@@ -17,12 +17,10 @@ Includes wallet connection, balance, claim/airdrop, withdrawals, anti-fraud limi
 
 ---
 
-## Swap
+## Swap (Live)
 
-BX swaps are supported via STON.fi (TON DEX).
+BX is live on STON.fi DEX.
 
-- Non-custodial
-- Wallet-signed transactions
-- TON ↔ BX swaps
-
-Use the `/swap` command in the bot.
+- Network: TON
+- Jetton: EQCRYlkaR6GlssLRrQlBH3HOPJSMk_vzfAAyyuhnriX-7a_a
+- Swap: TON ↔ BX via `/swap`
