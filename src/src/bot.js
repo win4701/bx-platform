@@ -159,7 +159,7 @@ bot.onText(/\/app/, async (msg) => {
       inline_keyboard: [[
         {
           text: "🚀 Open Mini App",
-          web_app: { url: "https://YOUR_DOMAIN/app" }
+          web_app: { url: "https://bx-ton-bot.onrender.com" }
         }
       ]]
     }
