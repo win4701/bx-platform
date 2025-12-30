@@ -17,4 +17,12 @@ Includes wallet connection, balance, claim/airdrop, withdrawals, anti-fraud limi
 
 ---
 
-## Project Structure
+## Swap
+
+BX swaps are supported via STON.fi (TON DEX).
+
+- Non-custodial
+- Wallet-signed transactions
+- TON ↔ BX swaps
+
+Use the `/swap` command in the bot.
