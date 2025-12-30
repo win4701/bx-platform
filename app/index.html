@@ -1,6 +1,21 @@
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+<h3>Bloxio Mini App</h3>
+
 <script>
 const tg = window.Telegram.WebApp;
 tg.ready();
-document.body.innerHTML = "Bloxio Mini App Ready";
+
+// Example: show Telegram user
+document.body.insertAdjacentHTML(
+  "beforeend",
+  "<p>User ID: " + tg.initDataUnsafe.user.id + "</p>"
+);
 </script>
+</body>
+</html>
