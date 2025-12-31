@@ -1,0 +1,53 @@
+bx-ton-bot/
+├── app/                         # Mini App (Telegram WebApp)
+│   ├── index.html               # UI كامل (Games, Buy, Withdraw, Analytics)
+│   ├── styles.css               # UI + Animations (Crash / Chicken)
+│   ├── app.js                   # Logic (TON Connect, Games, Buy/Withdraw)
+│   └── assets/
+│       └── sounds/
+│           ├── win.mp3
+│           └── lose.mp3
+│
+├── src/                         # Backend Core
+│   ├── bot.js                   # Core Server + Bot (موحد)
+│   │
+│   ├── auth/
+│   │   └── telegram.js          # verify initData (أمان)
+│   │
+│   ├── db/
+│   │   ├── pg.js                # PostgreSQL Pool
+│   │   └── migrations/
+│   │       └── 001_init.sql     # Migration كامل
+│   │
+│   ├── economy/
+│   │   └── engine.js            # BX Economy + Burn + Limits
+│   │
+│   ├── games/
+│   │   ├── chickenRoad.js       # Chicken Road Solo
+│   │   ├── chickenPVP.js        # Chicken PVP
+│   │   └── crashBX.js           # Crash Engine
+│   │
+│   ├── ton/
+│   │   ├── ston.js              # STON Quote
+│   │   └── txBuilder.js         # TON Tx Builder
+│   │
+│   ├── safety/
+│   │   ├── circuitBreaker.js    # Circuit Breaker
+│   │   ├── autoRamp.js          # Auto ramp limits
+│   │   ├── anomaly.js           # AI Anomaly Detection
+│   │   └── alerts.js            # Telegram alerts
+│   │
+│   ├── admin/
+│   │   └── invites.js           # Invite-only + Influencers
+│   │
+│   ├── events/
+│   │   └── tournament.js        # Tournaments + Leaderboard
+│   │
+│   └── public/
+│       ├── analytics.js         # Public analytics routes
+│       └── proof.js             # Proof-of-Reserve routes
+│
+├── .env.example                 # Env template
+├── package.json
+├── README.md
+└── .gitignore
