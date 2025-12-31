@@ -26,4 +26,18 @@ BX token has been successfully listed on the TON decentralized exchange **STON.f
 - Trading Pair: BX / TON
 - Status: Live
 
-This listing enables permissionless trading and liquidity provision for BX holders.
+This listing enables permissionless trading and liquidity provision for BX 
+holders.
+
+BX TON Bot + Mini App
+
+- Secure Telegram initData auth
+- Wallet-signed swaps
+- Dynamic slippage
+- Referral system
+- On-chain reward proof
+- PostgreSQL backend
+
+Deploy:
+- Render (Node)
+- PostgreSQL addon
