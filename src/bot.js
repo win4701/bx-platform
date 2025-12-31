@@ -4,11 +4,8 @@
 import TelegramBot from "node-telegram-bot-api";
 import dotenv from "dotenv";
 import express from "express";
-
-import { getWallet, saveWallet, hasClaimed, markClaimed } from "./db.js";
-import { getBalance, claimBX, withdrawBX } from "./ton.js";
-import { canWithdraw } from "./limits.js";
-import { tonToBX, bxToTON } from "./swap.js";
+import path from "path";
+import { fileURLToPath } from "url";
 
 /* =========================
    Load Environment
@@ -16,24 +13,36 @@ import { tonToBX, bxToTON } from "./swap.js";
 dotenv.config();
 
 /* =========================
-   Express Server (Required for Render + Mini App)
+   Fix __dirname (ESM)
 ========================= */
-const express = require('express');
-const app = express();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-/* any middlewares */
+/* =========================
+   Express Server
+========================= */
+const app = express();
 app.use(express.json());
 
-/* ✅   Main route */
-app.get('/', (req, res) => {
-  res.status(200).send('BOT IS LIVE');
+/* 👉 هذا السطر هو الأهم */
+app.use(express.static(path.join(__dirname, "../app")));
+
+/* 👉 Route صريح للـ Mini App */
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "../app/index.html"));
 });
 
-// Start HTTP server
-const PORT = process.env.PORT || 3000;
+/* Health check */
+app.get("/health", (req, res) => {
+  res.send("OK");
+});
 
-app.listen(PORT, '0.0.0.0', () => {
-  console.log('Server running on port', PORT);
+/* =========================
+   Start Server (Render)
+========================= */
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log("Server running on port", PORT);
 });
 
 /* =========================
