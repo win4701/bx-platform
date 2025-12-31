@@ -1,4 +1,3 @@
-// src/auth.js
 import crypto from "crypto";
 
 export function telegramAuth(req, res, next) {
@@ -14,22 +13,20 @@ export function telegramAuth(req, res, next) {
   const hash = params.get("hash");
   params.delete("hash");
 
-  const checkString = [...params.entries()]
+  const dataCheckString = [...params.entries()]
     .sort()
     .map(([k, v]) => `${k}=${v}`)
     .join("\n");
 
   const hmac = crypto
     .createHmac("sha256", secret)
-    .update(checkString)
+    .update(dataCheckString)
     .digest("hex");
 
   if (hmac !== hash) {
     return res.status(403).json({ error: "INVALID_SIGNATURE" });
   }
 
-  req.telegram = {
-    user: JSON.parse(params.get("user"))
-  };
+  req.telegram = { user: JSON.parse(params.get("user")) };
   next();
 }
