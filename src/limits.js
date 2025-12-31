@@ -1,21 +1,13 @@
-// src/antifraud.js
-import { getLastWithdraw, setLastWithdraw } from "./db.js";
+const hits = new Map();
 
-const DAILY_LIMIT = 1000; // BX
-const COOLDOWN = 24 * 60 * 60 * 1000; // 24h
-
-export async function canWithdraw(userId, amount) {
-  if (amount > DAILY_LIMIT) {
-    return false;
-  }
-
-  const last = getLastWithdraw(userId);
+export function rateLimit(key, max = 10, windowMs = 60000) {
   const now = Date.now();
+  const arr = (hits.get(key) || []).filter(t => now - t < windowMs);
+  arr.push(now);
+  hits.set(key, arr);
+  return arr.length <= max;
+}
 
-  if (now - last < COOLDOWN) {
-    return false;
-  }
-
-  setLastWithdraw(userId, now);
-  return true;
+export function canWithdraw(amount, dailyLimit = 1000) {
+  return amount > 0 && amount <= dailyLimit;
 }
