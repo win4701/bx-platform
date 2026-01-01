@@ -1,19 +1,244 @@
-<!doctype html>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <title>Bloxio Mini App</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta charset="UTF-8" />
+  <title>Bloxio (BX)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Telegram Mini App -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
-  <link rel="stylesheet" href="styles.css">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="styles.css" />
+
+  <style>
+    body {
+      margin: 0;
+      background: #0b0f1a;
+      color: #fff;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+    header {
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1px solid #1c2233;
+    }
+    header img {
+      width: 40px;
+      height: 40px;
+    }
+    header h1 {
+      font-size: 18px;
+      margin: 0;
+    }
+
+    nav {
+      display: flex;
+      justify-content: space-around;
+      border-top: 1px solid #1c2233;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: #0b0f1a;
+    }
+    nav button {
+      flex: 1;
+      padding: 12px 0;
+      background: none;
+      border: none;
+      color: #9aa4bf;
+      font-size: 12px;
+    }
+    nav button.active {
+      color: #f5c26b;
+    }
+
+    main {
+      padding: 16px;
+      padding-bottom: 80px;
+    }
+
+    .card {
+      background: #12182a;
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 16px;
+      border: 1px solid #1c2233;
+    }
+
+    .card h2 {
+      margin: 0 0 8px;
+      font-size: 16px;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 12px;
+      margin-top: 8px;
+      border-radius: 10px;
+      border: none;
+      background: #f5c26b;
+      color: #000;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .muted {
+      color: #9aa4bf;
+      font-size: 13px;
+    }
+
+    .hidden {
+      display: none;
+    }
+  </style>
 </head>
+
 <body>
-  <h2>🚀 Bloxio</h2>
 
-  <button onclick="open('/analytics')">📊 Analytics</button>
-  <button onclick="open('/proof')">🧾 Proof</button>
+<!-- Header -->
+<header>
+  <img src="bx.png" alt="BX" />
+  <h1>Bloxio (BX)</h1>
+</header>
 
-  <script src="app.js"></script>
+<!-- Main Content -->
+<main>
+
+  <!-- HOME -->
+  <section id="home" class="page">
+    <div class="card">
+      <h2>Welcome</h2>
+      <p class="muted">
+        Bloxio is a BX ecosystem with real liquidity, transparent rules,
+        and controlled minting.
+      </p>
+    </div>
+
+    <div class="card">
+      <h2>BX Balance</h2>
+      <p id="balance">Loading...</p>
+    </div>
+  </section>
+
+  <!-- BUY / SELL -->
+  <section id="payments" class="page hidden">
+    <div class="card">
+      <h2>Buy BX</h2>
+      <p class="muted">
+        Buy BX via TON, USDT, Binance Pay ID or RedotPay ID.
+      </p>
+      <button class="btn" onclick="alert('Follow instructions in bot')">
+        Buy BX
+      </button>
+    </div>
+
+    <div class="card">
+      <h2>Sell BX</h2>
+      <p class="muted">
+        Sell BX with limits. Small amounts may be auto-approved.
+      </p>
+      <button class="btn" onclick="alert('Sell flow opened in bot')">
+        Sell BX
+      </button>
+    </div>
+  </section>
+
+  <!-- AIRDROP -->
+  <section id="airdrop" class="page hidden">
+    <div class="card">
+      <h2>Airdrop Tasks</h2>
+      <p class="muted">Complete tasks to earn BX (one-time).</p>
+
+      <ul class="muted">
+        <li>Register on Bloxio website (+5 BX)</li>
+        <li>Join Telegram channel (+3 BX)</li>
+        <li>Join Telegram group (+3 BX)</li>
+        <li>Follow Facebook (+2 BX)</li>
+        <li>Follow Instagram (+2 BX)</li>
+      </ul>
+
+      <button class="btn" onclick="alert('Tasks verification in progress')">
+        Claim BX
+      </button>
+    </div>
+  </section>
+
+  <!-- PRICE -->
+  <section id="price" class="page hidden">
+    <div class="card">
+      <h2>BX Market Price</h2>
+      <p class="muted">
+        Prices are sourced from STON.fi liquidity pools.
+      </p>
+      <div id="chart" class="muted">Chart loading…</div>
+    </div>
+  </section>
+
+  <!-- HISTORY -->
+  <section id="history" class="page hidden">
+    <div class="card">
+      <h2>Transaction History</h2>
+      <ul id="historyList" class="muted">
+        <li>Loading…</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- PORTFOLIO -->
+  <section id="portfolio" class="page hidden">
+    <div class="card">
+      <h2>BX Ecosystem</h2>
+      <p class="muted">
+        Planned listings (not guaranteed):
+      </p>
+      <ul class="muted">
+        <li>PancakeSwap V2</li>
+        <li>Uniswap V3</li>
+        <li>Binance</li>
+        <li>HTX</li>
+        <li>Coinbase</li>
+        <li>Gate.io</li>
+        <li>BingX</li>
+        <li>Bybit</li>
+        <li>Bitget</li>
+      </ul>
+
+      <p class="muted">
+        Bloxio Exchange & Mint Authority launching soon.
+      </p>
+    </div>
+  </section>
+
+</main>
+
+<!-- Navigation -->
+<nav>
+  <button class="active" onclick="show('home')">Home</button>
+  <button onclick="show('payments')">Buy/Sell</button>
+  <button onclick="show('airdrop')">Airdrop</button>
+  <button onclick="show('price')">Price</button>
+  <button onclick="show('portfolio')">Ecosystem</button>
+</nav>
+
+<!-- Scripts -->
+<script>
+  const tg = window.Telegram?.WebApp;
+  if (tg) tg.ready();
+
+  function show(id) {
+    document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
+    document.getElementById(id).classList.remove('hidden');
+    document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+    event.target.classList.add('active');
+  }
+
+  // Example placeholders
+  document.getElementById("balance").innerText = "— BX";
+</script>
+
 </body>
 </html>
