@@ -1,0 +1,7 @@
+<h2>Provably Fair & RTP</h2>
+<p>Each round uses server-side seed.</p>
+<div id="rtp"></div>
+<script>
+fetch("/api/rtp/crash").then(r=>r.json())
+.then(d=>rtp.innerText=`Crash RTP: ${d.rtp}%`);
+</script>
