@@ -21,3 +21,18 @@ CREATE TABLE transactions (
   status TEXT,
   created_at TIMESTAMP DEFAULT NOW()
 );
+CREATE TABLE IF NOT EXISTS users (
+  id SERIAL PRIMARY KEY,
+  telegram_id BIGINT UNIQUE,
+  bx_balance NUMERIC DEFAULT 0,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS transactions (
+  id SERIAL PRIMARY KEY,
+  telegram_id BIGINT,
+  amount NUMERIC,
+  type TEXT,
+  status TEXT,
+  created_at TIMESTAMP DEFAULT NOW()
+);
