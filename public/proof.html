@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Bloxio Proof of Reserve</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="/app/styles.css" />
+  <style>
+    .box{background:#12182a;border-radius:12px;padding:16px;margin:16px}
+    code{display:block;word-break:break-all;background:#0b0f1a;padding:12px;border-radius:8px}
+    .ok{color:#7CFF9E}
+    .warn{color:#FFD36A}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🔐 Proof of Reserve</h1>
+  </header>
+
+  <main>
+    <div class="box">
+      <h3>Admin Vault (TON)</h3>
+      <code id="vault">—</code>
+      <p class="muted">All BX liquidity is consolidated here.</p>
+    </div>
+
+    <div class="box">
+      <h3>On-chain Balances</h3>
+      <p>BX Balance: <strong id="bx">—</strong></p>
+      <p>TON Balance: <strong id="ton">—</strong></p>
+      <p class="ok" id="status">—</p>
+    </div>
+
+    <div class="box">
+      <h3>Methodology</h3>
+      <ul class="muted">
+        <li>Sales from Admin wallet only</li>
+        <li>No mint during sales</li>
+        <li>Public analytics enabled</li>
+        <li>Limits + circuit breakers</li>
+      </ul>
+    </div>
+  </main>
+
+  <script>
+    async function load(){
+      const p = await fetch("/api/proof").then(r=>r.json());
+      vault.textContent = p.vault;
+      bx.textContent = p.balanceBX;
+      ton.textContent = p.balanceTON;
+      status.textContent = "✔ Reserves verified on TON";
+    }
+    load();
+    setInterval(load, 60000);
+  </script>
+</body>
+</html>
