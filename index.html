@@ -102,7 +102,45 @@ function buy(method) {
   });
   alert("Payment request sent");
 }
+</script> <!-- كل الـ HTML فوق -->
+
+<script>
+  // 🔹 Telegram WebApp init
+  Telegram.WebApp.ready();
+
+  // 🔹 Buy TON
+  function buyTON() {
+    fetch("/buy-ton", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        telegramId: Telegram.WebApp.initDataUnsafe.user.id,
+        ton: 10,
+        txHash: "USER_TX_HASH"
+      })
+    });
+  }
+
+  // 🔹 Crash Game
+  let crashPoint = 0;
+
+  function startCrash() {
+    fetch("/crash/start", { method: "POST" })
+      .then(r => r.json())
+      .then(d => crashPoint = d.point);
+  }
+
+  function cashout(mult) {
+    fetch("/crash/cashout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ bet: 10, mult, point: crashPoint })
+    });
+  }
 </script>
+
+</body>
+</html>
 
 </body>
 </html>
