@@ -1,9 +1,0 @@
-config:
-  target: "https://YOUR_DOMAIN"
-  phases:
-    - duration: 120
-      arrivalRate: 20
-scenarios:
-  - flow:
-    - get:
-        url: "/api/price/bx-ton"
