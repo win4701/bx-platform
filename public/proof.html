@@ -2,14 +2,15 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Bloxio Proof of Reserve</title>
+  <title>Bloxio • Proof of Reserve</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="/app/styles.css" />
   <style>
-    .box{background:#12182a;border-radius:12px;padding:16px;margin:16px}
+    .box{background:#12182a;border-radius:12px;padding:16px;margin-top:12px}
     code{display:block;word-break:break-all;background:#0b0f1a;padding:12px;border-radius:8px}
     .ok{color:#7CFF9E}
-    .warn{color:#FFD36A}
+    .muted{color:#9aa3b2;font-size:12px}
+    a{color:#f5c26b}
   </style>
 </head>
 <body>
@@ -21,7 +22,8 @@
     <div class="box">
       <h3>Admin Vault (TON)</h3>
       <code id="vault">—</code>
-      <p class="muted">All BX liquidity is consolidated here.</p>
+      <p class="muted">All BX liquidity is consolidated in this address.</p>
+      <a id="explorer" target="_blank">View on TON Explorer</a>
     </div>
 
     <div class="box">
@@ -29,6 +31,12 @@
       <p>BX Balance: <strong id="bx">—</strong></p>
       <p>TON Balance: <strong id="ton">—</strong></p>
       <p class="ok" id="status">—</p>
+    </div>
+
+    <div class="box">
+      <h3>Proof Signature</h3>
+      <code id="sig">—</code>
+      <p class="muted">HMAC-SHA256 signature of the proof payload.</p>
     </div>
 
     <div class="box">
@@ -46,9 +54,11 @@
     async function load(){
       const p = await fetch("/api/proof").then(r=>r.json());
       vault.textContent = p.vault;
-      bx.textContent = p.balanceBX;
-      ton.textContent = p.balanceTON;
+      bx.textContent    = p.balanceBX;
+      ton.textContent   = p.balanceTON;
+      sig.textContent   = p.signature;
       status.textContent = "✔ Reserves verified on TON";
+      explorer.href = "https://tonscan.org/address/" + p.vault;
     }
     load();
     setInterval(load, 60000);
