@@ -1,63 +1,19 @@
-let currentCrashRound = null;
-let currentChickenGame = null;
+const tg = window.Telegram.WebApp;
+tg.ready();
+tg.expand();
 
-function openScreen(id) {
-  document.querySelectorAll(".screen")
-    .forEach(s => s.classList.remove("active"));
-  document.getElementById(id).classList.add("active");
+function send(action, payload = {}) {
+  tg.sendData(JSON.stringify({ action, ...payload }));
 }
 
-// ===== Crash =====
-async function startCrash() {
-  const bet = document.getElementById("crashBet").value;
-  const res = await fetch("/api/crash/start", {
-    method: "POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({ bet })
-  });
-  const data = await res.json();
-  currentCrashRound = data.roundId;
-  document.getElementById("crashStatus").innerText = "Running...";
-}
+window.App = {
+  playChicken: () => send("PLAY_CHICKEN"),
+  playCrash: () => send("PLAY_CRASH"),
 
-async function cashoutCrash() {
-  await fetch("/api/crash/cashout", {
-    method: "POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({ roundId: currentCrashRound })
-  });
-  document.getElementById("crashStatus").innerText = "Cashed!";
-}
+  buyBX: () => send("BUY_BX"),
+  sellBX: () => send("SELL_BX"),
 
-// ===== Chicken =====
-async function startChicken() {
-  const bet = document.getElementById("chickenBet").value;
-  const res = await fetch("/api/chicken/start", {
-    method: "POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({ bet })
-  });
-  const data = await res.json();
-  currentChickenGame = data.gameId;
-  document.getElementById("chickenStatus").innerText = "Started";
-}
-
-async function stepChicken() {
-  const res = await fetch("/api/chicken/step", {
-    method: "POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({ gameId: currentChickenGame })
-  });
-  const data = await res.json();
-  document.getElementById("chickenStatus").innerText =
-    data.alive ? "Safe!" : "💥 Lost";
-}
-
-async function cashoutChicken() {
-  await fetch("/api/chicken/cashout", {
-    method: "POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({ gameId: currentChickenGame })
-  });
-  document.getElementById("chickenStatus").innerText = "Cashed!";
-}
+  openAirdrop: () => send("OPEN_AIRDROP"),
+  openMarket: () => send("OPEN_MARKET"),
+  openProof: () => send("OPEN_PROOF"),
+};
