@@ -1,0 +1,30 @@
+CREATE TABLE IF NOT EXISTS users (
+  id BIGINT PRIMARY KEY,
+  bx NUMERIC DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS cloud_mining (
+  user_id BIGINT PRIMARY KEY,
+  bnb NUMERIC DEFAULT 0,
+  sol NUMERIC DEFAULT 0,
+  last TIMESTAMP DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS usdt_orders (
+  id SERIAL PRIMARY KEY,
+  user_id BIGINT,
+  provider TEXT,
+  amount NUMERIC,
+  proof TEXT,
+  status TEXT DEFAULT 'pending'
+);
+
+CREATE TABLE IF NOT EXISTS proof_cache (
+  id INT PRIMARY KEY DEFAULT 1,
+  total_ton NUMERIC DEFAULT 0,
+  total_usdt NUMERIC DEFAULT 0,
+  total_bx NUMERIC DEFAULT 0,
+  updated_at TIMESTAMP DEFAULT now()
+);
+
+INSERT INTO proof_cache (id) VALUES (1) ON CONFLICT DO NOTHING;
