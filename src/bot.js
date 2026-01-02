@@ -7,38 +7,29 @@ import path from "path";
 
 import { registerMessages } from "./bot/messages.js";
 import { registerCallbacks } from "./bot/callbacks.js";
-import { stressAutoExit } from "./safety/stressAutoExit.js";
 
-import airdropRoutes from "./routes/airdrop.js";
 import buyRoutes from "./routes/buy.js";
 import sellRoutes from "./routes/sell.js";
-import priceRoutes from "./routes/price.js";
-import historyRoutes from "./routes/history.js";
-import monitorRoutes from "./routes/monitor.js";
+import miningRoutes from "./routes/mining.js";
+import gameRoutes from "./routes/games.js";
+import tournamentRoutes from "./routes/tournament.js";
+import webhooks from "./routes/webhooks/index.js";
 
 const app = express();
 app.use(express.json());
 
-/* API */
-app.use("/api/airdrop", airdropRoutes);
 app.use("/api/buy", buyRoutes);
 app.use("/api/sell", sellRoutes);
-app.use("/api/price", priceRoutes);
-app.use("/api/history", historyRoutes);
-app.use("/admin/monitor", monitorRoutes);
+app.use("/api/mining", miningRoutes);
+app.use("/api/games", gameRoutes);
+app.use("/api/tournament", tournamentRoutes);
+app.use("/webhook", webhooks);
 
-/* Mini App */
-app.use("/app", express.static(path.join(process.cwd(), "app")));
-app.use("/", express.static(path.join(process.cwd(), "public")));
+app.use("/app", express.static("app"));
+app.use("/", express.static("public"));
 
-/* Telegram Bot */
 const bot = new TelegramBot(process.env.BOT_TOKEN, { polling: true });
 registerMessages(bot);
 registerCallbacks(bot);
 
-/* Stress Auto Exit */
-setInterval(() => stressAutoExit(bot), 60_000);
-
-/* Server */
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log("BX Bot running on", PORT));
+app.listen(process.env.PORT || 3000);
