@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>Bloxio BX</title>
+<title>Bloxio Casino</title>
 
 <style>
 body {
@@ -20,54 +20,87 @@ nav {
 }
 nav button {
   flex: 1;
-  padding: 15px;
+  padding: 14px;
   background: none;
   border: none;
   color: #aaa;
+  font-size: 14px;
 }
-nav button.active { color: gold; }
-.card {
-  margin: 20px;
+nav button.active {
+  color: gold;
+}
+.screen {
+  display: none;
   padding: 20px;
-  background: #151a2e;
-  border-radius: 12px;
+}
+.screen.active {
+  display: block;
+}
+.game {
+  background: #161b2e;
+  margin: 10px 0;
+  padding: 15px;
+  border-radius: 10px;
+}
+button.primary {
+  background: gold;
+  border: none;
+  padding: 12px;
+  width: 100%;
+  border-radius: 8px;
+  font-weight: bold;
 }
 </style>
 </head>
 
 <body>
 
-<div id="app">
-  <div class="card">
-    <h2>🎰 Bloxio Casino</h2>
-    <p>Balance: <b id="balance">-- BX</b></p>
-  </div>
+<div id="play" class="screen active">
+  <h2>🎮 Play</h2>
+  <div class="game">🔥 Crash BX</div>
+  <div class="game">🐔 Chicken Road</div>
+  <div class="game">🎲 Dice</div>
+</div>
 
-  <div class="card">
-    <button onclick="buyBX()">💰 Buy BX</button>
-    <button onclick="openGame('crash')">🎮 Play Crash</button>
-  </div>
+<div id="wallet" class="screen">
+  <h2>💼 Wallet</h2>
+  <button class="primary" onclick="buy('TON')">Buy BX (TON)</button>
+  <button class="primary" onclick="buy('USDT')">Buy BX (USDT)</button>
+</div>
+
+<div id="rewards" class="screen">
+  <h2>🎁 Rewards</h2>
+  <p>Join Telegram → +5 BX</p>
+  <p>Play 3 games → +10 BX</p>
+  <p>Invite friend → +20 BX</p>
 </div>
 
 <nav>
-  <button class="active">Home</button>
-  <button>Wallet</button>
-  <button>Rewards</button>
-  <button>Market</button>
-  <button>More</button>
+  <button class="active" onclick="openTab('play')">Play</button>
+  <button onclick="openTab('wallet')">Wallet</button>
+  <button onclick="openTab('rewards')">Rewards</button>
 </nav>
 
 <script>
-function buyBX() {
-  Telegram.WebApp.sendData("buy_bx");
+function openTab(id) {
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  document.querySelectorAll("nav button").forEach(b => b.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+  event.target.classList.add("active");
 }
 
-function play() {
-  alert("🎮 Crash & Chicken coming live");
-}
-
-if (window.Telegram) {
-  Telegram.WebApp.ready();
+function buy(method) {
+  const amount = prompt("Enter amount:");
+  fetch("/buy", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      telegramId: Telegram.WebApp.initDataUnsafe.user.id,
+      amount,
+      method
+    })
+  });
+  alert("Payment request sent");
 }
 </script>
 
