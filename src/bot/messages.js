@@ -1,31 +1,34 @@
-import { pool } from "../db/pg.js";
+import { bot } from "./bot.js";
 
-export async function handleProof(bot, msg) {
-  if (!msg.photo && !msg.document) return;
+export async function handleMessage(msg) {
+  if (!msg.web_app_data) return;
 
-  const userId = msg.from.id;
+  const data = JSON.parse(msg.web_app_data.data);
+  const chatId = msg.chat.id;
 
-  const fileId =
-    msg.photo?.slice(-1)[0]?.file_id ||
-    msg.document?.file_id;
+  switch (data.action) {
+    case "BUY_BX":
+      return bot.sendMessage(chatId,
+        "🟢 Buy BX\nSend payment proof (TON / USDT / Binance / RedotPay)");
 
-  if (!fileId) return;
+    case "SELL_BX":
+      return bot.sendMessage(chatId,
+        "🔴 Sell BX\nSend amount + wallet. Admin approval.");
 
-  const file = await bot.getFile(fileId);
-  const proofUrl =
-    `https://api.telegram.org/file/bot${process.env.BOT_TOKEN}/${file.file_path}`;
+    case "PLAY_CHICKEN":
+      return bot.sendMessage(chatId, "🐔 Chicken game started!");
 
-  await pool.query(
-    `UPDATE usdt_orders
-     SET proof_url=$1
-     WHERE user_id=$2 AND status='PENDING'
-     ORDER BY created_at DESC
-     LIMIT 1`,
-    [proofUrl, userId]
-  );
+    case "PLAY_CRASH":
+      return bot.sendMessage(chatId, "📈 Crash game started!");
 
-  await bot.sendMessage(
-    userId,
-    "✅ Proof received. Awaiting admin approval."
-  );
+    case "OPEN_AIRDROP":
+      return bot.sendMessage(chatId,
+        "🎁 Tasks:\n• Join Telegram +5 BX\n• Play 3 games +10 BX\n• Invite friend +20 BX");
+
+    case "OPEN_MARKET":
+      return bot.sendMessage(chatId, "📊 BX price from STON.fi");
+
+    case "OPEN_PROOF":
+      return bot.sendMessage(chatId, "🔒 Proof-of-Reserve active");
+  }
 }
