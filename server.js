@@ -120,7 +120,14 @@ app.post("/buy", (req, res) => {
 
   res.json({ ok: true });
 });
-
+// داخل server.js
+app.post("/buy-ton", async (req,res)=>{
+  const {telegramId, ton, txHash}=req.body;
+  // TODO: verify txHash (مرحلة لاحقة)
+  pending[telegramId]={bx: ton*2, txHash};
+  notifyAdmins(telegramId, ton, txHash);
+  res.json({ok:true});
+});
 /* ======================
    Start Server
 ====================== */
