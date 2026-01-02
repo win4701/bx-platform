@@ -1,92 +1,28 @@
-* {
-  box-sizing: border-box;
-  font-family: system-ui, sans-serif;
-}
-
 body {
-  margin: 0;
-  background: radial-gradient(circle at top, #111827, #020617);
-  color: #fff;
+  background:#0b0f1a;
+  color:#fff;
+  font-family:system-ui;
+  padding:12px;
 }
 
-.top {
-  display: flex;
-  justify-content: space-between;
-  padding: 14px;
-  background: #020617;
-}
-
-.logo {
-  font-weight: bold;
-  color: #facc15;
-}
-
-.balance {
-  color: #22c55e;
-}
-
-main {
-  padding: 16px;
-  padding-bottom: 80px;
-}
-
-.screen {
-  display: none;
-}
-.screen.active {
-  display: block;
+header {
+  font-size:22px;
+  margin-bottom:16px;
 }
 
 .card {
-  background: linear-gradient(145deg,#020617,#111827);
-  padding: 16px;
-  border-radius: 14px;
-  margin-bottom: 12px;
-  cursor: pointer;
-  border: 1px solid #1e293b;
-}
-
-.card:hover {
-  border-color: #facc15;
-}
-
-.card.disabled {
-  opacity: 0.4;
-}
-
-input {
-  width: 100%;
-  padding: 12px;
-  margin: 8px 0;
-  border-radius: 10px;
-  border: none;
+  background:#131a2a;
+  border-radius:12px;
+  padding:14px;
+  margin-bottom:14px;
 }
 
 button {
-  width: 100%;
-  padding: 12px;
-  margin-top: 6px;
-  border-radius: 10px;
-  border: none;
-  background: #facc15;
-  font-weight: bold;
-}
-
-button.danger {
-  background: #ef4444;
-}
-
-.bottom {
-  position: fixed;
-  bottom: 0;
-  width: 100%;
-  display: flex;
-  background: #020617;
-  border-top: 1px solid #1e293b;
-}
-
-.bottom button {
-  flex: 1;
-  background: none;
-  color: #fff;
+  width:100%;
+  padding:12px;
+  margin-top:8px;
+  border-radius:10px;
+  border:none;
+  background:#d4af37;
+  font-weight:bold;
 }
