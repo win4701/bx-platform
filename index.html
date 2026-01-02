@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Bloxio BX</title>
+
+<style>
+body {
+  margin: 0;
+  background: #0b0f1a;
+  color: #fff;
+  font-family: Arial, sans-serif;
+}
+nav {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  display: flex;
+  background: #111;
+}
+nav button {
+  flex: 1;
+  padding: 15px;
+  background: none;
+  border: none;
+  color: #aaa;
+}
+nav button.active { color: gold; }
+.card {
+  margin: 20px;
+  padding: 20px;
+  background: #151a2e;
+  border-radius: 12px;
+}
+</style>
+</head>
+
+<body>
+
+<div id="app">
+  <div class="card">
+    <h2>🎰 Bloxio Casino</h2>
+    <p>Balance: <b id="balance">-- BX</b></p>
+  </div>
+
+  <div class="card">
+    <button onclick="buyBX()">💰 Buy BX</button>
+    <button onclick="play()">🎮 Play</button>
+  </div>
+</div>
+
+<nav>
+  <button class="active">Home</button>
+  <button>Wallet</button>
+  <button>Rewards</button>
+  <button>Market</button>
+  <button>More</button>
+</nav>
+
+<script>
+function buyBX() {
+  Telegram.WebApp.sendData("buy_bx");
+}
+
+function play() {
+  alert("🎮 Crash & Chicken coming live");
+}
+
+if (window.Telegram) {
+  Telegram.WebApp.ready();
+}
+</script>
+
+</body>
+</html>
