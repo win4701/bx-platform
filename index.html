@@ -1,167 +1,119 @@
-import os, time, random, asyncio
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import HTMLResponse
-import psycopg2
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no"/>
+<title>Bloxio BX</title>
+<script>
+if (window.Telegram?.WebApp) { Telegram.WebApp.ready(); Telegram.WebApp.expand(); }
+</script>
+<style>
+:root{
+  --bg:#0b0f1a; --panel:#12172a; --panel2:#0f1426;
+  --accent:#4ade80; --accent2:#60a5fa; --warn:#facc15;
+  --text:#e5e7eb; --muted:#9ca3af;
+}
+*{box-sizing:border-box}
+body{margin:0;background:linear-gradient(180deg,#0b0f1a,#0a0e18);color:var(--text);font-family:system-ui}
+#app{max-width:420px;margin:0 auto;padding:14px 14px 120px}
+header{padding:10px 4px 16px}
+header h1{margin:0;font-size:20px}
+.card{
+  background:linear-gradient(180deg,var(--panel),var(--panel2));
+  border-radius:16px;padding:14px;margin-bottom:12px;
+  box-shadow:0 12px 28px rgba(0,0,0,.45)
+}
+.value{font-size:22px;font-weight:900}
+.sub{color:var(--muted);font-size:12px}
+.btn{width:100%;padding:12px;border-radius:12px;border:0;font-weight:800;margin-top:8px}
+.buy{background:var(--accent);color:#052e16}
+.sell{background:var(--accent2);color:#020617}
+.nav{
+  position:fixed;left:0;right:0;bottom:0;background:#0a0e18;
+  border-top:1px solid rgba(255,255,255,.06);
+  display:flex;justify-content:space-around;padding:10px 6px
+}
+.nav button{flex:1;background:none;border:0;color:var(--muted);font-weight:800;padding:8px;border-radius:10px}
+.nav button.active{color:var(--accent2);background:rgba(96,165,250,.12)}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<div id="app">
+<header><h1>Bloxio · BX</h1></header>
 
-app = FastAPI()
+<section class="tab" id="wallet">
+  <div class="card">
+    <div class="value" id="bx">BX: --</div>
+    <div class="sub">Auto mining BX</div>
+    <button class="btn buy" onclick="buyBX()">Buy BX (TON)</button>
+    <button class="btn sell" onclick="withdrawTON()">Withdraw TON</button>
+  </div>
+</section>
 
-DATABASE_URL = os.getenv("DATABASE_URL")
-ADMIN_IDS = set(int(x) for x in os.getenv("ADMIN_IDS","").split(",") if x)
+<section class="tab hidden" id="mining">
+  <div class="card">
+    <h3>Mining External (xv)</h3>
+    <div class="value" id="bnb">BNB: --</div>
+    <div class="value" id="sol">SOL: --</div>
+    <div class="sub">Auto mining per minute</div>
+  </div>
+</section>
 
-conn = psycopg2.connect(DATABASE_URL, sslmode="require")
-conn.autocommit = True
+<section class="tab hidden" id="casino">
+  <div class="card">
+    <div class="value" id="crash">@ --x</div>
+    <div class="value" id="dice">--</div>
+    <div class="value" id="chicken">--</div>
+  </div>
+</section>
 
-def q(sql, params=None, one=False):
-    with conn.cursor() as c:
-        c.execute(sql, params or ())
-        return c.fetchone() if one else c.fetchall()
+</div>
 
-# ===== AUTO STATE =====
-AUTO = {"crash_at": 1.0}
+<nav class="nav">
+  <button class="active" onclick="showTab('wallet',this)">Wallet</button>
+  <button onclick="showTab('mining',this)">Mining</button>
+  <button onclick="showTab('casino',this)">Casino</button>
+</nav>
 
-# ===== AUTO LOOP =====
-async def auto_loop():
-    while True:
-        AUTO["crash_at"] = round(random.uniform(1.05, 6.0), 2)
-        await asyncio.sleep(5)
+<script>
+const uid = Telegram.WebApp?.initDataUnsafe?.user?.id || 1;
 
-@app.on_event("startup")
-async def startup():
-    asyncio.create_task(auto_loop())
-
-# ===== UI =====
-@app.get("/", response_class=HTMLResponse)
-def home():
-    with open("index.html", encoding="utf-8") as f:
-        return f.read()
-
-@app.get("/health")
-def health():
-    return {"ok": True}
-
-# ===== WALLET =====
-@app.get("/wallet/{uid}")
-def wallet(uid: int):
-    r = q("SELECT bx FROM users WHERE id=%s", (uid,), one=True)
-    if not r:
-        q("INSERT INTO users(id) VALUES(%s)", (uid,))
-        return {"bx": 0}
-    return {"bx": float(r[0])}
-
-# ===== AUTO MINING BX =====
-def auto_mine_bx(uid: int):
-    now = int(time.time())
-    r = q("SELECT last_mine FROM users WHERE id=%s", (uid,), one=True)
-    last = r[0] if r else 0
-    if now - last >= 60:
-        q("UPDATE users SET bx=bx+0.02,last_mine=%s WHERE id=%s", (now, uid))
-
-# ===== MINING BNB / SOL (xv) =====
-MINING_RATES = {
-    "bnb": 0.00002,   # xv rate
-    "sol": 0.00015
+function showTab(id,el){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.add('hidden'));
+  document.getElementById(id).classList.remove('hidden');
+  document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
 }
 
-def auto_mine_external(uid: int, asset: str):
-    now = int(time.time())
-    r = q("""
-        SELECT balance,last_mine
-        FROM mining_external
-        WHERE user_id=%s AND asset=%s
-    """, (uid, asset), one=True)
-
-    if not r:
-        q("""
-            INSERT INTO mining_external(user_id,asset,balance,last_mine)
-            VALUES(%s,%s,0,0)
-        """, (uid, asset))
-        return 0
-
-    balance, last = r
-    if now - last < 60:
-        return balance
-
-    reward = MINING_RATES[asset]
-    q("""
-        UPDATE mining_external
-        SET balance=balance+%s,last_mine=%s
-        WHERE user_id=%s AND asset=%s
-    """, (reward, now, uid, asset))
-    return balance + reward
-
-@app.get("/mining/{asset}/{uid}")
-def mining_external(asset: str, uid: int):
-    if asset not in MINING_RATES:
-        raise HTTPException(400)
-    bal = auto_mine_external(uid, asset)
-    return {"asset": asset, "balance": float(bal)}
-
-# ===== CASINO =====
-@app.get("/casino/crash")
-def crash(uid: int):
-    auto_mine_bx(uid)
-    return {"crash_at": AUTO["crash_at"]}
-
-@app.get("/casino/dice")
-def dice(uid: int):
-    auto_mine_bx(uid)
-    roll = random.randint(1, 100)
-    return {"roll": roll, "win": roll > 52}
-
-@app.get("/casino/chicken")
-def chicken(uid: int, step: int = 3):
-    auto_mine_bx(uid)
-    lose = min(0.05 * step, 0.6)
-    if random.random() < lose:
-        return {"result": "lose"}
-    return {"result": "win", "multiplier": round(1 + step * 0.3, 2)}
-
-# ===== BUY / WITHDRAW TON =====
-@app.post("/buy/ton")
-def buy_ton(p: dict):
-    uid = p["user"]
-    ton = float(p["ton"])
-    bx = ton * 2.0
-    q("INSERT INTO users(id) VALUES(%s) ON CONFLICT DO NOTHING", (uid,))
-    q("UPDATE users SET bx=bx+%s WHERE id=%s", (bx, uid))
-    return {"ok": True, "bx": bx}
-
-@app.post("/withdraw/ton")
-def withdraw(p: dict):
-    uid = p["user"]
-    ton = float(p["ton"])
-    addr = p["address"]
-    need_bx = ton / 0.2
-    r = q("SELECT bx FROM users WHERE id=%s", (uid,), one=True)
-    if not r or r[0] < need_bx:
-        return {"ok": False}
-    q("UPDATE users SET bx=bx-%s WHERE id=%s", (need_bx, uid))
-    q("INSERT INTO ton_withdrawals(user_id,ton,address) VALUES(%s,%s,%s)", (uid, ton, addr))
-    return {"ok": True, "status": "pending"}  alert(JSON.stringify(await r.json()));
-}
-async function playDice(){
-  const r = await fetch('/casino/dice',{
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({user:uid})
-  });
-  alert(JSON.stringify(await r.json()));
+async function buyBX(){
+  const ton = prompt("TON amount");
+  if(!ton) return;
+  await fetch('/buy/ton',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({user:uid,ton:parseFloat(ton)})});
 }
 
-/* Market */
-async function loadMarket(){
-  const r = await fetch('/market');
-  const d = await r.json();
-  price.textContent = `BX/TON ${d.bx_ton} | BX/USDT ${d.bx_usdt}`;
+async function withdrawTON(){
+  const ton = prompt("TON amount");
+  const addr = prompt("TON address");
+  if(!ton||!addr) return;
+  await fetch('/withdraw/ton',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({user:uid,ton:parseFloat(ton),address:addr})});
 }
-setInterval(loadMarket,30000);
-loadMarket();
 
-/* Proof */
-async function loadProof(){
-  const r = await fetch('/proof');
-  proof.textContent = JSON.stringify(await r.json(),null,2);
+async function tick(){
+  try{
+    let r,d;
+    r = await fetch(`/wallet/${uid}`); d = await r.json(); bx.textContent = `BX: ${d.bx}`;
+    r = await fetch(`/mining/bnb/${uid}`); d = await r.json(); bnb.textContent = `BNB: ${d.balance}`;
+    r = await fetch(`/mining/sol/${uid}`); d = await r.json(); sol.textContent = `SOL: ${d.balance}`;
+    r = await fetch(`/casino/crash?uid=${uid}`); d = await r.json(); crash.textContent = `@ ${d.crash_at}x`;
+    r = await fetch(`/casino/dice?uid=${uid}`); d = await r.json(); dice.textContent = d.roll ?? '--';
+    r = await fetch(`/casino/chicken?uid=${uid}&step=3`); d = await r.json(); chicken.textContent = d.result ?? '--';
+  }catch(e){}
 }
+setInterval(tick,1500);
+tick();
 </script>
 </body>
 </html>
