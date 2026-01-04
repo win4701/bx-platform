@@ -1,187 +1,85 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html>
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Bloxio</title>
-
+<meta charset="UTF-8">
+<title>BX Mini App</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
-:root{
-  --bg:#0b1020; --card:#151b3a; --nav:#111633;
-  --txt:#eaeaf0; --muted:#9aa0c3; --accent:#ffd36a;
-}
-*{box-sizing:border-box}
-body{
-  margin:0;background:var(--bg);color:var(--txt);
-  font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu;
-}
-header{
-  padding:16px;border-bottom:1px solid #20255a;
-  display:flex;justify-content:space-between;align-items:center;
-}
-header b{color:var(--accent)}
-main{padding:16px 16px 96px}
-.card{
-  background:var(--card);border-radius:16px;padding:14px;margin:12px 0;
-}
-h2,h3{margin:6px 0 10px}
-.small{font-size:12px;color:var(--muted)}
-.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-input,select,button,textarea{
-  width:100%;padding:10px;border-radius:10px;border:0;outline:0;
-  background:#0f1440;color:var(--txt);
-}
-textarea{min-height:60px}
-button.primary{background:var(--accent);color:#111;font-weight:700}
-pre{white-space:pre-wrap;word-break:break-word;background:#0f1440;padding:10px;border-radius:10px}
-
-nav{
-  position:fixed;left:0;right:0;bottom:0;background:var(--nav);
-  display:flex;border-top:1px solid #20255a
-}
-nav button{
-  flex:1;background:none;border:0;color:#7f86c8;padding:10px
-}
-nav button.active{color:var(--accent)}
-
-.nav-icon{
-  width:22px;height:22px;display:block;
-  margin:0 auto 4px;opacity:.7
-}
-nav button.active .nav-icon{opacity:1}
-nav span{font-size:11px}
-
-.hide{display:none}
-.kv{display:flex;justify-content:space-between}
-.kv span{color:var(--muted)}
-.badge{padding:4px 8px;border-radius:999px;background:#0f1440;font-size:12px}
+body{margin:0;background:#0b0f1a;color:#fff;font-family:sans-serif}
+header{padding:14px;background:#11162a;text-align:center;font-weight:700}
+.card{background:#141b33;margin:12px;border-radius:12px;padding:14px}
+.big{font-size:18px;font-weight:700}
+.small{font-size:13px;opacity:.85}
 </style>
 </head>
 
 <body>
+<header>BX Platform</header>
 
-<header>
-  <div><b>Bloxio</b> <span class="badge">Production</span></div>
-  <div class="small">online</div>
-</header>
+<div class="card">
+  <div class="big">Wallet</div>
+  <div id="bx">BX: --</div>
+  <div id="usdt">USDT: --</div>
+  <div id="ton">TON: --</div>
+</div>
 
-<main>
+<div class="card">
+  <div class="big">Mining</div>
+  <div id="rate">Rate: --</div>
+</div>
 
-<section id="home">
-  <div class="card">
-    <h2>Balances</h2>
-    <div class="kv"><span>BX</span><b id="bx">--</b></div>
-    <div class="kv"><span>TON</span><b id="tonb">--</b></div>
-    <div class="kv"><span>USDT</span><b id="usdtb">--</b></div>
-    <div class="kv"><span>BNB</span><b id="bnb">--</b></div>
-    <div class="kv"><span>SOL</span><b id="sol">--</b></div>
-    <div class="small">Auto-Mining مفعّل</div>
-  </div>
+<div class="card">
+  <div class="big">🏆 Leaderboard</div>
+  <div id="leaderboard" class="small"></div>
+</div>
 
-  <div class="card">
-    <h3>Prices</h3>
-    <div class="kv"><span>BX / TON</span><b id="p_ton">--</b></div>
-    <div class="kv"><span>BX / USDT</span><b id="p_usdt">--</b></div>
-  </div>
-</section>
+<div class="card">
+  <div class="big">🎁 Airdrop</div>
+  <div id="airdrop" class="small"></div>
+</div>
 
-<section id="wallet" class="hide">
-  <div class="card">
-    <h3>Buy BX (TON)</h3>
-    <input id="in_ton" placeholder="TON amount" />
-    <button class="primary" onclick="buyTON()">Buy</button>
-  </div>
-</section>
+<div class="card">
+  <div class="big">🎰 Casino</div>
+  <div id="casino" class="small"></div>
+</div>
 
-<section id="casino" class="hide">
-  <div class="card">
-    <h3>Crash</h3>
-    <input id="c_bet" placeholder="Bet BX" />
-    <input id="c_cash" placeholder="Cashout" />
-    <button class="primary" onclick="playCrash()">Play</button>
-    <pre id="c_res"></pre>
-  </div>
-</section>
-
-<section id="admin" class="hide">
-  <div class="card">
-    <h3>Admin</h3>
-    <input id="admin_id" placeholder="Admin ID" />
-    <button class="primary" onclick="loadPending()">Load</button>
-    <pre id="a_list"></pre>
-  </div>
-</section>
-
-<section id="proof" class="hide">
-  <div class="card">
-    <h3>Proof</h3>
-    <pre id="proof_box">--</pre>
-  </div>
-</section>
-
-</main>
-
-<!-- AUTO NAV -->
-<nav id="auto-nav"></nav>
+<div class="card">
+  <div class="big">🤝 Referral</div>
+  <div id="referral" class="small"></div>
+</div>
 
 <script>
-/* ===== CONFIG ===== */
-const uid = 1;
-const j = (p,d)=>fetch(p,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)}).then(r=>r.json());
-const g = (p)=>fetch(p).then(r=>r.json());
+const tg = window.Telegram.WebApp;
+tg.ready();
+const uid = tg.initDataUnsafe?.user?.id || 1;
 
-/* ===== AUTO NAV SYSTEM ===== */
-const TABS = [
-  {id:'home',label:'Home'},
-  {id:'wallet',label:'Wallet'},
-  {id:'casino',label:'Casino'},
-  {id:'admin',label:'Admin'},
-  {id:'proof',label:'Proof'},
-];
+async function load(){
+  const s = await fetch(`/state?uid=${uid}`).then(r=>r.json());
 
-const nav=document.getElementById('auto-nav');
+  bx.textContent   = "BX: " + s.wallet.bx;
+  usdt.textContent = "USDT: " + s.wallet.usdt;
+  ton.textContent  = "TON: " + s.wallet.ton;
 
-TABS.forEach((t,i)=>{
-  const b=document.createElement('button');
-  if(i===0) b.classList.add('active');
-  b.innerHTML=`<img class="nav-icon" src="assets/images/png/64/icon-${t.id}.png"><span>${t.label}</span>`;
-  b.onclick=()=>switchTab(t.id,b);
-  nav.appendChild(b);
-});
+  rate.textContent = "Rate: " + s.mining.rate + " BX/sec";
 
-function switchTab(id,btn){
-  document.querySelectorAll('section').forEach(s=>s.classList.add('hide'));
-  document.getElementById(id).classList.remove('hide');
-  document.querySelectorAll('#auto-nav button').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
+  leaderboard.innerHTML = s.leaderboard
+    .map(x => `${x.rank}. ${x.uid===uid?"You":"User#"+x.uid} — ${x.bx} BX`)
+    .join("<br>");
+
+  airdrop.innerHTML =
+    `Progress: ${s.airdrop.progress_pct}%<br>${s.airdrop.message}`;
+
+  casino.innerHTML =
+    `RTP: ${Math.round(s.casino.rtp*100)}%<br>Provably Fair`;
+
+  referral.innerHTML =
+    `Invited: ${s.referral.count}<br>
+     Reward: ${s.referral.reward_bx} BX<br>
+     <small>${s.referral.link}</small>`;
 }
 
-/* ===== DATA ===== */
-async function refresh(){
-  const u=await j('/user',{uid});
-  bx.textContent=u.bx.toFixed(4);
-  tonb.textContent=u.ton.toFixed(4);
-  usdtb.textContent=u.usdt.toFixed(4);
-  bnb.textContent=u.bnb.toFixed(6);
-  sol.textContent=u.sol.toFixed(6);
-  const p=await g('/chart');
-  p_ton.textContent=p.bx_ton;
-  p_usdt.textContent=p.bx_usdt;
-}
-setInterval(refresh,2000); refresh();
-
-/* ===== ACTIONS ===== */
-function buyTON(){j('/buy',{uid,ton:+in_ton.value}).then(refresh);}
-function playCrash(){
-  j('/crash',{uid,bet:+c_bet.value,cashout:+c_cash.value})
-  .then(r=>c_res.textContent=JSON.stringify(r,null,2));
-}
-function loadPending(){
-  fetch(`/admin/usdt/pending?admin=${admin_id.value}`)
-  .then(r=>r.json()).then(x=>a_list.textContent=JSON.stringify(x,null,2));
-}
-g('/proof').then(x=>proof_box.textContent=JSON.stringify(x,null,2));
+load();
+setInterval(load, 5000);
 </script>
-
 </body>
 </html>
