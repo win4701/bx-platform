@@ -1,147 +1,51 @@
-/* =====================================================
-   BX MINI APP - app.js
-   Single Script / Clean Sections
-===================================================== */
-
-/* =========================
-   CONFIG & INIT
-========================= */
 const tg = window.Telegram?.WebApp;
-if (tg) tg.ready();
+if(tg) tg.ready();
 
-const uid =
-  tg?.initDataUnsafe?.user?.id ||
-  tg?.initDataUnsafe?.user?.uid ||
-  1; // fallback للتجربة المحلية
+const uid = tg?.initDataUnsafe?.user?.id || 1;
+const loader = document.getElementById("loader");
 
-const API_STATE = "/state";
-
-/* =========================
-   DOM REFERENCES
-========================= */
 const el = {
   bx: document.getElementById("bx"),
   usdt: document.getElementById("usdt"),
   ton: document.getElementById("ton"),
   rate: document.getElementById("rate"),
-
   leaderboard: document.getElementById("leaderboard"),
   airdrop: document.getElementById("airdrop"),
   casino: document.getElementById("casino"),
   referral: document.getElementById("referral"),
 };
 
-/* =========================
-   API
-========================= */
-async function fetchState() {
-  const r = await fetch(`${API_STATE}?uid=${uid}`);
-  if (!r.ok) throw new Error("Failed to load state");
+function show(){ if(loader) loader.style.display="flex"; }
+function hide(){ if(loader) loader.style.display="none"; }
+
+async function fetchState(){
+  const r = await fetch(`/state?uid=${uid}`);
   return r.json();
 }
 
-/* =========================
-   RENDER: WALLET
-========================= */
-function renderWallet(s) {
-  if (!el.bx) return;
-  el.bx.textContent = `BX: ${s.wallet.bx}`;
-  el.usdt.textContent = `USDT: ${s.wallet.usdt}`;
-  el.ton.textContent = `TON: ${s.wallet.ton}`;
-}
-
-/* =========================
-   RENDER: MINING
-========================= */
-function renderMining(s) {
-  if (!el.rate) return;
-  el.rate.textContent = `Rate: ${s.mining.rate} BX/sec`;
-}
-
-/* =========================
-   RENDER: LEADERBOARD
-========================= */
-function renderLeaderboard(s) {
-  if (!el.leaderboard) return;
-
-  el.leaderboard.innerHTML = s.leaderboard
-    .map(
-      (x) =>
-        `${x.rank}. ${
-          x.uid === uid ? "You" : "User#" + x.uid
-        } — ${x.bx} BX`
-    )
-    .join("<br>");
-}
-
-/* =========================
-   RENDER: AIRDROP
-========================= */
-function renderAirdrop(s) {
-  if (!el.airdrop) return;
-
-  el.airdrop.innerHTML = `
-    Progress: ${s.airdrop.progress_pct}%<br>
-    ${s.airdrop.message}
-  `;
-}
-
-/* =========================
-   RENDER: CASINO
-========================= */
-function renderCasino(s) {
-  if (!el.casino) return;
-
-  el.casino.innerHTML = `
-    RTP: ${Math.round(s.casino.rtp * 100)}%<br>
-    ${s.casino.fair ? "Provably Fair" : ""}
-  `;
-}
-
-/* =========================
-   RENDER: REFERRAL
-========================= */
-function renderReferral(s) {
-  if (!el.referral) return;
-
-  el.referral.innerHTML = `
-    Invited: ${s.referral.count}<br>
-    Reward: ${s.referral.reward_bx} BX<br>
-    <small>${s.referral.link}</small>
-  `;
-}
-
-/* =========================
-   STATUS / NOTICES
-========================= */
-function handleStatus(s) {
-  if (s.status?.withdraw_pending) {
-    console.log("Withdrawal pending");
-    // يمكن لاحقًا استبداله Toast / Banner
-  }
-}
-
-/* =========================
-   MAIN LOOP
-========================= */
-async function load() {
-  try {
+async function load(){
+  try{
+    show();
     const s = await fetchState();
+    el.bx.textContent = "BX: "+s.wallet.bx;
+    el.usdt.textContent = "USDT: "+s.wallet.usdt;
+    el.ton.textContent = "TON: "+s.wallet.ton;
+    el.rate.textContent = "Rate: "+s.mining.rate+" BX/sec";
 
-    renderWallet(s);
-    renderMining(s);
-    renderLeaderboard(s);
-    renderAirdrop(s);
-    renderCasino(s);
-    renderReferral(s);
-    handleStatus(s);
-  } catch (e) {
-    console.error("Load error:", e);
+    el.leaderboard.innerHTML = s.leaderboard
+      .map(x=>`${x.rank}. ${x.uid===uid?"You":"User#"+x.uid} — ${x.bx} BX`)
+      .join("<br>");
+
+    el.airdrop.innerHTML = `Progress: ${s.airdrop.progress_pct}%<br>${s.airdrop.message}`;
+    el.casino.innerHTML = `RTP: ${Math.round(s.casino.rtp*100)}%<br>Provably Fair`;
+    el.referral.innerHTML =
+      `Invited: ${s.referral.count}<br>
+       Reward: ${s.referral.reward_bx} BX<br>
+       <small>${s.referral.link}</small>`;
+  }finally{
+    hide();
   }
 }
 
-/* =========================
-   START
-========================= */
 load();
-setInterval(load, 5000);
+setInterval(load,5000);
