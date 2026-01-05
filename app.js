@@ -1,78 +1,82 @@
-const uid = Telegram.WebApp.initDataUnsafe.user.id;
+/* ============================
+   Bloxio BX – App JS (Final)
+   ============================ */
 
-function tab(id){
-  ["home","market","casino","wallet","airdrop"].forEach(x=>{
-    document.getElementById(x).style.display = x===id ? "block" : "none";
+(() => {
+  /* -------- Telegram -------- */
+  const tg = window.Telegram?.WebApp;
+  if (tg) tg.expand();
+
+  const uid = tg?.initDataUnsafe?.user?.id || "demo";
+
+  /* -------- DOM Helpers -------- */
+  const $ = id => document.getElementById(id);
+
+  /* -------- Navigation -------- */
+  window.openView = function (id, el) {
+    document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+    $(id).classList.add("active");
+    el.classList.add("active");
+  };
+
+  /* -------- State -------- */
+  async function loadState() {
+    try {
+      const r = await fetch(`/state?tg_id=${uid}`);
+      if (!r.ok) return;
+      const d = await r.json();
+
+      if ($("bx"))   $("bx").textContent   = d.wallet?.bx   ?? 0;
+      if ($("ton"))  $("ton").textContent  = d.wallet?.ton  ?? 0;
+      if ($("usdt")) $("usdt").textContent = d.wallet?.usdt ?? 0;
+
+    } catch (e) {
+      console.error("state error", e);
+    }
+  }
+
+  /* -------- Market -------- */
+  window.submitMarket = async function () {
+    const mode   = $("marketMode").value;
+    const asset  = $("marketAsset").value;
+    const amount = Number($("marketAmount").value);
+
+    if (!amount || amount <= 0) return;
+
+    let url;
+    if (mode === "buy") {
+      url = `/market/buy?uid=${uid}&amount=${amount}&pay=${asset}`;
+    } else {
+      url = `/market/sell?uid=${uid}&bx=${amount}&to=${asset}`;
+    }
+
+    try {
+      await fetch(url, { method: "POST" });
+      $("marketAmount").value = "";
+      loadState();
+    } catch (e) {
+      console.error("market error", e);
+    }
+  };
+
+  /* -------- Casino -------- */
+  window.play = async function (game) {
+    try {
+      await fetch(
+        `/casino/v3/play?uid=${uid}&game=${game}&bet=1&client_seed=${Math.random()}`,
+        { method: "POST" }
+      );
+      loadState();
+    } catch (e) {
+      console.error("casino error", e);
+    }
+  };
+
+  /* -------- Init -------- */
+  document.addEventListener("DOMContentLoaded", () => {
+    loadState();
+    setInterval(loadState, 5000);
   });
-  if(id==="airdrop") loadAirdrop();
-}
 
-async function load(){
-  const r = await fetch(`/state?uid=${uid}`);
-  const s = await r.json();
-  bx.textContent = s.wallet.bx.toFixed(4);
-  usdt.textContent = s.wallet.usdt.toFixed(2);
-  ton.textContent = s.wallet.ton.toFixed(4);
-  bxr.textContent = s.mining.bx;
-  tonr.textContent = s.mining.ton;
-}
-
-async function sell(a){
-  await fetch(`/market/{side}?uid=${uid}&amount=${sellAmt.value}&against=${a}`,{method:"POST"});
-  load();
-}
-
-async function play(g){
-  const r = await fetch(`/casino/play?uid=${uid}&game=${g}&bet=${bet.value}`,{method:"POST"});
-  const j = await r.json();
-  res.textContent = j.win ? "WIN" : "LOSE";
-  load();
-}
-
-async function claim(){
-  await fetch(`/mining/claim?uid=${uid}`,{method:"POST"});
-  load();
-}
-
-async function deposit(p,a){
-  const r = await fetch(`/deposit/address?provider=${p}&asset=${a}`);
-  const j = await r.json();
-  depAddr.textContent = j.address;
-}
-
-async function withdraw(){
-  await fetch("/withdraw",{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({
-      uid,
-      provider:"ton",
-      asset:"ton",
-      amount:wdAmt.value,
-      address:wdAddr.value
-    })
-  });
-  load();
-}
-
-async function loadAirdrop(){
-  const r = await fetch("/airdrop/tasks");
-  const t = await r.json();
-  airdropList.innerHTML = t.map(x=>`
-    <div style="display:flex;justify-content:space-between;align-items:center;margin:6px 0">
-      <span>${x.platform}</span>
-      <button onclick="claimAirdrop(${x.id})">Claim</button>
-    </div>
-  `).join("");
-}
-
-async function claimAirdrop(id){
-  const r = await fetch("/airdrop/claim",{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({ uid, task_id:id })
-  });
-  if(r.ok) load();
-}
-
-load();
+})();
