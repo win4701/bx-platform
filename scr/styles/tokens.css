@@ -1,0 +1,5 @@
+:root{
+  --bg:#0b0f1a; --card:#141b33; --muted:#9aa3c7;
+  --primary:#5b7cff; --success:#3ddc97; --danger:#ff6b6b;
+  --radius:14px; --pad:14px;
+}
