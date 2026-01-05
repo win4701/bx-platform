@@ -1,24 +1,57 @@
 const uid = Telegram.WebApp.initDataUnsafe.user.id;
 
+function tab(id){
+ ["home","market","casino","wallet"].forEach(x=>{
+  document.getElementById(x).style.display=x===id?"block":"none";
+ });
+}
+
 async function load(){
-  const r = await fetch(`/state?uid=${uid}`);
-  const s = await r.json();
-  bx.textContent = s.wallet.bx.toFixed(4);
-  usdt.textContent = s.wallet.usdt.toFixed(2);
-  ton.textContent = s.wallet.ton.toFixed(4);
-  bxr.textContent = s.mining.bx_rate;
-  tonr.textContent = s.mining.ton_rate;
+ const r=await fetch(`/state?uid=${uid}`);
+ const s=await r.json();
+ bx.textContent=s.wallet.bx.toFixed(4);
+ usdt.textContent=s.wallet.usdt.toFixed(2);
+ ton.textContent=s.wallet.ton.toFixed(4);
+ bxr.textContent=s.mining.bx;
+ tonr.textContent=s.mining.ton;
 }
 
-async function sell(type){
-  await fetch(`/market/sell?uid=${uid}&amount=${sell.value}&against=${type}`,{method:"POST"});
-  load();
+async function sell(a){
+ await fetch(`/market/sell?uid=${uid}&amount=${sellAmt.value}&against=${a}`,{method:"POST"});
+ load();
 }
 
-async function play(){
-  await fetch(`/casino/play?uid=${uid}&game=dice&bet=${bet.value}`,{method:"POST"});
-  load();
+async function play(g){
+ const r=await fetch(`/casino/play?uid=${uid}&game=${g}&bet=${bet.value}`,{method:"POST"});
+ const j=await r.json();
+ res.textContent=j.win?"WIN":"LOSE";
+ load();
+}
+
+async function claim(){
+ await fetch(`/mining/claim?uid=${uid}`,{method:"POST"});
+ load();
+}
+
+async function deposit(p,a){
+ const r=await fetch(`/deposit/address?provider=${p}&asset=${a}`);
+ const j=await r.json();
+ depAddr.textContent=j.address;
+}
+
+async function withdraw(){
+ await fetch("/withdraw",{
+  method:"POST",
+  headers:{"Content-Type":"application/json"},
+  body:JSON.stringify({
+   uid,
+   provider:"ton",
+   asset:"ton",
+   amount:wdAmt.value,
+   address:wdAddr.value
+  })
+ });
+ load();
 }
 
 load();
-setInterval(load,5000);
