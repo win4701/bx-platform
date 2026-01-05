@@ -53,15 +53,15 @@ CREATE TABLE IF NOT EXISTS casino_rounds (
   ts INTEGER
 );
 
--- DEPOSITS (Binance / RedotPay / TON)
+-- DEPOSITS
 CREATE TABLE IF NOT EXISTS deposits (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER,
-  provider TEXT,
-  asset TEXT,
+  provider TEXT,      -- binance | redotpay | ton
+  asset TEXT,         -- usdt | ton
   amount REAL,
   txid TEXT,
-  status TEXT,
+  status TEXT,        -- confirmed
   ts INTEGER
 );
 
@@ -69,10 +69,25 @@ CREATE TABLE IF NOT EXISTS deposits (
 CREATE TABLE IF NOT EXISTS withdrawals (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER,
-  provider TEXT,
-  asset TEXT,
+  provider TEXT,      -- binance | redotpay | ton
+  asset TEXT,         -- usdt | ton
   amount REAL,
   address TEXT,
-  status TEXT,
+  status TEXT,        -- pending | approved | rejected
   ts INTEGER
+);
+
+-- AIRDROP (STATIC TASKS)
+CREATE TABLE IF NOT EXISTS airdrop_tasks (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  platform TEXT,      -- telegram | twitter | discord | binance | coinmarketcap
+  reward_bx REAL
+);
+
+-- AIRDROP CLAIMS
+CREATE TABLE IF NOT EXISTS airdrop_claims (
+  user_id INTEGER,
+  task_id INTEGER,
+  ts INTEGER,
+  PRIMARY KEY(user_id, task_id)
 );
