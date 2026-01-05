@@ -1,87 +1,311 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>BX Mini App</title>
+<meta charset="UTF-8" />
+<title>BX Platform</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+<!-- Telegram Mini App -->
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+<!-- =====================
+     DESIGN TOKENS
+===================== -->
 <style>
-body{margin:0;background:#0b0f1a;color:#fff;font-family:sans-serif}
-header{padding:14px;background:#11162a;text-align:center;font-weight:700}
-.card{background:#141b33;margin:12px;border-radius:12px;padding:14px}
+:root{
+  --bg:#0b0f1a;
+  --card:#141b33;
+  --muted:#9aa3c7;
+
+  --primary:#5b7cff;
+  --success:#3ddc97;
+  --danger:#ff6b6b;
+
+  --radius:14px;
+  --pad:14px;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:#fff;
+  font-family:system-ui,-apple-system,Segoe UI,Roboto;
+  padding-bottom:72px;
+}
+
+header{
+  background:#11162a;
+  padding:14px;
+  font-weight:700;
+  text-align:center;
+}
+
+/* =====================
+   COMMON
+===================== */
+.card{
+  background:var(--card);
+  margin:12px;
+  padding:var(--pad);
+  border-radius:var(--radius);
+  transition:.15s;
+}
+.card:hover{
+  transform:translateY(-2px);
+  box-shadow:0 8px 24px rgba(0,0,0,.25);
+}
+.card-h{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:10px;
+}
 .big{font-size:18px;font-weight:700}
-.small{font-size:13px;opacity:.85}
+.small{font-size:13px;color:var(--muted)}
+
+input,select{
+  width:100%;
+  background:#0f1530;
+  border:1px solid #20286b;
+  color:#fff;
+  border-radius:10px;
+  padding:10px;
+  margin:6px 0;
+}
+
+.btn{
+  border:0;
+  border-radius:10px;
+  padding:10px 14px;
+  font-weight:700;
+  cursor:pointer;
+  transition:.1s;
+}
+.btn:active{transform:scale(.98)}
+.btn.primary{background:var(--primary)}
+.btn.buy{background:var(--success)}
+.btn.sell{background:var(--danger)}
+
+.grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+  margin:12px;
+}
+
+/* =====================
+   HEADER KPIs
+===================== */
+.kpis{
+  display:flex;
+  gap:8px;
+  justify-content:center;
+}
+.kpi{
+  background:var(--card);
+  padding:10px;
+  border-radius:12px;
+  min-width:90px;
+}
+.kpi .label{font-size:12px;color:var(--muted)}
+.kpi .value{font-size:18px;font-weight:700}
+
+/* =====================
+   MINING
+===================== */
+.bar{
+  background:#0f1530;
+  border-radius:8px;
+  overflow:hidden;
+}
+.fill{
+  height:8px;
+  background:var(--success);
+  width:30%;
+}
+
+/* =====================
+   TABS
+===================== */
+.tabs{
+  position:fixed;
+  bottom:0;left:0;right:0;
+  background:#0f1530;
+  display:flex;
+  gap:6px;
+  padding:8px;
+}
+.tabs button{
+  flex:1;
+  background:#141b33;
+  color:#cfd6ff;
+}
+.tabs .active{
+  background:var(--primary);
+  color:#fff;
+}
+
+/* =====================
+   LOADER
+===================== */
+#loader{
+  position:fixed;
+  inset:0;
+  background:rgba(11,15,26,.9);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:999;
+}
+
+/* =====================
+   ONBOARDING
+===================== */
+.onboard{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.7);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:1000;
+}
+.onboard-box{
+  background:var(--card);
+  padding:18px;
+  border-radius:16px;
+  width:90%;
+  text-align:center;
+}
 </style>
 </head>
 
 <body>
-<header>BX Platform</header>
 
-<div class="card">
-  <div class="big">Wallet</div>
-  <div id="bx">BX: --</div>
-  <div id="usdt">USDT: --</div>
-  <div id="ton">TON: --</div>
+<!-- =====================
+     HEADER
+===================== -->
+<header>
+  BX Platform
+  <div class="kpis">
+    <div class="kpi"><div class="label">BX</div><div id="bx" class="value">--</div></div>
+    <div class="kpi"><div class="label">USDT</div><div id="usdt" class="value">--</div></div>
+    <div class="kpi"><div class="label">TON</div><div id="ton" class="value">--</div></div>
+  </div>
+</header>
+
+<!-- =====================
+     HOME
+===================== -->
+<section data-page="home">
+  <div class="card mining">
+    <div class="card-h">
+      <span>⛏️ Mining</span>
+      <span id="rate" class="small">-- BX/sec</span>
+    </div>
+    <div class="bar"><div id="mineFill" class="fill"></div></div>
+    <small class="small">Keep the app open to maximize rewards</small>
+  </div>
+
+  <div class="card chart">
+    <div class="card-h">📈 Performance</div>
+    <canvas id="chart" height="120"></canvas>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <div class="card-h">🏆 Leaderboard</div>
+      <div id="leaderboard" class="small"></div>
+    </div>
+    <div class="card">
+      <div class="card-h">🎁 Airdrop</div>
+      <div id="airdrop" class="small"></div>
+    </div>
+  </div>
+</section>
+
+<!-- =====================
+     TRADE
+===================== -->
+<section data-page="trade" hidden>
+  <div class="card">
+    <div class="card-h">💱 Trade BX</div>
+    <input id="tradeAmount" type="number" placeholder="Amount" />
+    <div id="tradePreview" class="small">≈ --</div>
+    <div style="display:flex;gap:8px">
+      <button id="buyBtn" class="btn buy">Buy BX</button>
+      <button id="sellBtn" class="btn sell">Sell BX</button>
+    </div>
+    <small class="small">Market price • Low fees</small>
+  </div>
+</section>
+
+<!-- =====================
+     CASINO
+===================== -->
+<section data-page="casino" hidden>
+  <div class="card">
+    <div class="card-h">🎰 Casino</div>
+    <input id="bet" type="number" placeholder="Bet USDT" />
+    <button id="play" class="btn primary">Play Dice</button>
+    <div id="casinoResult" class="small"></div>
+    <div id="casinoHistory" class="small"></div>
+    <small class="small">RTP 96% • Provably Fair</small>
+  </div>
+</section>
+
+<!-- =====================
+     WITHDRAW
+===================== -->
+<section data-page="withdraw" hidden>
+  <div class="card">
+    <div class="card-h">💸 Withdraw USDT</div>
+    <select id="wd_method">
+      <option value="binance">Binance ID</option>
+      <option value="redotpay">RedotPay ID</option>
+      <option value="bep20">BEP20 Address</option>
+    </select>
+    <input id="wd_target" placeholder="Account ID / Address" />
+    <input id="wd_amount" type="number" placeholder="Amount USDT" />
+    <button id="wd_btn" class="btn primary">Request Withdraw</button>
+    <div id="wd_status" class="small"></div>
+    <div id="wd_history" class="small"></div>
+  </div>
+</section>
+
+<!-- =====================
+     TABS
+===================== -->
+<nav class="tabs">
+  <button data-tab="home" class="active">Home</button>
+  <button data-tab="trade">Trade</button>
+  <button data-tab="casino">Casino</button>
+  <button data-tab="withdraw">Withdraw</button>
+</nav>
+
+<!-- =====================
+     LOADER
+===================== -->
+<div id="loader">Loading…</div>
+
+<!-- =====================
+     ONBOARDING
+===================== -->
+<div id="onboard" class="onboard" hidden>
+  <div class="onboard-box">
+    <h3>Welcome to BX</h3>
+    <p>⛏️ Start mining instantly</p>
+    <p>💱 Trade BX anytime</p>
+    <p>💸 Withdraw real USDT</p>
+    <button id="start" class="btn primary">Start</button>
+  </div>
 </div>
 
-<div class="card">
-  <div class="big">Mining</div>
-  <div id="rate">Rate: --</div>
-</div>
+<!-- =====================
+     SCRIPT (ONE ONLY)
+===================== -->
+<script src="app.js"></script>
 
-<div class="card">
-  <div class="big">🏆 Leaderboard</div>
-  <div id="leaderboard" class="small"></div>
-</div>
-
-<div class="card">
-  <div class="big">🎁 Airdrop</div>
-  <div id="airdrop" class="small"></div>
-</div>
-
-<div class="card">
-  <div class="big">🎰 Casino</div>
-  <div id="casino" class="small"></div>
-</div>
-
-<div class="card">
-  <div class="big">🤝 Referral</div>
-  <div id="referral" class="small"></div>
-</div>
-
-<script>
-const tg = window.Telegram.WebApp;
-tg.ready();
-const uid = tg.initDataUnsafe?.user?.id || 1;
-
-async function load(){
-  const s = await fetch(`/state?uid=${uid}`).then(r=>r.json());
-
-  bx.textContent   = "BX: " + s.wallet.bx;
-  usdt.textContent = "USDT: " + s.wallet.usdt;
-  ton.textContent  = "TON: " + s.wallet.ton;
-
-  rate.textContent = "Rate: " + s.mining.rate + " BX/sec";
-
-  leaderboard.innerHTML = s.leaderboard
-    .map(x => `${x.rank}. ${x.uid===uid?"You":"User#"+x.uid} — ${x.bx} BX`)
-    .join("<br>");
-
-  airdrop.innerHTML =
-    `Progress: ${s.airdrop.progress_pct}%<br>${s.airdrop.message}`;
-
-  casino.innerHTML =
-    `RTP: ${Math.round(s.casino.rtp*100)}%<br>Provably Fair`;
-
-  referral.innerHTML =
-    `Invited: ${s.referral.count}<br>
-     Reward: ${s.referral.reward_bx} BX<br>
-     <small>${s.referral.link}</small>`;
-}
-
-load();
-setInterval(load, 5000);
-</script><
-    
-    <script src="app.js"></script>
-  </body>
+</body>
 </html>
