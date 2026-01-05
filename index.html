@@ -19,6 +19,7 @@ button{background:#5b8cff;color:#fff}
 <button onclick="tab('market')">Market</button>
 <button onclick="tab('casino')">Casino</button>
 <button onclick="tab('wallet')">Wallet</button>
+<button onclick="tab('airdrop')">Airdrop</button>
 </nav>
 
 <div id="home" class="card">
@@ -61,6 +62,17 @@ button{background:#5b8cff;color:#fff}
 <input id="wdAmt" placeholder="Amount">
 <input id="wdAddr" placeholder="Address">
 <button onclick="withdraw()">Submit</button>
+</div>
+
+<div id="airdrop" class="card" style="display:none">
+<div style="display:flex;gap:10px;flex-wrap:wrap">
+  <img src="assets/images/telegram.png" width="28">
+  <img src="assets/images/twitter.png" width="28">
+  <img src="assets/images/discord.png" width="28">
+  <img src="assets/images/binance.png" width="28">
+  <img src="assets/images/coinmarketcap.png" width="28">
+</div>
+<div id="airdropList" style="margin-top:10px"></div>
 </div>
 
 <script src="app.js"></script>
