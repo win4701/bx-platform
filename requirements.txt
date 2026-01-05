@@ -1,5 +1,2 @@
-fastapi
-uvicorn
-psycopg2-binary
-httpx
-python-dotenv
+fastapi==0.110.0
+uvicorn==0.29.0
