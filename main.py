@@ -1,7 +1,10 @@
 from fastapi import FastAPI, HTTPException
-import sqlite3, time, random
+import sqlite3
+import time
+import random
 
 app = FastAPI()
+
 @app.get("/")
 def root():
     return {
@@ -10,15 +13,16 @@ def root():
         "version": "1.0.0",
         "message": "API is running"
     }
+
 DB = "db.sqlite"
 
 def db():
     return sqlite3.connect(DB, check_same_thread=False)
 
 # ===== CONSTANTS =====
-SELL_FEE = 0.05
-SELL_BURN = 0.10
-DAILY_SELL_LIMIT = 5000
+FEE = 0.05
+BURN = 0.10
+SELL_LIMIT = 5000
 
 MINING = {
   "silver": {"bx": 0.01, "ton": 0.0002},
