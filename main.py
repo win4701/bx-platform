@@ -2,6 +2,14 @@ from fastapi import FastAPI, HTTPException
 import sqlite3, time, random
 
 app = FastAPI()
+@app.get("/")
+def root():
+    return {
+        "status": "ok",
+        "service": "Bloxio BX Platform",
+        "version": "1.0.0",
+        "message": "API is running"
+    }
 DB = "db.sqlite"
 
 def db():
