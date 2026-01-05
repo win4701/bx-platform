@@ -18,7 +18,7 @@ async function load(){
 }
 
 async function sell(a){
-  await fetch(`/market/sell?uid=${uid}&amount=${sellAmt.value}&against=${a}`,{method:"POST"});
+  await fetch(`/market/{side}?uid=${uid}&amount=${sellAmt.value}&against=${a}`,{method:"POST"});
   load();
 }
 
