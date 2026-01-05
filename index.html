@@ -1,311 +1,152 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<title>BX Platform</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="utf-8">
+<title>Bloxio BX</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
 
-<!-- Telegram Mini App -->
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<!-- =====================
-     DESIGN TOKENS
-===================== -->
 <style>
-:root{
-  --bg:#0b0f1a;
-  --card:#141b33;
-  --muted:#9aa3c7;
-
-  --primary:#5b7cff;
-  --success:#3ddc97;
-  --danger:#ff6b6b;
-
-  --radius:14px;
-  --pad:14px;
-}
-
-*{box-sizing:border-box}
 body{
   margin:0;
-  background:var(--bg);
+  background:#0b0f1a;
   color:#fff;
-  font-family:system-ui,-apple-system,Segoe UI,Roboto;
-  padding-bottom:72px;
+  font-family:system-ui, sans-serif;
 }
-
-header{
-  background:#11162a;
-  padding:14px;
-  font-weight:700;
-  text-align:center;
-}
-
-/* =====================
-   COMMON
-===================== */
 .card{
-  background:var(--card);
-  margin:12px;
-  padding:var(--pad);
-  border-radius:var(--radius);
-  transition:.15s;
+  background:#141b33;
+  margin:10px;
+  padding:14px;
+  border-radius:14px;
 }
-.card:hover{
-  transform:translateY(-2px);
-  box-shadow:0 8px 24px rgba(0,0,0,.25);
-}
-.card-h{
+.row{
   display:flex;
   justify-content:space-between;
   align-items:center;
-  margin-bottom:10px;
 }
-.big{font-size:18px;font-weight:700}
-.small{font-size:13px;color:var(--muted)}
+.small{font-size:13px;color:#9aa3c7}
 
-input,select{
+input,button{
   width:100%;
-  background:#0f1530;
-  border:1px solid #20286b;
-  color:#fff;
-  border-radius:10px;
+  margin-top:8px;
   padding:10px;
-  margin:6px 0;
-}
-
-.btn{
+  border-radius:10px;
   border:0;
-  border-radius:10px;
-  padding:10px 14px;
-  font-weight:700;
-  cursor:pointer;
-  transition:.1s;
-}
-.btn:active{transform:scale(.98)}
-.btn.primary{background:var(--primary)}
-.btn.buy{background:var(--success)}
-.btn.sell{background:var(--danger)}
-
-.grid{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:12px;
-  margin:12px;
-}
-
-/* =====================
-   HEADER KPIs
-===================== */
-.kpis{
-  display:flex;
-  gap:8px;
-  justify-content:center;
-}
-.kpi{
-  background:var(--card);
-  padding:10px;
-  border-radius:12px;
-  min-width:90px;
-}
-.kpi .label{font-size:12px;color:var(--muted)}
-.kpi .value{font-size:18px;font-weight:700}
-
-/* =====================
-   MINING
-===================== */
-.bar{
   background:#0f1530;
-  border-radius:8px;
-  overflow:hidden;
+  color:#fff;
 }
-.fill{
-  height:8px;
-  background:var(--success);
-  width:30%;
+button{
+  background:#5b7cff;
 }
+button:active{opacity:.85}
 
-/* =====================
-   TABS
-===================== */
 .tabs{
-  position:fixed;
-  bottom:0;left:0;right:0;
-  background:#0f1530;
   display:flex;
   gap:6px;
-  padding:8px;
+  margin-bottom:10px;
 }
-.tabs button{
+.tab{
   flex:1;
-  background:#141b33;
-  color:#cfd6ff;
+  background:#0f1530;
+  color:#9aa3c7;
 }
-.tabs .active{
-  background:var(--primary);
+.tab.active{
+  background:#5b7cff;
   color:#fff;
 }
+.hidden{display:none}
 
-/* =====================
-   LOADER
-===================== */
-#loader{
-  position:fixed;
-  inset:0;
-  background:rgba(11,15,26,.9);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  z-index:999;
+.market-header .price{
+  font-size:22px;
+  font-weight:600;
 }
-
-/* =====================
-   ONBOARDING
-===================== */
-.onboard{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.7);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  z-index:1000;
-}
-.onboard-box{
-  background:var(--card);
-  padding:18px;
-  border-radius:16px;
-  width:90%;
-  text-align:center;
-}
+canvas{width:100%}
 </style>
 </head>
 
 <body>
 
-<!-- =====================
-     HEADER
-===================== -->
-<header>
-  BX Platform
-  <div class="kpis">
-    <div class="kpi"><div class="label">BX</div><div id="bx" class="value">--</div></div>
-    <div class="kpi"><div class="label">USDT</div><div id="usdt" class="value">--</div></div>
-    <div class="kpi"><div class="label">TON</div><div id="ton" class="value">--</div></div>
-  </div>
-</header>
+<!-- WALLET -->
+<div class="card">
+  <h3>Wallet</h3>
+  <div class="row"><span>BX</span><b id="bx">--</b></div>
+  <div class="row"><span>USDT</span><b id="usdt">--</b></div>
+  <div class="row"><span>TON</span><b id="ton">--</b></div>
+</div>
 
-<!-- =====================
-     HOME
-===================== -->
-<section data-page="home">
-  <div class="card mining">
-    <div class="card-h">
-      <span>⛏️ Mining</span>
-      <span id="rate" class="small">-- BX/sec</span>
-    </div>
-    <div class="bar"><div id="mineFill" class="fill"></div></div>
-    <small class="small">Keep the app open to maximize rewards</small>
-  </div>
-
-  <div class="card chart">
-    <div class="card-h">📈 Performance</div>
-    <canvas id="chart" height="120"></canvas>
-  </div>
-
-  <div class="grid">
-    <div class="card">
-      <div class="card-h">🏆 Leaderboard</div>
-      <div id="leaderboard" class="small"></div>
-    </div>
-    <div class="card">
-      <div class="card-h">🎁 Airdrop</div>
-      <div id="airdrop" class="small"></div>
-    </div>
-  </div>
-</section>
-
-<!-- =====================
-     TRADE
-===================== -->
-<section data-page="trade" hidden>
-  <div class="card">
-    <div class="card-h">💱 Trade BX</div>
-    <input id="tradeAmount" type="number" placeholder="Amount" />
-    <div id="tradePreview" class="small">≈ --</div>
-    <div style="display:flex;gap:8px">
-      <button id="buyBtn" class="btn buy">Buy BX</button>
-      <button id="sellBtn" class="btn sell">Sell BX</button>
-    </div>
-    <small class="small">Market price • Low fees</small>
-  </div>
-</section>
-
-<!-- =====================
-     CASINO
-===================== -->
-<section data-page="casino" hidden>
-  <div class="card">
-    <div class="card-h">🎰 Casino</div>
-    <input id="bet" type="number" placeholder="Bet USDT" />
-    <button id="play" class="btn primary">Play Dice</button>
-    <div id="casinoResult" class="small"></div>
-    <div id="casinoHistory" class="small"></div>
-    <small class="small">RTP 96% • Provably Fair</small>
-  </div>
-</section>
-
-<!-- =====================
-     WITHDRAW
-===================== -->
-<section data-page="withdraw" hidden>
-  <div class="card">
-    <div class="card-h">💸 Withdraw USDT</div>
-    <select id="wd_method">
-      <option value="binance">Binance ID</option>
-      <option value="redotpay">RedotPay ID</option>
-      <option value="bep20">BEP20 Address</option>
-    </select>
-    <input id="wd_target" placeholder="Account ID / Address" />
-    <input id="wd_amount" type="number" placeholder="Amount USDT" />
-    <button id="wd_btn" class="btn primary">Request Withdraw</button>
-    <div id="wd_status" class="small"></div>
-    <div id="wd_history" class="small"></div>
-  </div>
-</section>
-
-<!-- =====================
-     TABS
-===================== -->
-<nav class="tabs">
-  <button data-tab="home" class="active">Home</button>
-  <button data-tab="trade">Trade</button>
-  <button data-tab="casino">Casino</button>
-  <button data-tab="withdraw">Withdraw</button>
-</nav>
-
-<!-- =====================
-     LOADER
-===================== -->
-<div id="loader">Loading…</div>
-
-<!-- =====================
-     ONBOARDING
-===================== -->
-<div id="onboard" class="onboard" hidden>
-  <div class="onboard-box">
-    <h3>Welcome to BX</h3>
-    <p>⛏️ Start mining instantly</p>
-    <p>💱 Trade BX anytime</p>
-    <p>💸 Withdraw real USDT</p>
-    <button id="start" class="btn primary">Start</button>
+<!-- MINING -->
+<div class="card">
+  <h3>Mining</h3>
+  <div class="row">
+    <span>Rate</span>
+    <b id="mineRate">--</b>
   </div>
 </div>
 
-<!-- =====================
-     SCRIPT (ONE ONLY)
-===================== -->
-<script src="app.js"></script>
+<!-- CASINO -->
+<div class="card">
+  <h3>Casino</h3>
+  <input id="casinoBet" type="number" placeholder="BX amount">
+  <button onclick="playCasino()">Play</button>
+  <div id="casinoResult" class="small"></div>
+</div>
 
+<!-- MARKET HEADER -->
+<div class="card market-header">
+  <div class="row">
+    <div>
+      <div class="small">BX / USDT</div>
+      <div class="price" id="bxPrice">--</div>
+    </div>
+    <div class="small">Market</div>
+  </div>
+  <canvas id="chart" height="120"></canvas>
+</div>
+
+<!-- MARKET ACTIONS -->
+<div class="card">
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('buy')">Buy</button>
+    <button class="tab" onclick="showTab('sell')">Sell</button>
+    <button class="tab" onclick="showTab('swap')">Swap</button>
+  </div>
+
+  <div id="tab-buy">
+    <input id="buyAmount" type="number" placeholder="USDT amount">
+    <button onclick="buyBX()">Buy BX</button>
+  </div>
+
+  <div id="tab-sell" class="hidden">
+    <input id="sellAmount" type="number" placeholder="BX amount">
+    <button onclick="sellBX()">Sell BX</button>
+  </div>
+
+  <div id="tab-swap" class="hidden">
+    <input id="swapAmount" type="number" placeholder="BX amount">
+    <button onclick="swapBX('USDT')">BX → USDT</button>
+    <button onclick="swapBX('TON')">BX → TON</button>
+  </div>
+
+  <div id="marketResult" class="small"></div>
+</div>
+
+<!-- AIRDROP -->
+<div class="card">
+  <h3>Airdrop</h3>
+  <button onclick="claimTask('tg')">Telegram</button>
+  <button onclick="claimTask('x')">X</button>
+  <button onclick="claimTask('invite')">Invite</button>
+</div>
+
+<!-- REFERRALS -->
+<div class="card">
+  <h3>Referrals</h3>
+  <div class="row"><span>Total</span><b id="refCount">--</b></div>
+  <div id="refLB" class="small"></div>
+</div>
+
+<script src="app.js"></script>
 </body>
 </html>
