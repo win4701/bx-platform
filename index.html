@@ -1,80 +1,231 @@
-<!doctype html>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-<meta charset="utf-8">
-<title>Bloxio BX</title>
-<style>
-body{margin:0;background:#050b18;color:#e6f1ff;font-family:Inter}
-nav{display:flex;justify-content:space-around;background:#070f22;padding:12px}
-nav button{background:none;border:none;color:#7fbfff}
-.card{background:#0b1533;border-radius:14px;padding:14px;margin:12px}
-input,button{width:100%;padding:12px;border-radius:10px;border:none;margin-top:8px}
-button{background:#5b8cff;color:#fff}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Bloxio BX</title>
+
+  <!-- Telegram WebApp -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <style>
+    :root {
+      --bg: #0b0f1a;
+      --card: #12182a;
+      --accent: #f5c451;
+      --blue: #4f7cff;
+      --text: #eaeaf0;
+      --muted: #8a90a5;
+      --danger: #ff5c5c;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: Inter, Arial, sans-serif; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      padding-bottom: 90px;
+    }
+
+    header {
+      padding: 16px;
+      font-size: 20px;
+      font-weight: 700;
+      text-align: center;
+      background: linear-gradient(180deg,#12182a,#0b0f1a);
+    }
+
+    .tabs {
+      display: flex;
+      justify-content: space-around;
+      background: #0e1424;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 70px;
+      border-top: 1px solid #1c2440;
+    }
+
+    .tab {
+      flex: 1;
+      text-align: center;
+      padding-top: 10px;
+      font-size: 12px;
+      color: var(--muted);
+      cursor: pointer;
+    }
+
+    .tab.active {
+      color: var(--accent);
+    }
+
+    .view {
+      display: none;
+      padding: 16px;
+    }
+
+    .view.active {
+      display: block;
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 14px;
+    }
+
+    .row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      font-size: 14px;
+    }
+
+    input, select, button {
+      width: 100%;
+      padding: 12px;
+      border-radius: 10px;
+      border: none;
+      margin-top: 10px;
+      background: #1a2140;
+      color: var(--text);
+      font-size: 14px;
+    }
+
+    button {
+      background: var(--blue);
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    button.sell {
+      background: var(--danger);
+    }
+
+    button.gold {
+      background: var(--accent);
+      color: #000;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2,1fr);
+      gap: 10px;
+    }
+
+    .game {
+      background: #161d35;
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+      font-weight: 600;
+    }
+  </style>
 </head>
+
 <body>
 
-<nav>
-<button onclick="tab('home')">Home</button>
-<button onclick="tab('market')">Market</button>
-<button onclick="tab('casino')">Casino</button>
-<button onclick="tab('wallet')">Wallet</button>
-<button onclick="tab('airdrop')">Airdrop</button>
-</nav>
+<header>Bloxio BX</header>
 
-<div id="home" class="card">
-<h3>Mining</h3>
-<div>BX rate: <span id="bxr"></span></div>
-<div>TON rate: <span id="tonr"></span></div>
-<button onclick="claim()">Claim</button>
+<!-- HOME -->
+<div class="view active" id="home">
+  <div class="card">
+    <div class="row"><span>BX</span><span id="bxBalance">--</span></div>
+    <div class="row"><span>TON</span><span id="tonBalance">--</span></div>
+    <div class="row"><span>USDT</span><span id="usdtBalance">--</span></div>
+  </div>
+
+  <div class="card">
+    <div class="row"><span>BX / TON</span><span>0.955489564</span></div>
+    <div class="row"><span>BX / USDT</span><span>0.717872729</span></div>
+  </div>
 </div>
 
-<div id="market" class="card" style="display:none">
-<input id="sellAmt" placeholder="BX amount">
-<button onclick="sell('usdt')">Sell USDT</button>
-<button onclick="sell('ton')">Sell TON</button>
+<!-- MARKET -->
+<div class="view" id="market">
+  <div class="card">
+    <select id="marketType">
+      <option value="buy">Buy BX</option>
+      <option value="sell">Sell BX</option>
+    </select>
+
+    <select id="marketAgainst">
+      <option value="ton">TON</option>
+      <option value="usdt">USDT</option>
+    </select>
+
+    <input id="marketAmount" placeholder="Amount" />
+
+    <button onclick="submitMarket()">Confirm</button>
+  </div>
 </div>
 
-<div id="casino" class="card" style="display:none">
-<input id="bet" placeholder="BX bet">
-<button onclick="play('dice')">Dice</button>
-<button onclick="play('chicken')">Chicken</button>
-<button onclick="play('pvp')">PvP</button>
-<button onclick="play('slots')">Slots</button>
-<button onclick="play('crash')">Crash</button>
-<div id="res"></div>
+<!-- CASINO -->
+<div class="view" id="casino">
+  <div class="grid">
+    <div class="game">Dice</div>
+    <div class="game">Chicken Road</div>
+    <div class="game">PvP</div>
+    <div class="game">Slots</div>
+    <div class="game">Crash</div>
+  </div>
 </div>
 
-<div id="wallet" class="card" style="display:none">
-<div>BX: <span id="bx"></span></div>
-<div>USDT: <span id="usdt"></span></div>
-<div>TON: <span id="ton"></span></div>
-
-<hr>
-<h4>Deposit</h4>
-<button onclick="deposit('binance','usdt')">Binance USDT</button>
-<button onclick="deposit('redotpay','usdt')">RedotPay USDT</button>
-<button onclick="deposit('ton','ton')">TON Wallet</button>
-<div id="depAddr"></div>
-
-<hr>
-<h4>Withdraw</h4>
-<input id="wdAmt" placeholder="Amount">
-<input id="wdAddr" placeholder="Address">
-<button onclick="withdraw()">Submit</button>
+<!-- WALLET -->
+<div class="view" id="wallet">
+  <div class="card">
+    <button>Deposit (TON / USDT)</button>
+    <button class="sell">Withdraw</button>
+  </div>
 </div>
 
-<div id="airdrop" class="card" style="display:none">
-<div style="display:flex;gap:10px;flex-wrap:wrap">
-  <img src="assets/images/telegram.png" width="28">
-  <img src="assets/images/twitter.png" width="28">
-  <img src="assets/images/discord.png" width="28">
-  <img src="assets/images/binance.png" width="28">
-  <img src="assets/images/coinmarketcap.png" width="28">
+<!-- MINING -->
+<div class="view" id="mining">
+  <div class="card">
+    <div class="row"><span>Mining BX</span><span>Active</span></div>
+    <div class="row"><span>Mining TON</span><span>Active</span></div>
+  </div>
+
+  <div class="card">
+    <button>Silver</button>
+    <button class="gold">Gold (40 BX / 20 USDT)</button>
+  </div>
 </div>
-<div id="airdropList" style="margin-top:10px"></div>
+
+<!-- AIRDROP -->
+<div class="view" id="airdrop">
+  <div class="card">
+    <button>Join Telegram</button>
+    <button>Follow Twitter</button>
+    <button>Join Discord</button>
+    <button class="gold">Claim</button>
+  </div>
+</div>
+
+<!-- NAV -->
+<div class="tabs">
+  <div class="tab active" onclick="openView('home',this)">Home</div>
+  <div class="tab" onclick="openView('market',this)">Market</div>
+  <div class="tab" onclick="openView('casino',this)">Casino</div>
+  <div class="tab" onclick="openView('wallet',this)">Wallet</div>
+  <div class="tab" onclick="openView('mining',this)">Mining</div>
+  <div class="tab" onclick="openView('airdrop',this)">Airdrop</div>
 </div>
 
 <script src="app.js"></script>
+<script>
+  const tg = window.Telegram.WebApp;
+  tg.expand();
+
+  function openView(id, el) {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    el.classList.add('active');
+  }
+</script>
+
 </body>
 </html>
