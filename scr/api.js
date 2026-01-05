@@ -4,7 +4,7 @@ export const getState = (uid) =>
   fetch(`${API}/state?uid=${uid}`).then(r=>r.json());
 
 export const sellBX = (uid, amount, against) =>
-  fetch(`${API}/market/sell?uid=${uid}&amount=${amount}&against=${against}`,{method:"POST"});
+  fetch(`${API}/market/{side}?uid=${uid}&amount=${amount}&against=${against}`,{method:"POST"});
 
 export const playCasino = (payload) =>
   fetch(`${API}/casino/play`,{
