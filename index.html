@@ -1,66 +1,66 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
 <head>
-<meta charset="UTF-8">
+<meta charset="utf-8">
 <title>Bloxio BX</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600">
 <style>
-body{margin:0;font-family:Inter;background:#050b18;color:#e6f1ff}
-nav{display:flex;justify-content:space-around;padding:12px;background:#070f22}
-nav button{background:none;border:none;color:#7fbfff;font-size:14px}
-.section{padding:16px}
-.card{background:#0b1533;border-radius:14px;padding:14px;margin-bottom:14px}
-input,button{width:100%;padding:12px;border-radius:10px;border:none}
-button{background:#5b8cff;color:white}
-.gold{color:#ffd66b}
+body{margin:0;background:#050b18;color:#e6f1ff;font-family:Inter}
+nav{display:flex;justify-content:space-around;background:#070f22;padding:12px}
+nav button{background:none;border:none;color:#7fbfff}
+.card{background:#0b1533;border-radius:14px;padding:14px;margin:12px}
+input,button{width:100%;padding:12px;border-radius:10px;border:none;margin-top:8px}
+button{background:#5b8cff;color:#fff}
 </style>
 </head>
 <body>
 
 <nav>
-<button>Home</button>
-<button>Market</button>
-<button>Casino</button>
-<button>Wallet</button>
-<button>Airdrop</button>
+<button onclick="tab('home')">Home</button>
+<button onclick="tab('market')">Market</button>
+<button onclick="tab('casino')">Casino</button>
+<button onclick="tab('wallet')">Wallet</button>
 </nav>
 
-<div class="section">
-
-<div class="card">
-<h3>Wallet</h3>
-BX: <span id="bx">--</span><br>
-USDT: <span id="usdt">--</span><br>
-TON: <span id="ton">--</span>
-</div>
-
-<div class="card">
+<div id="home" class="card">
 <h3>Mining</h3>
-BX rate: <span id="bxr">--</span><br>
-TON rate: <span id="tonr">--</span><br>
-<span class="gold">Silver / Gold</span>
+<div>BX rate: <span id="bxr"></span></div>
+<div>TON rate: <span id="tonr"></span></div>
+<button onclick="claim()">Claim</button>
 </div>
 
-<div class="card">
-<h3>Casino</h3>
-<input id="bet" placeholder="BX amount">
-<button onclick="play()">Play</button>
-</div>
-
-<div class="card">
-<h3>Sell BX</h3>
-<input id="sell" placeholder="BX amount">
+<div id="market" class="card" style="display:none">
+<input id="sellAmt" placeholder="BX amount">
 <button onclick="sell('usdt')">Sell USDT</button>
 <button onclick="sell('ton')">Sell TON</button>
 </div>
 
-<div class="card">
-<h3>Airdrop</h3>
-<img src="assets/images/twitter.png" width="24">
-<img src="assets/images/telegram.png" width="24">
-<img src="assets/images/binance.png" width="24">
+<div id="casino" class="card" style="display:none">
+<input id="bet" placeholder="BX bet">
+<button onclick="play('dice')">Dice</button>
+<button onclick="play('chicken')">Chicken</button>
+<button onclick="play('pvp')">PvP</button>
+<button onclick="play('slots')">Slots</button>
+<button onclick="play('crash')">Crash</button>
+<div id="res"></div>
 </div>
 
+<div id="wallet" class="card" style="display:none">
+<div>BX: <span id="bx"></span></div>
+<div>USDT: <span id="usdt"></span></div>
+<div>TON: <span id="ton"></span></div>
+
+<hr>
+<h4>Deposit</h4>
+<button onclick="deposit('binance','usdt')">Binance USDT</button>
+<button onclick="deposit('redotpay','usdt')">RedotPay USDT</button>
+<button onclick="deposit('ton','ton')">TON Wallet</button>
+<div id="depAddr"></div>
+
+<hr>
+<h4>Withdraw</h4>
+<input id="wdAmt" placeholder="Amount">
+<input id="wdAddr" placeholder="Address">
+<button onclick="withdraw()">Submit</button>
 </div>
 
 <script src="app.js"></script>
