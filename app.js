@@ -1,295 +1,122 @@
-/* =====================================================
-   BX MINI APP — FINAL VANILLA SCRIPT v1.0
-===================================================== */
-
-/* =========================
-   TELEGRAM INIT
-========================= */
 const tg = window.Telegram?.WebApp;
-if (tg) tg.ready();
+tg?.ready();
+tg?.expand();
 
-const uid =
-  tg?.initDataUnsafe?.user?.id ||
-  parseInt(localStorage.getItem("uid") || "1", 10);
+const uid = tg?.initDataUnsafe?.user?.id || 0;
+const ref = new URLSearchParams(location.search).get("ref");
 
-localStorage.setItem("uid", uid);
+let priceChart;
 
-/* =========================
-   DOM REFERENCES
-========================= */
-const el = {
-  bx: document.getElementById("bx"),
-  usdt: document.getElementById("usdt"),
-  ton: document.getElementById("ton"),
-  rate: document.getElementById("rate"),
+/* ---------- UI HELPERS ---------- */
+function showTab(t){
+  document.querySelectorAll(".tab").forEach(b=>b.classList.remove("active"));
+  document.querySelectorAll("#tab-buy,#tab-sell,#tab-swap")
+    .forEach(d=>d.classList.add("hidden"));
 
-  leaderboard: document.getElementById("leaderboard"),
-  airdrop: document.getElementById("airdrop"),
-
-  tradeAmount: document.getElementById("tradeAmount"),
-  tradePreview: document.getElementById("tradePreview"),
-  buyBtn: document.getElementById("buyBtn"),
-  sellBtn: document.getElementById("sellBtn"),
-
-  bet: document.getElementById("bet"),
-  play: document.getElementById("play"),
-  casinoResult: document.getElementById("casinoResult"),
-  casinoHistory: document.getElementById("casinoHistory"),
-
-  wdMethod: document.getElementById("wd_method"),
-  wdTarget: document.getElementById("wd_target"),
-  wdAmount: document.getElementById("wd_amount"),
-  wdBtn: document.getElementById("wd_btn"),
-  wdStatus: document.getElementById("wd_status"),
-  wdHistory: document.getElementById("wd_history"),
-
-  loader: document.getElementById("loader"),
-  onboard: document.getElementById("onboard"),
-  start: document.getElementById("start"),
-
-  chart: document.getElementById("chart"),
-  mineFill: document.getElementById("mineFill"),
-};
-
-/* =========================
-   LOADER
-========================= */
-function showLoader() {
-  if (el.loader) el.loader.style.display = "flex";
-}
-function hideLoader() {
-  if (el.loader) el.loader.style.display = "none";
+  document.querySelector(`[onclick="showTab('${t}')"]`).classList.add("active");
+  document.getElementById("tab-"+t).classList.remove("hidden");
 }
 
-/* =========================
-   ONBOARDING (ONCE)
-========================= */
-if (el.onboard && !localStorage.getItem("seen")) {
-  el.onboard.hidden = false;
-}
-if (el.start) {
-  el.start.onclick = () => {
-    el.onboard.hidden = true;
-    localStorage.setItem("seen", "1");
-  };
-}
+/* ---------- CORE LOAD ---------- */
+async function load(){
+  const s = await fetch(`/state?uid=${uid}&ref=${ref}`).then(r=>r.json());
 
-/* =========================
-   FETCH STATE
-========================= */
-async function fetchState() {
-  const r = await fetch(`/state?uid=${uid}`);
-  if (!r.ok) throw new Error("state");
-  return r.json();
+  bx.textContent = s.wallet.bx;
+  usdt.textContent = s.wallet.usdt;
+  ton.textContent = s.wallet.ton;
+  mineRate.textContent = s.mining.rate;
+
+  loadReferrals();
+  loadChart();
 }
 
-/* =========================
-   RENDER FUNCTIONS
-========================= */
-function renderWallet(s) {
-  el.bx.textContent = s.wallet.bx;
-  el.usdt.textContent = s.wallet.usdt;
-  el.ton.textContent = s.wallet.ton;
+/* ---------- MARKET ---------- */
+async function buyBX(){
+  const v = +buyAmount.value;
+  await fetch(`/market/buy?uid=${uid}&usdt=${v}`,{method:"POST"});
+  marketResult.textContent = "Buy executed";
+  load();
 }
 
-function renderMining(s) {
-  el.rate.textContent = `${s.mining.rate} BX/sec`;
-  el.mineFill.style.width = Math.min(100, s.airdrop.progress_pct) + "%";
+async function sellBX(){
+  const v = +sellAmount.value;
+  const r = await fetch(`/market/sell?uid=${uid}&bx=${v}`,{method:"POST"});
+  const j = await r.json();
+  marketResult.textContent = j.error ? "Sell limit exceeded" : "Sell executed";
+  load();
 }
 
-function renderLeaderboard(s) {
-  el.leaderboard.innerHTML = s.leaderboard
-    .map(
-      (x) =>
-        `${x.rank}. ${
-          x.uid === uid ? "You" : "User#" + x.uid
-        } — ${x.bx} BX`
-    )
-    .join("<br>");
+async function swapBX(asset){
+  const v = +swapAmount.value;
+  await fetch(`/market/swap?uid=${uid}&bx=${v}&asset=${asset}`,{method:"POST"});
+  marketResult.textContent = `Swapped to ${asset}`;
+  load();
 }
 
-function renderAirdrop(s) {
-  el.airdrop.innerHTML = `
-    Progress: ${s.airdrop.progress_pct}%<br>
-    ${s.airdrop.message}
-  `;
+/* ---------- CASINO ---------- */
+async function playCasino(){
+  const v = +casinoBet.value;
+  const r = await fetch(`/casino/play?uid=${uid}&bet=${v}`,{method:"POST"});
+  const j = await r.json();
+  casinoResult.textContent = j.win ? `+${j.payout} BX` : `-${j.burned} BX`;
+  load();
 }
 
-/* =========================
-   SIMPLE CHART (CANVAS)
-========================= */
-const ctx = el.chart?.getContext("2d");
-let series = [];
-
-function drawChart() {
-  if (!ctx || series.length < 2) return;
-
-  ctx.clearRect(0, 0, el.chart.width, el.chart.height);
-
-  const max = Math.max(...series);
-  const min = Math.min(...series);
-  const pad = 10;
-  const w = el.chart.width - pad * 2;
-  const h = el.chart.height - pad * 2;
-
-  ctx.beginPath();
-  ctx.strokeStyle = "#5b7cff";
-  ctx.lineWidth = 2;
-
-  series.forEach((v, i) => {
-    const x = pad + (i / (series.length - 1)) * w;
-    const y = pad + h - ((v - min) / (max - min || 1)) * h;
-    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+/* ---------- AIRDROP ---------- */
+async function claimTask(task){
+  await fetch("/airdrop/claim",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({uid,task})
   });
-
-  ctx.stroke();
+  load();
 }
 
-/* =========================
-   TRADE UX
-========================= */
-if (el.tradeAmount) {
-  el.tradeAmount.oninput = () => {
-    const v = parseFloat(el.tradeAmount.value || 0);
-    el.tradePreview.textContent =
-      v > 0 ? `≈ ${v} at market price` : "≈ --";
-  };
+/* ---------- REFERRALS ---------- */
+async function loadReferrals(){
+  const r = await fetch(`/referrals/stats?uid=${uid}`).then(r=>r.json());
+  refCount.textContent = r.total;
+
+  const lb = await fetch("/referrals/leaderboard").then(r=>r.json());
+  refLB.innerHTML = lb.map(x=>{
+    const name = x.uid === uid ? "You" : "User " + x.uid;
+    return `${x.rank}. ${name} — ${x.total}`;
+  }).join("<br>");
 }
 
-async function buyBX(amount) {
-  await fetch("/buy/bx", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ uid, usdt: amount }),
-  });
-}
+/* ---------- CHART ---------- */
+async function loadChart(){
+  const data = await fetch("/chart").then(r=>r.json());
+  if(!data || !data.length) return;
 
-async function sellBX(amount) {
-  await fetch("/sell/bx", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ uid, bx: amount }),
-  });
-}
+  const labels = data.map(x=>new Date(x.ts*1000).toLocaleTimeString());
+  const prices = data.map(x=>x.price);
 
-if (el.buyBtn) {
-  el.buyBtn.onclick = async () => {
-    const v = parseFloat(el.tradeAmount.value || 0);
-    if (v <= 0) return;
-    if (!confirm(`Confirm buy BX with ${v}?`)) return;
-    await buyBX(v);
-    el.tradeAmount.value = "";
-    load();
-  };
-}
+  bxPrice.textContent = prices[prices.length-1];
 
-if (el.sellBtn) {
-  el.sellBtn.onclick = async () => {
-    const v = parseFloat(el.tradeAmount.value || 0);
-    if (v <= 0) return;
-    if (!confirm(`Confirm sell ${v} BX?`)) return;
-    await sellBX(v);
-    el.tradeAmount.value = "";
-    load();
-  };
-}
-
-/* =========================
-   CASINO UX (DICE)
-========================= */
-let lastGames = [];
-
-if (el.play) {
-  el.play.onclick = async () => {
-    const b = parseFloat(el.bet.value || 0);
-    if (b <= 0) return;
-
-    el.casinoResult.textContent = "Rolling…";
-
-    // Placeholder UX (real endpoint already exists)
-    const win = Math.random() > 0.5;
-    const payout = win ? (b * 1.92).toFixed(2) : "0.00";
-
-    const msg = win
-      ? `🎉 You won ${payout} USDT`
-      : `❌ You lost`;
-
-    el.casinoResult.textContent = msg;
-    lastGames.unshift(msg);
-    lastGames = lastGames.slice(0, 3);
-    el.casinoHistory.innerHTML = lastGames.join("<br>");
-  };
-}
-
-/* =========================
-   WITHDRAW UX
-========================= */
-if (el.wdBtn) {
-  el.wdBtn.onclick = async () => {
-    const method = el.wdMethod.value;
-    const target = el.wdTarget.value.trim();
-    const amount = parseFloat(el.wdAmount.value || 0);
-
-    if (!target || amount <= 0) return;
-
-    el.wdStatus.textContent = "⏳ Request sent…";
-
-    const r = await fetch("/withdraw/usdt", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ uid, amount, method, target }),
-    });
-
-    const j = await r.json();
-
-    if (j.ok) {
-      el.wdStatus.textContent = "⏳ Pending approval";
-      el.wdHistory.innerHTML = `• ${amount} USDT → ${method} (${new Date().toLocaleString()})`;
-      el.wdAmount.value = "";
-    } else {
-      el.wdStatus.textContent = "❌ Error, try again";
-    }
-  };
-}
-
-/* =========================
-   TABS NAVIGATION
-========================= */
-const tabs = document.querySelectorAll(".tabs button");
-const pages = document.querySelectorAll("[data-page]");
-
-tabs.forEach((b) => {
-  b.onclick = () => {
-    tabs.forEach((x) => x.classList.remove("active"));
-    b.classList.add("active");
-    pages.forEach(
-      (p) => (p.hidden = p.dataset.page !== b.dataset.tab)
-    );
-  };
-});
-
-/* =========================
-   MAIN LOAD LOOP
-========================= */
-async function load() {
-  try {
-    showLoader();
-    const s = await fetchState();
-
-    renderWallet(s);
-    renderMining(s);
-    renderLeaderboard(s);
-    renderAirdrop(s);
-
-    series.push(s.wallet.bx);
-    if (series.length > 30) series.shift();
-    drawChart();
-  } catch (e) {
-    console.error("Load error", e);
-  } finally {
-    hideLoader();
+  if(priceChart){
+    priceChart.data.labels = labels;
+    priceChart.data.datasets[0].data = prices;
+    priceChart.update();
+    return;
   }
+
+  priceChart = new Chart(document.getElementById("chart"),{
+    type:"line",
+    data:{
+      labels,
+      datasets:[{
+        data:prices,
+        borderColor:"#5b7cff",
+        tension:.3
+      }]
+    },
+    options:{
+      plugins:{legend:{display:false}},
+      scales:{x:{display:false}}
+    }
+  });
 }
 
-load();
-setInterval(load, 5000);
+/* ---------- START ---------- */
+window.onload = load;
