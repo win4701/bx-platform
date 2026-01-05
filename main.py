@@ -4,8 +4,8 @@ import sqlite3, time, random
 app = FastAPI()
 
 @app.get("/")
-def root():
-    return {"status":"ok","service":"Bloxio BX Platform","version":"1.0.0","message":"API is running"}
+def serve_app():
+    return FileResponse("public/index.html")
 
 DB = "db.sqlite"
 def db():
