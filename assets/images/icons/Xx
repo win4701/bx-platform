@@ -1,0 +1,13 @@
+.game img{
+  width:48px;
+  margin-bottom:8px;
+}
+
+.tabs{
+  position:fixed;
+  bottom:0;left:0;right:0;
+  height:72px;
+  display:flex;
+  background:#070b12;
+  border-top:1px solid #0e2018;
+}
