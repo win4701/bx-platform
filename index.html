@@ -1,205 +1,207 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Bloxio BX</title>
-
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bloxio</title>
 
 <style>
-:root{
-  --bg:#070b12;
-  --card:#0e1626;
-  --green:#5CFF9A;
-  --green-soft:#1ddf7a;
-  --text:#e8fef1;
-  --muted:#7fa89a;
-}
-
-*{box-sizing:border-box;font-family:Inter,Arial,sans-serif}
+/* ===== GLOBAL ===== */
 body{
   margin:0;
-  background:radial-gradient(circle at top,#0d1b14,#070b12);
-  color:var(--text);
-  padding-bottom:80px;
-}
-
-header{
-  text-align:center;
+  font-family:system-ui, Arial;
+  background:#0b0f14;
+  color:#eaeaea;
   padding:16px;
-  font-size:20px;
-  font-weight:700;
 }
-
-.view{display:none;padding:16px}
-.view.active{display:block}
-
+h1{margin:0 0 16px}
+h2{margin:0 0 12px;font-size:18px}
 .card{
-  background:linear-gradient(180deg,#0f1f18,#0b1411);
-  border-radius:18px;
+  background:#121820;
+  border:1px solid #1f2a3a;
+  border-radius:10px;
   padding:16px;
-  margin-bottom:14px;
-  box-shadow:0 10px 30px rgba(0,255,160,.08);
+  margin-bottom:16px;
 }
-
-.row{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
-.row img{width:28px;height:28px}
-
-.grid{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:12px;
-}
-
-button,select,input{
-  width:100%;
-  padding:14px;
-  border-radius:14px;
-  border:none;
-  background:#0e2018;
-  color:var(--text);
-  font-size:15px;
-}
-
-button{
-  background:linear-gradient(135deg,var(--green),var(--green-soft));
-  color:#012;
-  font-weight:700;
-}
-
-button:active{transform:scale(.97)}
-
-.game{
-  background:linear-gradient(145deg,#0f2a1f,#09140f);
-  border-radius:18px;
-  padding:22px;
-  text-align:center;
-  font-weight:700;
-  box-shadow:inset 0 0 40px rgba(92,255,154,.15);
-}
-
-.game img{
-  width:48px;
-  margin-bottom:8px;
-}
-
-.tabs{
-  position:fixed;
-  bottom:0;left:0;right:0;
-  height:72px;
+.row{
   display:flex;
-  background:#070b12;
-  border-top:1px solid #0e2018;
+  justify-content:space-between;
+  margin:6px 0;
 }
-
-.tab{
-  flex:1;
-  text-align:center;
-  font-size:11px;
-  color:var(--muted);
-  padding-top:6px;
+label{
+  display:block;
+  font-size:13px;
+  margin-top:10px;
 }
-
-.tab img{width:26px;display:block;margin:0 auto 4px}
-.tab.active{color:var(--green)}
+input,select,button{
+  width:100%;
+  padding:10px;
+  margin-top:6px;
+  background:#1a2230;
+  border:1px solid #2a3445;
+  border-radius:6px;
+  color:#fff;
+}
+button{
+  background:#2ecc71;
+  border:none;
+  font-weight:600;
+  cursor:pointer;
+}
+button.secondary{background:#3498db}
+button.warn{background:#f39c12}
+button:disabled{opacity:.6}
+.muted{font-size:13px;color:#aaa}
+hr{border:none;border-top:1px solid #1f2a3a;margin:12px 0}
 </style>
 </head>
 
 <body>
 
-<header>Bloxio BX</header>
+<h1>Bloxio</h1>
 
-<!-- HOME -->
-<div class="view active" id="home">
-  <div class="card">
-    <div class="row"><img src="assets/icons/bx.png"><span id="bx">0</span></div>
-    <div class="row"><img src="assets/icons/ton.png"><span id="ton">0</span></div>
-    <div class="row"><img src="assets/icons/usdt.png"><span id="usdt">0</span></div>
-  </div>
-
-  <div class="card">
-    <div class="row"><span>1 BX</span><span>0.955489564 TON</span></div>
-    <div class="row"><span>1 BX</span><span>0.717872729 USDT</span></div>
-  </div>
+<!-- ================= WALLET ================= -->
+<div class="card">
+  <h2>Wallet</h2>
+  <div class="row"><span>BX</span><span id="bx">0</span></div>
+  <div class="row"><span>USDT</span><span id="usdt">0</span></div>
+  <div class="row"><span>TON</span><span id="ton">0</span></div>
 </div>
 
-<!-- MARKET -->
-<div class="view" id="market">
-  <div class="card">
-    <select id="marketMode">
-      <option value="buy">Buy BX</option>
-      <option value="sell">Sell BX</option>
-    </select>
-    <select id="marketAsset">
-      <option value="ton">TON</option>
-      <option value="usdt">USDT</option>
-    </select>
-    <input id="marketAmount" placeholder="Amount">
-    <button onclick="submitMarket()">Confirm</button>
-  </div>
+<!-- ================= PAYMENTS ================= -->
+<div class="card">
+  <h2>Payments</h2>
+
+  <label>Deposit Provider</label>
+  <select id="depositProvider">
+    <option value="binance">Binance</option>
+    <option value="redotpay">RedotPay</option>
+  </select>
+
+  <label>Deposit Amount</label>
+  <input id="depositAmount" type="number">
+
+  <button onclick="deposit()">Deposit</button>
+
+  <hr>
+
+  <label>Withdraw Provider</label>
+  <select id="withdrawProvider">
+    <option value="binance">Binance</option>
+    <option value="redotpay">RedotPay</option>
+  </select>
+
+  <label>Withdraw Amount</label>
+  <input id="withdrawAmount" type="number">
+
+  <button class="warn" onclick="withdraw()">Withdraw</button>
 </div>
 
-<!-- CASINO -->
-<div class="view" id="casino">
-  <div class="grid">
-    <div class="game"><img src="assets/icons/bx.png"><div>Dice</div></div>
-    <div class="game"><img src="assets/icons/bx.png"><div>Chicken</div></div>
-    <div class="game"><img src="assets/icons/bx.png"><div>PvP</div></div>
-    <div class="game"><img src="assets/icons/bx.png"><div>Slots</div></div>
-    <div class="game"><img src="assets/icons/bx.png"><div>Crash</div></div>
-  </div>
+<!-- ================= MARKET ================= -->
+<div class="card">
+  <h2>Market</h2>
+
+  <label>Action</label>
+  <select id="marketSide">
+    <option value="buy">Buy BX</option>
+    <option value="sell">Sell BX</option>
+  </select>
+
+  <label>Amount</label>
+  <input id="marketAmount" type="number">
+
+  <button onclick="market()">Confirm</button>
 </div>
 
-<!-- MINING -->
-<div class="view" id="mining">
-  <div class="card">
-    <button>Silver</button>
-    <button>Gold (40 BX / 20 USDT)</button>
-  </div>
+<!-- ================= MINING ================= -->
+<div class="card">
+  <h2>Mining</h2>
+
+  <div class="row"><span>Plan</span><span id="plan">Silver</span></div>
+  <div class="row"><span>Rate</span><span>+0.001 BX / min</span></div>
+
+  <button class="secondary">Upgrade to Gold</button>
 </div>
 
-<!-- AIRDROP -->
-<div class="view" id="airdrop">
-  <div class="card">
-    <button>Telegram</button>
-    <button>Twitter</button>
-    <button>Binance</button>
-    <button>Claim</button>
-  </div>
+<!-- ================= AIRDROP ================= -->
+<div class="card">
+  <h2>Airdrop</h2>
+
+  <div class="muted">Complete tasks to unlock fixed rewards</div>
+
+  <button>Join Telegram</button>
+  <button>Follow Twitter</button>
+  <button disabled>Trade BX (Locked)</button>
 </div>
 
-<!-- NAV -->
-<div class="tabs">
-  <div class="tab active" onclick="openView('home',this)"><img src="assets/icons/home.png">Home</div>
-  <div class="tab" onclick="openView('market',this)"><img src="assets/icons/market.png">Market</div>
-  <div class="tab" onclick="openView('casino',this)"><img src="assets/icons/casino.png">Casino</div>
-  <div class="tab" onclick="openView('wallet',this)"><img src="assets/icons/wallet.png">Wallet</div>
-  <div class="tab" onclick="openView('mining',this)"><img src="assets/icons/mining.png">Mining</div>
-  <div class="tab" onclick="openView('airdrop',this)"><img src="assets/icons/airdrop.png">Airdrop</div>
+<!-- ================= CASINO ================= -->
+<div class="card">
+  <h2>Casino</h2>
+  <div class="muted">Entertainment only</div>
+
+  <button onclick="playCasino('dice')">Play Dice</button>
+  <button onclick="playCasino('crash')">Play Crash</button>
 </div>
 
 <script>
-const API_BASE = "https://bx-platform.onrender.com";
-const tg = window.Telegram.WebApp;
-tg.expand();
-const uid = tg.initDataUnsafe?.user?.id || "demo";
+const uid = 1;
 
-async function api(path){
-  try{
-    const r = await fetch(API_BASE + path);
-    return await r.json();
-  }catch{
-    alert("Server unavailable");
-  }
+/* ===== STATE ===== */
+async function loadWallet(){
+  const r = await fetch(`/state?tg_id=${uid}`);
+  const d = await r.json();
+  bx.textContent = d.wallet.bx;
+  usdt.textContent = d.wallet.usdt;
+  ton.textContent = d.wallet.ton;
 }
 
-function openView(id,el){
-  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-  el.classList.add('active');
+/* ===== PAYMENTS ===== */
+async function deposit(){
+  await fetch("/deposit",{
+    method:"POST",
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      uid,
+      provider:depositProvider.value,
+      amount:depositAmount.value
+    })
+  });
 }
+
+async function withdraw(){
+  await fetch("/withdraw",{
+    method:"POST",
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      uid,
+      provider:withdrawProvider.value,
+      amount:withdrawAmount.value
+    })
+  });
+}
+
+/* ===== MARKET ===== */
+async function market(){
+  await fetch(`/market/${marketSide.value}`,{
+    method:"POST",
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      uid,
+      amount:marketAmount.value
+    })
+  });
+  loadWallet();
+}
+
+/* ===== CASINO ===== */
+async function playCasino(game){
+  await fetch(`/casino/v3/play?uid=${uid}&game=${game}`,{
+    method:"POST"
+  });
+  loadWallet();
+}
+
+loadWallet();
 </script>
 
 </body>
