@@ -2,10 +2,22 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Bloxio BX</title>
 
+<!-- Telegram -->
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+<!-- PWA -->
+<link rel="manifest" href="data:application/json,{
+  &quot;name&quot;:&quot;Bloxio BX&quot;,
+  &quot;short_name&quot;:&quot;BX&quot;,
+  &quot;start_url&quot;:&quot;.&quot;,
+  &quot;display&quot;:&quot;standalone&quot;,
+  &quot;background_color&quot;:&quot;#0b0f1a&quot;,
+  &quot;theme_color&quot;:&quot;#0b0f1a&quot;
+}">
+<meta name="theme-color" content="#0b0f1a">
 
 <style>
 :root{
@@ -52,7 +64,14 @@ input,select,button{
   font-size:14px;
 }
 
-button{background:var(--blue);font-weight:600;cursor:pointer}
+button{
+  background:var(--blue);
+  font-weight:600;
+  cursor:pointer;
+  transition:.15s;
+}
+button:disabled{opacity:.5}
+button:active{transform:scale(.97)}
 button.sell{background:var(--red)}
 button.gold{background:var(--accent);color:#000}
 
@@ -62,6 +81,7 @@ button.gold{background:var(--accent);color:#000}
   border-radius:12px;
   text-align:center;
   font-weight:600;
+  cursor:pointer;
 }
 
 .tabs{
@@ -81,7 +101,6 @@ button.gold{background:var(--accent);color:#000}
   color:var(--muted);
   cursor:pointer;
 }
-
 .tab.active{color:var(--accent)}
 </style>
 </head>
@@ -97,7 +116,6 @@ button.gold{background:var(--accent);color:#000}
     <div class="row"><span>TON</span><span id="ton">0</span></div>
     <div class="row"><span>USDT</span><span id="usdt">0</span></div>
   </div>
-
   <div class="card">
     <div class="row"><span>1 BX</span><span>0.955489564 TON</span></div>
     <div class="row"><span>1 BX</span><span>0.717872729 USDT</span></div>
@@ -111,15 +129,12 @@ button.gold{background:var(--accent);color:#000}
       <option value="buy">Buy BX</option>
       <option value="sell">Sell BX</option>
     </select>
-
     <select id="marketAsset">
       <option value="ton">TON</option>
       <option value="usdt">USDT</option>
     </select>
-
     <input id="marketAmount" placeholder="Amount">
-
-    <button onclick="submitMarket()">Confirm</button>
+    <button onclick="submitMarket(this)">Confirm</button>
   </div>
 </div>
 
@@ -171,48 +186,107 @@ button.gold{background:var(--accent);color:#000}
 </div>
 
 <script>
+/* ================= TELEGRAM AUTH ================= */
 const tg = window.Telegram.WebApp;
 tg.expand();
-const uid = tg.initDataUnsafe?.user?.id || "demo";
 
+const auth = {
+  uid: String(tg.initDataUnsafe?.user?.id || "demo"),
+  initData: tg.initData || ""
+};
+
+/* ================= STATE ================= */
+const state = {
+  wallet:{bx:0,ton:0,usdt:0},
+  timer:null
+};
+
+/* ================= HELPERS ================= */
+async function api(url, options={}){
+  try{
+    const r = await fetch(url,{
+      ...options,
+      headers:{
+        "X-TG-INIT": auth.initData
+      }
+    });
+    if(!r.ok) throw new Error();
+    return await r.json();
+  }catch{
+    alert("Server unavailable");
+    return null;
+  }
+}
+
+function renderWallet(){
+  bx.textContent   = state.wallet.bx;
+  ton.textContent  = state.wallet.ton;
+  usdt.textContent = state.wallet.usdt;
+}
+
+/* ================= VIEWS ================= */
 function openView(id,el){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   el.classList.add('active');
+
+  if(id==="home"||id==="wallet") startRefresh();
+  else stopRefresh();
 }
 
+/* ================= DATA ================= */
 async function loadState(){
-  try{
-    const r = await fetch(`/state?tg_id=${uid}`);
-    const d = await r.json();
-    bx.textContent=d.wallet.bx;
-    ton.textContent=d.wallet.ton;
-    usdt.textContent=d.wallet.usdt;
-  }catch{}
+  const d = await api(`/state?tg_id=${auth.uid}`);
+  if(!d) return;
+  state.wallet = d.wallet;
+  renderWallet();
 }
 
-async function submitMarket(){
-  const mode=marketMode.value;
-  const asset=marketAsset.value;
-  const amt=Number(marketAmount.value);
-  if(!amt)return;
+function startRefresh(){
+  stopRefresh();
+  loadState();
+  state.timer = setInterval(loadState,5000);
+}
+function stopRefresh(){
+  if(state.timer) clearInterval(state.timer);
+}
 
-  const url = mode==="buy"
-    ? `/market/buy?uid=${uid}&amount=${amt}&pay=${asset}`
-    : `/market/sell?uid=${uid}&bx=${amt}&to=${asset}`;
+/* ================= ACTIONS ================= */
+async function submitMarket(btn){
+  const amt = Number(marketAmount.value);
+  if(!amt||amt<=0) return alert("Invalid amount");
+  btn.disabled=true;
 
-  await fetch(url,{method:"POST"});
+  const url = marketMode.value==="buy"
+    ? `/market/buy?uid=${auth.uid}&amount=${amt}&pay=${marketAsset.value}`
+    : `/market/sell?uid=${auth.uid}&bx=${amt}&to=${marketAsset.value}`;
+
+  await api(url,{method:"POST"});
+  btn.disabled=false;
   loadState();
 }
 
 async function play(game){
-  await fetch(`/casino/v3/play?uid=${uid}&game=${game}&bet=1&client_seed=${Math.random()}`,{method:"POST"});
+  await api(`/casino/v3/play?uid=${auth.uid}&game=${game}&bet=1&client_seed=${Math.random()}`,{method:"POST"});
   loadState();
 }
 
-loadState();
-setInterval(loadState,5000);
+/* ================= PWA ================= */
+if("serviceWorker" in navigator){
+  const swCode = `
+  self.addEventListener('install',e=>self.skipWaiting());
+  self.addEventListener('fetch',e=>{
+    e.respondWith(fetch(e.request).catch(()=>new Response("Offline")));
+  });
+  `;
+  navigator.serviceWorker.register(
+    URL.createObjectURL(new Blob([swCode],{type:"text/javascript"}))
+  );
+}
+
+/* INIT */
+startRefresh();
 </script>
 
 </body>
