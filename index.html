@@ -1,107 +1,108 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
+<meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Bloxio BX</title>
 
-<!-- Telegram -->
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
-
-<!-- PWA -->
-<link rel="manifest" href="data:application/json,{
-  &quot;name&quot;:&quot;Bloxio BX&quot;,
-  &quot;short_name&quot;:&quot;BX&quot;,
-  &quot;start_url&quot;:&quot;.&quot;,
-  &quot;display&quot;:&quot;standalone&quot;,
-  &quot;background_color&quot;:&quot;#0b0f1a&quot;,
-  &quot;theme_color&quot;:&quot;#0b0f1a&quot;
-}">
-<meta name="theme-color" content="#0b0f1a">
 
 <style>
 :root{
-  --bg:#0b0f1a;
-  --card:#12182a;
-  --accent:#f5c451;
-  --blue:#4f7cff;
-  --red:#ff5c5c;
-  --text:#eaeaf0;
-  --muted:#8a90a5;
+  --bg:#070b12;
+  --card:#0e1626;
+  --green:#5CFF9A;
+  --green-soft:#1ddf7a;
+  --text:#e8fef1;
+  --muted:#7fa89a;
 }
 
 *{box-sizing:border-box;font-family:Inter,Arial,sans-serif}
-body{margin:0;background:var(--bg);color:var(--text);padding-bottom:80px}
+body{
+  margin:0;
+  background:radial-gradient(circle at top,#0d1b14,#070b12);
+  color:var(--text);
+  padding-bottom:80px;
+}
 
 header{
-  padding:16px;
   text-align:center;
-  font-weight:700;
+  padding:16px;
   font-size:20px;
-  background:#0e1424;
+  font-weight:700;
 }
 
 .view{display:none;padding:16px}
 .view.active{display:block}
 
 .card{
-  background:var(--card);
-  border-radius:14px;
+  background:linear-gradient(180deg,#0f1f18,#0b1411);
+  border-radius:18px;
   padding:16px;
   margin-bottom:14px;
+  box-shadow:0 10px 30px rgba(0,255,160,.08);
 }
 
-.row{display:flex;justify-content:space-between;margin-bottom:10px}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.row{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.row img{width:28px;height:28px}
 
-input,select,button{
+.grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+
+button,select,input{
   width:100%;
-  padding:12px;
-  border-radius:10px;
+  padding:14px;
+  border-radius:14px;
   border:none;
-  background:#1a2140;
+  background:#0e2018;
   color:var(--text);
-  font-size:14px;
+  font-size:15px;
 }
 
 button{
-  background:var(--blue);
-  font-weight:600;
-  cursor:pointer;
-  transition:.15s;
+  background:linear-gradient(135deg,var(--green),var(--green-soft));
+  color:#012;
+  font-weight:700;
 }
-button:disabled{opacity:.5}
+
 button:active{transform:scale(.97)}
-button.sell{background:var(--red)}
-button.gold{background:var(--accent);color:#000}
 
 .game{
-  background:#161d35;
-  padding:20px;
-  border-radius:12px;
+  background:linear-gradient(145deg,#0f2a1f,#09140f);
+  border-radius:18px;
+  padding:22px;
   text-align:center;
-  font-weight:600;
-  cursor:pointer;
+  font-weight:700;
+  box-shadow:inset 0 0 40px rgba(92,255,154,.15);
+}
+
+.game img{
+  width:48px;
+  margin-bottom:8px;
 }
 
 .tabs{
   position:fixed;
   bottom:0;left:0;right:0;
-  height:70px;
-  background:#0e1424;
+  height:72px;
   display:flex;
-  border-top:1px solid #1c2440;
+  background:#070b12;
+  border-top:1px solid #0e2018;
 }
 
 .tab{
   flex:1;
   text-align:center;
-  padding-top:10px;
-  font-size:12px;
+  font-size:11px;
   color:var(--muted);
-  cursor:pointer;
+  padding-top:6px;
 }
-.tab.active{color:var(--accent)}
+
+.tab img{width:26px;display:block;margin:0 auto 4px}
+.tab.active{color:var(--green)}
 </style>
 </head>
 
@@ -112,10 +113,11 @@ button.gold{background:var(--accent);color:#000}
 <!-- HOME -->
 <div class="view active" id="home">
   <div class="card">
-    <div class="row"><span>BX</span><span id="bx">0</span></div>
-    <div class="row"><span>TON</span><span id="ton">0</span></div>
-    <div class="row"><span>USDT</span><span id="usdt">0</span></div>
+    <div class="row"><img src="assets/icons/bx.png"><span id="bx">0</span></div>
+    <div class="row"><img src="assets/icons/ton.png"><span id="ton">0</span></div>
+    <div class="row"><img src="assets/icons/usdt.png"><span id="usdt">0</span></div>
   </div>
+
   <div class="card">
     <div class="row"><span>1 BX</span><span>0.955489564 TON</span></div>
     <div class="row"><span>1 BX</span><span>0.717872729 USDT</span></div>
@@ -134,26 +136,18 @@ button.gold{background:var(--accent);color:#000}
       <option value="usdt">USDT</option>
     </select>
     <input id="marketAmount" placeholder="Amount">
-    <button onclick="submitMarket(this)">Confirm</button>
+    <button onclick="submitMarket()">Confirm</button>
   </div>
 </div>
 
 <!-- CASINO -->
 <div class="view" id="casino">
   <div class="grid">
-    <div class="game" onclick="play('dice')">Dice</div>
-    <div class="game" onclick="play('chicken')">Chicken</div>
-    <div class="game" onclick="play('pvp')">PvP</div>
-    <div class="game" onclick="play('slots')">Slots</div>
-    <div class="game" onclick="play('crash')">Crash</div>
-  </div>
-</div>
-
-<!-- WALLET -->
-<div class="view" id="wallet">
-  <div class="card">
-    <button>Deposit</button>
-    <button class="sell">Withdraw</button>
+    <div class="game"><img src="assets/icons/bx.png"><div>Dice</div></div>
+    <div class="game"><img src="assets/icons/bx.png"><div>Chicken</div></div>
+    <div class="game"><img src="assets/icons/bx.png"><div>PvP</div></div>
+    <div class="game"><img src="assets/icons/bx.png"><div>Slots</div></div>
+    <div class="game"><img src="assets/icons/bx.png"><div>Crash</div></div>
   </div>
 </div>
 
@@ -161,7 +155,7 @@ button.gold{background:var(--accent);color:#000}
 <div class="view" id="mining">
   <div class="card">
     <button>Silver</button>
-    <button class="gold">Gold (40 BX / 20 USDT)</button>
+    <button>Gold (40 BX / 20 USDT)</button>
   </div>
 </div>
 
@@ -170,123 +164,42 @@ button.gold{background:var(--accent);color:#000}
   <div class="card">
     <button>Telegram</button>
     <button>Twitter</button>
-    <button>Discord</button>
-    <button class="gold">Claim</button>
+    <button>Binance</button>
+    <button>Claim</button>
   </div>
 </div>
 
 <!-- NAV -->
 <div class="tabs">
-  <div class="tab active" onclick="openView('home',this)">Home</div>
-  <div class="tab" onclick="openView('market',this)">Market</div>
-  <div class="tab" onclick="openView('casino',this)">Casino</div>
-  <div class="tab" onclick="openView('wallet',this)">Wallet</div>
-  <div class="tab" onclick="openView('mining',this)">Mining</div>
-  <div class="tab" onclick="openView('airdrop',this)">Airdrop</div>
+  <div class="tab active" onclick="openView('home',this)"><img src="assets/icons/home.png">Home</div>
+  <div class="tab" onclick="openView('market',this)"><img src="assets/icons/market.png">Market</div>
+  <div class="tab" onclick="openView('casino',this)"><img src="assets/icons/casino.png">Casino</div>
+  <div class="tab" onclick="openView('wallet',this)"><img src="assets/icons/wallet.png">Wallet</div>
+  <div class="tab" onclick="openView('mining',this)"><img src="assets/icons/mining.png">Mining</div>
+  <div class="tab" onclick="openView('airdrop',this)"><img src="assets/icons/airdrop.png">Airdrop</div>
 </div>
 
 <script>
-/* ================= TELEGRAM AUTH ================= */
+const API_BASE = "https://bx-platform.onrender.com";
 const tg = window.Telegram.WebApp;
 tg.expand();
+const uid = tg.initDataUnsafe?.user?.id || "demo";
 
-const auth = {
-  uid: String(tg.initDataUnsafe?.user?.id || "demo"),
-  initData: tg.initData || ""
-};
-
-/* ================= STATE ================= */
-const state = {
-  wallet:{bx:0,ton:0,usdt:0},
-  timer:null
-};
-
-/* ================= HELPERS ================= */
-async function api(url, options={}){
+async function api(path){
   try{
-    const r = await fetch(url,{
-      ...options,
-      headers:{
-        "X-TG-INIT": auth.initData
-      }
-    });
-    if(!r.ok) throw new Error();
+    const r = await fetch(API_BASE + path);
     return await r.json();
   }catch{
     alert("Server unavailable");
-    return null;
   }
 }
 
-function renderWallet(){
-  bx.textContent   = state.wallet.bx;
-  ton.textContent  = state.wallet.ton;
-  usdt.textContent = state.wallet.usdt;
-}
-
-/* ================= VIEWS ================= */
 function openView(id,el){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   el.classList.add('active');
-
-  if(id==="home"||id==="wallet") startRefresh();
-  else stopRefresh();
 }
-
-/* ================= DATA ================= */
-async function loadState(){
-  const d = await api(`/state?tg_id=${auth.uid}`);
-  if(!d) return;
-  state.wallet = d.wallet;
-  renderWallet();
-}
-
-function startRefresh(){
-  stopRefresh();
-  loadState();
-  state.timer = setInterval(loadState,5000);
-}
-function stopRefresh(){
-  if(state.timer) clearInterval(state.timer);
-}
-
-/* ================= ACTIONS ================= */
-async function submitMarket(btn){
-  const amt = Number(marketAmount.value);
-  if(!amt||amt<=0) return alert("Invalid amount");
-  btn.disabled=true;
-
-  const url = marketMode.value==="buy"
-    ? `/market/buy?uid=${auth.uid}&amount=${amt}&pay=${marketAsset.value}`
-    : `/market/sell?uid=${auth.uid}&bx=${amt}&to=${marketAsset.value}`;
-
-  await api(url,{method:"POST"});
-  btn.disabled=false;
-  loadState();
-}
-
-async function play(game){
-  await api(`/casino/v3/play?uid=${auth.uid}&game=${game}&bet=1&client_seed=${Math.random()}`,{method:"POST"});
-  loadState();
-}
-
-/* ================= PWA ================= */
-if("serviceWorker" in navigator){
-  const swCode = `
-  self.addEventListener('install',e=>self.skipWaiting());
-  self.addEventListener('fetch',e=>{
-    e.respondWith(fetch(e.request).catch(()=>new Response("Offline")));
-  });
-  `;
-  navigator.serviceWorker.register(
-    URL.createObjectURL(new Blob([swCode],{type:"text/javascript"}))
-  );
-}
-
-/* INIT */
-startRefresh();
 </script>
 
 </body>
