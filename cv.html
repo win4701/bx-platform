@@ -1,17 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Bloxio BX</title>
 
 <style>
-/* ===== THEME ===== */
+/* ================= THEME ================= */
 :root{
   --bg:#0b0f14;
   --panel:#121820;
   --border:#1f2a3a;
-  --green:#2ecc71;
+  --green:#39d98a;
+  --green-soft:#6affb1;
+  --yellow:#f1c40f;
   --text:#eaeaea;
   --muted:#9aa4b2;
 }
@@ -19,7 +21,7 @@
 *{box-sizing:border-box}
 body{
   margin:0;
-  font-family:system-ui, Arial;
+  font-family:system-ui,Arial;
   background:var(--bg);
   color:var(--text);
   display:flex;
@@ -27,7 +29,7 @@ body{
   height:100vh;
 }
 
-/* ===== HEADER ===== */
+/* ================= HEADER ================= */
 header{
   padding:14px;
   text-align:center;
@@ -36,47 +38,54 @@ header{
   font-size:18px;
 }
 
-/* ===== MAIN ===== */
+/* ================= MAIN ================= */
 main{
   flex:1;
   padding:16px;
   overflow-y:auto;
 }
 
-/* ===== SECTIONS ===== */
-.section{display:none}
+/* ================= SECTIONS ================= */
+.section{display:none; animation:fade .25s ease}
 .section.active{display:block}
+@keyframes fade{
+  from{opacity:0;transform:translateY(6px)}
+  to{opacity:1;transform:none}
+}
 
-/* ===== CARDS ===== */
+/* ================= CARDS ================= */
 .card{
-  background:var(--panel);
+  background:linear-gradient(180deg,#121f1a,#0e1814);
   border:1px solid var(--border);
-  border-radius:14px;
+  border-radius:16px;
   padding:16px;
   margin-bottom:16px;
-  transition:.2s;
+  transition:.25s;
 }
 .card:hover{
   transform:translateY(-2px);
-  box-shadow:0 10px 30px rgba(46,204,113,.15);
+  box-shadow:0 10px 30px rgba(57,217,138,.18);
 }
 
-/* ===== WALLET ===== */
+h3{
+  margin:0 0 12px;
+  font-size:16px;
+}
+
+/* ================= WALLET ================= */
 .wallet-row{
   display:flex;
   justify-content:space-between;
   align-items:center;
   margin:8px 0;
 }
-.wallet-row img{
-  width:26px;
-}
+.wallet-row img{width:26px}
 
-/* ===== INPUTS ===== */
+/* ================= INPUTS ================= */
 input,select,button{
   width:100%;
   padding:12px;
-  border-radius:10px;
+  border-radius:12px;
   border:1px solid #2a3445;
   background:#1a2230;
   color:#fff;
@@ -84,31 +93,134 @@ input,select,button{
 }
 button{
   border:none;
-  background:var(--green);
-  color:#000;
-  font-weight:600;
+  background:linear-gradient(135deg,var(--green),var(--green-soft));
+  color:#00140a;
+  font-weight:700;
   cursor:pointer;
   transition:.2s;
 }
 button:hover{
   transform:scale(1.02);
-  box-shadow:0 0 18px rgba(46,204,113,.35);
+  box-shadow:0 0 18px rgba(57,217,138,.45);
 }
-button.secondary{background:#3498db;color:#fff}
-button.warn{background:#f1c40f;color:#000}
-
-/* ===== CASINO GRID ===== */
-.grid{
-  display:grid;
-  grid-template-columns:repeat(2,1fr);
-  gap:12px;
-}
-.grid button{
-  background:#1b2433;
+button.secondary{
+  background:#3498db;
   color:#fff;
 }
+button.warn{
+  background:linear-gradient(135deg,#f7d774,#f1c40f);
+  color:#2b1d00;
+}
 
-/* ===== BOTTOM NAV ===== */
+/* ================= MARKET ================= */
+.switch{
+  display:flex;
+  background:#0d1612;
+  border-radius:12px;
+  padding:4px;
+  margin:12px 0;
+}
+.switch button{
+  flex:1;
+  background:none;
+  color:var(--muted);
+}
+.switch button.active{
+  background:linear-gradient(135deg,var(--green),var(--green-soft));
+  color:#00140a;
+}
+
+input[type=range]{
+  -webkit-appearance:none;
+  width:100%;
+  height:6px;
+  background:linear-gradient(90deg,var(--green),var(--green-soft));
+  border-radius:6px;
+  margin:14px 0;
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;
+  width:22px;
+  height:22px;
+  background:#0b0f14;
+  border:3px solid var(--green);
+  border-radius:50%;
+  box-shadow:0 0 10px rgba(57,217,138,.6);
+}
+
+/* ================= SELL LIMIT ================= */
+.sell-limit{
+  margin-top:12px;
+}
+.sell-limit .bar{
+  height:6px;
+  background:#0d1612;
+  border-radius:6px;
+  overflow:hidden;
+}
+.sell-limit .used{
+  height:100%;
+  width:0%;
+  background:linear-gradient(90deg,#f1c40f,#e67e22);
+}
+.sell-limit small{
+  color:var(--muted);
+  font-size:12px;
+}
+
+/* ================= CASINO ================= */
+.casino-grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:14px;
+}
+.casino-card{
+  background:linear-gradient(145deg,#182232,#0f1724);
+  border:1px solid rgba(57,217,138,.25);
+  border-radius:18px;
+  padding:20px;
+  text-align:center;
+  font-size:26px;
+  cursor:pointer;
+  transition:.25s;
+  box-shadow:inset 0 0 20px rgba(57,217,138,.12);
+}
+.casino-card span{
+  display:block;
+  font-size:13px;
+  margin-top:6px;
+}
+.casino-card:hover{
+  transform:translateY(-4px) scale(1.02);
+  box-shadow:0 16px 40px rgba(57,217,138,.45);
+}
+.casino-card.wide{grid-column:1 / span 2}
+
+/* ================= AIRDROP ================= */
+.task{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:10px 12px;
+  background:#0f1a15;
+  border-radius:10px;
+  margin-bottom:8px;
+}
+.task.done{color:var(--green)}
+.progress{
+  height:8px;
+  background:#0d1612;
+  border-radius:6px;
+  overflow:hidden;
+  margin-top:10px;
+}
+.progress .fill{
+  height:100%;
+  width:0%;
+  background:linear-gradient(90deg,var(--green),var(--green-soft));
+}
+
+/* ================= NAV ================= */
 nav{
   display:flex;
   justify-content:space-around;
@@ -125,46 +237,8 @@ nav .item{
   color:#aaa;
   cursor:pointer;
 }
-nav .item.active{
-  color:var(--green);
-}
-nav img{
-  width:22px;
-  margin-bottom:4px;
-}
-
-.casino-grid{
-  display:grid;
-  grid-template-columns:repeat(2,1fr);
-  gap:14px;
-}
-
-.casino-game{
-  background:linear-gradient(145deg,#182232,#0f1724);
-  border:1px solid #233047;
-  border-radius:16px;
-  padding:18px;
-  text-align:center;
-  font-weight:600;
-  cursor:pointer;
-  transition:.25s;
-  box-shadow:inset 0 0 20px rgba(46,204,113,.12);
-}
-
-.casino-game span{
-  font-size:28px;
-  display:block;
-  margin-bottom:6px;
-}
-
-.casino-game:hover{
-  transform:translateY(-3px);
-  box-shadow:0 10px 30px rgba(46,204,113,.35);
-}
-
-.casino-game.wide{
-  grid-column:1 / span 2;
-}
+nav .item.active{color:var(--green)}
+nav img{width:22px;margin-bottom:4px}
 </style>
 </head>
 
@@ -174,171 +248,164 @@ nav img{
 
 <main>
 
-  <!-- HOME -->
-  <div class="section active" id="home"><button class="secondary">
-  <img src="assets/images/icons/ton.png" style="width:18px;vertical-align:middle">
-  Connect TON Wallet
+<!-- HOME -->
+<div class="section active" id="home">
+  <button class="secondary">
+    <img src="assets/images/icons/ton.png" style="width:18px;vertical-align:middle">
+    Connect TON Wallet
   </button>
-    <div class="card">
-      <h3>Wallet</h3>
-      <div class="wallet-row"><img src="assets/images/icons/bx.png"> BX <span id="bx">0</span></div>
-      <div class="wallet-row"><img src="assets/images/icons/ton.png"> TON <span id="ton">0</span></div>
-      <div class="wallet-row"><img src="assets/images/icons/usdt.png"> USDT <span id="usdt">0</span></div>
-    </div>
+
+  <div class="card">
+    <h3>Wallet</h3>
+    <div class="wallet-row"><img src="assets/images/icons/bx.png"> BX <span id="bx">0</span></div>
+    <div class="wallet-row"><img src="assets/images/icons/ton.png"> TON <span id="ton">0</span></div>
+    <div class="wallet-row"><img src="assets/images/icons/usdt.png"> USDT <span id="usdt">0</span></div>
   </div>
+</div>
+
 <!-- MARKET -->
 <div class="section" id="market">
   <div class="card">
     <h3>Market</h3>
 
-    <!-- Price -->
-    <div class="row">
-      <span>BX Price</span>
-      <strong>0.955489564 TON</strong>
-    </div>
-
-    <!-- Buy / Sell Switch -->
     <div class="switch">
       <button id="btn-buy" class="active" onclick="setSide('buy')">Buy</button>
       <button id="btn-sell" onclick="setSide('sell')">Sell</button>
     </div>
 
-    <!-- Slider -->
     <label>Amount (BX)</label>
     <input type="range" id="amountRange" min="0" max="100" value="0" oninput="syncAmount(this.value)">
     <input type="number" id="amountInput" placeholder="0.0" oninput="syncRange(this.value)">
 
-    <div class="row">
+    <div class="wallet-row">
       <span>Total</span>
       <strong id="total">0.00</strong>
     </div>
 
-    <button id="confirmBtn">Confirm</button>
+    <div class="sell-limit">
+      <div class="bar"><div class="used" id="sellUsed"></div></div>
+      <small>Sell limit: 20%</small>
+    </div>
+
+    <button>Confirm</button>
   </div>
 
-  <!-- CHART -->
   <div class="card">
     <h3>BX Chart</h3>
     <canvas id="chart" width="300" height="120"></canvas>
   </div>
 </div>
 
-  <!-- CASINO -->
-  <div class="section" id="casino">
-    <div class="card">
-      <h3>Casino</h3>
-      <div class="grid">
-        <button>Dice</button>
-        <button>Chicken</button>
-        <button>PvP</button>
-        <button>Slots</button>
-        <button>Crash</button>
-      </div>
+<!-- CASINO -->
+<div class="section" id="casino">
+  <div class="card">
+    <h3>Casino</h3>
+    <div class="casino-grid">
+      <div class="casino-card">🎲<span>Dice</span></div>
+      <div class="casino-card">🐔<span>Chicken</span></div>
+      <div class="casino-card">⚔️<span>PvP</span></div>
+      <div class="casino-card">🎰<span>Slots</span></div>
+      <div class="casino-card wide">🚀<span>Crash</span></div>
     </div>
   </div>
+</div>
 
-  <!-- MINING -->
-  <div class="section" id="mining">
-    <div class="card">
-      <h3>Mining</h3>
-      <button class="secondary">Silver</button>
-      <button class="warn">Gold (40 BX / 20 USDT)</button>
-    </div>
+<!-- MINING -->
+<div class="section" id="mining">
+  <div class="card">
+    <h3>Mining</h3>
+    <button class="secondary">Silver</button>
+    <button class="warn">Gold (40 BX / 20 USDT)</button>
   </div>
-  
+</div>
+
 <!-- AIRDROP -->
 <div class="section" id="airdrop">
   <div class="card">
     <h3>Airdrop</h3>
-
-    <button class="secondary">Join Telegram</button>
-    <button class="secondary">Follow X</button>
-    <button class="secondary">Join Discord</button>
-
-    <button style="margin-top:12px">Claim</button>
+    <div class="task done">Join Telegram ✓</div>
+    <div class="task">Follow X ○</div>
+    <div class="task">Join Discord ○</div>
+    <div class="progress"><div class="fill" id="airdropFill"></div></div>
+    <button>Claim</button>
   </div>
 </div>
+
 </main>
+
 <nav>
-  <div class="item active" onclick="show('home')"><img src="assets/images/icons/home.png">Home</div>
-  <div class="item" onclick="show('market')"><img src="assets/images/icons/market.png">Market</div>
-  <div class="item" onclick="show('casino')"><img src="assets/images/icons/casino.png">Casino</div>
-  <div class="item" onclick="show('mining')"><img src="assets/images/icons/mining.png">Mining</div>
-  <div class="item" onclick="show('airdrop')"><img src="assets/images/icons/airdrop.png">Airdrop
-</div>
+  <div class="item active" onclick="show('home',this)"><img src="assets/images/icons/home.png">Home</div>
+  <div class="item" onclick="show('market',this)"><img src="assets/images/icons/market.png">Market</div>
+  <div class="item" onclick="show('casino',this)"><img src="assets/images/icons/casino.png">Casino</div>
+  <div class="item" onclick="show('mining',this)"><img src="assets/images/icons/mining.png">Mining</div>
+  <div class="item" onclick="show('airdrop',this)"><img src="assets/images/icons/airdrop.png">Airdrop</div>
 </nav>
 
 <script>
-const uid = 1;
+let side="buy";
+const price=0.955489564;
 
-async function loadState(){
-  const r = await fetch(`/state?uid=${uid}`);
-  const d = await r.json();
-  bx.textContent = d.bx;
-  ton.textContent = d.ton;
-  usdt.textContent = d.usdt;
-}
-loadState();
-
-async function market(){
-  await fetch(`/market/${side.value}`,{
-    method:"POST",
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({
-      uid,
-      amount:Number(amount.value),
-      against:asset.value
-    })
-  });
-  loadState();
-}
-
-function show(id){
+function show(id,el){
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   document.querySelectorAll('nav .item').forEach(i=>i.classList.remove('active'));
-  event.currentTarget.classList.add('active');
+  el.classList.add('active');
 }
-</script>
-<script>
-let side = "buy";
-const price = 0.955489564;
 
 function setSide(s){
-  side = s;
-  btn-buy.classList.toggle("active", s==="buy");
-  btn-sell.classList.toggle("active", s==="sell");
+  side=s;
+  btn-buy.classList.toggle("active",s==="buy");
+  btn-sell.classList.toggle("active",s==="sell");
 }
 
 function syncAmount(v){
-  amountInput.value = v;
+  amountInput.value=v;
   calc();
 }
 function syncRange(v){
-  amountRange.value = v;
+  amountRange.value=v;
   calc();
 }
-
 function calc(){
-  total.textContent = (amountInput.value * price).toFixed(4);
+  total.textContent=(amountInput.value*price).toFixed(4);
 }
 
-/* ===== SIMPLE CHART ===== */
-const ctx = chart.getContext("2d");
-const data = [20,30,25,40,35,50,45,60];
+/* Sell limit visual */
+document.getElementById("sellUsed").style.width="12%";
 
+/* Chart */
+const ctx=chart.getContext("2d");
+const data=[20,30,28,40,36,48,45,55,52];
 function drawChart(){
-  ctx.clearRect(0,0,300,120);
-  ctx.strokeStyle="#2ecc71";
+  const w=chart.width,h=chart.height;
+  ctx.clearRect(0,0,w,h);
+  const max=Math.max(...data),min=Math.min(...data);
+  const grad=ctx.createLinearGradient(0,0,0,h);
+  grad.addColorStop(0,"rgba(57,217,138,.45)");
+  grad.addColorStop(1,"rgba(57,217,138,0)");
   ctx.beginPath();
   data.forEach((v,i)=>{
-    const x = i * (300/(data.length-1));
-    const y = 120 - v*2;
-    i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+    const x=i*(w/(data.length-1));
+    const y=h-((v-min)/(max-min))*(h-20)-10;
+    i?ctx.lineTo(x,y):ctx.moveTo(x,y);
   });
+  ctx.lineTo(w,h);ctx.lineTo(0,h);ctx.closePath();
+  ctx.fillStyle=grad;ctx.fill();
+  ctx.beginPath();
+  data.forEach((v,i)=>{
+    const x=i*(w/(data.length-1));
+    const y=h-((v-min)/(max-min))*(h-20)-10;
+    i?ctx.lineTo(x,y):ctx.moveTo(x,y);
+  });
+  ctx.strokeStyle=varGreen="#39d98a";
+  ctx.lineWidth=2;
   ctx.stroke();
 }
 drawChart();
+
+/* Airdrop progress */
+document.getElementById("airdropFill").style.width="33%";
 </script>
+
 </body>
 </html>
