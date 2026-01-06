@@ -132,6 +132,39 @@ nav img{
   width:22px;
   margin-bottom:4px;
 }
+
+.casino-grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:14px;
+}
+
+.casino-game{
+  background:linear-gradient(145deg,#182232,#0f1724);
+  border:1px solid #233047;
+  border-radius:16px;
+  padding:18px;
+  text-align:center;
+  font-weight:600;
+  cursor:pointer;
+  transition:.25s;
+  box-shadow:inset 0 0 20px rgba(46,204,113,.12);
+}
+
+.casino-game span{
+  font-size:28px;
+  display:block;
+  margin-bottom:6px;
+}
+
+.casino-game:hover{
+  transform:translateY(-3px);
+  box-shadow:0 10px 30px rgba(46,204,113,.35);
+}
+
+.casino-game.wide{
+  grid-column:1 / span 2;
+}
 </style>
 </head>
 
@@ -190,14 +223,27 @@ nav img{
       <button class="warn">Gold (40 BX / 20 USDT)</button>
     </div>
   </div>
+  
+<!-- AIRDROP -->
+<div class="section" id="airdrop">
+  <div class="card">
+    <h3>Airdrop</h3>
 
+    <button class="secondary">Join Telegram</button>
+    <button class="secondary">Follow X</button>
+    <button class="secondary">Join Discord</button>
+
+    <button style="margin-top:12px">Claim</button>
+  </div>
+</div>
 </main>
-
 <nav>
   <div class="item active" onclick="show('home')"><img src="assets/images/icons/home.png">Home</div>
   <div class="item" onclick="show('market')"><img src="assets/images/icons/market.png">Market</div>
   <div class="item" onclick="show('casino')"><img src="assets/images/icons/casino.png">Casino</div>
   <div class="item" onclick="show('mining')"><img src="assets/images/icons/mining.png">Mining</div>
+  <div class="item" onclick="show('airdrop')"><img src="assets/images/icons/airdrop.png">Airdrop
+</div>
 </nav>
 
 <script>
