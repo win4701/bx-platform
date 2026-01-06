@@ -232,18 +232,44 @@ nav .item.active img{
 <script>
 const uid = 1;
 
+async function loadState(){
+  const r = await fetch(`/state?uid=${uid}`);
+  const d = await r.json();
+  bx.textContent = d.bx;
+  ton.textContent = d.ton;
+  usdt.textContent = d.usdt;
+}
+loadState();
+
 async function market(){
   await fetch(`/market/${side.value}`,{
     method:"POST",
     headers:{'Content-Type':'application/json'},
     body:JSON.stringify({
       uid,
-      amount:amount.value,
+      amount:Number(amount.value),
       against:asset.value
     })
   });
+  loadState();
 }
-</script>
+</script>>
+<script>
+const sections = {
+  home: document.querySelectorAll('.card')[0],
+  market: document.querySelectorAll('.card')[1],
+  casino: document.querySelectorAll('.card')[2],
+  mining: document.querySelectorAll('.card')[3]
+};
 
+function show(name){
+  Object.values(sections).forEach(s=>s.style.display="none");
+  sections[name].style.display="block";
+  document.querySelectorAll("nav .item").forEach(i=>i.classList.remove("active"));
+  document.getElementById("nav-"+name).classList.add("active");
+}
+
+show("home");
+</script>
 </body>
 </html>
