@@ -175,7 +175,10 @@ nav img{
 <main>
 
   <!-- HOME -->
-  <div class="section active" id="home">
+  <div class="section active" id="home"><button class="secondary">
+  <img src="assets/images/icons/ton.png" style="width:18px;vertical-align:middle">
+  Connect TON Wallet
+  </button>
     <div class="card">
       <h3>Wallet</h3>
       <div class="wallet-row"><img src="assets/images/icons/bx.png"> BX <span id="bx">0</span></div>
@@ -183,23 +186,42 @@ nav img{
       <div class="wallet-row"><img src="assets/images/icons/usdt.png"> USDT <span id="usdt">0</span></div>
     </div>
   </div>
+<!-- MARKET -->
+<div class="section" id="market">
+  <div class="card">
+    <h3>Market</h3>
 
-  <!-- MARKET -->
-  <div class="section" id="market">
-    <div class="card">
-      <h3>Market</h3>
-      <select id="side">
-        <option value="buy">Buy BX</option>
-        <option value="sell">Sell BX</option>
-      </select>
-      <select id="asset">
-        <option value="ton">TON</option>
-        <option value="usdt">USDT</option>
-      </select>
-      <input id="amount" type="number" placeholder="Amount">
-      <button onclick="market()">Confirm</button>
+    <!-- Price -->
+    <div class="row">
+      <span>BX Price</span>
+      <strong>0.955489564 TON</strong>
     </div>
+
+    <!-- Buy / Sell Switch -->
+    <div class="switch">
+      <button id="btn-buy" class="active" onclick="setSide('buy')">Buy</button>
+      <button id="btn-sell" onclick="setSide('sell')">Sell</button>
+    </div>
+
+    <!-- Slider -->
+    <label>Amount (BX)</label>
+    <input type="range" id="amountRange" min="0" max="100" value="0" oninput="syncAmount(this.value)">
+    <input type="number" id="amountInput" placeholder="0.0" oninput="syncRange(this.value)">
+
+    <div class="row">
+      <span>Total</span>
+      <strong id="total">0.00</strong>
+    </div>
+
+    <button id="confirmBtn">Confirm</button>
   </div>
+
+  <!-- CHART -->
+  <div class="card">
+    <h3>BX Chart</h3>
+    <canvas id="chart" width="300" height="120"></canvas>
+  </div>
+</div>
 
   <!-- CASINO -->
   <div class="section" id="casino">
@@ -278,6 +300,45 @@ function show(id){
   event.currentTarget.classList.add('active');
 }
 </script>
+<script>
+let side = "buy";
+const price = 0.955489564;
 
+function setSide(s){
+  side = s;
+  btn-buy.classList.toggle("active", s==="buy");
+  btn-sell.classList.toggle("active", s==="sell");
+}
+
+function syncAmount(v){
+  amountInput.value = v;
+  calc();
+}
+function syncRange(v){
+  amountRange.value = v;
+  calc();
+}
+
+function calc(){
+  total.textContent = (amountInput.value * price).toFixed(4);
+}
+
+/* ===== SIMPLE CHART ===== */
+const ctx = chart.getContext("2d");
+const data = [20,30,25,40,35,50,45,60];
+
+function drawChart(){
+  ctx.clearRect(0,0,300,120);
+  ctx.strokeStyle="#2ecc71";
+  ctx.beginPath();
+  data.forEach((v,i)=>{
+    const x = i * (300/(data.length-1));
+    const y = 120 - v*2;
+    i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+  });
+  ctx.stroke();
+}
+drawChart();
+</script>
 </body>
 </html>
