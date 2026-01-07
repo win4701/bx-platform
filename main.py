@@ -17,7 +17,16 @@ MINING_RATE = {
     "bx": 0.001,      # per second
     "ton": 0.00002
 }
+HOUSE_EDGE = {
+    "dice": 0.02,
+    "slots": 0.05,
+    "pvp": 0.03,
+    "chicken": 0.04,
+    "crash": 0.02
+}
 
+def casino_cooldown(uid: int) -> bool:
+    return True
 # ======================================================
 # APP
 # ======================================================
