@@ -144,12 +144,23 @@ nav img{width:22px;margin-bottom:4px}
   </div>
 
   <div class="card">
-    <h3>Deposit</h3>
-    <button onclick="deposit('binance')">Binance</button>
-    <button onclick="deposit('redotpay')">RedotPay</button>
-    <button onclick="deposit('ton')">TON Transfer</button>
-  </div>
+  <h3>Deposit</h3>
 
+  <button onclick="deposit('binance')">
+    <img src="assets/images/icons/binance.png" style="width:18px;vertical-align:middle">
+    Binance
+  </button>
+
+  <button onclick="deposit('redotpay')">
+    <img src="assets/images/icons/redotpay.png" style="width:18px;vertical-align:middle">
+    RedotPay
+  </button>
+
+  <button onclick="deposit('ton')">
+    <img src="assets/images/icons/ton.png" style="width:18px;vertical-align:middle">
+    TON Transfer
+  </button>
+  </div>
   <div class="card">
     <h3>Withdraw</h3>
     <input id="withdrawAddress" placeholder="Address / Pay ID">
