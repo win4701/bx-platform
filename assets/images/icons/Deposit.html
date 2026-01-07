@@ -308,7 +308,7 @@ nav img{
     <div class="wallet-row"><span>Total</span><strong id="total">0.00</strong></div>
     <div class="sell-limit">
       <div class="bar"><div class="used"></div></div>
-      <small>Sell limit: 20%</small>
+      <small>Sell</small>
     </div>
     <button onclick="confirmMarket()">Confirm</button>
   </div>
@@ -399,8 +399,8 @@ function show(id,el){
 
 function setSide(s){
   side=s;
-  btn-buy.classList.toggle("active",s==="buy");
-  btn-sell.classList.toggle("active",s==="sell");
+  btn.Buy.classList.toggle("active",s==="buy");
+  btn.Sell.classList.toggle("active",s==="sell");
 }
 
 amountInput.oninput=()=>{
