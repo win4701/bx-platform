@@ -155,26 +155,41 @@ def market_buy(order: MarketOrder):
     c.connection.commit()
 
     return {"ok": True}
-
 @app.post("/market/sell")
 def market_sell(order: MarketOrder):
     apply_mining(order.uid)
     w = get_wallet(order.uid)
 
-    if w["bx"] < order.amount:
-        raise HTTPException(400, "INSUFFICIENT_BX")
+    bx_balance = w["bx"]
+    sell_amount = float(order.amount)
 
-    gain = order.amount * BX_PRICE
+    if bx_balance <= 0:
+        raise HTTPException(400, "NO_BX")
+
+    # 🔒 Sell limit (20%)
+    max_sell = bx_balance * 0.20
+    if sell_amount > max_sell:
+        raise HTTPException(400, "SELL_LIMIT_20_PERCENT")
+
+    if sell_amount <= 0:
+        raise HTTPException(400, "INVALID_AMOUNT")
+
+    gain = sell_amount * BX_PRICE
 
     c = db().cursor()
     c.execute("""
         UPDATE wallets
-        SET bx=bx-?, usdt=usdt+?
-        WHERE uid=?
-    """, (order.amount, gain, order.uid))
+        SET bx = bx - ?, usdt = usdt + ?
+        WHERE uid = ?
+    """, (sell_amount, gain, order.uid))
+
     c.connection.commit()
 
-    return {"ok": True}
+    return {
+        "ok": True,
+        "sold": sell_amount,
+        "received": gain
+    }
 
 # ======================================================
 # WALLET
