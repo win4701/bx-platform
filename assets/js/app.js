@@ -2,7 +2,7 @@
    APP CORE
 ===================================================== */
 
-const API = ""; // نفس الدومين
+const API = ""; // same origin
 const UID =
   window.Telegram?.WebApp?.initDataUnsafe?.user?.id || "demo";
 
@@ -48,14 +48,14 @@ const STATE = {
 };
 
 /* =====================================================
-   UI RENDER
+   UI
 ===================================================== */
 
 const UI = {
   renderWallet() {
-    if (bx)   bx.textContent   = STATE.wallet.bx;
-    if (ton)  ton.textContent  = STATE.wallet.ton;
-    if (usdt) usdt.textContent = STATE.wallet.usdt;
+    if (window.bx)   bx.textContent   = STATE.wallet.bx;
+    if (window.ton)  ton.textContent  = STATE.wallet.ton;
+    if (window.usdt) usdt.textContent = STATE.wallet.usdt;
   },
 
   showSection(id) {
@@ -63,14 +63,38 @@ const UI = {
       .forEach(s => s.classList.remove("active"));
     const el = document.getElementById(id);
     if (el) el.classList.add("active");
+  },
 
-    document.querySelectorAll("nav .item")
-      .forEach(i => i.classList.remove("active"));
+  /* ---- Mining UI helpers ---- */
+  setMiningStatus(text){
+    const s = document.getElementById("miningStatus");
+    if (s) s.textContent = text;
+  },
+  updateMiningTimer(sec){
+    const t = document.getElementById("miningTimer");
+    if (!t) return;
+    const m = String(Math.max(sec,0)/60|0).padStart(2,"0");
+    const s = String(Math.max(sec,0)%60).padStart(2,"0");
+    t.textContent = `${m}:${s}`;
+  },
+  updateMiningProgress(r){
+    const f = document.getElementById("miningFill");
+    if (f) f.style.width = Math.min(r*100,100)+"%";
+  },
+  renderMiningHistory(list){
+    const h = document.getElementById("miningHistory");
+    if (!h) return;
+    h.innerHTML = list.map(i=>{
+      const r = Object.entries(i.rewards)
+        .map(([k,v])=>`+${v.toFixed(4)} ${k.toUpperCase()}`)
+        .join(" ");
+      return `<div>${i.ts} — ${r}</div>`;
+    }).join("");
   }
 };
 
 /* =====================================================
-   MARKET (Buy / Sell)
+   MARKET (Buy / Sell + Chart)
 ===================================================== */
 
 const MARKET = {
@@ -78,92 +102,22 @@ const MARKET = {
 
   setMode(m) {
     this.mode = m;
-    if (btnBuy && btnSell) {
+    if (window.btnBuy && window.btnSell) {
       btnBuy.classList.toggle("active", m === "buy");
       btnSell.classList.toggle("active", m === "sell");
     }
   },
 
-  calcTotal(amount, asset) {
-    if (!amount) return 0;
-    return asset === "ton"
-      ? amount * STATE.price.bx_ton
-      : amount * STATE.price.bx_usdt;
-  },
-
   async confirm(amount, asset) {
     if (!amount || amount <= 0) return;
-
-    await post(`/market/${this.mode}`, {
-      amount,
-      against: asset
-    });
-
+    await post(`/market/${this.mode}`, { amount, against: asset });
     await STATE.load();
-    CHART.tick(); // تحديث الرسم
+    CHART.tick();
   }
 };
 
 /* =====================================================
-   WALLET ACTIONS
-===================================================== */
-
-const WALLET = {
-  deposit(provider, amount = 10) {
-    return post("/wallet/deposit", { provider, amount })
-      .then(STATE.load);
-  },
-
-  withdraw(asset, amount, address) {
-    if (!amount || !address) return;
-    return post("/wallet/withdraw", {
-      asset, amount, address
-    }).then(STATE.load);
-  }
-};
-
-/* =====================================================
-   ANTI-ABUSE (Client)
-===================================================== */
-
-const COOLDOWN = {
-  _t: {},
-  allow(key, ms) {
-    const now = Date.now();
-    if (this._t[key] && now - this._t[key] < ms) return false;
-    this._t[key] = now;
-    return true;
-  }
-};
-
-/* =====================================================
-   CASINO (5 GAMES)
-===================================================== */
-
-const CASINO = {
-  async play(game, bet, extra = {}) {
-    if (!COOLDOWN.allow(`casino:${game}`, 1500))
-      throw new Error("COOLDOWN");
-
-    if (!bet || bet <= 0) throw new Error("INVALID_BET");
-
-    const res = await post("/casino/play", {
-      game, bet, ...extra
-    });
-
-    await STATE.load();
-    return res;
-  },
-
-  dice(bet)    { return this.play("dice", bet); },
-  crash(bet,x) { return this.play("crash", bet, { cashout:x }); },
-  slots(bet)   { return this.play("slots", bet); },
-  pvp(bet)     { return this.play("pvp", bet); },
-  chicken(bet) { return this.play("chicken", bet); }
-};
-
-/* =====================================================
-   MARKET CHART (Local / Internal)
+   MARKET CHART (Internal)
 ===================================================== */
 
 const CHART = {
@@ -204,69 +158,207 @@ const CHART = {
 };
 
 /* =====================================================
+   WALLET (Binance / RedotPay / TON)
+===================================================== */
+
+const WALLET = {
+  deposit(provider, amount){
+    if (!amount || amount <= 0) return;
+    return post("/wallet/deposit", {
+      provider,
+      amount: Number(amount)
+    }).then(STATE.load);
+  },
+
+  withdraw(provider, amount, address){
+    if (!amount || !address) return;
+    return post("/wallet/withdraw", {
+      provider,   // binance | redotpay | ton
+      amount: Number(amount),
+      address
+    }).then(STATE.load);
+  }
+};
+
+/* =====================================================
+   ANTI-ABUSE (Client)
+===================================================== */
+
+const COOLDOWN = {
+  _t: {},
+  allow(key, ms){
+    const now = Date.now();
+    if (this._t[key] && now - this._t[key] < ms) return false;
+    this._t[key] = now;
+    return true;
+  }
+};
+
+/* =====================================================
+   CASINO (5 Games)
+===================================================== */
+
+const CASINO = {
+  async play(game, bet, extra = {}) {
+    if (!COOLDOWN.allow(`casino:${game}`, 1500))
+      throw new Error("COOLDOWN");
+    if (!bet || bet <= 0)
+      throw new Error("INVALID_BET");
+
+    const res = await post("/casino/play", {
+      game, bet, ...extra
+    });
+
+    await STATE.load();
+    return res;
+  },
+
+  dice(b){ return this.play("dice", b); },
+  crash(b,x){ return this.play("crash", b, { cashout:x }); },
+  slots(b){ return this.play("slots", b); },
+  pvp(b){ return this.play("pvp", b); },
+  chicken(b){ return this.play("chicken", b); }
+};
+
+/* =====================================================
    AIRDROP
 ===================================================== */
 
 const AIRDROP = {
-  state: {
-    completed: 0,
-    total: 5,
-    claimable: false
-  },
+  state: { completed:0, total:5, claimable:false },
 
-  async load() {
+  async load(){
     const r = await get(`/airdrop/state?uid=${UID}`);
     this.state = r;
     this.render();
   },
 
-  async complete(taskId) {
+  async complete(taskId){
     await post("/airdrop/complete", { task_id: taskId });
     await this.load();
   },
 
-  async claim() {
+  async claim(){
     if (!this.state.claimable) return;
     await post("/airdrop/claim", {});
     await STATE.load();
     await this.load();
   },
 
-  render() {
+  render(){
     const p = document.getElementById("airdropProgress");
     const b = document.getElementById("airdropClaim");
+    const f = document.getElementById("airdropBar");
+
     if (p) p.textContent = `${this.state.completed}/${this.state.total}`;
     if (b) b.disabled = !this.state.claimable;
+    if (f) f.style.width =
+      (this.state.completed/this.state.total*100)+"%";
   }
 };
+
+/* =====================================================
+   MINING (BX + TON)
+===================================================== */
+
+const MINING = {
+  active:{ bx:false, ton:false },
+  rate:{ bx:0.02, ton:0.0003 },
+  plan:"silver",
+  interval:60,
+  lastTick:0,
+  timer:null,
+  history:[],
+
+  start(asset){
+    if (!COOLDOWN.allow("mining:start", 3000)) return;
+    this.active[asset] = true;
+    this.lastTick = Date.now();
+    this.loop();
+    UI.setMiningStatus("Running");
+  },
+
+  stop(asset){
+    this.active[asset] = false;
+    if (!this.active.bx && !this.active.ton){
+      clearInterval(this.timer);
+      this.timer = null;
+      UI.setMiningStatus("Stopped");
+    }
+  },
+
+  setPlan(p){ this.plan = p; },
+  multiplier(){ return this.plan === "gold" ? 2 : 1; },
+
+  loop(){
+    if (this.timer) return;
+    this.timer = setInterval(()=>this.tick(),1000);
+  },
+
+  async tick(){
+    const now = Date.now();
+    const elapsed = Math.floor((now-this.lastTick)/1000);
+    const left = this.interval - elapsed;
+
+    UI.updateMiningTimer(left);
+    UI.updateMiningProgress(elapsed/this.interval);
+
+    if (left>0) return;
+    this.lastTick = now;
+
+    const rewards = {};
+    if (this.active.bx)
+      rewards.bx = this.rate.bx*this.multiplier();
+    if (this.active.ton)
+      rewards.ton = this.rate.ton*this.multiplier();
+    if (!Object.keys(rewards).length) return;
+
+    await post("/mining/claim", rewards);
+    await STATE.load();
+
+    this.history.unshift({
+      ts:new Date().toLocaleTimeString(),
+      rewards
+    });
+    if (this.history.length>10) this.history.pop();
+    UI.renderMiningHistory(this.history);
+  }
+};
+
 /* =====================================================
    BOOT
 ===================================================== */
 
-document.addEventListener("DOMContentLoaded", async () => {
+document.addEventListener("DOMContentLoaded", async ()=>{
   await STATE.load();
   await AIRDROP.load();
   CHART.tick();
 });
+
 /* =====================================================
    EXPOSE (HTML CALLS)
 ===================================================== */
 
 window.App = {
-  show: UI.showSection,
-  marketBuy: () => MARKET.setMode("buy"),
-  marketSell: () => MARKET.setMode("sell"),
-  marketConfirm: (amount, asset) =>
-    MARKET.confirm(Number(amount), asset),
+  show:(id)=>UI.showSection(id),
 
-  deposit: (p,a) => WALLET.deposit(p,a),
-  withdraw: (asset, amount, addr) =>
-    WALLET.withdraw(asset, Number(amount), addr),
-  airdropTask: (id) => AIRDROP.complete(id),
-  airdropClaim: () => AIRDROP.claim(),
-  dice: (b)=>CASINO.dice(Number(b)),
+  marketBuy:()=>MARKET.setMode("buy"),
+  marketSell:()=>MARKET.setMode("sell"),
+  marketConfirm:(a,asset)=>MARKET.confirm(Number(a),asset),
+
+  deposit:(p,a)=>WALLET.deposit(p,a),
+  withdraw:(p,a,addr)=>WALLET.withdraw(p,a,addr),
+
+  dice:(b)=>CASINO.dice(Number(b)),
   crash:(b,x)=>CASINO.crash(Number(b),x),
   slots:(b)=>CASINO.slots(Number(b)),
   pvp:(b)=>CASINO.pvp(Number(b)),
-  chicken:(b)=>CASINO.chicken(Number(b))
+  chicken:(b)=>CASINO.chicken(Number(b)),
+
+  airdropTask:(id)=>AIRDROP.complete(id),
+  airdropClaim:()=>AIRDROP.claim(),
+
+  miningStart:(a)=>MINING.start(a),
+  miningStop:(a)=>MINING.stop(a),
+  miningPlan:(p)=>MINING.setPlan(p)
 };
