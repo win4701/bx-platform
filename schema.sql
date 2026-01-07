@@ -76,6 +76,36 @@ CREATE TABLE IF NOT EXISTS withdrawals (
   ts INTEGER
 );
 
+ -- Payment Proof
+CREATE TABLE payments (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+  user_id INTEGER NOT NULL,
+
+  provider TEXT NOT NULL,
+  -- ton | binance_pay | redotpay
+
+  asset TEXT NOT NULL,
+  -- ton | usdt
+
+  amount REAL NOT NULL,
+
+  proof_type TEXT NOT NULL,
+  -- txid | order_id | manual
+
+  proof_value TEXT NOT NULL,
+  -- tx hash OR Binance orderId OR admin note
+
+  status TEXT NOT NULL,
+  -- pending | confirmed | rejected
+
+  verified_by TEXT,
+  -- system | api | admin
+
+  created_at INTEGER NOT NULL,
+  confirmed_at INTEGER
+);
+
 -- AIRDROP (STATIC TASKS)
 CREATE TABLE IF NOT EXISTS airdrop_tasks (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
