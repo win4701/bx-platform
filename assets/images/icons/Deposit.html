@@ -6,7 +6,6 @@
 <title>Bloxio BX</title>
 
 <style>
-/* ================= THEME ================= */
 :root{
   --bg:#0b0f14;
   --panel:#121820;
@@ -17,7 +16,6 @@
   --text:#eaeaea;
   --muted:#9aa4b2;
 }
-
 *{box-sizing:border-box}
 body{
   margin:0;
@@ -28,8 +26,6 @@ body{
   flex-direction:column;
   height:100vh;
 }
-
-/* ================= HEADER ================= */
 header{
   padding:14px;
   text-align:center;
@@ -37,19 +33,17 @@ header{
   font-weight:600;
   font-size:18px;
 }
-
-/* ================= MAIN ================= */
 main{
   flex:1;
   padding:16px;
   overflow-y:auto;
 }
-
-/* ================= SECTIONS ================= */
-.section{display:none}
+.section{display:none;animation:fade .25s ease}
 .section.active{display:block}
-
-/* ================= CARDS ================= */
+@keyframes fade{
+  from{opacity:0;transform:translateY(6px)}
+  to{opacity:1;transform:none}
+}
 .card{
   background:linear-gradient(180deg,#121f1a,#0e1814);
   border:1px solid var(--border);
@@ -57,13 +51,7 @@ main{
   padding:16px;
   margin-bottom:16px;
 }
-
-h3{
-  margin:0 0 12px;
-  font-size:16px;
-}
-
-/* ================= WALLET ================= */
+h3{margin:0 0 12px;font-size:16px}
 .wallet-row{
   display:flex;
   justify-content:space-between;
@@ -71,9 +59,7 @@ h3{
   margin:8px 0;
 }
 .wallet-row img{width:26px}
-
-/* ================= FORMS ================= */
-button,input,select{
+input,select,button{
   width:100%;
   padding:12px;
   border-radius:12px;
@@ -82,20 +68,18 @@ button,input,select{
   color:#fff;
   margin-top:8px;
 }
-
 button{
   border:none;
   background:linear-gradient(135deg,var(--green),var(--green-soft));
   color:#00140a;
   font-weight:700;
+  cursor:pointer;
 }
 button.secondary{background:#3498db;color:#fff}
 button.warn{
   background:linear-gradient(135deg,#f7d774,#f1c40f);
   color:#2b1d00;
 }
-
-/* ================= MARKET ================= */
 .switch{
   display:flex;
   background:#0d1612;
@@ -112,10 +96,6 @@ button.warn{
   background:linear-gradient(135deg,var(--green),var(--green-soft));
   color:#00140a;
 }
-
-.sell-limit{
-  margin-top:12px;
-}
 .sell-limit .bar{
   height:6px;
   background:#0d1612;
@@ -124,15 +104,12 @@ button.warn{
 }
 .sell-limit .used{
   height:100%;
-  width:0%;
+  width:12%;
   background:linear-gradient(90deg,#f1c40f,#e67e22);
 }
-
-/* ================= NAV ================= */
 nav{
   display:flex;
   justify-content:space-around;
-  align-items:center;
   padding:10px 0;
   background:#0e141c;
   border-top:1px solid var(--border);
@@ -152,93 +129,93 @@ nav img{width:22px;margin-bottom:4px}
 
 <body>
 
-<!-- ================= HEADER ================= -->
 <header>Bloxio BX</header>
 
-<!-- ================= MAIN ================= -->
 <main>
 
-  <!-- ===== HOME / WALLET ===== -->
-  <section id="home" class="section active">
+<!-- HOME -->
+<section id="home" class="section active">
 
-    <!-- Balances -->
-    <div class="card">
-      <h3>Wallet</h3>
-      <div class="wallet-row"><img src="assets/images/icons/bx.png"> BX <span id="bx">0</span></div>
-      <div class="wallet-row"><img src="assets/images/icons/ton.png"> TON <span id="ton">0</span></div>
-      <div class="wallet-row"><img src="assets/images/icons/usdt.png"> USDT <span id="usdt">0</span></div>
+  <div class="card">
+    <h3>Wallet</h3>
+    <div class="wallet-row"><span>BX</span><span id="bx">0</span></div>
+    <div class="wallet-row"><span>TON</span><span id="ton">0</span></div>
+    <div class="wallet-row"><span>USDT</span><span id="usdt">0</span></div>
+  </div>
+
+  <div class="card">
+    <h3>Deposit</h3>
+    <button onclick="deposit('binance')">Binance</button>
+    <button onclick="deposit('redotpay')">RedotPay</button>
+    <button onclick="deposit('ton')">TON Transfer</button>
+  </div>
+
+  <div class="card">
+    <h3>Withdraw</h3>
+    <input id="withdrawAddress" placeholder="Address / Pay ID">
+    <input id="withdrawAmount" type="number" placeholder="Amount">
+    <select id="withdrawAsset">
+      <option value="ton">TON</option>
+      <option value="usdt">USDT</option>
+    </select>
+    <button class="warn" onclick="withdraw()">Withdraw</button>
+  </div>
+
+</section>
+
+<!-- MARKET -->
+<section id="market" class="section">
+  <div class="card">
+    <h3>Market</h3>
+    <div class="switch">
+      <button id="btn-buy" class="active" onclick="setSide('buy')">Buy</button>
+      <button id="btn-sell" onclick="setSide('sell')">Sell</button>
     </div>
-
-    <!-- Deposit -->
-    <div class="card">
-      <h3>Deposit</h3>
-      <button onclick="deposit('binance')">Binance</button>
-      <button onclick="deposit('redotpay')">RedotPay</button>
-      <button onclick="deposit('ton')">TON Transfer</button>
+    <input id="amountInput" type="number" placeholder="BX amount">
+    <div class="wallet-row"><span>Total</span><strong id="total">0.00</strong></div>
+    <div class="sell-limit">
+      <div class="bar"><div class="used"></div></div>
+      <small>Sell limit: 20%</small>
     </div>
+    <button onclick="confirmMarket()">Confirm</button>
+  </div>
+</section>
 
-    <!-- Withdraw -->
-    <div class="card">
-      <h3>Withdraw</h3>
-      <input id="withdrawAddress" placeholder="Address / Pay ID">
-      <input id="withdrawAmount" type="number" placeholder="Amount">
-      <select id="withdrawAsset">
-        <option value="ton">TON</option>
-        <option value="usdt">USDT</option>
-      </select>
-      <button class="warn" onclick="withdraw()">Withdraw</button>
-    </div>
+<!-- CASINO -->
+<section id="casino" class="section">
+  <div class="card"><h3>Casino</h3>🎰 🎲 🚀</div>
+</section>
 
-  </section>
+<!-- MINING -->
+<section id="mining" class="section">
+  <div class="card"><h3>Mining</h3>
+    <button class="secondary">Silver</button>
+    <button class="warn">Gold</button>
+  </div>
+</section>
 
-  <!-- ===== MARKET ===== -->
-  <section id="market" class="section">
-
-    <div class="card">
-      <h3>Market</h3>
-
-      <div class="switch">
-        <button id="btn-buy" class="active" onclick="setSide('buy')">Buy</button>
-        <button id="btn-sell" onclick="setSide('sell')">Sell</button>
-      </div>
-
-      <input id="amountInput" type="number" placeholder="BX amount">
-
-      <div class="wallet-row">
-        <span>Total</span>
-        <strong id="total">0.00</strong>
-      </div>
-
-      <div class="sell-limit">
-        <div class="bar"><div class="used" id="sellUsed"></div></div>
-        <small>Sell limit: 20%</small>
-      </div>
-
-      <button onclick="confirmMarket()">Confirm</button>
-    </div>
-
-  </section>
+<!-- AIRDROP -->
+<section id="airdrop" class="section">
+  <div class="card"><h3>Airdrop</h3>
+    <button>Claim</button>
+  </div>
+</section>
 
 </main>
 
-<!-- ================= NAV ================= -->
 <nav>
-  <div class="item active" onclick="show('home',this)">
-    <img src="assets/images/icons/home.png">Home
-  </div>
-  <div class="item" onclick="show('market',this)">
-    <img src="assets/images/icons/market.png">Market
-  </div>
+  <div class="item active" onclick="show('home',this)">Home</div>
+  <div class="item" onclick="show('market',this)">Market</div>
+  <div class="item" onclick="show('casino',this)">Casino</div>
+  <div class="item" onclick="show('mining',this)">Mining</div>
+  <div class="item" onclick="show('airdrop',this)">Airdrop</div>
 </nav>
 
-<!-- ================= SCRIPT ================= -->
 <script>
-/* ===== CONFIG ===== */
-const uid = 1;
-const price = 0.955489564;
-let side = "buy";
+const uid=1;
+const price=0.955489564;
+let side="buy";
 
-/* ===== NAV ===== */
 function show(id,el){
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
@@ -246,54 +223,32 @@ function show(id,el){
   el.classList.add('active');
 }
 
-/* ===== LOAD WALLET ===== */
-async function loadState(){
-  const r = await fetch(`/state?uid=${uid}`);
-  const d = await r.json();
-  bx.textContent = d.bx;
-  ton.textContent = d.ton;
-  usdt.textContent = d.usdt;
-}
-loadState();
-
-/* ===== MARKET ===== */
 function setSide(s){
-  side = s;
-  btn-buy.classList.toggle("active", s==="buy");
-  btn-sell.classList.toggle("active", s==="sell");
+  side=s;
+  btn-buy.classList.toggle("active",s==="buy");
+  btn-sell.classList.toggle("active",s==="sell");
 }
 
-amountInput.oninput = ()=>{
-  total.textContent = (amountInput.value * price).toFixed(4);
+amountInput.oninput=()=>{
+  total.textContent=(amountInput.value*price).toFixed(4);
 };
 
 async function confirmMarket(){
   await fetch(`/market/${side}`,{
     method:"POST",
     headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({
-      uid,
-      amount:Number(amountInput.value),
-      against:"ton"
-    })
+    body:JSON.stringify({uid,amount:+amountInput.value})
   });
-  loadState();
 }
 
-/* ===== DEPOSIT ===== */
 async function deposit(provider){
   await fetch("/wallet/deposit",{
     method:"POST",
     headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({
-      uid,
-      provider,
-      amount:10
-    })
+    body:JSON.stringify({uid,provider,amount:10})
   });
 }
 
-/* ===== WITHDRAW ===== */
 async function withdraw(){
   await fetch("/wallet/withdraw",{
     method:"POST",
@@ -301,15 +256,11 @@ async function withdraw(){
     body:JSON.stringify({
       uid,
       asset:withdrawAsset.value,
-      amount:Number(withdrawAmount.value),
+      amount:+withdrawAmount.value,
       address:withdrawAddress.value
     })
   });
-  loadState();
 }
-
-/* ===== SELL LIMIT VISUAL ===== */
-sellUsed.style.width = "12%";
 </script>
 
 </body>
