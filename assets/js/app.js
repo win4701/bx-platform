@@ -262,7 +262,8 @@ window.App = {
   deposit: (p,a) => WALLET.deposit(p,a),
   withdraw: (asset, amount, addr) =>
     WALLET.withdraw(asset, Number(amount), addr),
-
+  airdropTask: (id) => AIRDROP.complete(id),
+  airdropClaim: () => AIRDROP.claim(),
   dice: (b)=>CASINO.dice(Number(b)),
   crash:(b,x)=>CASINO.crash(Number(b),x),
   slots:(b)=>CASINO.slots(Number(b)),
