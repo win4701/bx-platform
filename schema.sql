@@ -44,16 +44,12 @@ CREATE TABLE IF NOT EXISTS trades (
 
 -- CASINO
 CREATE TABLE IF NOT EXISTS casino_rounds(
- id INTEGER PRIMARY KEY,
- user_id INTEGER,
- game TEXT,
- bet REAL,
- win INTEGER,
- payout REAL,
- roll INTEGER,
- burn REAL,
- seed TEXT,
- ts INTEGER
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    uid INTEGER,
+    game TEXT,
+    bet REAL,
+    win INTEGER,
+    ts INTEGER
 );
   
 -- DEPOSITS
