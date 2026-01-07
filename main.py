@@ -1,30 +1,28 @@
-from fastapi import FastAPI, Request, HTTPException
-from fastapi.responses import FileResponse, JSONResponse
+import os
+import time
+import random
+import sqlite3
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-import sqlite3, os, time, random, logging, hmac, hashlib, urllib.parse
+from pydantic import BaseModel, Field
+import uvicorn
 
-# ===============================
+# ======================================================
 # CONFIG
-# ===============================
+# ======================================================
 DB_PATH = "db.sqlite"
-BOT_TOKEN = os.environ.get("BOT_TOKEN", "DEV_TOKEN")
-
-PRICE = {
-    "ton": 0.955489564,
-    "usdt": 0.717872729
-}
+BX_PRICE = 0.955489564
 
 MINING_RATE = {
-    "bx": 0.001,        # per second
+    "bx": 0.001,      # per second
     "ton": 0.00002
 }
 
-RATE_LIMIT = 40  # req / minute
-
-# ===============================
+# ======================================================
 # APP
-# ===============================
-app = FastAPI()
+# ======================================================
+app = FastAPI(title="Bloxio MiniApp API", version="1.0.0")
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -32,249 +30,239 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s | %(levelname)s | %(message)s"
-)
-
-# ===============================
+# ======================================================
 # DATABASE
-# ===============================
+# ======================================================
 def db():
     return sqlite3.connect(DB_PATH, check_same_thread=False)
 
 def init_db():
     c = db().cursor()
     c.executescript("""
-    CREATE TABLE IF NOT EXISTS users(
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        tg_id TEXT UNIQUE,
-        created INTEGER
-    );
-
     CREATE TABLE IF NOT EXISTS wallets(
-        user_id INTEGER,
-        bx REAL,
-        ton REAL,
-        usdt REAL
+        uid INTEGER PRIMARY KEY,
+        bx REAL DEFAULT 0,
+        ton REAL DEFAULT 0,
+        usdt REAL DEFAULT 0
     );
 
     CREATE TABLE IF NOT EXISTS mining(
-        user_id INTEGER,
+        uid INTEGER PRIMARY KEY,
         last_claim INTEGER
     );
     """)
     c.connection.commit()
 
-def ensure_user(tg_id: str) -> int:
+def ensure_user(uid: int):
     c = db().cursor()
-    r = c.execute("SELECT id FROM users WHERE tg_id=?", (tg_id,)).fetchone()
-    if r:
-        return r[0]
 
-    now = int(time.time())
-    c.execute("INSERT INTO users VALUES(NULL,?,?)", (tg_id, now))
-    uid = c.lastrowid
-    c.execute("INSERT INTO wallets VALUES(?,?,?,?)", (uid, 0, 0, 0))
-    c.execute("INSERT INTO mining VALUES(?,?)", (uid, now))
-    c.connection.commit()
-    return uid
+    if not c.execute("SELECT 1 FROM wallets WHERE uid=?", (uid,)).fetchone():
+        now = int(time.time())
+        c.execute("INSERT INTO wallets VALUES(?,?,?,?)", (uid, 0, 0, 0))
+        c.execute("INSERT INTO mining VALUES(?,?)", (uid, now))
+        c.connection.commit()
+
+def get_wallet(uid: int):
+    ensure_user(uid)
+    c = db().cursor()
+    bx, ton, usdt = c.execute(
+        "SELECT bx,ton,usdt FROM wallets WHERE uid=?", (uid,)
+    ).fetchone()
+    return {"bx": bx, "ton": ton, "usdt": usdt}
 
 init_db()
 
-# ===============================
-# SECURITY — TELEGRAM
-# ===============================
-def verify_telegram(init_data: str) -> bool:
-    if not init_data:
-        return False
-    try:
-        data = dict(urllib.parse.parse_qsl(init_data))
-        hash_ = data.pop("hash")
-        check = "\n".join(f"{k}={v}" for k, v in sorted(data.items()))
-        secret = hashlib.sha256(BOT_TOKEN.encode()).digest()
-        h = hmac.new(secret, check.encode(), hashlib.sha256).hexdigest()
-        return h == hash_
-    except Exception:
-        return False
-
-# ===============================
-# RATE LIMIT
-# ===============================
-REQUESTS = {}
-
-def rate_limit(key: str):
-    now = int(time.time())
-    window = REQUESTS.get(key, [])
-    window = [t for t in window if now - t < 60]
-
-    if len(window) >= RATE_LIMIT:
-        raise HTTPException(429, "RATE_LIMIT")
-
-    window.append(now)
-    REQUESTS[key] = window
-
-# ===============================
+# ======================================================
 # MINING
-# ===============================
+# ======================================================
 def apply_mining(uid: int):
-    now = int(time.time())
     c = db().cursor()
+    now = int(time.time())
+
     last = c.execute(
-        "SELECT last_claim FROM mining WHERE user_id=?",
-        (uid,)
+        "SELECT last_claim FROM mining WHERE uid=?", (uid,)
     ).fetchone()[0]
 
-    elapsed = now - last
-    if elapsed <= 0:
+    elapsed = max(0, now - last)
+    if elapsed == 0:
         return
 
     gain_bx = elapsed * MINING_RATE["bx"]
     gain_ton = elapsed * MINING_RATE["ton"]
 
+    c.execute("""
+        UPDATE wallets
+        SET bx=bx+?, ton=ton+?
+        WHERE uid=?
+    """, (gain_bx, gain_ton, uid))
+
     c.execute(
-        "UPDATE wallets SET bx=bx+?, ton=ton+? WHERE user_id=?",
-        (gain_bx, gain_ton, uid)
-    )
-    c.execute(
-        "UPDATE mining SET last_claim=? WHERE user_id=?",
+        "UPDATE mining SET last_claim=? WHERE uid=?",
         (now, uid)
     )
     c.connection.commit()
 
-# ===============================
-# MIDDLEWARE
-# ===============================
-@app.middleware("http")
-async def guard(request: Request, call_next):
-    path = request.url.path
-    if path.startswith(("/state", "/market", "/casino")):
-        init_data = request.headers.get("X-TG-INIT", "")
-        if not verify_telegram(init_data):
-            return JSONResponse({"error": "TG_AUTH_FAILED"}, status_code=403)
+# ======================================================
+# MODELS (MATCH Deposit.html 100%)
+# ======================================================
+class MarketOrder(BaseModel):
+    uid: int
+    amount: float = Field(gt=0)
 
-        uid = request.query_params.get("uid") or request.query_params.get("tg_id")
-        if uid:
-            rate_limit(f"{uid}:{request.client.host}")
+class DepositReq(BaseModel):
+    uid: int
+    provider: str
+    amount: float = Field(gt=0)
 
-    return await call_next(request)
+class WithdrawReq(BaseModel):
+    uid: int
+    asset: str
+    amount: float = Field(gt=0)
+    address: str
 
-# ===============================
-# FRONTEND
-# ===============================
-@app.get("/")
-def index():
-    return FileResponse("index.html")
+class CasinoReq(BaseModel):
+    uid: int
 
-# ===============================
-# STATE
-# ===============================
+class MiningReq(BaseModel):
+    uid: int
+
+# ======================================================
+# STATE (Wallet Refresh)
+# ======================================================
 @app.get("/state")
-def state(tg_id: str):
-    uid = ensure_user(tg_id)
+def state(uid: int):
     apply_mining(uid)
+    return get_wallet(uid)
 
-    c = db().cursor()
-    bx, ton, usdt = c.execute(
-        "SELECT bx,ton,usdt FROM wallets WHERE user_id=?",
-        (uid,)
-    ).fetchone()
-
-    return {
-        "wallet": {
-            "bx": round(bx, 6),
-            "ton": round(ton, 6),
-            "usdt": round(usdt, 6)
-        }
-    }
-
-# ===============================
-# MARKET BUY
-# ===============================
+# ======================================================
+# MARKET
+# ======================================================
 @app.post("/market/buy")
-def market_buy(uid: str, amount: float, pay: str):
-    if pay not in PRICE or amount <= 0:
-        raise HTTPException(400, "INVALID")
+def market_buy(order: MarketOrder):
+    apply_mining(order.uid)
+    w = get_wallet(order.uid)
 
-    user = ensure_user(uid)
-    apply_mining(user)
-
-    price = PRICE[pay]
-    cost = amount * price
+    cost = order.amount * BX_PRICE
+    if w["usdt"] < cost:
+        raise HTTPException(400, "INSUFFICIENT_USDT")
 
     c = db().cursor()
-    bal = c.execute(
-        f"SELECT {pay} FROM wallets WHERE user_id=?",
-        (user,)
-    ).fetchone()[0]
-
-    if bal < cost:
-        raise HTTPException(403, "NO_FUNDS")
-
-    c.execute(
-        f"UPDATE wallets SET {pay}={pay}-?, bx=bx+? WHERE user_id=?",
-        (cost, amount, user)
-    )
+    c.execute("""
+        UPDATE wallets
+        SET usdt=usdt-?, bx=bx+?
+        WHERE uid=?
+    """, (cost, order.amount, order.uid))
     c.connection.commit()
 
-    logging.info(f"BUY uid={uid} bx={amount} via {pay}")
     return {"ok": True}
 
-# ===============================
-# MARKET SELL
-# ===============================
 @app.post("/market/sell")
-def market_sell(uid: str, bx: float, to: str):
-    if to not in PRICE or bx <= 0:
-        raise HTTPException(400, "INVALID")
+def market_sell(order: MarketOrder):
+    apply_mining(order.uid)
+    w = get_wallet(order.uid)
 
-    user = ensure_user(uid)
-    apply_mining(user)
+    if w["bx"] < order.amount:
+        raise HTTPException(400, "INSUFFICIENT_BX")
+
+    gain = order.amount * BX_PRICE
 
     c = db().cursor()
-    bal = c.execute(
-        "SELECT bx FROM wallets WHERE user_id=?",
-        (user,)
-    ).fetchone()[0]
-
-    if bal < bx:
-        raise HTTPException(403, "NO_BX")
-
-    payout = bx * PRICE[to]
-
-    c.execute(
-        f"UPDATE wallets SET bx=bx-?, {to}={to}+? WHERE user_id=?",
-        (bx, payout, user)
-    )
+    c.execute("""
+        UPDATE wallets
+        SET bx=bx-?, usdt=usdt+?
+        WHERE uid=?
+    """, (order.amount, gain, order.uid))
     c.connection.commit()
 
-    logging.info(f"SELL uid={uid} bx={bx} to {to}")
     return {"ok": True}
 
-# ===============================
-# CASINO
-# ===============================
-@app.post("/casino/v3/play")
-def casino_play(uid: str, game: str, bet: float = 1):
-    user = ensure_user(uid)
-    apply_mining(user)
+# ======================================================
+# WALLET
+# ======================================================
+@app.post("/wallet/deposit")
+def deposit(req: DepositReq):
+    ensure_user(req.uid)
 
-    reward = random.choice([0, 1, 2])
+    if req.provider in ("binance", "redotpay"):
+        asset = "usdt"
+    elif req.provider == "ton":
+        asset = "ton"
+    else:
+        raise HTTPException(400, "INVALID_PROVIDER")
 
     c = db().cursor()
     c.execute(
-        "UPDATE wallets SET bx=bx+? WHERE user_id=?",
-        (reward, user)
+        f"UPDATE wallets SET {asset}={asset}+? WHERE uid=?",
+        (req.amount, req.uid)
     )
     c.connection.commit()
 
-    logging.info(f"CASINO uid={uid} game={game} reward={reward}")
-    return {"game": game, "reward": reward}
+    return {"ok": True}
 
-# ===============================
-# ENTRYPOINT (Render)
-# ===============================
+@app.post("/wallet/withdraw")
+def withdraw(req: WithdrawReq):
+    apply_mining(req.uid)
+    w = get_wallet(req.uid)
+
+    if req.asset not in ("ton", "usdt"):
+        raise HTTPException(400, "INVALID_ASSET")
+
+    if w[req.asset] < req.amount:
+        raise HTTPException(400, "INSUFFICIENT_BALANCE")
+
+    c = db().cursor()
+    c.execute(
+        f"UPDATE wallets SET {req.asset}={req.asset}-? WHERE uid=?",
+        (req.amount, req.uid)
+    )
+    c.connection.commit()
+
+    return {"ok": True}
+
+# ======================================================
+# CASINO
+# ======================================================
+@app.post("/casino/play")
+def casino_play(req: CasinoReq):
+    apply_mining(req.uid)
+
+    reward = random.choice([0, 0, 1, 2])
+
+    c = db().cursor()
+    c.execute(
+        "UPDATE wallets SET bx=bx+? WHERE uid=?",
+        (reward, req.uid)
+    )
+    c.connection.commit()
+
+    return {"reward": reward}
+
+# ======================================================
+# AIRDROP
+# ======================================================
+@app.post("/airdrop/claim")
+def airdrop(uid: int):
+    c = db().cursor()
+    c.execute(
+        "UPDATE wallets SET bx=bx+5 WHERE uid=?",
+        (uid,)
+    )
+    c.connection.commit()
+    return {"ok": True, "reward": 5}
+
+# ======================================================
+# HEALTH (Render)
+# ======================================================
+@app.get("/")
+def root():
+    return {"status": "running"}
+
+# ======================================================
+# RUN (Render Safe)
+# ======================================================
 if __name__ == "__main__":
-    import uvicorn
-    port = int(os.environ.get("PORT", 10000))
-    uvicorn.run("main:app", host="0.0.0.0", port=port)
+    uvicorn.run(
+        "main:app",
+        host="0.0.0.0",
+        port=int(os.environ.get("PORT", 10000)),
+    )
