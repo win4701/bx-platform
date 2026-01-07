@@ -245,9 +245,9 @@ const AIRDROP = {
 
 document.addEventListener("DOMContentLoaded", async () => {
   await STATE.load();
+  await AIRDROP.load();
   CHART.tick();
 });
-
 /* =====================================================
    EXPOSE (HTML CALLS)
 ===================================================== */
