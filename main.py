@@ -237,21 +237,80 @@ def withdraw(req: WithdrawReq):
 # ======================================================
 # CASINO
 # ======================================================
-@app.post("/casino/play")
+@@app.post("/casino/play")
 def casino_play(req: CasinoReq):
-    apply_mining(req.uid)
+    ensure_user(req.uid)
 
-    reward = random.choice([0, 0, 1, 2])
+    if not casino_cooldown(req.uid):
+        raise HTTPException(429, "COOLDOWN")
+
+    if req.game not in HOUSE_EDGE:
+        raise HTTPException(400, "INVALID_GAME")
+
+    if req.bet <= 0:
+        raise HTTPException(400, "INVALID_BET")
 
     c = db().cursor()
-    c.execute(
-        "UPDATE wallets SET bx=bx+? WHERE uid=?",
-        (reward, req.uid)
-    )
+    c.execute("SELECT bx FROM wallets WHERE uid=?", (req.uid,))
+    row = c.fetchone()
+    if not row or row[0] < req.bet:
+        raise HTTPException(400, "INSUFFICIENT_BX")
+
+    # خصم الرهان
+    c.execute("UPDATE wallets SET bx=bx-? WHERE uid=?", (req.bet, req.uid))
+
+    win = False
+    payout = 0.0
+    edge = HOUSE_EDGE[req.game]
+
+    # -------- GAME LOGIC --------
+    if req.game == "dice":
+        # 50/50 تقريبًا مع edge
+        win = random.random() > (0.5 + edge)
+        payout = req.bet * 2 if win else 0
+
+    elif req.game == "slots":
+        win = random.random() > (0.85 + edge)
+        payout = req.bet * random.choice([3,5,10]) if win else 0
+
+    elif req.game == "pvp":
+        win = random.random() > (0.5 + edge)
+        payout = req.bet * 2 if win else 0
+
+    elif req.game == "chicken":
+        win = random.random() > (0.7 + edge)
+        payout = req.bet * 1.5 if win else 0
+
+    elif req.game == "crash":
+        if not req.cashout or req.cashout < 1.1:
+            raise HTTPException(400, "INVALID_CASHOUT")
+        # احتمال الكراش قبل الكاش أوت
+        crash_point = random.uniform(1.0, 5.0)
+        win = crash_point >= req.cashout
+        payout = req.bet * req.cashout if win else 0
+
+    # -------- APPLY RESULT --------
+    if win and payout > 0:
+        c.execute(
+            "UPDATE wallets SET bx=bx+? WHERE uid=?",
+            (payout, req.uid)
+        )
+
+    # تسجيل الجولة
+    c.execute("""
+        INSERT INTO casino_rounds (uid, game, bet, win, ts)
+        VALUES (?,?,?,?,?)
+    """, (req.uid, req.game, req.bet, int(win), int(time.time())))
+
     c.connection.commit()
 
-    return {"reward": reward}
-
+    return {
+        "ok": True,
+        "game": req.game,
+        "win": win,
+        "bet": req.bet,
+        "payout": round(payout, 6)
+    }
 # ======================================================
 # AIRDROP
 # ======================================================
