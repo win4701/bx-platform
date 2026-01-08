@@ -181,3 +181,49 @@ CREATE TABLE IF NOT EXISTS whale_withdrawals (
 
   FOREIGN KEY(user_id) REFERENCES users(id)
 );
+-- =====================================================
+-- BNB DEPOSITS (BEP20 – On-chain)
+-- =====================================================
+CREATE TABLE IF NOT EXISTS bnb_deposits (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER,
+  tx_hash TEXT UNIQUE,
+  amount REAL,
+  status TEXT,        -- confirmed
+  ts INTEGER,
+  FOREIGN KEY(user_id) REFERENCES users(id)
+);
+
+-- =====================================================
+-- BNB WITHDRAWALS (BEP20 – On-chain)
+-- =====================================================
+CREATE TABLE IF NOT EXISTS bnb_withdrawals (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER,
+  amount REAL,
+  address TEXT,
+  tx_hash TEXT,
+  status TEXT,        -- pending | sent | failed
+  ts INTEGER,
+  FOREIGN KEY(user_id) REFERENCES users(id)
+);
+
+-- =====================================================
+-- BNB WITHDRAW LIMITS (Monthly)
+-- =====================================================
+CREATE TABLE IF NOT EXISTS bnb_withdraw_limits (
+  user_id INTEGER,
+  month TEXT,
+  withdrawn REAL DEFAULT 0,
+  PRIMARY KEY (user_id, month)
+);
+
+-- =====================================================
+-- AUDIT LOGS
+-- =====================================================
+CREATE TABLE IF NOT EXISTS audit_logs (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  action TEXT,
+  meta TEXT,
+  ts INTEGER
+);
