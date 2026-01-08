@@ -182,6 +182,21 @@ CREATE TABLE IF NOT EXISTS whale_withdrawals (
   FOREIGN KEY(user_id) REFERENCES users(id)
 );
 -- =====================================================
+-- ADD BNB TO WALLETS
+-- =====================================================
+ALTER TABLE wallets ADD COLUMN bnb REAL DEFAULT 0;
+
+-- =====================================================
+-- SUBSCRIPTIONS (FINAL)
+-- =====================================================
+CREATE TABLE IF NOT EXISTS subscriptions (
+  user_id INTEGER PRIMARY KEY,
+  tier TEXT CHECK(tier IN ('free','silver','gold','platinum')) DEFAULT 'free',
+  activated_at INTEGER,
+  expires_at INTEGER
+);
+
+-- =====================================================
 -- BNB DEPOSITS (BEP20 – On-chain)
 -- =====================================================
 CREATE TABLE IF NOT EXISTS bnb_deposits (
@@ -189,9 +204,8 @@ CREATE TABLE IF NOT EXISTS bnb_deposits (
   user_id INTEGER,
   tx_hash TEXT UNIQUE,
   amount REAL,
-  status TEXT,        -- confirmed
-  ts INTEGER,
-  FOREIGN KEY(user_id) REFERENCES users(id)
+  status TEXT,
+  ts INTEGER
 );
 
 -- =====================================================
@@ -203,13 +217,12 @@ CREATE TABLE IF NOT EXISTS bnb_withdrawals (
   amount REAL,
   address TEXT,
   tx_hash TEXT,
-  status TEXT,        -- pending | sent | failed
-  ts INTEGER,
-  FOREIGN KEY(user_id) REFERENCES users(id)
+  status TEXT,
+  ts INTEGER
 );
 
 -- =====================================================
--- BNB WITHDRAW LIMITS (Monthly)
+-- BNB WITHDRAW LIMITS (MONTHLY)
 -- =====================================================
 CREATE TABLE IF NOT EXISTS bnb_withdraw_limits (
   user_id INTEGER,
