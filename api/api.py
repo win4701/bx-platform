@@ -1,258 +1,246 @@
+import os
+import time
+import random
+import sqlite3
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-import sqlite3, time, random
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel, Field
+import uvicorn
 
-app = FastAPI()
+# ======================================================
+# CONFIG (FROM ENV)
+# ======================================================
+DB_PATH = os.getenv("DB_PATH", "db.sqlite")
 
-DB = "db.sqlite"
+BX_PRICE = float(os.getenv("BX_PRICE", "0.95"))
 
-def db():
-    return sqlite3.connect(DB, check_same_thread=False)
-
-def ensure_user(uid: str):
-    c = db().cursor()
-    c.execute("INSERT OR IGNORE INTO users(uid) VALUES(?)", (uid,))
-    c.execute("INSERT OR IGNORE INTO wallets(uid) VALUES(?)", (uid,))
-    c.connection.commit()
-
-# ================== CONSTANTS ==================
-
-BX_TON = 0.955489564
-BX_USDT = 0.717872729
-
-HOUSE_EDGE = {
-    "dice": 0.03,
-    "crash": 0.04,
-    "slots": 0.06,
-    "pvp": 0.02,
-    "chicken": 0.05
+MINING_RATE = {
+    "bx": float(os.getenv("MINING_RATE_BX", "0.001")),
+    "ton": float(os.getenv("MINING_RATE_TON", "0.00002")),
 }
 
-# ================== MODELS ==================
+HOUSE_EDGE = {
+    "dice": float(os.getenv("HOUSE_EDGE_DICE", "0.02")),
+    "slots": float(os.getenv("HOUSE_EDGE_SLOTS", "0.05")),
+    "pvp": float(os.getenv("HOUSE_EDGE_PVP", "0.03")),
+    "chicken": float(os.getenv("HOUSE_EDGE_CHICKEN", "0.04")),
+    "crash": float(os.getenv("HOUSE_EDGE_CRASH", "0.02")),
+}
 
-class BaseReq(BaseModel):
-    uid: str
+# ======================================================
+# APP
+# ======================================================
+app = FastAPI(title="BX Platform API", version="1.1.0")
 
-class MarketReq(BaseReq):
-    amount: float
-    against: str   # ton | usdt
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-class DepositReq(BaseReq):
-    provider: str  # binance | redotpay | ton
-    amount: float
+# ======================================================
+# DATABASE
+# ======================================================
+def db():
+    conn = sqlite3.connect(DB_PATH, check_same_thread=False)
+    conn.row_factory = sqlite3.Row
+    return conn
 
-class WithdrawReq(BaseReq):
-    provider: str
-    amount: float
-    address: str
+def init_db():
+    c = db().cursor()
+    c.executescript("""
+    CREATE TABLE IF NOT EXISTS wallets(
+        uid INTEGER PRIMARY KEY,
+        bx REAL DEFAULT 0,
+        ton REAL DEFAULT 0,
+        usdt REAL DEFAULT 0
+    );
 
-class CasinoReq(BaseReq):
-    game: str
-    bet: float
-    cashout: float | None = None
+    CREATE TABLE IF NOT EXISTS mining(
+        uid INTEGER PRIMARY KEY,
+        last_claim INTEGER
+    );
+    """)
+    c.connection.commit()
 
-class MiningReq(BaseReq):
-    bx: float | None = None
-    ton: float | None = None
+def ensure_user(uid: int):
+    c = db().cursor()
+    if not c.execute("SELECT 1 FROM wallets WHERE uid=?", (uid,)).fetchone():
+        now = int(time.time())
+        c.execute("INSERT INTO wallets VALUES (?,?,?,?)", (uid, 0, 0, 0))
+        c.execute("INSERT INTO mining VALUES (?,?)", (uid, now))
+        c.connection.commit()
 
-class AirdropTaskReq(BaseReq):
-    task_id: int
-
-# ================== STATE ==================
-
-@app.get("/state")
-def get_state(uid: str):
+def get_wallet(uid: int):
     ensure_user(uid)
     c = db().cursor()
-    c.execute("SELECT bx, ton, usdt FROM wallets WHERE uid=?", (uid,))
-    bx, ton, usdt = c.fetchone()
-    return {"bx": bx, "ton": ton, "usdt": usdt}
+    r = c.execute(
+        "SELECT bx, ton, usdt FROM wallets WHERE uid=?",
+        (uid,)
+    ).fetchone()
+    return dict(r)
 
-# ================== WALLET ==================
+init_db()
 
-@app.post("/wallet/deposit")
-def deposit(req: DepositReq):
-    ensure_user(req.uid)
-    asset = "usdt" if req.provider in ("binance", "redotpay") else "ton"
+# ======================================================
+# MINING
+# ======================================================
+def apply_mining(uid: int):
     c = db().cursor()
-    c.execute(f"UPDATE wallets SET {asset}={asset}+? WHERE uid=?",
-              (req.amount, req.uid))
-    c.connection.commit()
-    return {"ok": True}
+    now = int(time.time())
+    last = c.execute(
+        "SELECT last_claim FROM mining WHERE uid=?",
+        (uid,)
+    ).fetchone()[0]
 
-@app.post("/wallet/withdraw")
-def withdraw(req: WithdrawReq):
-    ensure_user(req.uid)
-    asset = "usdt" if req.provider in ("binance", "redotpay") else "ton"
-    c = db().cursor()
-    c.execute(f"SELECT {asset} FROM wallets WHERE uid=?", (req.uid,))
-    bal = c.fetchone()[0]
-    if bal < req.amount:
-        raise HTTPException(400, "INSUFFICIENT_FUNDS")
-    c.execute(f"UPDATE wallets SET {asset}={asset}-? WHERE uid=?",
-              (req.amount, req.uid))
-    c.connection.commit()
-    return {"ok": True}
+    elapsed = max(0, now - last)
+    if elapsed == 0:
+        return
 
-# ================== MARKET ==================
-
-@app.post("/market/buy")
-def market_buy(req: MarketReq):
-    ensure_user(req.uid)
-    price = BX_TON if req.against == "ton" else BX_USDT
-    c = db().cursor()
-    c.execute(f"SELECT {req.against} FROM wallets WHERE uid=?", (req.uid,))
-    bal = c.fetchone()[0]
-    cost = req.amount * price
-    if bal < cost:
-        raise HTTPException(400, "NO_FUNDS")
-    c.execute(f"""
+    c.execute("""
         UPDATE wallets
-        SET {req.against}={req.against}-?, bx=bx+?
-        WHERE uid=?
-    """, (cost, req.amount, req.uid))
+        SET bx = bx + ?, ton = ton + ?
+        WHERE uid = ?
+    """, (
+        elapsed * MINING_RATE["bx"],
+        elapsed * MINING_RATE["ton"],
+        uid
+    ))
+
+    c.execute(
+        "UPDATE mining SET last_claim=? WHERE uid=?",
+        (now, uid)
+    )
     c.connection.commit()
-    return {"ok": True}
+
+# ======================================================
+# MODELS
+# ======================================================
+class MarketOrder(BaseModel):
+    uid: int
+    amount: float = Field(gt=0)
+
+class CasinoReq(BaseModel):
+    uid: int
+    game: str
+    bet: float = Field(gt=0)
+
+# ======================================================
+# STATE
+# ======================================================
+@app.get("/state")
+def state(uid: int):
+    apply_mining(uid)
+    return get_wallet(uid)
+
+# ======================================================
+# MARKET (INTERNAL PRICE LAYER)
+# ======================================================
+@app.post("/market/buy")
+def market_buy(order: MarketOrder):
+    apply_mining(order.uid)
+    w = get_wallet(order.uid)
+
+    cost = order.amount * BX_PRICE
+    if w["usdt"] < cost:
+        raise HTTPException(400, "INSUFFICIENT_USDT")
+
+    c = db().cursor()
+    c.execute("""
+        UPDATE wallets
+        SET usdt = usdt - ?, bx = bx + ?
+        WHERE uid = ?
+    """, (cost, order.amount, order.uid))
+    c.connection.commit()
+
+    return {"ok": True, "price": BX_PRICE}
 
 @app.post("/market/sell")
-def market_sell(req: MarketReq):
-    ensure_user(req.uid)
+def market_sell(order: MarketOrder):
+    apply_mining(order.uid)
+    w = get_wallet(order.uid)
+
+    if w["bx"] < order.amount:
+        raise HTTPException(400, "INSUFFICIENT_BX")
+
+    # safety limit 20%
+    if order.amount > w["bx"] * 0.2:
+        raise HTTPException(400, "SELL_LIMIT_20_PERCENT")
+
+    gain = order.amount * BX_PRICE
+
     c = db().cursor()
-    c.execute("SELECT bx FROM wallets WHERE uid=?", (req.uid,))
-    bx = c.fetchone()[0]
-    if req.amount > bx * 0.2:
-        raise HTTPException(400, "SELL_LIMIT")
-    gain = req.amount * (BX_TON if req.against == "ton" else BX_USDT)
-    c.execute(f"""
+    c.execute("""
         UPDATE wallets
-        SET bx=bx-?, {req.against}={req.against}+?
-        WHERE uid=?
-    """, (req.amount, gain, req.uid))
+        SET bx = bx - ?, usdt = usdt + ?
+        WHERE uid = ?
+    """, (order.amount, gain, order.uid))
     c.connection.commit()
-    return {"ok": True}
 
-# ================== CASINO ==================
+    return {"ok": True, "received": gain}
 
-_last_play = {}
-
-def casino_cooldown(uid: str, sec=1.5):
-    now = time.time()
-    last = _last_play.get(uid, 0)
-    if now - last < sec:
-        return False
-    _last_play[uid] = now
-    return True
-
+# ======================================================
+# CASINO
+# ======================================================
 @app.post("/casino/play")
 def casino_play(req: CasinoReq):
-    ensure_user(req.uid)
-    if not casino_cooldown(req.uid):
-        raise HTTPException(429, "COOLDOWN")
+    apply_mining(req.uid)
     if req.game not in HOUSE_EDGE:
         raise HTTPException(400, "INVALID_GAME")
-    if req.bet <= 0:
-        raise HTTPException(400, "INVALID_BET")
 
     c = db().cursor()
-    c.execute("SELECT bx FROM wallets WHERE uid=?", (req.uid,))
-    bx = c.fetchone()[0]
+    bx = c.execute(
+        "SELECT bx FROM wallets WHERE uid=?",
+        (req.uid,)
+    ).fetchone()[0]
+
     if bx < req.bet:
         raise HTTPException(400, "INSUFFICIENT_BX")
 
-    c.execute("UPDATE wallets SET bx=bx-? WHERE uid=?", (req.bet, req.uid))
+    c.execute(
+        "UPDATE wallets SET bx = bx - ? WHERE uid=?",
+        (req.bet, req.uid)
+    )
 
-    edge = HOUSE_EDGE[req.game]
-    win, payout = False, 0.0
-
-    if req.game == "dice":
-        win = random.random() > (0.5 + edge)
-        payout = req.bet * 2 if win else 0
-
-    elif req.game == "slots":
-        win = random.random() > (0.85 + edge)
-        payout = req.bet * random.choice([3,5,10]) if win else 0
-
-    elif req.game == "pvp":
-        win = random.random() > (0.5 + edge)
-        payout = req.bet * 2 if win else 0
-
-    elif req.game == "chicken":
-        win = random.random() > (0.7 + edge)
-        payout = req.bet * 1.5 if win else 0
-
-    elif req.game == "crash":
-        if not req.cashout or req.cashout < 1.1:
-            raise HTTPException(400, "INVALID_CASHOUT")
-        crash_point = random.uniform(1.0, 5.0)
-        win = crash_point >= req.cashout
-        payout = req.bet * req.cashout if win else 0
+    win = random.random() > (0.5 + HOUSE_EDGE[req.game])
+    payout = req.bet * 2 if win else 0
 
     if win:
-        c.execute("UPDATE wallets SET bx=bx+? WHERE uid=?",
-                  (payout, req.uid))
+        c.execute(
+            "UPDATE wallets SET bx = bx + ? WHERE uid=?",
+            (payout, req.uid)
+        )
 
-    c.execute("""
-        INSERT INTO casino_rounds(uid,game,bet,win,ts)
-        VALUES(?,?,?,?,?)
-    """, (req.uid, req.game, req.bet, int(win), int(time.time())))
     c.connection.commit()
+    return {"ok": True, "win": win, "payout": payout}
 
-    return {"ok": True, "win": win, "payout": round(payout, 6)}
-
-# ================== MINING ==================
-
-_last_mining = {}
-
-@app.post("/mining/claim")
-def mining_claim(req: MiningReq):
-    ensure_user(req.uid)
-    now = time.time()
-    if now - _last_mining.get(req.uid, 0) < 60:
-        raise HTTPException(429, "MINING_COOLDOWN")
-    _last_mining[req.uid] = now
-
-    c = db().cursor()
-    if req.bx:
-        c.execute("UPDATE wallets SET bx=bx+? WHERE uid=?",
-                  (req.bx, req.uid))
-    if req.ton:
-        c.execute("UPDATE wallets SET ton=ton+? WHERE uid=?",
-                  (req.ton, req.uid))
-    c.connection.commit()
-    return {"ok": True}
-
-# ================== AIRDROP ==================
-
-@app.get("/airdrop/state")
-def airdrop_state(uid: str):
-    ensure_user(uid)
-    c = db().cursor()
-    c.execute("SELECT COUNT(*) FROM airdrop_tasks WHERE uid=?", (uid,))
-    completed = c.fetchone()[0]
-    return {
-        "completed": completed,
-        "total": 5,
-        "claimable": completed >= 5
-    }
-
-@app.post("/airdrop/complete")
-def airdrop_complete(req: AirdropTaskReq):
-    ensure_user(req.uid)
-    c = db().cursor()
-    c.execute("""
-        INSERT OR IGNORE INTO airdrop_tasks(uid,task)
-        VALUES(?,?)
-    """, (req.uid, req.task_id))
-    c.connection.commit()
-    return {"ok": True}
-
+# ======================================================
+# AIRDROP
+# ======================================================
 @app.post("/airdrop/claim")
-def airdrop_claim(req: BaseReq):
-    ensure_user(req.uid)
+def airdrop(uid: int):
     c = db().cursor()
-    c.execute("SELECT COUNT(*) FROM airdrop_tasks WHERE uid=?", (req.uid,))
-    if c.fetchone()[0] < 5:
-        raise HTTPException(400, "NOT_READY")
-    c.execute("UPDATE wallets SET bx=bx+50 WHERE uid=?", (req.uid,))
+    c.execute(
+        "UPDATE wallets SET bx = bx + 5 WHERE uid=?",
+        (uid,)
+    )
     c.connection.commit()
-    return {"ok": True}
+    return {"ok": True, "reward": 5}
+
+# ======================================================
+# HEALTH
+# ======================================================
+@app.get("/")
+def root():
+    return {"status": "running"}
+
+# ======================================================
+# RUN
+# ======================================================
+if __name__ == "__main__":
+    uvicorn.run(
+        "api:app",
+        host="0.0.0.0",
+        port=int(os.environ.get("PORT", 10000)),
+    )
