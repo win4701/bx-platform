@@ -1,6 +1,25 @@
 services:
   - type: web
-    name: bloxio-bx
+    name: bx-core-api
     env: python
+    plan: free
+    region: frankfurt
     buildCommand: pip install -r requirements.txt
-    startCommand: python main.py
+    startCommand: uvicorn core_api.app:app --host 0.0.0.0 --port 10000
+    envVars:
+      - key: DB_PATH
+        value: ../db.sqlite3
+      - key: ADMIN_TOKEN
+        sync: false
+      - key: BSC_RPC_URL
+        value: https://bsc-dataseed.binance.org/
+      - key: BEP20_WALLET_ADDRESS
+        sync: false
+      - key: BEP20_PRIVATE_KEY
+        sync: false
+      - key: BNB_MIN_DEPOSIT
+        value: "0.01"
+      - key: BNB_MIN_WITHDRAW
+        value: "0.01"
+      - key: BNB_WITHDRAW_FEE
+        value: "0.0005"
