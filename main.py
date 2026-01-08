@@ -248,7 +248,7 @@ def withdraw(req: WithdrawReq):
 # ======================================================
 # CASINO
 # ======================================================
- @app.post("/casino/play")
+@app.post("/casino/play")
 def casino_play(req: CasinoReq):
     ensure_user(req.uid)
 
