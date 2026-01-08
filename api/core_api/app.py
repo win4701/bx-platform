@@ -14,9 +14,7 @@ app = FastAPI(title="BX Platform – FINAL")
 # ==================================================
 # ENV
 # ==================================================
-DB_PATH = "db.sqlite3"
-
-ADMIN_TOKEN = os.getenv("ADMIN_TOKEN")
+DB_PATH = os.getenv("DB_PATH", "../db.sqlite3")
 
 BSC_RPC_URL = os.getenv("BSC_RPC_URL")
 BEP20_WALLET_ADDRESS = os.getenv("BEP20_WALLET_ADDRESS")
