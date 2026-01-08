@@ -35,7 +35,7 @@ The project is designed to be:
 
 ### 💸 Withdraw USDT
 - Manual admin approval
-- Methods: Binance ID, RedotPay, BEP20
+- Methods: Binance ID, RedotPay
 - Status flow: Pending / Done / Rejected
 
 ### 🧲 Referral
