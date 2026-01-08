@@ -1,4 +1,4 @@
 fastapi
 uvicorn
-web3
 pydantic
+python-multipart
