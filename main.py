@@ -211,8 +211,8 @@ def market_sell(order: MarketSell):
     if w["bx"] < order.amount:
         raise HTTPException(400, "INSUFFICIENT_BX")
 
-    if order.amount > w["bx"] * 0.20:
-        raise HTTPException(400, "SELL_LIMIT_20_PERCENT")
+    if order.amount > w["bx"] * 0.30:
+        raise HTTPException(400, "SELL_LIMIT_30_PERCENT")
 
     price = bx_sell_price(order.asset)
     gain = order.amount * price
