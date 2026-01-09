@@ -1,5 +1,5 @@
 import os, time, sqlite3, hmac, hashlib, requests
-from fastapi import FastAPI, HTTPException, Header
+from fastapi import FastAPI, HTTPException, Header, Request
 from pydantic import BaseModel, Field
 
 # ======================================================
@@ -13,6 +13,9 @@ ADMIN_TOKEN = os.getenv("ADMIN_TOKEN")
 BINANCE_API_KEY = os.getenv("BINANCE_API_KEY")
 BINANCE_API_SECRET = os.getenv("BINANCE_API_SECRET")
 BINANCE_BASE = "https://api.binance.com"
+
+# RedotPay
+REDOTPAY_API_SECRET = os.getenv("REDOTPAY_API_SECRET")
 
 # TON
 TON_WALLET = os.getenv("TON_WALLET")
@@ -28,7 +31,7 @@ def db():
     c.row_factory = sqlite3.Row
     return c
 
-def audit(action, uid, meta=""):
+def audit(action, uid=None, meta=""):
     c = db().cursor()
     c.execute("""
       INSERT INTO audit_logs(action, uid, meta, ts)
@@ -43,21 +46,34 @@ def admin_guard(token):
 # ======================================================
 # MODELS
 # ======================================================
-class DepositAuto(BaseModel):
-    provider: str   # ton | binance | redotpay
-
 class WithdrawRequest(BaseModel):
     uid: int
-    asset: str      # usdt | ton
+    asset: str            # usdt | ton
     amount: float = Field(gt=0)
     address: str
 
-class AdminWithdrawConfirm(BaseModel):
+class AdminConfirm(BaseModel):
     id: int
     txid: str | None = None
 
 # ======================================================
-# 1️⃣ TON AUTO DEPOSIT
+# SECURITY HELPERS
+# ======================================================
+def hmac_verify(secret: str, payload: bytes, signature: str) -> bool:
+    calc = hmac.new(secret.encode(), payload, hashlib.sha256).hexdigest()
+    return hmac.compare_digest(calc, signature)
+
+def binance_sign(params: dict) -> dict:
+    q = "&".join(f"{k}={params[k]}" for k in sorted(params))
+    sig = hmac.new(
+        BINANCE_API_SECRET.encode(),
+        q.encode(),
+        hashlib.sha256
+    ).hexdigest()
+    return {**params, "signature": sig}
+
+# ======================================================
+# 1️⃣ TON AUTO DEPOSIT (WATCHER)
 # ======================================================
 @app.post("/admin/deposit/ton/auto")
 def ton_auto_deposit(x_admin_token: str = Header(None)):
@@ -98,28 +114,79 @@ def ton_auto_deposit(x_admin_token: str = Header(None)):
     return {"ok": True}
 
 # ======================================================
-# 2️⃣ BINANCE AUTO DEPOSIT (USDT)
+# 2️⃣ BINANCE AUTO DEPOSIT (USDT) — WEBHOOK
 # ======================================================
-@app.post("/admin/deposit/binance/auto")
-def binance_auto_deposit(x_admin_token: str = Header(None)):
-    admin_guard(x_admin_token)
+@app.post("/webhook/binance/deposit")
+async def binance_deposit_webhook(
+    request: Request,
+    x_binance_signature: str = Header(None)
+):
+    body = await request.body()
 
-    # يفترض أن الإشعار يأتي من Binance Webhook
-    # هنا mock جاهز للربط
-    return {"ok": True, "note": "Handled via Binance Webhook"}
+    if not hmac_verify(BINANCE_API_SECRET, body, x_binance_signature):
+        raise HTTPException(401, "INVALID_SIGNATURE")
+
+    data = await request.json()
+    if data.get("status") != "SUCCESS":
+        return {"ok": True}
+
+    uid = int(data["uid"])
+    amount = float(data["amount"])
+
+    c = db().cursor()
+    c.execute("""
+      INSERT OR IGNORE INTO payments
+      (user_id, provider, asset, amount, status, created_at)
+      VALUES (?,?,?,?,?,?)
+    """, (uid, "binance", "usdt", amount, "confirmed", int(time.time())))
+
+    c.execute(
+      "UPDATE wallets SET usdt = usdt + ? WHERE uid=?",
+      (amount, uid)
+    )
+    c.connection.commit()
+    audit("binance_auto_deposit", uid, f"{amount} USDT")
+
+    return {"ok": True}
 
 # ======================================================
-# 3️⃣ REDOTPAY AUTO DEPOSIT (USDT)
+# 3️⃣ REDOTPAY AUTO DEPOSIT (USDT) — WEBHOOK
 # ======================================================
-@app.post("/admin/deposit/redotpay/auto")
-def redotpay_auto_deposit(x_admin_token: str = Header(None)):
-    admin_guard(x_admin_token)
+@app.post("/webhook/redotpay/deposit")
+async def redotpay_deposit_webhook(
+    request: Request,
+    x_redotpay_signature: str = Header(None)
+):
+    body = await request.body()
 
-    # RedotPay Webhook integration placeholder
-    return {"ok": True, "note": "Handled via RedotPay Webhook"}
+    if not hmac_verify(REDOTPAY_API_SECRET, body, x_redotpay_signature):
+        raise HTTPException(401, "INVALID_SIGNATURE")
+
+    data = await request.json()
+    if data.get("status") != "SUCCESS":
+        return {"ok": True}
+
+    uid = int(data["uid"])
+    amount = float(data["amount"])
+
+    c = db().cursor()
+    c.execute("""
+      INSERT OR IGNORE INTO payments
+      (user_id, provider, asset, amount, status, created_at)
+      VALUES (?,?,?,?,?,?)
+    """, (uid, "redotpay", "usdt", amount, "confirmed", int(time.time())))
+
+    c.execute(
+      "UPDATE wallets SET usdt = usdt + ? WHERE uid=?",
+      (amount, uid)
+    )
+    c.connection.commit()
+    audit("redotpay_auto_deposit", uid, f"{amount} USDT")
+
+    return {"ok": True}
 
 # ======================================================
-# 4️⃣ USER → WITHDRAW REQUEST (TON / USDT)
+# 4️⃣ USER → WITHDRAW REQUEST
 # ======================================================
 @app.post("/withdraw/request")
 def withdraw_request(req: WithdrawRequest):
@@ -153,17 +220,11 @@ def withdraw_request(req: WithdrawRequest):
 # ======================================================
 # 5️⃣ ADMIN → BINANCE WITHDRAW MANUAL (USDT)
 # ======================================================
-def binance_sign(params):
-    q = "&".join(f"{k}={params[k]}" for k in sorted(params))
-    return hmac.new(
-        BINANCE_API_SECRET.encode(),
-        q.encode(),
-        hashlib.sha256
-    ).hexdigest()
-
 @app.post("/admin/withdraw/binance/manual")
-def admin_binance_withdraw(req: AdminWithdrawConfirm,
-                           x_admin_token: str = Header(None)):
+def binance_withdraw_manual(
+    req: AdminConfirm,
+    x_admin_token: str = Header(None)
+):
     admin_guard(x_admin_token)
 
     c = db().cursor()
@@ -176,17 +237,16 @@ def admin_binance_withdraw(req: AdminWithdrawConfirm,
     if not w:
         raise HTTPException(404, "NOT_FOUND")
 
-    params = {
+    params = binance_sign({
         "coin": "USDT",
         "amount": w["amount"],
         "address": w["address"],
-        "timestamp": int(time.time() * 1000)
-    }
+        "timestamp": int(time.time()*1000)
+    })
 
-    sig = binance_sign(params)
     r = requests.post(
         f"{BINANCE_BASE}/sapi/v1/capital/withdraw/apply",
-        params={**params, "signature": sig},
+        params=params,
         headers={"X-MBX-APIKEY": BINANCE_API_KEY}
     )
 
@@ -207,8 +267,10 @@ def admin_binance_withdraw(req: AdminWithdrawConfirm,
 # 6️⃣ ADMIN → TON WITHDRAW MANUAL
 # ======================================================
 @app.post("/admin/withdraw/ton/manual")
-def admin_ton_withdraw(req: AdminWithdrawConfirm,
-                       x_admin_token: str = Header(None)):
+def ton_withdraw_manual(
+    req: AdminConfirm,
+    x_admin_token: str = Header(None)
+):
     admin_guard(x_admin_token)
 
     c = db().cursor()
