@@ -1,25 +1,89 @@
 services:
+  # =========================
+  # API GATEWAY (Public)
+  # =========================
   - type: web
-    name: bx-core-api
+    name: bx-gateway
     env: python
-    plan: free
     region: frankfurt
+    plan: free
+    rootDir: backend
     buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn core_api.app:app --host 0.0.0.0 --port 10000
+    startCommand: uvicorn _api:app --host 0.0.0.0 --port $PORT
     envVars:
-      - key: DB_PATH
-        value: ../db.sqlite3
+      - key: MAIN_API
+        value: https://bx-core.onrender.com
+      - key: WALLET_API
+        value: https://bx-wallet.onrender.com
+      - key: ADMIN_API
+        value: https://bx-admin.onrender.com
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+
+  # =========================
+  # CORE SERVICE
+  # =========================
+  - type: web
+    name: bx-core
+    env: python
+    region: frankfurt
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+
+  # =========================
+  # WALLET SERVICE
+  # =========================
+  - type: web
+    name: bx-wallet
+    env: python
+    region: frankfurt
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn wallet_api:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+
+  # =========================
+  # ADMIN / REAL MONEY SERVICE
+  # =========================
+  - type: web
+    name: bx-admin
+    env: python
+    region: frankfurt
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn service_admin:app --host 0.0.0.0 --port $PORT
+    envVars:
       - key: ADMIN_TOKEN
         sync: false
-      - key: BSC_RPC_URL
-        value: https://bsc-dataseed.binance.org/
-      - key: BEP20_WALLET_ADDRESS
+      - key: BINANCE_API_KEY
         sync: false
-      - key: BEP20_PRIVATE_KEY
+      - key: BINANCE_API_SECRET
         sync: false
-      - key: BNB_MIN_DEPOSIT
-        value: "0.01"
-      - key: BNB_MIN_WITHDRAW
-        value: "0.01"
-      - key: BNB_WITHDRAW_FEE
-        value: "0.0005"
+      - key: REDOTPAY_API_SECRET
+        sync: false
+      - key: TON_WALLET
+        sync: false
+
+  # =========================
+  # TON AUTO DEPOSIT WORKER
+  # =========================
+  - type: worker
+    name: bx-ton-watcher
+    env: python
+    region: frankfurt
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: python ton_watcher.py
+    envVars:
+      - key: TON_WALLET
+        sync: false
