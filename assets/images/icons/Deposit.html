@@ -162,11 +162,12 @@ input, select {
     RedotPay
   </button>
 
-  <button onclick="deposit('ton')">
-    <img src="assets/images/icons/ton.png" style="width:18px;vertical-align:middle">
-    TON Transfer
-  </button>
-  </div>
+  <button onclick="App.toggleTonConnect()" class="ton-connect-btn">
+  <img id="tonConnectImg"
+       src="assets/images/ton_disconnected.png"
+       alt="TON Connect"
+       height="36">
+  </button>  </div>
   <div class="card">
     <h3>Withdraw</h3>
     <input id="withdrawAddress" placeholder="Address / Pay ID">
