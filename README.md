@@ -1,68 +1,44 @@
-# BX Platform — Telegram Mini App (v1.0)
+# BX Platform
 
-BX Platform is a **Telegram Mini App** that combines:
-- BX Mining
-- Buy / Sell BX
-- Casino (fixed RTP)
-- USDT Withdraw (Admin approval)
-- Referral system
-- Airdrop progress tracking
+BX Platform  **Telegram Mini App**    Market، Wallet، Casino، Mining، Airdrop  **TON / USDT**  Backend . 
 
-The project is designed to be:
-- Lightweight
-- Fast
-- Scalable
-- Production-ready
 
 ---
 
-## ✨ Features (v1.0)
+## ✨ Features
 
-### ⛏️ Mining
-- Live BX mining
-- Tick-based anti-abuse logic
-- Automatic daily limits
-
-### 💱 Buy / Sell BX
-- Fixed BX ↔ USDT price
-- Sell with implicit fee (RTP logic)
-- Full accounting logs
-
-### 🎰 Casino
-- Fixed RTP
-- Logs ready for provably fair logic
-- Simple and clean UI
-
-### 💸 Withdraw USDT
-- Manual admin approval
-- Methods: Binance ID, RedotPay
-- Status flow: Pending / Done / Rejected
-
-### 🧲 Referral
-- Automatic referral links
-- Fixed BX reward
-- Anti-duplicate protection
-
-### 🎁 Airdrop
-- Progress tracking only (no direct claim)
-- Snapshot planned for later phases
-
-### 📊 Leaderboard
-- Top miners ranking
-- Periodic refresh
+- Telegram Mini App Authentication (Server-side)
+- Wallet (TON / USDT)
+- Market (Buy / Sell BX)
+- Casino & Mining
+- Airdrop system
+- TON Auto Deposit (Background Worker)
+- Binance / RedotPay integration
+- Unified Audit Logs
+- API Gateway
+- Render-ready deployment
 
 ---
 
-## 🧠 Architecture
+## 🧱 Project Structure
+---
 
-```text
-Telegram Mini App
-        |
-        v
-index.html + app.js (Vanilla JS)
-        |
-        v
-FastAPI (main.py)
-        |
-        v
-SQLite (db.sqlite)
+## 🔐 Security Design
+
+- User identity is verified via Telegram `initData`
+- No direct balance manipulation from frontend
+- Real-money operations are isolated in admin services
+- All financial actions are logged (audit trail)
+- TON deposits are processed automatically via blockchain watcher
+
+---
+
+## 🗄️ Database
+
+The project uses **SQLite** by default.
+
+Initialize the database once:
+
+```bash
+cd backend/db
+python init_db.py
