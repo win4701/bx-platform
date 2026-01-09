@@ -145,6 +145,68 @@ document.addEventListener("DOMContentLoaded",async()=>{
   await AIRDROP.load();
 });
 
+/* ================= TON CONNECT STATE ================= */
+
+let tonConnected = false;
+let tonUI = null;
+
+async function initTonConnect(){
+  if (!window.TON_CONNECT_UI) return;
+
+  tonUI = new TON_CONNECT_UI.TonConnectUI({
+    manifestUrl: "/tonconnect-manifest.json"
+  });
+
+  // حالة عند التحميل
+  const wallet = tonUI.wallet;
+  if (wallet) {
+    tonConnected = true;
+    updateTonBtn(true);
+  }
+
+  // الاستماع للتغييرات
+  tonUI.onStatusChange(w => {
+    tonConnected = !!w;
+    updateTonBtn(tonConnected);
+  });
+}
+
+function updateTonBtn(connected){
+  const img = document.getElementById("tonConnectImg");
+  if (!img) return;
+
+  img.src = connected
+    ? "assets/images/ton_connected.png"
+    : "assets/images/ton_disconnected.png";
+}
+
+/* زر واحد: Connect / Disconnect */
+async function toggleTonConnect(){
+  if (!tonUI) return;
+
+  if (!tonConnected){
+    const wallet = await tonUI.connectWallet();
+    tonConnected = true;
+    updateTonBtn(true);
+
+    // (اختياري) حفظ العنوان في السيرفر
+    if (wallet?.account?.address){
+      await fetch("/wallet/connect",{
+        method:"POST",
+        headers:{ "Content-Type":"application/json" },
+        body: JSON.stringify({
+          uid: window.Telegram?.WebApp?.initDataUnsafe?.user?.id,
+          address: wallet.account.address
+        })
+      });
+    }
+  } else {
+    await tonUI.disconnect();
+    tonConnected = false;
+    updateTonBtn(false);
+  }
+}
+
 /* ================== EXPOSE ================== */
 window.App={
   show:UI.show,
