@@ -1,7 +1,6 @@
-import os, time, sqlite3, hmac, hashlib, requests, csv
+import os, time, sqlite3, hmac, hashlib, requests
 from fastapi import FastAPI, HTTPException, Header
-from fastapi.responses import FileResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 # ======================================================
 # CONFIG
@@ -9,74 +8,124 @@ from pydantic import BaseModel
 DB_PATH = "db.sqlite"
 
 ADMIN_TOKEN = os.getenv("ADMIN_TOKEN")
-BINANCE_MERCHANT_ID = os.getenv("BINANCE_MERCHANT_ID")
+
+# Binance
 BINANCE_API_KEY = os.getenv("BINANCE_API_KEY")
 BINANCE_API_SECRET = os.getenv("BINANCE_API_SECRET")
-
 BINANCE_BASE = "https://api.binance.com"
 
-app = FastAPI(title="Unified Admin Service")
+# TON
+TON_WALLET = os.getenv("TON_WALLET")
+TON_API = "https://toncenter.com/api/v2/getTransactions"
+
+app = FastAPI(title="Unified Real Money Service")
 
 # ======================================================
-# DB
+# DB + AUDIT
 # ======================================================
 def db():
-    conn = sqlite3.connect(DB_PATH, check_same_thread=False)
-    conn.row_factory = sqlite3.Row
-    return conn
+    c = sqlite3.connect(DB_PATH, check_same_thread=False)
+    c.row_factory = sqlite3.Row
+    return c
 
-# ======================================================
-# AUDIT
-# ======================================================
-def audit(action, uid, meta):
+def audit(action, uid, meta=""):
     c = db().cursor()
     c.execute("""
-        INSERT INTO audit_logs (action, user_id, meta, ts)
-        VALUES (?,?,?,?)
+      INSERT INTO audit_logs(action, uid, meta, ts)
+      VALUES (?,?,?,?)
     """, (action, uid, meta, int(time.time())))
     c.connection.commit()
 
-# ======================================================
-# ADMIN GUARD (TOKEN ONLY)
-# ======================================================
 def admin_guard(token):
     if token != ADMIN_TOKEN:
         raise HTTPException(401, "ADMIN_ONLY")
 
 # ======================================================
-# BINANCE SIGN
-# ======================================================
-def binance_sign(params: dict):
-    query = "&".join(f"{k}={params[k]}" for k in sorted(params))
-    sig = hmac.new(
-        BINANCE_API_SECRET.encode(),
-        query.encode(),
-        hashlib.sha256
-    ).hexdigest()
-    return query + "&signature=" + sig
-
-# ======================================================
 # MODELS
 # ======================================================
+class DepositAuto(BaseModel):
+    provider: str   # ton | binance | redotpay
+
 class WithdrawRequest(BaseModel):
     uid: int
-    asset: str
-    amount: float
+    asset: str      # usdt | ton
+    amount: float = Field(gt=0)
     address: str
-    network: str = "TRX"
 
-class AdminWithdrawAuto(BaseModel):
-    withdraw_id: int
-
-class AdminWithdrawManual(BaseModel):
-    withdraw_id: int
-    txid: str
+class AdminWithdrawConfirm(BaseModel):
+    id: int
+    txid: str | None = None
 
 # ======================================================
-# USER → WITHDRAW REQUEST
+# 1️⃣ TON AUTO DEPOSIT
+# ======================================================
+@app.post("/admin/deposit/ton/auto")
+def ton_auto_deposit(x_admin_token: str = Header(None)):
+    admin_guard(x_admin_token)
+
+    r = requests.get(TON_API, params={
+        "address": TON_WALLET,
+        "limit": 20
+    }).json()
+
+    for tx in r.get("result", []):
+        msg = tx.get("in_msg", {})
+        memo = msg.get("message", "")
+        if not memo.isdigit():
+            continue
+
+        uid = int(memo)
+        amount = int(msg.get("value", 0)) / 1e9
+        txh = tx["transaction_id"]["hash"]
+
+        c = db().cursor()
+        try:
+            c.execute("""
+              INSERT INTO ton_deposits(tx_hash, uid, amount, ts)
+              VALUES (?,?,?,?)
+            """, (txh, uid, amount, int(time.time())))
+
+            c.execute(
+              "UPDATE wallets SET ton = ton + ? WHERE uid=?",
+              (amount, uid)
+            )
+            c.connection.commit()
+            audit("ton_auto_deposit", uid, f"{amount} TON")
+
+        except sqlite3.IntegrityError:
+            pass
+
+    return {"ok": True}
+
+# ======================================================
+# 2️⃣ BINANCE AUTO DEPOSIT (USDT)
+# ======================================================
+@app.post("/admin/deposit/binance/auto")
+def binance_auto_deposit(x_admin_token: str = Header(None)):
+    admin_guard(x_admin_token)
+
+    # يفترض أن الإشعار يأتي من Binance Webhook
+    # هنا mock جاهز للربط
+    return {"ok": True, "note": "Handled via Binance Webhook"}
+
+# ======================================================
+# 3️⃣ REDOTPAY AUTO DEPOSIT (USDT)
+# ======================================================
+@app.post("/admin/deposit/redotpay/auto")
+def redotpay_auto_deposit(x_admin_token: str = Header(None)):
+    admin_guard(x_admin_token)
+
+    # RedotPay Webhook integration placeholder
+    return {"ok": True, "note": "Handled via RedotPay Webhook"}
+
+# ======================================================
+# 4️⃣ USER → WITHDRAW REQUEST (TON / USDT)
 # ======================================================
 @app.post("/withdraw/request")
 def withdraw_request(req: WithdrawRequest):
+    if req.asset not in ("usdt", "ton"):
+        raise HTTPException(400, "INVALID_ASSET")
+
     c = db().cursor()
     bal = c.execute(
         f"SELECT {req.asset} FROM wallets WHERE uid=?",
@@ -92,126 +141,93 @@ def withdraw_request(req: WithdrawRequest):
     )
 
     c.execute("""
-        INSERT INTO withdrawals
-        (user_id, asset, amount, address, status, created_at)
-        VALUES (?,?,?,?,?,?)
-    """, (
-        req.uid, req.asset, req.amount, req.address,
-        "pending", int(time.time())
-    ))
+      INSERT INTO withdrawals
+      (user_id, asset, amount, address, status, created_at)
+      VALUES (?,?,?,?,?,?)
+    """, (req.uid, req.asset, req.amount, req.address, "pending", int(time.time())))
 
     c.connection.commit()
-    audit("withdraw_request", req.uid, str(req.amount))
+    audit("withdraw_request", req.uid, f"{req.asset}:{req.amount}")
     return {"ok": True, "status": "pending"}
 
 # ======================================================
-# ADMIN → BINANCE AUTO WITHDRAW
+# 5️⃣ ADMIN → BINANCE WITHDRAW MANUAL (USDT)
 # ======================================================
-@app.post("/admin/withdraw/binance/auto")
-def admin_withdraw_auto(
-    req: AdminWithdrawAuto,
-    x_admin_token: str = Header(None)
-):
-    admin_guard(x_admin_token)
-    c = db().cursor()
+def binance_sign(params):
+    q = "&".join(f"{k}={params[k]}" for k in sorted(params))
+    return hmac.new(
+        BINANCE_API_SECRET.encode(),
+        q.encode(),
+        hashlib.sha256
+    ).hexdigest()
 
+@app.post("/admin/withdraw/binance/manual")
+def admin_binance_withdraw(req: AdminWithdrawConfirm,
+                           x_admin_token: str = Header(None)):
+    admin_guard(x_admin_token)
+
+    c = db().cursor()
     w = c.execute("""
-        SELECT user_id, asset, amount, address
-        FROM withdrawals
-        WHERE id=? AND status='pending'
-    """, (req.withdraw_id,)).fetchone()
+      SELECT user_id, amount, address
+      FROM withdrawals
+      WHERE id=? AND asset='usdt' AND status='pending'
+    """, (req.id,)).fetchone()
 
     if not w:
-        raise HTTPException(404, "WITHDRAW_NOT_FOUND")
+        raise HTTPException(404, "NOT_FOUND")
 
     params = {
-        "coin": w["asset"].upper(),
+        "coin": "USDT",
         "amount": w["amount"],
         "address": w["address"],
         "timestamp": int(time.time() * 1000)
     }
 
-    query = binance_sign(params)
-    headers = {"X-MBX-APIKEY": BINANCE_API_KEY}
-
+    sig = binance_sign(params)
     r = requests.post(
-        f"{BINANCE_BASE}/sapi/v1/capital/withdraw/apply?{query}",
-        headers=headers,
-        timeout=15
+        f"{BINANCE_BASE}/sapi/v1/capital/withdraw/apply",
+        params={**params, "signature": sig},
+        headers={"X-MBX-APIKEY": BINANCE_API_KEY}
     )
 
     if r.status_code != 200:
         raise HTTPException(500, r.text)
 
-    order_id = r.json().get("id")
-
     c.execute("""
-        UPDATE withdrawals
-        SET status='processing', proof_value=?
-        WHERE id=?
-    """, (order_id, req.withdraw_id))
+      UPDATE withdrawals
+      SET status='completed', proof_value=?
+      WHERE id=?
+    """, (r.json().get("id"), req.id))
 
     c.connection.commit()
-    audit("withdraw_auto_binance", w["user_id"], order_id)
-
-    return {"ok": True, "binance_order_id": order_id}
+    audit("binance_withdraw_manual", w["user_id"], str(w["amount"]))
+    return {"ok": True}
 
 # ======================================================
-# ADMIN → MANUAL WITHDRAW COMPLETE
+# 6️⃣ ADMIN → TON WITHDRAW MANUAL
 # ======================================================
-@app.post("/admin/withdraw/manual/complete")
-def admin_withdraw_manual(
-    req: AdminWithdrawManual,
-    x_admin_token: str = Header(None)
-):
+@app.post("/admin/withdraw/ton/manual")
+def admin_ton_withdraw(req: AdminWithdrawConfirm,
+                       x_admin_token: str = Header(None)):
     admin_guard(x_admin_token)
-    c = db().cursor()
 
+    c = db().cursor()
     c.execute("""
-        UPDATE withdrawals
-        SET status='completed', proof_value=?, processed_at=?
-        WHERE id=? AND status='pending'
-    """, (req.txid, int(time.time()), req.withdraw_id))
+      UPDATE withdrawals
+      SET status='completed', proof_value=?, processed_at=?
+      WHERE id=? AND asset='ton' AND status='pending'
+    """, (req.txid, int(time.time()), req.id))
 
     if c.rowcount == 0:
         raise HTTPException(404, "NOT_FOUND")
 
     c.connection.commit()
-    audit("withdraw_manual_complete", None, req.txid)
+    audit("ton_withdraw_manual", None, req.txid)
     return {"ok": True}
-
-# ======================================================
-# ADMIN → EXPORT AUDIT CSV
-# ======================================================
-@app.get("/admin/audit/export")
-def export_audit_csv(x_admin_token: str = Header(None)):
-    admin_guard(x_admin_token)
-    c = db().cursor()
-
-    rows = c.execute("""
-        SELECT id, action, user_id, meta, ts FROM audit_logs
-        ORDER BY id DESC
-    """).fetchall()
-
-    file_path = "/tmp/audit_logs.csv"
-    with open(file_path, "w", newline="", encoding="utf-8") as f:
-        writer = csv.writer(f)
-        writer.writerow(["id", "action", "user_id", "meta", "timestamp"])
-        for r in rows:
-            writer.writerow([
-                r["id"], r["action"], r["user_id"],
-                r["meta"], r["ts"]
-            ])
-
-    return FileResponse(
-        file_path,
-        filename="audit_logs.csv",
-        media_type="text/csv"
-    )
 
 # ======================================================
 # HEALTH
 # ======================================================
 @app.get("/")
 def root():
-    return {"status": "running"}
+    return {"status": "service_admin ready"}
