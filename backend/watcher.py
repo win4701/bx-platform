@@ -1,42 +1,54 @@
 import time
 import threading
-import requests
 import sqlite3
+import requests
+from typing import List, Dict
 
-DB = "db.sqlite"
+from pricing import get_price
 
-# =========================
+DB_PATH = "db.sqlite"
+
+# ======================================================
 # CONFIG
-# =========================
+# ======================================================
 MIN_DEPOSIT_USDT = 10.0
-
-TON_CONFIRMATIONS = 5
-SOL_CONFIRMATIONS = 10
-BTC_CONFIRMATIONS = 3
-
-BTC_PRICE_USDT = 95000.0   # ثابت داخليًا
-SOL_PRICE_USDT = 150.0
-TON_PRICE_USDT = 6.0
-
 POLL_INTERVAL = 20  # seconds
 
-# =========================
-# DB helpers
-# =========================
-def db():
-    return sqlite3.connect(DB, check_same_thread=False)
+CONFIRMATIONS = {
+    "ton": 5,
+    "sol": 10,
+    "btc": 3
+}
 
+SUPPORTED_ASSETS = {"usdt", "ton", "sol", "btc"}
+
+# ======================================================
+# DB
+# ======================================================
+def db():
+    return sqlite3.connect(DB_PATH, check_same_thread=False)
+
+# ======================================================
+# HELPERS
+# ======================================================
 def tx_used(txid: str) -> bool:
     c = db().cursor()
-    r = c.execute("SELECT 1 FROM used_txs WHERE txid=?", (txid,)).fetchone()
-    return r is not None
+    return c.execute(
+        "SELECT 1 FROM used_txs WHERE txid=?",
+        (txid,)
+    ).fetchone() is not None
 
 def mark_tx_used(txid: str):
     c = db().cursor()
-    c.execute("INSERT OR IGNORE INTO used_txs(txid) VALUES(?)", (txid,))
+    c.execute(
+        "INSERT OR IGNORE INTO used_txs(txid) VALUES(?)",
+        (txid,)
+    )
     c.connection.commit()
 
-def add_balance(uid: int, asset: str, amount: float):
+def credit_wallet(uid: int, asset: str, amount: float):
+    if asset not in SUPPORTED_ASSETS:
+        return
     c = db().cursor()
     c.execute(
         f"UPDATE wallets SET {asset} = {asset} + ? WHERE uid=?",
@@ -44,7 +56,7 @@ def add_balance(uid: int, asset: str, amount: float):
     )
     c.connection.commit()
 
-def history(uid: int, asset: str, amount: float, ref: str):
+def record_history(uid: int, asset: str, amount: float, ref: str):
     c = db().cursor()
     c.execute(
         """INSERT INTO history
@@ -54,59 +66,75 @@ def history(uid: int, asset: str, amount: float, ref: str):
     )
     c.connection.commit()
 
-# =========================
-# BINANCE ID (USDT)
-# =========================
-def check_binance_transfers():
+def value_in_usdt(asset: str, amount: float) -> float:
     """
-    هذه دالة وهمية Placeholder.
-    الإيداع الحقيقي يتم عبر:
-    - Binance API
-    - أو CSV / Webhook
+    تقييم الإيداع بسعر حي
+    يرفض السعر القديم
     """
-    transfers = []  # يجب استبدالها بمصدر حقيقي
+    if asset == "usdt":
+        return amount
+    price = get_price(asset)  # قد يرفع STALE_PRICE
+    return amount * price
 
-    for t in transfers:
-        txid = f"binance:{t['id']}"
-        if tx_used(txid):
-            continue
+# ======================================================
+# BINANCE ID WATCHER (USDT)
+# ======================================================
+def binance_watcher():
+    """
+    Placeholder — يُربط لاحقًا بـ Binance API / Webhook
+    يجب أن يعيد معاملات بالشكل:
+    { txid, uid, amount }
+    """
+    while True:
+        try:
+            transfers: List[Dict] = []  # مصدر خارجي حقيقي لاحقًا
 
-        amount = t["amount"]
-        if amount < MIN_DEPOSIT_USDT:
-            mark_tx_used(txid)
-            continue
+            for t in transfers:
+                txid = f"binance:{t['txid']}"
+                if tx_used(txid):
+                    continue
 
-        uid = t["uid"]
+                amount = float(t["amount"])
+                if amount < MIN_DEPOSIT_USDT:
+                    mark_tx_used(txid)
+                    continue
 
-        add_balance(uid, "usdt", amount)
-        history(uid, "usdt", amount, txid)
-        mark_tx_used(txid)
+                uid = int(t["uid"])
 
-# =========================
+                credit_wallet(uid, "usdt", amount)
+                record_history(uid, "usdt", amount, txid)
+                mark_tx_used(txid)
+
+        except Exception as e:
+            print("[BINANCE]", e)
+
+        time.sleep(POLL_INTERVAL)
+
+# ======================================================
 # TON WATCHER
-# =========================
+# ======================================================
 def ton_watcher():
     while True:
         try:
-            txs = []  # اجلب معاملات TON من API
+            txs: List[Dict] = []  # TON API
             for tx in txs:
                 txid = tx["hash"]
                 if tx_used(txid):
                     continue
 
-                if tx["confirmations"] < TON_CONFIRMATIONS:
+                if tx["confirmations"] < CONFIRMATIONS["ton"]:
                     continue
 
                 uid = int(tx["memo"])
-                amount = tx["amount"]
-                value_usdt = amount * TON_PRICE_USDT
+                amount = float(tx["amount"])
 
-                if value_usdt < MIN_DEPOSIT_USDT:
+                usdt_value = value_in_usdt("ton", amount)
+                if usdt_value < MIN_DEPOSIT_USDT:
                     mark_tx_used(txid)
                     continue
 
-                add_balance(uid, "ton", amount)
-                history(uid, "ton", amount, txid)
+                credit_wallet(uid, "ton", amount)
+                record_history(uid, "ton", amount, txid)
                 mark_tx_used(txid)
 
         except Exception as e:
@@ -114,31 +142,31 @@ def ton_watcher():
 
         time.sleep(POLL_INTERVAL)
 
-# =========================
+# ======================================================
 # SOL WATCHER
-# =========================
+# ======================================================
 def sol_watcher():
     while True:
         try:
-            txs = []  # اجلب معاملات SOL من API
+            txs: List[Dict] = []  # SOL API
             for tx in txs:
                 txid = tx["signature"]
                 if tx_used(txid):
                     continue
 
-                if tx["confirmations"] < SOL_CONFIRMATIONS:
+                if tx["confirmations"] < CONFIRMATIONS["sol"]:
                     continue
 
                 uid = int(tx["memo"])
-                amount = tx["amount"]
-                value_usdt = amount * SOL_PRICE_USDT
+                amount = float(tx["amount"])
 
-                if value_usdt < MIN_DEPOSIT_USDT:
+                usdt_value = value_in_usdt("sol", amount)
+                if usdt_value < MIN_DEPOSIT_USDT:
                     mark_tx_used(txid)
                     continue
 
-                add_balance(uid, "sol", amount)
-                history(uid, "sol", amount, txid)
+                credit_wallet(uid, "sol", amount)
+                record_history(uid, "sol", amount, txid)
                 mark_tx_used(txid)
 
         except Exception as e:
@@ -146,31 +174,31 @@ def sol_watcher():
 
         time.sleep(POLL_INTERVAL)
 
-# =========================
+# ======================================================
 # BTC WATCHER
-# =========================
+# ======================================================
 def btc_watcher():
     while True:
         try:
-            txs = []  # اجلب معاملات BTC من API
+            txs: List[Dict] = []  # BTC API
             for tx in txs:
                 txid = tx["txid"]
                 if tx_used(txid):
                     continue
 
-                if tx["confirmations"] < BTC_CONFIRMATIONS:
+                if tx["confirmations"] < CONFIRMATIONS["btc"]:
                     continue
 
-                uid = tx["uid"]   # ربط address → uid
-                amount = tx["amount"]  # BTC
-                value_usdt = amount * BTC_PRICE_USDT
+                uid = int(tx["uid"])  # address → uid mapping
+                amount = float(tx["amount"])  # BTC
 
-                if value_usdt < MIN_DEPOSIT_USDT:
+                usdt_value = value_in_usdt("btc", amount)
+                if usdt_value < MIN_DEPOSIT_USDT:
                     mark_tx_used(txid)
                     continue
 
-                add_balance(uid, "btc", amount)
-                history(uid, "btc", amount, txid)
+                credit_wallet(uid, "btc", amount)
+                record_history(uid, "btc", amount, txid)
                 mark_tx_used(txid)
 
         except Exception as e:
@@ -178,13 +206,12 @@ def btc_watcher():
 
         time.sleep(POLL_INTERVAL)
 
-# =========================
+# ======================================================
 # START ALL WATCHERS
-# =========================
+# ======================================================
 def start_watchers():
-    threading.Thread(target=check_binance_transfers, daemon=True).start()
+    threading.Thread(target=binance_watcher, daemon=True).start()
     threading.Thread(target=ton_watcher, daemon=True).start()
     threading.Thread(target=sol_watcher, daemon=True).start()
     threading.Thread(target=btc_watcher, daemon=True).start()
-
     print("[WATCHER] Deposit watchers started")
