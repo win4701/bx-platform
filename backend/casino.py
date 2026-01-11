@@ -39,7 +39,7 @@ RTP = {
     "crash": 0.23,
     "ladder": 0.20,
     "roulette": 0.22,
-    "abyss": 0.25,
+    "abyss": 0.65,
     "slot": 0.24,
     "chicken": 0.21
 }
