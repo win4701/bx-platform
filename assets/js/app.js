@@ -2,11 +2,23 @@
    CONFIG
 ====================================================== */
 const API = "https://api.bloxio.online";
-const UID = 1; // سيتم ربطه لاحقًا بالجلسة / Telegram
+let UID = 1; // سيتم استبداله تلقائيًا في Telegram
 
 const headers = {
   "Content-Type": "application/json"
 };
+
+/* ======================================================
+   TELEGRAM MINI APP (AUTO UID)
+====================================================== */
+(function initTelegram() {
+  const tg = window.Telegram?.WebApp;
+  if (tg && tg.initDataUnsafe?.user) {
+    UID = tg.initDataUnsafe.user.id;
+    tg.ready();
+    tg.expand();
+  }
+})();
 
 /* ======================================================
    STATE
@@ -151,32 +163,7 @@ async function loadRTP() {
 }
 
 /* ======================================================
-   PAYEER
-====================================================== */
-async function depositPayeer(amount) {
-  const res = await api("/finance/deposit/payeer", {
-    method: "POST",
-    body: JSON.stringify({ uid: UID, amount })
-  });
-
-  const form = document.createElement("form");
-  form.method = "POST";
-  form.action = res.redirect_url;
-
-  Object.entries(res.params).forEach(([k, v]) => {
-    const i = document.createElement("input");
-    i.type = "hidden";
-    i.name = k;
-    i.value = v;
-    form.appendChild(i);
-  });
-
-  document.body.appendChild(form);
-  form.submit();
-}
-
-/* ======================================================
-   BINANCE ID (INFO ONLY)
+   BINANCE ID (INFO)
 ====================================================== */
 function showBinanceInfo() {
   alert(
@@ -184,6 +171,100 @@ function showBinanceInfo() {
     "Min: 10 USDT\n" +
     "Funds credited automatically."
   );
+}
+
+/* ======================================================
+   WALLETCONNECT – TRC20 (USDT)
+====================================================== */
+let wcProvider, wcSigner;
+
+async function connectWalletEVM() {
+  const web3Modal = new window.Web3Modal.default({
+    cacheProvider: false
+  });
+
+  wcProvider = new ethers.providers.Web3Provider(
+    await web3Modal.connect()
+  );
+  wcSigner = wcProvider.getSigner();
+}
+
+async function depositUSDT_TRC20(amount = 10) {
+  await connectWalletEVM();
+
+  const USDT = new ethers.Contract(
+    "0xdAC17F958D2ee523a2206206994597C13D831ec7", // USDT
+    ["function transfer(address to,uint amount) returns (bool)"],
+    wcSigner
+  );
+
+  const tx = await USDT.transfer(
+    window.TREASURY_TRC20,
+    ethers.utils.parseUnits(amount.toString(), 6)
+  );
+
+  await tx.wait();
+
+  await api("/finance/deposit/walletconnect", {
+    method: "POST",
+    body: JSON.stringify({
+      uid: UID,
+      network: "trc20",
+      txid: tx.hash
+    })
+  });
+
+  alert("Deposit submitted");
+  await loadWallet();
+}
+
+/* ======================================================
+   WALLETCONNECT – TON (USDT)
+====================================================== */
+let tonConnect;
+
+function initTonConnect() {
+  tonConnect = new TON_CONNECT_UI.TonConnectUI({
+    manifestUrl: "https://bloxio.online/tonconnect-manifest.json"
+  });
+}
+
+async function depositUSDT_TON(amount = 10) {
+  if (!tonConnect) initTonConnect();
+
+  const wallet = await tonConnect.connectWallet();
+  if (!wallet) throw new Error("TON WALLET NOT CONNECTED");
+
+  // إرسال USDT TON (يتم توقيعها في المحفظة)
+  // بعد الإرسال، احصل على txid من TON explorer
+
+  const txid = prompt("Paste TON USDT tx hash");
+
+  await api("/finance/deposit/walletconnect", {
+    method: "POST",
+    body: JSON.stringify({
+      uid: UID,
+      network: "ton",
+      txid
+    })
+  });
+
+  alert("Deposit submitted");
+  await loadWallet();
+}
+
+/* ======================================================
+   MINING (PLACEHOLDER)
+====================================================== */
+function startMining() {
+  alert("Mining started (backend connected)");
+}
+
+/* ======================================================
+   AIRDROP (PLACEHOLDER)
+====================================================== */
+function claimAirdrop() {
+  alert("Airdrop claimed");
 }
 
 /* ======================================================
