@@ -1,36 +1,29 @@
-import time
 import threading
+import time
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-# ======================================================
-# ROUTERS
-# ======================================================
-from finance import router as finance_router
+# Routers
 from market import router as market_router
+from finance import router as finance_router
 from casino import router as casino_router
 
-# ======================================================
-# WATCHERS (ON-CHAIN ONLY)
-# ======================================================
+# Watchers
 from watcher import start_watchers
 
-# ======================================================
-# PUBLIC HELPERS (READ ONLY)
-# ======================================================
+# Pricing / Transparency
+from pricing import pricing_snapshot
 from finance import rtp_stats
-from pricing import get_price
 
 # ======================================================
-# APP INIT
+# APP
 # ======================================================
 app = FastAPI(
     title="Bloxio API",
     version="1.0.0",
-    description="BX Platform Backend",
     docs_url="/docs",
-    redoc_url="/redoc"
+    redoc_url=None
 )
 
 # ======================================================
@@ -38,28 +31,21 @@ app = FastAPI(
 # ======================================================
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://bloxio.online",
-        "https://www.bloxio.online",
-        "https://api.bloxio.online",
-        "*"  # يمكن تشديدها لاحقًا
-    ],
+    allow_origins=["*"],   # يمكن تقييدها لاحقًا
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 # ======================================================
-# ROUTER MOUNTING
+# ROUTERS
 # ======================================================
-app.include_router(finance_router, prefix="/wallet", tags=["wallet"])
-app.include_router(finance_router, prefix="/finance", tags=["finance"])
-
 app.include_router(market_router, prefix="/market", tags=["market"])
+app.include_router(finance_router, prefix="/finance", tags=["finance"])
 app.include_router(casino_router, prefix="/casino", tags=["casino"])
 
 # ======================================================
-# HEALTH CHECK
+# HEALTH CHECK (RENDER REQUIRED)
 # ======================================================
 @app.get("/health")
 def health():
@@ -69,45 +55,43 @@ def health():
     }
 
 # ======================================================
-# PUBLIC PRICES (READ ONLY)
+# PUBLIC SNAPSHOTS
 # ======================================================
 @app.get("/public/prices")
 def public_prices():
-    return {
-        "bx": get_price("bx"),
-        "usdt": 1.0,
-        "ton": get_price("ton"),
-        "sol": get_price("sol"),
-        "btc": get_price("btc")
-    }
+    """
+    Snapshot موحّد للأسعار:
+    - السعر الداخلي الثابت لـ BX
+    - الأسعار الخارجية (USDT)
+    - تحويلها إلى BX
+    """
+    return pricing_snapshot()
 
-# ======================================================
-# PUBLIC RTP (TRANSPARENCY)
-# ======================================================
 @app.get("/public/rtp")
 def public_rtp():
+    """
+    شفافية RTP (قراءة فقط)
+    """
     return rtp_stats()
 
 # ======================================================
-# STARTUP EVENT
+# STARTUP: WATCHERS
 # ======================================================
 @app.on_event("startup")
-def on_startup():
+def startup():
     """
-    - Start blockchain watchers
-    - No blocking calls
+    تشغيل Watchers في Thread منفصل
+    (TON / SOL / BTC)
     """
-    threading.Thread(
+    t = threading.Thread(
         target=start_watchers,
         daemon=True
-    ).start()
-
-    print("[BOOT] Watchers started")
-    print("[BOOT] API ready")
+    )
+    t.start()
 
 # ======================================================
-# SHUTDOWN EVENT
+# SHUTDOWN
 # ======================================================
 @app.on_event("shutdown")
-def on_shutdown():
-    print("[SHUTDOWN] API stopped")
+def shutdown():
+    pass
