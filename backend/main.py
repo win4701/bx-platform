@@ -1,142 +1,113 @@
 import time
 import threading
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-# Routers
+# ======================================================
+# ROUTERS
+# ======================================================
 from finance import router as finance_router
 from market import router as market_router
 from casino import router as casino_router
 
-# Watchers
+# ======================================================
+# WATCHERS (ON-CHAIN ONLY)
+# ======================================================
 from watcher import start_watchers
 
-# Optional: public transparency helpers (read-only)
+# ======================================================
+# PUBLIC HELPERS (READ ONLY)
+# ======================================================
 from finance import rtp_stats
 from pricing import get_price
 
 # ======================================================
-# APP
+# APP INIT
 # ======================================================
 app = FastAPI(
     title="Bloxio API",
     version="1.0.0",
-    description="Bloxio Core API – Wallet, Market, Casino, Airdrop, Transparency"
+    description="BX Platform Backend",
+    docs_url="/docs",
+    redoc_url="/redoc"
 )
 
 # ======================================================
-# CORS (HTML5 / MiniApp)
+# CORS
 # ======================================================
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # قيّدها لاحقًا على الدومين
+    allow_origins=[
+        "https://bloxio.online",
+        "https://www.bloxio.online",
+        "https://api.bloxio.online",
+        "*"  # يمكن تشديدها لاحقًا
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 # ======================================================
-# ROUTERS
+# ROUTER MOUNTING
 # ======================================================
-app.include_router(finance_router, prefix="/wallet", tags=["Wallet"])
-app.include_router(market_router, prefix="/market", tags=["Market"])
-app.include_router(casino_router, prefix="/casino", tags=["Casino"])
+app.include_router(finance_router, prefix="/wallet", tags=["wallet"])
+app.include_router(finance_router, prefix="/finance", tags=["finance"])
+
+app.include_router(market_router, prefix="/market", tags=["market"])
+app.include_router(casino_router, prefix="/casino", tags=["casino"])
 
 # ======================================================
-# GLOBAL RUNTIME STATE
-# ======================================================
-START_TIME = int(time.time())
-
-EPOCH_DAYS = 7 * 4  # Epoch شهري (Airdrop / Reports)
-EPOCH_START = START_TIME
-
-def current_epoch() -> int:
-    return (int(time.time()) - EPOCH_START) // (EPOCH_DAYS * 86400)
-
-# ======================================================
-# STARTUP
-# ======================================================
-@app.on_event("startup")
-def on_startup():
-    # تشغيل Watchers (Deposit Gate)
-    threading.Thread(
-        target=start_watchers,
-        daemon=True
-    ).start()
-
-    print("[BOOT] Bloxio API started")
-    print("[BOOT] Deposit watchers running")
-    print(f"[BOOT] Current Epoch: {current_epoch()}")
-
-# ======================================================
-# HEALTH
+# HEALTH CHECK
 # ======================================================
 @app.get("/health")
 def health():
     return {
         "status": "ok",
-        "uptime_sec": int(time.time()) - START_TIME,
-        "epoch": current_epoch(),
-        "service": "api.bloxio.online"
+        "ts": int(time.time())
     }
 
 # ======================================================
-# METRICS (LIGHT – FOR DASHBOARD)
+# PUBLIC PRICES (READ ONLY)
 # ======================================================
-@app.get("/metrics")
-def metrics():
-    # القيم التفصيلية تُستخرج من DB داخل Routers
-    return {
-        "service": "bloxio",
-        "epoch": current_epoch(),
-        "uptime_sec": int(time.time()) - START_TIME
-    }
-
-# ======================================================
-# PUBLIC TRANSPARENCY (READ-ONLY)
-# ======================================================
-@app.get("/public/airdrop/summary")
-def public_airdrop_summary():
-    """
-    ملخّص عام للـ Airdrop بدون أي بيانات شخصية
-    """
-    # هذه القيم تُربط لاحقًا بحسابات فعلية من DB
-    return {
-        "epoch": current_epoch(),
-        "pool_bx": 0,
-        "distributed_bx": 0,
-        "users": 0,
-        "avg_bx": 0
-    }
-
-@app.get("/public/casino/rtp")
-def public_casino_rtp():
-    """
-    RTP فعلي مجمّع (شفافية)
-    """
-    return rtp_stats()
-
 @app.get("/public/prices")
 def public_prices():
-    """
-    أسعار حيّة (مرجعية + BX داخلي)
-    """
-    assets = ["btc", "sol", "ton", "bx"]
-    prices = {}
-    for a in assets:
-        try:
-            prices[a] = get_price(a)
-        except Exception:
-            prices[a] = None
-    return prices
+    return {
+        "bx": get_price("bx"),
+        "usdt": 1.0,
+        "ton": get_price("ton"),
+        "sol": get_price("sol"),
+        "btc": get_price("btc")
+    }
 
 # ======================================================
-# ROOT
+# PUBLIC RTP (TRANSPARENCY)
 # ======================================================
-@app.get("/")
-def root():
-    return {
-        "name": "Bloxio API",
-        "status": "running",
-        "epoch": current_epoch()
-    }
+@app.get("/public/rtp")
+def public_rtp():
+    return rtp_stats()
+
+# ======================================================
+# STARTUP EVENT
+# ======================================================
+@app.on_event("startup")
+def on_startup():
+    """
+    - Start blockchain watchers
+    - No blocking calls
+    """
+    threading.Thread(
+        target=start_watchers,
+        daemon=True
+    ).start()
+
+    print("[BOOT] Watchers started")
+    print("[BOOT] API ready")
+
+# ======================================================
+# SHUTDOWN EVENT
+# ======================================================
+@app.on_event("shutdown")
+def on_shutdown():
+    print("[SHUTDOWN] API stopped")
