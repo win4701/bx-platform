@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS wallets (
 );
 
 -- ======================================================
--- PRICES (LIVE EXTERNAL + INTERNAL REF)
+-- PRICES (LIVE)
 -- ======================================================
 CREATE TABLE IF NOT EXISTS prices (
   asset TEXT PRIMARY KEY,
@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS prices (
 );
 
 -- ======================================================
--- PRICE HISTORY (FOR CHARTS)
+-- PRICE HISTORY (CHARTS)
 -- ======================================================
 CREATE TABLE IF NOT EXISTS price_history (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS price_history (
 );
 
 -- ======================================================
--- LEDGER (DOUBLE ENTRY ACCOUNTING)
+-- LEDGER (DOUBLE ENTRY)
 -- ======================================================
 CREATE TABLE IF NOT EXISTS ledger (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -53,7 +53,7 @@ CREATE TABLE IF NOT EXISTS ledger (
 );
 
 -- ======================================================
--- USER HISTORY (ACTIONS LOG)
+-- USER HISTORY (ACTIONS)
 -- ======================================================
 CREATE TABLE IF NOT EXISTS history (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -81,12 +81,12 @@ CREATE TABLE IF NOT EXISTS game_history (
 );
 
 -- ======================================================
--- AIRDROP RECORDS
+-- AIRDROPS
 -- ======================================================
 CREATE TABLE IF NOT EXISTS airdrops (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   uid INTEGER NOT NULL,
-  type TEXT NOT NULL,        -- welcome / activity / referral
+  type TEXT NOT NULL,
   bx_amount REAL NOT NULL,
   reason TEXT,
   ts INTEGER NOT NULL,
@@ -94,7 +94,7 @@ CREATE TABLE IF NOT EXISTS airdrops (
 );
 
 -- ======================================================
--- ACTIVITY SCORES (FOR AIRDROP ENGINE)
+-- ACTIVITY SCORES (AIRDR0P ENGINE)
 -- ======================================================
 CREATE TABLE IF NOT EXISTS activity_scores (
   uid INTEGER PRIMARY KEY,
@@ -114,14 +114,38 @@ CREATE TABLE IF NOT EXISTS referrals (
   FOREIGN KEY(referrer_uid) REFERENCES users(uid)
 );
 
--- ======================================================
--- REFERRAL STATS (AGGREGATED)
--- ======================================================
 CREATE TABLE IF NOT EXISTS referral_stats (
   uid INTEGER PRIMARY KEY,
   total_referrals INTEGER DEFAULT 0,
   active_referrals INTEGER DEFAULT 0,
   total_value REAL DEFAULT 0,
+  FOREIGN KEY(uid) REFERENCES users(uid)
+);
+
+-- ======================================================
+-- BINANCE ID DEPOSITS (AUTO / AUDIT)
+-- ======================================================
+CREATE TABLE IF NOT EXISTS binance_deposits (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  uid INTEGER NOT NULL,
+  amount REAL NOT NULL,
+  binance_txid TEXT NOT NULL,
+  status TEXT DEFAULT 'confirmed', -- auto-confirmed
+  created_at INTEGER NOT NULL,
+  confirmed_at INTEGER,
+  FOREIGN KEY(uid) REFERENCES users(uid)
+);
+
+-- ======================================================
+-- PAYEER TRANSACTIONS (AUDIT)
+-- ======================================================
+CREATE TABLE IF NOT EXISTS payeer_transactions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  uid INTEGER NOT NULL,
+  order_id TEXT NOT NULL,
+  amount REAL NOT NULL,
+  status TEXT NOT NULL, -- success / failed
+  created_at INTEGER NOT NULL,
   FOREIGN KEY(uid) REFERENCES users(uid)
 );
 
@@ -138,7 +162,7 @@ CREATE TABLE IF NOT EXISTS device_fingerprints (
 );
 
 -- ======================================================
--- USED TRANSACTIONS (DEPOSIT DEDUP)
+-- USED TRANSACTIONS (GLOBAL DEDUP)
 -- ======================================================
 CREATE TABLE IF NOT EXISTS used_txs (
   txid TEXT PRIMARY KEY
@@ -147,7 +171,8 @@ CREATE TABLE IF NOT EXISTS used_txs (
 -- ======================================================
 -- INDEXES (PERFORMANCE + AUDIT)
 -- ======================================================
-CREATE INDEX IF NOT EXISTS idx_wallet_uid ON wallets(uid);
+CREATE INDEX IF NOT EXISTS idx_wallet_uid
+  ON wallets(uid);
 
 CREATE INDEX IF NOT EXISTS idx_price_hist_asset_ts
   ON price_history(asset, ts);
@@ -161,14 +186,11 @@ CREATE INDEX IF NOT EXISTS idx_history_uid_ts
 CREATE INDEX IF NOT EXISTS idx_game_uid_ts
   ON game_history(uid, created_at);
 
-CREATE INDEX IF NOT EXISTS idx_game_game
-  ON game_history(game);
-
 CREATE INDEX IF NOT EXISTS idx_airdrops_uid_ts
   ON airdrops(uid, ts);
 
-CREATE INDEX IF NOT EXISTS idx_activity_score
-  ON activity_scores(score);
+CREATE INDEX IF NOT EXISTS idx_binance_uid
+  ON binance_deposits(uid);
 
-CREATE INDEX IF NOT EXISTS idx_referrer
-  ON referrals(referrer_uid);
+CREATE INDEX IF NOT EXISTS idx_payeer_uid
+  ON payeer_transactions(uid);
