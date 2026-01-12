@@ -9,7 +9,6 @@ from fastapi import APIRouter, HTTPException, Depends, Request
 from key import api_guard, admin_guard
 
 router = APIRouter(dependencies=[Depends(api_guard)])
-
 DB_PATH = "db.sqlite"
 
 # ======================================================
@@ -20,8 +19,9 @@ PAYEER_SHOP_ID = os.getenv("PAYEER_SHOP_ID", "")
 PAYEER_SECRET_KEY = os.getenv("PAYEER_SECRET_KEY", "")
 PAYEER_URL = "https://payeer.com/merchant/"
 
-# BINANCE ID
+# BINANCE
 BINANCE_MIN_DEPOSIT = 10.0
+BINANCE_WEBHOOK_SECRET = os.getenv("BINANCE_WEBHOOK_SECRET", "")
 
 # ======================================================
 # DB
@@ -30,32 +30,18 @@ def db():
     return sqlite3.connect(DB_PATH, check_same_thread=False)
 
 # ======================================================
-# WALLET
-# ======================================================
-@router.get("/state")
-def wallet_state(uid: int):
-    c = db().cursor()
-    r = c.execute(
-        "SELECT usdt, ton, sol, btc, bx FROM wallets WHERE uid=?",
-        (uid,)
-    ).fetchone()
-    if not r:
-        raise HTTPException(404, "WALLET_NOT_FOUND")
-    return dict(zip(["usdt", "ton", "sol", "btc", "bx"], r))
-
-# ======================================================
 # LEDGER (DOUBLE ENTRY)
 # ======================================================
-def ledger(ref: str, debit_account: str, credit_account: str, amount: float):
+def ledger(ref: str, debit: str, credit: str, amount: float):
     ts = int(time.time())
     c = db().cursor()
     c.execute(
         "INSERT INTO ledger(ref, account, debit, credit, ts) VALUES (?,?,?,?,?)",
-        (ref, debit_account, amount, 0, ts)
+        (ref, debit, amount, 0, ts)
     )
     c.execute(
         "INSERT INTO ledger(ref, account, debit, credit, ts) VALUES (?,?,?,?,?)",
-        (ref, credit_account, 0, amount, ts)
+        (ref, credit, 0, amount, ts)
     )
     c.connection.commit()
 
@@ -77,89 +63,46 @@ def mark_tx_used(txid: str):
     )
     c.connection.commit()
 
-def get_bx(uid: int) -> float:
-    c = db().cursor()
-    r = c.execute("SELECT bx FROM wallets WHERE uid=?", (uid,)).fetchone()
-    return r[0] if r else 0.0
-
-def update_bx(uid: int, delta: float):
-    c = db().cursor()
-    c.execute("UPDATE wallets SET bx = bx + ? WHERE uid=?", (delta, uid))
-    c.connection.commit()
-
 # ======================================================
-# CASINO INTERFACE (BX ONLY)
+# WALLET
 # ======================================================
-def casino_debit(uid: int, amount: float, game: str):
-    if get_bx(uid) < amount:
-        raise HTTPException(400, "INSUFFICIENT_BX")
-    update_bx(uid, -amount)
-    ledger(f"casino:{game}", "user_bx", "casino_pool", amount)
-
-def casino_credit(uid: int, amount: float, game: str):
-    update_bx(uid, amount)
-    ledger(f"casino:{game}", "casino_pool", "user_bx", amount)
-
-def casino_history(uid: int, game: str, bet: float, payout: float, win: bool):
+@router.get("/state")
+def wallet_state(uid: int):
     c = db().cursor()
-    c.execute(
-        """INSERT INTO game_history
-           (uid, game, bet, payout, win, created_at)
-           VALUES (?,?,?,?,?,?)""",
-        (uid, game, bet, payout, int(win), int(time.time()))
-    )
-    c.connection.commit()
-
-# ======================================================
-# WITHDRAW RULES (USDT)
-# ======================================================
-MIN_WITHDRAW_USDT = 10.0
-MAX_WITHDRAW_RATIO = 0.5
-MAX_WITHDRAW_MONTH = 10
-
-def validate_withdraw(uid: int, amount: float):
-    if amount < MIN_WITHDRAW_USDT:
-        raise HTTPException(400, "MIN_WITHDRAW_10")
-
-    c = db().cursor()
-    bal = c.execute(
-        "SELECT usdt FROM wallets WHERE uid=?",
+    r = c.execute(
+        "SELECT usdt, ton, sol, btc, bx FROM wallets WHERE uid=?",
         (uid,)
     ).fetchone()
-    if not bal:
+    if not r:
         raise HTTPException(404, "WALLET_NOT_FOUND")
-
-    if amount > bal[0] * MAX_WITHDRAW_RATIO:
-        raise HTTPException(400, "WITHDRAW_LIMIT_RATIO")
-
-    month_start = int(time.time()) - 30 * 86400
-    count = c.execute(
-        """SELECT COUNT(*) FROM history
-           WHERE uid=? AND action LIKE 'withdraw%' AND ts>?""",
-        (uid, month_start)
-    ).fetchone()[0]
-
-    if count >= MAX_WITHDRAW_MONTH:
-        raise HTTPException(400, "WITHDRAW_MONTH_LIMIT")
+    return dict(zip(["usdt", "ton", "sol", "btc", "bx"], r))
 
 # ======================================================
-# BINANCE ID DEPOSIT (ADMIN CONFIRM)
+# AUTO BINANCE ID WEBHOOK
 # ======================================================
-@router.post("/deposit/binance", dependencies=[Depends(admin_guard)])
-def binance_deposit_confirm(
-    uid: int,
-    amount: float,
-    binance_txid: str
-):
-    """
-    Confirm Binance ID transfer manually or via internal tool
-    """
+def verify_binance_signature(payload: dict, signature: str):
+    raw = f"{payload}".encode()
+    expected = hashlib.sha256(
+        raw + BINANCE_WEBHOOK_SECRET.encode()
+    ).hexdigest()
+    if signature != expected:
+        raise HTTPException(401, "INVALID_BINANCE_SIGNATURE")
+
+@router.post("/webhook/binance")
+def binance_webhook(payload: dict, request: Request):
+    verify_binance_signature(
+        payload,
+        request.headers.get("X-BINANCE-SIGNATURE", "")
+    )
+
+    uid = int(payload["uid"])
+    amount = float(payload["amount"])
+    txid = f"binance:{payload['txid']}"
+
     if amount < BINANCE_MIN_DEPOSIT:
-        raise HTTPException(400, "MIN_DEPOSIT_10")
-
-    txid = f"binance:{binance_txid}"
+        return "TOO_SMALL"
     if tx_used(txid):
-        raise HTTPException(400, "DUPLICATE_TX")
+        return "DUPLICATE"
 
     c = db().cursor()
     c.execute(
@@ -176,8 +119,7 @@ def binance_deposit_confirm(
 
     ledger("deposit:binance", "binance_pool", "user_usdt", amount)
     mark_tx_used(txid)
-
-    return {"status": "confirmed", "source": "binance"}
+    return "OK"
 
 # ======================================================
 # PAYEER DEPOSIT (REDIRECT)
@@ -198,26 +140,40 @@ def payeer_deposit(uid: int, amount: float):
         "m_desc": desc,
     }
 
-    sign_str = ":".join(params.values()) + f":{PAYEER_SECRET_KEY}"
-    params["m_sign"] = hashlib.sha256(sign_str.encode()).hexdigest().upper()
+    sign = ":".join(params.values()) + f":{PAYEER_SECRET_KEY}"
+    params["m_sign"] = hashlib.sha256(sign.encode()).hexdigest().upper()
 
     return {"redirect_url": PAYEER_URL, "params": params}
 
 # ======================================================
-# PAYEER WEBHOOK (CONFIRM)
+# PAYEER SIGNATURE VERIFY
+# ======================================================
+def verify_payeer_signature(p: dict):
+    sign_str = (
+        f"{p['m_shop']}:{p['m_orderid']}:{p['m_amount']}:"
+        f"{p['m_curr']}:{p['m_desc']}:{p['m_status']}:"
+        f"{PAYEER_SECRET_KEY}"
+    )
+    expected = hashlib.sha256(sign_str.encode()).hexdigest().upper()
+    if expected != p.get("m_sign"):
+        raise HTTPException(401, "INVALID_PAYEER_SIGNATURE")
+
+# ======================================================
+# PAYEER WEBHOOK (AUTO)
 # ======================================================
 @router.post("/webhook/payeer")
 def payeer_webhook(payload: dict):
-    if payload.get("m_status") != "success":
+    verify_payeer_signature(payload)
+
+    if payload["m_status"] != "success":
         return "IGNORED"
 
-    orderid = payload.get("m_orderid")
-    txid = f"payeer:{orderid}"
+    txid = f"payeer:{payload['m_orderid']}"
     if tx_used(txid):
         return "DUPLICATE"
 
-    uid = int(orderid.split(":")[1])
-    amount = float(payload.get("m_amount", 0))
+    uid = int(payload["m_orderid"].split(":")[1])
+    amount = float(payload["m_amount"])
 
     if amount < 10:
         mark_tx_used(txid)
@@ -241,46 +197,23 @@ def payeer_webhook(payload: dict):
     return "OK"
 
 # ======================================================
-# PAYEER WITHDRAW
-# ======================================================
-@router.post("/withdraw/payeer")
-def withdraw_payeer(uid: int, amount: float, payeer_account: str):
-    validate_withdraw(uid, amount)
-
-    c = db().cursor()
-    c.execute(
-        "UPDATE wallets SET usdt = usdt - ? WHERE uid=?",
-        (amount, uid)
-    )
-    c.execute(
-        """INSERT INTO history
-           (uid, action, asset, amount, ref, ts)
-           VALUES (?,?,?,?,?,?)""",
-        (uid, "withdraw_request", "usdt", amount, payeer_account, int(time.time()))
-    )
-    c.connection.commit()
-
-    ledger("withdraw:payeer", "user_usdt", "payeer_pending", amount)
-    return {"status": "pending"}
-
-# ======================================================
 # RTP STATS (READ ONLY)
 # ======================================================
 def rtp_stats() -> Dict:
     c = db().cursor()
     rows = c.execute(
         """SELECT game,
-                  SUM(bet) AS total_bet,
-                  SUM(payout) AS total_payout
+                  SUM(bet),
+                  SUM(payout)
            FROM game_history
            GROUP BY game"""
     ).fetchall()
 
-    out = {}
-    for g, b, p in rows:
-        out[g] = {
+    return {
+        g: {
             "total_bet": b or 0,
             "total_payout": p or 0,
             "rtp_real": round((p / b), 4) if b else 0
         }
-    return out
+        for g, b, p in rows
+    }
