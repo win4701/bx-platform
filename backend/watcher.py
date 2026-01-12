@@ -1,7 +1,6 @@
 import time
 import threading
 import sqlite3
-import requests
 from typing import List, Dict
 
 from pricing import get_price
@@ -11,16 +10,16 @@ DB_PATH = "db.sqlite"
 # ======================================================
 # CONFIG
 # ======================================================
-MIN_DEPOSIT_USDT = 10.0
 POLL_INTERVAL = 20  # seconds
+MIN_DEPOSIT_USDT = 10.0
 
 CONFIRMATIONS = {
     "ton": 5,
     "sol": 10,
-    "btc": 3
+    "btc": 3,
 }
 
-SUPPORTED_ASSETS = {"usdt", "ton", "sol", "btc"}
+SUPPORTED_ASSETS = {"ton", "sol", "btc"}
 
 # ======================================================
 # DB
@@ -29,7 +28,7 @@ def db():
     return sqlite3.connect(DB_PATH, check_same_thread=False)
 
 # ======================================================
-# HELPERS
+# DEDUP
 # ======================================================
 def tx_used(txid: str) -> bool:
     c = db().cursor()
@@ -46,9 +45,10 @@ def mark_tx_used(txid: str):
     )
     c.connection.commit()
 
+# ======================================================
+# WALLET + HISTORY
+# ======================================================
 def credit_wallet(uid: int, asset: str, amount: float):
-    if asset not in SUPPORTED_ASSETS:
-        return
     c = db().cursor()
     c.execute(
         f"UPDATE wallets SET {asset} = {asset} + ? WHERE uid=?",
@@ -66,49 +66,16 @@ def record_history(uid: int, asset: str, amount: float, ref: str):
     )
     c.connection.commit()
 
+# ======================================================
+# VALUE CHECK (ANTI-DUST)
+# ======================================================
 def value_in_usdt(asset: str, amount: float) -> float:
     """
     تقييم الإيداع بسعر حي
-    يرفض السعر القديم
+    يرفض السعر القديم تلقائيًا (pricing.py)
     """
-    if asset == "usdt":
-        return amount
-    price = get_price(asset)  # قد يرفع STALE_PRICE
+    price = get_price(asset)
     return amount * price
-
-# ======================================================
-# BINANCE ID WATCHER (USDT)
-# ======================================================
-def binance_watcher():
-    """
-    Placeholder — يُربط لاحقًا بـ Binance API / Webhook
-    يجب أن يعيد معاملات بالشكل:
-    { txid, uid, amount }
-    """
-    while True:
-        try:
-            transfers: List[Dict] = []  # مصدر خارجي حقيقي لاحقًا
-
-            for t in transfers:
-                txid = f"binance:{t['txid']}"
-                if tx_used(txid):
-                    continue
-
-                amount = float(t["amount"])
-                if amount < MIN_DEPOSIT_USDT:
-                    mark_tx_used(txid)
-                    continue
-
-                uid = int(t["uid"])
-
-                credit_wallet(uid, "usdt", amount)
-                record_history(uid, "usdt", amount, txid)
-                mark_tx_used(txid)
-
-        except Exception as e:
-            print("[BINANCE]", e)
-
-        time.sleep(POLL_INTERVAL)
 
 # ======================================================
 # TON WATCHER
@@ -116,20 +83,20 @@ def binance_watcher():
 def ton_watcher():
     while True:
         try:
-            txs: List[Dict] = []  # TON API
+            txs: List[Dict] = []  # TON API adapter (خارجي)
+
             for tx in txs:
-                txid = tx["hash"]
+                txid = f"ton:{tx['hash']}"
                 if tx_used(txid):
                     continue
 
                 if tx["confirmations"] < CONFIRMATIONS["ton"]:
                     continue
 
-                uid = int(tx["memo"])
+                uid = int(tx["memo"])        # memo = uid
                 amount = float(tx["amount"])
 
-                usdt_value = value_in_usdt("ton", amount)
-                if usdt_value < MIN_DEPOSIT_USDT:
+                if value_in_usdt("ton", amount) < MIN_DEPOSIT_USDT:
                     mark_tx_used(txid)
                     continue
 
@@ -138,7 +105,7 @@ def ton_watcher():
                 mark_tx_used(txid)
 
         except Exception as e:
-            print("[TON]", e)
+            print("[TON WATCHER]", e)
 
         time.sleep(POLL_INTERVAL)
 
@@ -148,9 +115,10 @@ def ton_watcher():
 def sol_watcher():
     while True:
         try:
-            txs: List[Dict] = []  # SOL API
+            txs: List[Dict] = []  # SOL RPC adapter (خارجي)
+
             for tx in txs:
-                txid = tx["signature"]
+                txid = f"sol:{tx['signature']}"
                 if tx_used(txid):
                     continue
 
@@ -160,8 +128,7 @@ def sol_watcher():
                 uid = int(tx["memo"])
                 amount = float(tx["amount"])
 
-                usdt_value = value_in_usdt("sol", amount)
-                if usdt_value < MIN_DEPOSIT_USDT:
+                if value_in_usdt("sol", amount) < MIN_DEPOSIT_USDT:
                     mark_tx_used(txid)
                     continue
 
@@ -170,7 +137,7 @@ def sol_watcher():
                 mark_tx_used(txid)
 
         except Exception as e:
-            print("[SOL]", e)
+            print("[SOL WATCHER]", e)
 
         time.sleep(POLL_INTERVAL)
 
@@ -180,20 +147,20 @@ def sol_watcher():
 def btc_watcher():
     while True:
         try:
-            txs: List[Dict] = []  # BTC API
+            txs: List[Dict] = []  # BTC API adapter (خارجي)
+
             for tx in txs:
-                txid = tx["txid"]
+                txid = f"btc:{tx['txid']}"
                 if tx_used(txid):
                     continue
 
                 if tx["confirmations"] < CONFIRMATIONS["btc"]:
                     continue
 
-                uid = int(tx["uid"])  # address → uid mapping
-                amount = float(tx["amount"])  # BTC
+                uid = int(tx["uid"])          # address → uid mapping
+                amount = float(tx["amount"]) # BTC
 
-                usdt_value = value_in_usdt("btc", amount)
-                if usdt_value < MIN_DEPOSIT_USDT:
+                if value_in_usdt("btc", amount) < MIN_DEPOSIT_USDT:
                     mark_tx_used(txid)
                     continue
 
@@ -202,16 +169,15 @@ def btc_watcher():
                 mark_tx_used(txid)
 
         except Exception as e:
-            print("[BTC]", e)
+            print("[BTC WATCHER]", e)
 
         time.sleep(POLL_INTERVAL)
 
 # ======================================================
-# START ALL WATCHERS
+# START WATCHERS
 # ======================================================
 def start_watchers():
-    threading.Thread(target=binance_watcher, daemon=True).start()
     threading.Thread(target=ton_watcher, daemon=True).start()
     threading.Thread(target=sol_watcher, daemon=True).start()
     threading.Thread(target=btc_watcher, daemon=True).start()
-    print("[WATCHER] Deposit watchers started")
+    print("[WATCHER] TON / SOL / BTC watchers started")
