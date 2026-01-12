@@ -1,8 +1,19 @@
 import time
 import sqlite3
-from typing import Dict
+from typing import Dict, Optional
 
 DB_PATH = "db.sqlite"
+
+# ======================================================
+# FIXED INTERNAL REFERENCE (OFFICIAL)
+# ======================================================
+BX_PER_USDT = 0.5        # 1 USDT = 0.5 BX
+USDT_PER_BX = 2.0        # 1 BX   = 2 USDT
+
+# ======================================================
+# PRICE FEED RULES
+# ======================================================
+MAX_PRICE_AGE_SEC = 60   # نرفض أي سعر خارجي أقدم من دقيقة
 
 # ======================================================
 # DB
@@ -11,37 +22,13 @@ def db():
     return sqlite3.connect(DB_PATH, check_same_thread=False)
 
 # ======================================================
-# CONFIG
+# EXTERNAL PRICES (READ ONLY)
 # ======================================================
-# أقصى عمر مسموح للسعر الخارجي (ثوانٍ)
-MAX_PRICE_AGE_SEC = 15
-
-# أوزان المرجع الخارجي لحساب BX_ref
-BX_REF_WEIGHTS = {
-    "sol": 0.4,
-    "ton": 0.2,
-    "btc": 0.4
-}
-
-# حدود أمان سعر BX الداخلي
-BX_REF_MIN_FACTOR = 0.6
-BX_REF_MAX_FACTOR = 1.4
-
-# قيمة أساس BX (اقتصاد داخلي)
-BX_BASE_PRICE = 3.0
-
-# معاملات الاقتصاد الداخلي
-DEMAND_DIVISOR = 10_000.0
-BURN_DIVISOR = 5_000.0
-MINT_DIVISOR = 8_000.0
-
-# ======================================================
-# PRICE FETCH (FROM DB – FED BY FEEDER)
-# ======================================================
-def get_price(asset: str) -> float:
+def get_price(asset: str) -> Optional[float]:
     """
-    جلب سعر خارجي حي من جدول prices
-    يرفض السعر القديم
+    يجلب السعر الخارجي الحقيقي للأصل (USDT)
+    - يُستخدم للحسابات المرجعية فقط
+    - لا يغيّر سعر BX
     """
     c = db().cursor()
     row = c.execute(
@@ -50,17 +37,17 @@ def get_price(asset: str) -> float:
     ).fetchone()
 
     if not row:
-        raise ValueError("PRICE_NOT_AVAILABLE")
+        return None
 
-    price, updated_at = row
-    if int(time.time()) - updated_at > MAX_PRICE_AGE_SEC:
-        raise ValueError("STALE_PRICE")
+    price, ts = row
+    if int(time.time()) - ts > MAX_PRICE_AGE_SEC:
+        return None
 
     return float(price)
 
-def get_all_prices() -> Dict[str, float]:
+def get_all_prices() -> Dict[str, Optional[float]]:
     """
-    أسعار حيّة لكل الأصول (قد تُعيد None إذا السعر قديم)
+    يعيد جميع الأسعار الخارجية الصالحة
     """
     c = db().cursor()
     rows = c.execute(
@@ -70,108 +57,74 @@ def get_all_prices() -> Dict[str, float]:
     out = {}
     now = int(time.time())
     for asset, price, ts in rows:
-        out[asset] = price if now - ts <= MAX_PRICE_AGE_SEC else None
+        out[asset] = (
+            float(price)
+            if now - ts <= MAX_PRICE_AGE_SEC
+            else None
+        )
     return out
 
 # ======================================================
-# PRICE RECORDING (FROM FEEDER)
+# CONVERSIONS (REFERENCE ONLY)
 # ======================================================
-def record_price(asset: str, price_usdt: float):
+def usdt_to_bx(usdt: float) -> float:
     """
-    تُستدعى من Price Feeder فقط
+    تحويل قياسي: USDT → BX
     """
-    ts = int(time.time())
-    c = db().cursor()
+    return round(usdt * BX_PER_USDT, 6)
 
-    c.execute(
-        "INSERT OR REPLACE INTO prices(asset, price_usdt, updated_at) VALUES (?,?,?)",
-        (asset, price_usdt, ts)
-    )
+def bx_to_usdt(bx: float) -> float:
+    """
+    تحويل قياسي: BX → USDT
+    """
+    return round(bx * USDT_PER_BX, 6)
 
-    c.execute(
-        "INSERT INTO price_history(asset, price_usdt, ts) VALUES (?,?,?)",
-        (asset, price_usdt, ts)
-    )
-
-    c.connection.commit()
+def external_asset_to_bx(asset: str) -> Optional[float]:
+    """
+    تحويل سعر أصل خارجي (BTC / SOL / TON) إلى BX
+    عبر USDT فقط
+    """
+    price_usdt = get_price(asset)
+    if price_usdt is None:
+        return None
+    return usdt_to_bx(price_usdt)
 
 # ======================================================
-# BX INTERNAL PRICING
+# INTERNAL MARKET PRICE (FIXED)
 # ======================================================
-def get_bx_ref_price() -> float:
-    """
-    السعر المرجعي لـ BX (مرآة خارجية فقط)
-    """
-    sol = get_price("sol")
-    ton = get_price("ton")
-    btc = get_price("btc")
-
-    bx_ref = (
-        sol * BX_REF_WEIGHTS["sol"]
-        + ton * BX_REF_WEIGHTS["ton"]
-        + (btc / 1000.0) * BX_REF_WEIGHTS["btc"]
-    )
-    return bx_ref
-
-def _internal_factors() -> Dict[str, float]:
-    """
-    عوامل الاقتصاد الداخلي
-    (تُحسب من DB – حجم/حرق/سك)
-    """
-    c = db().cursor()
-
-    # حجم السوق (آخر 24h)
-    volume = c.execute(
-        "SELECT SUM(amount) FROM history WHERE action LIKE 'market_%' AND ts > ?",
-        (int(time.time()) - 86400,)
-    ).fetchone()[0] or 0.0
-
-    # الحرق (BX)
-    burned = c.execute(
-        "SELECT SUM(amount) FROM history WHERE action='burn' AND ts > ?",
-        (int(time.time()) - 86400,)
-    ).fetchone()[0] or 0.0
-
-    # السك (Mining / Rewards)
-    minted = c.execute(
-        "SELECT SUM(amount) FROM history WHERE action IN ('mining','airdrop') AND ts > ?",
-        (int(time.time()) - 86400,)
-    ).fetchone()[0] or 0.0
-
-    return {
-        "demand": volume / DEMAND_DIVISOR,
-        "burn": burned / BURN_DIVISOR,
-        "mint": minted / MINT_DIVISOR,
-    }
-
 def get_bx_internal_price() -> float:
     """
-    السعر الداخلي النهائي لـ BX
+    السعر الداخلي لـ BX
+    - ثابت
+    - غير مرتبط بتقلّبات الخارج
     """
-    bx_ref = get_bx_ref_price()
-    factors = _internal_factors()
-
-    bx_internal = (
-        BX_BASE_PRICE
-        + factors["demand"]
-        - factors["burn"]
-        - factors["mint"]
-    )
-
-    # تطبيق نطاق الأمان
-    min_price = bx_ref * BX_REF_MIN_FACTOR
-    max_price = bx_ref * BX_REF_MAX_FACTOR
-
-    bx_internal = max(min_price, min(max_price, bx_internal))
-    return round(bx_internal, 6)
+    return BX_PER_USDT
 
 # ======================================================
-# PUBLIC HELPERS (FOR API)
+# SNAPSHOT FOR API / UI
 # ======================================================
-def pricing_snapshot() -> Dict[str, float]:
+def pricing_snapshot() -> Dict:
     """
-    Snapshot جاهز للواجهة
+    Snapshot كامل للأسعار:
+    - BX (ثابت)
+    - أسعار خارجية (USDT)
+    - تحويلها إلى BX للعرض فقط
     """
     prices = get_all_prices()
-    prices["bx"] = get_bx_internal_price()
-    return prices
+
+    return {
+        "reference": {
+            "usdt_to_bx": BX_PER_USDT,
+            "bx_to_usdt": USDT_PER_BX
+        },
+        "bx_internal_price": BX_PER_USDT,
+        "external_prices_usdt": prices,
+        "external_prices_bx": {
+            asset: (
+                usdt_to_bx(price)
+                if price is not None
+                else None
+            )
+            for asset, price in prices.items()
+        }
+    }
