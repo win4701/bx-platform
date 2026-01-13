@@ -1,33 +1,27 @@
-import threading
 import time
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 # Routers
+from finance import router as finance_router, rtp_stats
 from market import router as market_router
-from finance import router as finance_router
 from casino import router as casino_router
 
-# Watchers
-from watcher import start_watchers
-
-# Pricing / Transparency
+# Pricing / Public
 from pricing import pricing_snapshot
-from finance import rtp_stats
 
 # ======================================================
 # APP
 # ======================================================
 app = FastAPI(
-    title="Bloxio API",
+    title="Bloxio Core API",
     version="1.0.0",
     docs_url="/docs",
     redoc_url=None
 )
 
 # ======================================================
-# CORS
+# CORS (UI / Bot / Mini App)
 # ======================================================
 app.add_middleware(
     CORSMiddleware,
@@ -38,60 +32,84 @@ app.add_middleware(
 )
 
 # ======================================================
-# ROUTERS
+# ROUTERS (CORE)
 # ======================================================
-app.include_router(market_router, prefix="/market", tags=["market"])
-app.include_router(finance_router, prefix="/finance", tags=["finance"])
-app.include_router(casino_router, prefix="/casino", tags=["casino"])
+app.include_router(
+    finance_router,
+    prefix="/finance",
+    tags=["finance"]
+)
+
+app.include_router(
+    market_router,
+    prefix="/market",
+    tags=["market"]
+)
+
+app.include_router(
+    casino_router,
+    prefix="/casino",
+    tags=["casino"]
+)
 
 # ======================================================
-# HEALTH CHECK (RENDER REQUIRED)
+# HEALTH (API ONLY)
 # ======================================================
 @app.get("/health")
 def health():
+    """
+    Health خاص بالـ API فقط.
+    watcher له Health مستقل على :9090
+    """
     return {
         "status": "ok",
+        "service": "api",
         "ts": int(time.time())
     }
 
 # ======================================================
-# PUBLIC SNAPSHOTS
+# PUBLIC SNAPSHOTS (READ-ONLY)
 # ======================================================
-@app.get("/public/prices")
+@app.get("/public/prices", tags=["public"])
 def public_prices():
     """
     Snapshot موحّد للأسعار:
-    - السعر الداخلي الثابت لـ BX
-    - الأسعار الخارجية (USDT)
-    - تحويلها إلى BX
+    - BX internal fixed
+    - External assets (USDT / TON / SOL / BTC)
     """
     return pricing_snapshot()
 
-@app.get("/public/rtp")
+@app.get("/public/rtp", tags=["public"])
 def public_rtp():
     """
-    شفافية RTP (قراءة فقط)
+    RTP شفافية (قراءة فقط)
     """
     return rtp_stats()
 
 # ======================================================
-# STARTUP: WATCHERS
+# ROOT (OPTIONAL)
 # ======================================================
-@app.on_event("startup")
-def startup():
-    """
-    تشغيل Watchers في Thread منفصل
-    (TON / SOL / BTC)
-    """
-    t = threading.Thread(
-        target=start_watchers,
-        daemon=True
-    )
-    t.start()
+@app.get("/")
+def root():
+    return {
+        "name": "Bloxio Core API",
+        "status": "running",
+        "ts": int(time.time())
+    }
 
 # ======================================================
-# SHUTDOWN
+# NOTES
 # ======================================================
-@app.on_event("shutdown")
-def shutdown():
-    pass
+"""
+تشغيل الخدمات على Fly.io:
+
+- API:
+  uvicorn main:app --host 0.0.0.0 --port 8080
+
+- Watcher (process مستقل):
+  python watcher.py
+
+ممنوع:
+- تشغيل watcher داخل FastAPI
+- Threads / background loops هنا
+"""
