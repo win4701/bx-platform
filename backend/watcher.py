@@ -1,183 +1,216 @@
+import os
 import time
-import threading
-import sqlite3
-from typing import List, Dict
+import requests
 
 from pricing import get_price
-
-DB_PATH = "db.sqlite"
-
-# ======================================================
-# CONFIG
-# ======================================================
-POLL_INTERVAL = 20  # seconds
-MIN_DEPOSIT_USDT = 10.0
-
-CONFIRMATIONS = {
-    "ton": 5,
-    "sol": 10,
-    "btc": 3,
-}
-
-SUPPORTED_ASSETS = {"ton", "sol", "btc"}
+from finance import credit_deposit, save_pending_deposit
+from key import get_env
 
 # ======================================================
-# DB
+# ENV
 # ======================================================
-def db():
-    return sqlite3.connect(DB_PATH, check_same_thread=False)
+TREASURY_SOL = os.getenv("TREASURY_SOL")
+TREASURY_BTC = os.getenv("TREASURY_BTC")
+
+SOL_API_URL = os.getenv("SOL_API_URL", "https://api.mainnet-beta.solana.com")
+BTC_API_URL = os.getenv("BTC_API_URL", "https://blockstream.info/api")
+
+SOL_CONFIRMATIONS = int(os.getenv("SOL_CONFIRMATIONS", "10"))
+BTC_CONFIRMATIONS = int(os.getenv("BTC_CONFIRMATIONS", "3"))
+
+MIN_DEPOSIT_USDT = float(os.getenv("MIN_DEPOSIT_USDT", "10"))
+
+# Telegram Alerts
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+ADMIN_CHAT_ID = os.getenv("ADMIN_CHAT_ID")
+
+# Optional HD (public only)
+HD_XPUB_SOL = os.getenv("HD_XPUB_SOL")
+HD_XPUB_BTC = os.getenv("HD_XPUB_BTC")
 
 # ======================================================
-# DEDUP
+# HELPERS
 # ======================================================
-def tx_used(txid: str) -> bool:
-    c = db().cursor()
-    return c.execute(
-        "SELECT 1 FROM used_txs WHERE txid=?",
-        (txid,)
-    ).fetchone() is not None
+def alert_admin(text: str):
+    if not TELEGRAM_BOT_TOKEN or not ADMIN_CHAT_ID:
+        return
+    try:
+        requests.post(
+            f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage",
+            json={"chat_id": ADMIN_CHAT_ID, "text": text},
+            timeout=5
+        )
+    except Exception:
+        pass
 
-def mark_tx_used(txid: str):
-    c = db().cursor()
-    c.execute(
-        "INSERT OR IGNORE INTO used_txs(txid) VALUES(?)",
-        (txid,)
-    )
-    c.connection.commit()
-
-# ======================================================
-# WALLET + HISTORY
-# ======================================================
-def credit_wallet(uid: int, asset: str, amount: float):
-    c = db().cursor()
-    c.execute(
-        f"UPDATE wallets SET {asset} = {asset} + ? WHERE uid=?",
-        (amount, uid)
-    )
-    c.connection.commit()
-
-def record_history(uid: int, asset: str, amount: float, ref: str):
-    c = db().cursor()
-    c.execute(
-        """INSERT INTO history
-           (uid, action, asset, amount, ref, ts)
-           VALUES (?,?,?,?,?,?)""",
-        (uid, "deposit", asset, amount, ref, int(time.time()))
-    )
-    c.connection.commit()
-
-# ======================================================
-# VALUE CHECK (ANTI-DUST)
-# ======================================================
-def value_in_usdt(asset: str, amount: float) -> float:
-    """
-    تقييم الإيداع بسعر حي
-    يرفض السعر القديم تلقائيًا (pricing.py)
-    """
+def usdt_value(asset: str, amount: float) -> float:
+    if asset == "usdt":
+        return amount
     price = get_price(asset)
+    if not price:
+        return 0.0
     return amount * price
 
-# ======================================================
-# TON WATCHER
-# ======================================================
-def ton_watcher():
-    while True:
+def extract_uid_from_memo(memo: str):
+    if not memo:
+        return None
+    memo = memo.strip().lower()
+    if memo.startswith("uid:"):
         try:
-            txs: List[Dict] = []  # TON API adapter (خارجي)
-
-            for tx in txs:
-                txid = f"ton:{tx['hash']}"
-                if tx_used(txid):
-                    continue
-
-                if tx["confirmations"] < CONFIRMATIONS["ton"]:
-                    continue
-
-                uid = int(tx["memo"])        # memo = uid
-                amount = float(tx["amount"])
-
-                if value_in_usdt("ton", amount) < MIN_DEPOSIT_USDT:
-                    mark_tx_used(txid)
-                    continue
-
-                credit_wallet(uid, "ton", amount)
-                record_history(uid, "ton", amount, txid)
-                mark_tx_used(txid)
-
-        except Exception as e:
-            print("[TON WATCHER]", e)
-
-        time.sleep(POLL_INTERVAL)
+            return int(memo.split("uid:")[1])
+        except Exception:
+            return None
+    return None
 
 # ======================================================
 # SOL WATCHER
 # ======================================================
-def sol_watcher():
+def fetch_sol_signatures(address: str, limit: int = 20):
+    payload = {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "getSignaturesForAddress",
+        "params": [address, {"limit": limit}],
+    }
+    r = requests.post(SOL_API_URL, json=payload, timeout=10)
+    r.raise_for_status()
+    return r.json().get("result", [])
+
+def fetch_sol_tx(signature: str):
+    payload = {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "getTransaction",
+        "params": [signature, {"encoding": "jsonParsed"}],
+    }
+    r = requests.post(SOL_API_URL, json=payload, timeout=10)
+    r.raise_for_status()
+    return r.json().get("result")
+
+def watch_sol():
+    if not TREASURY_SOL:
+        return
+
+    seen = set()
     while True:
         try:
-            txs: List[Dict] = []  # SOL RPC adapter (خارجي)
-
-            for tx in txs:
-                txid = f"sol:{tx['signature']}"
-                if tx_used(txid):
+            sigs = fetch_sol_signatures(TREASURY_SOL)
+            for s in sigs:
+                sig = s.get("signature")
+                conf = s.get("confirmations", 0)
+                if not sig or sig in seen or conf < SOL_CONFIRMATIONS:
                     continue
 
-                if tx["confirmations"] < CONFIRMATIONS["sol"]:
+                tx = fetch_sol_tx(sig)
+                if not tx:
                     continue
 
-                uid = int(tx["memo"])
-                amount = float(tx["amount"])
-
-                if value_in_usdt("sol", amount) < MIN_DEPOSIT_USDT:
-                    mark_tx_used(txid)
+                # amount + memo
+                meta = tx.get("meta", {})
+                post = meta.get("postBalances", [])
+                pre = meta.get("preBalances", [])
+                if not post or not pre:
                     continue
 
-                credit_wallet(uid, "sol", amount)
-                record_history(uid, "sol", amount, txid)
-                mark_tx_used(txid)
+                lamports = max(post) - max(pre)
+                amount_sol = lamports / 1e9
+                if usdt_value("sol", amount_sol) < MIN_DEPOSIT_USDT:
+                    continue
+
+                # memo
+                memo = None
+                for ix in tx.get("transaction", {}).get("message", {}).get("instructions", []):
+                    if ix.get("program") == "spl-memo":
+                        memo = ix.get("parsed")
+                        break
+
+                uid = extract_uid_from_memo(memo)
+
+                if uid:
+                    credit_deposit(uid, "sol", amount_sol, sig)
+                else:
+                    save_pending_deposit(
+                        uid=0,
+                        asset="sol",
+                        amount=amount_sol,
+                        txid=sig,
+                        reason="missing_memo"
+                    )
+                    alert_admin(
+                        f"⚠️ Pending SOL deposit\nTXID: {sig}\nAmount: {amount_sol}\nReason: missing memo"
+                    )
+
+                seen.add(sig)
 
         except Exception as e:
-            print("[SOL WATCHER]", e)
+            alert_admin(f"Watcher SOL error: {e}")
 
-        time.sleep(POLL_INTERVAL)
+        time.sleep(20)
 
 # ======================================================
 # BTC WATCHER
 # ======================================================
-def btc_watcher():
+def fetch_btc_txs(address: str):
+    r = requests.get(f"{BTC_API_URL}/address/{address}/txs", timeout=10)
+    r.raise_for_status()
+    return r.json()
+
+def watch_btc():
+    if not TREASURY_BTC:
+        return
+
+    seen = set()
     while True:
         try:
-            txs: List[Dict] = []  # BTC API adapter (خارجي)
-
+            txs = fetch_btc_txs(TREASURY_BTC)
             for tx in txs:
-                txid = f"btc:{tx['txid']}"
-                if tx_used(txid):
+                txid = tx.get("txid")
+                if not txid or txid in seen:
                     continue
 
-                if tx["confirmations"] < CONFIRMATIONS["btc"]:
+                conf = tx.get("status", {}).get("block_height")
+                if not conf:
                     continue
 
-                uid = int(tx["uid"])          # address → uid mapping
-                amount = float(tx["amount"]) # BTC
+                vout = tx.get("vout", [])
+                amount_btc = 0.0
+                for o in vout:
+                    if TREASURY_BTC in o.get("scriptpubkey_address", ""):
+                        amount_btc += o.get("value", 0) / 1e8
 
-                if value_in_usdt("btc", amount) < MIN_DEPOSIT_USDT:
-                    mark_tx_used(txid)
+                if usdt_value("btc", amount_btc) < MIN_DEPOSIT_USDT:
                     continue
 
-                credit_wallet(uid, "btc", amount)
-                record_history(uid, "btc", amount, txid)
-                mark_tx_used(txid)
+                # BTC without HD mapping → pending
+                save_pending_deposit(
+                    uid=0,
+                    asset="btc",
+                    amount=amount_btc,
+                    txid=txid,
+                    reason="no_address_mapping"
+                )
+                alert_admin(
+                    f"⚠️ Pending BTC deposit\nTXID: {txid}\nAmount: {amount_btc}\nReason: no address mapping"
+                )
+
+                seen.add(txid)
 
         except Exception as e:
-            print("[BTC WATCHER]", e)
+            alert_admin(f"Watcher BTC error: {e}")
 
-        time.sleep(POLL_INTERVAL)
+        time.sleep(30)
 
 # ======================================================
-# START WATCHERS
+# HOT / COLD POLICY (ALERT ONLY)
+# ======================================================
+def hot_wallet_policy():
+    # مثال بسيط: تنبيه فقط
+    pass
+
+# ======================================================
+# START ALL
 # ======================================================
 def start_watchers():
-    threading.Thread(target=ton_watcher, daemon=True).start()
-    threading.Thread(target=sol_watcher, daemon=True).start()
-    threading.Thread(target=btc_watcher, daemon=True).start()
-    print("[WATCHER] TON / SOL / BTC watchers started")
+    from threading import Thread
+    Thread(target=watch_sol, daemon=True).start()
+    Thread(target=watch_btc, daemon=True).start()
