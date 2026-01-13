@@ -1,7 +1,7 @@
 /* =========================
    CONFIG
 ========================= */
-const API = "https://api.bloxio.online";
+const API_BASE = "https://api.bloxio.online";
 let UID = null;
 
 /* =========================
