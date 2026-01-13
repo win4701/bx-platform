@@ -1,16 +1,8 @@
 PRAGMA foreign_keys = ON;
 
--- ======================================================
--- USERS
--- ======================================================
-CREATE TABLE IF NOT EXISTS users (
-  uid INTEGER PRIMARY KEY,
-  created_at INTEGER NOT NULL
-);
-
--- ======================================================
--- WALLETS
--- ======================================================
+-- ===============================
+-- USERS / WALLETS
+-- ===============================
 CREATE TABLE IF NOT EXISTS wallets (
   uid INTEGER PRIMARY KEY,
   usdt REAL DEFAULT 0,
@@ -18,179 +10,105 @@ CREATE TABLE IF NOT EXISTS wallets (
   sol  REAL DEFAULT 0,
   btc  REAL DEFAULT 0,
   bx   REAL DEFAULT 0,
-  FOREIGN KEY(uid) REFERENCES users(uid)
+  created_at INTEGER
 );
 
--- ======================================================
--- PRICES (LIVE)
--- ======================================================
-CREATE TABLE IF NOT EXISTS prices (
-  asset TEXT PRIMARY KEY,
-  price_usdt REAL NOT NULL,
-  updated_at INTEGER NOT NULL
-);
-
--- ======================================================
--- PRICE HISTORY (CHARTS)
--- ======================================================
-CREATE TABLE IF NOT EXISTS price_history (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  asset TEXT NOT NULL,
-  price_usdt REAL NOT NULL,
-  ts INTEGER NOT NULL
-);
-
--- ======================================================
+-- ===============================
 -- LEDGER (DOUBLE ENTRY)
--- ======================================================
+-- ===============================
 CREATE TABLE IF NOT EXISTS ledger (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  ref TEXT NOT NULL,
-  account TEXT NOT NULL,
+  ref TEXT,                  -- deposit:sol / withdraw:usdt / casino:slot ...
+  account TEXT,              -- treasury_usdt / user_usdt / revenue_casino ...
   debit REAL DEFAULT 0,
   credit REAL DEFAULT 0,
-  ts INTEGER NOT NULL
+  ts INTEGER
 );
 
--- ======================================================
--- USER HISTORY (ACTIONS)
--- ======================================================
+CREATE INDEX IF NOT EXISTS idx_ledger_account ON ledger(account);
+CREATE INDEX IF NOT EXISTS idx_ledger_ts ON ledger(ts);
+
+-- ===============================
+-- HISTORY (USER VIEW)
+-- ===============================
 CREATE TABLE IF NOT EXISTS history (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  uid INTEGER NOT NULL,
-  action TEXT NOT NULL,
+  uid INTEGER,
+  action TEXT,               -- deposit / withdraw / trade / casino
   asset TEXT,
   amount REAL,
   ref TEXT,
-  ts INTEGER NOT NULL,
-  FOREIGN KEY(uid) REFERENCES users(uid)
+  ts INTEGER
 );
 
--- ======================================================
+CREATE INDEX IF NOT EXISTS idx_history_uid ON history(uid);
+CREATE INDEX IF NOT EXISTS idx_history_ts ON history(ts);
+
+-- ===============================
+-- USED TXs (DEDUP)
+-- ===============================
+CREATE TABLE IF NOT EXISTS used_txs (
+  txid TEXT PRIMARY KEY,
+  ts INTEGER
+);
+
+-- ===============================
+-- PENDING DEPOSITS
+-- ===============================
+CREATE TABLE IF NOT EXISTS pending_deposits (
+  txid TEXT PRIMARY KEY,
+  uid INTEGER,
+  asset TEXT,
+  amount REAL,
+  reason TEXT,
+  ts INTEGER
+);
+
+-- ===============================
+-- WITHDRAW WORKFLOW
+-- ===============================
+CREATE TABLE IF NOT EXISTS withdrawals (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  uid INTEGER,
+  asset TEXT,
+  amount REAL,
+  address TEXT,
+  status TEXT,               -- requested / approved / sent / rejected
+  txid TEXT,
+  reason TEXT,
+  ts INTEGER
+);
+
+CREATE INDEX IF NOT EXISTS idx_withdraw_uid ON withdrawals(uid);
+CREATE INDEX IF NOT EXISTS idx_withdraw_status ON withdrawals(status);
+
+-- ===============================
 -- GAME HISTORY (CASINO)
--- ======================================================
+-- ===============================
 CREATE TABLE IF NOT EXISTS game_history (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  uid INTEGER NOT NULL,
-  game TEXT NOT NULL,
-  bet REAL NOT NULL,
-  payout REAL NOT NULL,
-  win INTEGER NOT NULL,
-  created_at INTEGER NOT NULL,
-  FOREIGN KEY(uid) REFERENCES users(uid)
+  uid INTEGER,
+  game TEXT,
+  bet REAL,
+  payout REAL,
+  ts INTEGER
 );
 
--- ======================================================
--- AIRDROPS
--- ======================================================
-CREATE TABLE IF NOT EXISTS airdrops (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  uid INTEGER NOT NULL,
-  type TEXT NOT NULL,
-  bx_amount REAL NOT NULL,
-  reason TEXT,
-  ts INTEGER NOT NULL,
-  FOREIGN KEY(uid) REFERENCES users(uid)
+-- ===============================
+-- WATCHER METRICS
+-- ===============================
+CREATE TABLE IF NOT EXISTS watcher_metrics (
+  key TEXT PRIMARY KEY,
+  value INTEGER,
+  ts INTEGER
 );
 
--- ======================================================
--- ACTIVITY SCORES (AIRDR0P ENGINE)
--- ======================================================
-CREATE TABLE IF NOT EXISTS activity_scores (
-  uid INTEGER PRIMARY KEY,
-  score REAL DEFAULT 0,
-  updated_at INTEGER NOT NULL,
-  FOREIGN KEY(uid) REFERENCES users(uid)
+-- ===============================
+-- TON JETTON CACHE
+-- ===============================
+CREATE TABLE IF NOT EXISTS jettons (
+  master TEXT PRIMARY KEY,
+  symbol TEXT,
+  decimals INTEGER,
+  ts INTEGER
 );
-
--- ======================================================
--- REFERRALS
--- ======================================================
-CREATE TABLE IF NOT EXISTS referrals (
-  uid INTEGER PRIMARY KEY,
-  referrer_uid INTEGER,
-  created_at INTEGER NOT NULL,
-  FOREIGN KEY(uid) REFERENCES users(uid),
-  FOREIGN KEY(referrer_uid) REFERENCES users(uid)
-);
-
-CREATE TABLE IF NOT EXISTS referral_stats (
-  uid INTEGER PRIMARY KEY,
-  total_referrals INTEGER DEFAULT 0,
-  active_referrals INTEGER DEFAULT 0,
-  total_value REAL DEFAULT 0,
-  FOREIGN KEY(uid) REFERENCES users(uid)
-);
-
--- ======================================================
--- BINANCE ID DEPOSITS (AUTO / AUDIT)
--- ======================================================
-CREATE TABLE IF NOT EXISTS binance_deposits (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  uid INTEGER NOT NULL,
-  amount REAL NOT NULL,
-  binance_txid TEXT NOT NULL,
-  status TEXT DEFAULT 'confirmed', -- auto-confirmed
-  created_at INTEGER NOT NULL,
-  confirmed_at INTEGER,
-  FOREIGN KEY(uid) REFERENCES users(uid)
-);
-
--- ======================================================
--- PAYEER TRANSACTIONS (AUDIT)
--- ======================================================
-CREATE TABLE IF NOT EXISTS payeer_transactions (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  uid INTEGER NOT NULL,
-  order_id TEXT NOT NULL,
-  amount REAL NOT NULL,
-  status TEXT NOT NULL, -- success / failed
-  created_at INTEGER NOT NULL,
-  FOREIGN KEY(uid) REFERENCES users(uid)
-);
-
--- ======================================================
--- DEVICE FINGERPRINTS (ANTI-SYBIL)
--- ======================================================
-CREATE TABLE IF NOT EXISTS device_fingerprints (
-  uid INTEGER NOT NULL,
-  fp_hash TEXT NOT NULL,
-  first_seen INTEGER NOT NULL,
-  last_seen INTEGER NOT NULL,
-  PRIMARY KEY(uid, fp_hash),
-  FOREIGN KEY(uid) REFERENCES users(uid)
-);
-
--- ======================================================
--- USED TRANSACTIONS (GLOBAL DEDUP)
--- ======================================================
-CREATE TABLE IF NOT EXISTS used_txs (
-  txid TEXT PRIMARY KEY
-);
-
--- ======================================================
--- INDEXES (PERFORMANCE + AUDIT)
--- ======================================================
-CREATE INDEX IF NOT EXISTS idx_wallet_uid
-  ON wallets(uid);
-
-CREATE INDEX IF NOT EXISTS idx_price_hist_asset_ts
-  ON price_history(asset, ts);
-
-CREATE INDEX IF NOT EXISTS idx_ledger_ref
-  ON ledger(ref);
-
-CREATE INDEX IF NOT EXISTS idx_history_uid_ts
-  ON history(uid, ts);
-
-CREATE INDEX IF NOT EXISTS idx_game_uid_ts
-  ON game_history(uid, created_at);
-
-CREATE INDEX IF NOT EXISTS idx_airdrops_uid_ts
-  ON airdrops(uid, ts);
-
-CREATE INDEX IF NOT EXISTS idx_binance_uid
-  ON binance_deposits(uid);
-
-CREATE INDEX IF NOT EXISTS idx_payeer_uid
-  ON payeer_transactions(uid);
