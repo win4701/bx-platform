@@ -40,8 +40,10 @@ ADMIN_CHAT_ID = os.getenv("ADMIN_CHAT_ID")
 # ======================================================
 # DB (DEDUP PERSISTENT)
 # ======================================================
+import psycopg2, os
+
 def db():
-    return sqlite3.connect(DB_PATH, check_same_thread=False)
+    return psycopg2.connect(os.getenv("DATABASE_URL"))
 
 def init_seen():
     c = db().cursor()
