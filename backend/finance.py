@@ -1,28 +1,11 @@
 import time
-import os
-import hashlib
 import sqlite3
-from typing import Dict
-from fastapi import APIRouter, HTTPException, Depends, Request
+from fastapi import APIRouter, HTTPException, Depends
 
 from key import api_guard, admin_guard
 
 router = APIRouter(dependencies=[Depends(api_guard)])
 DB_PATH = "db.sqlite"
-
-# ======================================================
-# CONFIG
-# ======================================================
-MIN_DEPOSIT_USDT = 10.0
-MAX_WITHDRAW_RATIO = 0.5
-MAX_WITHDRAW_MONTH = 10
-
-# Binance ID (AUTO webhook)
-BINANCE_WEBHOOK_SECRET = os.getenv("BINANCE_WEBHOOK_SECRET", "")
-
-# WalletConnect treasury addresses
-TREASURY_USDT_TON = os.getenv("TREASURY_USDT_TON", "")
-TREASURY_USDT_TRC20 = os.getenv("TREASURY_USDT_TRC20", "")
 
 # ======================================================
 # DB
@@ -47,199 +30,155 @@ def ledger(ref: str, debit: str, credit: str, amount: float):
     c.connection.commit()
 
 # ======================================================
-# DEDUP
+# WALLET HELPERS
 # ======================================================
-def tx_used(txid: str) -> bool:
-    c = db().cursor()
-    return c.execute(
-        "SELECT 1 FROM used_txs WHERE txid=?",
-        (txid,)
-    ).fetchone() is not None
-
-def mark_tx_used(txid: str):
+def get_wallet(uid: int):
     c = db().cursor()
     c.execute(
-        "INSERT OR IGNORE INTO used_txs(txid) VALUES(?)",
-        (txid,)
-    )
-    c.connection.commit()
-
-# ======================================================
-# WALLET
-# ======================================================
-@router.get("/state")
-def wallet_state(uid: int):
-    c = db().cursor()
-    r = c.execute(
-        "SELECT usdt, ton, sol, btc, bx FROM wallets WHERE uid=?",
+        "SELECT usdt, ton, sol, btc, bx, usdt_confirmed, bx_confirmed, deposit_status "
+        "FROM wallets WHERE uid=?",
         (uid,)
-    ).fetchone()
-    if not r:
+    )
+    row = c.fetchone()
+    if not row:
         raise HTTPException(404, "WALLET_NOT_FOUND")
-    return dict(zip(["usdt", "ton", "sol", "btc", "bx"], r))
-
-# ======================================================
-# WITHDRAW RULES (USDT)
-# ======================================================
-def validate_withdraw(uid: int, amount: float):
-    if amount < MIN_DEPOSIT_USDT:
-        raise HTTPException(400, "MIN_WITHDRAW_10")
-
-    c = db().cursor()
-    bal = c.execute(
-        "SELECT usdt FROM wallets WHERE uid=?",
-        (uid,)
-    ).fetchone()
-    if not bal:
-        raise HTTPException(404, "WALLET_NOT_FOUND")
-
-    if amount > bal[0] * MAX_WITHDRAW_RATIO:
-        raise HTTPException(400, "WITHDRAW_LIMIT_RATIO")
-
-    month_start = int(time.time()) - 30 * 86400
-    count = c.execute(
-        """SELECT COUNT(*) FROM history
-           WHERE uid=? AND action LIKE 'withdraw%' AND ts>?""",
-        (uid, month_start)
-    ).fetchone()[0]
-
-    if count >= MAX_WITHDRAW_MONTH:
-        raise HTTPException(400, "WITHDRAW_MONTH_LIMIT")
-
-# ======================================================
-# BINANCE ID — AUTO WEBHOOK
-# ======================================================
-def verify_binance_signature(payload: dict, signature: str):
-    raw = f"{payload}".encode()
-    expected = hashlib.sha256(
-        raw + BINANCE_WEBHOOK_SECRET.encode()
-    ).hexdigest()
-    if signature != expected:
-        raise HTTPException(401, "INVALID_BINANCE_SIGNATURE")
-
-@router.post("/webhook/binance")
-def binance_webhook(payload: dict, request: Request):
-    verify_binance_signature(
-        payload,
-        request.headers.get("X-BINANCE-SIGNATURE", "")
-    )
-
-    uid = int(payload["uid"])
-    amount = float(payload["amount"])
-    txid = f"binance:{payload['txid']}"
-
-    if amount < MIN_DEPOSIT_USDT:
-        return "TOO_SMALL"
-    if tx_used(txid):
-        return "DUPLICATE"
-
-    c = db().cursor()
-    c.execute(
-        "UPDATE wallets SET usdt = usdt + ? WHERE uid=?",
-        (amount, uid)
-    )
-    c.execute(
-        """INSERT INTO history
-           (uid, action, asset, amount, ref, ts)
-           VALUES (?,?,?,?,?,?)""",
-        (uid, "deposit", "usdt", amount, txid, int(time.time()))
-    )
-    c.connection.commit()
-
-    ledger("deposit:binance", "binance_pool", "user_usdt", amount)
-    mark_tx_used(txid)
-    return "OK"
-
-# ======================================================
-# WALLETCONNECT — USDT (TON / TRC20)
-# ======================================================
-def verify_ton_usdt(txid: str) -> Dict:
-    """
-    تحقق on-chain عبر TON API
-    يجب التأكد من:
-    - العقد الرسمي USDT
-    - المرسل → المستخدم
-    - المستلم → TREASURY_USDT_TON
-    - confirmations كافية
-    """
-    # pseudo
     return {
-        "confirmed": True,
-        "amount": 20.0,
-        "to": TREASURY_USDT_TON
+        "usdt": row[0],
+        "ton": row[1],
+        "sol": row[2],
+        "btc": row[3],
+        "bx": row[4],
+        "usdt_confirmed": row[5],
+        "bx_confirmed": row[6],
+        "deposit_status": row[7],
     }
 
-def verify_trc20_usdt(txid: str) -> Dict:
-    """
-    تحقق on-chain عبر TRON API
-    """
-    # pseudo
-    return {
-        "confirmed": True,
-        "amount": 25.0,
-        "to": TREASURY_USDT_TRC20
-    }
-
-@router.post("/deposit/walletconnect")
-def walletconnect_deposit(
-    uid: int,
-    network: str,   # ton | trc20
-    txid: str
-):
-    if network not in ("ton", "trc20"):
-        raise HTTPException(400, "INVALID_NETWORK")
-
-    txkey = f"wc:{network}:{txid}"
-    if tx_used(txkey):
-        raise HTTPException(400, "DUPLICATE_TX")
-
-    tx = (
-        verify_ton_usdt(txid)
-        if network == "ton"
-        else verify_trc20_usdt(txid)
-    )
-
-    if not tx["confirmed"]:
-        raise HTTPException(400, "NOT_CONFIRMED")
-
-    if tx["amount"] < MIN_DEPOSIT_USDT:
-        mark_tx_used(txkey)
-        raise HTTPException(400, "MIN_DEPOSIT_10")
-
+def set_deposit_status(uid: int, status: str):
     c = db().cursor()
     c.execute(
-        "UPDATE wallets SET usdt = usdt + ? WHERE uid=?",
-        (tx["amount"], uid)
-    )
-    c.execute(
-        """INSERT INTO history
-           (uid, action, asset, amount, ref, ts)
-           VALUES (?,?,?,?,?,?)""",
-        (uid, "deposit", "usdt", tx["amount"], txkey, int(time.time()))
+        "UPDATE wallets SET deposit_status=? WHERE uid=?",
+        (status, uid)
     )
     c.connection.commit()
 
-    ledger("deposit:walletconnect", "wc_pool", "user_usdt", tx["amount"])
-    mark_tx_used(txkey)
-
-    return {"status": "confirmed"}
-
 # ======================================================
-# RTP STATS (READ ONLY)
+# DEPOSITS (USED BY WATCHER)
 # ======================================================
-def rtp_stats() -> Dict:
+def credit_deposit(uid: int, asset: str, amount: float, txid: str):
+    ts = int(time.time())
     c = db().cursor()
-    rows = c.execute(
-        """SELECT game, SUM(bet), SUM(payout)
-           FROM game_history
-           GROUP BY game"""
-    ).fetchall()
 
-    return {
-        g: {
-            "total_bet": b or 0,
-            "total_payout": p or 0,
-            "rtp_real": round((p / b), 4) if b else 0
+    # credit balance
+    c.execute(
+        f"UPDATE wallets SET {asset}={asset}+?, {asset}_confirmed={asset}_confirmed+? WHERE uid=?",
+        (amount, amount, uid)
+    )
+
+    ledger(f"deposit:{asset}", f"treasury_{asset}", f"user_{asset}", amount)
+
+    c.execute(
+        "INSERT INTO history(uid, action, asset, amount, ref, ts) VALUES (?,?,?,?,?,?)",
+        (uid, "deposit", asset, amount, txid, ts)
+    )
+
+    set_deposit_status(uid, "confirmed")
+    c.connection.commit()
+
+def save_pending_deposit(uid: int, asset: str, amount: float, txid: str, reason: str):
+    ts = int(time.time())
+    c = db().cursor()
+    c.execute(
+        """INSERT INTO deposits(uid, asset, txid, amount, confirmations, credited, ts)
+           VALUES (?,?,?,?,0,0,?)""",
+        (uid, asset, txid, amount, ts)
+    )
+    set_deposit_status(uid, "pending")
+    c.connection.commit()
+
+# ======================================================
+# ADMIN: APPROVE PENDING DEPOSIT
+# ======================================================
+@router.post("/admin/approve_deposit")
+def admin_approve_deposit(deposit_id: int, admin=Depends(admin_guard)):
+    c = db().cursor()
+    c.execute(
+        "SELECT uid, asset, amount, txid FROM deposits WHERE id=? AND credited=0",
+        (deposit_id,)
+    )
+    dep = c.fetchone()
+    if not dep:
+        raise HTTPException(404, "DEPOSIT_NOT_FOUND")
+
+    uid, asset, amount, txid = dep
+    credit_deposit(uid, asset, amount, txid)
+
+    c.execute(
+        "UPDATE deposits SET credited=1 WHERE id=?",
+        (deposit_id,)
+    )
+    c.connection.commit()
+    return {"status": "approved"}
+
+# ======================================================
+# ADMIN: VIEW PENDING DEPOSITS
+# ======================================================
+@router.get("/admin/pending_deposits")
+def admin_pending_deposits(admin=Depends(admin_guard)):
+    c = db().cursor()
+    c.execute(
+        "SELECT id, uid, asset, amount, txid, ts FROM deposits WHERE credited=0 ORDER BY ts DESC"
+    )
+    rows = c.fetchall()
+    return [
+        {
+            "id": r[0],
+            "uid": r[1],
+            "asset": r[2],
+            "amount": r[3],
+            "txid": r[4],
+            "ts": r[5],
         }
-        for g, b, p in rows
+        for r in rows
+    ]
+
+# ======================================================
+# ADMIN: LEDGER VIEW (READ ONLY)
+# ======================================================
+@router.get("/admin/ledger")
+def admin_ledger(admin=Depends(admin_guard)):
+    c = db().cursor()
+    c.execute(
+        "SELECT ref, account, debit, credit, ts FROM ledger ORDER BY ts DESC LIMIT 500"
+    )
+    rows = c.fetchall()
+    return [
+        {
+            "ref": r[0],
+            "account": r[1],
+            "debit": r[2],
+            "credit": r[3],
+            "ts": r[4],
+        }
+        for r in rows
+    ]
+
+# ======================================================
+# RTP STATS (PUBLIC READ ONLY)
+# ======================================================
+def rtp_stats():
+    c = db().cursor()
+    c.execute("SELECT SUM(bet), SUM(win) FROM game_history")
+    bet, win = c.fetchone()
+    if not bet or bet == 0:
+        return {"rtp": 1.0}
+    return {"rtp": round(win / bet, 4)}
+
+# ======================================================
+# CONFIRMED BALANCE (USED BY CASINO / MARKET)
+# ======================================================
+def get_confirmed_balance(uid: int):
+    w = get_wallet(uid)
+    return {
+        "usdt": w["usdt_confirmed"],
+        "bx": w["bx_confirmed"],
     }
