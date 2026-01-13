@@ -10,8 +10,10 @@ DB_PATH = "db.sqlite"
 # ======================================================
 # DB
 # ======================================================
+import psycopg2, os
+
 def db():
-    return sqlite3.connect(DB_PATH, check_same_thread=False)
+    return psycopg2.connect(os.getenv("DATABASE_URL"))
 
 # ======================================================
 # LEDGER (DOUBLE ENTRY)
