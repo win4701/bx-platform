@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Bloxio</title>
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="assets/style.css"/>
+
+  <!-- QR -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+
+  <!-- Telegram Mini App -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+
+<body>
+
+<!-- =========================
+HEADER / WALLET
+========================= -->
+<header>
+  <h1>Bloxio</h1>
+  <div class="wallet">
+    <div>BX: <span id="bal-bx">0</span></div>
+    <div>USDT: <span id="bal-usdt">0</span></div>
+    <div>TON: <span id="bal-ton">0</span></div>
+    <div>SOL: <span id="bal-sol">0</span></div>
+    <div>BTC: <span id="bal-btc">0</span></div>
+  </div>
+</header>
+
+<!-- =========================
+DEPOSIT
+========================= -->
+<section>
+  <h2>Deposit</h2>
+
+  <!-- SOL -->
+  <div class="deposit-box">
+    <h3>SOL</h3>
+    <p>Send SOL to:</p>
+    <code id="sol-address"></code>
+
+    <p>Memo (required):</p>
+    <div class="memo">
+      <code id="sol-memo"></code>
+      <button onclick="copySolMemo()">Copy</button>
+    </div>
+
+    <canvas id="sol-qr"></canvas>
+  </div>
+
+  <!-- BTC -->
+  <div class="deposit-box">
+    <h3>BTC</h3>
+    <p>Send BTC to:</p>
+    <code id="btc-address"></code>
+    <canvas id="btc-qr"></canvas>
+  </div>
+</section>
+
+<!-- =========================
+CASINO
+========================= -->
+<section>
+  <h2>Casino</h2>
+
+  <div id="casino-warning" class="warning" style="display:none;">
+    Deposit pending confirmation
+  </div>
+
+  <div class="casino-games">
+    <button class="casino-btn" onclick="playGame('slot', 1)">🎰 Slot</button>
+    <button class="casino-btn" onclick="playGame('dice', 1)">🎲 Dice</button>
+    <button class="casino-btn" onclick="playGame('crash', 1)">📈 Crash</button>
+    <button class="casino-btn" onclick="playGame('roulette', 1)">🎡 Roulette</button>
+    <button class="casino-btn" onclick="playGame('coinflip', 1)">🪙 Coinflip</button>
+    <button class="casino-btn" onclick="playGame('chicken_road', 1)">🐔 Chicken Road</button>
+    <button class="casino-btn" onclick="playGame('beast', 1, 100)">👹 Beast ×100</button>
+  </div>
+</section>
+
+<!-- =========================
+MARKET
+========================= -->
+<section>
+  <h2>Market</h2>
+  <div>
+    <div>BX Price: <span id="price-bx">—</span></div>
+    <div>BTC Price: <span id="price-btc">—</span></div>
+    <div>SOL Price: <span id="price-sol">—</span></div>
+    <div>TON Price: <span id="price-ton">—</span></div>
+  </div>
+</section>
+
+<!-- =========================
+MINING
+========================= -->
+<section>
+  <h2>Mining</h2>
+  <p>Stake BX or SOL to get mining power.</p>
+</section>
+
+<!-- =========================
+AIRDROP
+========================= -->
+<section>
+  <h2>Airdrop</h2>
+  <p>Invite users and bring value to the system.</p>
+</section>
+
+<!-- =========================
+ADMIN PANEL
+========================= -->
+<section id="admin-panel" class="admin-panel hidden">
+  <h2>Admin</h2>
+
+  <h3>Pending Deposits</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Asset</th>
+        <th>Amount</th>
+        <th>TXID</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody id="pending-table"></tbody>
+  </table>
+
+  <h3>Ledger</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Ref</th>
+        <th>Account</th>
+        <th>Debit</th>
+        <th>Credit</th>
+        <th>Time</th>
+      </tr>
+    </thead>
+    <tbody id="ledger-table"></tbody>
+  </table>
+
+  <h3>Watcher Metrics</h3>
+  <div id="metrics-box"></div>
+</section>
+
+<!-- =========================
+SCRIPTS
+========================= -->
+<script src="app.js"></script>
+
+</body>
+</html>
