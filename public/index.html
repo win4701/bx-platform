@@ -1,157 +1,219 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Bloxio</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Bloxio BX</title>
 
-  <!-- Styles -->
-  <link rel="stylesheet" href="assets/style.css"/>
+<link rel="stylesheet" href="assets/css/style.css" />
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-  <!-- QR -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
-
-  <!-- Telegram Mini App -->
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+body{margin:0;background:#0a0a0a;color:#e6fff3;font-family:system-ui,sans-serif}
+.container{padding:16px;padding-bottom:90px}
+.card{background:#0f1f1a;border-radius:16px;padding:16px;margin-bottom:16px;border:1px solid rgba(127,207,154,.25)}
+.wallet-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+button{width:100%;padding:14px;border-radius:16px;border:none;font-weight:600;cursor:pointer;background:#7fcf9a;color:#000;margin-bottom:10px}
+.section{display:none}.section.active{display:block}
+.progress{background:#122;border-radius:12px;height:8px;overflow:hidden;margin-top:8px}
+.progress-bar{height:8px;width:0%;background:#7fcf9a}
+nav{position:fixed;bottom:0;left:0;right:0;background:#0b1512;display:flex;justify-content:space-around;padding:10px 0;border-top:1px solid rgba(127,207,154,.25)}
+nav .item{font-size:12px;color:#9fbfb0;text-align:center}
+nav .item.active{color:#7fcf9a}
+.asset-row{display:flex;gap:8px}
+.asset-row button{flex:1}
+</style>
 </head>
 
 <body>
 
-<!-- =========================
-HEADER / WALLET
-========================= -->
-<header>
-  <h1>Bloxio</h1>
-  <div class="wallet">
-    <div>BX: <span id="bal-bx">0</span></div>
-    <div>USDT: <span id="bal-usdt">0</span></div>
-    <div>TON: <span id="bal-ton">0</span></div>
-    <div>SOL: <span id="bal-sol">0</span></div>
-    <div>BTC: <span id="bal-btc">0</span></div>
+<header style="padding:16px;font-weight:700">Bloxio BX</header>
+
+<main class="container">
+
+<!-- ================= HOME ================= -->
+<section id="home" class="section active">
+  <div class="card">
+    <div class="wallet-row"><span><img src="assets/images/bx.png" width="18"> BX</span><b id="bal-bx">0</b></div>
+    <div class="wallet-row"><span><img src="assets/images/usdt.png" width="18"> USDT</span><b id="bal-usdt">0</b></div>
+    <div class="wallet-row"><span><img src="assets/images/ton.png" width="18"> TON</span><b id="bal-ton">0</b></div>
+    <div class="wallet-row"><span><img src="assets/images/icons/sol.png" width="18"> SOL</span><b id="bal-sol">0</b></div>
+    <div class="wallet-row"><span><img src="assets/images/btc.png" width="18"> BTC</span><b id="bal-btc">0</b></div>
   </div>
-</header>
 
-<!-- =========================
-DEPOSIT
-========================= -->
-<section>
-  <h2>Deposit</h2>
+  <!-- ===== Deposit ===== -->
+  <div class="card">
+    <h3>Deposit</h3>
+    <img src="assets/images/payments/deposit.png" width="100%" style="border-radius:12px">
 
-  <!-- SOL -->
-  <div class="deposit-box">
-    <h3>SOL</h3>
-    <p>Send SOL to:</p>
-    <code id="sol-address"></code>
+    <button onclick="depositTon()">TON (On-chain)</button>
+    <button onclick="showBinanceInfo()">Binance ID (USDT)</button>
+ <button onclick="depositUSDT_TON()">
+  <img src="assets/images/icons/ton.png" width="16"> USDT (TON)
+</button>
 
-    <p>Memo (required):</p>
-    <div class="memo">
-      <code id="sol-memo"></code>
-      <button onclick="copySolMemo()">Copy</button>
+<button onclick="depositUSDT_TRC20()">
+  <img src="assets/images/usdt.png" width="16"> USDT (TRC20)
+</button>
+  </div>
+
+  <!-- ===== Withdraw ===== -->
+  <div class="card">
+    <h3>Withdraw</h3>
+    <img src="assets/images/payments/withdraw.png" width="100%" style="border-radius:12px">
+
+    <div class="asset-row">
+      <button onclick="withdrawAsset('usdt')">USDT</button>
+      <button onclick="withdrawAsset('ton')">TON</button>
+    </div>
+    <div class="asset-row">
+      <button onclick="withdrawAsset('sol')">SOL</button>
+      <button onclick="withdrawAsset('btc')">BTC</button>
     </div>
 
-    <canvas id="sol-qr"></canvas>
-  </div>
-
-  <!-- BTC -->
-  <div class="deposit-box">
-    <h3>BTC</h3>
-    <p>Send BTC to:</p>
-    <code id="btc-address"></code>
-    <canvas id="btc-qr"></canvas>
+    <p style="color:#9fbfb0;font-size:12px">
+      Min 10 USDT • Max 50% • 10 withdrawals / month
+    </p>
   </div>
 </section>
 
-<!-- =========================
-CASINO
-========================= -->
-<section>
-  <h2>Casino</h2>
-
-  <div id="casino-warning" class="warning" style="display:none;">
-    Deposit pending confirmation
+<!-- ================= MARKET ================= -->
+<section id="market" class="section">
+  <div class="card">
+    <h3>BX / USDT</h3>
+    <b id="price-bx">—</b>
+    <canvas id="bxChart" height="120"></canvas>
   </div>
 
-  <div class="casino-games">
-    <button class="casino-btn" onclick="playGame('slot', 1)">🎰 Slot</button>
-    <button class="casino-btn" onclick="playGame('dice', 1)">🎲 Dice</button>
-    <button class="casino-btn" onclick="playGame('crash', 1)">📈 Crash</button>
-    <button class="casino-btn" onclick="playGame('roulette', 1)">🎡 Roulette</button>
-    <button class="casino-btn" onclick="playGame('coinflip', 1)">🪙 Coinflip</button>
-    <button class="casino-btn" onclick="playGame('chicken_road', 1)">🐔 Chicken Road</button>
-    <button class="casino-btn" onclick="playGame('beast', 1, 100)">👹 Beast ×100</button>
-  </div>
-</section>
+  <div class="card">
+    <select id="marketAsset">
+      <option value="usdt">USDT</option>
+      <option value="ton">TON</option>
+      <option value="sol">SOL</option>
+      <option value="btc">BTC</option>
+    </select>
 
-<!-- =========================
-MARKET
-========================= -->
-<section>
-  <h2>Market</h2>
-  <div>
-    <div>BX Price: <span id="price-bx">—</span></div>
-    <div>BTC Price: <span id="price-btc">—</span></div>
-    <div>SOL Price: <span id="price-sol">—</span></div>
-    <div>TON Price: <span id="price-ton">—</span></div>
+    <select id="marketSide">
+      <option value="buy">Buy BX</option>
+      <option value="sell">Sell BX</option>
+    </select>
+
+    <input id="marketAmount" type="number" placeholder="Amount" />
+    <button onclick="marketPreview()">Preview</button>
+    <div id="marketResult"></div>
+    <button onclick="marketConfirm()">Confirm</button>
   </div>
 </section>
 
-<!-- =========================
-MINING
-========================= -->
-<section>
-  <h2>Mining</h2>
-  <p>Stake BX or SOL to get mining power.</p>
+<!-- ================= CASINO (7 GAMES) ================= -->
+<section id="casino" class="section">
+
+  <div class="card">
+    <img src="assets/images/casino/slot.png" width="100%" style="border-radius:12px">
+    <button onclick="playGame('slot',1)">🎰 Slot</button>
+  </div>
+
+  <div class="card">
+    <img src="assets/images/casino/chicken.png" width="100%" style="border-radius:12px">
+    <!-- Chicken Road = زر واحد فقط -->
+    <button onclick="playGame('chicken',1,1)">🐔 Chicken Road</button>
+  </div>
+
+  <div class="card">
+    <img src="assets/images/casino/dice.png" width="100%" style="border-radius:12px">
+    <button onclick="playGame('dice',1,2)">🎲 Dice ×2</button>
+  </div>
+
+  <div class="card">
+    <img src="assets/images/casino/coinflip.png" width="100%" style="border-radius:12px">
+    <button onclick="playGame('coinflip',1)">🪙 Coinflip</button>
+  </div>
+
+  <div class="card">
+    <img src="assets/images/casino/crash.png" width="100%" style="border-radius:12px">
+    <button onclick="playGame('crash',1,5)">📈 Crash ×5</button>
+  </div>
+
+  <div class="card">
+    <img src="assets/images/casino/roulette.png" width="100%" style="border-radius:12px">
+    <button onclick="playGame('roulette',1)">🎡 Roulette</button>
+  </div>
+
+  <div class="card">
+    <img src="assets/images/casino/abyss.png" width="100%" style="border-radius:12px">
+    <button onclick="playGame('abyss',1,100)">🕳 Abyss ×100</button>
+  </div>
+
+  <div class="card">
+    <h3>History</h3>
+    <div id="casino-history"></div>
+  </div>
 </section>
 
-<!-- =========================
-AIRDROP
-========================= -->
-<section>
-  <h2>Airdrop</h2>
-  <p>Invite users and bring value to the system.</p>
+<!-- ================= MINING ================= -->
+<section id="mining" class="section">
+  <div class="card">
+    <img src="assets/images/mining/mining.png" width="100%" style="border-radius:12px">
+    <h3>Cloud Mining</h3>
+    <p style="color:#9fbfb0">Stake BX → Generate Mining Power (SOL / BTC)</p>
+    <button onclick="startMining()">⛏ Start Mining</button>
+    <div id="mining-status"></div>
+  </div>
 </section>
 
-<!-- =========================
-ADMIN PANEL
-========================= -->
-<section id="admin-panel" class="admin-panel hidden">
-  <h2>Admin</h2>
-
-  <h3>Pending Deposits</h3>
-  <table>
-    <thead>
-      <tr>
-        <th>Asset</th>
-        <th>Amount</th>
-        <th>TXID</th>
-        <th>Action</th>
-      </tr>
-    </thead>
-    <tbody id="pending-table"></tbody>
-  </table>
-
-  <h3>Ledger</h3>
-  <table>
-    <thead>
-      <tr>
-        <th>Ref</th>
-        <th>Account</th>
-        <th>Debit</th>
-        <th>Credit</th>
-        <th>Time</th>
-      </tr>
-    </thead>
-    <tbody id="ledger-table"></tbody>
-  </table>
-
-  <h3>Watcher Metrics</h3>
-  <div id="metrics-box"></div>
+<!-- ================= AIRDROP ================= -->
+<section id="airdrop" class="section">
+  <div class="card">
+    <img src="assets/images/airdrop/airdrop.png" width="100%" style="border-radius:12px">
+    <h3>Airdrop</h3>
+    <p id="airdrop-info">—</p>
+    <div class="progress">
+      <div id="airdrop-bar" class="progress-bar"></div>
+    </div>
+    <button id="airdrop-claim" onclick="claimAirdrop()" disabled>
+      Claim Airdrop
+    </button>
+  </div>
 </section>
 
-<!-- =========================
-SCRIPTS
-========================= -->
-<script src="app.js"></script>
+</main>
+
+<!-- ================= NAV ================= -->
+<nav>
+  <div class="item active" onclick="show('home',this)">
+    <img src="assets/images/home.png" width="20"><br>Home
+  </div>
+  <div class="item" onclick="show('market',this)">
+    <img src="assets/images/market.png" width="20"><br>Market
+  </div>
+  <div class="item" onclick="show('casino',this)">
+    <img src="assets/images/casino.png" width="20"><br>Casino
+  </div>
+  <div class="item" onclick="show('mining',this)">
+    <img src="assets/images/mining.png" width="20"><br>Mining
+  </div>
+  <div class="item" onclick="show('airdrop',this)">
+    <img src="assets/images/airdrop.png" width="20"><br>Airdrop
+  </div>
+</nav>
+
+<script>
+function show(id, el){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('nav .item').forEach(i=>i.classList.remove('active'));
+  el.classList.add('active');
+}
+</script>
+<!-- WalletConnect (TRC20 / EVM) -->
+<script src="https://unpkg.com/@walletconnect/web3modal@1.9.12/dist/index.js"></script>
+<script src="https://unpkg.com/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+
+<!-- TON Connect -->
+<script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
+
+<!-- App Logic -->
+<script src="assets/js/app.js"></script>
 
 </body>
 </html>
