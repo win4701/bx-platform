@@ -9,10 +9,10 @@
   <link rel="stylesheet" href="assets/styles.css"/>
 
   <!-- Sounds -->
-  <audio id="snd-click" src="assets/sounds/click.mp3" preload="auto"></audio>
-  <audio id="snd-win"   src="assets/sounds/win.mp3"   preload="auto"></audio>
-  <audio id="snd-lose"  src="assets/sounds/lose.mp3"  preload="auto"></audio>
-  <audio id="snd-spin"  src="assets/sounds/spin.mp3"  preload="auto"></audio>
+  <audio src="assets/sounds/click.mp3" preload="auto"></audio>
+  <audio src="assets/sounds/win.mp3" preload="auto"></audio>
+  <audio src="assets/sounds/lose.mp3" preload="auto"></audio>
+  <audio src="assets/sounds/spin.mp3" preload="auto"></audio>
 </head>
 
 <body data-mode="wallet">
@@ -34,11 +34,11 @@
 
     <h3>Balances</h3>
     <ul class="balances">
-      <li><img src="assets/images/bx.png"/>   BX   <span id="bal-bx">—</span></li>
-      <li><img src="assets/images/usdt.png"/> USDT <span id="bal-usdt">—</span></li>
-      <li><img src="assets/images/ton.png"/>  TON  <span id="bal-ton">—</span></li>
-      <li><img src="assets/images/sol.png"/>  SOL  <span id="bal-sol">—</span></li>
-      <li><img src="assets/images/btc.png"/>  BTC  <span id="bal-btc">—</span></li>
+      <li><img src="assets/images/bx.png"/>   BX   <span id="bal-bx">0</span></li>
+      <li><img src="assets/images/usdt.png"/> USDT <span id="bal-usdt">0</span></li>
+      <li><img src="assets/images/ton.png"/>  TON  <span id="bal-ton">0</span></li>
+      <li><img src="assets/images/sol.png"/>  SOL  <span id="bal-sol">0</span></li>
+      <li><img src="assets/images/btc.png"/>  BTC  <span id="bal-btc">0</span></li>
     </ul>
 
     <h3>Actions</h3>
@@ -49,7 +49,8 @@
   </section>
 
   <!-- ================= MARKET ================= -->
-  <section id="market" class="card view">
+  
+<section id="market" class="card view">
     <h2>Market</h2>
 
     <h3>Trade</h3>
@@ -83,18 +84,71 @@
   </section>
 
   <!-- ================= CASINO ================= -->
-  <section id="casino" class="card view">
+  <section id="casino" class="card view locked">
     <h2>Casino</h2>
 
     <h3>Games</h3>
     <div class="games-grid">
-      <div class="game"><img src="assets/images/slot.png"/><h4>Slot</h4></div>
-      <div class="game"><img src="assets/images/chicken.png"/><h4>Chicken Road</h4></div>
-      <div class="game"><img src="assets/images/dice.png"/><h4>Dice</h4></div>
-      <div class="game"><img src="assets/images/coinflip.png"/><h4>Coinflip</h4></div>
-      <div class="game"><img src="assets/images/crash.png"/><h4>Crash</h4></div>
-      <div class="game"><img src="assets/images/roulette.png"/><h4>Roulette</h4></div>
-      <div class="game"><img src="assets/images/abyss.png"/><h4>Abyss</h4></div>
+
+      <!-- GAME CARD -->
+      <div class="game-card">
+        <div class="game-thumb">
+          <img src="assets/images/slot.png" alt="Slot"/>
+        </div>
+        <div class="game-title">Slot</div>
+
+        <div class="game-actions">
+          <button class="play-btn">Play</button>
+          <!-- Bet button with tooltip caret + circular progress -->
+          <button class="bet-btn disabled" data-tip="" style="--p:0">
+            Bet
+            <span class="tooltip-caret"></span>
+          </button>
+        </div>
+      </div>
+
+      <div class="game-card">
+        <div class="game-thumb">
+          <img src="assets/images/chicken.png" alt="Chicken Road"/>
+        </div>
+        <div class="game-title">Chicken Road</div>
+        <div class="game-actions">
+          <button class="play-btn">Play</button>
+          <button class="bet-btn disabled" data-tip="" style="--p:0">
+            Bet
+            <span class="tooltip-caret"></span>
+          </button>
+        </div>
+      </div>
+
+      <div class="game-card">
+        <div class="game-thumb">
+          <img src="assets/images/dice.png" alt="Dice"/>
+        </div>
+        <div class="game-title">Dice</div>
+        <div class="game-actions">
+          <button class="play-btn">Play</button>
+          <button class="bet-btn disabled" data-tip="" style="--p:0">
+            Bet
+            <span class="tooltip-caret"></span>
+          </button>
+        </div>
+      </div>
+
+      <div class="game-card">
+        <div class="game-thumb">
+          <img src="assets/images/coinflip.png" alt="Coinflip"/>
+        </div>
+        <div class="game-title">Coinflip</div>
+        <div class="game-actions">
+          <button class="play-btn">Play</button>
+          <button class="bet-btn disabled" data-tip="" style="--p:0">
+            Bet
+            <span class="tooltip-caret"></span>
+          </button>
+        </div>
+      </div>
+
     </div>
   </section>
 
@@ -115,17 +169,11 @@
         <button class="btn primary">Subscribe</button>
       </div>
     </div>
-
-    <h3>Daily Rewards</h3>
-    <!-- Claim handled by JS -->
   </section>
 
   <!-- ================= AIRDROP ================= -->
   <section id="airdrop" class="card view">
     <h2>Airdrop</h2>
-
-    <h3>Progress</h3>
-    <!-- Progress bar handled by CSS/JS -->
 
     <h3>Claim</h3>
     <div class="airdrop-box">
@@ -159,4 +207,4 @@
 <!-- ================= JS ================= -->
 <script src="app.js"></script>
 </body>
-</html>
+            </html>
