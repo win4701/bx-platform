@@ -1,276 +1,321 @@
-/* =========================
-   RESET + BASE
-========================= */
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+/* =========================================================
+   ROOT / THEME
+========================================================= */
+:root{
+  --bg:#0b0f14;
+  --card:#0f1a1f;
+  --border:#12323f;
+  --text:#e6f1ff;
+  --muted:#9fb3c8;
+
+  --green:#6ee7a8;
+  --green-strong:#22c55e;
+  --red:#ef4444;
+  --yellow:#facc15;
+
+  --radius:16px;
 }
 
-html, body {
-  height: 100%;
+*{box-sizing:border-box}
+html,body{
+  margin:0;
+  height:100%;
+  background:var(--bg);
+  color:var(--text);
+  font-family:system-ui,-apple-system,Segoe UI,Roboto;
+  -webkit-font-smoothing:antialiased;
 }
 
-body {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto;
-  background: radial-gradient(120% 80% at 50% 0%, #0f2027 0%, #05080a 70%);
-  color: #eafff7;
-  overflow-x: hidden;
+/* =========================================================
+   GLOBAL LAYOUT
+========================================================= */
+.app-header{
+  position:sticky;
+  top:0;
+  z-index:10;
+  background:rgba(11,15,20,.92);
+  backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--border);
+  padding:12px 16px;
 }
 
-/* =========================
-   GLOBAL BACKGROUND (PNG)
-========================= */
-.app-bg {
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
+.logo{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.logo img{width:28px;height:28px}
+.logo span{font-weight:700;letter-spacing:.4px}
+
+.app-container{
+  position:relative;
+  padding:16px 16px 96px;
+  min-height:calc(100vh - 56px);
 }
 
-.app-bg::before {
-  content: "";
-  position: absolute;
-  width: 520px;
-  height: 520px;
-  top: -140px;
-  right: -140px;
-  background: url("assets/images/solana.png") center/contain no-repeat;
-  opacity: 0.12;
-  filter: blur(6px) saturate(1.2);
-  animation: floatBg 18s ease-in-out infinite alternate;
+/* =========================================================
+   VIEWS / TRANSITIONS (REAL ANIMATION)
+========================================================= */
+.view{
+  position:absolute;
+  inset:0;
+  opacity:0;
+  transform:translateY(14px) scale(.98);
+  pointer-events:none;
+
+  transition:
+    opacity .35s ease,
+    transform .35s cubic-bezier(.4,0,.2,1);
 }
 
-@keyframes floatBg {
-  from { transform: translateY(0); }
-  to { transform: translateY(24px); }
+.view.active{
+  opacity:1;
+  transform:translateY(0) scale(1);
+  pointer-events:auto;
 }
 
-/* =========================
-   APP CONTAINER
-========================= */
-.app {
-  padding-bottom: 84px; /* space for nav */
+/* =========================================================
+   CARD BASE
+========================================================= */
+.card{
+  background:
+    radial-gradient(120% 120% at 10% 0%, #10252c 0%, var(--card) 60%);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:14px;
+  box-shadow:0 20px 40px rgba(0,0,0,.35);
 }
 
-/* =========================
-   HEADER
-========================= */
-.header {
-  padding: 18px 16px;
-  font-size: 22px;
-  font-weight: 700;
-  letter-spacing: 0.3px;
-  background: linear-gradient(180deg, #0b1c22, transparent);
+h2{
+  margin:4px 0 12px;
+  font-size:18px;
+  letter-spacing:.3px;
 }
 
-/* =========================
-   SECTIONS (GLOBAL)
-========================= */
-.section {
-  margin: 14px 12px;
-  padding: 16px;
-  border-radius: 18px;
-  background: linear-gradient(
-    180deg,
-    rgba(20, 40, 48, 0.75),
-    rgba(8, 18, 22, 0.75)
-  );
-  border: 1px solid rgba(255, 255, 255, 0.04);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
-  animation: fadeUp 0.35s ease both;
+/* =========================================================
+   BUTTONS (TACTILE)
+========================================================= */
+.btn{
+  border:0;
+  border-radius:12px;
+  padding:12px 14px;
+  font-weight:700;
+  cursor:pointer;
+  transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+}
+.btn:active{transform:scale(.95)}
+
+.btn.primary{
+  background:linear-gradient(180deg,var(--green),var(--green-strong));
+  color:#052013;
+}
+.btn.secondary{
+  background:#122b34;
+  color:var(--text);
+  border:1px solid var(--border);
+}
+.btn.buy{
+  background:linear-gradient(180deg,#7cf3b2,var(--green-strong));
+}
+.btn.sell{
+  background:linear-gradient(180deg,#ff9aa2,var(--red));
+  color:#3a0b10;
 }
 
-@keyframes fadeUp {
-  from {
-    opacity: 0;
-    transform: translateY(14px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+/* =========================================================
+   WALLET (CALM / TRUST)
+========================================================= */
+#wallet .balances{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:10px;
+}
+#wallet .balances li{
+  list-style:none;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  background:#0b1f27;
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:10px;
+}
+#wallet .balances img{width:18px;height:18px}
+#wallet .balances span{
+  margin-left:auto;
+  color:var(--green);
 }
 
-.section h2 {
-  font-size: 20px;
-  margin-bottom: 12px;
-  font-weight: 700;
+.wallet-actions{
+  margin-top:10px;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
 }
 
-.section h3 {
-  font-size: 14px;
-  opacity: 0.75;
-  margin-bottom: 8px;
+/* =========================================================
+   MARKET (FAST / TENSION)
+========================================================= */
+#market .pair-selector select{
+  width:100%;
+  background:#0b1f27;
+  color:var(--text);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:10px;
 }
 
-/* =========================
-   WALLET
-========================= */
-.wallet-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
+.chart-box{
+  margin:10px 0;
+  height:220px;
+  background:#081a21;
+  border:1px solid var(--border);
+  border-radius:12px;
 }
 
-.wallet-item {
-  padding: 14px;
-  border-radius: 14px;
-  background: linear-gradient(145deg, #0e232a, #08161b);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.trade-box{
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  gap:8px;
+}
+.trade-box input{
+  grid-column:1/4;
+  background:#0b1f27;
+  color:var(--text);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:10px;
 }
 
-.wallet-actions {
-  display: flex;
-  gap: 12px;
-  margin-top: 14px;
+.trades-feed ul{padding:0;margin:8px 0 0}
+.trades-feed li{
+  list-style:none;
+  display:grid;
+  grid-template-columns:1fr auto auto;
+  gap:8px;
+  padding:6px 4px;
+  font-size:13px;
+  border-bottom:1px dashed #143a47;
+  animation:tradeIn .25s ease forwards;
+}
+@keyframes tradeIn{
+  from{opacity:0;transform:translateY(-6px)}
+  to{opacity:1;transform:none}
+}
+.trades-feed .buy{color:var(--green)}
+.trades-feed .sell{color:var(--red)}
+
+/* =========================================================
+   CASINO (DANGER / ADRENALINE)
+========================================================= */
+.games-grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:10px;
+}
+.game{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  padding:14px;
+  background:#0b1f27;
+  border:1px solid var(--border);
+  border-radius:14px;
+  transition:transform .15s ease, box-shadow .15s ease;
+}
+.game img{width:26px;height:26px}
+
+.game:hover{
+  transform:scale(1.05) rotate(-.6deg);
+  box-shadow:0 18px 40px rgba(239,68,68,.28);
+}
+.game:active{transform:scale(.96)}
+
+@keyframes shake{
+  0%{transform:translateX(0)}
+  25%{transform:translateX(-4px)}
+  50%{transform:translateX(4px)}
+  100%{transform:translateX(0)}
+}
+.game.shake{animation:shake .25s}
+
+/* =========================================================
+   MINING (SLOW / GROWTH)
+========================================================= */
+.mining-plans{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:10px;
+}
+.plan{
+  background:#0b1f27;
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:12px;
+  display:grid;
+  gap:8px;
+  justify-items:center;
+  animation:floatSlow 4s ease-in-out infinite;
+}
+@keyframes floatSlow{
+  0%,100%{transform:translateY(0)}
+  50%{transform:translateY(-6px)}
+}
+.plan img{width:48px;height:48px}
+
+/* =========================================================
+   AIRDROP (REWARD / JOY)
+========================================================= */
+.airdrop-box{
+  display:grid;
+  gap:10px;
+  justify-items:center;
+  text-align:center;
+  animation:floatSlow 3s ease-in-out infinite;
+}
+.airdrop-box img{width:64px;height:64px}
+
+/* =========================================================
+   BOTTOM NAV (NAVIGATION FEEL)
+========================================================= */
+.bottom-nav{
+  position:fixed;
+  bottom:0;left:0;right:0;
+  background:rgba(11,15,20,.95);
+  backdrop-filter:blur(10px);
+  border-top:1px solid var(--border);
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  z-index:20;
 }
 
-/* =========================
-   MARKET
-========================= */
-.market-select,
-.market-input {
-  width: 100%;
-  padding: 14px;
-  border-radius: 14px;
-  background: #08161b;
-  border: 1px solid rgba(255,255,255,0.06);
-  color: #eafff7;
-  margin-bottom: 12px;
+.bottom-nav button{
+  background:none;
+  border:0;
+  color:var(--muted);
+  padding:10px 6px;
+  display:grid;
+  gap:4px;
+  justify-items:center;
+  transition:color .2s ease, transform .2s ease;
 }
 
-.market-actions {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
+.bottom-nav img{width:20px;height:20px}
+
+.bottom-nav button.active{
+  color:var(--green);
+  transform:translateY(-6px) scale(1.08);
 }
 
-.chart-box {
-  height: 220px;
-  border-radius: 14px;
-  background: linear-gradient(180deg, #07161c, #04090c);
-  margin-top: 14px;
+/* =========================================================
+   MODE BACKGROUND SHIFT (GLOBAL FEEL)
+========================================================= */
+body{
+  transition:background .4s ease;
 }
-
-/* =========================
-   BUTTONS
-========================= */
-.btn {
-  padding: 14px;
-  border-radius: 14px;
-  font-weight: 700;
-  text-align: center;
-  cursor: pointer;
-  user-select: none;
-}
-
-.btn-buy {
-  background: linear-gradient(180deg, #32d583, #1fbf70);
-  color: #022e1c;
-}
-
-.btn-sell {
-  background: linear-gradient(180deg, #ff6b6b, #e44);
-  color: #3b0000;
-}
-
-.btn-secondary {
-  background: linear-gradient(180deg, #1e3c47, #102229);
-  color: #d9ffff;
-}
-
-/* =========================
-   CASINO (LOCKED STYLE)
-========================= */
-.casino-locked {
-  opacity: 0.45;
-  filter: grayscale(1);
-  position: relative;
-}
-
-.casino-locked::after {
-  content: "Trade first to unlock Casino";
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  background: rgba(0,0,0,0.55);
-  font-weight: 700;
-  text-align: center;
-  border-radius: 18px;
-}
-
-/* =========================
-   CASINO GRID
-========================= */
-.casino-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-}
-
-.game-card {
-  padding: 16px;
-  border-radius: 16px;
-  background: linear-gradient(160deg, #0c2630, #07161b);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-/* =========================
-   MINING
-========================= */
-.mining-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-
-.mining-card {
-  padding: 16px;
-  border-radius: 16px;
-  background: linear-gradient(160deg, #0d2a24, #071916);
-}
-
-/* =========================
-   AIRDROP
-========================= */
-.airdrop {
-  text-align: center;
-}
-
-.airdrop img {
-  width: 96px;
-  margin-bottom: 12px;
-}
-
-/* =========================
-   BOTTOM NAV
-========================= */
-.nav {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 64px;
-  background: linear-gradient(180deg, #020506, #000);
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  border-top: 1px solid rgba(255,255,255,0.06);
-}
-
-.nav-item {
-  display: grid;
-  place-items: center;
-  font-size: 12px;
-  opacity: 0.6;
-}
-
-.nav-item.active {
-  opacity: 1;
-  color: #32d583;
-}
+body[data-mode="wallet"]  { background:#081417; }
+body[data-mode="market"]  { background:#050f0c; }
+body[data-mode="casino"]  { background:#120707; }
+body[data-mode="mining"]  { background:#0b1016; }
+body[data-mode="airdrop"] { background:#08120b; }
