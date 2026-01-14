@@ -307,7 +307,20 @@ h2{
   color:var(--green);
   transform:translateY(-6px) scale(1.08);
 }
+.page {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transform: translateX(20px);
+  pointer-events: none;
+  transition: opacity .35s ease, transform .35s ease;
+}
 
+.page.active {
+  opacity: 1;
+  transform: translateX(0);
+  pointer-events: auto;
+}
 /* =========================================================
    MODE BACKGROUND SHIFT (GLOBAL FEEL)
 ========================================================= */
