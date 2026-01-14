@@ -24,22 +24,23 @@ function playSound(name){
 const sections = document.querySelectorAll(".view");
 const navButtons = document.querySelectorAll(".bottom-nav button");
 
-function showTab(id){
-  sections.forEach(s=>{
-    s.classList.remove("active");
-    s.style.display = "none";
-  });
+const views = document.querySelectorAll(".view");
+const navBtns = document.querySelectorAll(".bottom-nav button");
 
-  const el = document.getElementById(id);
-  document.body.dataset.mode = id;      // 👈 يغيّر الإيقاع العام
-  el.style.display = "block";
+function showTab(id) {
+  views.forEach(v => v.classList.remove("active"));
 
-  requestAnimationFrame(()=> el.classList.add("active"));
+  const target = document.getElementById(id);
+  target.classList.add("active");
 
-  navButtons.forEach(b=>b.classList.remove("active"));
-  document.querySelector(`.bottom-nav button[data-tab="${id}"]`)
+  document.body.dataset.mode = id;
+
+  navBtns.forEach(b => b.classList.remove("active"));
+  document
+    .querySelector(`.bottom-nav button[data-tab="${id}"]`)
     ?.classList.add("active");
 }
+  
 
 navButtons.forEach(btn=>{
   btn.addEventListener("click", ()=>{
