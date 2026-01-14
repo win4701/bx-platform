@@ -1,127 +1,160 @@
 /* =========================
-   STATE
+   GLOBAL STATE
 ========================= */
 const state = {
-  activePage: 'wallet',
-  traded: false,
-  balanceBX: 0,
-  pair: 'BX/USDT'
+  activeSection: "wallet",
+  hasTraded: false,
+  balances: {
+    BX: 0,
+    USDT: 0,
+    TON: 0,
+    SOL: 0,
+    BTC: 0,
+  },
+  pair: "BX/USDT",
 };
+
+/* =========================
+   HELPERS
+========================= */
+const $ = (id) => document.getElementById(id);
+const $$ = (q) => document.querySelectorAll(q);
+
+function haptic(type = "light") {
+  if (navigator.vibrate) {
+    navigator.vibrate(type === "heavy" ? 40 : 15);
+  }
+}
 
 /* =========================
    NAVIGATION
 ========================= */
-document.querySelectorAll('[data-nav]').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const target = btn.dataset.nav;
+function showSection(name) {
+  state.activeSection = name;
 
-    if (target === 'casino' && !state.traded) {
-      showTooltip(
-        btn,
-        '🔒 Casino locked. Get BX from Market first'
-      );
-      highlightMarket();
-      haptic('light');
-      return;
-    }
+  $$(".section").forEach((s) => (s.style.display = "none"));
+  $(`section-${name}`).style.display = "block";
 
-    switchPage(target);
-  });
-});
+  $$(".nav-item").forEach((n) => n.classList.remove("active"));
+  $(`nav-${name}`).classList.add("active");
 
-function switchPage(page) {
-  document.querySelectorAll('.page').forEach(p => {
-    p.classList.remove('active');
-  });
-  document.getElementById(page).classList.add('active');
-  state.activePage = page;
-}
-
-/* =========================
-   MARKET
-========================= */
-const buyBtn = document.getElementById('buyBtn');
-const sellBtn = document.getElementById('sellBtn');
-const amountInput = document.getElementById('amount');
-
-buyBtn?.addEventListener('click', () => {
-  const amount = Number(amountInput.value);
-  if (!amount || amount <= 0) {
-    showTooltip(buyBtn, 'Enter amount');
-    return;
-  }
-
-  state.balanceBX += amount;
-  state.traded = true;
-
-  updateWallet();
-  unlockCasinoVisual();
-  haptic('success');
-});
-
-sellBtn?.addEventListener('click', () => {
-  showTooltip(sellBtn, 'Sell disabled (UI only)');
-});
-
-/* =========================
-   WALLET
-========================= */
-function updateWallet() {
-  const bxEl = document.getElementById('bxBalance');
-  if (bxEl) bxEl.textContent = state.balanceBX.toFixed(2);
-}
-
-/* =========================
-   CASINO LOCK VISUAL
-========================= */
-function unlockCasinoVisual() {
-  const lock = document.querySelector('.casino-lock');
-  if (lock) lock.classList.add('hidden');
-}
-
-/* =========================
-   TOOLTIP
-========================= */
-let tooltip;
-function showTooltip(target, text) {
-  if (tooltip) tooltip.remove();
-
-  tooltip = document.createElement('div');
-  tooltip.className = 'tooltip';
-  tooltip.textContent = text;
-
-  document.body.appendChild(tooltip);
-
-  const rect = target.getBoundingClientRect();
-  tooltip.style.left = rect.left + rect.width / 2 + 'px';
-  tooltip.style.top = rect.top - 10 + 'px';
-
-  setTimeout(() => tooltip.remove(), 2000);
-}
-
-/* =========================
-   MARKET HIGHLIGHT
-========================= */
-function highlightMarket() {
-  const marketBtn = document.querySelector('[data-nav="market"]');
-  if (!marketBtn) return;
-
-  marketBtn.classList.add('pulse');
-  setTimeout(() => marketBtn.classList.remove('pulse'), 1500);
-}
-
-/* =========================
-   HAPTIC
-========================= */
-function haptic(type) {
-  if (!navigator.vibrate) return;
-
-  if (type === 'success') navigator.vibrate([20, 30, 20]);
-  else navigator.vibrate(10);
+  haptic();
 }
 
 /* =========================
    INIT
 ========================= */
-switchPage('wallet');
-updateWallet();
+function init() {
+  // Hide all sections except wallet
+  $$(".section").forEach((s) => (s.style.display = "none"));
+  $("section-wallet").style.display = "block";
+
+  // Casino lock
+  updateCasinoLock();
+
+  // Nav buttons
+  $$(".nav-item").forEach((item) => {
+    item.addEventListener("click", () => {
+      showSection(item.dataset.section);
+    });
+  });
+
+  // Market
+  $("pairSelect").addEventListener("change", (e) => {
+    state.pair = e.target.value;
+    updateTooltip();
+  });
+
+  $("btnBuy").addEventListener("click", () => trade("buy"));
+  $("btnSell").addEventListener("click", () => trade("sell"));
+
+  // Casino games (UI only)
+  $$(".game-card").forEach((game) => {
+    game.addEventListener("click", () => {
+      if (!state.hasTraded) {
+        showTooltip("Get BX in Market to play 🎯");
+        highlightMarket();
+        return;
+      }
+      haptic("heavy");
+      showTooltip("Game opened (UI demo)");
+    });
+  });
+}
+
+/* =========================
+   MARKET LOGIC
+========================= */
+function trade(type) {
+  const amount = parseFloat($("amountInput").value);
+  if (!amount || amount <= 0) {
+    showTooltip("Enter amount");
+    return;
+  }
+
+  state.hasTraded = true;
+  state.balances.BX += type === "buy" ? amount : -amount;
+  updateBalances();
+  updateCasinoLock();
+
+  haptic("heavy");
+  showTooltip("Trade successful ✅");
+}
+
+/* =========================
+   WALLET
+========================= */
+function updateBalances() {
+  Object.keys(state.balances).forEach((k) => {
+    const el = $(`bal-${k}`);
+    if (el) el.textContent = state.balances[k].toFixed(2);
+  });
+}
+
+/* =========================
+   CASINO LOCK
+========================= */
+function updateCasinoLock() {
+  const casino = $("section-casino");
+  if (!state.hasTraded) {
+    casino.classList.add("casino-locked");
+  } else {
+    casino.classList.remove("casino-locked");
+  }
+}
+
+/* =========================
+   TOOLTIP SYSTEM
+========================= */
+let tooltipTimeout = null;
+
+function showTooltip(text) {
+  let tip = $("tooltip");
+  if (!tip) return;
+
+  tip.textContent = text;
+  tip.classList.add("show");
+
+  clearTimeout(tooltipTimeout);
+  tooltipTimeout = setTimeout(() => {
+    tip.classList.remove("show");
+  }, 2200);
+}
+
+function updateTooltip() {
+  showTooltip(`Trading ${state.pair}`);
+}
+
+/* =========================
+   HIGHLIGHT MARKET
+========================= */
+function highlightMarket() {
+  showSection("market");
+  $("btnBuy").classList.add("pulse");
+  setTimeout(() => $("btnBuy").classList.remove("pulse"), 1600);
+}
+
+/* =========================
+   DOM READY
+========================= */
+document.addEventListener("DOMContentLoaded", init);
