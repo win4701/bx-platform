@@ -49,15 +49,18 @@
   <section id="market" class="card view">
     <h2>Market</h2>
 
-    <div class="pair-selector">
-      <select id="pair">
-        <option>BX / USDT</option>
-        <option>BX / TON</option>
-        <option>BX / SOL</option>
-        <option>BX / BTC</option>
-      </select>
-    </div>
+    <h3>Trade</h3>
+    <div class="pair-bar" id="pairBar">
+  <span id="currentPair">BX / USDT</span>
+  <span class="arrow">▼</span>
+</div>
 
+<div class="pair-sheet hidden" id="pairSheet">
+  <div class="pair-option" data-pair="BX/USDT">BX / USDT</div>
+  <div class="pair-option" data-pair="BX/TON">BX / TON</div>
+  <div class="pair-option" data-pair="BX/SOL">BX / SOL</div>
+  <div class="pair-option" data-pair="BX/BTC">BX / BTC</div>
+</div>
     <div class="chart-box">
       <canvas id="priceChart"></canvas>
     </div>
