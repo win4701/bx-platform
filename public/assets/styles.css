@@ -27,7 +27,7 @@ html,body{
 }
 
 /* =========================================================
-   GLOBAL LAYOUT
+   HEADER
 ========================================================= */
 .app-header{
   position:sticky;
@@ -38,15 +38,17 @@ html,body{
   border-bottom:1px solid var(--border);
   padding:12px 16px;
 }
-
 .logo{
   display:flex;
   align-items:center;
   gap:10px;
 }
 .logo img{width:28px;height:28px}
-.logo span{font-weight:700;letter-spacing:.4px}
+.logo h1{font-size:16px;margin:0;letter-spacing:.4px}
 
+/* =========================================================
+   LAYOUT
+========================================================= */
 .app-container{
   position:relative;
   padding:16px 16px 96px;
@@ -54,7 +56,7 @@ html,body{
 }
 
 /* =========================================================
-   VIEWS / TRANSITIONS (REAL ANIMATION)
+   VIEWS / TRANSITIONS
 ========================================================= */
 .view{
   position:absolute;
@@ -62,12 +64,10 @@ html,body{
   opacity:0;
   transform:translateY(14px) scale(.98);
   pointer-events:none;
-
   transition:
     opacity .35s ease,
     transform .35s cubic-bezier(.4,0,.2,1);
 }
-
 .view.active{
   opacity:1;
   transform:translateY(0) scale(1);
@@ -75,7 +75,7 @@ html,body{
 }
 
 /* =========================================================
-   CARD BASE
+   CARD
 ========================================================= */
 .card{
   background:
@@ -85,15 +85,12 @@ html,body{
   padding:14px;
   box-shadow:0 20px 40px rgba(0,0,0,.35);
 }
-
-h2{
-  margin:4px 0 12px;
-  font-size:18px;
-  letter-spacing:.3px;
-}
+h2{margin:6px 0 10px;font-size:18px}
+h3{margin:14px 0 8px;font-size:14px;color:var(--muted)}
+h4{margin:0;font-size:14px}
 
 /* =========================================================
-   BUTTONS (TACTILE)
+   BUTTONS
 ========================================================= */
 .btn{
   border:0;
@@ -104,7 +101,6 @@ h2{
   transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
 }
 .btn:active{transform:scale(.95)}
-
 .btn.primary{
   background:linear-gradient(180deg,var(--green),var(--green-strong));
   color:#052013;
@@ -123,12 +119,13 @@ h2{
 }
 
 /* =========================================================
-   WALLET (CALM / TRUST)
+   WALLET
 ========================================================= */
 #wallet .balances{
   display:grid;
   grid-template-columns:repeat(2,1fr);
   gap:10px;
+  padding:0;
 }
 #wallet .balances li{
   list-style:none;
@@ -145,7 +142,6 @@ h2{
   margin-left:auto;
   color:var(--green);
 }
-
 .wallet-actions{
   margin-top:10px;
   display:grid;
@@ -154,7 +150,7 @@ h2{
 }
 
 /* =========================================================
-   MARKET (FAST / TENSION)
+   MARKET
 ========================================================= */
 #market .pair-selector select{
   width:100%;
@@ -164,7 +160,6 @@ h2{
   border-radius:12px;
   padding:10px;
 }
-
 .chart-box{
   margin:10px 0;
   height:220px;
@@ -172,7 +167,6 @@ h2{
   border:1px solid var(--border);
   border-radius:12px;
 }
-
 .trade-box{
   display:grid;
   grid-template-columns:1fr 1fr 1fr;
@@ -186,7 +180,6 @@ h2{
   border-radius:12px;
   padding:10px;
 }
-
 .trades-feed ul{padding:0;margin:8px 0 0}
 .trades-feed li{
   list-style:none;
@@ -206,42 +199,140 @@ h2{
 .trades-feed .sell{color:var(--red)}
 
 /* =========================================================
-   CASINO (DANGER / ADRENALINE)
+   CASINO – GAME CARDS
 ========================================================= */
 .games-grid{
   display:grid;
   grid-template-columns:repeat(2,1fr);
-  gap:10px;
+  gap:12px;
 }
-.game{
+.game-card{
+  background:#0b1f27;
+  border:1px solid var(--border);
+  border-radius:18px;
+  padding:12px;
+  transition:transform .25s ease, box-shadow .25s ease, opacity .25s ease;
+}
+.game-card:hover{
+  transform:translateY(-4px) scale(1.02);
+  box-shadow:0 18px 40px rgba(0,255,180,.15);
+}
+.game-card:active{transform:scale(.98)}
+
+.game-thumb{
+  width:100%;
+  aspect-ratio:1/1;
+  border-radius:14px;
+  background:#07151a;
   display:flex;
   align-items:center;
   justify-content:center;
+  overflow:hidden;
+}
+.game-thumb img{
+  width:70%;
+  height:70%;
+  object-fit:contain;
+  transition:transform .3s ease;
+}
+.game-card:hover .game-thumb img{transform:scale(1.08)}
+
+.game-title{
+  margin-top:8px;
+  text-align:center;
+  font-weight:600;
+}
+
+.game-actions{
+  margin-top:10px;
+  display:grid;
+  grid-template-columns:1fr 1fr;
   gap:8px;
-  padding:14px;
-  background:#0b1f27;
-  border:1px solid var(--border);
-  border-radius:14px;
-  transition:transform .15s ease, box-shadow .15s ease;
 }
-.game img{width:26px;height:26px}
-
-.game:hover{
-  transform:scale(1.05) rotate(-.6deg);
-  box-shadow:0 18px 40px rgba(239,68,68,.28);
-}
-.game:active{transform:scale(.96)}
-
-@keyframes shake{
-  0%{transform:translateX(0)}
-  25%{transform:translateX(-4px)}
-  50%{transform:translateX(4px)}
-  100%{transform:translateX(0)}
-}
-.game.shake{animation:shake .25s}
 
 /* =========================================================
-   MINING (SLOW / GROWTH)
+   BET TOOLTIP + CIRCULAR PROGRESS
+========================================================= */
+.bet-btn{
+  position:relative;
+  background:#2a3a40;
+  color:#e6f1ff;
+  border-radius:12px;
+  padding:10px 12px;
+}
+
+.bet-btn.disabled{
+  opacity:.6;
+}
+
+.bet-btn::after{
+  content:attr(data-tip);
+  position:absolute;
+  bottom:120%;
+  left:50%;
+  transform:translateX(-50%);
+  background:rgba(10,20,26,.95);
+  color:#e6f1ff;
+  padding:10px 12px 10px 48px;
+  border-radius:14px;
+  font-size:12px;
+  white-space:nowrap;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .2s ease, transform .2s ease;
+}
+
+/* Circular progress */
+.bet-btn::before{
+  content:"";
+  position:absolute;
+  bottom:calc(120% + 8px);
+  left:calc(50% - 22px);
+  width:32px;
+  height:32px;
+  border-radius:50%;
+  background:
+    conic-gradient(var(--green) calc(var(--p) * 1%), #22343c 0);
+  box-shadow:inset 0 0 0 4px #0b1f27;
+  opacity:0;
+  transition:opacity .2s ease;
+}
+
+/* Caret */
+.bet-btn .tooltip-caret{
+  position:absolute;
+  bottom:calc(120% - 6px);
+  left:50%;
+  width:0;height:0;
+  border-left:6px solid transparent;
+  border-right:6px solid transparent;
+  border-top:6px solid rgba(10,20,26,.95);
+  transform:translateX(-50%);
+  opacity:0;
+  transition:opacity .2s ease, transform .2s ease;
+}
+
+.bet-btn.disabled:hover::after,
+.bet-btn.disabled:hover::before,
+.bet-btn.disabled:hover .tooltip-caret{
+  opacity:1;
+  transform:translateX(-50%) translateY(-4px);
+}
+
+/* =========================================================
+   HIGHLIGHT BUY
+========================================================= */
+@keyframes glow{
+  0%{box-shadow:0 0 0 rgba(46,255,154,0)}
+  50%{box-shadow:0 0 22px rgba(46,255,154,.45)}
+  100%{box-shadow:0 0 0 rgba(46,255,154,0)}
+}
+.btn.buy.highlight{
+  animation:glow 1.2s ease-out 2;
+}
+
+/* =========================================================
+   MINING
 ========================================================= */
 .mining-plans{
   display:grid;
@@ -256,28 +347,21 @@ h2{
   display:grid;
   gap:8px;
   justify-items:center;
-  animation:floatSlow 4s ease-in-out infinite;
-}
-@keyframes floatSlow{
-  0%,100%{transform:translateY(0)}
-  50%{transform:translateY(-6px)}
 }
 .plan img{width:48px;height:48px}
 
 /* =========================================================
-   AIRDROP (REWARD / JOY)
+   AIRDROP
 ========================================================= */
 .airdrop-box{
   display:grid;
   gap:10px;
   justify-items:center;
   text-align:center;
-  animation:floatSlow 3s ease-in-out infinite;
 }
-.airdrop-box img{width:64px;height:64px}
 
 /* =========================================================
-   BOTTOM NAV (NAVIGATION FEEL)
+   BOTTOM NAV
 ========================================================= */
 .bottom-nav{
   position:fixed;
@@ -289,7 +373,6 @@ h2{
   grid-template-columns:repeat(5,1fr);
   z-index:20;
 }
-
 .bottom-nav button{
   background:none;
   border:0;
@@ -300,22 +383,18 @@ h2{
   justify-items:center;
   transition:color .2s ease, transform .2s ease;
 }
-
 .bottom-nav img{width:20px;height:20px}
-
 .bottom-nav button.active{
   color:var(--green);
   transform:translateY(-6px) scale(1.08);
 }
 
 /* =========================================================
-   MODE BACKGROUND SHIFT (GLOBAL FEEL)
+   MODE BACKGROUND
 ========================================================= */
-body{
-  transition:background .4s ease;
-}
-body[data-mode="wallet"]  { background:#081417; }
-body[data-mode="market"]  { background:#050f0c; }
-body[data-mode="casino"]  { background:#120707; }
-body[data-mode="mining"]  { background:#0b1016; }
-body[data-mode="airdrop"] { background:#08120b; }
+body{transition:background .4s ease}
+body[data-mode="wallet"]{background:#081417}
+body[data-mode="market"]{background:#050f0c}
+body[data-mode="casino"]{background:#120707}
+body[data-mode="mining"]{background:#0b1016}
+body[data-mode="airdrop"]{background:#08120b}
