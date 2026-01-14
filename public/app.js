@@ -6,31 +6,44 @@ const API_BASE = "https://api.bloxio.online";
 /* =========================================================
    SOUNDS
 ========================================================= */
-const SND = {
-  click: document.getElementById("snd-click"),
-  win: document.getElementById("snd-win"),
-  lose: document.getElementById("snd-lose"),
+const sounds = {
+  click: new Audio("assets/sounds/click.mp3"),
+  win:   new Audio("assets/sounds/win.mp3"),
+  lose:  new Audio("assets/sounds/lose.mp3"),
+  spin:  new Audio("assets/sounds/spin.mp3"),
 };
-function sound(name){
-  try { SND[name]?.play(); } catch(e){}
+function playSound(name){
+  if(!sounds[name]) return;
+  sounds[name].currentTime = 0;
+  sounds[name].play();
 }
 
 /* =========================================================
-   NAVIGATION (Bottom Tabs)
+   SECTION NAVIGATION + MODE (CORE LIFE)
 ========================================================= */
-const sections = document.querySelectorAll("main section");
+const sections = document.querySelectorAll(".view");
 const navButtons = document.querySelectorAll(".bottom-nav button");
 
 function showTab(id){
-  sections.forEach(s => s.style.display = "none");
-  document.getElementById(id).style.display = "block";
-  navButtons.forEach(b => b.classList.remove("active"));
-  document.querySelector(`.bottom-nav button[data-tab="${id}"]`)?.classList.add("active");
+  sections.forEach(s=>{
+    s.classList.remove("active");
+    s.style.display = "none";
+  });
+
+  const el = document.getElementById(id);
+  document.body.dataset.mode = id;      // 👈 يغيّر الإيقاع العام
+  el.style.display = "block";
+
+  requestAnimationFrame(()=> el.classList.add("active"));
+
+  navButtons.forEach(b=>b.classList.remove("active"));
+  document.querySelector(`.bottom-nav button[data-tab="${id}"]`)
+    ?.classList.add("active");
 }
 
 navButtons.forEach(btn=>{
-  btn.addEventListener("click",()=>{
-    sound("click");
+  btn.addEventListener("click", ()=>{
+    playSound("click");
     showTab(btn.dataset.tab);
   });
 });
@@ -39,95 +52,106 @@ navButtons.forEach(btn=>{
 showTab("wallet");
 
 /* =========================================================
-   WALLET
+   WALLET (CALM / TRUST)
 ========================================================= */
 async function loadBalances(){
   try{
     const r = await fetch(`${API_BASE}/wallet/balances`);
     const b = await r.json();
-    document.getElementById("bal-bx").textContent   = b.BX?.toFixed(2)   ?? "0";
-    document.getElementById("bal-usdt").textContent = b.USDT?.toFixed(2) ?? "0";
-    document.getElementById("bal-ton").textContent  = b.TON?.toFixed(2)  ?? "0";
-    document.getElementById("bal-sol").textContent  = b.SOL?.toFixed(2)  ?? "0";
-    document.getElementById("bal-btc").textContent  = b.BTC?.toFixed(8)  ?? "0";
+    set("bal-bx",   b.BX);
+    set("bal-usdt", b.USDT);
+    set("bal-ton",  b.TON);
+    set("bal-sol",  b.SOL);
+    set("bal-btc",  b.BTC, 8);
   }catch(e){}
 }
 
+function set(id,val,dec=2){
+  document.getElementById(id).textContent =
+    val !== undefined ? Number(val).toFixed(dec) : "0";
+}
+
 /* =========================================================
-   MARKET (Live Price + Chart + Trades)
+   MARKET (FAST / LIVE)
 ========================================================= */
 const pairSelect = document.getElementById("pair");
 const amountInput = document.getElementById("amount");
 const tradesUL = document.getElementById("trades");
-const chartCanvas = document.getElementById("priceChart");
-const ctx = chartCanvas.getContext("2d");
 
-let prices = [];
+let series = [];
+let lastPrice = 0;
 
-/* resize chart */
+/* ===== Canvas Chart ===== */
+const canvas = document.getElementById("priceChart");
+const ctx = canvas.getContext("2d");
+
 function resizeChart(){
-  chartCanvas.width  = chartCanvas.parentElement.clientWidth;
-  chartCanvas.height = chartCanvas.parentElement.clientHeight;
+  canvas.width = canvas.parentElement.clientWidth;
+  canvas.height = canvas.parentElement.clientHeight;
 }
 window.addEventListener("resize", resizeChart);
 resizeChart();
 
-/* draw lightweight line chart */
 function drawChart(){
-  ctx.clearRect(0,0,chartCanvas.width,chartCanvas.height);
-  if(prices.length < 2) return;
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  if(series.length < 2) return;
 
-  const max = Math.max(...prices);
-  const min = Math.min(...prices);
   const pad = 10;
-  const h = chartCanvas.height - pad*2;
-  const w = chartCanvas.width  - pad*2;
+  const min = Math.min(...series);
+  const max = Math.max(...series);
+  const w = canvas.width - pad*2;
+  const h = canvas.height - pad*2;
 
   ctx.beginPath();
-  prices.forEach((p,i)=>{
-    const x = pad + (i/(prices.length-1))*w;
+  series.forEach((p,i)=>{
+    const x = pad + (i/(series.length-1))*w;
     const y = pad + (1-(p-min)/(max-min||1))*h;
-    i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+    i ? ctx.lineTo(x,y) : ctx.moveTo(x,y);
   });
   ctx.strokeStyle = "#6ee7a8";
   ctx.lineWidth = 2;
   ctx.stroke();
 }
 
-/* fetch live price */
-async function fetchPrice(){
+/* ===== Price Tick ===== */
+async function tickPrice(){
   try{
     const pair = pairSelect.value.replace(" ","");
     const r = await fetch(`${API_BASE}/market/price?pair=${pair}`);
     const { price } = await r.json();
-    prices.push(price);
-    if(prices.length > 60) prices.shift();
+
+    series.push(price);
+    if(series.length > 80) series.shift();
     drawChart();
+
+    lastPrice = price;
   }catch(e){}
 }
 
-/* fetch trades */
+/* ===== Trades Feed ===== */
 async function fetchTrades(){
   try{
     const pair = pairSelect.value.replace(" ","");
     const r = await fetch(`${API_BASE}/market/trades?pair=${pair}`);
     const data = await r.json();
-    tradesUL.innerHTML = data.slice(0,8).map(t=>`
-      <li>
-        <span class="${t.side}">${t.side.toUpperCase()}</span>
+
+    tradesUL.innerHTML = "";
+    data.slice(0,8).forEach(t=>{
+      const li = document.createElement("li");
+      li.className = t.side;
+      li.innerHTML = `
+        <span>${t.side.toUpperCase()}</span>
         <span>${t.amount}</span>
         <span>${t.price}</span>
-      </li>
-    `).join("");
+      `;
+      tradesUL.appendChild(li);
+    });
   }catch(e){}
 }
 
-setInterval(fetchPrice, 2000);
-setInterval(fetchTrades, 3000);
-
-/* submit order */
+/* ===== Buy / Sell ===== */
 async function submitOrder(side){
-  sound("click");
+  playSound("click");
   const amt = Number(amountInput.value);
   if(!amt) return;
 
@@ -146,39 +170,67 @@ async function submitOrder(side){
 document.querySelector(".btn.buy")?.addEventListener("click",()=>submitOrder("buy"));
 document.querySelector(".btn.sell")?.addEventListener("click",()=>submitOrder("sell"));
 
-/* =========================================================
-   CASINO (Free – No Unlock – No Dependency)
-========================================================= */
-async function playGame(game, bet){
-  sound("click");
-  const r = await fetch(`${API_BASE}/casino/play`,{
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body: JSON.stringify({ game, bet })
-  });
-  const res = await r.json();
-  res.win ? sound("win") : sound("lose");
+/* ===== Market Loop ===== */
+let priceTimer, tradesTimer;
+function startMarketLoops(){
+  priceTimer = setInterval(tickPrice, 1500);
+  tradesTimer = setInterval(fetchTrades, 2500);
 }
+startMarketLoops();
+
+/* Pause when tab hidden */
+document.addEventListener("visibilitychange", ()=>{
+  if(document.hidden){
+    clearInterval(priceTimer);
+    clearInterval(tradesTimer);
+  } else {
+    startMarketLoops();
+  }
+});
+
+/* =========================================================
+   CASINO (DANGER / TENSION)
+========================================================= */
+document.querySelectorAll(".game").forEach(game=>{
+  game.addEventListener("click", async ()=>{
+    playSound("spin");
+    game.classList.add("shake");
+
+    await new Promise(r=>setTimeout(r, 350));
+
+    const r = await fetch(`${API_BASE}/casino/play`,{
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify({ game: game.textContent.trim(), bet: 1 })
+    });
+    const res = await r.json();
+
+    game.classList.remove("shake");
+    playSound(res.win ? "win" : "lose");
+  });
+});
 
 /* =========================================================
    MINING
 ========================================================= */
-async function claimMining(){
-  sound("click");
-  await fetch(`${API_BASE}/mining/claim`,{ method:"POST" });
-}
+document.querySelectorAll("#mining .btn").forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    playSound("click");
+    fetch(`${API_BASE}/mining/claim`,{ method:"POST" });
+  });
+});
 
 /* =========================================================
    AIRDROP
 ========================================================= */
-async function claimAirdrop(){
-  sound("click");
-  await fetch(`${API_BASE}/airdrop/claim`,{ method:"POST" });
-}
+document.querySelector("#airdrop .btn")?.addEventListener("click", ()=>{
+  playSound("win");
+  fetch(`${API_BASE}/airdrop/claim`,{ method:"POST" });
+});
 
 /* =========================================================
    INIT
 ========================================================= */
-document.addEventListener("DOMContentLoaded",()=>{
+document.addEventListener("DOMContentLoaded", ()=>{
   loadBalances();
 });
