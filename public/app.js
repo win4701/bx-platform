@@ -1,25 +1,19 @@
-/* ======================================================
+=======================================================
    CONFIG
-====================================================== */
-const API = "https://api.bloxio.online";
-let UID = 1; // سيتم استبداله تلقائيًا في Telegram
+========================================================= */
+const API_BASE = "https://api.bloxio.online";
 
-const headers = {
-  "Content-Type": "application/json"
-};
+/* =========================================================
+   TELEGRAM MINI APP (OPTIONAL)
+========================================================= */
+const tg = window.Telegram?.WebApp;
+if (tg) {
+  tg.ready();
+  tg.expand();
+  document.body.classList.add("tma");
+}
 
-/* ======================================================
-   TELEGRAM MINI APP (AUTO UID)
-====================================================== */
-(function initTelegram() {
-  const tg = window.Telegram?.WebApp;
-  if (tg && tg.initDataUnsafe?.user) {
-    UID = tg.initDataUnsafe.user.id;
-    tg.ready();
-    tg.expand();
-  }
-})();
-
+/* =========================================
 /* ======================================================
    STATE
 ====================================================== */
