@@ -14,7 +14,7 @@
   <audio id="snd-lose" src="assets/sounds/lose.mp3" preload="auto"></audio>
 </head>
 
-<body>
+<body data-mode="wallet">
 
 <!-- ================= HEADER ================= -->
 <header class="app-header">
@@ -28,7 +28,7 @@
 <main class="app-container">
 
   <!-- ========== WALLET ========== -->
-  <section id="wallet" class="card view">
+  <section id="wallet" class="card view active">
     <h2>Wallet</h2>
 
     <ul class="balances">
@@ -45,7 +45,7 @@
     </div>
   </section>
 
-  <!-- ========== MARKET (BLUM STYLE) ========== -->
+  <!-- ========== MARKET ========== -->
   <section id="market" class="card view">
     <h2>Market</h2>
 
@@ -119,13 +119,23 @@
 
 </main>
 
-<!-- ================= NAV ================= -->
+<!-- ================= BOTTOM NAV ================= -->
 <nav class="bottom-nav">
-  <button data-tab="wallet"><img src="assets/images/home.png"/>Home</button>
-  <button data-tab="market"><img src="assets/images/market.png"/>Market</button>
-  <button data-tab="casino"><img src="assets/images/casino.png"/>Casino</button>
-  <button data-tab="mining"><img src="assets/images/mining.png"/>Mining</button>
-  <button data-tab="airdrop"><img src="assets/images/airdrop.png"/>Airdrop</button>
+  <button data-tab="wallet" class="active">
+    <img src="assets/images/home.png"/><span>Wallet</span>
+  </button>
+  <button data-tab="market">
+    <img src="assets/images/market.png"/><span>Market</span>
+  </button>
+  <button data-tab="casino">
+    <img src="assets/images/casino.png"/><span>Casino</span>
+  </button>
+  <button data-tab="mining">
+    <img src="assets/images/mining.png"/><span>Mining</span>
+  </button>
+  <button data-tab="airdrop">
+    <img src="assets/images/airdrop.png"/><span>Airdrop</span>
+  </button>
 </nav>
 
 <!-- ================= JS ================= -->
@@ -139,6 +149,5 @@
 
 <!-- App Logic -->
 <script src="assets/js/app.js"></script>
-
 </body>
 </html>
