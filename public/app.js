@@ -1,186 +1,165 @@
-/* =========================================================
-   CONFIG
-========================================================= */
-const API_BASE = "https://api.bloxio.online";
+/* ===============================
+   GLOBAL STATE (UI ONLY)
+================================ */
+const state = {
+  activePage: 'wallet',
+  hasTraded: false,
+  wallet: {
+    BX: 0,
+    USDT: 0,
+    TON: 0,
+    SOL: 0,
+    BTC: 0
+  },
+  currentPair: 'BX/USDT'
+};
 
-/* =========================================================
-   TELEGRAM MINI APP (OPTIONAL)
-========================================================= */
-const tg = window.Telegram?.WebApp;
-if (tg) {
-  tg.ready();
-  tg.expand();
-  document.body.classList.add("tma");
-}
+/* ===============================
+   SAFE DOM HELPERS
+================================ */
+const $ = (id) => document.getElementById(id);
+const $$ = (q) => document.querySelectorAll(q);
 
-/* =========================================================
-   HAPTIC (DIFFERENT FOR BUY / BET)
-========================================================= */
-function haptic(type){
-  // Web
-  if (navigator.vibrate){
-    const map = { buy:[20], bet:[40] };
-    navigator.vibrate(map[type] || 20);
+/* ===============================
+   PAGE NAVIGATION
+================================ */
+function switchPage(page) {
+  $$('.page').forEach(p => p.classList.remove('active'));
+  const target = $(page);
+  if (target) {
+    target.classList.add('active');
+    state.activePage = page;
   }
-  // Telegram
-  if (tg?.HapticFeedback){
-    tg.HapticFeedback.impactOccurred(type === "bet" ? "medium" : "light");
-  }
 }
 
-/* =========================================================
-   NAVIGATION (NO display:none)
-========================================================= */
-const views = document.querySelectorAll(".view");
-const navBtns = document.querySelectorAll(".bottom-nav button");
-const tabs = ["wallet","market","casino","mining","airdrop"];
-let currentIndex = 0;
-
-function showTab(id){
-  views.forEach(v=>v.classList.remove("active"));
-  const el = document.getElementById(id);
-  if (!el) return;
-  el.classList.add("active");
-  document.body.dataset.mode = id;
-
-  navBtns.forEach(b=>b.classList.remove("active"));
-  document.querySelector(`.bottom-nav button[data-tab="${id}"]`)
-    ?.classList.add("active");
-
-  currentIndex = tabs.indexOf(id);
-}
-
-navBtns.forEach(btn=>{
-  btn.addEventListener("click",()=>{
-    showTab(btn.dataset.tab);
+/* bind bottom nav */
+$$('[data-nav]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const page = btn.dataset.nav;
+    switchPage(page);
+    highlightNav(btn);
   });
 });
 
-// default
-showTab("wallet");
+function highlightNav(activeBtn) {
+  $$('[data-nav]').forEach(b => b.classList.remove('nav-active'));
+  activeBtn.classList.add('nav-active');
+}
 
-/* Swipe navigation */
-let sx=0, ex=0;
-document.addEventListener("touchstart",e=>sx=e.changedTouches[0].screenX);
-document.addEventListener("touchend",e=>{
-  ex=e.changedTouches[0].screenX;
-  const d = ex-sx;
-  if (Math.abs(d)<60) return;
-  if (d<0 && currentIndex<tabs.length-1) currentIndex++;
-  if (d>0 && currentIndex>0) currentIndex--;
-  showTab(tabs[currentIndex]);
-});
+/* ===============================
+   MARKET (TRADE)
+================================ */
+function initMarket() {
+  const pairSelect = $('pairSelect');
+  if (!pairSelect) return;
 
-/* =========================================================
+  pairSelect.addEventListener('change', () => {
+    state.currentPair = pairSelect.value;
+    updateTooltip();
+  });
+
+  $('buyBtn')?.addEventListener('click', () => executeTrade('buy'));
+  $('sellBtn')?.addEventListener('click', () => executeTrade('sell'));
+}
+
+function executeTrade(type) {
+  // UI simulation only
+  state.hasTraded = true;
+
+  // unlock casino
+  unlockCasino();
+
+  // haptic feedback (mobile)
+  if (navigator.vibrate) navigator.vibrate(type === 'buy' ? 30 : 15);
+
+  showToast(`Trade successful (${type.toUpperCase()})`);
+}
+
+/* ===============================
+   CASINO (LOCKED UNTIL TRADE)
+================================ */
+function unlockCasino() {
+  const casino = $('casino');
+  if (!casino) return;
+
+  casino.classList.remove('locked');
+}
+
+function initCasino() {
+  $$('.bet-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (!state.hasTraded) {
+        showTooltip(btn, 'Get BX in Market');
+        highlightMarket();
+        return;
+      }
+
+      if (state.wallet.BX <= 0) {
+        showTooltip(btn, 'No BX balance');
+        return;
+      }
+
+      // play allowed (UI only)
+      showToast('Game started');
+    });
+  });
+}
+
+/* ===============================
    WALLET (UI ONLY)
-========================================================= */
-async function loadBalances(){
-  try{
-    const r = await fetch(`${API_BASE}/wallet/balances`);
-    const b = await r.json();
-    setVal("bal-bx", b.BX);
-    setVal("bal-usdt", b.USDT);
-    setVal("bal-ton", b.TON);
-    setVal("bal-sol", b.SOL);
-    setVal("bal-btc", b.BTC, 8);
-    updateBetTooltip();
-  }catch(e){}
-}
-
-function setVal(id,val,dec=2){
-  const el=document.getElementById(id);
-  if(!el) return;
-  el.textContent = val!==undefined ? Number(val).toFixed(dec) : "0";
-}
-
-function getBXBalance(){
-  return Number(document.getElementById("bal-bx")?.textContent || 0);
-}
-
-/* =========================================================
-   MARKET (PAIR + BUY HIGHLIGHT)
-========================================================= */
-function getCurrentPair(){
-  return document.getElementById("pair")?.value || "BX / USDT";
-}
-
-function highlightBuy(){
-  showTab("market");
-  const buy=document.querySelector(".btn.buy");
-  if(!buy) return;
-  buy.classList.add("highlight");
-  setTimeout(()=>buy.classList.remove("highlight"),2600);
-  haptic("buy");
-}
-
-/* =========================================================
-   BET TOOLTIP (ICON + CIRCULAR PROGRESS)
-========================================================= */
-function updateBetTooltip(){
-  const bx = getBXBalance();
-  const pct = Math.min(Math.round((bx/1)*100),100);
-  const pair = getCurrentPair();
-  const quote = pair.split("/")[1].trim();
-
-  document.querySelectorAll(".bet-btn").forEach(btn=>{
-    btn.style.setProperty("--p", pct);
-
-    if (bx>0){
-      btn.classList.remove("disabled");
-      btn.dataset.tip = "Place your bet with BX";
-    } else {
-      btn.classList.add("disabled");
-      btn.dataset.tip = `Convert ${quote} → BX`;
-    }
+================================ */
+function initWallet() {
+  Object.keys(state.wallet).forEach(sym => {
+    const el = $(`bal-${sym}`);
+    if (el) el.textContent = state.wallet[sym];
   });
 }
 
-/* =========================================================
-   BET / PLAY BUTTONS (XBET STYLE)
-========================================================= */
-document.querySelectorAll(".play-btn").forEach(btn=>{
-  btn.addEventListener("click",()=>{
-    // Demo only
-  });
-});
+/* ===============================
+   TOOLTIP / TOAST
+================================ */
+function showTooltip(el, text) {
+  let tip = document.createElement('div');
+  tip.className = 'tooltip';
+  tip.innerHTML = `<span>${text}</span><div class="caret"></div>`;
+  el.appendChild(tip);
 
-document.addEventListener("click",e=>{
-  const betBtn = e.target.closest(".bet-btn");
-  if (!betBtn) return;
+  setTimeout(() => tip.remove(), 2000);
+}
 
-  if (betBtn.classList.contains("disabled")){
-    updateBetTooltip();
-    highlightBuy();
-  } else {
-    haptic("bet");
-    // start game (UI only)
-  }
-});
+function showToast(text) {
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.textContent = text;
+  document.body.appendChild(toast);
 
-/* =========================================================
-   MARKET BUY / SELL (UI GATE ONLY)
-========================================================= */
-document.querySelector(".btn.buy")?.addEventListener("click",()=>{
-  haptic("buy");
-  // UI success simulation
-  setTimeout(loadBalances,400);
-});
+  setTimeout(() => toast.remove(), 1800);
+}
 
-document.querySelector(".btn.sell")?.addEventListener("click",()=>{
-  haptic("buy");
-});
+/* ===============================
+   MARKET HIGHLIGHT (GUIDANCE)
+================================ */
+function highlightMarket() {
+  const btn = document.querySelector('[data-nav="market"]');
+  if (!btn) return;
 
-/* =========================================================
-   PAIR CHANGE
-========================================================= */
-document.getElementById("pair")?.addEventListener("change",()=>{
-  updateBetTooltip();
-});
+  btn.classList.add('pulse');
+  if (navigator.vibrate) navigator.vibrate([10, 40, 10]);
 
-/* =========================================================
-   INIT
-========================================================= */
-document.addEventListener("DOMContentLoaded",()=>{
-  loadBalances();
-  updateBetTooltip();
+  setTimeout(() => btn.classList.remove('pulse'), 1500);
+}
+
+function updateTooltip() {
+  // can be extended per pair (BX/USDT, BX/BTC…)
+}
+
+/* ===============================
+   INIT (SAFE BOOT)
+================================ */
+document.addEventListener('DOMContentLoaded', () => {
+  try { initWallet(); } catch (e) {}
+  try { initMarket(); } catch (e) {}
+  try { initCasino(); } catch (e) {}
+
+  switchPage('wallet'); // default
 });
