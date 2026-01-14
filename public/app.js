@@ -14,6 +14,19 @@ if (tg) {
 }
 
 /* =========================================================
+   SOUNDS (SMART & LIMITED)
+========================================================= */
+
+function playSound(name) {
+  if (!sounds[name]) return;
+  try {
+    sounds[name].currentTime = 0;
+    sounds[name].play();
+    tg?.HapticFeedback?.impactOccurred("light");
+  } catch (e) {}
+}
+
+/* =========================================================
    NAVIGATION + TRANSITIONS (NO display:none)
 ========================================================= */
 const views = document.querySelectorAll(".view");
