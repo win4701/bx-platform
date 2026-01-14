@@ -1,4 +1,4 @@
-=======================================================
+/* =========================================================
    CONFIG
 ========================================================= */
 const API_BASE = "https://api.bloxio.online";
@@ -13,267 +13,233 @@ if (tg) {
   document.body.classList.add("tma");
 }
 
-/* =========================================
-/* ======================================================
-   STATE
-====================================================== */
-const state = {
-  wallet: {},
-  prices: {},
-  casinoHistory: [],
-  rtp: {},
-  marketQuote: null
-};
+/* =========================================================
+   NAVIGATION + TRANSITIONS (NO display:none)
+========================================================= */
+const views = document.querySelectorAll(".view");
+const navBtns = document.querySelectorAll(".bottom-nav button");
+const tabs = ["wallet", "market", "casino", "mining", "airdrop"];
+let currentIndex = 0;
 
-/* ======================================================
-   CORE FETCH
-====================================================== */
-async function api(path, options = {}) {
-  const r = await fetch(API + path, {
-    headers,
-    ...options
+function showTab(id) {
+  views.forEach(v => v.classList.remove("active"));
+
+  const target = document.getElementById(id);
+  if (!target) return;
+
+  document.body.dataset.mode = id;
+  target.classList.add("active");
+
+  navBtns.forEach(b => b.classList.remove("active"));
+  document
+    .querySelector(`.bottom-nav button[data-tab="${id}"]`)
+    ?.classList.add("active");
+
+  currentIndex = tabs.indexOf(id);
+}
+
+navBtns.forEach(btn => {
+  btn.addEventListener("click", () => {
+    playSound("click");
+    showTab(btn.dataset.tab);
   });
-  if (!r.ok) {
-    const t = await r.text();
-    throw new Error(t);
+});
+
+// default view
+showTab("wallet");
+
+/* =========================================================
+   SWIPE NAVIGATION (MOBILE FIRST)
+========================================================= */
+let touchStartX = 0;
+let touchEndX = 0;
+
+document.addEventListener("touchstart", e => {
+  touchStartX = e.changedTouches[0].screenX;
+});
+
+document.addEventListener("touchend", e => {
+  touchEndX = e.changedTouches[0].screenX;
+  handleSwipe();
+});
+
+function handleSwipe() {
+  const diff = touchEndX - touchStartX;
+  if (Math.abs(diff) < 60) return;
+
+  if (diff < 0 && currentIndex < tabs.length - 1) {
+    currentIndex++;
+  } else if (diff > 0 && currentIndex > 0) {
+    currentIndex--;
   }
-  return r.json();
+  showTab(tabs[currentIndex]);
 }
 
-/* ======================================================
-   WALLET
-====================================================== */
-async function loadWallet() {
-  state.wallet = await api(`/wallet/state?uid=${UID}`);
-  renderWallet();
-}
-
-function renderWallet() {
-  Object.entries(state.wallet).forEach(([k, v]) => {
-    const el = document.getElementById(`bal-${k}`);
-    if (el) el.innerText = Number(v).toFixed(6);
-  });
-}
-
-/* ======================================================
-   PRICES
-====================================================== */
-async function loadPrices() {
-  state.prices = await api("/public/prices");
-  Object.entries(state.prices).forEach(([k, v]) => {
-    const el = document.getElementById(`price-${k}`);
-    if (el) el.innerText = v === null ? "—" : Number(v).toFixed(4);
-  });
-}
-
-/* ======================================================
-   MARKET
-====================================================== */
-async function marketPreview() {
-  const asset = document.getElementById("marketAsset").value;
-  const side = document.getElementById("marketSide").value;
-  const amount = Number(document.getElementById("marketAmount").value);
-
-  state.marketQuote = await api("/market/quote", {
-    method: "POST",
-    body: JSON.stringify({ asset, side, amount })
-  });
-
-  document.getElementById("marketResult").innerText =
-    `Result: ${state.marketQuote.result} BX`;
-}
-
-async function marketConfirm() {
-  if (!state.marketQuote) return;
-
-  await api("/market/execute", {
-    method: "POST",
-    body: JSON.stringify(state.marketQuote)
-  });
-
-  state.marketQuote = null;
-  document.getElementById("marketResult").innerText = "";
-  await loadWallet();
-}
-
-/* ======================================================
-   CASINO
-====================================================== */
-async function playGame(game, bet, multiplier = null) {
-  const payload = {
-    uid: UID,
-    game,
-    bet,
-    multiplier,
-    client_seed: Math.random().toString(36).slice(2)
-  };
-
-  const res = await api("/casino/play", {
-    method: "POST",
-    body: JSON.stringify(payload)
-  });
-
-  alert(
-    res.win
-      ? `🎉 WIN ${res.payout} BX`
-      : game === "chicken"
-        ? "💀 Chicken died"
-        : "❌ Lost"
-  );
-
-  await loadWallet();
-  await loadCasinoHistory();
-}
-
-async function loadCasinoHistory() {
-  state.casinoHistory = await api(`/casino/history?uid=${UID}&limit=20`);
-  const box = document.getElementById("casino-history");
-  if (!box) return;
-
-  box.innerHTML = "";
-  state.casinoHistory.forEach(h => {
-    const d = document.createElement("div");
-    d.innerText =
-      `${h.game} | bet ${h.bet} | ` +
-      (h.win ? `WIN ${h.payout}` : "LOSE");
-    box.appendChild(d);
-  });
-}
-
-/* ======================================================
-   RTP (TRANSPARENCY)
-====================================================== */
-async function loadRTP() {
-  state.rtp = await api("/public/rtp");
-  const el = document.getElementById("rtp-public");
-  if (!el) return;
-
-  el.innerHTML = "";
-  Object.entries(state.rtp).forEach(([g, r]) => {
-    const d = document.createElement("div");
-    d.innerText = `${g}: ${(r.rtp_real * 100).toFixed(2)}%`;
-    el.appendChild(d);
-  });
-}
-
-/* ======================================================
-   BINANCE ID (INFO)
-====================================================== */
-function showBinanceInfo() {
-  alert(
-    "Send USDT via Binance ID.\n" +
-    "Min: 10 USDT\n" +
-    "Funds credited automatically."
-  );
-}
-
-/* ======================================================
-   WALLETCONNECT – TRC20 (USDT)
-====================================================== */
-let wcProvider, wcSigner;
-
-async function connectWalletEVM() {
-  const web3Modal = new window.Web3Modal.default({
-    cacheProvider: false
-  });
-
-  wcProvider = new ethers.providers.Web3Provider(
-    await web3Modal.connect()
-  );
-  wcSigner = wcProvider.getSigner();
-}
-
-async function depositUSDT_TRC20(amount = 10) {
-  await connectWalletEVM();
-
-  const USDT = new ethers.Contract(
-    "0xdAC17F958D2ee523a2206206994597C13D831ec7", // USDT
-    ["function transfer(address to,uint amount) returns (bool)"],
-    wcSigner
-  );
-
-  const tx = await USDT.transfer(
-    window.TREASURY_TRC20,
-    ethers.utils.parseUnits(amount.toString(), 6)
-  );
-
-  await tx.wait();
-
-  await api("/finance/deposit/walletconnect", {
-    method: "POST",
-    body: JSON.stringify({
-      uid: UID,
-      network: "trc20",
-      txid: tx.hash
-    })
-  });
-
-  alert("Deposit submitted");
-  await loadWallet();
-}
-
-/* ======================================================
-   WALLETCONNECT – TON (USDT)
-====================================================== */
-let tonConnect;
-
-function initTonConnect() {
-  tonConnect = new TON_CONNECT_UI.TonConnectUI({
-    manifestUrl: "https://bloxio.online/tonconnect-manifest.json"
-  });
-}
-
-async function depositUSDT_TON(amount = 10) {
-  if (!tonConnect) initTonConnect();
-
-  const wallet = await tonConnect.connectWallet();
-  if (!wallet) throw new Error("TON WALLET NOT CONNECTED");
-
-  // إرسال USDT TON (يتم توقيعها في المحفظة)
-  // بعد الإرسال، احصل على txid من TON explorer
-
-  const txid = prompt("Paste TON USDT tx hash");
-
-  await api("/finance/deposit/walletconnect", {
-    method: "POST",
-    body: JSON.stringify({
-      uid: UID,
-      network: "ton",
-      txid
-    })
-  });
-
-  alert("Deposit submitted");
-  await loadWallet();
-}
-
-/* ======================================================
-   MINING (PLACEHOLDER)
-====================================================== */
-function startMining() {
-  alert("Mining started (backend connected)");
-}
-
-/* ======================================================
-   AIRDROP (PLACEHOLDER)
-====================================================== */
-function claimAirdrop() {
-  alert("Airdrop claimed");
-}
-
-/* ======================================================
-   INIT
-====================================================== */
-async function boot() {
+/* =========================================================
+   WALLET (CALM / TRUST)
+========================================================= */
+async function loadBalances() {
   try {
-    await loadWallet();
-    await loadPrices();
-    await loadCasinoHistory();
-    await loadRTP();
-  } catch (e) {
-    console.error(e);
-    alert("API error");
-  }
+    const r = await fetch(`${API_BASE}/wallet/balances`);
+    const b = await r.json();
+    setVal("bal-bx", b.BX);
+    setVal("bal-usdt", b.USDT);
+    setVal("bal-ton", b.TON);
+    setVal("bal-sol", b.SOL);
+    setVal("bal-btc", b.BTC, 8);
+  } catch (e) {}
 }
 
-document.addEventListener("DOMContentLoaded", boot);
+function setVal(id, val, dec = 2) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = val !== undefined ? Number(val).toFixed(dec) : "0";
+}
+
+/* =========================================================
+   MARKET (LIVE / BLUM-STYLE)
+========================================================= */
+const pairSelect = document.getElementById("pair");
+const amountInput = document.getElementById("amount");
+const tradesUL = document.getElementById("trades");
+
+/* ----- Canvas Chart ----- */
+const canvas = document.getElementById("priceChart");
+const ctx = canvas.getContext("2d");
+let series = [];
+
+function resizeChart() {
+  canvas.width = canvas.parentElement.clientWidth;
+  canvas.height = canvas.parentElement.clientHeight;
+}
+window.addEventListener("resize", resizeChart);
+resizeChart();
+
+function drawChart() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  if (series.length < 2) return;
+
+  const pad = 10;
+  const min = Math.min(...series);
+  const max = Math.max(...series);
+  const w = canvas.width - pad * 2;
+  const h = canvas.height - pad * 2;
+
+  ctx.beginPath();
+  series.forEach((p, i) => {
+    const x = pad + (i / (series.length - 1)) * w;
+    const y = pad + (1 - (p - min) / (max - min || 1)) * h;
+    i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+  });
+  ctx.strokeStyle = "#6ee7a8";
+  ctx.lineWidth = 2;
+  ctx.stroke();
+}
+
+/* ----- Price Tick ----- */
+async function tickPrice() {
+  try {
+    const pair = pairSelect.value.replace(" ", "");
+    const r = await fetch(`${API_BASE}/market/price?pair=${pair}`);
+    const { price } = await r.json();
+    series.push(price);
+    if (series.length > 80) series.shift();
+    drawChart();
+  } catch (e) {}
+}
+
+/* ----- Trades Feed ----- */
+async function fetchTrades() {
+  try {
+    const pair = pairSelect.value.replace(" ", "");
+    const r = await fetch(`${API_BASE}/market/trades?pair=${pair}`);
+    const data = await r.json();
+    tradesUL.innerHTML = "";
+    data.slice(0, 8).forEach(t => {
+      const li = document.createElement("li");
+      li.className = t.side;
+      li.innerHTML = `
+        <span>${t.side.toUpperCase()}</span>
+        <span>${t.amount}</span>
+        <span>${t.price}</span>
+      `;
+      tradesUL.appendChild(li);
+    });
+  } catch (e) {}
+}
+
+/* ----- Buy / Sell ----- */
+async function submitOrder(side) {
+  playSound("click");
+  const amt = Number(amountInput.value);
+  if (!amt) return;
+
+  await fetch(`${API_BASE}/market/order`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      side,
+      amount: amt,
+      pair: pairSelect.value
+    })
+  });
+  amountInput.value = "";
+}
+
+document.querySelector(".btn.buy")?.addEventListener("click", () => submitOrder("buy"));
+document.querySelector(".btn.sell")?.addEventListener("click", () => submitOrder("sell"));
+
+/* ----- Market Loop (pause on hidden) ----- */
+let priceTimer, tradesTimer;
+
+function startMarketLoops() {
+  priceTimer = setInterval(tickPrice, 1500);
+  tradesTimer = setInterval(fetchTrades, 2500);
+}
+function stopMarketLoops() {
+  clearInterval(priceTimer);
+  clearInterval(tradesTimer);
+}
+
+startMarketLoops();
+
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) stopMarketLoops();
+  else startMarketLoops();
+});
+
+/* =========================================================
+   CASINO (VISUAL ONLY – NO LOGIC)
+========================================================= */
+document.querySelectorAll(".game").forEach(game => {
+  game.addEventListener("click", () => {
+    playSound("spin");
+    game.classList.add("shake");
+    setTimeout(() => game.classList.remove("shake"), 300);
+  });
+});
+
+/* =========================================================
+   MINING
+========================================================= */
+document.querySelectorAll("#mining .btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    playSound("click");
+    fetch(`${API_BASE}/mining/claim`, { method: "POST" });
+  });
+});
+
+/* =========================================================
+   AIRDROP
+========================================================= */
+document.querySelector("#airdrop .btn")?.addEventListener("click", () => {
+  playSound("win");
+  fetch(`${API_BASE}/airdrop/claim`, { method: "POST" });
+});
+
+/* =========================================================
+   INIT
+========================================================= */
+document.addEventListener("DOMContentLoaded", () => {
+  loadBalances();
+});
