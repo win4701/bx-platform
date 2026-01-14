@@ -10,8 +10,9 @@
 
   <!-- Sounds -->
   <audio id="snd-click" src="assets/sounds/click.mp3" preload="auto"></audio>
-  <audio id="snd-win" src="assets/sounds/win.mp3" preload="auto"></audio>
-  <audio id="snd-lose" src="assets/sounds/lose.mp3" preload="auto"></audio>
+  <audio id="snd-win"   src="assets/sounds/win.mp3"   preload="auto"></audio>
+  <audio id="snd-lose"  src="assets/sounds/lose.mp3"  preload="auto"></audio>
+  <audio id="snd-spin"  src="assets/sounds/spin.mp3"  preload="auto"></audio>
 </head>
 
 <body data-mode="wallet">
@@ -20,49 +21,45 @@
 <header class="app-header">
   <div class="logo">
     <img src="assets/images/logo.png" alt="BX"/>
-    <span>Bloxio BX</span>
+    <h1>Bloxio BX</h1>
   </div>
 </header>
 
 <!-- ================= MAIN ================= -->
 <main class="app-container">
 
-  <!-- ========== WALLET ========== -->
+  <!-- ================= WALLET ================= -->
   <section id="wallet" class="card view active">
     <h2>Wallet</h2>
 
+    <h3>Balances</h3>
     <ul class="balances">
-      <li><img src="assets/images/bx.png"/> BX <span id="bal-bx">—</span></li>
+      <li><img src="assets/images/bx.png"/>   BX   <span id="bal-bx">—</span></li>
       <li><img src="assets/images/usdt.png"/> USDT <span id="bal-usdt">—</span></li>
-      <li><img src="assets/images/ton.png"/> TON <span id="bal-ton">—</span></li>
-      <li><img src="assets/images/sol.png"/> SOL <span id="bal-sol">—</span></li>
-      <li><img src="assets/images/btc.png"/> BTC <span id="bal-btc">—</span></li>
+      <li><img src="assets/images/ton.png"/>  TON  <span id="bal-ton">—</span></li>
+      <li><img src="assets/images/sol.png"/>  SOL  <span id="bal-sol">—</span></li>
+      <li><img src="assets/images/btc.png"/>  BTC  <span id="bal-btc">—</span></li>
     </ul>
 
+    <h3>Actions</h3>
     <div class="wallet-actions">
       <button class="btn primary">Deposit</button>
       <button class="btn secondary">Withdraw</button>
     </div>
   </section>
 
-  <!-- ========== MARKET ========== -->
+  <!-- ================= MARKET ================= -->
   <section id="market" class="card view">
     <h2>Market</h2>
 
     <h3>Trade</h3>
-    <div class="pair-bar" id="pairBar">
-  <span id="currentPair">BX / USDT</span>
-  <span class="arrow">▼</span>
-</div>
-
-<div class="pair-sheet hidden" id="pairSheet">
-  <div class="pair-option" data-pair="BX/USDT">BX / USDT</div>
-  <div class="pair-option" data-pair="BX/TON">BX / TON</div>
-  <div class="pair-option" data-pair="BX/SOL">BX / SOL</div>
-  <div class="pair-option" data-pair="BX/BTC">BX / BTC</div>
-</div>
-    <div class="chart-box">
-      <canvas id="priceChart"></canvas>
+    <div class="pair-selector">
+      <select id="pair">
+        <option>BX / USDT</option>
+        <option>BX / TON</option>
+        <option>BX / SOL</option>
+        <option>BX / BTC</option>
+      </select>
     </div>
 
     <div class="trade-box">
@@ -71,30 +68,38 @@
       <button class="btn sell">Sell</button>
     </div>
 
+    <h3>Chart</h3>
+    <div class="chart-box">
+      <canvas id="priceChart"></canvas>
+    </div>
+
+    <h3>Recent Trades</h3>
     <div class="trades-feed">
       <ul id="trades"></ul>
     </div>
   </section>
 
-  <!-- ========== CASINO ========== -->
+  <!-- ================= CASINO ================= -->
   <section id="casino" class="card view">
     <h2>Casino</h2>
 
+    <h3>Games</h3>
     <div class="games-grid">
-      <div class="game"><img src="assets/images/slot.png"/> Slot</div>
-      <div class="game"><img src="assets/images/chicken.png"/> Chicken Road</div>
-      <div class="game"><img src="assets/images/dice.png"/> Dice</div>
-      <div class="game"><img src="assets/images/coinflip.png"/> Coinflip</div>
-      <div class="game"><img src="assets/images/crash.png"/> Crash</div>
-      <div class="game"><img src="assets/images/roulette.png"/> Roulette</div>
-      <div class="game"><img src="assets/images/abyss.png"/> Abyss</div>
+      <div class="game"><img src="assets/images/slot.png"/><h4>Slot</h4></div>
+      <div class="game"><img src="assets/images/chicken.png"/><h4>Chicken Road</h4></div>
+      <div class="game"><img src="assets/images/dice.png"/><h4>Dice</h4></div>
+      <div class="game"><img src="assets/images/coinflip.png"/><h4>Coinflip</h4></div>
+      <div class="game"><img src="assets/images/crash.png"/><h4>Crash</h4></div>
+      <div class="game"><img src="assets/images/roulette.png"/><h4>Roulette</h4></div>
+      <div class="game"><img src="assets/images/abyss.png"/><h4>Abyss</h4></div>
     </div>
   </section>
 
-  <!-- ========== MINING ========== -->
+  <!-- ================= MINING ================= -->
   <section id="mining" class="card view">
     <h2>Mining</h2>
 
+    <h3>Plans</h3>
     <div class="mining-plans">
       <div class="plan">
         <img src="assets/images/mining.png"/>
@@ -107,15 +112,22 @@
         <button class="btn primary">Subscribe</button>
       </div>
     </div>
+
+    <h3>Daily Rewards</h3>
+    <!-- Claim handled by JS -->
   </section>
 
-  <!-- ========== AIRDROP ========== -->
+  <!-- ================= AIRDROP ================= -->
   <section id="airdrop" class="card view">
     <h2>Airdrop</h2>
 
+    <h3>Progress</h3>
+    <!-- Progress bar handled by CSS/JS -->
+
+    <h3>Claim</h3>
     <div class="airdrop-box">
       <img src="assets/images/airdrop.png"/>
-      <p>Earn BX by trading, mining, and playing.</p>
+      <p>Earn BX by action.</p>
       <button class="btn primary">Claim Airdrop</button>
     </div>
   </section>
@@ -142,15 +154,6 @@
 </nav>
 
 <!-- ================= JS ================= -->
-</script>
-<!-- WalletConnect (TRC20 / EVM) -->
-<script src="https://unpkg.com/@walletconnect/web3modal@1.9.12/dist/index.js"></script>
-<script src="https://unpkg.com/ethers@5.7.2/dist/ethers.umd.min.js"></script>
-
-<!-- TON Connect -->
-<script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
-
-<!-- App Logic -->
-<script src="assets/js/app.js"></script>
+<script src="app.js"></script>
 </body>
 </html>
