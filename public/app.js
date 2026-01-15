@@ -3,18 +3,14 @@
 ========================================================= */
 const API_BASE = "https://api.bloxio.online";
 
-/* Internal price */
-const INTERNAL_BX_USDT = 2.0; // 1 BX = 2 USDT
-const MARKET_FEE = 0.002;
-
 /* =========================================================
-   DEVICE / PERFORMANCE
+   DEVICE / PERFORMANCE CHECK
 ========================================================= */
-const isLowEnd =
+const isLowEndDevice =
   navigator.hardwareConcurrency <= 4 ||
   navigator.deviceMemory <= 4;
 
-const ENABLE_ANIM = !isLowEnd;
+const ENABLE_3D = !isLowEndDevice;
 
 /* =========================================================
    SOUNDS
@@ -36,13 +32,13 @@ function playSound(name){
 }
 
 /* =========================================================
-   SNAP / MICRO FEEDBACK
+   SNAP / HAPTIC FEEL
 ========================================================= */
 function snap(el){
-  if(!el || !ENABLE_ANIM) return;
+  if(!el) return;
   el.classList.add("snap");
-  navigator.vibrate?.(8);
-  setTimeout(()=>el.classList.remove("snap"),120);
+  navigator.vibrate?.(10);
+  setTimeout(()=>el.classList.remove("snap"),150);
 }
 
 /* =========================================================
@@ -62,23 +58,21 @@ function showTab(id){
 
   document.body.dataset.mode = id;
   el.style.display = "block";
-  requestAnimationFrame(()=>el.classList.add("active"));
+  requestAnimationFrame(()=> el.classList.add("active"));
 
   navButtons.forEach(b=>b.classList.remove("active"));
-  document
-    .querySelector(`.bottom-nav button[data-tab="${id}"]`)
+  document.querySelector(`.bottom-nav button[data-tab="${id}"]`)
     ?.classList.add("active");
 }
 
 navButtons.forEach(btn=>{
-  btn.addEventListener("click",()=>{
+  btn.addEventListener("click", ()=>{
     playSound("click");
     snap(btn);
     showTab(btn.dataset.tab);
   });
 });
 
-/* default */
 showTab("wallet");
 
 /* =========================================================
@@ -107,7 +101,7 @@ function setVal(id,val,dec=2){
 loadBalances();
 
 /* =========================================================
-   MARKET – PAIR SELECTOR
+   MARKET – PAIR SELECT
 ========================================================= */
 const pairBar = document.getElementById("pairBar");
 const pairSheet = document.getElementById("pairSheet");
@@ -128,7 +122,7 @@ document.querySelectorAll(".pair-option").forEach(opt=>{
 });
 
 /* =========================================================
-   MARKET – CHART (BASIC + READY FOR ADVANCED)
+   CHART (3D ILLUSION SAFE)
 ========================================================= */
 const canvas = document.getElementById("priceChart");
 const ctx = canvas?.getContext("2d");
@@ -162,16 +156,25 @@ function drawChart(){
     i ? ctx.lineTo(x,y) : ctx.moveTo(x,y);
   });
 
+  ctx.save();
+  ctx.shadowColor =
+    series.at(-1) >= lastPrice
+      ? "rgba(74,222,187,.6)"
+      : "rgba(255,143,163,.6)";
+  ctx.shadowBlur = 12;
+  ctx.shadowOffsetY = 6;
+
   ctx.strokeStyle =
     series.at(-1) >= lastPrice ? "#4adebb" : "#ff8fa3";
   ctx.lineWidth = 2;
   ctx.stroke();
+  ctx.restore();
 
   lastPrice = series.at(-1);
 }
 
 /* =========================================================
-   MARKET – DATA LOOP
+   MARKET DATA LOOP
 ========================================================= */
 const amountInput = document.getElementById("amount");
 const tradesUL = document.getElementById("trades");
@@ -185,15 +188,6 @@ async function tickPrice(){
     series.push(price);
     if(series.length > 80) series.shift();
     drawChart();
-
-    if(ENABLE_ANIM){
-      currentPair.classList.remove("price-up","price-down");
-      setTimeout(()=>{
-        currentPair.classList.add(
-          price >= lastPrice ? "price-up" : "price-down"
-        );
-      },10);
-    }
   }catch(e){}
 }
 
@@ -219,28 +213,7 @@ async function fetchTrades(){
 }
 
 /* =========================================================
-   MARKET LOOP CONTROL
-========================================================= */
-let priceTimer, tradesTimer;
-
-function startMarket(){
-  priceTimer = setInterval(tickPrice,1500);
-  tradesTimer = setInterval(fetchTrades,2500);
-}
-
-function stopMarket(){
-  clearInterval(priceTimer);
-  clearInterval(tradesTimer);
-}
-
-startMarket();
-
-document.addEventListener("visibilitychange", ()=>{
-  document.hidden ? stopMarket() : startMarket();
-});
-
-/* =========================================================
-   BUY / SELL (BASIC – PREVIEW READY)
+   BUY / SELL
 ========================================================= */
 async function submitOrder(side){
   const amt = Number(amountInput.value);
@@ -258,7 +231,6 @@ async function submitOrder(side){
         pair: currentPair.textContent.replace(" / ","")
       })
     });
-
     amountInput.value = "";
     loadBalances();
   }catch(e){}
@@ -270,21 +242,75 @@ document.querySelector(".btn.sell")
   ?.addEventListener("click",()=>submitOrder("sell"));
 
 /* =========================================================
-   CASINO (CARD INTERACTION ONLY)
+   MARKET LOOP CONTROL
 ========================================================= */
-document.querySelectorAll("#casino .game").forEach(game=>{
-  game.addEventListener("click", ()=>{
+let priceTimer, tradesTimer;
+
+function startMarket(){
+  priceTimer = setInterval(tickPrice,1500);
+  tradesTimer = setInterval(fetchTrades,2500);
+}
+function stopMarket(){
+  clearInterval(priceTimer);
+  clearInterval(tradesTimer);
+}
+
+startMarket();
+document.addEventListener("visibilitychange",()=>{
+  document.hidden ? stopMarket() : startMarket();
+});
+
+/* =========================================================
+   CASINO 3D (SAFE)
+========================================================= */
+if(ENABLE_3D){
+  document.querySelectorAll("#casino .game").forEach(game=>{
+    game.addEventListener("mousemove", e=>{
+      const r = game.getBoundingClientRect();
+      const x = e.clientX - r.left;
+      const y = e.clientY - r.top;
+
+      const rx = ((y/r.height)-0.5)*-12;
+      const ry = ((x/r.width)-0.5)*12;
+
+      game.style.transform =
+        `rotateX(${rx}deg) rotateY(${ry}deg) translateZ(30px)`;
+    });
+
+    game.addEventListener("mouseleave", ()=>{
+      game.style.transform = "translateZ(0)";
+    });
+  });
+}
+
+/* =========================================================
+   CASINO ACTION
+========================================================= */
+document.querySelectorAll(".game").forEach(game=>{
+  game.addEventListener("click", async ()=>{
     playSound("spin");
     snap(game);
-    /* Routing to game pages later */
+
+    try{
+      const r = await fetch(`${API_BASE}/casino/play`,{
+        method:"POST",
+        headers:{ "Content-Type":"application/json" },
+        body: JSON.stringify({
+          game: game.textContent.trim(),
+          bet: 1
+        })
+      });
+      const res = await r.json();
+      playSound(res.win ? "win" : "lose");
+      loadBalances();
+    }catch(e){}
   });
 });
 
 /* =========================================================
-   MINING / AIRDROP (BASIC)
+   MINING / AIRDROP
 ========================================================= */
-document
-  .querySelectorAll("#mining .btn, #airdrop .btn")
+document.querySelectorAll("#mining .btn, #airdrop .btn")
   .forEach(btn=>{
     btn.addEventListener("click",()=>{
       playSound("click");
