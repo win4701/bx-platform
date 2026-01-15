@@ -316,11 +316,13 @@ miningTabs.forEach(btn=>{
 /* Default */
 renderMining("BX");
 function renderMining(coin){
+  if (!plansBox || !MINING_PLANS[coin]) return;
+
   plansBox.innerHTML = "";
 
   MINING_PLANS[coin].forEach(p=>{
     const div = document.createElement("div");
-    div.className = "mining-plan" + (p.name==="VIP"?" vip":"");
+    div.className = "mining-plan" + (p.name==="VIP" ? " vip" : "");
 
     div.innerHTML = `
       <h4>${p.name}</h4>
