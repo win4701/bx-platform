@@ -830,3 +830,37 @@ input{
 body{
   perspective:none !important;
 }
+/* =========================================================
+   IMAGE QUALITY FIX – CASINO + WALLET
+========================================================= */
+
+/* صور الألعاب (Casino) */
+#casino .game img{
+  width:56px;          /* حجم حقيقي بدون تكبير */
+  height:56px;
+  object-fit:contain;
+  image-rendering:auto;
+  filter:drop-shadow(0 6px 12px rgba(0,0,0,.6));
+}
+
+/* صور العملات في المحفظة */
+.balances img{
+  width:22px;
+  height:22px;
+  object-fit:contain;
+  image-rendering:auto;
+}
+
+/* صور طرق الإيداع */
+.deposit-method img{
+  width:36px;
+  height:36px;
+  object-fit:contain;
+  image-rendering:auto;
+}
+
+/* تحسين عام لكل الصور */
+img{
+  -webkit-backface-visibility:hidden;
+  backface-visibility:hidden;
+}
