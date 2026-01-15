@@ -710,3 +710,50 @@ input{
 .airdrop-box .status.success{
   color:var(--green);
 }
+/* =========================================================
+   WALLET – DEPOSIT METHODS
+========================================================= */
+
+.deposit-methods{
+  display:flex;
+  justify-content:space-between;
+  gap:14px;
+  margin-top:14px;
+}
+
+.deposit-method{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:6px;
+  padding:12px;
+  background:#0b1f27;
+  border:1px solid var(--border);
+  border-radius:16px;
+  cursor:pointer;
+  transition:.2s ease;
+}
+
+.deposit-method img{
+  width:36px;
+  height:36px;
+  object-fit:contain;
+  filter:drop-shadow(0 4px 8px rgba(0,0,0,.6));
+}
+
+.deposit-method span{
+  font-size:13px;
+  font-weight:700;
+  color:var(--text);
+}
+
+/* Hover / Tap */
+.deposit-method:hover{
+  transform:translateY(-2px);
+  border-color:var(--green);
+}
+
+.deposit-method:active{
+  transform:scale(.96);
+}
