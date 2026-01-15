@@ -410,6 +410,10 @@ input{
   height:22px;
 }
 
+.bottom-nav{
+  z-index:100;
+}
+
 /* =========================================================
    CASINO – GLOBAL STYLE (VERTICAL CARDS)
 ========================================================= */
@@ -595,6 +599,7 @@ input{
   width:100%;
   margin-top:8px;
 }
+
 /* =========================================================
    MINING – SUBSCRIPTION STATES
 ========================================================= */
@@ -628,6 +633,7 @@ input{
   opacity:.5;
   pointer-events:none;
 }
+
 /* =========================================================
    AIRDROP – ADVANCED SYSTEM
 ========================================================= */
@@ -682,6 +688,7 @@ input{
 .airdrop-box .status.success{
   color:var(--green);
 }
+
 /* =========================================================
    WALLET – DEPOSIT METHODS
 ========================================================= */
@@ -729,6 +736,7 @@ input{
 .deposit-method:active{
   transform:scale(.96);
 }
+
 /* =========================================================
    MINING – VISUAL TABS (EYE COMFORT)
 ========================================================= */
@@ -787,29 +795,39 @@ input{
 .mining-tabs button:active{
   transform:scale(.96);
 }
+
 /* =========================================================
-   MARKET – MOBILE SAFE LAYOUT
+   MARKET – STABLE MOBILE LAYOUT
 ========================================================= */
 
 #market{
   display:flex;
   flex-direction:column;
-  gap:14px;
+  gap:16px;
 }
 
-/* Trade box لا ينضغط */
+/* Buy / Sell */
 #market .trade-box{
   flex-shrink:0;
 }
 
-/* Chart مرن حسب الجهاز */
+/* Chart يتكيّف */
 #market .chart-box{
   min-height:220px;
-  height:clamp(220px, 40vh, 360px);
+  height:clamp(220px, 38vh, 360px);
 }
 
-/* Recent trades آمن */
+/* Recent Trades */
 #market .trades-feed{
+  flex-shrink:0;
   max-height:200px;
   overflow:auto;
+}
+
+/* =========================================================
+   SAFE AREA – CONTENT FIX
+========================================================= */
+
+.app-container{
+  padding-bottom:calc(90px + env(safe-area-inset-bottom));
 }
