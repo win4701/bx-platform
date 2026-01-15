@@ -350,6 +350,48 @@ miningTabs.forEach(btn=>{
 
 /* Default */
 renderMining("BX");
+function renderMining(coin){
+  plansBox.innerHTML = "";
+
+  MINING_PLANS[coin].forEach(p=>{
+    const div = document.createElement("div");
+    div.className = "mining-plan" + (p.name==="VIP"?" vip":"");
+
+    div.innerHTML = `
+      <h4>${p.name}</h4>
+      <div class="badge">${coin} Mining</div>
+      <ul>
+        <li><span>Daily Profit</span><strong>${p.daily}</strong></li>
+        <li><span>Duration</span><strong>${p.days} days</strong></li>
+        <li><span>Min</span><strong>${p.min} ${coin}</strong></li>
+        <li><span>Max</span><strong>${p.max} ${coin}</strong></li>
+      </ul>
+      <button class="btn primary">Subscribe</button>
+      <div class="status"></div>
+    `;
+
+    const btn = div.querySelector(".btn");
+    const status = div.querySelector(".status");
+
+    btn.addEventListener("click",()=>{
+      playSound("click");
+      snap(btn);
+
+      const res = subscribeMining(coin,p);
+      if(res.ok){
+        div.classList.add("active");
+        btn.disabled = true;
+        status.textContent = "Active Subscription";
+        status.className = "status active";
+      }else{
+        status.textContent = res.msg;
+        status.className = "status error";
+      }
+    });
+
+    plansBox.appendChild(div);
+  });
+}
 /* =========================================================
    MINING – WALLET SUBSCRIPTION LOGIC
 ========================================================= */
