@@ -154,24 +154,19 @@
   </section>
 
   <!-- ================= MINING ================= -->
-  <section id="mining" class="card view">
-    <h2>Mining</h2>
+   <section id="mining" class="card view">
+  <h2>Mining</h2>
 
-    <div class="mining-plans">
-      <div class="plan">
-        <img src="assets/images/mining.png" alt="BX Mining"/>
-        <strong>BX Mining</strong>
-        <button class="btn primary">Subscribe</button>
-      </div>
+  <!-- Currency Tabs -->
+  <div class="mining-tabs">
+    <button class="active" data-coin="BX">BX</button>
+    <button data-coin="TON">TON</button>
+    <button data-coin="SOL">SOL</button>
+  </div>
 
-      <div class="plan">
-        <img src="assets/images/ton.png" alt="TON / SOL"/>
-        <strong>TON / SOL</strong>
-        <button class="btn primary">Subscribe</button>
-      </div>
-    </div>
-  </section>
-
+  <!-- Plans -->
+  <div class="mining-plans" id="miningPlans"></div>
+   </section>
   <!-- ================= AIRDROP ================= -->
   <section id="airdrop" class="card view">
     <h2>Airdrop</h2>
