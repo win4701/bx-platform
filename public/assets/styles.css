@@ -91,6 +91,12 @@ body{
 .view.active{
   display:block;
 }
+
+/* container must always have height */
+.app-container{
+  min-height:calc(100vh - 120px);
+}
+
 /* =========================================================
    CARD (GLOBAL DEPTH)
 ========================================================= */
