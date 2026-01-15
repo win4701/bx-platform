@@ -865,3 +865,42 @@ img{
   -webkit-backface-visibility:hidden;
   backface-visibility:hidden;
 }
+/* =========================================================
+   PNG IMAGE FIX – MOBILE (IMPORTANT)
+========================================================= */
+
+/* منع تشويش كل الصور */
+img{
+  max-width:100%;
+  height:auto;
+  image-rendering:auto;
+  transform:none !important;
+}
+
+/* صور العملات (Wallet + Market + Pairs) */
+.balances img,
+.pair-option img,
+.deposit-method img{
+  width:24px;
+  height:24px;
+  object-fit:contain;
+  transform:none !important;
+}
+
+/* صور الألعاب (Casino) */
+#casino .game img{
+  width:48px;
+  height:48px;
+  object-fit:contain;
+  transform:none !important;
+}
+
+/* أي صورة كبيرة (مثل التي ظهرت عندك مكبّرة) */
+.market-banner img,
+.hero img,
+.chart-box img{
+  width:100%;
+  max-width:420px;   /* يمنع التكبير الزائد */
+  margin:auto;
+  display:block;
+}
