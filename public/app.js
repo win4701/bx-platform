@@ -522,15 +522,10 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function showTab(tabId) {
-  views.forEach(v => {
-    v.classList.remove("active");
-  });
+  views.forEach(v => v.classList.remove("active"));
 
   const target = document.getElementById(tabId);
-  if (!target) {
-    console.error("View not found:", tabId);
-    return;
-  }
+  if (!target) return;
 
   target.classList.add("active");
 
@@ -541,7 +536,6 @@ document.addEventListener("DOMContentLoaded", () => {
   );
   if (btn) btn.classList.add("active");
 
-  // ⭐ حفظ التبويب الحالي
   localStorage.setItem("activeTab", tabId);
 }
   navButtons.forEach(btn => {
