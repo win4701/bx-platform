@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
   <title>BX App</title>
 
   <link rel="icon" href="assets/images/logo.png"/>
@@ -15,7 +16,16 @@
   <audio id="snd-spin"  src="assets/sounds/spin.mp3"  preload="auto"></audio>
 </head>
 
-<body data-mode="wallet">
+<body
+  data-3d="on"
+  data-3d-level="medium"
+  data-motion="on"
+  data-sound="on"
+  data-performance="auto"
+  data-theme="dark"
+  data-ui="pro"
+  data-version="1.0.0"
+>
 
 <!-- ================= HEADER ================= -->
 <header class="app-header">
@@ -29,12 +39,8 @@
 <main class="app-container">
 
   <!-- ================= WALLET ================= -->
-  <section class="card layer-front">Wallet</section>
+  <section id="wallet" class="card view active">
     <h2>Wallet</h2>
-
-    <div class="wallet-summary">
-      Total Balance
-    </div>
 
     <ul class="balances">
       <li><img src="assets/images/bx.png"/>   BX   <span id="bal-bx">—</span></li>
@@ -45,8 +51,8 @@
     </ul>
 
     <div class="wallet-actions">
-      <button class="btn primary">Deposit</button>
-      <button class="btn secondary">Withdraw</button>
+      <button class="btn primary" data-press="soft">Deposit</button>
+      <button class="btn secondary" data-press="soft">Withdraw</button>
     </div>
   </section>
 
@@ -68,12 +74,12 @@
 
     <div class="trade-box">
       <input id="amount" type="number" placeholder="Amount"/>
-      <button class="btn buy">Buy</button>
-      <button class="btn sell">Sell</button>
+      <button class="btn buy" data-press="deep">Buy</button>
+      <button class="btn sell" data-press="deep">Sell</button>
     </div>
 
     <h3>Chart</h3>
-    <div class="chart-box">
+    <div class="chart-box" data-chart-3d="on" data-glow="on">
       <canvas id="priceChart"></canvas>
     </div>
 
@@ -84,17 +90,40 @@
   </section>
 
   <!-- ================= CASINO ================= -->
-  <section id="casino" class="card view">
+  <section id="casino" class="card view"
+           data-3d="strong"
+           data-tilt="on">
     <h2>Casino</h2>
 
-    <div class="games-grid casino-layout">
-      <div class="game"><img src="assets/images/slot.png"/><h4>Slot</h4></div>
-      <div class="game"><img src="assets/images/chicken.png"/><h4>Chicken Road</h4></div>
-      <div class="game"><img src="assets/images/dice.png"/><h4>Dice</h4></div>
-      <div class="game"><img src="assets/images/coinflip.png"/><h4>Coinflip</h4></div>
-      <div class="game"><img src="assets/images/crash.png"/><h4>Crash</h4></div>
-      <div class="game"><img src="assets/images/roulette.png"/><h4>Roulette</h4></div>
-      <div class="game"><img src="assets/images/abyss.png"/><h4>Abyss</h4></div>
+    <div class="games-grid">
+      <div class="game" data-hover="tilt">
+        <img src="assets/images/slot.png"/>
+        <h4>Slot</h4>
+      </div>
+      <div class="game" data-hover="tilt">
+        <img src="assets/images/chicken.png"/>
+        <h4>Chicken Road</h4>
+      </div>
+      <div class="game" data-hover="tilt">
+        <img src="assets/images/dice.png"/>
+        <h4>Dice</h4>
+      </div>
+      <div class="game" data-hover="tilt">
+        <img src="assets/images/coinflip.png"/>
+        <h4>Coinflip</h4>
+      </div>
+      <div class="game" data-hover="tilt">
+        <img src="assets/images/crash.png"/>
+        <h4>Crash</h4>
+      </div>
+      <div class="game" data-hover="tilt">
+        <img src="assets/images/roulette.png"/>
+        <h4>Roulette</h4>
+      </div>
+      <div class="game" data-hover="tilt">
+        <img src="assets/images/abyss.png"/>
+        <h4>Abyss</h4>
+      </div>
     </div>
   </section>
 
@@ -106,13 +135,12 @@
       <div class="plan">
         <img src="assets/images/mining.png"/>
         <strong>BX Mining</strong>
-        <button class="btn primary">Subscribe</button>
+        <button class="btn primary" data-press="soft">Subscribe</button>
       </div>
-
       <div class="plan">
         <img src="assets/images/ton.png"/>
         <strong>TON / SOL</strong>
-        <button class="btn primary">Subscribe</button>
+        <button class="btn primary" data-press="soft">Subscribe</button>
       </div>
     </div>
   </section>
@@ -124,7 +152,7 @@
     <div class="airdrop-box">
       <img src="assets/images/airdrop.png"/>
       <p>Earn BX by action.</p>
-      <button class="btn primary">Claim Airdrop</button>
+      <button class="btn primary" data-press="soft">Claim Airdrop</button>
     </div>
   </section>
 
@@ -133,19 +161,24 @@
 <!-- ================= BOTTOM NAV ================= -->
 <nav class="bottom-nav">
   <button data-tab="wallet" class="active">
-    <img src="assets/images/wallet.svg"/><span>Wallet</span>
+    <img src="assets/images/wallet.svg"/>
+    <span>Wallet</span>
   </button>
   <button data-tab="market">
-    <img src="assets/images/market.svg"/><span>Market</span>
+    <img src="assets/images/market.svg"/>
+    <span>Market</span>
   </button>
   <button data-tab="casino">
-    <img src="assets/images/casino.svg"/><span>Casino</span>
+    <img src="assets/images/casino.svg"/>
+    <span>Casino</span>
   </button>
   <button data-tab="mining">
-    <img src="assets/images/mining.svg"/><span>Mining</span>
+    <img src="assets/images/mining.svg"/>
+    <span>Mining</span>
   </button>
   <button data-tab="airdrop">
-    <img src="assets/images/airdrop.png"/><span>Airdrop</span>
+    <img src="assets/images/airdrop.png"/>
+    <span>Airdrop</span>
   </button>
 </nav>
 
