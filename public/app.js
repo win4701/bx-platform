@@ -540,27 +540,30 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function showTab(tabId) {
-    views.forEach(v => {
-      v.classList.remove("active");
-      v.style.display = "none";
-    });
+  views.forEach(v => {
+    v.classList.remove("active");
+    v.style.display = "none";
+  });
 
-    const target = document.getElementById(tabId);
-    if (!target) {
-      console.error("View not found:", tabId);
-      return;
-    }
-
-    target.style.display = "block";
-    target.classList.add("active");
-
-    navButtons.forEach(b => b.classList.remove("active"));
-    const btn = document.querySelector(
-      `.bottom-nav button[data-tab="${tabId}"]`
-    );
-    if (btn) btn.classList.add("active");
+  const target = document.getElementById(tabId);
+  if (!target) {
+    console.error("View not found:", tabId);
+    return;
   }
 
+  target.style.display = "block";
+  target.classList.add("active");
+
+  navButtons.forEach(b => b.classList.remove("active"));
+
+  const btn = document.querySelector(
+    `.bottom-nav button[data-tab="${tabId}"]`
+  );
+  if (btn) btn.classList.add("active");
+
+  // ⭐ حفظ التبويب الحالي
+  localStorage.setItem("activeTab", tabId);
+}
   navButtons.forEach(btn => {
     btn.addEventListener("click", () => {
       const tab = btn.dataset.tab;
@@ -568,6 +571,5 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  // Default
-  showTab("wallet");
-});
+  const lastTab = localStorage.getItem("activeTab") || "wallet";
+showTab(lastTab);
