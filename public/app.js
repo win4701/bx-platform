@@ -534,15 +534,18 @@ const views = document.querySelectorAll(".view");
 const navButtons = document.querySelectorAll(".bottom-nav button");
 
 function showTab(tabId){
-  views.forEach(v => v.classList.remove("active"));
+  views.forEach(v => {
+    v.classList.remove("active");
+    v.style.display = "none";
+  });
 
   const target = document.getElementById(tabId);
-  if(!target){
-    console.warn("View not found:", tabId);
-    return;
-  }
+  if(!target) return;
 
-  target.classList.add("active");
+  target.style.display = "block";
+  requestAnimationFrame(()=>{
+    target.classList.add("active");
+  });
 
   navButtons.forEach(b => b.classList.remove("active"));
   document
