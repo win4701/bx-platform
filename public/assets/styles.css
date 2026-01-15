@@ -757,3 +757,61 @@ input{
 .deposit-method:active{
   transform:scale(.96);
 }
+/* =========================================================
+   MINING – VISUAL TABS (EYE COMFORT)
+========================================================= */
+
+.mining-tabs{
+  display:flex;
+  gap:10px;
+  margin-bottom:16px;
+}
+
+.mining-tabs button{
+  flex:1;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+
+  padding:12px;
+  border-radius:16px;
+  border:1px solid var(--border);
+  background:#0b1f27;
+
+  color:var(--muted);
+  font-weight:700;
+  font-size:14px;
+
+  transition:.25s ease;
+}
+
+/* Icon */
+.mining-tabs img{
+  width:22px;
+  height:22px;
+  object-fit:contain;
+  filter:grayscale(1) brightness(.8);
+}
+
+/* Active Tab */
+.mining-tabs button.active{
+  background:linear-gradient(180deg,#102a33,#0f1a1f);
+  color:var(--green);
+  border-color:rgba(110,231,168,.5);
+
+  box-shadow:
+    0 8px 24px rgba(110,231,168,.25),
+    inset 0 0 0 1px rgba(110,231,168,.25);
+}
+
+/* Active Icon */
+.mining-tabs button.active img{
+  filter:none;
+  transform:scale(1.1);
+}
+
+/* Tap / Hover */
+.mining-tabs button:active{
+  transform:scale(.96);
+}
