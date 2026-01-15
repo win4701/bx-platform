@@ -46,42 +46,6 @@ function snap(el){
 }
 
 /* =========================================================
-   VIEW NAVIGATION
-========================================================= */
-const views = document.querySelectorAll(".view");
-const navButtons = document.querySelectorAll(".bottom-nav button");
-
-function showTab(id){
-  views.forEach(v=>{
-    v.classList.remove("active");
-    v.style.display = "none";
-  });
-
-  const el = document.getElementById(id);
-  if(!el) return;
-
-  document.body.dataset.mode = id;
-  el.style.display = "block";
-  requestAnimationFrame(()=>el.classList.add("active"));
-
-  navButtons.forEach(b=>b.classList.remove("active"));
-  document
-    .querySelector(`.bottom-nav button[data-tab="${id}"]`)
-    ?.classList.add("active");
-}
-
-navButtons.forEach(btn=>{
-  btn.addEventListener("click",()=>{
-    playSound("click");
-    snap(btn);
-    showTab(btn.dataset.tab);
-  });
-});
-
-/* default */
-showTab("wallet");
-
-/* =========================================================
    WALLET
 ========================================================= */
 async function loadBalances(){
