@@ -534,25 +534,32 @@ const views = document.querySelectorAll(".view");
 const navButtons = document.querySelectorAll(".bottom-nav button");
 
 function showTab(tabId){
+  // إخفاء كل الأقسام تمامًا
   views.forEach(v => {
     v.classList.remove("active");
     v.style.display = "none";
   });
 
+  // إظهار القسم المطلوب
   const target = document.getElementById(tabId);
-  if(!target) return;
+  if(!target){
+    console.warn("View not found:", tabId);
+    return;
+  }
 
   target.style.display = "block";
+
+  // تفعيل الكلاس بعد فريم (حل تعارض 3D)
   requestAnimationFrame(()=>{
     target.classList.add("active");
   });
 
+  // تفعيل زر القائمة
   navButtons.forEach(b => b.classList.remove("active"));
   document
     .querySelector(`.bottom-nav button[data-tab="${tabId}"]`)
     ?.classList.add("active");
 }
-
 navButtons.forEach(btn=>{
   btn.addEventListener("click", ()=>{
     const tab = btn.dataset.tab;
