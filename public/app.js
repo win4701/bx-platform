@@ -304,26 +304,6 @@ const MINING_PLANS = {
 const plansBox = document.getElementById("miningPlans");
 const miningTabs = document.querySelectorAll(".mining-tabs button");
 
-function renderMining(coin){
-  plansBox.innerHTML = "";
-  MINING_PLANS[coin].forEach(p=>{
-    const div = document.createElement("div");
-    div.className = "mining-plan" + (p.name==="VIP"?" vip":"");
-    div.innerHTML = `
-      <h4>${p.name}</h4>
-      <div class="badge">${coin} Mining</div>
-      <ul>
-        <li><span>Daily Profit</span><strong>${p.daily}</strong></li>
-        <li><span>Duration</span><strong>${p.days} days</strong></li>
-        <li><span>Min</span><strong>${p.min} ${coin}</strong></li>
-        <li><span>Max</span><strong>${p.max} ${coin}</strong></li>
-      </ul>
-      <button class="btn primary">Subscribe</button>
-    `;
-    plansBox.appendChild(div);
-  });
-}
-
 /* Tabs click */
 miningTabs.forEach(btn=>{
   btn.addEventListener("click",()=>{
