@@ -531,3 +531,95 @@ input{
 #market .btn.sell:active{
   transform:translateZ(4px) scale(.97);
 }
+/* =========================================================
+   MINING – TABS
+========================================================= */
+
+.mining-tabs{
+  display:flex;
+  gap:8px;
+  margin-bottom:14px;
+}
+
+.mining-tabs button{
+  flex:1;
+  padding:10px;
+  border-radius:14px;
+  border:1px solid var(--border);
+  background:#0b1f27;
+  color:var(--muted);
+  font-weight:700;
+}
+
+.mining-tabs button.active{
+  background:linear-gradient(180deg,#102a33,#0f1a1f);
+  color:var(--green);
+  box-shadow:0 6px 18px rgba(0,0,0,.35);
+}
+
+/* =========================================================
+   MINING – PLANS GRID
+========================================================= */
+
+.mining-plans{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:14px;
+}
+
+/* Plan Card */
+.mining-plan{
+  background:linear-gradient(180deg,#0f2a33,#0b1f27);
+  border:1px solid var(--border);
+  border-radius:18px;
+  padding:14px;
+  box-shadow:0 14px 30px rgba(0,0,0,.35);
+  transform:translateZ(10px);
+}
+
+.mining-plan.vip{
+  border-color:#facc15;
+  box-shadow:0 18px 36px rgba(250,204,21,.25);
+}
+
+/* Header */
+.mining-plan h4{
+  margin:0 0 6px;
+  font-size:15px;
+}
+
+.mining-plan .badge{
+  display:inline-block;
+  padding:4px 8px;
+  border-radius:10px;
+  font-size:11px;
+  font-weight:700;
+  background:#143a47;
+  color:var(--green);
+  margin-bottom:10px;
+}
+
+/* Details */
+.mining-plan ul{
+  list-style:none;
+  padding:0;
+  margin:0 0 10px;
+  font-size:13px;
+}
+
+.mining-plan li{
+  display:flex;
+  justify-content:space-between;
+  padding:4px 0;
+  color:var(--muted);
+}
+
+.mining-plan li strong{
+  color:var(--text);
+}
+
+/* Button */
+.mining-plan .btn{
+  width:100%;
+  margin-top:8px;
+}
