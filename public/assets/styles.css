@@ -810,3 +810,23 @@ input{
   flex-direction:column;
   padding-bottom:90px; /* مساحة Bottom Nav فقط */
 }
+/* FIX VIEW SWITCHING */
+.view{
+  display:none;
+  transform:none !important;
+}
+
+.view.active{
+  display:block;
+  transform:none !important;
+}
+
+/* FIX 3D NAV CONFLICT */
+.bottom-nav{
+  transform:none !important;
+}
+
+/* DISABLE GLOBAL 3D ON BODY (SAFE) */
+body{
+  perspective:none !important;
+}
