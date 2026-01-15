@@ -29,12 +29,24 @@ const sounds = {
 function playSound(name){
   const s = sounds[name];
   if(!s) return;
-  try{
-    s.currentTime = 0;
-    s.play();
-  }catch(e){}
-}
 
+  // لا تشغّل الصوت إلا بعد تفاعل المستخدم
+  if (document.visibilityState !== "visible") return;
+
+  try{
+    s.pause();
+    s.currentTime = 0;
+
+    const playPromise = s.play();
+    if (playPromise !== undefined) {
+      playPromise.catch(() => {
+        // تجاهل الخطأ (المتصفح منع الصوت)
+      });
+    }
+  }catch(e){
+    // تجاهل أي خطأ بدون إيقاف JS
+  }
+}
 /* =========================================================
    SNAP / MICRO FEEDBACK
 ========================================================= */
