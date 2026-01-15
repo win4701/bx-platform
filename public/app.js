@@ -519,3 +519,25 @@ function updateAirdropUI(type){
 
 /* Debug (remove later) */
 // setInterval(addReferral, 10000); // كل 10 ثواني إحالة تجريبية
+/* =========================================================
+   WALLET – DEPOSIT METHODS LOGIC
+========================================================= */
+
+document.querySelectorAll(".deposit-method").forEach(method=>{
+  method.addEventListener("click", ()=>{
+    playSound("click");
+    snap(method);
+
+    const type = method.dataset.method;
+
+    if(type === "binance"){
+      alert("Enter your Binance ID (Coming Soon)");
+      // لاحقًا: open modal + API
+    }
+
+    if(type === "walletconnect"){
+      alert("WalletConnect integration (Coming Soon)");
+      // لاحقًا: WalletConnect SDK
+    }
+  });
+});
