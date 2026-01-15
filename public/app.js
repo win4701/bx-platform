@@ -573,3 +573,4 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const lastTab = localStorage.getItem("activeTab") || "wallet";
 showTab(lastTab);
+   });
