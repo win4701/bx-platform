@@ -80,21 +80,17 @@ body{
 }
 
 /* =========================================================
-   VIEWS
+   VIEW SYSTEM – STABLE
 ========================================================= */
+
 .view{
   display:none;
-  opacity:0;
-  transform:translateY(12px) translateZ(-10px);
-  transition:.35s ease;
+  min-height:100%;
 }
 
 .view.active{
   display:block;
-  opacity:1;
-  transform:none;
 }
-
 /* =========================================================
    CARD (GLOBAL DEPTH)
 ========================================================= */
