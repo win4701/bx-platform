@@ -425,6 +425,9 @@ input{
   width:22px;
   height:22px;
 }
+.bottom-nav{
+  z-index:100;
+}
 
 /* =========================================================
    SNAP ANIMATION (USED BY JS)
@@ -814,4 +817,11 @@ input{
 /* Tap / Hover */
 .mining-tabs button:active{
   transform:scale(.96);
+}
+/* =========================================================
+   SAFE AREA – CONTENT FIX
+========================================================= */
+
+.app-container{
+  padding-bottom:calc(90px + env(safe-area-inset-bottom));
 }
