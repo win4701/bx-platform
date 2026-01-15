@@ -4,7 +4,16 @@
 const API_BASE = "https://api.bloxio.online";
 
 /* =========================================================
-   SOUNDS (SAFE PLAY)
+   DEVICE / PERFORMANCE CHECK
+========================================================= */
+const isLowEndDevice =
+  navigator.hardwareConcurrency <= 4 ||
+  navigator.deviceMemory <= 4;
+
+const ENABLE_3D = !isLowEndDevice;
+
+/* =========================================================
+   SOUNDS
 ========================================================= */
 const sounds = {
   click: document.getElementById("snd-click"),
@@ -23,16 +32,17 @@ function playSound(name){
 }
 
 /* =========================================================
-   SNAP / MOBILE FEEL
+   SNAP / HAPTIC FEEL
 ========================================================= */
 function snap(el){
-  el?.classList.add("snap");
+  if(!el) return;
+  el.classList.add("snap");
   navigator.vibrate?.(10);
-  setTimeout(()=>el?.classList.remove("snap"),150);
+  setTimeout(()=>el.classList.remove("snap"),150);
 }
 
 /* =========================================================
-   VIEW NAVIGATION (CORE)
+   VIEW NAVIGATION
 ========================================================= */
 const views = document.querySelectorAll(".view");
 const navButtons = document.querySelectorAll(".bottom-nav button");
@@ -63,7 +73,6 @@ navButtons.forEach(btn=>{
   });
 });
 
-/* default */
 showTab("wallet");
 
 /* =========================================================
@@ -85,13 +94,14 @@ async function loadBalances(){
 function setVal(id,val,dec=2){
   const el = document.getElementById(id);
   if(!el) return;
-  el.textContent = val !== undefined ? Number(val).toFixed(dec) : "0";
+  el.textContent =
+    val !== undefined ? Number(val).toFixed(dec) : "0";
 }
 
 loadBalances();
 
 /* =========================================================
-   MARKET – PAIR SELECTOR
+   MARKET – PAIR SELECT
 ========================================================= */
 const pairBar = document.getElementById("pairBar");
 const pairSheet = document.getElementById("pairSheet");
@@ -112,7 +122,7 @@ document.querySelectorAll(".pair-option").forEach(opt=>{
 });
 
 /* =========================================================
-   MARKET – CHART (CANVAS)
+   CHART (3D ILLUSION SAFE)
 ========================================================= */
 const canvas = document.getElementById("priceChart");
 const ctx = canvas?.getContext("2d");
@@ -146,15 +156,25 @@ function drawChart(){
     i ? ctx.lineTo(x,y) : ctx.moveTo(x,y);
   });
 
-  ctx.strokeStyle = series.at(-1) >= lastPrice ? "#4adebb" : "#ff8fa3";
+  ctx.save();
+  ctx.shadowColor =
+    series.at(-1) >= lastPrice
+      ? "rgba(74,222,187,.6)"
+      : "rgba(255,143,163,.6)";
+  ctx.shadowBlur = 12;
+  ctx.shadowOffsetY = 6;
+
+  ctx.strokeStyle =
+    series.at(-1) >= lastPrice ? "#4adebb" : "#ff8fa3";
   ctx.lineWidth = 2;
   ctx.stroke();
+  ctx.restore();
 
   lastPrice = series.at(-1);
 }
 
 /* =========================================================
-   MARKET – LIVE DATA
+   MARKET DATA LOOP
 ========================================================= */
 const amountInput = document.getElementById("amount");
 const tradesUL = document.getElementById("trades");
@@ -185,14 +205,15 @@ async function fetchTrades(){
         <span>${t.amount}</span>
         <span>${t.price}</span>
       `;
-      li.style.color = t.side === "buy" ? "#4adebb" : "#ff8fa3";
+      li.style.color =
+        t.side === "buy" ? "#4adebb" : "#ff8fa3";
       tradesUL.appendChild(li);
     });
   }catch(e){}
 }
 
 /* =========================================================
-   MARKET – BUY / SELL
+   BUY / SELL
 ========================================================= */
 async function submitOrder(side){
   const amt = Number(amountInput.value);
@@ -217,7 +238,6 @@ async function submitOrder(side){
 
 document.querySelector(".btn.buy")
   ?.addEventListener("click",()=>submitOrder("buy"));
-
 document.querySelector(".btn.sell")
   ?.addEventListener("click",()=>submitOrder("sell"));
 
@@ -230,20 +250,41 @@ function startMarket(){
   priceTimer = setInterval(tickPrice,1500);
   tradesTimer = setInterval(fetchTrades,2500);
 }
-
 function stopMarket(){
   clearInterval(priceTimer);
   clearInterval(tradesTimer);
 }
 
 startMarket();
-
-document.addEventListener("visibilitychange", ()=>{
+document.addEventListener("visibilitychange",()=>{
   document.hidden ? stopMarket() : startMarket();
 });
 
 /* =========================================================
-   CASINO
+   CASINO 3D (SAFE)
+========================================================= */
+if(ENABLE_3D){
+  document.querySelectorAll("#casino .game").forEach(game=>{
+    game.addEventListener("mousemove", e=>{
+      const r = game.getBoundingClientRect();
+      const x = e.clientX - r.left;
+      const y = e.clientY - r.top;
+
+      const rx = ((y/r.height)-0.5)*-12;
+      const ry = ((x/r.width)-0.5)*12;
+
+      game.style.transform =
+        `rotateX(${rx}deg) rotateY(${ry}deg) translateZ(30px)`;
+    });
+
+    game.addEventListener("mouseleave", ()=>{
+      game.style.transform = "translateZ(0)";
+    });
+  });
+}
+
+/* =========================================================
+   CASINO ACTION
 ========================================================= */
 document.querySelectorAll(".game").forEach(game=>{
   game.addEventListener("click", async ()=>{
@@ -254,7 +295,10 @@ document.querySelectorAll(".game").forEach(game=>{
       const r = await fetch(`${API_BASE}/casino/play`,{
         method:"POST",
         headers:{ "Content-Type":"application/json" },
-        body: JSON.stringify({ game: game.textContent.trim(), bet: 1 })
+        body: JSON.stringify({
+          game: game.textContent.trim(),
+          bet: 1
+        })
       });
       const res = await r.json();
       playSound(res.win ? "win" : "lose");
@@ -264,41 +308,12 @@ document.querySelectorAll(".game").forEach(game=>{
 });
 
 /* =========================================================
-   MINING
+   MINING / AIRDROP
 ========================================================= */
-document.querySelectorAll("#mining .btn").forEach(btn=>{
-  btn.addEventListener("click", ()=>{
-    playSound("click");
-    snap(btn);
+document.querySelectorAll("#mining .btn, #airdrop .btn")
+  .forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      playSound("click");
+      snap(btn);
+    });
   });
-});
-
-/* =========================================================
-   AIRDROP
-========================================================= */
-document.querySelector("#airdrop .btn")?.addEventListener("click",()=>{
-  playSound("win");
-});
-/* =========================================================
-   CASINO 3D INTERACTION
-========================================================= */
-document.querySelectorAll("#casino .game").forEach(game=>{
-  game.addEventListener("mousemove", e=>{
-    const r = game.getBoundingClientRect();
-    const x = e.clientX - r.left;
-    const y = e.clientY - r.top;
-
-    const rx = ((y / r.height) - 0.5) * -12;
-    const ry = ((x / r.width) - 0.5) * 12;
-
-    game.style.transform = `
-      rotateX(${rx}deg)
-      rotateY(${ry}deg)
-      translateZ(30px)
-    `;
-  });
-
-  game.addEventListener("mouseleave", ()=>{
-    game.style.transform = "translateZ(0)";
-  });
-});
