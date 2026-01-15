@@ -107,18 +107,45 @@ function setVal(id,val,dec=2){
 loadBalances();
 
 /* =========================================================
-   MARKET – PAIR SELECTOR
+   MARKET – PAIR SELECTOR (CLEAN VERSION)
 ========================================================= */
+
+/* Available pairs */
+const MARKET_PAIRS = [
+  "BX / USDT",
+  "BX / TON",
+  "BX / SOL",
+  "BX / BTC"
+];
+
+let currentPairIndex = 0;
+
 const pairBar = document.getElementById("pairBar");
 const currentPair = document.getElementById("currentPair");
 
-document.querySelectorAll(".pair-option").forEach(opt=>{
-  opt.addEventListener("click", ()=>{
-    currentPair.textContent = opt.dataset.pair;
-    pairSheet.classList.remove("show");
-    series.length = 0;
-    drawChart();
-  });
+/* Init default pair */
+if(currentPair){
+  currentPair.textContent = MARKET_PAIRS[currentPairIndex];
+}
+
+/* Switch pair on tap */
+pairBar?.addEventListener("click", ()=>{
+  playSound("click");
+  snap(pairBar);
+
+  /* Next pair */
+  currentPairIndex++;
+  if(currentPairIndex >= MARKET_PAIRS.length){
+    currentPairIndex = 0;
+  }
+
+  const pair = MARKET_PAIRS[currentPairIndex];
+  currentPair.textContent = pair;
+
+  /* Reset chart data */
+  series.length = 0;
+  lastPrice = 0;
+  drawChart();
 });
 
 /* =========================================================
