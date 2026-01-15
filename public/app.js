@@ -527,50 +527,47 @@ document.querySelectorAll(".deposit-method").forEach(method=>{
   });
 });
 /* =========================================================
-   SPA HASH ROUTER – RENDER SAFE
+   SAFE NAVIGATION – WORKS EVERYWHERE
 ========================================================= */
 
-const views = document.querySelectorAll(".view");
-const navButtons = document.querySelectorAll(".bottom-nav button");
+document.addEventListener("DOMContentLoaded", () => {
+  const views = document.querySelectorAll(".view");
+  const navButtons = document.querySelectorAll(".bottom-nav button");
 
-function renderRoute(route){
-  const tab = route.replace("#","") || "wallet";
-
-  views.forEach(v=>{
-    v.classList.remove("active");
-    v.style.display = "none";
-  });
-
-  const target = document.getElementById(tab);
-  if(target){
-    target.style.display = "block";
-    requestAnimationFrame(()=>{
-      target.classList.add("active");
-    });
+  if (!views.length || !navButtons.length) {
+    console.error("Navigation elements not found");
+    return;
   }
 
-  navButtons.forEach(b=>b.classList.remove("active"));
-  document
-    .querySelector(`.bottom-nav button[data-tab="${tab}"]`)
-    ?.classList.add("active");
-}
+  function showTab(tabId) {
+    views.forEach(v => {
+      v.classList.remove("active");
+      v.style.display = "none";
+    });
 
-/* Click navigation */
-navButtons.forEach(btn=>{
-  btn.addEventListener("click", ()=>{
-    const route = btn.dataset.route;
-    if(route){
-      location.hash = route;
+    const target = document.getElementById(tabId);
+    if (!target) {
+      console.error("View not found:", tabId);
+      return;
     }
+
+    target.style.display = "block";
+    target.classList.add("active");
+
+    navButtons.forEach(b => b.classList.remove("active"));
+    const btn = document.querySelector(
+      `.bottom-nav button[data-tab="${tabId}"]`
+    );
+    if (btn) btn.classList.add("active");
+  }
+
+  navButtons.forEach(btn => {
+    btn.addEventListener("click", () => {
+      const tab = btn.dataset.tab;
+      if (tab) showTab(tab);
+    });
   });
-});
 
-/* Hash change (Render compatible) */
-window.addEventListener("hashchange", ()=>{
-  renderRoute(location.hash);
-});
-
-/* Initial load */
-document.addEventListener("DOMContentLoaded", ()=>{
-  renderRoute(location.hash || "#wallet");
+  // Default
+  showTab("wallet");
 });
