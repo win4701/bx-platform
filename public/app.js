@@ -562,3 +562,36 @@ document.querySelectorAll(".deposit-method").forEach(method=>{
     }
   });
 });
+/* =========================================================
+   BOTTOM NAV – STABLE NAVIGATION
+========================================================= */
+
+const views = document.querySelectorAll(".view");
+const navButtons = document.querySelectorAll(".bottom-nav button");
+
+function showTab(tabId){
+  views.forEach(v => v.classList.remove("active"));
+
+  const target = document.getElementById(tabId);
+  if(!target){
+    console.warn("View not found:", tabId);
+    return;
+  }
+
+  target.classList.add("active");
+
+  navButtons.forEach(b => b.classList.remove("active"));
+  document
+    .querySelector(`.bottom-nav button[data-tab="${tabId}"]`)
+    ?.classList.add("active");
+}
+
+navButtons.forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    const tab = btn.dataset.tab;
+    showTab(tab);
+  });
+});
+
+/* default */
+showTab("wallet");
