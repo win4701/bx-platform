@@ -88,6 +88,7 @@ body{
 
 .view.active{
   display:block;
+  flex:1;
 }
 /* =========================================================
    CARD (GLOBAL DEPTH)
@@ -806,8 +807,9 @@ input{
 
 .app-container{
   min-height:100vh;
-  display:flex;
-  flex-direction:column;
+  position:relative;
+  padding-bottom:90px;
+}
   padding-bottom:90px; /* مساحة Bottom Nav فقط */
 }
 /* FIX VIEW SWITCHING */
