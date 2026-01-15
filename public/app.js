@@ -4,36 +4,50 @@
 const API_BASE = "https://api.bloxio.online";
 
 /* =========================================================
-   SOUNDS
+   SOUNDS (SAFE PLAY)
 ========================================================= */
 const sounds = {
-  click: new Audio("assets/sounds/click.mp3"),
-  win:   new Audio("assets/sounds/win.mp3"),
-  lose:  new Audio("assets/sounds/lose.mp3"),
-  spin:  new Audio("assets/sounds/spin.mp3"),
+  click: document.getElementById("snd-click"),
+  win:   document.getElementById("snd-win"),
+  lose:  document.getElementById("snd-lose"),
+  spin:  document.getElementById("snd-spin"),
 };
+
 function playSound(name){
-  if(!sounds[name]) return;
-  sounds[name].currentTime = 0;
-  sounds[name].play();
+  const s = sounds[name];
+  if(!s) return;
+  try{
+    s.currentTime = 0;
+    s.play();
+  }catch(e){}
 }
 
 /* =========================================================
-   SECTION NAVIGATION + MODE (CORE LIFE)
+   SNAP / MOBILE FEEL
 ========================================================= */
-const sections = document.querySelectorAll(".view");
+function snap(el){
+  el?.classList.add("snap");
+  navigator.vibrate?.(10);
+  setTimeout(()=>el?.classList.remove("snap"),150);
+}
+
+/* =========================================================
+   VIEW NAVIGATION (CORE)
+========================================================= */
+const views = document.querySelectorAll(".view");
 const navButtons = document.querySelectorAll(".bottom-nav button");
 
 function showTab(id){
-  sections.forEach(s=>{
-    s.classList.remove("active");
-    s.style.display = "none";
+  views.forEach(v=>{
+    v.classList.remove("active");
+    v.style.display = "none";
   });
 
   const el = document.getElementById(id);
-  document.body.dataset.mode = id;      // 👈 يغيّر الإيقاع العام
-  el.style.display = "block";
+  if(!el) return;
 
+  document.body.dataset.mode = id;
+  el.style.display = "block";
   requestAnimationFrame(()=> el.classList.add("active"));
 
   navButtons.forEach(b=>b.classList.remove("active"));
@@ -44,48 +58,70 @@ function showTab(id){
 navButtons.forEach(btn=>{
   btn.addEventListener("click", ()=>{
     playSound("click");
+    snap(btn);
     showTab(btn.dataset.tab);
   });
 });
 
-// default
+/* default */
 showTab("wallet");
 
 /* =========================================================
-   WALLET (CALM / TRUST)
+   WALLET
 ========================================================= */
 async function loadBalances(){
   try{
     const r = await fetch(`${API_BASE}/wallet/balances`);
     const b = await r.json();
-    set("bal-bx",   b.BX);
-    set("bal-usdt", b.USDT);
-    set("bal-ton",  b.TON);
-    set("bal-sol",  b.SOL);
-    set("bal-btc",  b.BTC, 8);
+
+    setVal("bal-bx",   b.BX);
+    setVal("bal-usdt", b.USDT);
+    setVal("bal-ton",  b.TON);
+    setVal("bal-sol",  b.SOL);
+    setVal("bal-btc",  b.BTC, 8);
   }catch(e){}
 }
 
-function set(id,val,dec=2){
-  document.getElementById(id).textContent =
-    val !== undefined ? Number(val).toFixed(dec) : "0";
+function setVal(id,val,dec=2){
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.textContent = val !== undefined ? Number(val).toFixed(dec) : "0";
 }
 
+loadBalances();
+
 /* =========================================================
-   MARKET (FAST / LIVE)
+   MARKET – PAIR SELECTOR
 ========================================================= */
-const pairSelect = document.getElementById("pair");
-const amountInput = document.getElementById("amount");
-const tradesUL = document.getElementById("trades");
+const pairBar = document.getElementById("pairBar");
+const pairSheet = document.getElementById("pairSheet");
+const currentPair = document.getElementById("currentPair");
+
+pairBar?.addEventListener("click", ()=>{
+  pairSheet?.classList.toggle("show");
+  playSound("click");
+});
+
+document.querySelectorAll(".pair-option").forEach(opt=>{
+  opt.addEventListener("click", ()=>{
+    currentPair.textContent = opt.dataset.pair;
+    pairSheet.classList.remove("show");
+    series.length = 0;
+    drawChart();
+  });
+});
+
+/* =========================================================
+   MARKET – CHART (CANVAS)
+========================================================= */
+const canvas = document.getElementById("priceChart");
+const ctx = canvas?.getContext("2d");
 
 let series = [];
 let lastPrice = 0;
 
-/* ===== Canvas Chart ===== */
-const canvas = document.getElementById("priceChart");
-const ctx = canvas.getContext("2d");
-
 function resizeChart(){
+  if(!canvas) return;
   canvas.width = canvas.parentElement.clientWidth;
   canvas.height = canvas.parentElement.clientHeight;
 }
@@ -93,8 +129,9 @@ window.addEventListener("resize", resizeChart);
 resizeChart();
 
 function drawChart(){
+  if(!ctx || series.length < 2) return;
+
   ctx.clearRect(0,0,canvas.width,canvas.height);
-  if(series.length < 2) return;
 
   const pad = 10;
   const min = Math.min(...series);
@@ -108,105 +145,121 @@ function drawChart(){
     const y = pad + (1-(p-min)/(max-min||1))*h;
     i ? ctx.lineTo(x,y) : ctx.moveTo(x,y);
   });
-  ctx.strokeStyle = "#6ee7a8";
+
+  ctx.strokeStyle = series.at(-1) >= lastPrice ? "#4adebb" : "#ff8fa3";
   ctx.lineWidth = 2;
   ctx.stroke();
+
+  lastPrice = series.at(-1);
 }
 
-/* ===== Price Tick ===== */
+/* =========================================================
+   MARKET – LIVE DATA
+========================================================= */
+const amountInput = document.getElementById("amount");
+const tradesUL = document.getElementById("trades");
+
 async function tickPrice(){
   try{
-    const pair = pairSelect.value.replace(" ","");
+    const pair = currentPair.textContent.replace(" / ","");
     const r = await fetch(`${API_BASE}/market/price?pair=${pair}`);
     const { price } = await r.json();
 
     series.push(price);
     if(series.length > 80) series.shift();
     drawChart();
-
-    lastPrice = price;
   }catch(e){}
 }
 
-/* ===== Trades Feed ===== */
 async function fetchTrades(){
   try{
-    const pair = pairSelect.value.replace(" ","");
+    const pair = currentPair.textContent.replace(" / ","");
     const r = await fetch(`${API_BASE}/market/trades?pair=${pair}`);
     const data = await r.json();
 
     tradesUL.innerHTML = "";
     data.slice(0,8).forEach(t=>{
       const li = document.createElement("li");
-      li.className = t.side;
       li.innerHTML = `
         <span>${t.side.toUpperCase()}</span>
         <span>${t.amount}</span>
         <span>${t.price}</span>
       `;
+      li.style.color = t.side === "buy" ? "#4adebb" : "#ff8fa3";
       tradesUL.appendChild(li);
     });
   }catch(e){}
 }
 
-/* ===== Buy / Sell ===== */
+/* =========================================================
+   MARKET – BUY / SELL
+========================================================= */
 async function submitOrder(side){
-  playSound("click");
   const amt = Number(amountInput.value);
   if(!amt) return;
 
-  await fetch(`${API_BASE}/market/order`,{
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body: JSON.stringify({
-      side,
-      amount: amt,
-      pair: pairSelect.value
-    })
-  });
-  amountInput.value = "";
+  playSound("click");
+
+  try{
+    await fetch(`${API_BASE}/market/order`,{
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify({
+        side,
+        amount: amt,
+        pair: currentPair.textContent.replace(" / ","")
+      })
+    });
+    amountInput.value = "";
+    loadBalances();
+  }catch(e){}
 }
 
-document.querySelector(".btn.buy")?.addEventListener("click",()=>submitOrder("buy"));
-document.querySelector(".btn.sell")?.addEventListener("click",()=>submitOrder("sell"));
+document.querySelector(".btn.buy")
+  ?.addEventListener("click",()=>submitOrder("buy"));
 
-/* ===== Market Loop ===== */
+document.querySelector(".btn.sell")
+  ?.addEventListener("click",()=>submitOrder("sell"));
+
+/* =========================================================
+   MARKET LOOP CONTROL
+========================================================= */
 let priceTimer, tradesTimer;
-function startMarketLoops(){
-  priceTimer = setInterval(tickPrice, 1500);
-  tradesTimer = setInterval(fetchTrades, 2500);
-}
-startMarketLoops();
 
-/* Pause when tab hidden */
+function startMarket(){
+  priceTimer = setInterval(tickPrice,1500);
+  tradesTimer = setInterval(fetchTrades,2500);
+}
+
+function stopMarket(){
+  clearInterval(priceTimer);
+  clearInterval(tradesTimer);
+}
+
+startMarket();
+
 document.addEventListener("visibilitychange", ()=>{
-  if(document.hidden){
-    clearInterval(priceTimer);
-    clearInterval(tradesTimer);
-  } else {
-    startMarketLoops();
-  }
+  document.hidden ? stopMarket() : startMarket();
 });
 
 /* =========================================================
-   CASINO (DANGER / TENSION)
+   CASINO
 ========================================================= */
 document.querySelectorAll(".game").forEach(game=>{
   game.addEventListener("click", async ()=>{
     playSound("spin");
-    game.classList.add("shake");
+    snap(game);
 
-    await new Promise(r=>setTimeout(r, 350));
-
-    const r = await fetch(`${API_BASE}/casino/play`,{
-      method:"POST",
-      headers:{ "Content-Type":"application/json" },
-      body: JSON.stringify({ game: game.textContent.trim(), bet: 1 })
-    });
-    const res = await r.json();
-
-    game.classList.remove("shake");
-    playSound(res.win ? "win" : "lose");
+    try{
+      const r = await fetch(`${API_BASE}/casino/play`,{
+        method:"POST",
+        headers:{ "Content-Type":"application/json" },
+        body: JSON.stringify({ game: game.textContent.trim(), bet: 1 })
+      });
+      const res = await r.json();
+      playSound(res.win ? "win" : "lose");
+      loadBalances();
+    }catch(e){}
   });
 });
 
@@ -216,21 +269,13 @@ document.querySelectorAll(".game").forEach(game=>{
 document.querySelectorAll("#mining .btn").forEach(btn=>{
   btn.addEventListener("click", ()=>{
     playSound("click");
-    fetch(`${API_BASE}/mining/claim`,{ method:"POST" });
+    snap(btn);
   });
 });
 
 /* =========================================================
    AIRDROP
 ========================================================= */
-document.querySelector("#airdrop .btn")?.addEventListener("click", ()=>{
+document.querySelector("#airdrop .btn")?.addEventListener("click",()=>{
   playSound("win");
-  fetch(`${API_BASE}/airdrop/claim`,{ method:"POST" });
-});
-
-/* =========================================================
-   INIT
-========================================================= */
-document.addEventListener("DOMContentLoaded", ()=>{
-  loadBalances();
 });
