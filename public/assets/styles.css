@@ -430,18 +430,6 @@ input{
 }
 
 /* =========================================================
-   SNAP ANIMATION (USED BY JS)
-========================================================= */
-.snap{
-  animation:snap .15s ease;
-}
-
-@keyframes snap{
-  0%{transform:scale(1)}
-  50%{transform:scale(.92)}
-  100%{transform:scale(1)}
-}
-/* =========================================================
    CASINO – GLOBAL STYLE (VERTICAL CARDS)
 ========================================================= */
 
@@ -819,9 +807,12 @@ input{
   transform:scale(.96);
 }
 /* =========================================================
-   SAFE AREA – CONTENT FIX
+   APP CONTAINER – STABLE MOBILE FLOW
 ========================================================= */
 
 .app-container{
-  padding-bottom:calc(90px + env(safe-area-inset-bottom));
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  padding-bottom:90px; /* مساحة Bottom Nav فقط */
 }
