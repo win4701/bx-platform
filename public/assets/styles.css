@@ -656,3 +656,57 @@ input{
   opacity:.5;
   pointer-events:none;
 }
+/* =========================================================
+   AIRDROP – ADVANCED SYSTEM
+========================================================= */
+
+.airdrop-box{
+  background:linear-gradient(180deg,#102a33,#0b1f27);
+  border:1px solid var(--border);
+  border-radius:18px;
+  padding:16px;
+  text-align:center;
+}
+
+.airdrop-reward{
+  font-size:22px;
+  font-weight:800;
+  color:var(--green);
+  margin:10px 0;
+}
+
+.airdrop-task{
+  background:#0b1f27;
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:12px;
+  margin-top:12px;
+  font-size:14px;
+}
+
+.airdrop-task.done{
+  border-color:var(--green);
+  color:var(--green);
+}
+
+.airdrop-referral{
+  margin-top:14px;
+  font-size:13px;
+}
+
+.airdrop-referral strong{
+  color:var(--green);
+}
+
+.airdrop-box .status{
+  margin-top:10px;
+  font-size:12px;
+  font-weight:700;
+}
+
+.airdrop-box .status.error{
+  color:#ff8fa3;
+}
+.airdrop-box .status.success{
+  color:var(--green);
+}
