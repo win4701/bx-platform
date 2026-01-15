@@ -291,3 +291,62 @@ document
       snap(btn);
     });
   });
+/* =========================================================
+   MINING – PLANS DATA
+========================================================= */
+
+const MINING_PLANS = {
+  BX: [
+    { name:"Starter", daily:"1.2%", days:30, min:10,  max:500 },
+    { name:"Silver",  daily:"2.0%", days:45, min:100, max:2000 },
+    { name:"Gold",    daily:"3.0%", days:60, min:500, max:10000 },
+    { name:"VIP",     daily:"4.5%", days:90, min:2000,max:50000 }
+  ],
+  TON: [
+    { name:"Starter", daily:"0.8%", days:30, min:5,  max:200 },
+    { name:"Silver",  daily:"1.5%", days:45, min:50, max:1000 },
+    { name:"Gold",    daily:"2.5%", days:60, min:200,max:5000 },
+    { name:"VIP",     daily:"3.8%", days:90, min:1000,max:20000 }
+  ],
+  SOL: [
+    { name:"Starter", daily:"0.7%", days:30, min:1,  max:100 },
+    { name:"Silver",  daily:"1.3%", days:45, min:20, max:500 },
+    { name:"Gold",    daily:"2.2%", days:60, min:100,max:3000 },
+    { name:"VIP",     daily:"3.5%", days:90, min:500,max:10000 }
+  ]
+};
+
+const plansBox = document.getElementById("miningPlans");
+const miningTabs = document.querySelectorAll(".mining-tabs button");
+
+function renderMining(coin){
+  plansBox.innerHTML = "";
+  MINING_PLANS[coin].forEach(p=>{
+    const div = document.createElement("div");
+    div.className = "mining-plan" + (p.name==="VIP"?" vip":"");
+    div.innerHTML = `
+      <h4>${p.name}</h4>
+      <div class="badge">${coin} Mining</div>
+      <ul>
+        <li><span>Daily Profit</span><strong>${p.daily}</strong></li>
+        <li><span>Duration</span><strong>${p.days} days</strong></li>
+        <li><span>Min</span><strong>${p.min} ${coin}</strong></li>
+        <li><span>Max</span><strong>${p.max} ${coin}</strong></li>
+      </ul>
+      <button class="btn primary">Subscribe</button>
+    `;
+    plansBox.appendChild(div);
+  });
+}
+
+/* Tabs click */
+miningTabs.forEach(btn=>{
+  btn.addEventListener("click",()=>{
+    miningTabs.forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+    renderMining(btn.dataset.coin);
+  });
+});
+
+/* Default */
+renderMining("BX");
