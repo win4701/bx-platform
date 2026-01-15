@@ -42,7 +42,7 @@ function snap(el){
   if(!el || !ENABLE_ANIM) return;
   el.classList.add("snap");
   navigator.vibrate?.(8);
-  setTimeout(()=>el.classList.remove("snap"),120);
+  
 }
 
 /* =========================================================
