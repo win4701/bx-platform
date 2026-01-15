@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title></title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+  <title>BX App</title>
 
   <link rel="icon" href="assets/images/logo.png"/>
   <link rel="stylesheet" href="assets/styles.css"/>
@@ -21,7 +21,7 @@
 <header class="app-header">
   <div class="logo">
     <img src="assets/images/logo.png" alt="BX"/>
-    <h1></h1>
+    <span>BX</span>
   </div>
 </header>
 
@@ -32,7 +32,10 @@
   <section id="wallet" class="card view active">
     <h2>Wallet</h2>
 
-    <h3>Balances</h3>
+    <div class="wallet-summary">
+      Total Balance
+    </div>
+
     <ul class="balances">
       <li><img src="assets/images/bx.png"/>   BX   <span id="bal-bx">—</span></li>
       <li><img src="assets/images/usdt.png"/> USDT <span id="bal-usdt">—</span></li>
@@ -41,7 +44,6 @@
       <li><img src="assets/images/btc.png"/>  BTC  <span id="bal-btc">—</span></li>
     </ul>
 
-    <h3>Actions</h3>
     <div class="wallet-actions">
       <button class="btn primary">Deposit</button>
       <button class="btn secondary">Withdraw</button>
@@ -52,18 +54,18 @@
   <section id="market" class="card view">
     <h2>Market</h2>
 
-    <h3>Trade</h3>
-   <div class="pair-bar" id="pairBar">
-  <span id="currentPair">BX / USDT</span>
-  <span class="arrow">▼</span>
-</div>
+    <div class="pair-bar" id="pairBar">
+      <span id="currentPair">BX / USDT</span>
+      <span class="arrow">▼</span>
+    </div>
 
-<div class="pair-sheet hidden" id="pairSheet">
-  <div class="pair-option" data-pair="BX/USDT">BX / USDT</div>
-  <div class="pair-option" data-pair="BX/TON">BX / TON</div>
-  <div class="pair-option" data-pair="BX/SOL">BX / SOL</div>
-  <div class="pair-option" data-pair="BX/BTC">BX / BTC</div>
-</div> 
+    <div class="pair-sheet hidden" id="pairSheet">
+      <div class="pair-option" data-pair="BX/USDT">BX / USDT</div>
+      <div class="pair-option" data-pair="BX/TON">BX / TON</div>
+      <div class="pair-option" data-pair="BX/SOL">BX / SOL</div>
+      <div class="pair-option" data-pair="BX/BTC">BX / BTC</div>
+    </div>
+
     <div class="trade-box">
       <input id="amount" type="number" placeholder="Amount"/>
       <button class="btn buy">Buy</button>
@@ -85,8 +87,7 @@
   <section id="casino" class="card view">
     <h2>Casino</h2>
 
-    <h3>Games</h3>
-    <div class="games-grid">
+    <div class="games-grid casino-layout">
       <div class="game"><img src="assets/images/slot.png"/><h4>Slot</h4></div>
       <div class="game"><img src="assets/images/chicken.png"/><h4>Chicken Road</h4></div>
       <div class="game"><img src="assets/images/dice.png"/><h4>Dice</h4></div>
@@ -101,32 +102,25 @@
   <section id="mining" class="card view">
     <h2>Mining</h2>
 
-    <h3>Plans</h3>
     <div class="mining-plans">
       <div class="plan">
         <img src="assets/images/mining.png"/>
         <strong>BX Mining</strong>
         <button class="btn primary">Subscribe</button>
       </div>
+
       <div class="plan">
         <img src="assets/images/ton.png"/>
         <strong>TON / SOL</strong>
         <button class="btn primary">Subscribe</button>
       </div>
     </div>
-
-    <h3>Daily Rewards</h3>
-    <!-- Claim handled by JS -->
   </section>
 
   <!-- ================= AIRDROP ================= -->
   <section id="airdrop" class="card view">
     <h2>Airdrop</h2>
 
-    <h3>Progress</h3>
-    <!-- Progress bar handled by CSS/JS -->
-
-    <h3>Claim</h3>
     <div class="airdrop-box">
       <img src="assets/images/airdrop.png"/>
       <p>Earn BX by action.</p>
