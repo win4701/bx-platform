@@ -350,3 +350,56 @@ miningTabs.forEach(btn=>{
 
 /* Default */
 renderMining("BX");
+/* =========================================================
+   MINING – WALLET SUBSCRIPTION LOGIC
+========================================================= */
+
+/* Mock wallet balances (fallback if API not ready) */
+let WALLET = {
+  BX: 1000,
+  TON: 300,
+  SOL: 150
+};
+
+/* Active subscriptions */
+const ACTIVE_MINING = [];
+
+/* Override balances if wallet loaded */
+function syncWalletFromUI(){
+  ["BX","TON","SOL"].forEach(c=>{
+    const el = document.getElementById("bal-"+c.toLowerCase());
+    if(el){
+      WALLET[c] = Number(el.textContent) || WALLET[c];
+    }
+  });
+}
+
+/* Subscribe handler */
+function subscribeMining(coin, plan){
+  syncWalletFromUI();
+
+  if(WALLET[coin] < plan.min){
+    return {
+      ok:false,
+      msg:`Insufficient ${coin} balance`
+    };
+  }
+
+  WALLET[coin] -= plan.min;
+
+  ACTIVE_MINING.push({
+    coin,
+    plan:plan.name,
+    amount:plan.min,
+    daily:plan.daily,
+    start:Date.now()
+  });
+
+  /* Update UI wallet */
+  const balEl = document.getElementById("bal-"+coin.toLowerCase());
+  if(balEl){
+    balEl.textContent = WALLET[coin].toFixed(2);
+  }
+
+  return { ok:true };
+}
