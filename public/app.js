@@ -445,3 +445,77 @@ function subscribeMining(coin, plan){
 
   return { ok:true };
 }
+/* =========================================================
+   AIRDROP – CASINO + REFERRAL SYSTEM
+========================================================= */
+
+/* State */
+let AIRDROP = {
+  casinoRewarded:false,
+  referralPoints:0
+};
+
+const AIRDROP_BX_REWARD = 2.5;
+const REFERRAL_POINT_TO_BX = 0.5; // كل نقطة = 0.5 BX
+
+/* Sync BX balance */
+function addBX(amount){
+  const el = document.getElementById("bal-bx");
+  if(!el) return;
+
+  let current = Number(el.textContent) || 0;
+  current += amount;
+  el.textContent = current.toFixed(2);
+}
+
+/* ===== Casino Play Reward ===== */
+function onCasinoPlayed(){
+  if(AIRDROP.casinoRewarded) return;
+
+  AIRDROP.casinoRewarded = true;
+  addBX(AIRDROP_BX_REWARD);
+
+  updateAirdropUI("casino");
+}
+
+/* Hook casino games */
+document.querySelectorAll("#casino .game").forEach(game=>{
+  game.addEventListener("click", ()=>{
+    setTimeout(onCasinoPlayed, 500);
+  });
+});
+
+/* ===== Referral System ===== */
+
+/* Simulate referral (later from backend) */
+function addReferral(){
+  AIRDROP.referralPoints++;
+
+  const bx = REFERRAL_POINT_TO_BX;
+  addBX(bx);
+
+  updateAirdropUI("referral");
+}
+
+/* ===== UI Update ===== */
+function updateAirdropUI(type){
+  const status = document.getElementById("airdropStatus");
+  const casinoTask = document.getElementById("casinoTask");
+  const refPoints = document.getElementById("refPoints");
+
+  if(type === "casino" && casinoTask){
+    casinoTask.classList.add("done");
+    casinoTask.innerHTML = "✔ Casino Played – 2.5 BX Added";
+    status.textContent = "Reward added to wallet";
+    status.className = "status success";
+  }
+
+  if(type === "referral" && refPoints){
+    refPoints.textContent = AIRDROP.referralPoints;
+    status.textContent = "Referral reward added";
+    status.className = "status success";
+  }
+}
+
+/* Debug (remove later) */
+// setInterval(addReferral, 10000); // كل 10 ثواني إحالة تجريبية
