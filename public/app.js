@@ -527,45 +527,50 @@ document.querySelectorAll(".deposit-method").forEach(method=>{
   });
 });
 /* =========================================================
-   BOTTOM NAV – STABLE NAVIGATION
+   SPA HASH ROUTER – RENDER SAFE
 ========================================================= */
 
 const views = document.querySelectorAll(".view");
 const navButtons = document.querySelectorAll(".bottom-nav button");
 
-function showTab(tabId){
-  // إخفاء كل الأقسام تمامًا
-  views.forEach(v => {
+function renderRoute(route){
+  const tab = route.replace("#","") || "wallet";
+
+  views.forEach(v=>{
     v.classList.remove("active");
     v.style.display = "none";
   });
 
-  // إظهار القسم المطلوب
-  const target = document.getElementById(tabId);
-  if(!target){
-    console.warn("View not found:", tabId);
-    return;
+  const target = document.getElementById(tab);
+  if(target){
+    target.style.display = "block";
+    requestAnimationFrame(()=>{
+      target.classList.add("active");
+    });
   }
 
-  target.style.display = "block";
-
-  // تفعيل الكلاس بعد فريم (حل تعارض 3D)
-  requestAnimationFrame(()=>{
-    target.classList.add("active");
-  });
-
-  // تفعيل زر القائمة
-  navButtons.forEach(b => b.classList.remove("active"));
+  navButtons.forEach(b=>b.classList.remove("active"));
   document
-    .querySelector(`.bottom-nav button[data-tab="${tabId}"]`)
+    .querySelector(`.bottom-nav button[data-tab="${tab}"]`)
     ?.classList.add("active");
 }
+
+/* Click navigation */
 navButtons.forEach(btn=>{
   btn.addEventListener("click", ()=>{
-    const tab = btn.dataset.tab;
-    showTab(tab);
+    const route = btn.dataset.route;
+    if(route){
+      location.hash = route;
+    }
   });
 });
 
-/* default */
-showTab("wallet");
+/* Hash change (Render compatible) */
+window.addEventListener("hashchange", ()=>{
+  renderRoute(location.hash);
+});
+
+/* Initial load */
+document.addEventListener("DOMContentLoaded", ()=>{
+  renderRoute(location.hash || "#wallet");
+});
