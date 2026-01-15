@@ -374,3 +374,54 @@ input{
   width:22px;
   height:22px;
 }
+/* =========================================================
+   CASINO 3D WOW EFFECT
+========================================================= */
+#casino{
+  perspective:1200px;
+}
+
+#casino .games-grid{
+  transform-style:preserve-3d;
+}
+
+#casino .game{
+  position:relative;
+  transform-style:preserve-3d;
+  transition:
+    transform .35s cubic-bezier(.4,0,.2,1),
+    box-shadow .35s ease;
+  box-shadow:
+    0 14px 30px rgba(0,0,0,.35);
+}
+
+/* Floating depth */
+#casino .game::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  border-radius:16px;
+  background:linear-gradient(
+    180deg,
+    rgba(255,255,255,.08),
+    transparent
+  );
+  transform:translateZ(12px);
+  pointer-events:none;
+}
+
+/* Hover / Touch */
+#casino .game:hover{
+  transform:
+    translateZ(30px)
+    rotateX(6deg)
+    rotateY(-6deg);
+  box-shadow:
+    0 30px 60px rgba(0,0,0,.55);
+}
+
+#casino .game:active{
+  transform:
+    translateZ(10px)
+    scale(.96);
+}
