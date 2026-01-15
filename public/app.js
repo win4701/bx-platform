@@ -110,13 +110,7 @@ loadBalances();
    MARKET – PAIR SELECTOR
 ========================================================= */
 const pairBar = document.getElementById("pairBar");
-const pairSheet = document.getElementById("pairSheet");
 const currentPair = document.getElementById("currentPair");
-
-pairBar?.addEventListener("click", ()=>{
-  pairSheet?.classList.toggle("show");
-  playSound("click");
-});
 
 document.querySelectorAll(".pair-option").forEach(opt=>{
   opt.addEventListener("click", ()=>{
