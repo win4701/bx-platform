@@ -279,3 +279,26 @@ document.querySelectorAll("#mining .btn").forEach(btn=>{
 document.querySelector("#airdrop .btn")?.addEventListener("click",()=>{
   playSound("win");
 });
+/* =========================================================
+   CASINO 3D INTERACTION
+========================================================= */
+document.querySelectorAll("#casino .game").forEach(game=>{
+  game.addEventListener("mousemove", e=>{
+    const r = game.getBoundingClientRect();
+    const x = e.clientX - r.left;
+    const y = e.clientY - r.top;
+
+    const rx = ((y / r.height) - 0.5) * -12;
+    const ry = ((x / r.width) - 0.5) * 12;
+
+    game.style.transform = `
+      rotateX(${rx}deg)
+      rotateY(${ry}deg)
+      translateZ(30px)
+    `;
+  });
+
+  game.addEventListener("mouseleave", ()=>{
+    game.style.transform = "translateZ(0)";
+  });
+});
