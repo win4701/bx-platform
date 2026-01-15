@@ -528,35 +528,27 @@ document.addEventListener("DOMContentLoaded", () => {
   const views = document.querySelectorAll(".view");
   const navButtons = document.querySelectorAll(".bottom-nav button");
 
-  if (!views.length || !navButtons.length) {
-    console.error("Navigation elements not found");
-    return;
+  function showTab(tabId) {
+    views.forEach(v => v.classList.remove("active"));
+    navButtons.forEach(b => b.classList.remove("active"));
+
+    const target = document.getElementById(tabId);
+    if (!target) return;
+
+    target.classList.add("active");
+
+    const btn = document.querySelector(
+      `.bottom-nav button[data-tab="${tabId}"]`
+    );
+    if (btn) btn.classList.add("active");
   }
 
-  function showTab(tabId) {
-  views.forEach(v => v.classList.remove("active"));
-
-  const target = document.getElementById(tabId);
-  if (!target) return;
-
-  target.classList.add("active");
-
-  navButtons.forEach(b => b.classList.remove("active"));
-
-  const btn = document.querySelector(
-    `.bottom-nav button[data-tab="${tabId}"]`
-  );
-  if (btn) btn.classList.add("active");
-
-  localStorage.setItem("activeTab", tabId);
-}
   navButtons.forEach(btn => {
     btn.addEventListener("click", () => {
-      const tab = btn.dataset.tab;
-      if (tab) showTab(tab);
+      showTab(btn.dataset.tab);
     });
   });
 
-  const lastTab = localStorage.getItem("activeTab") || "wallet";
-showTab(lastTab);
-   });
+  // تبويب افتراضي
+  showTab("wallet");
+});
