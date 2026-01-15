@@ -524,7 +524,6 @@ document.addEventListener("DOMContentLoaded", () => {
   function showTab(tabId) {
   views.forEach(v => {
     v.classList.remove("active");
-    v.style.display = "none";
   });
 
   const target = document.getElementById(tabId);
@@ -533,7 +532,6 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
-  target.style.display = "block";
   target.classList.add("active");
 
   navButtons.forEach(b => b.classList.remove("active"));
