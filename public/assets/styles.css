@@ -302,55 +302,54 @@ input{
 }
 
 /* =========================================================
-   CASINO (WOW DEPTH)
+   CASINO – GLOBAL STYLE (VERTICAL CARDS)
 ========================================================= */
-#casino{
-  perspective:1200px;
-}
 
-.games-grid{
-  display:grid;
+#casino .games-grid{
   grid-template-columns:repeat(3,1fr);
-  gap:12px;
+  gap:14px;
 }
 
-.game{
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  gap:6px;
-  height:110px;
-  background:#0b1f27;
-  border:1px solid var(--border);
-  border-radius:16px;
-  transform-style:preserve-3d;
-  transition:.35s ease;
-  box-shadow:
-    0 14px 30px rgba(0,0,0,.35);
+/* الكرت نفسه */
+#casino .game{
+  height:150px;                 /* مستطيل عمودي */
+  padding:14px 10px;
+  justify-content:space-between;
+  background:
+    linear-gradient(180deg,#0f2a33,#0b1f27);
 }
 
-.game img{
-  width:36px;
-  height:36px;
-  transform:translateZ(20px);
+/* صورة اللعبة */
+#casino .game img{
+  width:56px;
+  height:56px;
+  object-fit:contain;
+  margin-top:6px;
+  filter:drop-shadow(0 6px 12px rgba(0,0,0,.6));
+  transform:translateZ(30px);
 }
 
-.game:hover{
+/* اسم اللعبة */
+#casino .game h4{
+  margin:0;
+  font-size:14px;
+  font-weight:700;
+  text-align:center;
+  letter-spacing:.3px;
+}
+
+/* Hover احترافي */
+#casino .game:hover{
   transform:
-    translateZ(30px)
-    rotateX(6deg)
-    rotateY(-6deg);
-  box-shadow:
-    0 30px 60px rgba(0,0,0,.55);
+    translateZ(36px)
+    rotateX(5deg)
+    rotateY(-5deg);
 }
 
-.game:active{
-  transform:
-    translateZ(10px)
-    scale(.96);
+/* اللعبة الأخيرة بالمنتصف (3 / 3 / 1) */
+#casino .game:last-child{
+  grid-column:2 / 3;
 }
-
 /* =========================================================
    MINING
 ========================================================= */
