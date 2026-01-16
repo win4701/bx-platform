@@ -963,11 +963,6 @@ img{
    SAFE VIEW SWITCHING – MOBILE FIX
 ========================================================= */
 
-.view.active{
-  visibility:visible;
-  height:auto;
-  overflow:visible;
-}
 .card{
   transform:translateZ(0);
 }
