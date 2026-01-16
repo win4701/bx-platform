@@ -538,7 +538,7 @@ document.addEventListener("DOMContentLoaded", ()=>{
   const target = document.getElementById(tabId);
   if(!target) return;
 
-  target.style.display = "block"; // ← وهذا
+  target.style.display = "none"; // ← وهذا
   target.classList.add("active");
 
   navButtons.forEach(b=>b.classList.remove("active"));
