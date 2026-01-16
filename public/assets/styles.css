@@ -354,7 +354,7 @@ input{
 
 .mining-tabs button{
   flex:1;
-  height:38px
+  height:40px
   padding:12px;
   border-radius:14px;
   border:1px solid var(--border);
