@@ -23,7 +23,7 @@
 /* =========================================================
    GLOBAL RESET
 ========================================================= */
-{
+*{
   box-sizing:border-box;
   -webkit-tap-highlight-color:transparent;
 }
@@ -80,21 +80,15 @@ body{
 }
 
 /* =========================================================
-   VIEW SYSTEM – FINAL (ONE ONLY)
+   VIEW SYSTEM – STABLE
 ========================================================= */
-
 .view{
-  width:100%;
-  box-sizing:border-box;
-  visibility:hidden;
-  max-height:0;
-  overflow:hidden;
+  display:none;
 }
 
 .view.active{
-  visibility:visible;
-  max-height:5000px; 
-  overflow:visible;
+  display:block;
+  flex:1;
 }
 /* =========================================================
    CARD (GLOBAL DEPTH)
@@ -289,7 +283,7 @@ input{
   perspective:1000px;
 }
 
-.priceChart{
+#priceChart{
   transform:
     rotateX(8deg)
     translateZ(20px);
@@ -305,7 +299,7 @@ input{
 /* =========================================================
    CASINO (WOW DEPTH)
 ========================================================= */
-.casino{
+#casino{
   perspective:1200px;
 }
 
@@ -434,13 +428,13 @@ input{
    CASINO – GLOBAL STYLE (VERTICAL CARDS)
 ========================================================= */
 
-.casino .games-grid{
+#casino .games-grid{
   grid-template-columns:repeat(3,1fr);
   gap:14px;
 }
 
 /* الكرت نفسه */
-.casino .game{
+#casino .game{
   height:150px;                 /* مستطيل عمودي */
   padding:14px 10px;
   justify-content:space-between;
@@ -449,7 +443,7 @@ input{
 }
 
 /* صورة اللعبة */
-.casino .game img{
+#casino .game img{
   width:56px;
   height:56px;
   object-fit:contain;
@@ -459,7 +453,7 @@ input{
 }
 
 /* اسم اللعبة */
-.casino .game h4{
+#casino .game h4{
   margin:0;
   font-size:14px;
   font-weight:700;
@@ -468,7 +462,7 @@ input{
 }
 
 /* Hover احترافي */
-.casino .game:hover{
+#casino .game:hover{
   transform:
     translateZ(36px)
     rotateX(5deg)
@@ -476,49 +470,51 @@ input{
 }
 
 /* اللعبة الأخيرة بالمنتصف (3 / 3 / 1) */
-.casino .game:last-child{
+#casino .game:last-child{
   grid-column:2 / 3;
 }
 /* =========================================================
    MARKET – CLEAN & PRO LAYOUT
 ========================================================= */
 
-.market .trade-box{
+#market .trade-box{
   display:grid;
   grid-template-columns:1fr 1fr;
   gap:12px;
   align-items:stretch;
 }
 
-
-.market .trade-box input{
+/* Input يأخذ صف كامل */
+#market .trade-box input{
   grid-column:1 / 3;
   height:52px;
   font-size:16px;
 }
 
-
-.market .btn.buy,
-.market .btn.sell{
+/* أزرار Buy / Sell */
+#market .btn.buy,
+#market .btn.sell{
   height:52px;
   font-size:15px;
   border-radius:18px;
 }
 
-.market .btn.buy{
+/* توحيد الشكل */
+#market .btn.buy{
   box-shadow:
     0 10px 22px rgba(74,222,187,.35),
     0 4px 0 rgba(0,0,0,.35);
 }
 
-.market .btn.sell{
+#market .btn.sell{
   box-shadow:
     0 10px 22px rgba(255,143,163,.35),
     0 4px 0 rgba(0,0,0,.35);
 }
 
-.market .btn.buy:active,
-.market .btn.sell:active{
+/* عند الضغط */
+#market .btn.buy:active,
+#market .btn.sell:active{
   transform:translateZ(4px) scale(.97);
 }
 /* =========================================================
@@ -815,23 +811,40 @@ input{
   padding-bottom:90px;
 }
 
-/* FIX 3D NAV CONFLICT */
-.bottom-nav{
-  transform:none;
+/* FIX VIEW SWITCHING */
+.view{
+  display:none;
+  transform:none !important;
 }
 
+.view.active{
+  display:block;
+  transform:none !important;
+}
+
+/* FIX 3D NAV CONFLICT */
+.bottom-nav{
+  transform:none !important;
+}
+
+/* DISABLE GLOBAL 3D ON BODY (SAFE) */
+body{
+  perspective:none !important;
+}
 /* =========================================================
    IMAGE QUALITY FIX – CASINO + WALLET
 ========================================================= */
 
-.casino .game img{
-  width:56px;         
+/* صور الألعاب (Casino) */
+#casino .game img{
+  width:56px;          /* حجم حقيقي بدون تكبير */
   height:56px;
   object-fit:contain;
   image-rendering:auto;
   filter:drop-shadow(0 6px 12px rgba(0,0,0,.6));
 }
 
+/* صور العملات في المحفظة */
 .balances img{
   width:22px;
   height:22px;
@@ -851,97 +864,4 @@ input{
 img{
   -webkit-backface-visibility:hidden;
   backface-visibility:hidden;
-}
-/* =========================================================
-   PNG IMAGE FIX – MOBILE (IMPORTANT)
-========================================================= */
-
-img{
-  max-width:100%;
-  height:auto;
-  image-rendering:auto;
-  transform:none;
-}
-
-.balances img,
-.pair-option img,
-.deposit-method img{
-  width:24px;
-  height:24px;
-  object-fit:contain;
-  transform:none;
-}
-
-.casino .game img{
-  width:48px;
-  height:48px;
-  object-fit:contain;
-  transform:none;
-}
-
-.market-banner img,
-.hero img,
-.chart-box img{
-  width:100%;
-  max-width:420px;   
-  margin:auto;
-  display:block;
-}
-/* =========================================================
-   RECENT TRADES – CLEAN TRADING UI
-========================================================= */
-
-.trades-list{
-  list-style:none;
-  margin:0;
-  padding:0;
-  border-radius:14px;
-  overflow:hidden;
-}
-
-.trade{
-  display:grid;
-  grid-template-columns:60px 1fr auto;
-  align-items:center;
-  padding:10px 14px;
-  font-size:13px;
-  border-bottom:1px solid var(--border);
-}
-
-.trade:last-child{
-  border-bottom:none;
-}
-
-.trade .side{
-  font-weight:800;
-}
-
-.trade.buy{
-  color:var(--green);
-  background:rgba(74,222,187,.05);
-}
-
-.trade.sell{
-  color:#ff8fa3;
-  background:rgba(255,143,163,.05);
-}
-
-.trade .amount{
-  color:var(--text);
-}
-
-.trade .price{
-  font-weight:700;
-}
-/* =========================================================
-   RECENT TRADES – TOUCH FEEDBACK (OPTIONAL)
-========================================================= */
-
-.trade{
-  transition:background-color .15s ease, transform .1s ease;
-}
-
-.trade:active{
-  background-color:rgba(255,255,255,.06);
-  transform:scale(.98);
 }
