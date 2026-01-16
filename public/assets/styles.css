@@ -23,7 +23,7 @@
 /* =========================================================
    GLOBAL RESET
 ========================================================= */
-*{
+{
   box-sizing:border-box;
   -webkit-tap-highlight-color:transparent;
 }
@@ -93,7 +93,7 @@ body{
 
 .view.active{
   visibility:visible;
-  max-height:5000px; /* مهم */
+  max-height:5000px; 
   overflow:visible;
 }
 /* =========================================================
@@ -289,7 +289,7 @@ input{
   perspective:1000px;
 }
 
-#priceChart{
+.priceChart{
   transform:
     rotateX(8deg)
     translateZ(20px);
@@ -305,7 +305,7 @@ input{
 /* =========================================================
    CASINO (WOW DEPTH)
 ========================================================= */
-#casino{
+.casino{
   perspective:1200px;
 }
 
@@ -434,13 +434,13 @@ input{
    CASINO – GLOBAL STYLE (VERTICAL CARDS)
 ========================================================= */
 
-#casino .games-grid{
+.casino .games-grid{
   grid-template-columns:repeat(3,1fr);
   gap:14px;
 }
 
 /* الكرت نفسه */
-#casino .game{
+.casino .game{
   height:150px;                 /* مستطيل عمودي */
   padding:14px 10px;
   justify-content:space-between;
@@ -449,7 +449,7 @@ input{
 }
 
 /* صورة اللعبة */
-#casino .game img{
+.casino .game img{
   width:56px;
   height:56px;
   object-fit:contain;
@@ -459,7 +459,7 @@ input{
 }
 
 /* اسم اللعبة */
-#casino .game h4{
+.casino .game h4{
   margin:0;
   font-size:14px;
   font-weight:700;
@@ -468,7 +468,7 @@ input{
 }
 
 /* Hover احترافي */
-#casino .game:hover{
+.casino .game:hover{
   transform:
     translateZ(36px)
     rotateX(5deg)
@@ -476,51 +476,49 @@ input{
 }
 
 /* اللعبة الأخيرة بالمنتصف (3 / 3 / 1) */
-#casino .game:last-child{
+.casino .game:last-child{
   grid-column:2 / 3;
 }
 /* =========================================================
    MARKET – CLEAN & PRO LAYOUT
 ========================================================= */
 
-#market .trade-box{
+.market .trade-box{
   display:grid;
   grid-template-columns:1fr 1fr;
   gap:12px;
   align-items:stretch;
 }
 
-/* Input يأخذ صف كامل */
-#market .trade-box input{
+
+.market .trade-box input{
   grid-column:1 / 3;
   height:52px;
   font-size:16px;
 }
 
-/* أزرار Buy / Sell */
-#market .btn.buy,
-#market .btn.sell{
+
+.market .btn.buy,
+.market .btn.sell{
   height:52px;
   font-size:15px;
   border-radius:18px;
 }
 
-/* توحيد الشكل */
-#market .btn.buy{
+.market .btn.buy{
   box-shadow:
     0 10px 22px rgba(74,222,187,.35),
     0 4px 0 rgba(0,0,0,.35);
 }
 
-#market .btn.sell{
+.market .btn.sell{
   box-shadow:
     0 10px 22px rgba(255,143,163,.35),
     0 4px 0 rgba(0,0,0,.35);
 }
 
-/* عند الضغط */
-#market .btn.buy:active,
-#market .btn.sell:active{
+.market .btn.buy:active,
+.market .btn.sell:active{
   transform:translateZ(4px) scale(.97);
 }
 /* =========================================================
@@ -819,23 +817,21 @@ input{
 
 /* FIX 3D NAV CONFLICT */
 .bottom-nav{
-  transform:none !important;
+  transform:none;
 }
 
 /* =========================================================
    IMAGE QUALITY FIX – CASINO + WALLET
 ========================================================= */
 
-/* صور الألعاب (Casino) */
-#casino .game img{
-  width:56px;          /* حجم حقيقي بدون تكبير */
+.casino .game img{
+  width:56px;         
   height:56px;
   object-fit:contain;
   image-rendering:auto;
   filter:drop-shadow(0 6px 12px rgba(0,0,0,.6));
 }
 
-/* صور العملات في المحفظة */
 .balances img{
   width:22px;
   height:22px;
@@ -860,38 +856,34 @@ img{
    PNG IMAGE FIX – MOBILE (IMPORTANT)
 ========================================================= */
 
-/* منع تشويش كل الصور */
 img{
   max-width:100%;
   height:auto;
   image-rendering:auto;
-  transform:none !important;
+  transform:none;
 }
 
-/* صور العملات (Wallet + Market + Pairs) */
 .balances img,
 .pair-option img,
 .deposit-method img{
   width:24px;
   height:24px;
   object-fit:contain;
-  transform:none !important;
+  transform:none;
 }
 
-/* صور الألعاب (Casino) */
-#casino .game img{
+.casino .game img{
   width:48px;
   height:48px;
   object-fit:contain;
-  transform:none !important;
+  transform:none;
 }
 
-/* أي صورة كبيرة (مثل التي ظهرت عندك مكبّرة) */
 .market-banner img,
 .hero img,
 .chart-box img{
   width:100%;
-  max-width:420px;   /* يمنع التكبير الزائد */
+  max-width:420px;   
   margin:auto;
   display:block;
 }
@@ -952,11 +944,4 @@ img{
 .trade:active{
   background-color:rgba(255,255,255,.06);
   transform:scale(.98);
-}
-/* =========================================================
-   SAFE VIEW SWITCHING – MOBILE FIX
-========================================================= */
-
-.card{
-  transform:translateZ(0);
 }
