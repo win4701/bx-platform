@@ -342,23 +342,10 @@ input{
   font-size:14px;
 }
 
-/* =========================================================
-   MINING – ISOLATED / SAFE
-   
-========================================================= */
+/* =========================
+   MINING
+========================= */
 
-/* ===== Variables محلية (اختياري) ===== */
-.mining{
-  --m-bg:#0b1f27;
-  --m-bg-soft:#08161b;
-  --m-border:rgba(255,255,255,.08);
-  --m-text:#e6f5ef;
-  --m-muted:#8fa7a1;
-  --m-green:#2ecc71;
-  --m-yellow:#f1c40f;
-}
-
-/* ===== Tabs ===== */
 .mining-tabs{
   display:flex;
   gap:10px;
@@ -367,40 +354,40 @@ input{
 
 .mining-tabs button{
   flex:1;
-  height:44px;
+  padding:12px;
   border-radius:18px;
-  border:1px solid var(--m-border);
-  background:var(--m-bg);
-  color:var(--m-muted);
+  border:1px solid var(--border);
+  background:#0b1f27;
+  color:var(--muted);
   font-weight:700;
-  transition:all .2s ease;
+  transition:.2s;
 }
 
 .mining-tabs button.active{
-  background:linear-gradient(180deg,#12323b,#0b1f27);
-  color:var(--m-green);
+  background:linear-gradient(180deg,#122f38,#0b1f27);
+  color:var(--green);
   border-color:rgba(46,204,113,.6);
 }
 
-/* ===== Plans Grid ===== */
+/* Plans grid */
 .mining-plans{
   display:grid;
   grid-template-columns:repeat(2,1fr);
   gap:16px;
 }
 
-/* ===== Plan Card ===== */
+/* Card */
 .mining-plan{
-  background:linear-gradient(180deg,#0e2730,var(--m-bg-soft));
-  border:1px solid var(--m-border);
+  background:linear-gradient(180deg,#0e2730,#08161b);
+  border:1px solid var(--border);
   border-radius:20px;
   padding:16px;
   position:relative;
 }
 
-/* ===== VIP ===== */
+/* VIP */
 .mining-plan.vip{
-  border-color:var(--m-yellow);
+  border-color:var(--yellow);
   box-shadow:0 0 0 1px rgba(241,196,15,.35);
 }
 
@@ -409,31 +396,30 @@ input{
   position:absolute;
   top:10px;
   right:10px;
-  background:var(--m-yellow);
-  color:#000;
   font-size:11px;
   font-weight:800;
+  color:#000;
+  background:var(--yellow);
   padding:4px 8px;
   border-radius:8px;
 }
 
-/* ===== Title ===== */
+/* Title */
 .mining-plan h4{
-  margin:0 0 6px;
   font-size:15px;
   font-weight:800;
-  color:var(--m-text);
+  margin-bottom:6px;
 }
 
-/* ===== Profit ===== */
+/* Profit */
 .mining-profit{
   font-size:22px;
   font-weight:900;
-  color:var(--m-green);
+  color:var(--green);
   margin-bottom:10px;
 }
 
-/* ===== Details ===== */
+/* Details */
 .mining-plan ul{
   list-style:none;
   padding:0;
@@ -445,23 +431,19 @@ input{
   justify-content:space-between;
   padding:4px 0;
   font-size:13px;
-  color:var(--m-muted);
+  color:var(--muted);
 }
 
 .mining-plan li strong{
-  color:var(--m-text);
-  font-weight:600;
+  color:#e6f5ef;
 }
 
-/* ===== Button ===== */
-.mining-plan .mining-btn{
-  margin-top:10px;
+/* Button */
+.mining-plan button{
+  margin-top:12px;
   width:100%;
   height:40px;
-  border-radius:12px;
-  border:none;
-  background:linear-gradient(180deg,#2ecc71,#27ae60);
-  color:#022b17;
+  border-radius:14px;
   font-weight:800;
 }
 /* =========================================================
