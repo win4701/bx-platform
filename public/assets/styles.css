@@ -354,6 +354,7 @@ input{
 
 .mining-tabs button{
   flex:1;
+  height:38px
   padding:12px;
   border-radius:14px;
   border:1px solid var(--border);
@@ -364,9 +365,7 @@ input{
 }
 
 .mining-tabs button.active{
-  background:linear-gradient(180deg,#122f38,#0b1f27);
-  color:var(--green);
-  border-color:rgba(46,204,113,.6);
+  box-shadow:0 0 0 2px rgba(110,231,168,.35);
 }
 
 /* Plans grid */
