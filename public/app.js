@@ -530,21 +530,22 @@ document.addEventListener("DOMContentLoaded", ()=>{
   const navButtons = document.querySelectorAll(".bottom-nav button");
 
   function showTab(tabId){
-    views.forEach(v => v.classList.remove("active"));
+  views.forEach(v=>{
+    v.classList.remove("active");
+    v.style.display = "none";   // ← هذا السطر الحاسم
+  });
 
-    const target = document.getElementById(tabId);
-    if(!target){
-      console.error("View not found:", tabId);
-      return;
-    }
-    target.classList.add("active");
+  const target = document.getElementById(tabId);
+  if(!target) return;
 
-    navButtons.forEach(b => b.classList.remove("active"));
-    const btn = document.querySelector(
-      `.bottom-nav button[data-tab="${tabId}"]`
-    );
-    if(btn) btn.classList.add("active");
-  }
+  target.style.display = "block"; // ← وهذا
+  target.classList.add("active");
+
+  navButtons.forEach(b=>b.classList.remove("active"));
+  document
+    .querySelector(`.bottom-nav button[data-tab="${tabId}"]`)
+    ?.classList.add("active");
+}
 
   navButtons.forEach(btn=>{
     btn.addEventListener("click", ()=>{
