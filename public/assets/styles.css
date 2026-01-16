@@ -404,40 +404,27 @@ input{
   border-radius:8px;
 }
 
-/* Title */
 .mining-plan h4{
-  font-size:14px;
-  font-weight:800;
-  margin-bottom:6px;
-}
-
-/* Profit */
-.mining-profit{
-  font-size:20px;
-  font-weight:800;
-  color:var(--green);
+  font-size:15px;
   margin-bottom:10px;
+  text-align:center;
 }
 
-/* Details */
-.mining-plan ul{
-  list-style:none;
-  padding:0;
-  margin:0;
+.mining-profit{
+  font-size:22px;
+  margin-bottom:12px;
+  text-align:center;
 }
 
-.mining-plan li{
-  display:flex;
-  justify-content:space-between;
-  padding:4px 0;
-  font-size:12px;
-  color:var(--muted);
+.mining-plan ul li{
+  font-size:13px;
+  padding:6px 0;
+  border-bottom:1px dashed rgba(255,255,255,.06);
 }
 
-.mining-plan li strong{
-  color:#e6f5ef;
+.mining-plan ul li:last-child{
+  border-bottom:none;
 }
-
 /* Button */
 .mining-plan button{
   margin-top:12px;
@@ -575,58 +562,83 @@ button:active,
   border-radius:10px;
 }
 /* =========================================================
-   GLOBAL IMAGE SIZE FIX – UNIFIED LOOK
+   GLOBAL IMAGE SYSTEM – UNIFIED & SMART
 ========================================================= */
 
-/* جميع الصور داخل البطاقات */
-.card img,
-.game img,
-.mining-plan img,
-.deposit-method img,
-.balances img {
-  width: 22px;
-  height: 22px;
-  object-fit: contain;
-  image-rendering: auto;
-  margin: 0 auto;
+/* قاعدة عامة: لا تكسر الصور */
+img{
+  max-width:100%;
+  height:auto;
+  object-fit:contain;
+  image-rendering:auto;
 }
 
-/* تصغير شعارات العملات فقط */
-.balances img {
-  width: 20px;
-  height: 20px;
+/* =========================
+   WALLET / COINS
+========================= */
+.balances img{
+  width:22px;
+  height:22px;
 }
 
-/* صور الـ Market مثل USDT و TON */
-#market img {
-  width: 20px;
-  height: 20px;
-  object-fit: contain;
+/* =========================
+   MARKET PAIRS
+========================= */
+#market img{
+  width:20px;
+  height:20px;
 }
 
-/* تحسين المسافات بين العناصر */
-.game,
-.mining-plan,
-.deposit-method {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: space-between;
+/* =========================
+   DEPOSIT / TOKENS
+========================= */
+.deposit-method img{
+  width:48px;
+  height:48px;
+  margin-bottom:8px;
 }
 
-/* جعل جميع البطاقات متناسقة في الارتفاع */
-.game,
-.mining-plan,
-.deposit-method {
-  min-height: 160px;
+/* =========================
+   CASINO GAMES
+========================= */
+.game img{
+  width:68px;
+  height:68px;
 }
 
-/* تحسين التجاوب للشاشات الصغيرة */
-@media (max-width: 480px) {
-  .game img,
-  .mining-plan img,
-  .deposit-method img {
-    width: 56px;
-    height: 72px;
+/* =========================
+   MINING PLANS
+========================= */
+.mining-plan img{
+  width:56px;
+  height:56px;
+  margin-bottom:10px;
+}
+
+/* =========================
+   HEADER / NAV ICONS
+========================= */
+.bottom-nav img{
+  width:22px;
+  height:22px;
+}
+
+/* =========================
+   RESPONSIVE TUNING
+========================= */
+@media (max-width:480px){
+  .game img{
+    width:60px;
+    height:60px;
+  }
+
+  .mining-plan img{
+    width:48px;
+    height:48px;
+  }
+
+  .deposit-method img{
+    width:42px;
+    height:42px;
   }
 }
