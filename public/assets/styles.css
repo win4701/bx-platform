@@ -974,3 +974,6 @@ img{
   height:auto;
   overflow:visible;
 }
+.card{
+  transform:translateZ(0);
+}
