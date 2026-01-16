@@ -498,3 +498,59 @@ button:active,
   padding:8px;
   border-radius:10px;
 }
+/* =========================================================
+   GLOBAL IMAGE SIZE FIX – UNIFIED LOOK
+========================================================= */
+
+/* جميع الصور داخل البطاقات */
+.card img,
+.game img,
+.mining-plan img,
+.deposit-method img,
+.balances img {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+  image-rendering: auto;
+  margin: 0 auto;
+}
+
+/* تصغير شعارات العملات فقط */
+.balances img {
+  width: 28px;
+  height: 28px;
+}
+
+/* صور الـ Market مثل USDT و TON */
+#market img {
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+}
+
+/* تحسين المسافات بين العناصر */
+.game,
+.mining-plan,
+.deposit-method {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* جعل جميع البطاقات متناسقة في الارتفاع */
+.game,
+.mining-plan,
+.deposit-method {
+  min-height: 150px;
+}
+
+/* تحسين التجاوب للشاشات الصغيرة */
+@media (max-width: 480px) {
+  .game img,
+  .mining-plan img,
+  .deposit-method img {
+    width: 48px;
+    height: 48px;
+  }
+}
