@@ -517,8 +517,8 @@ button:active,
 
 /* تصغير شعارات العملات فقط */
 .balances img {
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
 }
 
 /* صور الـ Market مثل USDT و TON */
@@ -542,7 +542,7 @@ button:active,
 .game,
 .mining-plan,
 .deposit-method {
-  min-height: 150px;
+  min-height: 120px;
 }
 
 /* تحسين التجاوب للشاشات الصغيرة */
