@@ -320,10 +320,10 @@ input{
 }
 
 .game{
-  height:150px;
+  height:160px;
   background:#0b1f27;
   border:1px solid var(--border);
-  border-radius:16px;
+  border-radius:20px;
   padding:12px;
   display:flex;
   flex-direction:column;
@@ -333,13 +333,13 @@ input{
 
 .game img{
   width:56px;
-  height:56px;
+  height:72px;
   object-fit:contain;
 }
 
 .game h4{
   margin:0;
-  font-size:14px;
+  font-size:12px;
 }
 
 /* =========================
