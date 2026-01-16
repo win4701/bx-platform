@@ -521,34 +521,42 @@ document.querySelectorAll(".deposit-method").forEach(method=>{
   });
 });
 /* =========================================================
-   SAFE NAVIGATION – WORKS EVERYWHERE
+   FINAL SAFE TAB NAVIGATION
 ========================================================= */
 
-document.addEventListener("DOMContentLoaded", () => {
-  const views = document.querySelectorAll(".view");
-  const navButtons = document.querySelectorAll(".bottom-nav button");
+const views = document.querySelectorAll(".view");
+const navButtons = document.querySelectorAll(".bottom-nav button");
 
-  function showTab(tabId) {
-    views.forEach(v => v.classList.remove("active"));
-    navButtons.forEach(b => b.classList.remove("active"));
-
-    const target = document.getElementById(tabId);
-    if (!target) return;
-
-    target.classList.add("active");
-
-    const btn = document.querySelector(
-      `.bottom-nav button[data-tab="${tabId}"]`
-    );
-    if (btn) btn.classList.add("active");
-  }
-
-  navButtons.forEach(btn => {
-    btn.addEventListener("click", () => {
-      showTab(btn.dataset.tab);
-    });
+function showTab(tabId){
+  // إخفاء كل الأقسام
+  views.forEach(v=>{
+    v.classList.remove("active");
   });
 
-  // تبويب افتراضي
-  showTab("wallet");
+  // إظهار القسم المطلوب
+  const target = document.getElementById(tabId);
+  if(!target){
+    console.error("View not found:", tabId);
+    return;
+  }
+
+  target.classList.add("active");
+
+  // تفعيل الزر
+  navButtons.forEach(b=>b.classList.remove("active"));
+  const btn = document.querySelector(
+    `.bottom-nav button[data-tab="${tabId}"]`
+  );
+  if(btn) btn.classList.add("active");
+}
+
+// ربط الأزرار
+navButtons.forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    const tab = btn.dataset.tab;
+    if(tab){
+      showTab(tab);
+    }
+  });
 });
+showTab("wallet");
