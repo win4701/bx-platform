@@ -950,3 +950,15 @@ img{
 .trade .price{
   font-weight:700;
 }
+/* =========================================================
+   RECENT TRADES – TOUCH FEEDBACK (OPTIONAL)
+========================================================= */
+
+.trade{
+  transition:background-color .15s ease, transform .1s ease;
+}
+
+.trade:active{
+  background-color:rgba(255,255,255,.06);
+  transform:scale(.98);
+}
