@@ -584,7 +584,7 @@ button:active,
 .mining-plan img,
 .deposit-method img,
 .balances img {
-  width: 20px;
+  width: 22px;
   height: 22px;
   object-fit: contain;
   image-rendering: auto;
@@ -593,8 +593,8 @@ button:active,
 
 /* تصغير شعارات العملات فقط */
 .balances img {
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
 }
 
 /* صور الـ Market مثل USDT و TON */
@@ -618,7 +618,7 @@ button:active,
 .game,
 .mining-plan,
 .deposit-method {
-  min-height: 120px;
+  min-height: 160px;
 }
 
 /* تحسين التجاوب للشاشات الصغيرة */
@@ -626,7 +626,7 @@ button:active,
   .game img,
   .mining-plan img,
   .deposit-method img {
-    width: 48px;
-    height: 48px;
+    width: 56px;
+    height: 72px;
   }
 }
