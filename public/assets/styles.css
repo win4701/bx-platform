@@ -80,12 +80,24 @@ body{
 }
 
 /* =========================================================
-   VIEW SYSTEM – STABLE
+   VIEW SYSTEM – STABLE (FINAL & SAFE)
 ========================================================= */
 
+.view{
+  width:100%;
+  max-width:100%;
+  box-sizing:border-box;
+
+  visibility:hidden;
+  max-height:0;
+  overflow:hidden;
+
+}
+
 .view.active{
-  display:block;
-  flex:1;
+  visibility:visible;
+  max-height:none;
+  overflow:visible;
 }
 /* =========================================================
    CARD (GLOBAL DEPTH)
