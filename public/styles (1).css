@@ -454,29 +454,47 @@ button:active,
   transform:scale(.97);
 }
 /* =========================================================
-   UX – SKELETON
+   UX – MARKET EMPHASIS
 ========================================================= */
-.skeleton{
-  position:relative;
-  overflow:hidden;
-  background:#0b1f27;
-  color:transparent !important;
+.btn.buy{
+  outline:2px solid rgba(74,222,187,.25);
 }
 
-.skeleton::after{
-  content:"";
-  position:absolute;
-  inset:0;
-  background:linear-gradient(
-    90deg,
-    transparent,
-    rgba(255,255,255,.06),
-    transparent
-  );
-  animation:skeleton 1.2s infinite;
+.btn.sell{
+  outline:2px solid rgba(255,143,163,.25);
+}
+/* =========================================================
+   UX – WALLET READABILITY
+========================================================= */
+.balances li{
+  justify-content:space-between;
 }
 
-@keyframes skeleton{
-  from{ transform:translateX(-100%); }
-  to{ transform:translateX(100%); }
+.balances li span{
+  font-size:15px;
+  letter-spacing:.3px;
+}
+/* =========================================================
+   UX – MICRO HOVER
+========================================================= */
+.trade:hover,
+.deposit-method:hover,
+.mining-plan:hover{
+  border-color:var(--green);
+}
+/* =========================================================
+   UX – ERROR STATES
+========================================================= */
+.status.error{
+  background:rgba(255,143,163,.08);
+  border:1px solid rgba(255,143,163,.4);
+  padding:8px;
+  border-radius:10px;
+}
+
+.status.success{
+  background:rgba(110,231,168,.08);
+  border:1px solid rgba(110,231,168,.4);
+  padding:8px;
+  border-radius:10px;
 }
