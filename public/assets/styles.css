@@ -820,26 +820,11 @@ input{
   padding-bottom:90px;
 }
 
-/* FIX VIEW SWITCHING */
-.view{
-  display:none;
-  transform:none !important;
-}
-
-.view.active{
-  display:block;
-  transform:none !important;
-}
-
 /* FIX 3D NAV CONFLICT */
 .bottom-nav{
   transform:none !important;
 }
 
-/* DISABLE GLOBAL 3D ON BODY (SAFE) */
-body{
-  perspective:none !important;
-}
 /* =========================================================
    IMAGE QUALITY FIX – CASINO + WALLET
 ========================================================= */
