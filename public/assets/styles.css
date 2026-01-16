@@ -80,23 +80,20 @@ body{
 }
 
 /* =========================================================
-   VIEW SYSTEM – STABLE (FINAL & SAFE)
+   VIEW SYSTEM – FINAL (ONE ONLY)
 ========================================================= */
 
 .view{
   width:100%;
-  max-width:100%;
   box-sizing:border-box;
-
   visibility:hidden;
   max-height:0;
   overflow:hidden;
-
 }
 
 .view.active{
   visibility:visible;
-  max-height:none;
+  max-height:5000px; /* مهم */
   overflow:visible;
 }
 /* =========================================================
