@@ -151,65 +151,98 @@ input{
 /* =========================================================
    WALLET
 ========================================================= */
+/* GRID العملات */
 .balances{
   list-style:none;
   padding:0;
   margin:0;
   display:grid;
   grid-template-columns:repeat(2,1fr);
-  gap:10px;
+  gap:12px;
 }
 
+/* عنصر العملة */
 .balances li{
   display:flex;
   align-items:center;
-  gap:8px;
-  background:#0b1f27;
-  border:1px solid var(--border);
-  border-radius:14px;
-  padding:10px;
-}
-
-.balances img{
-  width:22px;
-  height:22px;
-}
-
-.balances span{
-  margin-left:auto;
-  color:var(--green);
-  font-weight:700;
-}
-
-.wallet-actions{
-  margin-top:12px;
-  display:grid;
-  grid-template-columns:1fr 1fr;
   gap:10px;
-}
-
-/* Deposit */
-.deposit-methods{
-  margin-top:14px;
-  display:flex;
-  gap:14px;
-}
-
-.deposit-method{
-  flex:1;
   background:#0b1f27;
   border:1px solid var(--border);
   border-radius:16px;
   padding:12px;
+}
+
+/* حاوية الأيقونة */
+.balances .coin-icon{
+  width:32px;
+  height:32px;
+  border-radius:50%;
+  background:#081a20;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-shrink:0;
+}
+
+.balances .coin-icon img{
+  width:18px;
+  height:18px;
+  object-fit:contain;
+}
+
+/* اسم العملة */
+.balances .coin-name{
+  font-size:13px;
+  font-weight:600;
+  color:#e6f5ef;
+}
+
+/* الرصيد */
+.balances .coin-balance{
+  margin-left:auto;
+  font-size:13px;
+  font-weight:700;
+  color:var(--green);
+}
+.wallet-actions{
+  margin-top:14px;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+
+.wallet-actions button{
+  height:44px;
+  border-radius:14px;
+  font-weight:700;
+}
+.deposit-methods{
+  margin-top:16px;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;
+}
+
+.deposit-method{
+  background:#0b1f27;
+  border:1px solid var(--border);
+  border-radius:18px;
+  padding:14px 10px;
   text-align:center;
 }
 
 .deposit-method img{
-  width:36px;
-  height:36px;
-  margin:0 auto 6px;
+  width:34px;
+  height:34px;
+  object-fit:contain;
+  margin-bottom:6px;
 }
 
+.deposit-method span{
+  font-size:12px;
+  font-weight:600;
+  color:#dff6ef;
+}
 /* =========================================================
    MARKET
 ========================================================= */
