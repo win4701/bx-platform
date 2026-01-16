@@ -576,21 +576,13 @@ button:active,
 }
 /* =========================================================
    GLOBAL IMAGE SIZE FIX – UNIFIED LOOK
-========================================================= */
+=======================================================
 
-/* جميع الصور داخل البطاقات */
-.card img,
-.game img,
-.mining-plan img,
-.deposit-method img,
-.balances img {
-  width: 22px;
-  height: 22px;
-  object-fit: contain;
-  image-rendering: auto;
-  margin: 0 auto;
+.card, .deposit-method, .mining-plan, .airdrop-box {
+  background: linear-gradient(180deg, #12242b, #0b1419);
+  border: 1px solid rgba(18, 50, 63, 0.8);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.35);
 }
-
 /* تصغير شعارات العملات فقط */
 .balances img {
   width: 20px;
@@ -621,12 +613,13 @@ button:active,
   min-height: 160px;
 }
 
-/* تحسين التجاوب للشاشات الصغيرة */
+/* تحسين تباين النصوص الصغيرة */
+h2, h3, p, span {
+  color: #e6f5ef;
+}
+
 @media (max-width: 480px) {
-  .game img,
-  .mining-plan img,
-  .deposit-method img {
-    width: 56px;
-    height: 72px;
+  .app-container {
+    padding-bottom: 120px;
   }
 }
