@@ -342,109 +342,78 @@ input{
   font-size:12px;
 }
 
-/* =========================
-   MINING
-========================= */
+/* =========================================================
+   🔧 تحسين محاذاة كروت التعدين و الأزرار
+========================================================= */
 
-.mining-tabs{
-  display:flex;
-  gap:10px;
-  margin-bottom:14px;
+/* جعل جميع بطاقات التعدين متساوية الارتفاع */
+.mining-plans {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 18px;
+  align-items: stretch; /* يساوي ارتفاع البطاقات */
 }
 
-.mining-tabs button{
-  flex:1;
-  padding:12px;
-  border-radius:14px;
-  border:1px solid var(--border);
-  background:#0b1f27;
-  color:var(--muted);
-  font-weight:800;
-  transition:.2s;
+/* ضبط ارتفاع البطاقة الداخلي وتوزيع المحتوى */
+.mining-plan {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between; /* يجعل الزر دائمًا في الأسفل */
+  height: 100%; /* تأخذ كامل الارتفاع داخل الشبكة */
+  padding: 16px;
+  text-align: center;
 }
 
-.mining-tabs button.active{
-  background:linear-gradient(180deg,#122f38,#0b1f27);
-  color:var(--green);
-  border-color:rgba(46,204,113,.6);
+/* محاذاة الزر السفلي في كل بطاقة */
+.mining-plan button {
+  margin-top: auto;
+  width: 100%;
+  height: 44px;
+  border-radius: 12px;
+  font-weight: 800;
+  background: linear-gradient(180deg, #6ee7a8, #16a34a);
+  color: #042417;
+  transition: 0.2s ease;
 }
 
-/* Plans grid */
-.mining-plans{
-  display:grid;
-  grid-template-columns:repeat(2,1fr);
-  gap:18px;
+/* تحسين تنسيق النص داخل البطاقة */
+.mining-plan ul {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0;
+  flex-grow: 1;
 }
 
-/* Card */
-.mining-plan{
-  background:linear-gradient(180deg,#0e2730,#08161b);
-  border:1px solid var(--border);
-  border-radius:22px;
-  padding:12px;
-  position:relative;
+.mining-plan li {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--muted);
 }
 
-/* VIP */
-.mining-plan.vip{
-  border-color:var(--yellow);
-  box-shadow:0 0 0 1px rgba(241,196,15,.35);
+.mining-plan h4 {
+  font-size: 15px;
+  font-weight: 800;
+  margin-bottom: 8px;
 }
 
-.mining-plan.vip::before{
-  content:"VIP";
-  position:absolute;
-  top:10px;
-  right:14px;
-  font-size:11px;
-  font-weight:800;
-  color:#000;
-  background:var(--yellow);
-  padding:4px 8px;
-  border-radius:8px;
+/* الحفاظ على تباين متساوٍ في جميع البطاقات */
+.mining-plan.vip {
+  border-color: var(--yellow);
+  box-shadow: 0 0 10px rgba(250, 204, 21, 0.3);
 }
 
-/* Title */
-.mining-plan h4{
-  font-size:14px;
-  font-weight:800;
-  margin-bottom:6px;
-}
-
-/* Profit */
-.mining-profit{
-  font-size:20px;
-  font-weight:800;
-  color:var(--green);
-  margin-bottom:10px;
-}
-
-/* Details */
-.mining-plan ul{
-  list-style:none;
-  padding:0;
-  margin:0;
-}
-
-.mining-plan li{
-  display:flex;
-  justify-content:space-between;
-  padding:4px 0;
-  font-size:12px;
-  color:var(--muted);
-}
-
-.mining-plan li strong{
-  color:#e6f5ef;
-}
-
-/* Button */
-.mining-plan button{
-  margin-top:12px;
-  width:100%;
-  height:40px;
-  border-radius:12px;
-  font-weight:800;
+.mining-plan.vip::before {
+  content: "VIP";
+  position: absolute;
+  top: 10px;
+  right: 14px;
+  font-size: 11px;
+  font-weight: 800;
+  color: #000;
+  background: var(--yellow);
+  padding: 4px 8px;
+  border-radius: 8px;
 }
 /* =========================================================
    AIRDROP
