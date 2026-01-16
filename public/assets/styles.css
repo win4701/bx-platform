@@ -454,11 +454,8 @@ input{
    AIRDROP
 ========================================================= */
 .airdrop-box img{
-  width:44px;   
-  height:44px;
-  margin-bottom:8px;
+  filter:drop-shadow(0 6px 14px rgba(0,0,0,.45));
 }
-
 .airdrop-reward{
   font-size:22px;
   font-weight:800;
