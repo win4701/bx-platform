@@ -80,15 +80,22 @@ body{
 }
 
 /* =========================================================
-   VIEW SYSTEM – STABLE
+   VIEW SYSTEM – FINAL STABLE (ONE SOURCE OF TRUTH)
 ========================================================= */
+
 .view{
-  display:none;
+  width:100%;
+  box-sizing:border-box;
+
+  visibility:hidden;
+  max-height:0;
+  overflow:hidden;
 }
 
 .view.active{
-  display:block;
-  flex:1;
+  visibility:visible;
+  max-height:none;
+  overflow:visible;
 }
 /* =========================================================
    CARD (GLOBAL DEPTH)
@@ -811,25 +818,14 @@ input{
   padding-bottom:90px;
 }
 
-/* FIX VIEW SWITCHING */
-.view{
-  display:none;
-  transform:none !important;
-}
-
-.view.active{
-  display:block;
-  transform:none !important;
-}
-
 /* FIX 3D NAV CONFLICT */
 .bottom-nav{
-  transform:none !important;
+  transform:none ;
 }
 
 /* DISABLE GLOBAL 3D ON BODY (SAFE) */
 body{
-  perspective:none !important;
+  perspective:none ;
 }
 /* =========================================================
    IMAGE QUALITY FIX – CASINO + WALLET
