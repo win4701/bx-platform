@@ -524,39 +524,37 @@ document.querySelectorAll(".deposit-method").forEach(method=>{
    FINAL SAFE TAB NAVIGATION
 ========================================================= */
 
-const views = document.querySelectorAll(".view");
-const navButtons = document.querySelectorAll(".bottom-nav button");
+document.addEventListener("DOMContentLoaded", ()=>{
 
-function showTab(tabId){
-  // إخفاء كل الأقسام
-  views.forEach(v=>{
-    v.classList.remove("active");
-  });
+  const views = document.querySelectorAll(".view");
+  const navButtons = document.querySelectorAll(".bottom-nav button");
 
-  // إظهار القسم المطلوب
-  const target = document.getElementById(tabId);
-  if(!target){
-    console.error("View not found:", tabId);
-    return;
+  function showTab(tabId){
+    views.forEach(v => v.classList.remove("active"));
+
+    const target = document.getElementById(tabId);
+    if(!target){
+      console.error("View not found:", tabId);
+      return;
+    }
+    target.classList.add("active");
+
+    navButtons.forEach(b => b.classList.remove("active"));
+    const btn = document.querySelector(
+      `.bottom-nav button[data-tab="${tabId}"]`
+    );
+    if(btn) btn.classList.add("active");
   }
 
-  target.classList.add("active");
-
-  // تفعيل الزر
-  navButtons.forEach(b=>b.classList.remove("active"));
-  const btn = document.querySelector(
-    `.bottom-nav button[data-tab="${tabId}"]`
-  );
-  if(btn) btn.classList.add("active");
-}
-
-// ربط الأزرار
-navButtons.forEach(btn=>{
-  btn.addEventListener("click", ()=>{
-    const tab = btn.dataset.tab;
-    if(tab){
-      showTab(tab);
-    }
+  navButtons.forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const tab = btn.dataset.tab;
+      if(tab){
+        showTab(tab);
+      }
+    });
   });
+
+  showTab("wallet");
+
 });
-showTab("wallet");
