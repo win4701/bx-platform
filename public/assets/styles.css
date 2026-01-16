@@ -373,7 +373,7 @@ input{
 .mining-plans{
   display:grid;
   grid-template-columns:repeat(2,1fr);
-  gap:18px;
+  gap:14px;
 }
 
 /* Card */
@@ -395,7 +395,7 @@ input{
   content:"VIP";
   position:absolute;
   top:10px;
-  right:14px;
+  right:12px;
   font-size:11px;
   font-weight:800;
   color:#000;
@@ -406,14 +406,14 @@ input{
 
 /* Title */
 .mining-plan h4{
-  font-size:14px;
+  font-size:12px;
   font-weight:800;
   margin-bottom:6px;
 }
 
 /* Profit */
 .mining-profit{
-  font-size:20px;
+  font-size:21px;
   font-weight:800;
   color:var(--green);
   margin-bottom:10px;
@@ -430,7 +430,7 @@ input{
   display:flex;
   justify-content:space-between;
   padding:4px 0;
-  font-size:12px;
+  font-size:10px;
   color:var(--muted);
 }
 
@@ -440,7 +440,7 @@ input{
 
 /* Button */
 .mining-plan button{
-  margin-top:12px;
+  margin-top:10px;
   width:100%;
   height:40px;
   border-radius:12px;
@@ -453,7 +453,7 @@ input{
   background:#0b1f27;
   border:1px solid var(--border);
   border-radius:18px;
-  padding:16px;
+  padding:14px;
   text-align:center;
 }
 
@@ -509,8 +509,8 @@ input{
 }
 
 .bottom-nav img{
-  width:20px;
-  height:20px;
+  width:21px;
+  height:21px;
 }
 /* =========================================================
    UX – TAP FEEDBACK
@@ -527,7 +527,7 @@ button:active,
 .deposit-method:active,
 .game:active,
 .mining-plan:active{
-  transform:scale(.97);
+  transform:scale(.7);
 }
 /* =========================================================
    UX – MARKET EMPHASIS
@@ -593,14 +593,14 @@ button:active,
 
 /* تصغير شعارات العملات فقط */
 .balances img {
-  width: 20px;
-  height: 20px;
+  width: 21px;
+  height: 21px;
 }
 
 /* صور الـ Market مثل USDT و TON */
 #market img {
-  width: 20px;
-  height: 20px;
+  width: 21px;
+  height: 21px;
   object-fit: contain;
 }
 
@@ -618,7 +618,7 @@ button:active,
 .game,
 .mining-plan,
 .deposit-method {
-  min-height: 160px;
+  min-height: 150px;
 }
 
 /* تحسين التجاوب للشاشات الصغيرة */
@@ -627,6 +627,6 @@ button:active,
   .mining-plan img,
   .deposit-method img {
     width: 56px;
-    height: 72px;
+    height: 56px;
   }
 }
