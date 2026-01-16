@@ -82,9 +82,6 @@ body{
 /* =========================================================
    VIEW SYSTEM – STABLE
 ========================================================= */
-.view{
-  display:none;
-}
 
 .view.active{
   display:block;
@@ -961,4 +958,19 @@ img{
 .trade:active{
   background-color:rgba(255,255,255,.06);
   transform:scale(.98);
+}
+/* =========================================================
+   SAFE VIEW SWITCHING – MOBILE FIX
+========================================================= */
+
+.view{
+  visibility:hidden;
+  height:0;
+  overflow:hidden;
+}
+
+.view.active{
+  visibility:visible;
+  height:auto;
+  overflow:visible;
 }
