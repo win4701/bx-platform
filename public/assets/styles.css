@@ -544,28 +544,59 @@ button:active,
   border-radius:10px;
 }
 /* =========================================================
-   GLOBAL IMAGE SIZE FIX – UNIFIED LOOK
-=======================================================
+   🌐 GLOBAL IMAGE SIZE FIX – UNIFIED LOOK (Enhanced)
+   الهدف: مظهر متناسق واحترافي لجميع الصور
+========================================================= */
 
-.card, .deposit-method, .mining-plan, .airdrop-box {
-  background: linear-gradient(180deg, #12242b, #0b1419);
-  border: 1px solid rgba(18, 50, 63, 0.8);
-  box-shadow: 0 8px 20px rgba(0,0,0,0.35);
-}
-/* تصغير شعارات العملات فقط */
+/* تنسيق الصور العامة داخل البطاقات */
+.card img,
+.game img,
+.mining-plan img,
+.deposit-method img,
 .balances img {
-  width: 20px;
-  height: 20px;
-}
-
-/* صور الـ Market مثل USDT و TON */
-#market img {
-  width: 20px;
-  height: 20px;
+  display: block;
+  margin: 0 auto;
   object-fit: contain;
+  image-rendering: -webkit-optimize-contrast; /* تحسين وضوح الشعارات */
+  transition: transform 0.25s ease, opacity 0.25s ease;
 }
 
-/* تحسين المسافات بين العناصر */
+/* حجم موحد افتراضي لجميع الصور داخل البطاقات */
+.card img,
+.mining-plan img,
+.deposit-method img {
+  width: clamp(48px, 6vw, 72px);
+  height: auto;
+  max-height: 72px;
+}
+
+/* صور الألعاب – تكون أكبر قليلاً لإبراز الطابع الترفيهي */
+.game img {
+  width: clamp(56px, 8vw, 84px);
+  height: auto;
+  max-height: 84px;
+}
+
+/* صور العملات داخل المحفظة */
+.balances img {
+  width: clamp(22px, 4.5vw, 28px);
+  height: clamp(22px, 4.5vw, 28px);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.02);
+  padding: 4px;
+}
+
+/* تحسين تفاعل الصور (Hover Effect لطيف) */
+.card img:hover,
+.game img:hover,
+.mining-plan img:hover,
+.deposit-method img:hover {
+  transform: scale(1.06);
+  opacity: 0.95;
+}
+
+/* جعل كل الحاويات التي تحتوي صورًا تتوسطها الصورة تمامًا */
+.card,
 .game,
 .mining-plan,
 .deposit-method {
@@ -575,20 +606,20 @@ button:active,
   justify-content: space-between;
 }
 
-/* جعل جميع البطاقات متناسقة في الارتفاع */
-.game,
+/* الحد الأدنى من الارتفاع للبطاقات لتوازن التصميم */
+.card,
 .mining-plan,
-.deposit-method {
+.deposit-method,
+.game {
   min-height: 160px;
 }
 
-/* تحسين تباين النصوص الصغيرة */
-h2, h3, p, span {
-  color: #e6f5ef;
-}
-
+/* تحسين التجاوب للشاشات الصغيرة */
 @media (max-width: 480px) {
-  .app-container {
-    padding-bottom: 120px;
+  .card img,
+  .game img,
+  .mining-plan img,
+  .deposit-method img {
+    width: clamp(48px, 10vw, 64px);
   }
 }
