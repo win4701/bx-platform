@@ -295,21 +295,21 @@ document
 const MINING_PLANS = {
   BX: [
     { name:"Starter", daily:"1.2%", days:30, min:10,  max:500 },
-    { name:"Silver",  daily:"2.0%", days:45, min:100, max:2000 },
-    { name:"Gold",    daily:"3.0%", days:60, min:500, max:10000 },
-    { name:"VIP",     daily:"4.5%", days:90, min:2000,max:50000 }
+    { name:"Silver",  daily:"4%", days:45, min:100, max:2000 },
+    { name:"Gold",    daily:"9%", days:60, min:500, max:10000 },
+    { name:"VIP",     daily:"15%", days:90, min:2000,max:50000 }
   ],
   TON: [
     { name:"Starter", daily:"0.8%", days:30, min:5,  max:200 },
-    { name:"Silver",  daily:"1.5%", days:45, min:50, max:1000 },
-    { name:"Gold",    daily:"2.5%", days:60, min:200,max:5000 },
-    { name:"VIP",     daily:"3.8%", days:90, min:1000,max:20000 }
+    { name:"Silver",  daily:"4%", days:45, min:50, max:1000 },
+    { name:"Gold",    daily:"7.5%", days:60, min:200,max:5000 },
+    { name:"VIP",     daily:"14%", days:90, min:1000,max:20000 }
   ],
   SOL: [
     { name:"Starter", daily:"0.7%", days:30, min:1,  max:100 },
-    { name:"Silver",  daily:"1.3%", days:45, min:20, max:500 },
-    { name:"Gold",    daily:"2.2%", days:60, min:100,max:3000 },
-    { name:"VIP",     daily:"3.5%", days:90, min:500,max:10000 }
+    { name:"Silver",  daily:"3.5%", days:45, min:20, max:500 },
+    { name:"Gold",    daily:"7%", days:60, min:100,max:3000 },
+    { name:"VIP",     daily:"12%", days:90, min:500,max:10000 }
   ]
 };
 
