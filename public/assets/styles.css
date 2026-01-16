@@ -23,15 +23,16 @@
   -webkit-tap-highlight-color:transparent;
 }
 
-html,body{
-  margin:0;
-  padding:0;
-  min-height:100%;
-  background:var(--bg);
-  color:var(--text);
-  font-family:system-ui,-apple-system,Segoe UI,Roboto;
+body {
+  font-smooth: always;
+  -webkit-font-smoothing: antialiased;
 }
 
+.balances .coin-name,
+.balances .coin-balance {
+  font-size: 14px;
+  letter-spacing: 0.2px;
+}
 img{
   display:block;
   max-width:100%;
@@ -525,9 +526,10 @@ button,
 
 button:active,
 .deposit-method:active,
-.game:active,
-.mining-plan:active{
-  transform:scale(.97);
+.mining-plan:active,
+.game:active {
+  transform: scale(0.97);
+  box-shadow: 0 0 0 2px rgba(110, 231, 168, 0.3);
 }
 /* =========================================================
    UX – MARKET EMPHASIS
@@ -581,14 +583,19 @@ button:active,
 /* جميع الصور داخل البطاقات */
 .card img,
 .game img,
-.mining-plan img,
 .deposit-method img,
-.balances img {
-  width: 22px;
-  height: 22px;
+.mining-plan img,
+.game img {
+  width: clamp(48px, 7vw, 72px);
+  height: auto;
   object-fit: contain;
-  image-rendering: auto;
-  margin: 0 auto;
+  transition: transform 0.25s ease;
+}
+
+.deposit-method img:hover,
+.mining-plan img:hover,
+.game img:hover {
+  transform: scale(1.08);
 }
 
 /* تصغير شعارات العملات فقط */
@@ -621,12 +628,16 @@ button:active,
   min-height: 160px;
 }
 
-/* تحسين التجاوب للشاشات الصغيرة */
 @media (max-width: 480px) {
-  .game img,
-  .mining-plan img,
-  .deposit-method img {
-    width: 56px;
-    height: 72px;
+  .balances, .mining-plans, .deposit-methods {
+    grid-template-columns: 1fr; /* عمود واحد لراحة القراءة */
+  }
+
+  .card, .mining-plan, .deposit-method {
+    min-height: 140px;
+  }
+
+  .bottom-nav button {
+    font-size: 10px;
   }
 }
