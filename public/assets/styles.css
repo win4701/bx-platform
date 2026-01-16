@@ -348,20 +348,25 @@ input{
 
 .mining-tabs{
   display:flex;
-  gap:10px;
-  margin-bottom:14px;
+  gap:14px;
+  margin-bottom:18px;
 }
 
 .mining-tabs button{
   flex:1;
-  height:36px
-  padding:12px;
-  border-radius:14px;
-  border:1px solid var(--border);
-  background:#0b1f27;
-  color:var(--muted);
+  height:48px;
+  padding:0 16px;
+  border-radius:18px;
+  border:1px solid #143743;
+  background:linear-gradient(180deg,#0e2a33,#0a1f26);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  color:#9fb3c8;
   font-weight:800;
-  transition:.2s;
+  font-size:14px;
+  transition:.25s ease;
 }
 
 .mining-tabs button.active{
