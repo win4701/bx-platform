@@ -99,7 +99,7 @@ const PAIRS = {
   "BXBTC": "BTCUSDT",
   "BXSOL": "SOLUSDT",
   "BXTON": "TONUSDT"
-};
+];
 
 let currentPairIndex = 0;
 
