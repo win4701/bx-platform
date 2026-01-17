@@ -310,38 +310,115 @@ input{
 .btn.sell{
   outline:2px solid rgba(255,143,163,.25);
 }
+
 /* =========================================================
-   CASINO
+   CASINO – REFINED LAYOUT (SYNC WITH NEW VARIABLES)
 ========================================================= */
+
+/* Grid منظم – متوازن */
+.casino-grid,
 .games-grid{
   display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:12px;
+  grid-template-columns:repeat(3, 1fr);
+  gap:16px;
 }
 
-.game{
-  height:160px;
-  background:#0b1f27;
-  border:1px solid var(--border);
+/* Card */
+#casino .game{
+  position:relative;
+  height:170px;
+  background:linear-gradient(180deg,#0e2932,#081b22);
+  border:1px solid rgba(110,231,168,.18);
   border-radius:20px;
-  padding:12px;
+  padding:14px 10px;
   display:flex;
   flex-direction:column;
-  justify-content:space-between;
   align-items:center;
+  justify-content:center;
+  gap:12px;
+  cursor:pointer;
+  transition:
+    transform .25s ease,
+    box-shadow .25s ease,
+    border-color .25s ease;
 }
 
-.game img{
-  width:56px;
-  height:72px;
+/* Hover */
+#casino .game:hover{
+  transform:translateY(-4px) scale(1.03);
+  box-shadow:0 18px 40px rgba(0,0,0,.55);
+  border-color:rgba(110,231,168,.45);
+}
+
+/* Active (Tap) */
+#casino .game:active{
+  transform:scale(.96);
+}
+
+/* Image */
+#casino .game img{
+  width:64px;
+  height:64px;
   object-fit:contain;
+  filter:drop-shadow(0 6px 14px rgba(0,0,0,.55));
+  transition:transform .25s ease;
 }
 
-.game h4{
+/* Image hover focus */
+#casino .game:hover img{
+  transform:scale(1.08);
+}
+
+/* Title */
+#casino .game h4{
   margin:0;
-  font-size:12px;
+  font-size:13px;
+  font-weight:800;
+  letter-spacing:.4px;
+  text-transform:uppercase;
+  color:#e6f5ef;
+  text-align:center;
 }
 
+/* Optional meta layer (جاهز للتوسعة لاحقًا) */
+#casino .game .casino-meta{
+  position:absolute;
+  bottom:10px;
+  left:10px;
+  right:10px;
+  display:flex;
+  justify-content:space-between;
+  font-size:11px;
+  font-weight:700;
+  color:#fff;
+  opacity:.9;
+}
+
+#casino .game .casino-meta span{
+  background:rgba(0,0,0,.55);
+  padding:4px 8px;
+  border-radius:999px;
+  backdrop-filter:blur(6px);
+}
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+@media (max-width:480px){
+  .casino-grid,
+  .games-grid{
+    grid-template-columns:repeat(2,1fr);
+  }
+
+  #casino .game{
+    height:160px;
+  }
+
+  #casino .game img{
+    width:56px;
+    height:56px;
+  }
+}
 /* =========================
    MINING
 ========================= */
