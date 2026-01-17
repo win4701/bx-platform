@@ -243,80 +243,67 @@ input{
   font-weight:600;
   color:#dff6ef;
 }
+
 /* =========================================================
-   MARKET
+   MARKET (CLEAN & STABLE)
 ========================================================= */
-/* مهم: لجعل القائمة المنسدلة عائمة */
+
 #market{
-  position: relative;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
 }
 
+/* Selector */
 .pair-bar{
   display:flex;
-  align-items:center;
   justify-content:space-between;
+  align-items:center;
+  padding:12px 14px;
   background:#0b1f27;
   border:1px solid var(--border);
   border-radius:14px;
-  padding:12px 14px;
   font-weight:800;
 }
 
-/* السهم */
-.pair-bar .arrow{
-  font-size:14px;
-  opacity:.7;
-}
-
- /* القائمة المنسدلة لا تدفع المحتوى */
+/* Dropdown list */
 .pair-sheet{
-  position: absolute;
-  top: 64px;      
-  left: 14px;
-  right: 14px;
-  z-index: 20;
+  background:#0b1f27;
+  border:1px solid var(--border);
+  border-radius:14px;
+  overflow:hidden;
+  max-height:240px;
+  overflow-y:auto;
 }
 
-/* عنصر الزوج */
+/* Pair item */
 .pair-option{
   display:flex;
   align-items:center;
   gap:12px;
   padding:12px 14px;
   cursor:pointer;
-  transition:background .15s ease;
 }
 
 .pair-option:hover{
   background:#0e2a33;
 }
 
-.pair-option:active{
-  background:#0a2027;
-}
-
-.pair-option{
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-/* حاوية ثابتة للأيقونات */
+/* Icon (FIXED & CLEAN) */
 .pair-option img{
-  width: 26px;
-  height: 26px;
-  padding: 4px;
-  border-radius: 50%;
-  background: #081a21;
-  object-fit: contain;
-  flex-shrink: 0;
+  width:24px;
+  height:24px;
+  border-radius:50%;
+  background:#081a21;
+  object-fit:contain;
+  flex-shrink:0;
 }
 
-/* النص بجانب الرمز */
+/* Text */
 .pair-text{
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
+  display:flex;
+  flex-direction:column;
+  line-height:1.15;
 }
 
 .pair-text strong{
@@ -327,6 +314,17 @@ input{
 .pair-text span{
   font-size:12px;
   color:var(--muted);
+}
+
+/* Trade box */
+.trade-box{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+
+.trade-box input{
+  grid-column:1 / 3;
 }
 
 /* =========================================================
