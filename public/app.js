@@ -8,6 +8,12 @@ const INTERNAL_BX_USDT = 2.0; // 1 BX = 2 USDT
 const MARKET_FEE = 0.002;
 
 /* =========================================================
+   PROVABLY FAIR – CLIENT SEED
+========================================================= */
+let CLIENT_SEED =
+  localStorage.getItem("client_seed") || "1.2.3.4";
+
+/* =========================================================
    DEVICE / PERFORMANCE
 ========================================================= */
 const isLowEnd =
@@ -76,8 +82,9 @@ async function loadBalances(){
 function setVal(id,val,dec=2){
   const el = document.getElementById(id);
   if(!el) return;
-  el.textContent =
-    val !== undefined ? Number(val).toFixed(dec) : "0";
+  el.textContent = val !== undefined
+    ? Number(val).toFixed(dec)
+    : "0";
 }
 
 loadBalances();
@@ -267,9 +274,6 @@ document.querySelector(".btn.sell")
   ?.addEventListener("click",()=>submitOrder("sell"));
 
 /* =========================================================
-   CASINO (CARD INTERACTION ONLY)
-========================================================= */
-/* =========================================================
    CASINO – GLOBAL GAME RUNNER (9 GAMES)
 ========================================================= */
 
@@ -278,33 +282,26 @@ document.querySelectorAll("#casino .game").forEach(game=>{
     playSound("spin");
     snap(game);
 
-    const gameName = game.dataset.game;
-
     try{
-      const r = await fetch(`${API_BASE}/casino/play`,{
-        method:"POST",
-        headers:{ "Content-Type":"application/json" },
-        body: JSON.stringify({
-          uid: 1,                 // لاحقًا من auth
-          game: gameName,         // coinflip, dice, ...
-          bet: 1,                 // قيمة تجريبية
-          client_seed: "1.2.3.4"  // ثابت حاليًا
-        })
-      });
+      const r = await fetch(
+        `${API_BASE}/casino/play`,
+        {
+          method:"POST",
+          headers:{ "Content-Type":"application/json" },
+          body: JSON.stringify({
+            uid: 1,
+            game: game.dataset.game,
+            bet: 1,
+            client_seed: CLIENT_SEED
+          })
+        }
+      );
 
       const data = await r.json();
 
-      if(data.win){
-        playSound("win");
-      }else{
-        playSound("lose");
-      }
-
-      // ✅ ربط مباشر مع Airdrop
+      playSound(data.win ? "win" : "lose");
       onCasinoPlayed();
-
-      // (اختياري) عرض نتيجة سريعة
-      console.log("Casino result:", data);
+      showFairnessInfo(data);
 
     }catch(e){
       console.error("Casino error", e);
@@ -329,10 +326,10 @@ document
 
 const MINING_PLANS = {
   BX: [
-    { name:"Starter", daily:"1.2%", days:30, min:10,  max:500 },
-    { name:"Silver",  daily:"4%", days:45, min:100, max:2000 },
-    { name:"Gold",    daily:"9%", days:60, min:500, max:10000 },
-    { name:"VIP",     daily:"15%", days:90, min:2000,max:50000 }
+    { name:"Starter", daily:"3%", days:30, min:10,  max:500 },
+    { name:"Silver",  daily:"8%", days:45, min:100, max:2000 },
+    { name:"Gold",    daily:"15%", days:60, min:500, max:10000 },
+    { name:"VIP",     daily:"30%", days:90, min:2000,max:50000 }
   ],
   TON: [
     { name:"Starter", daily:"0.8%", days:30, min:5,  max:200 },
@@ -524,8 +521,46 @@ function updateAirdropUI(type){
   }
 }
 
-/* Debug (remove later) */
-// setInterval(addReferral, 10000); // كل 10 ثواني إحالة تجريبية
+/* =========================================================
+   PROVABLY FAIR – UI
+========================================================= */
+function showFairnessInfo(data){
+  let box = document.getElementById("fairnessBox");
+  if(!box){
+    box = document.createElement("div");
+    box.id = "fairnessBox";
+    box.style.marginTop = "12px";
+    box.style.fontSize = "12px";
+    box.style.color = "#9fb3c8";
+    document.getElementById("casino").appendChild(box);
+  }
+
+  box.innerHTML = `
+    <strong>Provably Fair</strong><br/>
+    Client Seed: <code>${CLIENT_SEED}</code><br/>
+    Server Seed Hash: <code>${data.server_seed_hash}</code><br/>
+    Nonce: <code>${data.nonce}</code><br/>
+    <button id="verifyBtn"
+      class="btn secondary"
+      style="margin-top:6px;font-size:12px">
+      Verify Fairness
+    </button>
+  `;
+}
+
+document.addEventListener("click",e=>{
+  if(e.target.id === "verifyBtn"){
+    alert(
+`Verification steps:
+1. Save Server Seed Hash
+2. Save Client Seed
+3. Save Nonce
+4. When server reveals seed,
+   hash(seed) must match`
+    );
+  }
+});
+
 /* =========================================================
    WALLET – DEPOSIT METHODS LOGIC
 ========================================================= */
@@ -548,6 +583,35 @@ document.querySelectorAll(".deposit-method").forEach(method=>{
     }
   });
 });
+
+/* =========================================================
+   CLIENT SEED INPUT (UI)
+========================================================= */
+document.addEventListener("DOMContentLoaded", ()=>{
+  const wallet = document.getElementById("wallet");
+  if(!wallet) return;
+
+  const box = document.createElement("div");
+  box.style.marginTop = "12px";
+  box.innerHTML = `
+    <label style="font-size:12px;color:#9fb3c8">
+      Client Seed
+    </label>
+    <input
+      value="${CLIENT_SEED}"
+      style="margin-top:6px"
+      placeholder="1.2.3.4"/>
+  `;
+
+  const input = box.querySelector("input");
+  input.onchange = ()=>{
+    CLIENT_SEED = input.value || "1.2.3.4";
+    localStorage.setItem("client_seed", CLIENT_SEED);
+  };
+
+  wallet.appendChild(box);
+});
+
 /* =========================================================
    FINAL SAFE TAB NAVIGATION
 ========================================================= */
