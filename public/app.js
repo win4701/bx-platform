@@ -94,12 +94,12 @@ loadBalances();
 ========================================================= */
 
 /* Available pairs */
-const MARKET_PAIRS = [
-  "BX / USDT",
-  "BX / TON",
-  "BX / SOL",
-  "BX / BTC"
-];
+const PAIRS = {
+  "BXUSDT": "BTCUSDT",
+  "BXBTC": "BTCUSDT",
+  "BXSOL": "SOLUSDT",
+  "BXTON": "TONUSDT"
+};
 
 let currentPairIndex = 0;
 
