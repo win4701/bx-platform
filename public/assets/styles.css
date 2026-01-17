@@ -639,59 +639,60 @@ button:active,
   padding:8px;
   border-radius:10px;
 }
+
 /* =========================================================
-   GLOBAL IMAGE SIZE FIX – UNIFIED LOOK
+   IMAGE SYSTEM – SCOPED & SAFE (REPLACEMENT)
 ========================================================= */
 
-/* جميع الصور داخل البطاقات */
-.card img,
-.game img,
-.mining-plan img,
-.deposit-method img,
-.balances img {
-  width: 22px;
-  height: 22px;
-  object-fit: contain;
-  image-rendering: auto;
-  margin: 0 auto;
+/* ===== ICON SYSTEM (Small icons) ===== */
+.balances img,
+.wallet img,
+.bottom-nav img{
+  width:20px;
+  height:20px;
+  object-fit:contain;
 }
 
-/* تصغير شعارات العملات فقط */
-.balances img {
-  width: 20px;
-  height: 20px;
+/* Mining tabs icons (BX / TON / SOL) */
+.mining-tabs img{
+  width:28px;
+  height:28px;
+  object-fit:contain;
 }
 
-/* صور الـ Market مثل USDT و TON */
-#market img {
-  width: 20px;
-  height: 20px;
-  object-fit: contain;
+/* Deposit / Payment logos */
+.deposit-method img{
+  width:48px;
+  height:56px;
+  object-fit:contain;
+  margin-bottom:6px;
 }
 
-/* تحسين المسافات بين العناصر */
-.game,
-.mining-plan,
-.deposit-method {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: space-between;
+/* ===== CASINO – POSTER IMAGES ===== */
+#casino .game img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  margin:0;
 }
 
-/* جعل جميع البطاقات متناسقة في الارتفاع */
-.game,
-.mining-plan,
-.deposit-method {
-  min-height: 160px;
+/* لو صورة صغيرة أو أيقونة داخل كازينو */
+#casino .game img[src*="icon"],
+#casino .game img[src*="logo"]{
+  object-fit:contain;
+  padding:18px;
 }
 
-/* تحسين التجاوب للشاشات الصغيرة */
-@media (max-width: 480px) {
-  .game img,
-  .mining-plan img,
-  .deposit-method img {
-    width: 56px;
-    height: 72px;
-  }
+/* ===== AIRDROP ===== */
+.airdrop-box img{
+  width:56px;
+  height:56px;
+  object-fit:contain;
+}
+
+/* ===== MARKET SYMBOLS ===== */
+#market img{
+  width:20px;
+  height:20px;
+  object-fit:contain;
 }
