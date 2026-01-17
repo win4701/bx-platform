@@ -312,23 +312,23 @@ input{
 }
 
 /* =========================================================
-   CASINO – REFINED LAYOUT (SYNC WITH NEW VARIABLES)
+   CASINO – REFINED LAYOUT
+   SYNC WITH NEW VARIABLES + RESPONSIVE
 ========================================================= */
 
-/* Grid منظم – متوازن */
-.casino-grid,
-.games-grid{
+/* Grid – 3 × 3 */
+#casino .games-grid{
   display:grid;
   grid-template-columns:repeat(3, 1fr);
   gap:16px;
 }
 
-/* Card */
+/* Casino Card */
 #casino .game{
   position:relative;
-  height:170px;
+  height:160px; /* ثابت لضمان 3 صفوف */
   background:linear-gradient(180deg,#0e2932,#081b22);
-  border:1px solid rgba(110,231,168,.18);
+  border:1px solid var(--border);
   border-radius:20px;
   padding:14px 10px;
   display:flex;
@@ -350,7 +350,7 @@ input{
   border-color:rgba(110,231,168,.45);
 }
 
-/* Active (Tap) */
+/* Tap */
 #casino .game:active{
   transform:scale(.96);
 }
@@ -361,12 +361,6 @@ input{
   height:64px;
   object-fit:contain;
   filter:drop-shadow(0 6px 14px rgba(0,0,0,.55));
-  transition:transform .25s ease;
-}
-
-/* Image hover focus */
-#casino .game:hover img{
-  transform:scale(1.08);
 }
 
 /* Title */
@@ -376,42 +370,35 @@ input{
   font-weight:800;
   letter-spacing:.4px;
   text-transform:uppercase;
-  color:#e6f5ef;
+  color:var(--text);
   text-align:center;
 }
 
-/* Optional meta layer (جاهز للتوسعة لاحقًا) */
-#casino .game .casino-meta{
-  position:absolute;
-  bottom:10px;
-  left:10px;
-  right:10px;
-  display:flex;
-  justify-content:space-between;
-  font-size:11px;
-  font-weight:700;
-  color:#fff;
-  opacity:.9;
-}
-
-#casino .game .casino-meta span{
-  background:rgba(0,0,0,.55);
-  padding:4px 8px;
-  border-radius:999px;
-  backdrop-filter:blur(6px);
+/* ضمان عدم قص الصف الأخير */
+#casino.card{
+  padding-bottom:24px;
 }
 
 /* =========================================================
    RESPONSIVE
 ========================================================= */
-@media (max-width:480px){
-  .casino-grid,
-  .games-grid{
+
+/* Tablet */
+@media (max-width:768px){
+  #casino .games-grid{
     grid-template-columns:repeat(2,1fr);
+  }
+}
+
+/* Mobile */
+@media (max-width:480px){
+  #casino .games-grid{
+    grid-template-columns:repeat(2,1fr);
+    gap:14px;
   }
 
   #casino .game{
-    height:160px;
+    height:150px;
   }
 
   #casino .game img{
