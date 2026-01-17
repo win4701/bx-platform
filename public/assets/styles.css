@@ -312,70 +312,63 @@ input{
 }
 
 /* =========================================================
-   CASINO – FINAL WORKING GRID
+   CASINO – POSTER SYSTEM (MATCHES PROVIDED IMAGE)
 ========================================================= */
 
+/* Grid */
 #casino .games-grid{
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  grid-auto-flow: column;
-  gap: 18px;
+  display:grid;
+  grid-template-columns:repeat(3, 1fr);
+  gap:18px;
 }
 
-/* Casino Card */
+/* Poster Card */
 #casino .game{
   position:relative;
   border-radius:22px;
   overflow:hidden;
-  background:#111;
+  background:#000;
+  aspect-ratio:3 / 4;   /* 🔑 هذا هو السر */
 }
 
-/* Image */
+/* Image behaves like real poster */
 #casino .game img{
   width:100%;
   height:100%;
   object-fit:cover;
+  display:block;
 }
 
-/* Overlay */
+/* Dark bottom overlay (like example) */
 #casino .game::after{
   content:"";
   position:absolute;
   inset:0;
   background:linear-gradient(
     180deg,
-    rgba(0,0,0,.05),
-    rgba(0,0,0,.75)
+    rgba(0,0,0,0) 50%,
+    rgba(0,0,0,.75) 100%
   );
 }
 
-/* Title */
+/* Title (if needed outside image) */
 #casino .game h4{
   position:absolute;
-  bottom:16px;
-  left:16px;
-  right:16px;
+  bottom:14px;
+  left:14px;
+  right:14px;
   margin:0;
+  z-index:2;
   font-size:15px;
   font-weight:900;
+  letter-spacing:.4px;
   color:#fff;
 }
 
-/* =========================================================
-   RESPONSIVE
-========================================================= */
-
-@media (max-width:900px){
-  #casino .games-grid{
-    grid-template-columns:repeat(2,1fr);
-    grid-template-rows:repeat(3, auto);
-  }
-}
-
+/* Mobile */
 @media (max-width:480px){
   #casino .games-grid{
-    grid-template-columns:1fr;
-    grid-template-rows:auto;
+    grid-template-columns:repeat(2,1fr);
   }
 }
 /* =========================
