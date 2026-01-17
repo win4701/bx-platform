@@ -312,14 +312,25 @@ input{
 }
 
 /* =========================================================
-   CASINO – POSTER GRID (VERTICAL / COLUMN-FIRST)
+   CASINO – VERTICAL GRID (REAL FIX)
+   3 فوق / 3 وسط / 3 تحت
 ========================================================= */
 
-/* Grid عمودي */
 #casino .games-grid{
   display:grid;
-  grid-template-rows:repeat(3, 1fr);   /* 3 عناصر عموديًا */
-  grid-auto-flow:column;              /* تعبئة بالأعمدة */
+
+  /* 3 أعمدة ثابتة */
+  grid-template-columns:repeat(3, 1fr);
+
+  /* نملأ عموديًا */
+  grid-auto-flow:column;
+
+  /* عدد العناصر عموديًا */
+  grid-template-rows:repeat(3, auto);
+
+  /* عرض الأعمدة التلقائي */
+  grid-auto-columns:1fr;
+
   gap:18px;
 }
 
@@ -331,9 +342,7 @@ input{
   overflow:hidden;
   background:#111;
   cursor:pointer;
-  transition:
-    transform .25s ease,
-    box-shadow .25s ease;
+  transition:transform .25s ease, box-shadow .25s ease;
 }
 
 /* Hover */
@@ -349,7 +358,7 @@ input{
   object-fit:cover;
 }
 
-/* Gradient overlay */
+/* Overlay */
 #casino .game::after{
   content:"";
   position:absolute;
@@ -377,39 +386,21 @@ input{
   text-align:left;
 }
 
-/* منع قص الصف الأخير */
-#casino.card{
-  padding-bottom:24px;
-}
-
 /* =========================================================
    RESPONSIVE
 ========================================================= */
 
-/* Tablet */
 @media (max-width:900px){
   #casino .games-grid{
-    grid-template-rows:repeat(2, 1fr);
-  }
-
-  #casino .game{
-    height:210px;
+    grid-template-columns:repeat(2,1fr);
+    grid-template-rows:repeat(3, auto);
   }
 }
 
-/* Mobile */
 @media (max-width:480px){
   #casino .games-grid{
-    grid-template-rows:repeat(2, 1fr);
-    gap:14px;
-  }
-
-  #casino .game{
-    height:190px;
-  }
-
-  #casino .game h4{
-    font-size:14px;
+    grid-template-columns:1fr;
+    grid-template-rows:auto;
   }
 }
 /* =========================
