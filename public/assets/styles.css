@@ -379,6 +379,9 @@ input{
   object-fit:contain;   /* 🔑 بدون قص */
 }
 
+#casino .game h4{
+  display: none;
+}
 /* =========================
    MINING
 ========================= */
