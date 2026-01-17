@@ -385,11 +385,10 @@ input{
   transition: .25s ease;
 }
 
-#casino .game:active h4,
-#casino .game:hover h4{
-  opacity: 1;
-  transform: translateY(0);
+#casino .game h4{
+  display: none;
 }
+
 /* =========================
    MINING
 ========================= */
