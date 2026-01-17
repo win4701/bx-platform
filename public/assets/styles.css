@@ -327,6 +327,21 @@ input{
   grid-column:1 / 3;
 }
 
+/* ===== CHART FIX =========================== ====== */
+.chart-box{
+  height:240px;          /* 🔑 مهم جدًا */
+  background:#081a21;
+  border:1px solid var(--border);
+  border-radius:14px;
+  margin-top:10px;
+  position:relative;
+}
+
+#priceChart{
+  width:100%;
+  height:100%;
+  display:block;
+}
 /* =========================================================
    UX – MARKET EMPHASIS
 ========================================================= */
