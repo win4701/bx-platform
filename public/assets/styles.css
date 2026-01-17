@@ -528,6 +528,82 @@ input{
 }
 
 /* =========================================================
+   PROMO / ADS SECTION
+========================================================= */
+
+.promo-section{
+  margin-top:16px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
+/* Card */
+.promo-card{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:14px;
+  border-radius:16px;
+  border:1px solid var(--border);
+  background:linear-gradient(180deg,#0b1f27,#081a21);
+}
+
+/* Variants */
+.promo-card.casino{
+  box-shadow:0 0 0 1px rgba(110,231,168,.25);
+}
+
+.promo-card.gift{
+  box-shadow:0 0 0 1px rgba(250,204,21,.25);
+}
+
+.promo-card.hot{
+  box-shadow:0 0 0 1px rgba(255,99,132,.25);
+}
+
+/* Icon */
+.promo-icon{
+  width:40px;
+  height:40px;
+  border-radius:12px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:20px;
+  background:#081a21;
+  flex-shrink:0;
+}
+
+/* Text */
+.promo-text{
+  display:flex;
+  flex-direction:column;
+  flex:1;
+}
+
+.promo-text strong{
+  font-size:14px;
+  font-weight:800;
+}
+
+.promo-text span{
+  font-size:12px;
+  color:var(--muted);
+}
+
+/* Button */
+.promo-btn{
+  background:linear-gradient(180deg,#6ee7a8,#16a34a);
+  color:#042417;
+  border:0;
+  border-radius:12px;
+  padding:8px 12px;
+  font-size:12px;
+  font-weight:800;
+  cursor:pointer;
+}
+/* =========================================================
    BOTTOM NAV
 ========================================================= */
 .bottom-nav{
