@@ -312,32 +312,20 @@ input{
 }
 
 /* =========================================================
-   CASINO – VERTICAL GRID (REAL FIX)
-   3 فوق / 3 وسط / 3 تحت
+   CASINO – POSTER GRID (VERTICAL / REAL FIX)
 ========================================================= */
 
 #casino .games-grid{
   display:grid;
-
-  /* 3 أعمدة ثابتة */
   grid-template-columns:repeat(3, 1fr);
-
-  /* نملأ عموديًا */
+  grid-template-rows:repeat(3, 220px);
   grid-auto-flow:column;
-
-  /* عدد العناصر عموديًا */
-  grid-template-rows:repeat(3, auto);
-
-  /* عرض الأعمدة التلقائي */
-  grid-auto-columns:1fr;
-
   gap:18px;
 }
 
-/* Casino Poster Card */
+/* Casino Card */
 #casino .game{
   position:relative;
-  height:220px;
   border-radius:22px;
   overflow:hidden;
   background:#111;
@@ -351,7 +339,7 @@ input{
   box-shadow:0 18px 40px rgba(0,0,0,.55);
 }
 
-/* Image */
+/* Poster Image */
 #casino .game img{
   width:100%;
   height:100%;
@@ -386,6 +374,20 @@ input{
   text-align:left;
 }
 
+/* Responsive */
+@media (max-width:900px){
+  #casino .games-grid{
+    grid-template-columns:repeat(2,1fr);
+    grid-template-rows:repeat(3, 200px);
+  }
+}
+
+@media (max-width:480px){
+  #casino .games-grid{
+    grid-template-columns:1fr;
+    grid-template-rows:auto;
+  }
+}
 /* =========================================================
    RESPONSIVE
 ========================================================= */
