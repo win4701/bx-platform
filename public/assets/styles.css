@@ -316,10 +316,10 @@ input{
 ========================================================= */
 
 #casino .games-grid{
-  display:grid;
-  grid-template-columns:repeat(3, 1fr); /* 3 أعمدة دائمًا */
-  grid-template-rows:repeat(3, 220px);  /* 3 صفوف */
-  gap:18px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-auto-flow: column;
+  gap: 18px;
 }
 
 /* Casino Card */
