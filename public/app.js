@@ -1,7 +1,7 @@
 /* =========================================================
    CONFIG
 ========================================================= */
-const API_BASE = "https://api.bloxio.online";
+const API_BASE = "https://bx-backend.fly.dev";
 
 /* Internal price */
 const INTERNAL_BX_USDT = 2.0; // 1 BX = 2 USDT
@@ -269,11 +269,46 @@ document.querySelector(".btn.sell")
 /* =========================================================
    CASINO (CARD INTERACTION ONLY)
 ========================================================= */
+/* =========================================================
+   CASINO – GLOBAL GAME RUNNER (9 GAMES)
+========================================================= */
+
 document.querySelectorAll("#casino .game").forEach(game=>{
-  game.addEventListener("click", ()=>{
+  game.addEventListener("click", async ()=>{
     playSound("spin");
     snap(game);
-    /* Routing to game pages later */
+
+    const gameName = game.dataset.game;
+
+    try{
+      const r = await fetch(`${API_BASE}/casino/play`,{
+        method:"POST",
+        headers:{ "Content-Type":"application/json" },
+        body: JSON.stringify({
+          uid: 1,                 // لاحقًا من auth
+          game: gameName,         // coinflip, dice, ...
+          bet: 1,                 // قيمة تجريبية
+          client_seed: "1.2.3.4"  // ثابت حاليًا
+        })
+      });
+
+      const data = await r.json();
+
+      if(data.win){
+        playSound("win");
+      }else{
+        playSound("lose");
+      }
+
+      // ✅ ربط مباشر مع Airdrop
+      onCasinoPlayed();
+
+      // (اختياري) عرض نتيجة سريعة
+      console.log("Casino result:", data);
+
+    }catch(e){
+      console.error("Casino error", e);
+    }
   });
 });
 
@@ -456,13 +491,6 @@ function onCasinoPlayed(){
 
   updateAirdropUI("casino");
 }
-
-/* Hook casino games */
-document.querySelectorAll("#casino .game").forEach(game=>{
-  game.addEventListener("click", ()=>{
-    setTimeout(onCasinoPlayed, 500);
-  });
-});
 
 /* ===== Referral System ===== */
 
