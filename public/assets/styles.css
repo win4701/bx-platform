@@ -246,6 +246,11 @@ input{
 /* =========================================================
    MARKET
 ========================================================= */
+/* مهم: لجعل القائمة المنسدلة عائمة */
+#market{
+  position: relative;
+}
+
 .pair-bar{
   display:flex;
   align-items:center;
@@ -263,13 +268,13 @@ input{
   opacity:.7;
 }
 
-/* القائمة المنسدلة */
+ /* القائمة المنسدلة لا تدفع المحتوى */
 .pair-sheet{
-  margin-top:10px;
-  background:#0b1f27;
-  border:1px solid var(--border);
-  border-radius:14px;
-  overflow:hidden;
+  position: absolute;
+  top: 64px;      
+  left: 14px;
+  right: 14px;
+  z-index: 20;
 }
 
 /* عنصر الزوج */
@@ -290,19 +295,28 @@ input{
   background:#0a2027;
 }
 
-/* أيقونة العملة */
-.pair-option img{
-  width:26px;
-  height:26px;
-  object-fit:contain;
-  flex-shrink:0;
+.pair-option{
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
-/* النص */
+/* حاوية ثابتة للأيقونات */
+.pair-option img{
+  width: 26px;
+  height: 26px;
+  padding: 4px;
+  border-radius: 50%;
+  background: #081a21;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+/* النص بجانب الرمز */
 .pair-text{
-  display:flex;
-  flex-direction:column;
-  line-height:1.15;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .pair-text strong{
