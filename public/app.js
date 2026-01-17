@@ -92,53 +92,21 @@ loadBalances();
 /* =========================================================
    MARKET – PAIR SELECTOR (CLEAN VERSION)
 ========================================================= */
-
-/* Available pairs */
-const PAIRS = {
-  "BXUSDT": "BTCUSDT",
-  "BXBTC": "BTCUSDT",
-  "BXSOL": "SOLUSDT",
-  "BXTON": "TONUSDT"
-];
-
-let currentPairIndex = 0;
-
+const MARKET_PAIRS = ["BX / USDT","BX / TON","BX / SOL","BX / BTC"];
+let pairIndex = 0, series = [], lastPrice = 0;
 const pairBar = document.getElementById("pairBar");
 const currentPair = document.getElementById("currentPair");
-
-/* Init default pair */
-if(currentPair){
-  currentPair.textContent = MARKET_PAIRS[currentPairIndex];
-}
-
-/* Switch pair on tap */
-pairBar?.addEventListener("click", ()=>{
-  playSound("click");
-  snap(pairBar);
-
-  /* Next pair */
-  currentPairIndex++;
-  if(currentPairIndex >= MARKET_PAIRS.length){
-    currentPairIndex = 0;
-  }
-
-  const pair = MARKET_PAIRS[currentPairIndex];
-  currentPair.textContent = pair;
-
-  /* Reset chart data */
-  series.length = 0;
-  lastPrice = 0;
-  drawChart();
-});
-
-/* =========================================================
-   MARKET – CHART (BASIC + READY FOR ADVANCED)
-========================================================= */
 const canvas = document.getElementById("priceChart");
 const ctx = canvas?.getContext("2d");
 
-let series = [];
-let lastPrice = 0;
+if(currentPair) currentPair.textContent = MARKET_PAIRS[0];
+
+pairBar?.addEventListener("click",()=>{
+  playSound("click"); snap(pairBar);
+  pairIndex = (pairIndex+1)%MARKET_PAIRS.length;
+  currentPair.textContent = MARKET_PAIRS[pairIndex];
+  series=[]; lastPrice=0; drawChart();
+});
 
 function resizeChart(){
   if(!canvas) return;
@@ -149,99 +117,33 @@ window.addEventListener("resize", resizeChart);
 resizeChart();
 
 function drawChart(){
-  if(!ctx || series.length < 2) return;
-
+  if(!ctx || series.length<2) return;
   ctx.clearRect(0,0,canvas.width,canvas.height);
-
-  const pad = 10;
-  const min = Math.min(...series);
-  const max = Math.max(...series);
-  const w = canvas.width - pad*2;
-  const h = canvas.height - pad*2;
-
+  const pad=10,min=Math.min(...series),max=Math.max(...series);
   ctx.beginPath();
   series.forEach((p,i)=>{
-    const x = pad + (i/(series.length-1))*w;
-    const y = pad + (1-(p-min)/(max-min||1))*h;
-    i ? ctx.lineTo(x,y) : ctx.moveTo(x,y);
+    const x=pad+(i/(series.length-1))*(canvas.width-pad*2);
+    const y=pad+(1-(p-min)/(max-min||1))*(canvas.height-pad*2);
+    i?ctx.lineTo(x,y):ctx.moveTo(x,y);
   });
-
-  ctx.strokeStyle =
-    series.at(-1) >= lastPrice ? "#4adebb" : "#ff8fa3";
-  ctx.lineWidth = 2;
-  ctx.stroke();
-
-  lastPrice = series.at(-1);
+  ctx.strokeStyle = series.at(-1)>=lastPrice?"#4adebb":"#ff8fa3";
+  ctx.lineWidth=2; ctx.stroke();
+  lastPrice=series.at(-1);
 }
-
-/* =========================================================
-   MARKET – DATA LOOP
-========================================================= */
-const amountInput = document.getElementById("amount");
-const tradesUL = document.getElementById("trades");
 
 async function tickPrice(){
   try{
-    const pair = currentPair.textContent.replace(" / ","");
-    const r = await fetch(`${API_BASE}/market/price?pair=${pair}`);
-    const { price } = await r.json();
-
-    series.push(price);
-    if(series.length > 80) series.shift();
+    const pair=currentPair.textContent.replace(" / ","");
+    const r=await fetch(`${API_BASE}/market/price?pair=${pair}`);
+    const {price}=await r.json();
+    series.push(price); if(series.length>80) series.shift();
     drawChart();
-
-    if(ENABLE_ANIM){
-      currentPair.classList.remove("price-up","price-down");
-      setTimeout(()=>{
-        currentPair.classList.add(
-          price >= lastPrice ? "price-up" : "price-down"
-        );
-      },10);
-    }
   }catch(e){}
 }
 
-async function fetchTrades(){
-  try{
-    const pair = currentPair.textContent.replace(" / ","");
-    const r = await fetch(`${API_BASE}/market/trades?pair=${pair}`);
-    const data = await r.json();
-
-    tradesUL.innerHTML = "";
-    data.slice(0,8).forEach(t=>{
-      const li = document.createElement("li");
-      li.innerHTML = `
-        <span>${t.side.toUpperCase()}</span>
-        <span>${t.amount}</span>
-        <span>${t.price}</span>
-      `;
-      li.style.color =
-        t.side === "buy" ? "#4adebb" : "#ff8fa3";
-      tradesUL.appendChild(li);
-    });
-  }catch(e){}
-}
-
-/* =========================================================
-   MARKET LOOP CONTROL
-========================================================= */
-let priceTimer, tradesTimer;
-
-function startMarket(){
-  priceTimer = setInterval(tickPrice,1500);
-  tradesTimer = setInterval(fetchTrades,2500);
-}
-
-function stopMarket(){
-  clearInterval(priceTimer);
-  clearInterval(tradesTimer);
-}
-
-startMarket();
-
-document.addEventListener("visibilitychange", ()=>{
-  document.hidden ? stopMarket() : startMarket();
-});
+let marketTimer;
+function startMarket(){ stopMarket(); marketTimer=setInterval(tickPrice,1500); }
+function stopMarket(){ clearInterval(marketTimer); }
 
 /* =========================================================
    BUY / SELL (BASIC – PREVIEW READY)
