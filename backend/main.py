@@ -1,158 +1,164 @@
 # ======================================================
-# pricing.py
-# Pricing & Reference Layer (Production)
+# main.py
+# Bloxio Core API – Fly.io Ready
 # ======================================================
 
 import time
-import sqlite3
-from typing import Dict, Optional
-
-DB_PATH = "db.sqlite"
-
-# ======================================================
-# BX INTERNAL REFERENCE (OFFICIAL – FLOOR)
-# ======================================================
-BX_USDT_FLOOR = 2.0        # 1 BX = 2 USDT (minimum)
-USDT_PER_BX = BX_USDT_FLOOR
-BX_PER_USDT = 1 / BX_USDT_FLOOR
+import os
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 # ======================================================
-# PRICE FEED RULES
+# Routers
 # ======================================================
-MAX_PRICE_AGE_SEC = 60     # reject prices older than 60s
-SUPPORTED_ASSETS = {"usdt", "btc", "bnb", "sol", "ton"}
+from finance import router as finance_router, rtp_stats
+from market import router as market_router
+from casino import router as casino_router
+from kyc import router as kyc_router
 
-# ======================================================
-# DB
-# ======================================================
-def db():
-    return sqlite3.connect(DB_PATH, check_same_thread=False)
-
-# ======================================================
-# EXTERNAL PRICE FEED (READ ONLY)
-# ======================================================
-def get_price(asset: str) -> Optional[float]:
-    """
-    Returns external asset price in USDT.
-    Used only as reference (market / display).
-    """
-    asset = asset.lower()
-    if asset not in SUPPORTED_ASSETS:
-        return None
-
-    if asset == "usdt":
-        return 1.0
-
-    c = db().cursor()
-    row = c.execute(
-        "SELECT price_usdt, updated_at FROM prices WHERE asset=?",
-        (asset,)
-    ).fetchone()
-
-    if not row:
-        return None
-
-    price, ts = row
-    if int(time.time()) - ts > MAX_PRICE_AGE_SEC:
-        return None
-
-    return float(price)
-
-def get_all_prices() -> Dict[str, Optional[float]]:
-    """
-    Returns all valid external prices in USDT.
-    """
-    c = db().cursor()
-    rows = c.execute(
-        "SELECT asset, price_usdt, updated_at FROM prices"
-    ).fetchall()
-
-    now = int(time.time())
-    out = {"usdt": 1.0}
-
-    for asset, price, ts in rows:
-        asset = asset.lower()
-        if asset not in SUPPORTED_ASSETS:
-            continue
-
-        out[asset] = (
-            float(price)
-            if now - ts <= MAX_PRICE_AGE_SEC
-            else None
-        )
-
-    return out
+# Public / Pricing
+from pricing import pricing_snapshot
 
 # ======================================================
-# CONVERSIONS (REFERENCE ONLY)
+# APP CONFIG
 # ======================================================
-def usdt_to_bx(usdt: float) -> float:
-    """
-    Convert USDT → BX (floor reference).
-    """
-    return round(usdt * BX_PER_USDT, 6)
 
-def bx_to_usdt(bx: float) -> float:
-    """
-    Convert BX → USDT (floor reference).
-    """
-    return round(bx * USDT_PER_BX, 6)
+APP_NAME = "Bloxio Core API"
+APP_VERSION = "1.0.0"
+APP_ENV = os.getenv("APP_ENV", "production")
 
-def external_asset_to_bx(asset: str) -> Optional[float]:
-    """
-    Convert external asset price to BX via USDT.
-    """
-    price_usdt = get_price(asset)
-    if price_usdt is None:
-        return None
-    return usdt_to_bx(price_usdt)
+app = FastAPI(
+    title=APP_NAME,
+    version=APP_VERSION,
+    docs_url="/docs" if APP_ENV != "production" else None,
+    redoc_url=None,
+)
 
 # ======================================================
-# BX INTERNAL PRICE (FIXED FLOOR)
+# CORS
 # ======================================================
-def get_bx_floor_price() -> float:
-    """
-    Returns BX internal floor price in BX terms.
-    Always 1 BX.
-    """
-    return 1.0
-
-def get_bx_floor_price_usdt() -> float:
-    """
-    Returns BX internal floor price in USDT.
-    Always 2.0 USDT.
-    """
-    return BX_USDT_FLOOR
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],   # يمكن تقييدها لاحقًا (Fly secrets)
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # ======================================================
-# SNAPSHOT FOR API / UI
+# ROUTERS (CORE API)
 # ======================================================
-def pricing_snapshot() -> Dict:
-    """
-    Complete pricing snapshot for API/UI:
-    - BX floor price
-    - External prices (USDT)
-    - Converted prices to BX (display only)
-    """
-    external = get_all_prices()
+app.include_router(
+    finance_router,
+    prefix="/finance",
+    tags=["finance"]
+)
 
+app.include_router(
+    market_router,
+    prefix="/market",
+    tags=["market"]
+)
+
+app.include_router(
+    casino_router,
+    prefix="/casino",
+    tags=["casino"]
+)
+
+app.include_router(
+    kyc_router,
+    prefix="/kyc",
+    tags=["kyc"]
+)
+
+# ======================================================
+# HEALTH CHECKS (FLY)
+# ======================================================
+@app.get("/health")
+def health():
+    """
+    Health check for Fly.io.
+    Used by Fly proxy & monitors.
+    """
     return {
-        "bx": {
-            "floor_usdt": BX_USDT_FLOOR,
-            "bx_per_usdt": BX_PER_USDT,
-            "usdt_per_bx": USDT_PER_BX
-        },
-        "external_prices_usdt": external,
-        "external_prices_bx": {
-            asset: (
-                usdt_to_bx(price)
-                if price is not None
-                else None
-            )
-            for asset, price in external.items()
-        },
-        "meta": {
-            "max_price_age_sec": MAX_PRICE_AGE_SEC,
-            "supported_assets": sorted(SUPPORTED_ASSETS)
-        }
+        "status": "ok",
+        "service": "api",
+        "env": APP_ENV,
+        "ts": int(time.time())
     }
+
+@app.get("/health/ready")
+def readiness():
+    """
+    Readiness probe (DB, deps can be added later).
+    """
+    return {
+        "ready": True,
+        "ts": int(time.time())
+    }
+
+# ======================================================
+# PUBLIC (READ ONLY)
+# ======================================================
+@app.get("/public/prices", tags=["public"])
+def public_prices():
+    """
+    Unified pricing snapshot:
+    - BX internal floor (2 USDT)
+    - External prices (USDT / BTC / BNB / SOL / TON)
+    """
+    return pricing_snapshot()
+
+@app.get("/public/rtp", tags=["public"])
+def public_rtp():
+    """
+    Casino RTP transparency (read-only).
+    """
+    return rtp_stats()
+
+# ======================================================
+# ROOT
+# ======================================================
+@app.get("/")
+def root():
+    return {
+        "name": APP_NAME,
+        "status": "running",
+        "env": APP_ENV,
+        "ts": int(time.time())
+    }
+
+# ======================================================
+# NOTES (IMPORTANT)
+# ======================================================
+"""
+Fly.io Deployment Notes:
+
+API Service:
+-------------
+CMD: uvicorn main:app --host 0.0.0.0 --port 8080
+
+Ports:
+------
+internal_port = 8080
+external_port = 80 / 443 (Fly proxy)
+
+Watcher:
+--------
+- watcher.py runs as a separate Fly app or process
+- NEVER run watcher inside FastAPI
+- Watcher listens to Webhooks / blockchain events only
+
+Env Vars (Fly Secrets):
+----------------------
+APP_ENV
+API_KEY
+ADMIN_TOKEN
+AUDIT_TOKEN
+HMAC_SECRET
+WATCHER_SECRET
+DATABASE_URL
+TELEGRAM_BOT_TOKEN
+ADMIN_TELEGRAM_ID
+"""
