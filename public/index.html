@@ -93,65 +93,90 @@
   </section>
 
   <!-- ================= MARKET ================= -->
-  <section id="market" class="card view">
-  <h2>Market</h2>
+  
+<section id="market" class="card view">
 
-  <!-- Pair Selector -->
-  <div class="pair-bar" id="pairBar">
-    <span id="currentPair">BX / USDT</span>
-    <span class="arrow">▼</span>
+  <!-- ===== MARKET HEADER ===== -->
+  <div class="market-header">
+    <div class="pair-info" id="pairBar">
+      <strong id="currentPair">BX / USDT</strong>
+      <span class="arrow">▼</span>
+    </div>
+
+    <div class="price-info">
+      <span class="label">Last Price</span>
+      <strong id="lastPrice">—</strong>
+    </div>
   </div>
 
-  <!-- Pair Sheet -->
-  <div class="pair-sheet hidden" id="pairSheet">
+  <!-- ===== MAIN MARKET LAYOUT ===== -->
+  <div class="market-layout">
 
-    <div class="pair-option" data-pair="BX/USDT">
-      <img src="assets/images/usdt.png" alt="USDT">
-      <div class="pair-text">
-        <strong>BX / USDT</strong>
-        <span>Stable</span>
+    <!-- ===== LEFT : ORDER PANEL ===== -->
+    <div class="market-order">
+
+      <div class="order-tabs">
+        <button class="active buy">Buy</button>
+        <button class="sell">Sell</button>
       </div>
+
+      <div class="order-form">
+        <label>Amount</label>
+        <input id="amount" type="number" placeholder="Amount" />
+
+        <button class="btn buy">Buy BX</button>
+        <button class="btn sell">Sell BX</button>
+      </div>
+
     </div>
 
-    <div class="pair-option" data-pair="BX/TON">
-      <img src="assets/images/ton.png" alt="TON">
-      <div class="pair-text">
-        <strong>BX / TON</strong>
-        <span>TON</span>
-      </div>
+    <!-- ===== CENTER : CHART ===== -->
+    <div class="market-chart">
+      <canvas id="priceChart"></canvas>
     </div>
 
-    <div class="pair-option" data-pair="BX/SOL">
-      <img src="assets/images/sol.png" alt="SOL">
-      <div class="pair-text">
-        <strong>BX / SOL</strong>
-        <span>Chain</span>
-      </div>
-    </div>
+    <!-- ===== RIGHT : ORDER BOOK ===== -->
+    <div class="market-book">
 
-    <div class="pair-option" data-pair="BX/BTC">
-      <img src="assets/images/btc.png" alt="BTC">
-      <div class="pair-text">
-        <strong>BX / BTC</strong>
-        <span>Bitcoin</span>
-      </div>
+      <h4>Order Book</h4>
+
+      <ul id="orderBook" class="order-book">
+        <!-- Asks (Sell) -->
+        <li class="ask">
+          <span class="price">95,184.04</span>
+          <span class="amount">0.00313</span>
+        </li>
+
+        <!-- Bids (Buy) -->
+        <li class="bid">
+          <span class="price">95,183.94</span>
+          <span class="amount">2.69205</span>
+        </li>
+      </ul>
+
     </div>
 
   </div>
 
-  <!-- Trade Box -->
-  <div class="trade-box">
-  <input id="amount" type="number" placeholder="Amount" />
-  <button class="btn buy">Buy</button>
-  <button class="btn sell">Sell</button>
-</div>
+  <!-- ===== RECENT TRADES ===== -->
+  <div class="market-trades">
+    <h4>Recent Trades</h4>
 
-<h3 class="chart-title">Chart</h3>
+    <ul class="trades-list" id="trades">
+      <li class="trade buy">
+        <span class="side">BUY</span>
+        <span class="amount">1 BX</span>
+        <span class="price">2.00</span>
+      </li>
+      <li class="trade sell">
+        <span class="side">SELL</span>
+        <span class="amount">1 BX</span>
+        <span class="price">1.99</span>
+      </li>
+    </ul>
+  </div>
 
-<div class="chart-box">
-  <canvas id="priceChart"></canvas>
-</div> </section>
-
+  </section>
   <!-- ================= CASINO ================= -->
   <section id="casino" class="card view">
   <h2 class="casino-title">Casino</h2>
