@@ -1,25 +1,47 @@
 PRAGMA foreign_keys = ON;
 
--- ===============================
--- USERS / WALLETS
--- ===============================
+-- =====================================================
+-- USERS
+-- =====================================================
+CREATE TABLE IF NOT EXISTS users (
+  uid INTEGER PRIMARY KEY,
+  telegram_id BIGINT UNIQUE,
+  username TEXT,
+  created_at INTEGER
+);
+
+-- =====================================================
+-- WALLETS
+-- =====================================================
 CREATE TABLE IF NOT EXISTS wallets (
   uid INTEGER PRIMARY KEY,
   usdt REAL DEFAULT 0,
   ton  REAL DEFAULT 0,
   sol  REAL DEFAULT 0,
   btc  REAL DEFAULT 0,
+  bnb  REAL DEFAULT 0,
   bx   REAL DEFAULT 0,
-  created_at INTEGER
+  created_at INTEGER,
+  FOREIGN KEY(uid) REFERENCES users(uid)
 );
 
--- ===============================
+-- =====================================================
+-- HOT / COLD VAULTS
+-- =====================================================
+CREATE TABLE IF NOT EXISTS wallet_vaults (
+  asset TEXT PRIMARY KEY,
+  hot_balance REAL DEFAULT 0,
+  cold_balance REAL DEFAULT 0,
+  last_reconcile INTEGER
+);
+
+-- =====================================================
 -- LEDGER (DOUBLE ENTRY)
--- ===============================
+-- =====================================================
 CREATE TABLE IF NOT EXISTS ledger (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  ref TEXT,                  -- deposit:sol / withdraw:usdt / casino:slot ...
-  account TEXT,              -- treasury_usdt / user_usdt / revenue_casino ...
+  ref TEXT,
+  account TEXT,
   debit REAL DEFAULT 0,
   credit REAL DEFAULT 0,
   ts INTEGER
@@ -28,33 +50,49 @@ CREATE TABLE IF NOT EXISTS ledger (
 CREATE INDEX IF NOT EXISTS idx_ledger_account ON ledger(account);
 CREATE INDEX IF NOT EXISTS idx_ledger_ts ON ledger(ts);
 
--- ===============================
--- HISTORY (USER VIEW)
--- ===============================
+-- =====================================================
+-- USER HISTORY (UI)
+-- =====================================================
 CREATE TABLE IF NOT EXISTS history (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   uid INTEGER,
-  action TEXT,               -- deposit / withdraw / trade / casino
+  action TEXT,
   asset TEXT,
   amount REAL,
   ref TEXT,
-  ts INTEGER
+  meta TEXT,
+  ts INTEGER,
+  FOREIGN KEY(uid) REFERENCES users(uid)
 );
 
 CREATE INDEX IF NOT EXISTS idx_history_uid ON history(uid);
 CREATE INDEX IF NOT EXISTS idx_history_ts ON history(ts);
 
--- ===============================
--- USED TXs (DEDUP)
--- ===============================
+-- =====================================================
+-- INTERNAL TRANSFERS (BX)
+-- =====================================================
+CREATE TABLE IF NOT EXISTS transfers (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  from_uid INTEGER,
+  to_uid INTEGER,
+  amount REAL,
+  ts INTEGER,
+  FOREIGN KEY(from_uid) REFERENCES users(uid),
+  FOREIGN KEY(to_uid) REFERENCES users(uid)
+);
+
+-- =====================================================
+-- USED TXs (REPLAY PROTECTION)
+-- =====================================================
 CREATE TABLE IF NOT EXISTS used_txs (
   txid TEXT PRIMARY KEY,
+  asset TEXT,
   ts INTEGER
 );
 
--- ===============================
+-- =====================================================
 -- PENDING DEPOSITS
--- ===============================
+-- =====================================================
 CREATE TABLE IF NOT EXISTS pending_deposits (
   txid TEXT PRIMARY KEY,
   uid INTEGER,
@@ -64,48 +102,105 @@ CREATE TABLE IF NOT EXISTS pending_deposits (
   ts INTEGER
 );
 
--- ===============================
--- WITHDRAW WORKFLOW
--- ===============================
-CREATE TABLE IF NOT EXISTS withdrawals (
+-- =====================================================
+-- WITHDRAW QUEUE
+-- =====================================================
+CREATE TABLE IF NOT EXISTS withdraw_queue (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   uid INTEGER,
   asset TEXT,
   amount REAL,
   address TEXT,
-  status TEXT,               -- requested / approved / sent / rejected
+  status TEXT,      -- pending / approved / sent / confirmed / rejected
   txid TEXT,
-  reason TEXT,
-  ts INTEGER
+  ts INTEGER,
+  FOREIGN KEY(uid) REFERENCES users(uid)
 );
 
-CREATE INDEX IF NOT EXISTS idx_withdraw_uid ON withdrawals(uid);
-CREATE INDEX IF NOT EXISTS idx_withdraw_status ON withdrawals(status);
+CREATE INDEX IF NOT EXISTS idx_withdraw_uid ON withdraw_queue(uid);
+CREATE INDEX IF NOT EXISTS idx_withdraw_status ON withdraw_queue(status);
 
--- ===============================
+-- =====================================================
 -- GAME HISTORY (CASINO)
--- ===============================
+-- =====================================================
 CREATE TABLE IF NOT EXISTS game_history (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   uid INTEGER,
   game TEXT,
   bet REAL,
   payout REAL,
+  ts INTEGER,
+  FOREIGN KEY(uid) REFERENCES users(uid)
+);
+
+-- =====================================================
+-- KYC
+-- =====================================================
+CREATE TABLE IF NOT EXISTS kyc (
+  uid INTEGER PRIMARY KEY,
+  level INTEGER,
+  status TEXT,
+  updated_at INTEGER,
+  FOREIGN KEY(uid) REFERENCES users(uid)
+);
+
+CREATE TABLE IF NOT EXISTS kyc_requests (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  uid INTEGER,
+  full_name TEXT,
+  country TEXT,
+  document_type TEXT,
+  document_number TEXT,
+  document_path TEXT,
+  status TEXT,
+  ts INTEGER,
+  FOREIGN KEY(uid) REFERENCES users(uid)
+);
+
+-- =====================================================
+-- PRICE CACHE (pricing.py)
+-- =====================================================
+CREATE TABLE IF NOT EXISTS prices (
+  asset TEXT PRIMARY KEY,
+  price_usdt REAL,
+  updated_at INTEGER
+);
+
+-- =====================================================
+-- MARKET PRICES (CHARTS)
+-- =====================================================
+CREATE TABLE IF NOT EXISTS market_prices (
+  pair TEXT,
+  price REAL,
   ts INTEGER
 );
 
--- ===============================
+CREATE INDEX IF NOT EXISTS idx_market_pair_ts
+ON market_prices(pair, ts);
+
+-- =====================================================
+-- WEBHOOK RATE-LIMIT
+-- =====================================================
+CREATE TABLE IF NOT EXISTS webhook_hits (
+  ip TEXT,
+  ts INTEGER
+);
+
+CREATE INDEX IF NOT EXISTS idx_webhook_hits_ip_ts
+ON webhook_hits(ip, ts);
+
+-- =====================================================
 -- WATCHER METRICS
--- ===============================
+-- =====================================================
 CREATE TABLE IF NOT EXISTS watcher_metrics (
   key TEXT PRIMARY KEY,
   value INTEGER,
   ts INTEGER
 );
 
--- ===============================
+-- =====================================================
 -- TON JETTON CACHE
--- ===============================
+-- =====================================================
 CREATE TABLE IF NOT EXISTS jettons (
   master TEXT PRIMARY KEY,
   symbol TEXT,
