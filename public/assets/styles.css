@@ -703,15 +703,6 @@ input{
   width: auto;
   padding: 14px 28px;
 }
-
-/* موبايل */
-@media (max-width: 420px){
-  .mining-card.extra-horizontal{
-    flex-direction: column;
-    text-align: center;
-    gap: 12px;
-  }
-}
   
 /* =========================================================
    AIRDROP
