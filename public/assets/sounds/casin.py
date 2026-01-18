@@ -62,21 +62,27 @@ GAME_INDEX = {
     "slot": 7,
     "fortune": 8,
     "coins4x4": 9,
+    "plinko": 10,
+    "hilo": 11,
+    "airboss": 12,
 }
 
 # ======================================================
 # RTP CONFIG
 # ======================================================
 RTP = {
-    "coinflip": 0.25,
-    "roulette": 0.22,
-    "limbo": 0.24,
-    "chicken": 0.21,
-    "dice": 0.26,
-    "crash": 0.23,
+    "coinflip": 0.35,
+    "roulette": 0.32,
+    "limbo": 0.34,
+    "chicken": 0.31,
+    "dice": 0.36,
+    "crash": 0.33,
     "slot": 0.24,
-    "fortune": 0.24,
-    "coins4x4": 0.24,
+    "fortune": 0.33,
+    "coins4x4": 0.34,
+    "plinko": 0.34,
+    "hilo": 0.35,
+    "airboss": 0.33,
 }
 
 def probability(multiplier: float, game: str) -> float:
