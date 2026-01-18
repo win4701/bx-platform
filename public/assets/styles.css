@@ -149,99 +149,185 @@ input{
 }
 
 /* =========================================================
-   WALLET
+   WALLET – BINANCE STYLE (FINAL)
 ========================================================= */
-/* GRID العملات */
-.balances{
-  list-style:none;
-  padding:0;
-  margin:0;
-  display:grid;
-  grid-template-columns:repeat(2,1fr);
-  gap:12px;
+
+#wallet{
+  padding-bottom: 90px; /* مساحة للأزرار السفلية */
 }
 
-/* عنصر العملة */
-.balances li{
-  display:flex;
-  align-items:center;
-  gap:10px;
-  background:#0b1f27;
-  border:1px solid var(--border);
-  border-radius:16px;
-  padding:12px;
+/* ================= TOP TOTAL ================= */
+.wallet-top{
+  padding: 16px;
 }
 
-/* حاوية الأيقونة */
-.balances .coin-icon{
-  width:32px;
-  height:32px;
-  border-radius:50%;
-  background:#081a20;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  flex-shrink:0;
+.wallet-top .label{
+  font-size: 13px;
+  color: #9ca3af;
 }
 
-.balances .coin-icon img{
-  width:20px;
-  height:20px;
-  object-fit:contain;
+.wallet-top h1{
+  font-size: 34px;
+  margin-top: 6px;
+  font-weight: 700;
 }
 
-/* اسم العملة */
-.balances .coin-name{
-  font-size:13px;
-  font-weight:600;
-  color:#e6f5ef;
+.wallet-top small{
+  font-size: 14px;
+  color: #9ca3af;
 }
 
-/* الرصيد */
-.balances .coin-balance{
-  margin-left:auto;
-  font-size:13px;
-  font-weight:700;
-  color:var(--green);
-}
+/* ================= MAIN ACTIONS ================= */
 .wallet-actions{
-  margin-top:14px;
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:12px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  padding: 0 16px;
+  margin-top: 12px;
 }
 
-.wallet-actions button{
-  height:44px;
-  border-radius:14px;
-  font-weight:700;
-}
-.deposit-methods{
-  margin-top:16px;
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:14px;
+.wallet-btn{
+  padding: 12px;
+  border-radius: 14px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: transform .15s ease, opacity .15s ease;
 }
 
-.deposit-method{
-  background:#0b1f27;
-  border:1px solid var(--border);
-  border-radius:18px;
-  padding:14px 10px;
-  text-align:center;
+.wallet-btn:hover{
+  opacity: .9;
+  transform: translateY(-1px);
 }
 
-.deposit-method img{
-  width:48px;
-  height:56px;
-  object-fit:contain;
-  margin-bottom:6px;
+/* Deposit – Green */
+.wallet-btn.deposit{
+  background: #22c55e;
+  color: #022c22;
 }
 
-.deposit-method span{
-  font-size:12px;
-  font-weight:600;
-  color:#dff6ef;
+/* Withdraw – Yellow (as requested) */
+.wallet-btn.withdraw{
+  background: #facc15;
+  color: #111827;
+}
+
+/* Transfer – Dark */
+.wallet-btn.transfer{
+  background: #1f2937;
+  color: #e5e7eb;
+}
+
+/* ================= BALANCES ================= */
+.wallet-balances{
+  margin-top: 24px;
+  padding: 0 16px;
+}
+
+.wallet-balances h3{
+  margin-bottom: 8px;
+  font-size: 16px;
+}
+
+.wallet-row{
+  display: flex;
+  align-items: center;
+  padding: 14px 0;
+  border-bottom: 1px solid #020617;
+}
+
+.wallet-row:last-child{
+  border-bottom: none;
+}
+
+.wallet-row img{
+  width: 34px;
+  margin-right: 12px;
+}
+
+.wallet-row .info strong{
+  display: block;
+  font-size: 15px;
+}
+
+.wallet-row .info span{
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.wallet-row .amount{
+  margin-left: auto;
+  font-size: 17px;
+}
+
+/* MAIN COIN (BX Highlight) */
+.wallet-row.main{
+  background: #0f172a;
+  padding: 16px;
+  border-radius: 14px;
+  margin-bottom: 10px;
+}
+
+/* ================= TRANSFER PANEL ================= */
+.wallet-transfer{
+  margin: 16px;
+  padding: 16px;
+  background: #0f172a;
+  border-radius: 16px;
+}
+
+.wallet-transfer h4{
+  margin-bottom: 10px;
+}
+
+.wallet-transfer input{
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 10px;
+  border: none;
+  background: #020617;
+  color: white;
+}
+
+.wallet-transfer .confirm{
+  width: 100%;
+  padding: 12px;
+  border-radius: 14px;
+  background: #3b82f6;
+  color: white;
+  font-weight: 600;
+}
+
+/* ================= BOTTOM ACTIONS ================= */
+.wallet-bottom{
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 16px;
+  background: #020617;
+  border-top: 1px solid #020617;
+}
+
+.wallet-btn.pay{
+  background: #facc15;
+  color: #111827;
+  font-weight: 700;
+}
+
+.wallet-btn.ton{
+  background: #0ea5e9;
+  color: white;
+  font-weight: 700;
+}
+
+/* ================= UTIL ================= */
+.hidden{
+  display: none;
 }
 
 /* =========================================================
