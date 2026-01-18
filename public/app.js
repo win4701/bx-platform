@@ -57,11 +57,108 @@ function playSound(name){
    SNAP / MICRO FEEDBACK
 ========================================================= */
 function snap(el){
-  if(!el || !ENABLE_ANIM) return;
+  if(UI_CONTEXT.section !== "casino") return;
+  if(!el) return;
+
   el.classList.add("snap");
-  navigator.vibrate?.(8);
-  
+  setTimeout(()=>{
+    el.classList.remove("snap");
+  },200);
 }
+
+/* =====================================================
+   MINING LOGIC (INTEGRATED IN app.js)
+===================================================== */
+
+const miningPlans = {
+  BX: [
+    { id: "starter", name: "Starter", days: 15, vip: false },
+    { id: "silver", name: "Silver", days: 30, vip: false },
+    { id: "gold", name: "Gold", days: 45, vip: false },
+    { id: "vip", name: "VIP", days: 60, vip: true },
+    { id: "platinum", name: "Platinum VIP", days: 90, vip: true, horizontal: true }
+  ],
+  BNB: [],
+  SOL: []
+};
+
+// مثال رصيد (سيُربط بالـ backend)
+let userBalances = {
+  BX: 1200,
+  BNB: 0,
+  SOL: 0
+};
+
+function renderMining(coin = "BX") {
+  const grid = document.getElementById("miningGrid");
+  if (!grid) return;
+
+  grid.innerHTML = "";
+
+  const plans = miningPlans[coin] || [];
+
+  plans.forEach(plan => {
+    const card = document.createElement("div");
+    card.className = "mining-card";
+    if (plan.vip) card.classList.add("vip");
+    if (plan.horizontal) card.classList.add("horizontal");
+
+    card.innerHTML = `
+      <div>
+        <h3>${plan.name}</h3>
+        <p class="subtitle">${coin} Mining</p>
+
+        <div class="mining-stat">
+          <span>Duration</span>
+          <strong>${plan.days} days</strong>
+        </div>
+      </div>
+
+      <button class="mining-btn">
+        Subscribe
+      </button>
+    `;
+
+    const btn = card.querySelector(".mining-btn");
+
+    // Disable example (logic will expand)
+    if (userBalances[coin] <= 0) {
+      btn.disabled = true;
+      btn.textContent = "Insufficient balance";
+    }
+
+    btn.addEventListener("click", () => {
+      subscribeMining(plan, coin);
+    });
+
+    grid.appendChild(card);
+  });
+}
+
+// Subscribe handler (placeholder)
+function subscribeMining(plan, coin) {
+  console.log("Subscribe:", plan.name, "Coin:", coin);
+  // هنا لاحقًا:
+  // - JWT
+  // - backend call
+  // - progress start
+}
+
+// Tabs logic
+document.addEventListener("DOMContentLoaded", () => {
+  document.querySelectorAll(".mining-tabs .tab").forEach(tab => {
+    tab.addEventListener("click", () => {
+      document.querySelectorAll(".mining-tabs .tab")
+        .forEach(t => t.classList.remove("active"));
+
+      tab.classList.add("active");
+      renderMining(tab.dataset.coin);
+    });
+  });
+
+  // initial render
+  renderMining("BX");
+});
 
 /* =========================================================
    WALLET
