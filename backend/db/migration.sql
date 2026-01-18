@@ -1,190 +1,195 @@
 PRAGMA foreign_keys = OFF;
 BEGIN TRANSACTION;
 
--- ======================================================
--- USERS
--- ======================================================
-CREATE TABLE IF NOT EXISTS users (
-  uid INTEGER PRIMARY KEY,
-  created_at INTEGER NOT NULL
+-- =====================================================
+-- MIGRATION META (VERSIONING)
+-- =====================================================
+CREATE TABLE IF NOT EXISTS migrations (
+  version INTEGER PRIMARY KEY,
+  applied_at INTEGER
 );
 
--- ======================================================
--- WALLETS (ADD MISSING COLUMNS SAFELY)
--- ======================================================
+INSERT OR IGNORE INTO migrations(version, applied_at)
+VALUES (2, strftime('%s','now'));
+
+-- =====================================================
+-- USERS (EXTEND SAFELY)
+-- =====================================================
+CREATE TABLE IF NOT EXISTS users (
+  uid INTEGER PRIMARY KEY,
+  telegram_id BIGINT UNIQUE,
+  username TEXT,
+  created_at INTEGER
+);
+
+-- =====================================================
+-- WALLETS (FULL – SAFE)
+-- =====================================================
 CREATE TABLE IF NOT EXISTS wallets (
   uid INTEGER PRIMARY KEY,
   usdt REAL DEFAULT 0,
   ton  REAL DEFAULT 0,
   sol  REAL DEFAULT 0,
   btc  REAL DEFAULT 0,
-  bx   REAL DEFAULT 0
+  bnb  REAL DEFAULT 0,
+  bx   REAL DEFAULT 0,
+  created_at INTEGER
 );
 
--- ضمان وجود الأعمدة (SQLite-safe pattern)
-ALTER TABLE wallets ADD COLUMN usdt REAL DEFAULT 0;
-ALTER TABLE wallets ADD COLUMN ton  REAL DEFAULT 0;
-ALTER TABLE wallets ADD COLUMN sol  REAL DEFAULT 0;
-ALTER TABLE wallets ADD COLUMN btc  REAL DEFAULT 0;
-ALTER TABLE wallets ADD COLUMN bx   REAL DEFAULT 0;
-
--- ======================================================
--- PRICES
--- ======================================================
-CREATE TABLE IF NOT EXISTS prices (
+-- =====================================================
+-- HOT / COLD VAULTS
+-- =====================================================
+CREATE TABLE IF NOT EXISTS wallet_vaults (
   asset TEXT PRIMARY KEY,
-  price_usdt REAL NOT NULL,
-  updated_at INTEGER NOT NULL
+  hot_balance REAL DEFAULT 0,
+  cold_balance REAL DEFAULT 0,
+  last_reconcile INTEGER
 );
 
-CREATE TABLE IF NOT EXISTS price_history (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  asset TEXT NOT NULL,
-  price_usdt REAL NOT NULL,
-  ts INTEGER NOT NULL
-);
+-- Seed vaults (safe)
+INSERT OR IGNORE INTO wallet_vaults(asset) VALUES
+ ('usdt'), ('ton'), ('sol'), ('btc'), ('bnb'), ('bx');
 
--- ======================================================
+-- =====================================================
 -- LEDGER (DOUBLE ENTRY)
--- ======================================================
+-- =====================================================
 CREATE TABLE IF NOT EXISTS ledger (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  ref TEXT NOT NULL,
-  account TEXT NOT NULL,
+  ref TEXT,
+  account TEXT,
   debit REAL DEFAULT 0,
   credit REAL DEFAULT 0,
-  ts INTEGER NOT NULL
+  ts INTEGER
 );
 
--- ======================================================
--- HISTORY
--- ======================================================
+-- =====================================================
+-- HISTORY (UI)
+-- =====================================================
 CREATE TABLE IF NOT EXISTS history (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  uid INTEGER NOT NULL,
-  action TEXT NOT NULL,
+  uid INTEGER,
+  action TEXT,
   asset TEXT,
   amount REAL,
   ref TEXT,
-  ts INTEGER NOT NULL
+  meta TEXT,
+  ts INTEGER
 );
 
--- ======================================================
--- GAME HISTORY
--- ======================================================
-CREATE TABLE IF NOT EXISTS game_history (
+-- =====================================================
+-- INTERNAL TRANSFERS (BX)
+-- =====================================================
+CREATE TABLE IF NOT EXISTS transfers (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  uid INTEGER NOT NULL,
-  game TEXT NOT NULL,
-  bet REAL NOT NULL,
-  payout REAL NOT NULL,
-  win INTEGER NOT NULL,
-  created_at INTEGER NOT NULL
+  from_uid INTEGER,
+  to_uid INTEGER,
+  amount REAL,
+  ts INTEGER
 );
 
--- ======================================================
--- AIRDROP ENGINE
--- ======================================================
-CREATE TABLE IF NOT EXISTS airdrops (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  uid INTEGER NOT NULL,
-  type TEXT NOT NULL,
-  bx_amount REAL NOT NULL,
-  reason TEXT,
-  ts INTEGER NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS activity_scores (
-  uid INTEGER PRIMARY KEY,
-  score REAL DEFAULT 0,
-  updated_at INTEGER NOT NULL
-);
-
--- ======================================================
--- REFERRALS
--- ======================================================
-CREATE TABLE IF NOT EXISTS referrals (
-  uid INTEGER PRIMARY KEY,
-  referrer_uid INTEGER,
-  created_at INTEGER NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS referral_stats (
-  uid INTEGER PRIMARY KEY,
-  total_referrals INTEGER DEFAULT 0,
-  active_referrals INTEGER DEFAULT 0,
-  total_value REAL DEFAULT 0
-);
-
--- ======================================================
--- BINANCE ID (AUTO)
--- ======================================================
-CREATE TABLE IF NOT EXISTS binance_deposits (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  uid INTEGER NOT NULL,
-  amount REAL NOT NULL,
-  binance_txid TEXT NOT NULL,
-  status TEXT DEFAULT 'confirmed',
-  created_at INTEGER NOT NULL,
-  confirmed_at INTEGER
-);
-
--- ======================================================
--- PAYEER (AUDIT)
--- ======================================================
-CREATE TABLE IF NOT EXISTS payeer_transactions (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  uid INTEGER NOT NULL,
-  order_id TEXT NOT NULL,
-  amount REAL NOT NULL,
-  status TEXT NOT NULL,
-  created_at INTEGER NOT NULL
-);
-
--- ======================================================
--- DEDUP TRANSACTIONS
--- ======================================================
+-- =====================================================
+-- USED TXs (REPLAY PROTECTION)
+-- =====================================================
 CREATE TABLE IF NOT EXISTS used_txs (
-  txid TEXT PRIMARY KEY
+  txid TEXT PRIMARY KEY,
+  asset TEXT,
+  ts INTEGER
 );
 
--- ======================================================
--- DEVICE FINGERPRINTS (ANTI-SYBIL)
--- ======================================================
-CREATE TABLE IF NOT EXISTS device_fingerprints (
-  uid INTEGER NOT NULL,
-  fp_hash TEXT NOT NULL,
-  first_seen INTEGER NOT NULL,
-  last_seen INTEGER NOT NULL,
-  PRIMARY KEY (uid, fp_hash)
+-- =====================================================
+-- PENDING DEPOSITS
+-- =====================================================
+CREATE TABLE IF NOT EXISTS pending_deposits (
+  txid TEXT PRIMARY KEY,
+  uid INTEGER,
+  asset TEXT,
+  amount REAL,
+  reason TEXT,
+  ts INTEGER
 );
 
--- ======================================================
+-- =====================================================
+-- WITHDRAW QUEUE (NEW FLOW)
+-- =====================================================
+CREATE TABLE IF NOT EXISTS withdraw_queue (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  uid INTEGER,
+  asset TEXT,
+  amount REAL,
+  address TEXT,
+  status TEXT,
+  txid TEXT,
+  ts INTEGER
+);
+
+-- =====================================================
+-- KYC
+-- =====================================================
+CREATE TABLE IF NOT EXISTS kyc (
+  uid INTEGER PRIMARY KEY,
+  level INTEGER,
+  status TEXT,
+  updated_at INTEGER
+);
+
+CREATE TABLE IF NOT EXISTS kyc_requests (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  uid INTEGER,
+  full_name TEXT,
+  country TEXT,
+  document_type TEXT,
+  document_number TEXT,
+  document_path TEXT,
+  status TEXT,
+  ts INTEGER
+);
+
+-- =====================================================
+-- PRICES (pricing.py)
+-- =====================================================
+CREATE TABLE IF NOT EXISTS prices (
+  asset TEXT PRIMARY KEY,
+  price_usdt REAL,
+  updated_at INTEGER
+);
+
+-- =====================================================
+-- MARKET PRICES (CHART)
+-- =====================================================
+CREATE TABLE IF NOT EXISTS market_prices (
+  pair TEXT,
+  price REAL,
+  ts INTEGER
+);
+
+-- =====================================================
+-- WEBHOOK RATE-LIMIT
+-- =====================================================
+CREATE TABLE IF NOT EXISTS webhook_hits (
+  ip TEXT,
+  ts INTEGER
+);
+
+-- =====================================================
 -- INDEXES (SAFE)
--- ======================================================
-CREATE INDEX IF NOT EXISTS idx_wallet_uid
-  ON wallets(uid);
-
+-- =====================================================
 CREATE INDEX IF NOT EXISTS idx_history_uid_ts
   ON history(uid, ts);
-
-CREATE INDEX IF NOT EXISTS idx_game_uid_ts
-  ON game_history(uid, created_at);
 
 CREATE INDEX IF NOT EXISTS idx_ledger_ref
   ON ledger(ref);
 
-CREATE INDEX IF NOT EXISTS idx_price_hist_asset_ts
-  ON price_history(asset, ts);
+CREATE INDEX IF NOT EXISTS idx_withdraw_uid
+  ON withdraw_queue(uid);
 
-CREATE INDEX IF NOT EXISTS idx_airdrops_uid_ts
-  ON airdrops(uid, ts);
+CREATE INDEX IF NOT EXISTS idx_withdraw_status
+  ON withdraw_queue(status);
 
-CREATE INDEX IF NOT EXISTS idx_binance_uid
-  ON binance_deposits(uid);
+CREATE INDEX IF NOT EXISTS idx_market_pair_ts
+  ON market_prices(pair, ts);
 
-CREATE INDEX IF NOT EXISTS idx_payeer_uid
-  ON payeer_transactions(uid);
+CREATE INDEX IF NOT EXISTS idx_webhook_ip_ts
+  ON webhook_hits(ip, ts);
 
 COMMIT;
 PRAGMA foreign_keys = ON;
