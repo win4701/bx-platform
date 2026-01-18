@@ -548,113 +548,168 @@ input{
   display: none;
 }
 
-/* =========================
-   MINING
-========================= */
+/* =========================================================
+   MINING – CARDS STYLE (FINAL)
+========================================================= */
 
-.mining-tabs{
-  display:flex;
-  gap:14px;
-  margin-bottom:18px;
+.mining-container{
+  padding: 16px;
 }
 
-.mining-tabs button{
-  flex:1;
-  height:40px;
-  padding:0 16px;
-  border-radius:18px;
-  border:1px solid #143743;
-  background:linear-gradient(180deg,#0e2a33,#0a1f26);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:10px;
-  color:#9fb3c8;
-  font-weight:800;
-  font-size:14px;
-  transition:.25s ease;
+/* ================= GRID ================= */
+.mining-grid{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
 }
 
-.mining-tabs button.active{
-  box-shadow:0 0 0 2px rgba(110,231,168,.35);
+/* ================= CARD BASE ================= */
+.mining-card{
+  background: linear-gradient(
+    180deg,
+    #0f172a,
+    #020617
+  );
+  border-radius: 22px;
+  padding: 18px;
+  position: relative;
+  box-shadow: 0 0 0 1px rgba(255,255,255,.03);
 }
 
-/* Plans grid */
-.mining-plans{
-  display:grid;
-  grid-template-columns:repeat(2,1fr);
-  gap:18px;
+/* ================= TITLES ================= */
+.mining-card h3{
+  margin-bottom: 6px;
+  font-size: 18px;
 }
 
-/* Card */
-.mining-plan{
-  background:linear-gradient(180deg,#0e2730,#08161b);
-  border:1px solid var(--border);
-  border-radius:22px;
-  padding:12px;
-  position:relative;
+.mining-card .subtitle{
+  font-size: 13px;
+  color: #94a3b8;
+  margin-bottom: 14px;
 }
 
-/* VIP */
-.mining-plan.vip{
-  border-color:var(--yellow);
-  box-shadow:0 0 0 1px rgba(241,196,15,.35);
+/* ================= STATS ================= */
+.mining-stat{
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  margin-bottom: 6px;
 }
 
-.mining-plan.vip::before{
-  content:"VIP";
-  position:absolute;
-  top:10px;
-  right:14px;
-  font-size:11px;
-  font-weight:800;
-  color:#000;
-  background:var(--yellow);
-  padding:4px 8px;
-  border-radius:8px;
+.mining-stat span{
+  color: #94a3b8;
 }
 
-/* Title */
-.mining-plan h4{
-  font-size:14px;
-  font-weight:800;
-  margin-bottom:6px;
+.mining-stat strong{
+  color: #e5e7eb;
 }
 
-/* Profit */
-.mining-profit{
-  font-size:20px;
-  font-weight:800;
-  color:var(--green);
-  margin-bottom:10px;
+/* ================= BUTTON ================= */
+.mining-btn{
+  margin-top: 14px;
+  width: 100%;
+  padding: 12px;
+  border-radius: 16px;
+  border: none;
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+  background: linear-gradient(
+    135deg,
+    #22c55e,
+    #16a34a
+  );
+  color: #022c22;
 }
 
-/* Details */
-.mining-plan ul{
-  list-style:none;
-  padding:0;
-  margin:0;
+/* ================= VIP CARD ================= */
+.mining-card.vip{
+  box-shadow:
+    0 0 0 2px #facc15,
+    0 0 20px rgba(250,204,21,.15);
 }
 
-.mining-plan li{
-  display:flex;
-  justify-content:space-between;
-  padding:4px 0;
-  font-size:12px;
-  color:var(--muted);
+.mining-card.vip::after{
+  content: "VIP";
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  background: #facc15;
+  color: #111827;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 10px;
 }
 
-.mining-plan li strong{
-  color:#e6f5ef;
+/* ================= HORIZONTAL CARD ================= */
+.mining-card.horizontal{
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  align-items: center;
+  padding: 20px;
 }
 
-/* Button */
-.mining-plan button{
-  margin-top:12px;
-  width:100%;
-  height:38px;
-  border-radius:12px;
-  font-weight:800;
+/* LEFT SIDE */
+.mining-card.horizontal .left h3{
+  font-size: 20px;
+}
+
+.mining-card.horizontal .left .subtitle{
+  margin-bottom: 10px;
+}
+
+/* RIGHT SIDE */
+.mining-card.horizontal .right{
+  text-align: right;
+}
+
+.mining-card.horizontal .right .mining-btn{
+  width: auto;
+  padding: 12px 28px;
+}
+
+/* ================= PLATINUM STYLE ================= */
+.mining-card.platinum{
+  box-shadow:
+    0 0 0 2px #fde047,
+    0 0 25px rgba(253,224,71,.25);
+  background: linear-gradient(
+    180deg,
+    #111827,
+    #020617
+  );
+}
+
+.mining-card.platinum::after{
+  content: "PLATINUM VIP";
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  background: linear-gradient(
+    135deg,
+    #fde047,
+    #facc15
+  );
+  color: #111827;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 5px 10px;
+  border-radius: 12px;
+}
+
+/* ================= RESPONSIVE ================= */
+@media (max-width: 420px){
+  .mining-card.horizontal{
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+
+  .mining-card.horizontal .right{
+    text-align: center;
+  }
 }
 /* =========================================================
    AIRDROP
@@ -761,6 +816,7 @@ input{
   font-weight:800;
   cursor:pointer;
 }
+
 /* =========================================================
    BOTTOM NAV
 ========================================================= */
