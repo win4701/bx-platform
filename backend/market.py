@@ -1,142 +1,117 @@
 import time
 import os
-import sqlite3
 from fastapi import APIRouter, HTTPException, Depends
 
 from key import api_guard
-from pricing import (
-    BX_PER_USDT,
-    USDT_PER_BX,
-    get_price,
-    usdt_to_bx,
-    bx_to_usdt,
-)
+from pricing import get_price  # returns price in USDT
+import psycopg2
 
 router = APIRouter(dependencies=[Depends(api_guard)])
-DB_PATH = "db.sqlite"
 
 # ======================================================
-# SPREADS (FROM ENV)
+# CONFIG
 # ======================================================
-BX_BUY_SPREAD_USDT = float(os.getenv("BX_BUY_SPREAD_USDT", "0.0"))
-BX_BUY_SPREAD_TON  = float(os.getenv("BX_BUY_SPREAD_TON", "0.0"))
-BX_BUY_SPREAD_SOL  = float(os.getenv("BX_BUY_SPREAD_SOL", "0.0"))
-BX_BUY_SPREAD_BTC  = float(os.getenv("BX_BUY_SPREAD_BTC", "0.0"))
+BX_BASE_PRICE_USDT = 2.0               # FLOOR PRICE
+MAX_DEMAND_PREMIUM = 0.50              # +50% max
+DB_URL = os.getenv("DATABASE_URL")
 
-BX_SELL_SPREAD_USDT = float(os.getenv("BX_SELL_SPREAD_USDT", "0.0"))
-BX_SELL_SPREAD_TON  = float(os.getenv("BX_SELL_SPREAD_TON", "0.0"))
-BX_SELL_SPREAD_SOL  = float(os.getenv("BX_SELL_SPREAD_SOL", "0.0"))
-BX_SELL_SPREAD_BTC  = float(os.getenv("BX_SELL_SPREAD_BTC", "0.0"))
+ALLOWED_ASSETS = {"usdt", "ton", "sol", "btc", "bnb"}
+
+# ======================================================
+# SPREADS (ENV)
+# ======================================================
+SPREADS = {
+    "usdt": {
+        "buy":  float(os.getenv("BX_BUY_SPREAD_USDT", 0)),
+        "sell": float(os.getenv("BX_SELL_SPREAD_USDT", 0)),
+    },
+    "ton": {
+        "buy":  float(os.getenv("BX_BUY_SPREAD_TON", 0)),
+        "sell": float(os.getenv("BX_SELL_SPREAD_TON", 0)),
+    },
+    "sol": {
+        "buy":  float(os.getenv("BX_BUY_SPREAD_SOL", 0)),
+        "sell": float(os.getenv("BX_SELL_SPREAD_SOL", 0)),
+    },
+    "btc": {
+        "buy":  float(os.getenv("BX_BUY_SPREAD_BTC", 0)),
+        "sell": float(os.getenv("BX_SELL_SPREAD_BTC", 0)),
+    },
+    "bnb": {
+        "buy":  float(os.getenv("BX_BUY_SPREAD_BNB", 0)),
+        "sell": float(os.getenv("BX_SELL_SPREAD_BNB", 0)),
+    },
+}
 
 # ======================================================
 # DB
 # ======================================================
-import psycopg2, os
-
 def db():
-    return psycopg2.connect(os.getenv("DATABASE_URL"))
+    return psycopg2.connect(DB_URL)
 
 # ======================================================
-# LEDGER (DOUBLE ENTRY)
+# DEMAND-BASED PRICE (BX)
 # ======================================================
-def ledger(ref: str, debit: str, credit: str, amount: float):
-    ts = int(time.time())
+def demand_premium():
+    """
+    Increase price based on net buy demand (last 1h)
+    """
     c = db().cursor()
-    c.execute(
-        "INSERT INTO ledger(ref, account, debit, credit, ts) VALUES (?,?,?,?,?)",
-        (ref, debit, amount, 0, ts)
-    )
-    c.execute(
-        "INSERT INTO ledger(ref, account, debit, credit, ts) VALUES (?,?,?,?,?)",
-        (ref, credit, 0, amount, ts)
-    )
-    c.connection.commit()
+    buy = c.execute(
+        """SELECT COALESCE(SUM(amount),0)
+           FROM history
+           WHERE action='market_buy'
+           AND ts > extract(epoch from now()) - 3600"""
+    ).fetchone()[0]
+
+    sell = c.execute(
+        """SELECT COALESCE(SUM(amount),0)
+           FROM history
+           WHERE action='market_sell'
+           AND ts > extract(epoch from now()) - 3600"""
+    ).fetchone()[0]
+
+    net = max(buy - sell, 0)
+    premium = net / 10000  # كل 10k BX = +1%
+    return min(premium, MAX_DEMAND_PREMIUM)
+
+def bx_price_usdt():
+    return BX_BASE_PRICE_USDT * (1 + demand_premium())
 
 # ======================================================
-# HELPERS
-# ======================================================
-def get_spread(asset: str, side: str) -> float:
-    if side == "buy":
-        return {
-            "usdt": BX_BUY_SPREAD_USDT,
-            "ton":  BX_BUY_SPREAD_TON,
-            "sol":  BX_BUY_SPREAD_SOL,
-            "btc":  BX_BUY_SPREAD_BTC,
-        }[asset]
-    else:
-        return {
-            "usdt": BX_SELL_SPREAD_USDT,
-            "ton":  BX_SELL_SPREAD_TON,
-            "sol":  BX_SELL_SPREAD_SOL,
-            "btc":  BX_SELL_SPREAD_BTC,
-        }[asset]
-
-# ======================================================
-# QUOTE (READ ONLY)
+# QUOTE
 # ======================================================
 @router.post("/quote")
 def quote(asset: str, side: str, amount: float):
-    """
-    asset: usdt | ton | sol | btc
-    side: buy | sell
-    amount:
-      - buy  -> amount of asset
-      - sell -> amount of BX
-    """
-    if asset not in ("usdt", "ton", "sol", "btc"):
+    if asset not in ALLOWED_ASSETS:
         raise HTTPException(400, "INVALID_ASSET")
     if side not in ("buy", "sell"):
         raise HTTPException(400, "INVALID_SIDE")
     if amount <= 0:
         raise HTTPException(400, "INVALID_AMOUNT")
 
-    spread = get_spread(asset, side)
+    asset_usdt = 1 if asset == "usdt" else get_price(asset)
+    if asset_usdt is None:
+        raise HTTPException(400, "PRICE_UNAVAILABLE")
 
-    # ---------------- BUY BX ----------------
-    if side == "buy":
-        if asset == "usdt":
-            usdt_val = amount
-        else:
-            price = get_price(asset)
-            if price is None:
-                raise HTTPException(400, f"{asset.upper()}_PRICE_UNAVAILABLE")
-            usdt_val = amount * price
+    bx_usdt = bx_price_usdt()
+    raw_price = bx_usdt / asset_usdt
 
-        bx = usdt_to_bx(usdt_val) * (1 - spread)
+    spread = SPREADS[asset][side]
+    price = raw_price * (1 + spread if side == "buy" else 1 - spread)
 
-        return {
-            "asset": asset,
-            "side": side,
-            "amount": amount,
-            "result": round(bx, 6),
-            "rate": BX_PER_USDT,
-            "spread": spread,
-        }
-
-    # ---------------- SELL BX ----------------
-    if side == "sell":
-        bx = amount
-        usdt_val = bx_to_usdt(bx) * (1 - spread)
-
-        if asset == "usdt":
-            result = usdt_val
-        else:
-            price = get_price(asset)
-            if price is None:
-                raise HTTPException(400, f"{asset.upper()}_PRICE_UNAVAILABLE")
-            result = usdt_val / price
-
-        return {
-            "asset": asset,
-            "side": side,
-            "amount": amount,
-            "result": round(result, 6),
-            "rate": USDT_PER_BX,
-            "spread": spread,
-        }
+    return {
+        "pair": f"BX/{asset.upper()}",
+        "side": side,
+        "price": round(price, 8),
+        "amount": amount,
+        "total": round(price * amount, 8),
+        "bx_usdt": round(bx_usdt, 4),
+        "spread": spread,
+    }
 
 # ======================================================
-# EXECUTE (STATE CHANGING)
+# EXECUTE
 # ======================================================
 @router.post("/execute")
 def execute(payload: dict):
@@ -144,42 +119,61 @@ def execute(payload: dict):
     asset = payload.get("asset")
     side = payload.get("side")
     amount = float(payload.get("amount", 0))
-    result = float(payload.get("result", 0))
 
     if uid <= 0:
         raise HTTPException(400, "INVALID_UID")
-    if asset not in ("usdt", "ton", "sol", "btc"):
+    if asset not in ALLOWED_ASSETS:
         raise HTTPException(400, "INVALID_ASSET")
     if side not in ("buy", "sell"):
         raise HTTPException(400, "INVALID_SIDE")
 
+    q = quote(asset, side, amount)
+    total = q["total"]
+    price = q["price"]
+
     c = db().cursor()
     ts = int(time.time())
 
-    # ---------------- BUY BX ----------------
     if side == "buy":
         c.execute(
-            f"UPDATE wallets SET {asset} = {asset} - ?, bx = bx + ? WHERE uid=?",
-            (amount, result, uid)
+            f"UPDATE wallets SET {asset}={asset}-%s, bx=bx+%s WHERE uid=%s",
+            (amount, total, uid)
         )
-        ledger("market:buy", f"user_{asset}", "user_bx", amount)
         action = "market_buy"
-
-    # ---------------- SELL BX ----------------
     else:
         c.execute(
-            f"UPDATE wallets SET bx = bx - ?, {asset} = {asset} + ? WHERE uid=?",
-            (amount, result, uid)
+            f"UPDATE wallets SET bx=bx-%s, {asset}={asset}+%s WHERE uid=%s",
+            (amount, total, uid)
         )
-        ledger("market:sell", "user_bx", f"user_{asset}", amount)
         action = "market_sell"
 
+    # history (used for chart + demand)
     c.execute(
-        """INSERT INTO history
-           (uid, action, asset, amount, ref, ts)
-           VALUES (?,?,?,?,?,?)""",
-        (uid, action, asset, amount, "market", ts)
+        """INSERT INTO history(uid, action, asset, amount, price, ts)
+           VALUES (%s,%s,%s,%s,%s,%s)""",
+        (uid, action, asset, amount, price, ts)
     )
 
     c.connection.commit()
-    return {"status": "ok"}
+    return {"status": "filled", **q}
+
+# ======================================================
+# REAL CHART (BX / BNB)
+# ======================================================
+@router.get("/chart/bx_bnb")
+def chart_bx_bnb(limit: int = 100):
+    c = db().cursor()
+    rows = c.execute(
+        """SELECT price, ts
+           FROM history
+           WHERE asset='bnb'
+           AND action IN ('market_buy','market_sell')
+           ORDER BY ts DESC
+           LIMIT %s""",
+        (limit,)
+    ).fetchall()
+
+    return [
+        {"price": float(p), "ts": int(t)}
+        for p, t in reversed(rows)
+    ]
