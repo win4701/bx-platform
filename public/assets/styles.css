@@ -656,53 +656,6 @@ input{
   border-radius:12px;
   font-weight:800;
 }
-
-/* =========================================================
-   EXTRA HORIZONTAL CARD (SAFE ADDITION)
-========================================================= */
-
-/* الشبكة تبقى كما هي */
-.mining-grid{
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 14px;
-}
-
-/* الكرت الأفقي فقط */
-.mining-card.extra-horizontal{
-  grid-column: 1 / -1;          /* بعرض كامل */
-  background: linear-gradient(
-    180deg,
-    #0f172a,
-    #020617
-  );
-  border-radius: 22px;
-  padding: 20px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  box-shadow:
-    0 0 0 2px #fde047,
-    0 0 24px rgba(253,224,71,.25);
-  margin-top: 6px;
-}
-
-/* النص */
-.mining-card.extra-horizontal h3{
-  font-size: 20px;
-  margin-bottom: 6px;
-}
-
-.mining-card.extra-horizontal .subtitle{
-  font-size: 13px;
-  color: #94a3b8;
-}
-
-/* زر الاشتراك */
-.mining-card.extra-horizontal .mining-btn{
-  width: auto;
-  padding: 14px 28px;
-}
   
 /* =========================================================
    AIRDROP
