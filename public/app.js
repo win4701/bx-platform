@@ -1083,31 +1083,43 @@ function navigate(section) {
 
   APP_STATE.currentSection = section;
 
-  document.querySelectorAll(".section").forEach(sec => {
-    sec.style.display = "none";
+  // إخفاء كل الأقسام
+  document.querySelectorAll(".view").forEach(sec => {
+    sec.classList.remove("active");
   });
 
-  const active = $(section);
-  if (active) active.style.display = "block";
+  // إظهار القسم المطلوب
+  const activeSection = document.getElementById(section);
+  if (activeSection) {
+    activeSection.classList.add("active");
+  }
 
-  // تحديثات ذكية حسب القسم
+  // تحديث أزرار البوتوم ناف
+  document.querySelectorAll(".bottom-nav button").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.tab === section);
+  });
+
+  // تحميل بيانات حسب القسم
   if (section === "wallet") loadWallet();
-  if (section === "market") {}
-  if (section === "casino") {}
   if (section === "mining") loadMining();
   if (section === "airdrop") loadAirdrop();
 }
+
+function autoBindNavigation() {
+  document.querySelectorAll(".bottom-nav button").forEach(btn => {
+    btn.addEventListener("click", () => {
+      navigate(btn.dataset.tab);
+    });
+  });
+     }
 /* ================================================================================================
    FINAL INIT
 ================================================================================================ */
 
 document.addEventListener("DOMContentLoaded", () => {
-
-  // 🔗 ربط القائمة تلقائيًا بدون data-nav أو ids
   autoBindNavigation();
-
-  // 🧭 الانتقال إلى القسم الافتراضي
   navigate(APP_STATE.currentSection);
+});
 
   // 🎁 Airdrop + Referrals
   if (FEATURES.AIRDROP) {
