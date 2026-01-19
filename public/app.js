@@ -1111,15 +1111,18 @@ function autoBindNavigation() {
       navigate(btn.dataset.tab);
     });
   });
-     }
+}
 /* ================================================================================================
    FINAL INIT
 ================================================================================================ */
 
 document.addEventListener("DOMContentLoaded", () => {
+
+  // 🔗 ربط أزرار التنقل
   autoBindNavigation();
-  navigate(APP_STATE.currentSection);
-});
+
+  // 🧭 القسم الافتراضي
+  navigate(APP_STATE.currentSection || "wallet");
 
   // 🎁 Airdrop + Referrals
   if (FEATURES.AIRDROP) {
