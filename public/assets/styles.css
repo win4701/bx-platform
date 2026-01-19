@@ -550,159 +550,113 @@ input{
 /* =====================================================
    MINING SECTION – GENERAL STYLES (JS DRIVEN)
 ===================================================== */
+/* ============================================
+   MINING
+============================= ===================*/
 
-/* =========================================================
-   MINING SECTION – SAFE STABLE LAYOUT
-   (NO CORE BREAKING)
-========================================================= */
-
-/* ===== SECTION BASE ===== */
-#mining{
-  padding: 16px;
+.mining-tabs{
+  display:flex;
+  gap:14px;
+  margin-bottom:18px;
 }
 
-/* ===== HEADER ===== */
-#mining .page-header h2{
-  font-size: 22px;
-  margin-bottom: 16px;
+.mining-tabs button{
+  flex:1;
+  height:40px;
+  padding:0 16px;
+  border-radius:18px;
+  border:1px solid #143743;
+  background:linear-gradient(180deg,#0e2a33,#0a1f26);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  color:#9fb3c8;
+  font-weight:800;
+  font-size:14px;
+  transition:.25s ease;
 }
 
-/* =========================================================
-   TABS (BX / BNB / SOL)
-========================================================= */
-#mining .mining-tabs{
-  display: flex;
-  gap: 12px;
-  margin-bottom: 22px;
+.mining-tabs button.active{
+  box-shadow:0 0 0 2px rgba(110,231,168,.35);
 }
 
-#mining .mining-tabs .tab{
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 12px;
-  border-radius: 18px;
-  background: #020617;
-  color: #94a3b8;
-  border: 1px solid rgba(255,255,255,.06);
-  font-weight: 600;
+/* Plans grid */
+.mining-plans{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:18px;
 }
 
-#mining .mining-tabs .tab img{
-  width: 24px;
-  height: 24px;
-  object-fit: contain;
+/* Card */
+.mining-plan{
+  background:linear-gradient(180deg,#0e2730,#08161b);
+  border:1px solid var(--border);
+  border-radius:22px;
+  padding:12px;
+  position:relative;
 }
 
-#mining .mining-tabs .tab.active{
-  background: linear-gradient(135deg,#0f766e,#022c22);
-  color: #ecfeff;
-  box-shadow: 0 0 0 2px rgba(34,197,94,.35);
+/* VIP */
+.mining-plan.vip{
+  border-color:var(--yellow);
+  box-shadow:0 0 0 1px rgba(241,196,15,.35);
 }
 
-/* =========================================================
-   GRID SYSTEM (OLD STYLE – STABLE)
-========================================================= */
-#mining .mining-grid{
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
-  align-items: stretch;
+.mining-plan.vip::before{
+  content:"VIP";
+  position:absolute;
+  top:10px;
+  right:14px;
+  font-size:11px;
+  font-weight:800;
+  color:#000;
+  background:var(--yellow);
+  padding:4px 8px;
+  border-radius:8px;
 }
 
-/* =========================================================
-   CARD BASE
-========================================================= */
-#mining .mining-card{
-  background: linear-gradient(180deg,#0f172a,#020617);
-  border-radius: 22px;
-  padding: 18px;
-  box-shadow: 0 0 0 1px rgba(255,255,255,.05);
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  min-height: 260px;
+/* Title */
+.mining-plan h4{
+  font-size:14px;
+  font-weight:800;
+  margin-bottom:6px;
 }
 
-/* ===== TITLE ===== */
-#mining .mining-card h3{
-  font-size: 18px;
-  margin-bottom: 4px;
+/* Profit */
+.mining-profit{
+  font-size:20px;
+  font-weight:800;
+  color:var(--green);
+  margin-bottom:10px;
 }
 
-/* ===== SUBTITLE ===== */
-#mining .mining-card .subtitle{
-  font-size: 13px;
-  color: #94a3b8;
-  margin-bottom: 14px;
+/* Details */
+.mining-plan ul{
+  list-style:none;
+  padding:0;
+  margin:0;
 }
 
-/* ===== STATS ===== */
-#mining .mining-stat{
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 14px;
-  margin-bottom: 6px;
-  color: #e5e7eb;
+.mining-plan li{
+  display:flex;
+  justify-content:space-between;
+  padding:4px 0;
+  font-size:12px;
+  color:var(--muted);
 }
 
-/* ===== BUTTON ===== */
-#mining .mining-btn{
-  margin-top: auto;
-  padding: 12px;
-  border-radius: 16px;
-  border: none;
-  font-weight: 700;
-  background: linear-gradient(135deg,#22c55e,#16a34a);
-  color: #022c22;
-  cursor: pointer;
+.mining-plan li strong{
+  color:#e6f5ef;
 }
 
-/* =========================================================
-   VIP / PLATINUM (HORIZONTAL – OLD STYLE)
-========================================================= */
-#mining .mining-card.horizontal{
-  grid-column: 1 / -1;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  min-height: 180px;
-}
-
-/* محتوى الخطة */
-#mining .mining-card.horizontal > div{
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-/* VIP BORDER */
-#mining .mining-card.vip{
-  box-shadow:
-    0 0 0 2px #facc15,
-    0 0 22px rgba(250,204,21,.25);
-}
-
-/* =========================================================
-   MOBILE (SAFE – NO BREAK)
-========================================================= */
-@media (max-width: 420px){
-  #mining .mining-grid{
-    grid-template-columns: 1fr;
-  }
-
-  #mining .mining-card.horizontal{
-    flex-direction: column;
-    text-align: center;
-  }
-
-  #mining .mining-card.horizontal .mining-btn{
-    width: 100%;
-  }
+/* Button */
+.mining-plan button{
+  margin-top:12px;
+  width:100%;
+  height:38px;
+  border-radius:12px;
+  font-weight:800;
 }
 
 /* =========================================================
