@@ -585,6 +585,10 @@ input{
   gap:18px;
 }
 
+.mining-plan{
+  box-shadow: 0 12px 24px rgba(0,0,0,.35);
+}
+
 /* Card */
 .mining-plan{
   position: relative;
