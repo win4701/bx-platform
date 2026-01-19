@@ -728,6 +728,7 @@ document.addEventListener("DOMContentLoaded", () => {
 const MINING_STATE = {
   activeBX: null,
   activeBNB: null,
+  activeSOL: null,   // ✅ جديد
   history: []
 };
 
@@ -869,6 +870,21 @@ async function subscribeBNBMining(planId, amount) {
   });
 
   toast("BNB Mining activated");
+  loadMining();
+}
+async function subscribeSOLMining(planId, amount) {
+  if (!planId || amount <= 0) return;
+
+  await fetch(API_BASE + "/mining/sol/subscribe", {
+    method: "POST",
+    headers: {
+      ...authHeaders(),
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ plan: planId, amount })
+  });
+
+  toast("SOL Mining activated");
   loadMining();
 }
 
@@ -1063,6 +1079,8 @@ function renderPartners() {
 ================================================================================================ */
 
 function navigate(section) {
+  if (!section) return;
+
   APP_STATE.currentSection = section;
 
   document.querySelectorAll(".section").forEach(sec => {
@@ -1072,13 +1090,13 @@ function navigate(section) {
   const active = $(section);
   if (active) active.style.display = "block";
 
+  // تحديثات ذكية حسب القسم
   if (section === "wallet") loadWallet();
   if (section === "market") {}
   if (section === "casino") {}
   if (section === "mining") loadMining();
   if (section === "airdrop") loadAirdrop();
 }
-
 /* ================================================================================================
    FINAL INIT
 ================================================================================================ */
