@@ -587,11 +587,10 @@ input{
 
 /* Card */
 .mining-plan{
-  background:linear-gradient(180deg,#0e2730,#08161b);
-  border:1px solid var(--border);
-  border-radius:22px;
-  padding:12px;
-  position:relative;
+  position: relative;
+  background-repeat: no-repeat;
+  background-position: top 16px right 16px;
+  background-size: 32px 32px;
 }
 
 /* VIP */
