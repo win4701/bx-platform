@@ -782,19 +782,68 @@ function renderMining() {
  * Render available mining plans
  */
 function renderMiningPlans() {
-  if (!$("miningPlans")) return;
+  const grid = $("miningGrid");
+  if (!grid) return;
 
-  $("miningPlans").innerHTML = MINING_PLANS.map(plan => {
-    return `
-      <div class="mining-plan ${plan.horizontal ? "horizontal" : ""}">
-        <h3>${plan.name}</h3>
-        <p>${plan.days} Days</p>
-        <button onclick="subscribeBXMining('${plan.id}')">
-          Start BX Mining
-        </button>
+  grid.innerHTML = `
+    <div class="mining-card">
+      <h3>Starter</h3>
+      <div class="subtitle">BX Mining</div>
+
+      <div class="mining-stat"><span>Daily Profit</span><strong>1.2%</strong></div>
+      <div class="mining-stat"><span>Duration</span><strong>30 days</strong></div>
+      <div class="mining-stat"><span>Min</span><strong>10 BX</strong></div>
+      <div class="mining-stat"><span>Max</span><strong>500 BX</strong></div>
+
+      <button class="mining-btn" onclick="subscribeBXMining('starter')">
+        Subscribe
+      </button>
+    </div>
+
+    <div class="mining-card">
+      <h3>Silver</h3>
+      <div class="subtitle">BX Mining</div>
+
+      <div class="mining-stat"><span>Daily Profit</span><strong>4%</strong></div>
+      <div class="mining-stat"><span>Duration</span><strong>45 days</strong></div>
+      <div class="mining-stat"><span>Min</span><strong>100 BX</strong></div>
+      <div class="mining-stat"><span>Max</span><strong>2000 BX</strong></div>
+
+      <button class="mining-btn" onclick="subscribeBXMining('silver')">
+        Subscribe
+      </button>
+    </div>
+
+    <div class="mining-card">
+      <h3>Gold</h3>
+      <div class="subtitle">BX Mining</div>
+
+      <div class="mining-stat"><span>Daily Profit</span><strong>9%</strong></div>
+      <div class="mining-stat"><span>Duration</span><strong>60 days</strong></div>
+      <div class="mining-stat"><span>Min</span><strong>500 BX</strong></div>
+      <div class="mining-stat"><span>Max</span><strong>10000 BX</strong></div>
+
+      <button class="mining-btn" onclick="subscribeBXMining('gold')">
+        Subscribe
+      </button>
+    </div>
+
+    <div class="mining-card vip horizontal">
+      <div>
+        <h3>VIP</h3>
+        <div class="subtitle">BX Mining</div>
+
+        <div class="mining-stat"><span>Daily Profit</span><strong>15%</strong></div>
+        <div class="mining-stat"><span>Duration</span><strong>90 days</strong></div>
+        <div class="mining-stat"><span>Min</span><strong>2000 BX</strong></div>
+        <div class="mining-stat"><span>Max</span><strong>50000 BX</strong></div>
       </div>
-    `;
-  }).join("");
+
+      <button class="mining-btn" onclick="subscribeBXMining('vip')">
+        Subscribe
+      </button>
+    </div>
+  `;
 }
 
 /**
