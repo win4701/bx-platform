@@ -1,652 +1,1103 @@
-/* =========================================================
-   CONFIG
-========================================================= */
+'use strict';
+
+/* ================================================================================================
+   GLOBAL CORE
+================================================================================================ */
+
+/**
+ * Base API endpoint (Fly.io backend)
+ */
 const API_BASE = "https://bx-backend.fly.dev";
 
-/* Internal price */
-const INTERNAL_BX_USDT = 2.0; // 1 BX = 2 USDT
-const MARKET_FEE = 0.002;
-
-/* =========================================================
-   PROVABLY FAIR – CLIENT SEED
-========================================================= */
-let CLIENT_SEED =
-  localStorage.getItem("client_seed") || "1.2.3.4";
-
-/* =========================================================
-   DEVICE / PERFORMANCE
-========================================================= */
-const isLowEnd =
-  navigator.hardwareConcurrency <= 4 ||
-  navigator.deviceMemory <= 4;
-
-const ENABLE_ANIM = !isLowEnd;
-
-/* =========================================================
-   SOUNDS
-========================================================= */
-const sounds = {
-  click: document.getElementById("snd-click"),
-  win:   document.getElementById("snd-win"),
-  lose:  document.getElementById("snd-lose"),
-  spin:  document.getElementById("snd-spin"),
+/**
+ * Internal application state
+ */
+const APP_STATE = {
+  ready: false,
+  currentSection: "wallet",
+  lastTick: 0
 };
 
-function playSound(name){
-  const s = sounds[name];
-  if(!s) return;
+/**
+ * Utility: safe DOM getter
+ */
+function $(id) {
+  return document.getElementById(id);
+}
 
-  // لا تشغّل الصوت إلا بعد تفاعل المستخدم
-  if (document.visibilityState !== "visible") return;
-
-  try{
-    s.pause();
-    s.currentTime = 0;
-
-    const playPromise = s.play();
-    if (playPromise !== undefined) {
-      playPromise.catch(() => {
-        // تجاهل الخطأ (المتصفح منع الصوت)
-      });
-    }
-  }catch(e){
-    // تجاهل أي خطأ بدون إيقاف JS
+/**
+ * Utility: logger (can be disabled in production)
+ */
+function log(...args) {
+  if (window.DEBUG_MODE) {
+    console.log("[APP]", ...args);
   }
 }
-/* =========================================================
-   SNAP / MICRO FEEDBACK
-========================================================= */
-function snap(el){
-  if(UI_CONTEXT.section !== "casino") return;
-  if(!el) return;
 
-  el.classList.add("snap");
-  setTimeout(()=>{
-    el.classList.remove("snap");
-  },200);
+/* ================================================================================================
+   CONFIGURATION
+================================================================================================ */
+
+/**
+ * BX internal peg
+ * This value NEVER changes on frontend
+ */
+const BX_FIXED_PRICE_USDT = 2; // 1 BX = 2 USDT
+
+/**
+ * BX chart visual bounds (for market animation only)
+ */
+const BX_CHART_MIN = BX_FIXED_PRICE_USDT * 0.9;
+const BX_CHART_MAX = BX_FIXED_PRICE_USDT * 1.1;
+
+/**
+ * Market pairs supported
+ */
+const MARKET_PAIRS = [
+  "BX/USDT",
+  "BX/TON",
+  "BX/BNB",
+  "BX/SOL",
+  "BX/BTC"
+];
+
+/**
+ * Feature flags (do NOT remove existing sections, only toggle behavior)
+ */
+const FEATURES = {
+  WALLET: true,
+  MARKET: true,
+  CASINO: true,
+  MINING: true,
+  AIRDROP: true,
+  PARTNERS: true
+};
+
+/* ================================================================================================
+   USER & AUTH
+================================================================================================ */
+
+/**
+ * User context (hydrated from backend after auth)
+ */
+const USER = {
+  id: null,
+  username: null,
+  jwt: localStorage.getItem("jwt") || null,
+  telegramId: null,
+  binanceId: null,
+  connectedWallet: null
+};
+
+/**
+ * Authorization headers helper
+ */
+function authHeaders() {
+  return USER.jwt
+    ? { "Authorization": "Bearer " + USER.jwt }
+    : {};
 }
 
-/* =====================================================
-   MINING LOGIC (INTEGRATED IN app.js)
-===================================================== */
+/**
+ * Check if user is authenticated
+ */
+function isAuthenticated() {
+  return !!USER.jwt;
+}
 
-const miningPlans = {
-  BX: [
-    { id: "starter", name: "Starter", days: 15, vip: false },
-    { id: "silver", name: "Silver", days: 30, vip: false },
-    { id: "gold", name: "Gold", days: 45, vip: false },
-    { id: "vip", name: "VIP", days: 60, vip: true },
-    { id: "platinum", name: "Platinum VIP", days: 90, vip: true, horizontal: true }
-  ],
-  BNB: [],
-  SOL: []
-};
+/* ================================================================================================
+   PROVABLY FAIR (CLIENT SIDE)
+================================================================================================ */
 
-// مثال رصيد (سيُربط بالـ backend)
-let userBalances = {
-  BX: 1200,
-  BNB: 0,
-  SOL: 0
-};
+/**
+ * Client Seed
+ * - Editable from UI
+ * - Stored in localStorage
+ * - Sent with every casino play
+ */
+let CLIENT_SEED = localStorage.getItem("client_seed") || "1.2.3.4";
 
-function renderMining(coin = "BX") {
-  const grid = document.getElementById("miningGrid");
-  if (!grid) return;
+/**
+ * Update client seed
+ */
+function setClientSeed(seed) {
+  if (!seed || typeof seed !== "string") return;
+  CLIENT_SEED = seed;
+  localStorage.setItem("client_seed", seed);
+  log("Client seed updated:", seed);
+}
 
-  grid.innerHTML = "";
-
-  const plans = miningPlans[coin] || [];
-
-  plans.forEach(plan => {
-    const card = document.createElement("div");
-    card.className = "mining-card";
-    if (plan.vip) card.classList.add("vip");
-    if (plan.horizontal) card.classList.add("horizontal");
-
-    card.innerHTML = `
-      <div>
-        <h3>${plan.name}</h3>
-        <p class="subtitle">${coin} Mining</p>
-
-        <div class="mining-stat">
-          <span>Duration</span>
-          <strong>${plan.days} days</strong>
-        </div>
-      </div>
-
-      <button class="mining-btn">
-        Subscribe
-      </button>
-    `;
-
-    const btn = card.querySelector(".mining-btn");
-
-    // Disable example (logic will expand)
-    if (userBalances[coin] <= 0) {
-      btn.disabled = true;
-      btn.textContent = "Insufficient balance";
+/**
+ * Load current fairness state (server seed hash)
+ */
+async function loadFairness() {
+  try {
+    const r = await fetch(API_BASE + "/casino/fairness");
+    if (!r.ok) return;
+    const data = await r.json();
+    if ($("serverSeedHash")) {
+      $("serverSeedHash").textContent = data.server_seed_hash;
     }
+  } catch (e) {
+    console.error("Fairness load error", e);
+  }
+}
 
-    btn.addEventListener("click", () => {
-      subscribeMining(plan, coin);
+/**
+ * Reveal server seed (after round)
+ */
+async function revealServerSeed() {
+  try {
+    const r = await fetch(API_BASE + "/casino/reveal");
+    if (!r.ok) return;
+    const data = await r.json();
+    alert("Server Seed:\n" + data.server_seed);
+  } catch (e) {
+    console.error("Reveal error", e);
+  }
+}
+
+/* ================================================================================================
+   UI NOTIFICATIONS
+================================================================================================ */
+
+/**
+ * Simple toast notification
+ */
+function toast(message) {
+  if (!message) return;
+  const el = document.createElement("div");
+  el.className = "toast";
+  el.textContent = message;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 3000);
+}
+
+/* ================================================================================================
+   WALLET (DISPLAY + ACTION HOOKS)
+================================================================================================ */
+
+/**
+ * Wallet balances (display only)
+ */
+let WALLET = {
+  BX: 0,
+  USDT: 0,
+  TON: 0,
+  BNB: 0,
+  SOL: 0,
+  BTC: 0
+};
+
+/**
+ * Load wallet balances from backend
+ */
+async function loadWallet() {
+  if (!FEATURES.WALLET || !isAuthenticated()) return;
+
+  try {
+    const r = await fetch(API_BASE + "/wallet", {
+      headers: authHeaders()
     });
+    if (!r.ok) return;
+    WALLET = await r.json();
+    renderWallet();
+  } catch (e) {
+    console.error("Wallet load error", e);
+  }
+}
 
-    grid.appendChild(card);
+/**
+ * Render wallet balances into UI
+ */
+function renderWallet() {
+  Object.keys(WALLET).forEach(asset => {
+    const el = $(asset + "Balance");
+    if (el) {
+      el.textContent = WALLET[asset];
+    }
   });
+
+  // BX value in USDT (informational only)
+  if ($("bxValueUSDT")) {
+    $("bxValueUSDT").textContent =
+      (WALLET.BX * BX_FIXED_PRICE_USDT).toFixed(2) + " USDT";
+  }
 }
 
-// Subscribe handler (placeholder)
-function subscribeMining(plan, coin) {
-  console.log("Subscribe:", plan.name, "Coin:", coin);
-  // هنا لاحقًا:
-  // - JWT
-  // - backend call
-  // - progress start
+/* -----------------------------------------------------------------------------------------------
+   WALLET ACTIONS (HOOKS ONLY)
+------------------------------------------------------------------------------------------------ */
+
+/**
+ * Deposit (UI hook)
+ */
+function deposit() {
+  toast("Deposit request initiated");
 }
 
-// Tabs logic
+/**
+ * Withdraw BNB (request only)
+ */
+async function withdrawBNB(amount) {
+  if (!amount || amount <= 0) return;
+
+  await fetch(API_BASE + "/withdraw/bnb", {
+    method: "POST",
+    headers: {
+      ...authHeaders(),
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ amount })
+  });
+
+  toast("Withdraw request submitted");
+}
+
+/**
+ * Transfer BX to another user via Telegram ID
+ */
+async function transferBX(targetTelegramId, amount) {
+  if (!targetTelegramId || amount <= 0) return;
+
+  await fetch(API_BASE + "/wallet/transfer", {
+    method: "POST",
+    headers: {
+      ...authHeaders(),
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      telegram_id: targetTelegramId,
+      amount
+    })
+  });
+
+  toast("BX transfer sent");
+}
+
+/* ================================================================================================
+   INITIALIZATION (PART 1)
+================================================================================================ */
+
 document.addEventListener("DOMContentLoaded", () => {
-  document.querySelectorAll(".mining-tabs .tab").forEach(tab => {
-    tab.addEventListener("click", () => {
-      document.querySelectorAll(".mining-tabs .tab")
-        .forEach(t => t.classList.remove("active"));
+  log("App initializing (Part 1)");
 
-      tab.classList.add("active");
-      renderMining(tab.dataset.coin);
+  if (isAuthenticated()) {
+    loadWallet();
+    loadFairness();
+  }
+
+  APP_STATE.ready = true;
+});
+
+
+/* ================================================================================================
+   MARKET STATE
+================================================================================================ */
+
+let MARKET_STATE = {
+  pair: "BX/USDT",
+  price: BX_FIXED_PRICE_USDT,
+  history: [],
+  orders: {
+    buy: [],
+    sell: []
+  },
+  lastUpdate: 0
+};
+
+/* ================================================================================================
+   MARKET PAIR MANAGEMENT
+================================================================================================ */
+
+/**
+ * Switch active trading pair
+ */
+function switchMarketPair(pair) {
+  if (!MARKET_PAIRS.includes(pair)) return;
+
+  MARKET_STATE.pair = pair;
+  MARKET_STATE.history = [];
+  MARKET_STATE.orders.buy = [];
+  MARKET_STATE.orders.sell = [];
+
+  renderMarketPair(pair);
+}
+
+/**
+ * Render selected pair in UI
+ */
+function renderMarketPair(pair) {
+  if ($("marketPair")) {
+    $("marketPair").textContent = pair;
+  }
+}
+
+/* ================================================================================================
+   PRICE ENGINE
+================================================================================================ */
+
+/**
+ * External asset price (from global feed if available)
+ */
+function getExternalAssetPrice(asset) {
+  return window.externalPrices?.[asset] || 1;
+}
+
+/**
+ * Calculate base price for current pair
+ */
+function calculateBasePrice(pair) {
+  const quote = pair.split("/")[1];
+
+  if (quote === "USDT") {
+    return BX_FIXED_PRICE_USDT;
+  }
+
+  return BX_FIXED_PRICE_USDT * getExternalAssetPrice(quote);
+}
+
+/**
+ * Tick market price (visual movement only)
+ */
+function tickMarketPrice() {
+  const base = calculateBasePrice(MARKET_STATE.pair);
+  const volatility = 0.02;
+  const drift = (Math.random() - 0.5) * volatility;
+
+  let nextPrice = base + base * drift;
+
+  nextPrice = Math.max(BX_CHART_MIN, Math.min(BX_CHART_MAX, nextPrice));
+
+  MARKET_STATE.price = +nextPrice.toFixed(6);
+  MARKET_STATE.history.push(MARKET_STATE.price);
+
+  if (MARKET_STATE.history.length > 300) {
+    MARKET_STATE.history.shift();
+  }
+
+  renderMarketPrice();
+}
+
+/**
+ * Render market price
+ */
+function renderMarketPrice() {
+  if ($("marketPrice")) {
+    $("marketPrice").textContent = MARKET_STATE.price.toFixed(6);
+  }
+
+  if ($("marketFixedPrice")) {
+    $("marketFixedPrice").textContent =
+      BX_FIXED_PRICE_USDT.toFixed(2) + " USDT";
+  }
+}
+
+/* ================================================================================================
+   CHART
+================================================================================================ */
+
+/**
+ * Render chart (simple hook – actual chart lib handled elsewhere)
+ */
+function renderMarketChart() {
+  if (typeof window.drawChart === "function") {
+    window.drawChart(MARKET_STATE.history);
+  }
+}
+
+/* ================================================================================================
+   ORDER BOOK (FAKE / ACTIVE)
+================================================================================================ */
+
+/**
+ * Generate fake orders to simulate active market
+ */
+function generateMarketOrders() {
+  const buyOrders = [];
+  const sellOrders = [];
+
+  for (let i = 0; i < 12; i++) {
+    buyOrders.push({
+      price: +(MARKET_STATE.price * (1 - Math.random() / 40)).toFixed(6),
+      amount: +(Math.random() * 100).toFixed(2)
     });
-  });
 
-  // initial render
-  renderMining("BX");
+    sellOrders.push({
+      price: +(MARKET_STATE.price * (1 + Math.random() / 40)).toFixed(6),
+      amount: +(Math.random() * 100).toFixed(2)
+    });
+  }
+
+  MARKET_STATE.orders.buy = buyOrders.sort((a, b) => b.price - a.price);
+  MARKET_STATE.orders.sell = sellOrders.sort((a, b) => a.price - b.price);
+
+  renderOrderBook();
+}
+
+/**
+ * Render order book into UI
+ */
+function renderOrderBook() {
+  if ($("buyOrders")) {
+    $("buyOrders").innerHTML = MARKET_STATE.orders.buy
+      .map(o => `<div>${o.price} / ${o.amount}</div>`)
+      .join("");
+  }
+
+  if ($("sellOrders")) {
+    $("sellOrders").innerHTML = MARKET_STATE.orders.sell
+      .map(o => `<div>${o.price} / ${o.amount}</div>`)
+      .join("");
+  }
+}
+
+/* ================================================================================================
+   BUY / SELL (UI HOOKS – SIMULATED)
+================================================================================================ */
+
+/**
+ * Buy BX (simulated)
+ */
+function buyBX(amount) {
+  if (!amount || amount <= 0) return;
+  toast("Buy order placed");
+}
+
+/**
+ * Sell BX (simulated)
+ */
+function sellBX(amount) {
+  if (!amount || amount <= 0) return;
+  toast("Sell order placed");
+}
+
+/* ================================================================================================
+   MARKET LOOP
+================================================================================================ */
+
+/**
+ * Start market loop (only when market section active)
+ */
+function startMarketLoop() {
+  setInterval(() => {
+    if (APP_STATE.currentSection !== "market") return;
+
+    tickMarketPrice();
+    generateMarketOrders();
+    renderMarketChart();
+  }, MARKET_TICK_MS);
+}
+
+/* ================================================================================================
+   MARKET INITIALIZATION
+================================================================================================ */
+
+document.addEventListener("DOMContentLoaded", () => {
+  if (!FEATURES.MARKET) return;
+
+  renderMarketPair(MARKET_STATE.pair);
+  startMarketLoop();
 });
 
-/* =========================================================
-   WALLET
-========================================================= */
-async function loadBalances(){
-  try{
-    const r = await fetch(`${API_BASE}/wallet/balances`);
-    const b = await r.json();
+/* ================================================================================================
+   CASINO STATE
+================================================================================================ */
 
-    setVal("bal-bx",   b.BX);
-    setVal("bal-usdt", b.USDT);
-    setVal("bal-ton",  b.TON);
-    setVal("bal-sol",  b.SOL);
-    setVal("bal-btc",  b.BTC, 8);
-  }catch(e){}
+const CASINO_STATE = {
+  activeGame: null,
+  isPlaying: false,
+  lastResult: null,
+  botsEnabled: true
+};
+
+/* ================================================================================================
+   CASINO GAMES REGISTRY (12)
+================================================================================================ */
+
+const CASINO_GAMES = [
+  { id: "coinflip",     name: "Coin Flip" },
+  { id: "roulette",    name: "Roulette" },
+  { id: "limbo",       name: "Limbo" },
+  { id: "chickenroad", name: "Chicken Road" },
+  { id: "dice",        name: "Dice" },
+  { id: "crash",       name: "Crash" },
+  { id: "slot7",       name: "Slot 7" },
+  { id: "fortune",     name: "Wheel of Fortune" },
+  { id: "coins4x4",    name: "Coins 4x4" },
+  { id: "plinko",      name: "Plinko" },
+  { id: "hilo",        name: "Hi-Lo" },
+  { id: "airboss",     name: "Air Boss" }
+];
+
+/* ================================================================================================
+   CASINO UI
+================================================================================================ */
+
+/**
+ * Select casino game
+ */
+function selectCasinoGame(gameId) {
+  if (!CASINO_GAMES.find(g => g.id === gameId)) return;
+
+  CASINO_STATE.activeGame = gameId;
+  CASINO_STATE.lastResult = null;
+
+  if ($("casinoGameName")) {
+    const game = CASINO_GAMES.find(g => g.id === gameId);
+    $("casinoGameName").textContent = game.name;
+  }
 }
 
-function setVal(id,val,dec=2){
-  const el = document.getElementById(id);
-  if(!el) return;
-  el.textContent = val !== undefined
-    ? Number(val).toFixed(dec)
-    : "0";
+/* ================================================================================================
+   CASINO SOUND & ANIMATION (ISOLATED)
+================================================================================================ */
+
+const CASINO_SOUNDS = {
+  click: new Audio("/sounds/casino/click.mp3"),
+  win:   new Audio("/sounds/casino/win.mp3"),
+  lose:  new Audio("/sounds/casino/lose.mp3")
+};
+
+function playCasinoSound(type) {
+  if (!FEATURES.CASINO) return;
+  const sound = CASINO_SOUNDS[type];
+  if (!sound) return;
+  sound.currentTime = 0;
+  sound.play().catch(()=>{});
 }
 
-loadBalances();
+/* ================================================================================================
+   CASINO PLAY (BACKEND)
+================================================================================================ */
 
-/* =========================================================
-   MARKET – PAIR SELECTOR (CLEAN VERSION)
-========================================================= */
-const MARKET_PAIRS = ["BX / USDT","BX / TON","BX / SOL","BX / BTC"];
-let pairIndex = 0, series = [], lastPrice = 0;
-const pairBar = document.getElementById("pairBar");
-const currentPair = document.getElementById("currentPair");
-const canvas = document.getElementById("priceChart");
-const ctx = canvas?.getContext("2d");
+/**
+ * Play casino game
+ */
+async function playCasino(gameId, betAmount) {
+  if (!FEATURES.CASINO) return;
+  if (CASINO_STATE.isPlaying) return;
+  if (!CASINO_GAMES.find(g => g.id === gameId)) return;
+  if (!betAmount || betAmount <= 0) return;
 
-if(currentPair) currentPair.textContent = MARKET_PAIRS[0];
+  CASINO_STATE.isPlaying = true;
+  playCasinoSound("click");
 
-pairBar?.addEventListener("click",()=>{
-  playSound("click"); snap(pairBar);
-  pairIndex = (pairIndex+1)%MARKET_PAIRS.length;
-  currentPair.textContent = MARKET_PAIRS[pairIndex];
-  series=[]; lastPrice=0; drawChart();
-});
-
-function resizeChart(){
-  if(!canvas) return;
-  canvas.width = canvas.parentElement.clientWidth;
-  canvas.height = canvas.parentElement.clientHeight;
-}
-window.addEventListener("resize", resizeChart);
-resizeChart();
-
-function drawChart(){
-  if(!ctx || series.length<2) return;
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  const pad=10,min=Math.min(...series),max=Math.max(...series);
-  ctx.beginPath();
-  series.forEach((p,i)=>{
-    const x=pad+(i/(series.length-1))*(canvas.width-pad*2);
-    const y=pad+(1-(p-min)/(max-min||1))*(canvas.height-pad*2);
-    i?ctx.lineTo(x,y):ctx.moveTo(x,y);
-  });
-  ctx.strokeStyle = series.at(-1)>=lastPrice?"#4adebb":"#ff8fa3";
-  ctx.lineWidth=2; ctx.stroke();
-  lastPrice=series.at(-1);
-}
-
-async function tickPrice(){
-  try{
-    const pair=currentPair.textContent.replace(" / ","");
-    const r=await fetch(`${API_BASE}/market/price?pair=${pair}`);
-    const {price}=await r.json();
-    series.push(price); if(series.length>80) series.shift();
-    drawChart();
-  }catch(e){}
-}
-
-let marketTimer;
-function startMarket(){ stopMarket(); marketTimer=setInterval(tickPrice,1500); }
-function stopMarket(){ clearInterval(marketTimer); }
-
-/* =========================================================
-   BUY / SELL (BASIC – PREVIEW READY)
-========================================================= */
-async function submitOrder(side){
-  const amt = Number(amountInput.value);
-  if(!amt) return;
-
-  playSound("click");
-
-  try{
-    await fetch(`${API_BASE}/market/order`,{
-      method:"POST",
-      headers:{ "Content-Type":"application/json" },
+  try {
+    const r = await fetch(API_BASE + "/casino/play", {
+      method: "POST",
+      headers: {
+        ...authHeaders(),
+        "Content-Type": "application/json"
+      },
       body: JSON.stringify({
-        side,
-        amount: amt,
-        pair: currentPair.textContent.replace(" / ","")
+        game: gameId,
+        bet: betAmount,
+        client_seed: CLIENT_SEED
       })
     });
 
-    amountInput.value = "";
-    loadBalances();
-  }catch(e){}
+    if (!r.ok) throw new Error("Casino play failed");
+
+    const result = await r.json();
+    CASINO_STATE.lastResult = result;
+
+    handleCasinoResult(result);
+  } catch (e) {
+    console.error("Casino error", e);
+  } finally {
+    CASINO_STATE.isPlaying = false;
+  }
 }
 
-document.querySelector(".btn.buy")
-  ?.addEventListener("click",()=>submitOrder("buy"));
-document.querySelector(".btn.sell")
-  ?.addEventListener("click",()=>submitOrder("sell"));
+/**
+ * Handle casino result
+ */
+function handleCasinoResult(result) {
+  if (!result) return;
 
-/* =========================================================
-   CASINO – GLOBAL GAME RUNNER (9 GAMES)
-========================================================= */
+  if (result.win) {
+    playCasinoSound("win");
+    toast("You Win!");
+  } else {
+    playCasinoSound("lose");
+    toast("You Lose!");
+  }
 
-document.querySelectorAll("#casino .game").forEach(game=>{
-  game.addEventListener("click", async ()=>{
-    playSound("spin");
-    snap(game);
+  updateCasinoUI(result);
+  loadWallet();
+}
 
-    try{
-      const r = await fetch(
-        `${API_BASE}/casino/play`,
-        {
-          method:"POST",
-          headers:{ "Content-Type":"application/json" },
-          body: JSON.stringify({
-            uid: 1,
-            game: game.dataset.game,
-            bet: 1,
-            client_seed: CLIENT_SEED
-          })
-        }
-      );
+/* ================================================================================================
+   CASINO RESULT RENDER
+================================================================================================ */
 
-      const data = await r.json();
+function updateCasinoUI(result) {
+  if ($("casinoResult")) {
+    $("casinoResult").textContent = JSON.stringify(result, null, 2);
+  }
 
-      playSound(data.win ? "win" : "lose");
-      onCasinoPlayed();
-      showFairnessInfo(data);
+  if ($("casinoNonce")) {
+    $("casinoNonce").textContent = result.nonce ?? "-";
+  }
 
-    }catch(e){
-      console.error("Casino error", e);
-    }
-  });
-});
+  if ($("casinoServerHash")) {
+    $("casinoServerHash").textContent = result.server_seed_hash ?? "-";
+  }
+}
 
-/* =========================================================
-   MINING / AIRDROP (BASIC)
-========================================================= */
-document
-  .querySelectorAll("#mining .btn, #airdrop .btn")
-  .forEach(btn=>{
-    btn.addEventListener("click",()=>{
-      playSound("click");
-      snap(btn);
+/* ================================================================================================
+   PROVABLY FAIR VERIFY (CLIENT SIDE)
+================================================================================================ */
+
+/**
+ * Verify fairness locally (optional UI helper)
+ */
+function verifyFairness(serverSeed, clientSeed, nonce) {
+  if (!serverSeed || !clientSeed) return null;
+
+  const input = `${serverSeed}:${clientSeed}:${nonce}`;
+  return crypto.subtle.digest("SHA-256", new TextEncoder().encode(input))
+    .then(buf => {
+      return Array.from(new Uint8Array(buf))
+        .map(b => b.toString(16).padStart(2, "0"))
+        .join("");
     });
-  });
-/* =========================================================
-   MINING – PLANS DATA
-========================================================= */
-
-const MINING_PLANS = {
-  BX: [
-    { name:"Starter", daily:"3%", days:30, min:10,  max:500 },
-    { name:"Silver",  daily:"8%", days:45, min:100, max:2000 },
-    { name:"Gold",    daily:"15%", days:60, min:500, max:10000 },
-    { name:"VIP",     daily:"30%", days:90, min:2000,max:50000 }
-  ],
-  TON: [
-    { name:"Starter", daily:"0.8%", days:30, min:5,  max:200 },
-    { name:"Silver",  daily:"4%", days:45, min:50, max:1000 },
-    { name:"Gold",    daily:"7.5%", days:60, min:200,max:5000 },
-    { name:"VIP",     daily:"14%", days:90, min:1000,max:20000 }
-  ],
-  SOL: [
-    { name:"Starter", daily:"0.7%", days:30, min:1,  max:100 },
-    { name:"Silver",  daily:"3.5%", days:45, min:20, max:500 },
-    { name:"Gold",    daily:"7%", days:60, min:100,max:3000 },
-    { name:"VIP",     daily:"12%", days:90, min:500,max:10000 }
-  ]
-};
-
-const plansBox = document.getElementById("miningPlans");
-const miningTabs = document.querySelectorAll(".mining-tabs button");
-
-/* Tabs click */
-miningTabs.forEach(btn=>{
-  btn.addEventListener("click",()=>{
-    miningTabs.forEach(b=>b.classList.remove("active"));
-    btn.classList.add("active");
-    renderMining(btn.dataset.coin);
-  });
-});
-
-/* Default */
-renderMining("BX");
-function renderMining(coin){
-  if (!plansBox || !MINING_PLANS[coin]) return;
-
-  plansBox.innerHTML = "";
-
-  MINING_PLANS[coin].forEach(p=>{
-    const div = document.createElement("div");
-    div.className = "mining-plan" + (p.name==="VIP" ? " vip" : "");
-
-    div.innerHTML = `
-      <h4>${p.name}</h4>
-      <div class="badge">${coin} Mining</div>
-      <ul>
-        <li><span>Daily Profit</span><strong>${p.daily}</strong></li>
-        <li><span>Duration</span><strong>${p.days} days</strong></li>
-        <li><span>Min</span><strong>${p.min} ${coin}</strong></li>
-        <li><span>Max</span><strong>${p.max} ${coin}</strong></li>
-      </ul>
-      <button class="btn primary">Subscribe</button>
-      <div class="status"></div>
-    `;
-
-    const btn = div.querySelector(".btn");
-    const status = div.querySelector(".status");
-
-    btn.addEventListener("click",()=>{
-      playSound("click");
-      snap(btn);
-
-      const res = subscribeMining(coin,p);
-      if(res.ok){
-        div.classList.add("active");
-        btn.disabled = true;
-        status.textContent = "Active Subscription";
-        status.className = "status active";
-      }else{
-        status.textContent = res.msg;
-        status.className = "status error";
-      }
-    });
-
-    plansBox.appendChild(div);
-  });
-}
-/* =========================================================
-   MINING – WALLET SUBSCRIPTION LOGIC
-========================================================= */
-
-/* Mock wallet balances (fallback if API not ready) */
-let WALLET = {
-  BX: 1000,
-  TON: 300,
-  SOL: 150
-};
-
-/* Active subscriptions */
-const ACTIVE_MINING = [];
-
-/* Override balances if wallet loaded */
-function syncWalletFromUI(){
-  ["BX","TON","SOL"].forEach(c=>{
-    const el = document.getElementById("bal-"+c.toLowerCase());
-    if(el){
-      WALLET[c] = Number(el.textContent) || WALLET[c];
-    }
-  });
 }
 
-/* Subscribe handler */
-function subscribeMining(coin, plan){
-  syncWalletFromUI();
+/* ================================================================================================
+   FAKE USERS / BOTS ACTIVITY
+================================================================================================ */
 
-  if(WALLET[coin] < plan.min){
-    return {
-      ok:false,
-      msg:`Insufficient ${coin} balance`
-    };
-  }
+/**
+ * Simulate fake users activity feed
+ */
+function startCasinoBots() {
+  if (!CASINO_STATE.botsEnabled) return;
 
-  WALLET[coin] -= plan.min;
+  setInterval(() => {
+    if (APP_STATE.currentSection !== "casino") return;
 
-  ACTIVE_MINING.push({
-    coin,
-    plan:plan.name,
-    amount:plan.min,
-    daily:plan.daily,
-    start:Date.now()
-  });
+    const fakeUser = "User" + Math.floor(Math.random() * 9000);
+    const fakeGame = CASINO_GAMES[Math.floor(Math.random() * CASINO_GAMES.length)].name;
+    const fakeBet = (Math.random() * 10).toFixed(2);
+    const fakeWin = Math.random() > 0.6;
 
-  /* Update UI wallet */
-  const balEl = document.getElementById("bal-"+coin.toLowerCase());
-  if(balEl){
-    balEl.textContent = WALLET[coin].toFixed(2);
-  }
-
-  return { ok:true };
-}
-/* =========================================================
-   AIRDROP – CASINO + REFERRAL SYSTEM
-========================================================= */
-
-/* State */
-let AIRDROP = {
-  casinoRewarded:false,
-  referralPoints:0
-};
-
-const AIRDROP_BX_REWARD = 2.5;
-const REFERRAL_POINT_TO_BX = 0.5; // كل نقطة = 0.5 BX
-
-/* Sync BX balance */
-function addBX(amount){
-  const el = document.getElementById("bal-bx");
-  if(!el) return;
-
-  let current = Number(el.textContent) || 0;
-  current += amount;
-  el.textContent = current.toFixed(2);
+    renderCasinoBotActivity(fakeUser, fakeGame, fakeBet, fakeWin);
+  }, 2000);
 }
 
-/* ===== Casino Play Reward ===== */
-function onCasinoPlayed(){
-  if(AIRDROP.casinoRewarded) return;
+/**
+ * Render fake activity line
+ */
+function renderCasinoBotActivity(user, game, bet, win) {
+  if (!$("casinoActivity")) return;
 
-  AIRDROP.casinoRewarded = true;
-  addBX(AIRDROP_BX_REWARD);
+  const line = document.createElement("div");
+  line.className = win ? "win" : "lose";
+  line.textContent =
+    `${user} played ${game} with ${bet} BX ${win ? "and WON" : "and LOST"}`;
 
-  updateAirdropUI("casino");
-}
+  $("casinoActivity").prepend(line);
 
-/* ===== Referral System ===== */
-
-/* Simulate referral (later from backend) */
-function addReferral(){
-  AIRDROP.referralPoints++;
-
-  const bx = REFERRAL_POINT_TO_BX;
-  addBX(bx);
-
-  updateAirdropUI("referral");
-}
-
-/* ===== UI Update ===== */
-function updateAirdropUI(type){
-  const status = document.getElementById("airdropStatus");
-  const casinoTask = document.getElementById("casinoTask");
-  const refPoints = document.getElementById("refPoints");
-
-  if(type === "casino" && casinoTask){
-    casinoTask.classList.add("done");
-    casinoTask.innerHTML = "✔ Casino Played – 2.5 BX Added";
-    status.textContent = "Reward added to wallet";
-    status.className = "status success";
-  }
-
-  if(type === "referral" && refPoints){
-    refPoints.textContent = AIRDROP.referralPoints;
-    status.textContent = "Referral reward added";
-    status.className = "status success";
-  }
-}
-
-/* =========================================================
-   PROVABLY FAIR – UI
-========================================================= */
-function showFairnessInfo(data){
-  let box = document.getElementById("fairnessBox");
-  if(!box){
-    box = document.createElement("div");
-    box.id = "fairnessBox";
-    box.style.marginTop = "12px";
-    box.style.fontSize = "12px";
-    box.style.color = "#9fb3c8";
-    document.getElementById("casino").appendChild(box);
-  }
-
-  box.innerHTML = `
-    <strong>Provably Fair</strong><br/>
-    Client Seed: <code>${CLIENT_SEED}</code><br/>
-    Server Seed Hash: <code>${data.server_seed_hash}</code><br/>
-    Nonce: <code>${data.nonce}</code><br/>
-    <button id="verifyBtn"
-      class="btn secondary"
-      style="margin-top:6px;font-size:12px">
-      Verify Fairness
-    </button>
-  `;
-}
-
-document.addEventListener("click",e=>{
-  if(e.target.id === "verifyBtn"){
-    alert(
-`Verification steps:
-1. Save Server Seed Hash
-2. Save Client Seed
-3. Save Nonce
-4. When server reveals seed,
-   hash(seed) must match`
+  if ($("casinoActivity").children.length > 20) {
+    $("casinoActivity").removeChild(
+      $("casinoActivity").lastChild
     );
   }
-});
-
-/* =========================================================
-   WALLET – DEPOSIT METHODS LOGIC
-========================================================= */
-
-document.querySelectorAll(".deposit-method").forEach(method=>{
-  method.addEventListener("click", ()=>{
-    playSound("click");
-    snap(method);
-
-    const type = method.dataset.method;
-
-    if(type === "binance"){
-      alert("Enter your Binance ID (Coming Soon)");
-      // لاحقًا: open modal + API
-    }
-
-    if(type === "walletconnect"){
-      alert("WalletConnect integration (Coming Soon)");
-      // لاحقًا: WalletConnect SDK
-    }
-  });
-});
-
-/* =========================================================
-   CLIENT SEED INPUT (UI)
-========================================================= */
-document.addEventListener("DOMContentLoaded", ()=>{
-  const wallet = document.getElementById("wallet");
-  if(!wallet) return;
-
-  const box = document.createElement("div");
-  box.style.marginTop = "12px";
-  box.innerHTML = `
-    <label style="font-size:12px;color:#9fb3c8">
-      Client Seed
-    </label>
-    <input
-      value="${CLIENT_SEED}"
-      style="margin-top:6px"
-      placeholder="1.2.3.4"/>
-  `;
-
-  const input = box.querySelector("input");
-  input.onchange = ()=>{
-    CLIENT_SEED = input.value || "1.2.3.4";
-    localStorage.setItem("client_seed", CLIENT_SEED);
-  };
-
-  wallet.appendChild(box);
-});
-
-/* =========================================================
-   FINAL SAFE TAB NAVIGATION
-========================================================= */
-
-document.addEventListener("DOMContentLoaded", ()=>{
-
-  const views = document.querySelectorAll(".view");
-  const navButtons = document.querySelectorAll(".bottom-nav button");
-
-  function showTab(tabId){
-  views.forEach(v=>{
-    v.classList.remove("active");
-    v.style.display = "none";   // ← هذا السطر الحاسم
-  });
-
-  const target = document.getElementById(tabId);
-  if(!target) return;
-
-  target.style.display = "block"; // ← وهذا
-  target.classList.add("active");
-
-  navButtons.forEach(b=>b.classList.remove("active"));
-  document
-    .querySelector(`.bottom-nav button[data-tab="${tabId}"]`)
-    ?.classList.add("active");
 }
 
-  navButtons.forEach(btn=>{
-    btn.addEventListener("click", ()=>{
-      const tab = btn.dataset.tab;
-      if(tab){
-        showTab(tab);
-      }
+/* ================================================================================================
+   CASINO INIT
+================================================================================================ */
+
+document.addEventListener("DOMContentLoaded", () => {
+  if (!FEATURES.CASINO) return;
+
+  // Default game
+  selectCasinoGame(CASINO_GAMES[0].id);
+
+  // Start fake activity
+  startCasinoBots();
+});
+
+/* ================================================================================================
+   MINING STATE
+================================================================================================ */
+
+const MINING_STATE = {
+  activeBX: null,
+  activeBNB: null,
+  history: []
+};
+
+/* ================================================================================================
+   MINING PLANS (FIXED ORDER)
+================================================================================================ */
+
+const MINING_PLANS = [
+  { id: "starter",  name: "Starter",       days: 15 },
+  { id: "silver",   name: "Silver",        days: 30 },
+  { id: "gold",     name: "Gold",          days: 45 },
+  { id: "vip",      name: "VIP",           days: 60 },
+  { id: "platinum", name: "Platinum VIP",  days: 90, horizontal: true }
+];
+
+/* ================================================================================================
+   LOAD MINING DASHBOARD
+================================================================================================ */
+
+async function loadMining() {
+  if (!FEATURES.MINING || !isAuthenticated()) return;
+
+  try {
+    const r = await fetch(API_BASE + "/mining/dashboard", {
+      headers: authHeaders()
     });
+    if (!r.ok) return;
+
+    const data = await r.json();
+    MINING_STATE.activeBX = data.bx || null;
+    MINING_STATE.activeBNB = data.bnb || null;
+    MINING_STATE.history = data.history || [];
+
+    renderMining();
+  } catch (e) {
+    console.error("Mining load error", e);
+  }
+}
+
+/* ================================================================================================
+   RENDER MINING UI
+================================================================================================ */
+
+function renderMining() {
+  renderMiningPlans();
+  renderActiveMining();
+  renderMiningHistory();
+}
+
+/**
+ * Render available mining plans
+ */
+function renderMiningPlans() {
+  if (!$("miningPlans")) return;
+
+  $("miningPlans").innerHTML = MINING_PLANS.map(plan => {
+    return `
+      <div class="mining-plan ${plan.horizontal ? "horizontal" : ""}">
+        <h3>${plan.name}</h3>
+        <p>${plan.days} Days</p>
+        <button onclick="subscribeBXMining('${plan.id}')">
+          Start BX Mining
+        </button>
+      </div>
+    `;
+  }).join("");
+}
+
+/**
+ * Render active mining status
+ */
+function renderActiveMining() {
+  if (MINING_STATE.activeBX && $("activeBXMining")) {
+    $("activeBXMining").innerHTML =
+      renderMiningProgress(MINING_STATE.activeBX);
+  }
+
+  if (MINING_STATE.activeBNB && $("activeBNBMining")) {
+    $("activeBNBMining").innerHTML =
+      renderMiningProgress(MINING_STATE.activeBNB);
+  }
+}
+
+/**
+ * Render mining progress bar
+ */
+function renderMiningProgress(mining) {
+  const progress =
+    (mining.days_completed / mining.total_days) * 100;
+
+  return `
+    <div class="mining-progress">
+      <div class="progress-bar">
+        <div class="progress-fill" style="width:${progress}%"></div>
+      </div>
+      <p>${mining.days_completed} / ${mining.total_days} days</p>
+      <p>Daily Profit: ${mining.daily_profit}</p>
+      <p>Total Earned: ${mining.total_earned}</p>
+    </div>
+  `;
+}
+
+/* ================================================================================================
+   SUBSCRIBE TO MINING
+================================================================================================ */
+
+/**
+ * Subscribe BX mining
+ */
+async function subscribeBXMining(planId) {
+  if (!planId) return;
+
+  await fetch(API_BASE + "/mining/bx/subscribe", {
+    method: "POST",
+    headers: {
+      ...authHeaders(),
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ plan: planId })
   });
 
-  showTab("wallet");
+  toast("BX Mining activated");
+  loadMining();
+}
 
+/**
+ * Subscribe BNB mining
+ */
+async function subscribeBNBMining(planId, amount) {
+  if (!planId || amount <= 0) return;
+
+  await fetch(API_BASE + "/mining/bnb/subscribe", {
+    method: "POST",
+    headers: {
+      ...authHeaders(),
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ plan: planId, amount })
+  });
+
+  toast("BNB Mining activated");
+  loadMining();
+}
+
+/* ================================================================================================
+   MINING HISTORY
+================================================================================================ */
+
+function renderMiningHistory() {
+  if (!$("miningHistory")) return;
+
+  $("miningHistory").innerHTML = MINING_STATE.history
+    .map(entry => `
+      <div class="history-item">
+        <span>${entry.date}</span>
+        <span>${entry.coin}</span>
+        <span>${entry.amount}</span>
+      </div>
+    `)
+    .join("");
+}
+
+/* ================================================================================================
+   DAILY UPDATE HOOK (DISPLAY ONLY)
+================================================================================================ */
+
+/**
+ * Called after backend daily job
+ */
+function onMiningDayUpdate() {
+  loadMining();
+  loadWallet();
+}
+
+/* ================================================================================================
+   MINING INIT
+================================================================================================ */
+
+document.addEventListener("DOMContentLoaded", () => {
+  if (!FEATURES.MINING) return;
+  loadMining();
+});
+
+
+/* ================================================================================================
+   AIRDROP STATE
+================================================================================================ */
+
+const AIRDROP_STATE = {
+  claimed: false,
+  referrals: 0,
+  rewardBX: 0
+};
+
+/* ================================================================================================
+   AIRDROP ACTIONS
+================================================================================================ */
+
+/**
+ * Claim airdrop reward
+ */
+async function claimAirdrop() {
+  if (!FEATURES.AIRDROP || !isAuthenticated()) return;
+
+  try {
+    const r = await fetch(API_BASE + "/airdrop/claim", {
+      method: "POST",
+      headers: authHeaders()
+    });
+
+    if (!r.ok) return;
+
+    const data = await r.json();
+    AIRDROP_STATE.claimed = true;
+    AIRDROP_STATE.rewardBX = data.reward || 0;
+
+    toast("Airdrop claimed");
+    loadWallet();
+    renderAirdrop();
+  } catch (e) {
+    console.error("Airdrop claim error", e);
+  }
+}
+
+/**
+ * Load airdrop status
+ */
+async function loadAirdrop() {
+  if (!FEATURES.AIRDROP || !isAuthenticated()) return;
+
+  try {
+    const r = await fetch(API_BASE + "/airdrop/status", {
+      headers: authHeaders()
+    });
+
+    if (!r.ok) return;
+
+    const data = await r.json();
+    AIRDROP_STATE.claimed = data.claimed;
+    AIRDROP_STATE.referrals = data.referrals;
+    AIRDROP_STATE.rewardBX = data.reward;
+
+    renderAirdrop();
+  } catch (e) {
+    console.error("Airdrop load error", e);
+  }
+}
+
+/* ================================================================================================
+   AIRDROP RENDER
+================================================================================================ */
+
+function renderAirdrop() {
+  if ($("airdropStatus")) {
+    $("airdropStatus").textContent =
+      AIRDROP_STATE.claimed ? "Claimed" : "Available";
+  }
+
+  if ($("airdropReward")) {
+    $("airdropReward").textContent =
+      AIRDROP_STATE.rewardBX + " BX";
+  }
+
+  if ($("airdropReferrals")) {
+    $("airdropReferrals").textContent =
+      AIRDROP_STATE.referrals;
+  }
+}
+
+/* ================================================================================================
+   REFERRAL SYSTEM
+================================================================================================ */
+
+/**
+ * Copy referral link
+ */
+function copyReferralLink() {
+  if (!USER.id) return;
+
+  const link = `${location.origin}/?ref=${USER.id}`;
+  navigator.clipboard.writeText(link);
+  toast("Referral link copied");
+}
+
+/**
+ * Load referral stats
+ */
+async function loadReferrals() {
+  if (!isAuthenticated()) return;
+
+  try {
+    const r = await fetch(API_BASE + "/referrals", {
+      headers: authHeaders()
+    });
+    if (!r.ok) return;
+
+    const data = await r.json();
+    AIRDROP_STATE.referrals = data.count || 0;
+
+    renderAirdrop();
+  } catch (e) {
+    console.error("Referral load error", e);
+  }
+}
+
+/* ================================================================================================
+   PARTNERS SECTION
+================================================================================================ */
+
+const PARTNERS = [
+  { name: "Temu",     logo: "/img/partners/temu.png" },
+  { name: "Samsung",  logo: "/img/partners/samsung.png" },
+  { name: "Apple",    logo: "/img/partners/apple.png" },
+  { name: "Nike",     logo: "/img/partners/nike.png" }
+];
+
+/**
+ * Render partners
+ */
+function renderPartners() {
+  if (!FEATURES.PARTNERS || !$("partners")) return;
+
+  $("partners").innerHTML = PARTNERS.map(p => `
+    <div class="partner">
+      <img src="${p.logo}" alt="${p.name}">
+      <span>${p.name}</span>
+    </div>
+  `).join("");
+}
+
+/* ================================================================================================
+   GLOBAL NAVIGATION
+================================================================================================ */
+
+function navigate(section) {
+  APP_STATE.currentSection = section;
+
+  document.querySelectorAll(".section").forEach(sec => {
+    sec.style.display = "none";
+  });
+
+  const active = $(section);
+  if (active) active.style.display = "block";
+
+  if (section === "wallet") loadWallet();
+  if (section === "market") {}
+  if (section === "casino") {}
+  if (section === "mining") loadMining();
+  if (section === "airdrop") loadAirdrop();
+}
+
+/* ================================================================================================
+   FINAL INIT
+================================================================================================ */
+
+document.addEventListener("DOMContentLoaded", () => {
+  if (!APP_STATE.ready) return;
+
+  // Initial navigation
+  navigate(APP_STATE.currentSection);
+
+  // Load optional sections
+  if (FEATURES.AIRDROP) {
+    loadAirdrop();
+    loadReferrals();
+  }
+
+  if (FEATURES.PARTNERS) {
+    renderPartners();
+  }
+
+  log("Application fully initialized (Part 5)");
 });
