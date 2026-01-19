@@ -1,53 +1,34 @@
-<section id="casino" class="card view">
-  <h2 class="casino-title">Casino</h2>
+<section id="mining" class="view card">
 
-  <!-- Casino Grid -->
-  <div class="casino-grid">
+  <!-- ===== HEADER ===== -->
+  <header class="page-header">
+    <h2>Mining</h2>
+  </header>
 
-    <div class="game" data-game="coinflip">
-      <img src="assets/images/coinflip.png" alt="Coin Flip">
-      <h4>Coin Flip</h4>
-    </div>
+  <!-- ===== TABS (STATIC) ===== -->
+  <div class="mining-tabs">
+    <button class="tab active" data-coin="BX">
+      <img src="assets/images/bx.png" alt="BX">
+      BX
+    </button>
+    <button class="tab" data-coin="BNB">
+      <img src="assets/images/bnb.png" alt="BNB">
+      BNB
+    </button>
+    <button class="tab" data-coin="SOL">
+      <img src="assets/images/sol.png" alt="SOL">
+      SOL
+    </button>
+  </div>
 
-    <div class="game" data-game="roulette">
-      <img src="assets/images/roulette.png" alt="Roulette">
-      <h4>Roulette</h4>
-    </div>
+  <!-- ===== CONTENT ===== -->
+  <div class="mining-container">
 
-    <div class="game" data-game="limbo">
-      <img src="assets/images/limbo.png" alt="Limbo">
-      <h4>Limbo</h4>
-    </div>
-
-    <div class="game" data-game="chicken">
-      <img src="assets/images/chicken.png" alt="Chicken Road">
-      <h4>Chicken Road</h4>
-    </div>
-
-    <div class="game" data-game="dice">
-      <img src="assets/images/dice.png" alt="Dice">
-      <h4>Dice</h4>
-    </div>
-
-    <div class="game" data-game="crash">
-      <img src="assets/images/crash.png" alt="Crash">
-      <h4>Crash</h4>
-    </div>
-
-    <div class="game" data-game="slot">
-      <img src="assets/images/slot.png" alt="Slot">
-      <h4>Slot</h4>
-    </div>
-
-    <div class="game" data-game="fortune">
-      <img src="assets/images/fortune.png" alt="Fortune">
-      <h4></h4>
-    </div>
-
-    <div class="game" data-game="coins4x4">
-      <img src="assets/images/coins4x4.png" alt="Coins 4x4">
-      <h4>Coins 4x4</h4>
+    <!-- GRID (JS WILL FILL) -->
+    <div class="mining-grid" id="miningGrid">
+      <!-- Cards injected by JS -->
     </div>
 
   </div>
+
 </section>
