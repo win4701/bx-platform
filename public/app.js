@@ -976,7 +976,57 @@ document.addEventListener("DOMContentLoaded", () => {
   loadMining();
 });
 
+/* ================================================================================================
+   MINING COIN SWITCH (BX / BNB / SOL)  ✅ أضِف هنا
+================================================================================================ */
 
+const MINING_COINS = {
+  BX: { symbol: "BX", img: "/assets/images/bx.png" },
+  BNB:{ symbol: "BNB",img: "/assets/images/bnb.png"},
+  SOL:{ symbol: "SOL",img: "/assets/images/sol.png"}
+};
+
+let ACTIVE_MINING_COIN = "BX";
+
+document.querySelectorAll(".mining-tabs button").forEach(btn => {
+  btn.addEventListener("click", () => {
+
+    document.querySelectorAll(".mining-tabs button")
+      .forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+
+    ACTIVE_MINING_COIN = btn.textContent.trim();
+    updateMiningByCoin();
+  });
+});
+
+function updateMiningByCoin() {
+  const coin = MINING_COINS[ACTIVE_MINING_COIN];
+
+  document.querySelectorAll(".mining-plan").forEach(plan => {
+
+    // 🔹 صورة العملة (inline – بدون CSS)
+    plan.style.backgroundImage =
+      `linear-gradient(180deg,#0e2730,#08161b), url(${coin.img})`;
+    plan.style.backgroundRepeat = "no-repeat";
+    plan.style.backgroundPosition = "top 14px right 14px";
+    plan.style.backgroundSize = "32px";
+
+    // 🔹 تحديث النصوص Min / Max
+    plan.querySelectorAll("li strong").forEach(el => {
+      el.textContent = el.textContent.replace(/BX|BNB|SOL/g, coin.symbol);
+    });
+
+    // 🔹 زر الاشتراك
+    const btn = plan.querySelector("button");
+    if (btn) {
+      btn.textContent = `Subscribe ${coin.symbol}`;
+    }
+  });
+}
+
+// تشغيل افتراضي
+document.addEventListener("DOMContentLoaded", updateMiningByCoin);
 /* ================================================================================================
    AIRDROP STATE
 ================================================================================================ */
