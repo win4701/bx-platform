@@ -997,3 +997,9 @@ button:active,
   background:linear-gradient(180deg,#6ee7a8,#16a34a);
   color:#042417;
 }
+/* ===== FIX SUBSCRIBE BUTTON (FINAL) ===== */
+.mining-plan button{
+  background: linear-gradient(135deg,#22c55e,#16a34a) !important;
+  color: #022c22 !important;
+  border: none !important;
+}
