@@ -1102,20 +1102,23 @@ function navigate(section) {
 ================================================================================================ */
 
 document.addEventListener("DOMContentLoaded", () => {
-  if (!APP_STATE.ready) return;
 
-  // Initial navigation
+  // 🔗 ربط القائمة تلقائيًا بدون data-nav أو ids
+  autoBindNavigation();
+
+  // 🧭 الانتقال إلى القسم الافتراضي
   navigate(APP_STATE.currentSection);
 
-  // Load optional sections
+  // 🎁 Airdrop + Referrals
   if (FEATURES.AIRDROP) {
     loadAirdrop();
     loadReferrals();
   }
 
+  // 🤝 Partners
   if (FEATURES.PARTNERS) {
     renderPartners();
   }
 
-  log("Application fully initialized (Part 5)");
+  log("Application fully initialized (FINAL)");
 });
