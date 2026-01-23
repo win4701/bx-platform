@@ -316,6 +316,8 @@ h3{
   white-space: nowrap;          /* يمنع كسر النص */
 }
 
+.view{ padding-bottom:120px; }
+
 .wallet-btn.pay{
   height: 44px;
   background: linear-gradient(135deg,#facc15,#f59e0b);
