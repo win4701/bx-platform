@@ -625,32 +625,116 @@ input{
 }
 
 /* =====================================================
-   MINING – FINAL CLEAN UI
+   MINING + WALLET – CLEAN & SAFE LAYOUT
 ===================================================== */
 
-/* ================= TABS ================= */
+/* ================= GLOBAL VIEW FIX ================= */
+
+.view{
+  min-height: 100vh;
+  padding-bottom: 120px; /* مساحة للـ bottom nav */
+  overflow-y: auto;
+}
+
+.view.card{
+  overflow: visible;
+}
+
+/* ================= WALLET ================= */
+
+#wallet{
+  padding-bottom: 120px;
+}
+
+.wallet-top{
+  padding: 16px;
+}
+
+.wallet-top .label{
+  font-size: 13px;
+  color: #9ca3af;
+}
+
+.wallet-top h1{
+  font-size: 34px;
+  margin-top: 6px;
+  font-weight: 700;
+}
+
+.wallet-top small{
+  font-size: 14px;
+  color: #9ca3af;
+}
+
+/* ================= WALLET ACTIONS ================= */
+
+.wallet-actions{
+  display: grid;
+  grid-template-columns: repeat(3,1fr);
+  gap: 12px;
+  padding: 0 16px;
+  margin-top: 16px;
+}
+
+.wallet-btn{
+  height: 46px;
+  font-size: 14px;
+  border-radius: 14px;
+  font-weight: 700;
+}
+
+/* Colors */
+.wallet-btn.deposit{ background:#22c55e; color:#022c22; }
+.wallet-btn.withdraw{ background:#facc15; color:#111827; }
+.wallet-btn.transfer{ background:#1f2937; color:#e5e7eb; }
+
+/* ================= BALANCES ================= */
+
+.wallet-balances{
+  margin-top: 24px;
+  padding: 0 16px;
+}
+
+.wallet-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding: 10px 0;
+}
+
+.wallet-row img{
+  width: 26px;
+  height: 26px;
+}
+
+.wallet-row .info strong{ font-size:14px; }
+.wallet-row .info span{ font-size:11px; color:#9ca3af; }
+.wallet-row .amount{ font-size:15px; font-weight:600; }
+
+/* ================= MINING ================= */
+
+#mining{
+  padding: 16px;
+}
 
 .mining-tabs{
   display:flex;
-  gap:14px;
-  margin-bottom:18px;
+  gap:12px;
+  margin-bottom: 20px;
 }
 
 .mining-tabs button{
   flex:1;
   height:42px;
-  padding:0 16px;
   border-radius:18px;
-  border:1px solid #143743;
-  background:linear-gradient(180deg,#0e2a33,#0a1f26);
   display:flex;
   align-items:center;
   justify-content:center;
-  gap:10px;
-  color:#9fb3c8;
-  font-weight:800;
-  font-size:14px;
-  transition:.25s ease;
+  gap:8px;
+  background:#020617;
+  border:1px solid #1e293b;
+  color:#94a3b8;
+  font-weight:700;
 }
 
 .mining-tabs button img{
@@ -659,60 +743,25 @@ input{
 }
 
 .mining-tabs button.active{
-  color:#022c22;
   background:linear-gradient(135deg,#22c55e,#6ee7a8);
-  border-color:transparent;
-  box-shadow:0 0 0 2px rgba(110,231,168,.35);
+  color:#022c22;
+  border:none;
 }
 
-.mining-tabs button:active{
-  transform:scale(.96);
-}
-
-/* ================= PLANS GRID ================= */
+/* ================= MINING PLANS ================= */
 
 .mining-plans{
   display:grid;
-  grid-template-columns:repeat(2,1fr);
-  gap:18px;
+  grid-template-columns: repeat(2,1fr);
+  gap:16px;
 }
-
-/* ================= PLAN CARD ================= */
 
 .mining-plan{
-  position:relative;
   padding:16px;
   border-radius:18px;
-  background:
-    linear-gradient(180deg,#0e2730,#08161b);
+  background:linear-gradient(180deg,#0e2730,#08161b);
   border:1px solid #143743;
-  box-shadow:0 12px 24px rgba(0,0,0,.35);
-  background-repeat:no-repeat;
-  background-position:top 16px right 16px;
-  background-size:32px 32px;
 }
-
-/* ================= VIP ================= */
-
-.mining-plan.vip{
-  border-color:var(--yellow);
-  box-shadow:0 0 0 1px rgba(241,196,15,.35);
-}
-
-.mining-plan.vip::before{
-  content:"VIP";
-  position:absolute;
-  top:12px;
-  right:14px;
-  font-size:11px;
-  font-weight:800;
-  color:#000;
-  background:var(--yellow);
-  padding:4px 8px;
-  border-radius:8px;
-}
-
-/* ================= TITLE ================= */
 
 .mining-plan h4{
   font-size:14px;
@@ -720,68 +769,32 @@ input{
   margin-bottom:6px;
 }
 
-/* ================= PROFIT ================= */
-
 .mining-profit{
   font-size:20px;
   font-weight:800;
-  color:var(--green);
+  color:#22c55e;
   margin-bottom:12px;
 }
 
-/* ================= DETAILS ================= */
-
-.mining-plan ul{
-  list-style:none;
-  padding:0;
-  margin:0;
-}
-
-.mining-plan li{
-  display:flex;
-  justify-content:space-between;
-  padding:4px 0;
-  font-size:12px;
-  color:var(--muted);
-}
-
-.mining-plan li strong{
-  color:#e6f5ef;
-}
-
-/* ================= BUTTON ================= */
-
 .mining-plan button{
-  margin-top:14px;
   width:100%;
   height:40px;
   border-radius:14px;
-  font-weight:800;
-  background:linear-gradient(135deg,#22c55e,#16a34a);
+  background:#22c55e;
   color:#022c22;
+  font-weight:700;
   border:none;
-  transition:.2s ease;
 }
 
-.mining-plan button:active{
-  transform:scale(.97);
-}
+/* ================= BOTTOM NAV ================= */
 
-/* ===== FIX: MINING PLANS NOT VISIBLE ===== */
-
-#mining{
-  min-height: 100vh;
-  padding-bottom: 120px; /* مساحة للـ bottom nav */
-}
-
-.mining-plans{
-  margin-top: 20px;
-  min-height: 200px; /* يجبر الظهور */
-}
-
-.mining-plan{
-  opacity: 1;
-  visibility: visible;
+.bottom-nav{
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 64px;
+  z-index: 999;
 }
 
 /* =========================================================
