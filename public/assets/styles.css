@@ -768,6 +768,23 @@ input{
   transform:scale(.97);
 }
 
+/* ===== FIX: MINING PLANS NOT VISIBLE ===== */
+
+#mining{
+  min-height: 100vh;
+  padding-bottom: 120px; /* مساحة للـ bottom nav */
+}
+
+.mining-plans{
+  margin-top: 20px;
+  min-height: 200px; /* يجبر الظهور */
+}
+
+.mining-plan{
+  opacity: 1;
+  visibility: visible;
+}
+
 /* =========================================================
    AIRDROP
 ========================================================= */
