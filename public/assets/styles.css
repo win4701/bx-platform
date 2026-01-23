@@ -229,45 +229,28 @@ input{
   font-size: 16px;
 }
 
+/* ================= COIN ROW – COMPACT ================= */
 .wallet-row{
-  display: flex;
-  align-items: center;
-  padding: 14px 0;
-  border-bottom: 1px solid #020617;
-}
-
-.wallet-row:last-child{
-  border-bottom: none;
+  padding: 10px 0;              /* أصغر */
 }
 
 .wallet-row img{
-  width: 34px;
-  margin-right: 12px;
+  width: 26px;                  /* تصغير الأيقونة */
+  height: 26px;
 }
 
 .wallet-row .info strong{
-  display: block;
-  font-size: 15px;
+  font-size: 14px;
 }
 
 .wallet-row .info span{
-  font-size: 12px;
-  color: #9ca3af;
+  font-size: 11px;
 }
 
 .wallet-row .amount{
-  margin-left: auto;
-  font-size: 17px;
+  font-size: 15px;
+  font-weight: 600;
 }
-
-/* MAIN COIN (BX Highlight) */
-.wallet-row.main{
-  background: #0f172a;
-  padding: 16px;
-  border-radius: 14px;
-  margin-bottom: 10px;
-}
-
 /* ================= TRANSFER PANEL ================= */
 .wallet-transfer{
   margin: 16px;
