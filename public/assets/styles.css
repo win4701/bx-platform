@@ -1085,3 +1085,45 @@ button:active,
   color: #022c22 !important;
   border: none !important;
 }
+
+/* =====================================================
+   BOTTOM NAV – VISIBILITY FIX (FINAL)
+===================================================== */
+
+.bottom-nav{
+  background: linear-gradient(180deg,#020617,#020617);
+  border-top: 1px solid #1e293b;
+  box-shadow: 0 -6px 20px rgba(0,0,0,.6);
+}
+
+/* زر */
+.bottom-nav button{
+  color: #64748b;               /* أوضح من السابق */
+  font-size: 11px;
+  font-weight: 600;
+  padding: 6px 0;
+  transition: all .2s ease;
+}
+
+/* أيقونة */
+.bottom-nav img{
+  width: 22px;
+  height: 22px;
+  opacity: .7;
+  transition: all .2s ease;
+}
+
+/* ACTIVE TAB */
+.bottom-nav button.active{
+  color: #6ee7a8;               /* أخضر واضح */
+}
+
+.bottom-nav button.active img{
+  opacity: 1;
+  filter: drop-shadow(0 0 6px rgba(110,231,168,.6));
+}
+
+/* HOVER / TAP */
+.bottom-nav button:active{
+  transform: scale(.92);
+}
