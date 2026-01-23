@@ -297,15 +297,13 @@ input{
 }
 
 .wallet-btn.pay{
-  background: #facc15;
-  color: #111827;
-  font-weight: 700;
+  background: linear-gradient(135deg,#facc15,#f59e0b);
+  font-size: 14px;
 }
 
 .wallet-btn.ton{
-  background: #0ea5e9;
-  color: white;
-  font-weight: 700;
+  background: linear-gradient(135deg,#0ea5e9,#2563eb);
+  font-size: 14px;
 }
 
 /* ================= UTIL ================= */
