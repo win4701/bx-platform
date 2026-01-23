@@ -169,10 +169,9 @@ h3{
 /* ================= ACTION BUTTONS ================= */
 .wallet-actions{
   display: grid;
-  grid-template-columns: repeat(3,1fr);
-  gap: 10px;
-  padding: 0 16px;
-  margin-top: 14px;
+  grid-template-columns: repeat(3, 1fr); /* 3 أزرار متساوية */
+  gap: 12px;
+  margin-top: 16px;
 }
 
 .wallet-btn{
@@ -305,18 +304,16 @@ h3{
 }
 
 /* ================= BOTTOM WALLET ACTIONS ================= */
-.wallet-bottom{
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  padding: 14px 16px;
-  background: #020617;
-  border-top: 1px solid #020617;
-  z-index: 50;
+.wallet-actions button{
+  height: 48px;                 /* نفس الارتفاع */
+  width: 100%;                  /* يملأ العمود */
+  border-radius: 14px;
+  font-size: 15px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;          /* يمنع كسر النص */
 }
 
 .wallet-btn.pay{
