@@ -49,6 +49,7 @@ const BX_FIXED_PRICE_USDT = 2; // 1 BX = 2 USDT
  */
 const BX_CHART_MIN = BX_FIXED_PRICE_USDT * 0.9;
 const BX_CHART_MAX = BX_FIXED_PRICE_USDT * 1.1;
+const MARKET_TICK_MS = 1200;
 
 /**
  * Market pairs supported
@@ -817,9 +818,8 @@ function renderMiningPlans(){
 
     card.innerHTML = `
       ${plan.vip ? `<span class="badge">VIP</span>` : ""}
-      <h3>${plan.name}</h3>
-      <div class="profit">${plan.roi}%</div>
-
+      <h4>${plan.name}</h4>
+<div class="mining-profit">${plan.roi}%</div>
       <ul>
         <li><span>Duration</span><strong>${plan.days} days</strong></li>
         <li><span>Min</span><strong>Auto</strong></li>
@@ -909,17 +909,19 @@ function renderMiningHistory(){
    COIN SWITCH
 ===================================================== */
 
-document.querySelectorAll(".mining-tabs button").forEach(btn => {
-  btn.addEventListener("click", () => {
-    document.querySelectorAll(".mining-tabs button")
-      .forEach(b => b.classList.remove("active"));
-    btn.classList.add("active");
+document.addEventListener("DOMContentLoaded", () => {
+  document.querySelectorAll(".mining-tabs button").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document
+        .querySelectorAll(".mining-tabs button")
+        .forEach(b => b.classList.remove("active"));
 
-    ACTIVE_MINING_COIN = btn.dataset.coin;
-    renderMiningPlans();
+      btn.classList.add("active");
+      ACTIVE_MINING_COIN = btn.dataset.coin;
+      renderMiningPlans();
+    });
   });
 });
-
 /* =====================================================
    INIT
 ===================================================== */
