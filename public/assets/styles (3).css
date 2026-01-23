@@ -1,7 +1,6 @@
 /* ============================================
    MINING
 ============================= ===================*/
-
 .mining-tabs{
   display:flex;
   gap:14px;
@@ -36,13 +35,16 @@
   gap:18px;
 }
 
+.mining-plan{
+  box-shadow: 0 12px 24px rgba(0,0,0,.35);
+}
+
 /* Card */
 .mining-plan{
-  background:linear-gradient(180deg,#0e2730,#08161b);
-  border:1px solid var(--border);
-  border-radius:22px;
-  padding:12px;
-  position:relative;
+  position: relative;
+  background-repeat: no-repeat;
+  background-position: top 16px right 16px;
+  background-size: 32px 32px;
 }
 
 /* VIP */
@@ -105,4 +107,36 @@
   height:38px;
   border-radius:12px;
   font-weight:800;
+}
+
+/* ===== Platinum Horizontal Layout ===== */
+
+/* Platinum card becomes full-width */
+.mining-plan.vip:last-child{
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 18px;
+  padding: 16px 18px;
+}
+
+/* المحتوى */
+.mining-plan.vip:last-child h4,
+.mining-plan.vip:last-child .mining-profit,
+.mining-plan.vip:last-child ul{
+  margin-bottom: 0;
+}
+
+/* ترتيب النص */
+.mining-plan.vip:last-child ul{
+  flex: 1;
+}
+
+/* زر الاشتراك */
+.mining-plan.vip:last-child button{
+  width: 160px;
+  height: 42px;
+  background: linear-gradient(135deg,#22c55e,#16a34a);
+  color: #022c22;
 }
