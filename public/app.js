@@ -732,23 +732,48 @@ const MINING_STATE = {
   history: []
 };
 
-/* ================================================================================================
-   MINING PLANS (FIXED ORDER)
-================================================================================================ */
+/* =====================================================
+   MINING CONFIG (SINGLE SOURCE OF TRUTH)
+===================================================== */
 
-const MINING_PLANS = [
-  { id: "starter",  name: "Starter",       days: 15 },
-  { id: "silver",   name: "Silver",        days: 30 },
-  { id: "gold",     name: "Gold",          days: 45 },
-  { id: "vip",      name: "VIP",           days: 60 },
-  { id: "platinum", name: "Platinum VIP",  days: 90, horizontal: true }
-];
+const MINING_CONFIG = {
+  BX: [
+    { id:"p10", name:"Starter",  days:10, roi:2 },
+    { id:"p21", name:"Basic",    days:21, roi:4.5 },
+    { id:"p30", name:"Growth",   days:30, roi:7 },
+    { id:"p45", name:"Advanced", days:45, roi:11 },
+    { id:"p60", name:"Pro",      days:60, roi:15 },
+    { id:"p90", name:"Infinity", days:90, roi:22, vip:true }
+  ],
+  SOL: [
+    { id:"p10", name:"Starter",  days:10, roi:1 },
+    { id:"p21", name:"Basic",    days:21, roi:2.2 },
+    { id:"p30", name:"Growth",   days:30, roi:3.5 },
+    { id:"p45", name:"Advanced", days:45, roi:6 },
+    { id:"p60", name:"Pro",      days:60, roi:8 },
+    { id:"p90", name:"Infinity", days:90, roi:12, vip:true }
+  ],
+  BNB: [
+    { id:"p10", name:"Starter",  days:10, roi:0.8 },
+    { id:"p21", name:"Basic",    days:21, roi:1.8 },
+    { id:"p30", name:"Growth",   days:30, roi:2.8 },
+    { id:"p45", name:"Advanced", days:45, roi:4.5 },
+    { id:"p60", name:"Pro",      days:60, roi:6 },
+    { id:"p90", name:"Infinity", days:90, roi:9, vip:true }
+  ]
+};
 
-/* ================================================================================================
-   LOAD MINING DASHBOARD
-================================================================================================ */
+/* =====================================================
+   STATE
+===================================================== */
 
-async function loadMining() {
+let ACTIVE_MINING_COIN = "BX";
+
+/* =====================================================
+   LOAD MINING
+===================================================== */
+
+async function loadMining(){
   if (!FEATURES.MINING || !isAuthenticated()) return;
 
   try {
@@ -758,9 +783,10 @@ async function loadMining() {
     if (!r.ok) return;
 
     const data = await r.json();
-    MINING_STATE.activeBX = data.bx || null;
+    MINING_STATE.activeBX  = data.bx  || null;
     MINING_STATE.activeBNB = data.bnb || null;
-    MINING_STATE.history = data.history || [];
+    MINING_STATE.activeSOL = data.sol || null;
+    MINING_STATE.history  = data.history || [];
 
     renderMining();
   } catch (e) {
@@ -768,129 +794,88 @@ async function loadMining() {
   }
 }
 
-/* ================================================================================================
-   RENDER MINING UI
-================================================================================================ */
+/* =====================================================
+   RENDER
+===================================================== */
 
-function renderMining() {
+function renderMining(){
   renderMiningPlans();
   renderActiveMining();
   renderMiningHistory();
 }
 
-/**
- * Render available mining plans
- */
-function renderMiningPlans() {
-  const grid = $("miningGrid");
+function renderMiningPlans(){
+  const grid = document.getElementById("miningGrid");
   if (!grid) return;
 
-  grid.innerHTML = `
-    <div class="mining-card">
-      <h3>Starter</h3>
-      <div class="subtitle">BX Mining</div>
+  grid.innerHTML = "";
 
-      <div class="mining-stat"><span>Daily Profit</span><strong>1.2%</strong></div>
-      <div class="mining-stat"><span>Duration</span><strong>30 days</strong></div>
-      <div class="mining-stat"><span>Min</span><strong>10 BX</strong></div>
-      <div class="mining-stat"><span>Max</span><strong>500 BX</strong></div>
+  MINING_CONFIG[ACTIVE_MINING_COIN].forEach(plan => {
 
-      <button class="mining-btn" onclick="subscribeBXMining('starter')">
-        Subscribe
+    const card = document.createElement("div");
+    card.className = "mining-plan" + (plan.vip ? " vip" : "");
+
+    card.innerHTML = `
+      ${plan.vip ? `<span class="badge">VIP</span>` : ""}
+      <h3>${plan.name}</h3>
+      <div class="profit">${plan.roi}%</div>
+
+      <ul>
+        <li><span>Duration</span><strong>${plan.days} days</strong></li>
+        <li><span>Min</span><strong>Auto</strong></li>
+        <li><span>Max</span><strong>Auto</strong></li>
+      </ul>
+
+      <button onclick="subscribeMining('${plan.id}')">
+        Subscribe ${ACTIVE_MINING_COIN}
       </button>
-    </div>
+    `;
 
-    <div class="mining-card">
-      <h3>Silver</h3>
-      <div class="subtitle">BX Mining</div>
-
-      <div class="mining-stat"><span>Daily Profit</span><strong>4%</strong></div>
-      <div class="mining-stat"><span>Duration</span><strong>45 days</strong></div>
-      <div class="mining-stat"><span>Min</span><strong>100 BX</strong></div>
-      <div class="mining-stat"><span>Max</span><strong>2000 BX</strong></div>
-
-      <button class="mining-btn" onclick="subscribeBXMining('silver')">
-        Subscribe
-      </button>
-    </div>
-
-    <div class="mining-card">
-      <h3>Gold</h3>
-      <div class="subtitle">BX Mining</div>
-
-      <div class="mining-stat"><span>Daily Profit</span><strong>9%</strong></div>
-      <div class="mining-stat"><span>Duration</span><strong>60 days</strong></div>
-      <div class="mining-stat"><span>Min</span><strong>500 BX</strong></div>
-      <div class="mining-stat"><span>Max</span><strong>10000 BX</strong></div>
-
-      <button class="mining-btn" onclick="subscribeBXMining('gold')">
-        Subscribe
-      </button>
-    </div>
-
-    <div class="mining-card vip horizontal">
-      <div>
-        <h3>VIP</h3>
-        <div class="subtitle">BX Mining</div>
-
-        <div class="mining-stat"><span>Daily Profit</span><strong>15%</strong></div>
-        <div class="mining-stat"><span>Duration</span><strong>90 days</strong></div>
-        <div class="mining-stat"><span>Min</span><strong>2000 BX</strong></div>
-        <div class="mining-stat"><span>Max</span><strong>50000 BX</strong></div>
-      </div>
-
-      <button class="mining-btn" onclick="subscribeBXMining('vip')">
-        Subscribe
-      </button>
-    </div>
-  `;
+    grid.appendChild(card);
+  });
 }
 
-/**
- * Render active mining status
- */
-function renderActiveMining() {
-  if (MINING_STATE.activeBX && $("activeBXMining")) {
-    $("activeBXMining").innerHTML =
+/* =====================================================
+   ACTIVE MINING
+===================================================== */
+
+function renderActiveMining(){
+  if (MINING_STATE.activeBX && document.getElementById("activeBXMining")) {
+    document.getElementById("activeBXMining").innerHTML =
       renderMiningProgress(MINING_STATE.activeBX);
   }
-
-  if (MINING_STATE.activeBNB && $("activeBNBMining")) {
-    $("activeBNBMining").innerHTML =
+  if (MINING_STATE.activeBNB && document.getElementById("activeBNBMining")) {
+    document.getElementById("activeBNBMining").innerHTML =
       renderMiningProgress(MINING_STATE.activeBNB);
+  }
+  if (MINING_STATE.activeSOL && document.getElementById("activeSOLMining")) {
+    document.getElementById("activeSOLMining").innerHTML =
+      renderMiningProgress(MINING_STATE.activeSOL);
   }
 }
 
-/**
- * Render mining progress bar
- */
-function renderMiningProgress(mining) {
-  const progress =
-    (mining.days_completed / mining.total_days) * 100;
-
+function renderMiningProgress(m){
+  const p = (m.days_completed / m.total_days) * 100;
   return `
     <div class="mining-progress">
-      <div class="progress-bar">
-        <div class="progress-fill" style="width:${progress}%"></div>
-      </div>
-      <p>${mining.days_completed} / ${mining.total_days} days</p>
-      <p>Daily Profit: ${mining.daily_profit}</p>
-      <p>Total Earned: ${mining.total_earned}</p>
+      <div class="bar"><div style="width:${p}%"></div></div>
+      <small>${m.days_completed} / ${m.total_days} days</small>
+      <small>Earned: ${m.total_earned}</small>
     </div>
   `;
 }
 
-/* ================================================================================================
-   SUBSCRIBE TO MINING
-================================================================================================ */
+/* =====================================================
+   SUBSCRIBE
+===================================================== */
 
-/**
- * Subscribe BX mining
- */
-async function subscribeBXMining(planId) {
-  if (!planId) return;
+async function subscribeMining(planId){
+  const url =
+    ACTIVE_MINING_COIN === "BX"  ? "/mining/bx/subscribe"  :
+    ACTIVE_MINING_COIN === "BNB" ? "/mining/bnb/subscribe" :
+                                   "/mining/sol/subscribe";
 
-  await fetch(API_BASE + "/mining/bx/subscribe", {
+  await fetch(API_BASE + url, {
     method: "POST",
     headers: {
       ...authHeaders(),
@@ -899,134 +884,52 @@ async function subscribeBXMining(planId) {
     body: JSON.stringify({ plan: planId })
   });
 
-  toast("BX Mining activated");
+  toast(`${ACTIVE_MINING_COIN} mining activated`);
   loadMining();
 }
 
-/**
- * Subscribe BNB mining
- */
-async function subscribeBNBMining(planId, amount) {
-  if (!planId || amount <= 0) return;
+/* =====================================================
+   HISTORY
+===================================================== */
 
-  await fetch(API_BASE + "/mining/bnb/subscribe", {
-    method: "POST",
-    headers: {
-      ...authHeaders(),
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({ plan: planId, amount })
+function renderMiningHistory(){
+  const box = document.getElementById("miningHistory");
+  if (!box) return;
+
+  box.innerHTML = MINING_STATE.history.map(h => `
+    <div class="history-item">
+      <span>${h.date}</span>
+      <span>${h.coin}</span>
+      <span>${h.amount}</span>
+    </div>
+  `).join("");
+}
+
+/* =====================================================
+   COIN SWITCH
+===================================================== */
+
+document.querySelectorAll(".mining-tabs button").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".mining-tabs button")
+      .forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+
+    ACTIVE_MINING_COIN = btn.dataset.coin;
+    renderMiningPlans();
   });
+});
 
-  toast("BNB Mining activated");
-  loadMining();
-}
-async function subscribeSOLMining(planId, amount) {
-  if (!planId || amount <= 0) return;
-
-  await fetch(API_BASE + "/mining/sol/subscribe", {
-    method: "POST",
-    headers: {
-      ...authHeaders(),
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({ plan: planId, amount })
-  });
-
-  toast("SOL Mining activated");
-  loadMining();
-}
-
-/* ================================================================================================
-   MINING HISTORY
-================================================================================================ */
-
-function renderMiningHistory() {
-  if (!$("miningHistory")) return;
-
-  $("miningHistory").innerHTML = MINING_STATE.history
-    .map(entry => `
-      <div class="history-item">
-        <span>${entry.date}</span>
-        <span>${entry.coin}</span>
-        <span>${entry.amount}</span>
-      </div>
-    `)
-    .join("");
-}
-
-/* ================================================================================================
-   DAILY UPDATE HOOK (DISPLAY ONLY)
-================================================================================================ */
-
-/**
- * Called after backend daily job
- */
-function onMiningDayUpdate() {
-  loadMining();
-  loadWallet();
-}
-
-/* ================================================================================================
-   MINING INIT
-================================================================================================ */
+/* =====================================================
+   INIT
+===================================================== */
 
 document.addEventListener("DOMContentLoaded", () => {
   if (!FEATURES.MINING) return;
   loadMining();
 });
 
-/* ================================================================================================
-   MINING COIN SWITCH (BX / BNB / SOL)  ✅ أضِف هنا
-================================================================================================ */
-
-const MINING_COINS = {
-  BX: { symbol: "BX", img: "/assets/images/bx.png" },
-  BNB:{ symbol: "BNB",img: "/assets/images/bnb.png"},
-  SOL:{ symbol: "SOL",img: "/assets/images/sol.png"}
-};
-
-let ACTIVE_MINING_COIN = "BX";
-
-document.querySelectorAll(".mining-tabs button").forEach(btn => {
-  btn.addEventListener("click", () => {
-
-    document.querySelectorAll(".mining-tabs button")
-      .forEach(b => b.classList.remove("active"));
-    btn.classList.add("active");
-
-    ACTIVE_MINING_COIN = btn.textContent.trim();
-    updateMiningByCoin();
-  });
-});
-
-function updateMiningByCoin() {
-  const coin = MINING_COINS[ACTIVE_MINING_COIN];
-
-  document.querySelectorAll(".mining-plan").forEach(plan => {
-
-    // 🔹 صورة العملة (inline – بدون CSS)
-    plan.style.backgroundImage =
-      `linear-gradient(180deg,#0e2730,#08161b), url(${coin.img})`;
-    plan.style.backgroundRepeat = "no-repeat";
-    plan.style.backgroundPosition = "top 14px right 14px";
-    plan.style.backgroundSize = "32px";
-
-    // 🔹 تحديث النصوص Min / Max
-    plan.querySelectorAll("li strong").forEach(el => {
-      el.textContent = el.textContent.replace(/BX|BNB|SOL/g, coin.symbol);
-    });
-
-    // 🔹 زر الاشتراك
-    const btn = plan.querySelector("button");
-    if (btn) {
-      btn.textContent = `Subscribe ${coin.symbol}`;
-    }
-  });
-}
-
-// تشغيل افتراضي
-document.addEventListener("DOMContentLoaded", updateMiningByCoin);
+      
 /* ================================================================================================
    AIRDROP STATE
 ================================================================================================ */
