@@ -288,4 +288,4 @@ function updateMiningByCoin() {
 }
 
 // تشغيل افتراضي
-document.addEventLi
+document.addEventListener("DOMContentLoaded", updateMiningByCoin);
