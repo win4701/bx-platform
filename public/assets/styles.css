@@ -1127,3 +1127,11 @@ button:active,
 .bottom-nav button:active{
   transform: scale(.92);
 }
+.bottom-nav button.active::after{
+  content:"";
+  width: 22px;
+  height: 3px;
+  background: #6ee7a8;
+  border-radius: 3px;
+  margin-top: 4px;
+   }
