@@ -1,32 +1,75 @@
 <section id="mining" class="view card">
 
-  <!-- ===== HEADER ===== -->
-  <header class="page-header">
-    <h2>Mining</h2>
-  </header>
+  <h2 class="page-title">Mining</h2>
 
-  <!-- ===== TABS (STATIC) ===== -->
+  <!-- Tabs -->
   <div class="mining-tabs">
-    <button class="tab active" data-coin="BX">
-      <img src="assets/images/bx.png" alt="BX">
-      BX
-    </button>
-    <button class="tab" data-coin="BNB">
-      <img src="assets/images/bnb.png" alt="BNB">
-      BNB
-    </button>
-    <button class="tab" data-coin="SOL">
-      <img src="assets/images/sol.png" alt="SOL">
-      SOL
-    </button>
+    <button class="active">BX</button>
+    <button>BNB</button>
+    <button>SOL</button>
   </div>
 
-  <!-- ===== CONTENT ===== -->
-  <div class="mining-container">
+  <!-- Plans -->
+  <div class="mining-plans">
 
-    <!-- GRID (JS WILL FILL) -->
-    <div class="mining-grid" id="miningGrid">
-      <!-- Cards injected by JS -->
+    <!-- Starter -->
+    <div class="mining-plan">
+      <h4>Starter</h4>
+      <div class="mining-profit">1.2%</div>
+      <ul>
+        <li><span>Duration</span><strong>30 days</strong></li>
+        <li><span>Min</span><strong>10 BX</strong></li>
+        <li><span>Max</span><strong>500 BX</strong></li>
+      </ul>
+      <button>Subscribe</button>
+    </div>
+
+    <!-- Silver -->
+    <div class="mining-plan">
+      <h4>Silver</h4>
+      <div class="mining-profit">4%</div>
+      <ul>
+        <li><span>Duration</span><strong>45 days</strong></li>
+        <li><span>Min</span><strong>100 BX</strong></li>
+        <li><span>Max</span><strong>2000 BX</strong></li>
+      </ul>
+      <button>Subscribe</button>
+    </div>
+
+    <!-- Gold -->
+    <div class="mining-plan">
+      <h4>Gold</h4>
+      <div class="mining-profit">9%</div>
+      <ul>
+        <li><span>Duration</span><strong>60 days</strong></li>
+        <li><span>Min</span><strong>500 BX</strong></li>
+        <li><span>Max</span><strong>10000 BX</strong></li>
+      </ul>
+      <button>Subscribe</button>
+    </div>
+
+    <!-- VIP -->
+    <div class="mining-plan vip">
+      <h4>VIP</h4>
+      <div class="mining-profit">15%</div>
+      <ul>
+        <li><span>Duration</span><strong>90 days</strong></li>
+        <li><span>Min</span><strong>2000 BX</strong></li>
+        <li><span>Max</span><strong>50000 BX</strong></li>
+      </ul>
+      <button>Subscribe</button>
+    </div>
+
+    <!-- Platinum (نفس نسبة VIP) -->
+    <div class="mining-plan vip">
+      <h4>Platinum</h4>
+      <div class="mining-profit">15%</div>
+      <ul>
+        <li><span>Duration</span><strong>90 days</strong></li>
+        <li><span>Min</span><strong>2000 BX</strong></li>
+        <li><span>Max</span><strong>50000 BX</strong></li>
+      </ul>
+      <button>Subscribe</button>
     </div>
 
   </div>
