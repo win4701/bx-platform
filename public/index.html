@@ -61,103 +61,60 @@
 </div>
 
   <!-- ================= BALANCES ================= -->
-  <div class="wallet-balances">
-
-    <h3>Balances</h3>
-
-    <!-- BX -->
-    <div class="wallet-row main">
-  <img src="assets/images/bx.png" alt="BX">
-      <div class="info">
-        <strong>BX</strong>
-        <span>Bloxio Token</span>
-      </div>
-      <div class="amount">
-        <strong id="bal-bx">0.00</strong>
-      </div>
+  <section id="wallet" class="view active">
+  <div class="bn-wallet-card">
+    <div class="wallet-eye">
+      <span class="muted">إجمالي الرصيد</span>
+      <img src="assets/images/eye-icon.svg" width="16" style="margin-left:5px">
     </div>
-
-    <!-- USDT -->
-    <div class="wallet-row">
- <img src="assets/images/usdt.png" alt="USDT">
-      <div class="info">
-        <strong>USDT</strong>
-        <span>Tether</span>
-      </div>
-      <div class="amount">
-        <strong id="bal-usdt">0.00</strong>
-      </div>
+    <div class="wallet-main-balance">
+      <span class="balance-num">1.16</span>
+      <span class="balance-unit">USD</span>
     </div>
-
-    <!-- BNB -->
-    <div class="wallet-row">
-      <img src="assets/images/bnb.png" alt="BNB">
-      <div class="info">
-        <strong>BNB</strong>
-        <span>Binance Coin</span>
-      </div>
-      <div class="amount">
-        <strong id="bal-bnb">0.00</strong>
-      </div>
-    </div>
-
-    <!-- TON -->
-    <div class="wallet-row">
-      <img src="assets/images/ton.png" alt="TON">
-      <div class="info">
-        <strong>TON</strong>
-        <span>Toncoin</span>
-      </div>
-      <div class="amount">
-        <strong id="bal-ton">0.00</strong>
-      </div>
-    </div>
-
-    <!-- SOL -->
-    <div class="wallet-row">
-      <img src="assets/images/sol.png" alt="SOL">
-      <div class="info">
-        <strong>SOL</strong>
-        <span>Solana</span>
-      </div>
-      <div class="amount">
-        <strong id="bal-sol">0.00</strong>
+    <div class="wallet-pnl">
+      <span class="muted">ربح اليوم</span>
+      <span class="pos-text">+$0.045 (0.32%)</span>
     </div>
   </div>
 
-    <!-- BTC -->
-    <div class="wallet-row">
-      <img src="assets/images/btc.png" alt="BTC">
-      <div class="info">
-        <strong>BTC</strong>
-        <span>Bitcoin</span>
+  <div class="bn-action-buttons">
+    <div class="action-box">
+      <button class="circle-btn bg-bn-green">
+        <img src="assets/images/deposit.svg">
+      </button>
+      <span>إيداع</span>
+    </div>
+    <div class="action-box">
+      <button class="circle-btn bg-bn-yellow">
+        <img src="assets/images/withdraw.svg">
+      </button>
+      <span>سحب</span>
+    </div>
+    <div class="action-box">
+      <button class="circle-btn bg-bn-gray">
+        <img src="assets/images/transfer.svg">
+      </button>
+      <span>تحويل</span>
+    </div>
+  </div>
+
+  <div class="bn-asset-section">
+    <div class="asset-tab">الأصول</div>
+    
+    <div class="asset-row-item">
+      <div class="asset-l">
+        <img src="assets/images/bx.png">
+        <div class="asset-texts">
+          <div class="a-symbol">BX</div>
+          <div class="a-name">Bloxio Token</div>
+        </div>
       </div>
-      <div class="amount">
-        <strong id="bal-btc">0.0000</strong>
+      <div class="asset-r">
+        <div class="a-qty">0.00</div>
+        <div class="a-usd">$0.00</div>
       </div>
     </div>
-
-  <!-- ================= TRANSFER PANEL ================= -->
-  <div class="wallet-transfer" id="transferPanel">
-
-    <h4>Transfer BX</h4>
-
-    <input
-      id="transferTelegram"
-      placeholder="Telegram ID ( @username )"
-    />
-
-    <input
-      id="transferAmount"
-      type="number"
-      placeholder="Amount BX"
-    />
-
-    <button class="btn confirm">
-      Confirm Transfer
-    </button>
-
-  </div>
+    </div>
 
   <!-- ================= BOTTOM ACTIONS ================= -->
   <div class="wallet-bottom">
@@ -175,90 +132,78 @@
   
 
   <!-- ================= MARKET ================= -->
-  
-<section id="market" class="card view">
-
-  <!-- ===== MARKET HEADER ===== -->
-  <div class="market-header">
-    <div class="pair-info" id="pairBar">
-      <strong id="currentPair">BX / USDT</strong>
-      <span class="arrow">▼</span>
-    </div>
-
-    <div class="price-info">
-      <span class="label">Last Price</span>
-      <strong id="lastPrice">—</strong>
-    </div>
-  </div>
-
-  <!-- ===== MAIN MARKET LAYOUT ===== -->
-  <div class="market-layout">
-
-    <!-- ===== LEFT : ORDER PANEL ===== -->
-    <div class="market-order">
-
-      <div class="order-tabs">
-        <button class="active buy">Buy</button>
-        <button class="sell">Sell</button>
+ <section id="market" class="view">
+  <div class="bn-market-header">
+    <div class="bn-pair-info">
+      <img src="assets/images/bx.png" class="coin-icon-main">
+      <div class="pair-details">
+        <div class="pair-title">BX/USDT <i class="arrow-down"></i></div>
+        <div class="pair-price-row">
+          <span class="main-price">2.0000</span>
+          <span class="change-tag">+5.12%</span>
+        </div>
       </div>
-
-      <div class="order-form">
-        <label>Amount</label>
-        <input id="amount" type="number" placeholder="Amount" />
-
-        <button class="btn buy">Buy BX</button>
-        <button class="btn sell">Sell BX</button>
-      </div>
-
     </div>
-
-    <!-- ===== CENTER : CHART ===== -->
-    <div class="market-chart">
-      <canvas id="priceChart"></canvas>
+    <div class="header-icons">
+      <img src="assets/images/chart-icon.svg" width="20">
     </div>
-
-    <!-- ===== RIGHT : ORDER BOOK ===== -->
-    <div class="market-book">
-
-      <h4>Order Book</h4>
-
-      <ul id="orderBook" class="order-book">
-        <!-- Asks (Sell) -->
-        <li class="ask">
-          <span class="price">95,184.04</span>
-          <span class="amount">0.00313</span>
-        </li>
-
-        <!-- Bids (Buy) -->
-        <li class="bid">
-          <span class="price">95,183.94</span>
-          <span class="amount">2.69205</span>
-        </li>
-      </ul>
-
-    </div>
-
   </div>
 
-  <!-- ===== RECENT TRADES ===== -->
-  <div class="market-trades">
-    <h4>Recent Trades</h4>
-
-    <ul class="trades-list" id="trades">
-      <li class="trade buy">
-        <span class="side">BUY</span>
-        <span class="amount">1 BX</span>
-        <span class="price">2.00</span>
-      </li>
-      <li class="trade sell">
-        <span class="side">SELL</span>
-        <span class="amount">1 BX</span>
-        <span class="price">1.99</span>
-      </li>
-    </ul>
+  <div class="bn-chart-area">
+    <div class="chart-labels">
+      <span>High: 2.10</span>
+      <span>Low: 1.85</span>
+      <span>24h Vol: 1.2M</span>
+    </div>
+    <div class="fake-chart">
+       <div class="candle up" style="height: 40%; left: 10%"></div>
+       <div class="candle up" style="height: 60%; left: 25%"></div>
+       <div class="candle down" style="height: 50%; left: 40%"></div>
+       <div class="candle up" style="height: 80%; left: 55%"></div>
+       <div class="candle down" style="height: 30%; left: 70%"></div>
+    </div>
   </div>
 
-  </section>
+  <div class="bn-coin-list">
+    <div class="list-head">
+      <span>اسم العملة</span>
+      <span>السعر الأخير</span>
+      <span>التغيير 24س</span>
+    </div>
+
+    <div class="coin-row active">
+      <div class="c-info"><img src="assets/images/bx.png"> <span>BX/USDT</span></div>
+      <div class="c-price">2.0000</div>
+      <div class="c-change pos">+5.12%</div>
+    </div>
+    <div class="coin-row">
+      <div class="c-info"><img src="assets/images/ton.png"> <span>BX/TON</span></div>
+      <div class="c-price">0.3541</div>
+      <div class="c-change neg">-0.24%</div>
+    </div>
+    <div class="coin-row">
+      <div class="c-info"><img src="assets/images/sol.png"> <span>BX/SOL</span></div>
+      <div class="c-price">0.0124</div>
+      <div class="c-change pos">+1.15%</div>
+    </div>
+    <div class="coin-row">
+      <div class="c-info"><img src="assets/images/bnb.png"> <span>BX/BNB</span></div>
+      <div class="c-price">0.0031</div>
+      <div class="c-change pos">+0.88%</div>
+    </div>
+    <div class="coin-row">
+      <div class="c-info"><img src="assets/images/btc.png"> <span>BX/BTC</span></div>
+      <div class="c-price">0.000021</div>
+      <div class="c-change neg">-1.20%</div>
+    </div>
+    <div class="coin-row">
+      <div class="c-info"><img src="assets/images/usdt.png"> <span>USDT/BX</span></div>
+      <div class="c-price">0.5000</div>
+      <div class="c-change pos">+0.00%</div>
+    </div>
+  </div>
+</section> 
+
   <!-- ================= CASINO ================= -->
   <section id="casino" class="card view">
   <h2 class="casino-title">Casino</h2>
