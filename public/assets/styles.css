@@ -11,8 +11,6 @@
   --green: #02C076; 
   --red: #F84960;
   --yellow: #FCD535;
-
-  --radius:16px;
 }
 
 /* =========================================================
@@ -151,11 +149,9 @@ h3{
   color: #94a3b8;
 }
 
-.wallet-top h1{
-  margin: 6px 0 0;
-  font-size: 36px;
+.wallet-top h1 {
+  font-size: 38px;
   font-weight: 800;
-  letter-spacing: .5px;
 }
 
 .wallet-top small{
@@ -173,38 +169,32 @@ h3{
 }
 
 .wallet-btn{
-  height: 42px;
+  height: 38px;
   border-radius: 14px;
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 800;
   letter-spacing: .3px;
   border: none;
   cursor: pointer;
   transition: all .15s ease;
 }
 
-.wallet-btn:active{
-  transform: scale(.97);
-  opacity: .9;
+.wallet-actions .wallet-btn {
+  opacity: 0.9;          /* بدل 1 */
 }
 
 /* Deposit */
-.wallet-btn.deposit{
-  background: linear-gradient(135deg,#22c55e,#16a34a);
-  color: #022c22;
+.wallet-actions .deposit {
+  box-shadow: none;      /* لا ظل ثقيل */
 }
-
 /* Withdraw */
-.wallet-btn.withdraw{
-  background: linear-gradient(135deg,#facc15,#f59e0b);
-  color: #1f2937;
+.wallet-actions .withdraw {
+  box-shadow: none;      /* لا ظل ثقيل */
 }
 
 /* Transfer */
-.wallet-btn.transfer{
-  background: #1f2937;
-  color: #e5e7eb;
-  border: 1px solid #334155;
+.wallet-actions .transfer {
+  box-shadow: none;      /* لا ظل ثقيل */
 }
 
 /* ================= BALANCES ================= */
@@ -293,21 +283,21 @@ h3{
 }
 
 .wallet-transfer .confirm{
-  height: 44px;
+  height: 38px;
   border-radius: 14px;
   background: linear-gradient(135deg,#3b82f6,#2563eb);
   color: #fff;
-  font-weight: 700;
+  font-weight: 800;
   border: none;
 }
 
 /* ================= BOTTOM WALLET ACTIONS ================= */
 .wallet-actions button{
-  height: 48px;                 /* نفس الارتفاع */
+  height: 38px;                 /* نفس الارتفاع */
   width: 100%;                  /* يملأ العمود */
   border-radius: 14px;
   font-size: 15px;
-  font-weight: 700;
+  font-weight: 800;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -317,14 +307,14 @@ h3{
 .view{ padding-bottom:120px; }
 
 .wallet-btn.pay{
-  height: 44px;
+  height: 38px;
   background: linear-gradient(135deg,#facc15,#f59e0b);
   color: #111827;
   font-weight: 800;
 }
 
 .wallet-btn.ton{
-  height: 44px;
+  height: 38px;
   background: linear-gradient(135deg,#0ea5e9,#2563eb);
   color: #fff;
   font-weight: 800;
@@ -398,11 +388,6 @@ input{
 .wallet-btn.ton{
   background: linear-gradient(135deg,#0ea5e9,#2563eb);
   font-size: 14px;
-}
-
-/* ================= UTIL ================= */
-.hidden{
-  display: none;
 }
 
 /* =========================================================
@@ -562,15 +547,10 @@ input{
   padding: 4px 0;
 }
 
-.trade.buy{
-  color: #4adebb;
-}
+.trade.sell-mode .buy-btn { display:none; }
+.trade.buy-mode .sell-btn { display:none; }
 
-.trade.sell{
-  color: #ff6b6b;
-}
-
-@media (max-width: 900px){
+@media (max-width: 800px){
   .market-layout{
     grid-template-columns: 1fr;
     height: auto;
@@ -638,32 +618,6 @@ input{
   overflow: visible;
 }
 
-/* ================= WALLET ================= */
-
-#wallet{
-  padding-bottom: 120px;
-}
-
-.wallet-top{
-  padding: 16px;
-}
-
-.wallet-top .label{
-  font-size: 13px;
-  color: #9ca3af;
-}
-
-.wallet-top h1{
-  font-size: 34px;
-  margin-top: 6px;
-  font-weight: 700;
-}
-
-.wallet-top small{
-  font-size: 14px;
-  color: #9ca3af;
-}
-
 /* ================= WALLET ACTIONS ================= */
 
 .wallet-actions{
@@ -675,10 +629,10 @@ input{
 }
 
 .wallet-btn{
-  height: 46px;
+  height: 38px;
   font-size: 14px;
   border-radius: 14px;
-  font-weight: 700;
+  font-weight: 800;
 }
 
 /* Colors */
