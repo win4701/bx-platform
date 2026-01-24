@@ -1,94 +1,218 @@
-<section id="market" class="card view">
-  <div class="market-top-bar">
-    <div class="pair-selector">
-      <img src="assets/images/btc.png" width="20">
-      <strong>BTC/USDT</strong>
-      <span class="percent positive">+0.27%</span>
+-- ================= WALLET ================= -->
+  <section id="wallet" class="card view active">
+
+  <!-- ================= TOP TOTAL ================= -->
+  <div class="wallet-top">
+    <span class="label">Est. Total Value</span>
+    <h1>
+      <span id="walletTotal">$0.00</span>
+      <small>USD</small>
+    </h1>
+  </div>
+
+  <!-- ================= MAIN ACTIONS ================= -->
+  <div class="wallet-actions">
+  <button class="btn primary">Deposit</button>
+  <button class="btn">Withdraw</button>
+  <button class="btn">Transfer</button>
+</div>
+
+  <!-- ================= BALANCES ================= -->
+  <div class="wallet-balances">
+
+    <h3>Balances</h3>
+
+    <!-- BX -->
+    <div class="wallet-row main">
+  <img src="assets/images/bx.png" alt="BX">
+      <div class="info">
+        <strong>BX</strong>
+        <span>Bloxio Token</span>
+      </div>
+      <div class="amount">
+        <strong id="bal-bx">0.00</strong>
+      </div>
     </div>
-    <div class="market-icons">
-      <i class="chart-icon"></i>
-      <i class="dots-icon"></i>
+
+    <!-- USDT -->
+    <div class="wallet-row">
+ <img src="assets/images/usdt.png" alt="USDT">
+      <div class="info">
+        <strong>USDT</strong>
+        <span>Tether</span>
+      </div>
+      <div class="amount">
+        <strong id="bal-usdt">0.00</strong>
+      </div>
+    </div>
+
+    <!-- BNB -->
+    <div class="wallet-row">
+      <img src="assets/images/bnb.png" alt="BNB">
+      <div class="info">
+        <strong>BNB</strong>
+        <span>Binance Coin</span>
+      </div>
+      <div class="amount">
+        <strong id="bal-bnb">0.00</strong>
+      </div>
+    </div>
+
+    <!-- TON -->
+    <div class="wallet-row">
+      <img src="assets/images/ton.png" alt="TON">
+      <div class="info">
+        <strong>TON</strong>
+        <span>Toncoin</span>
+      </div>
+      <div class="amount">
+        <strong id="bal-ton">0.00</strong>
+      </div>
+    </div>
+
+    <!-- SOL -->
+    <div class="wallet-row">
+      <img src="assets/images/sol.png" alt="SOL">
+      <div class="info">
+        <strong>SOL</strong>
+        <span>Solana</span>
+      </div>
+      <div class="amount">
+        <strong id="bal-sol">0.00</strong>
     </div>
   </div>
 
-  <div class="trade-container">
-    <div class="trade-form">
-      <div class="trade-tabs">
-        <button class="tab-buy active">Acheter</button>
-        <button class="tab-sell">Vendre</button>
+    <!-- BTC -->
+    <div class="wallet-row">
+      <img src="assets/images/btc.png" alt="BTC">
+      <div class="info">
+        <strong>BTC</strong>
+        <span>Bitcoin</span>
       </div>
-
-      <div class="input-group">
-        <select class="market-type"><option>Marché</option></select>
-        <div class="price-input">Prix <span>USDT</span></div>
-        <input type="number" placeholder="Quantité" id="amount">
-      </div>
-
-      <button class="btn-action buy">Acheter BTC</button>
-    </div>
-
-    <div class="order-book-binance">
-      <div class="book-header">
-        <span>Prix(USDT)</span>
-        <span>Montant(BTC)</span>
-      </div>
-      <div class="asks">
-        <div class="book-row sell"><span>89,536.85</span><span>0.00012</span></div>
-        <div class="book-row sell"><span>89,536.82</span><span>0.05573</span></div>
-      </div>
-      <div class="current-price">89,536.76</div>
-      <div class="bids">
-        <div class="book-row buy"><span>89,536.76</span><span>3.36907</span></div>
-        <div class="book-row buy"><span>89,536.75</span><span>0.00081</span></div>
+      <div class="amount">
+        <strong id="bal-btc">0.0000</strong>
       </div>
     </div>
+
+  <!-- ================= TRANSFER PANEL ================= -->
+  <div class="wallet-transfer" id="transferPanel">
+
+    <h4>Transfer BX</h4>
+
+    <input
+      id="transferTelegram"
+      placeholder="Telegram ID ( @username )"
+    />
+
+    <input
+      id="transferAmount"
+      type="number"
+      placeholder="Amount BX"
+    />
+
+    <button class="btn confirm">
+      Confirm Transfer
+    </button>
+
   </div>
+
+  <!-- ================= BOTTOM ACTIONS ================= -->
+  <div class="wallet-bottom">
+
+  <button class="wallet-btn pay">
+    Binance ID
+  </button>
+
+  <button class="wallet-btn ton">
+    WalletConnect
+  </button>
+
+</div>
 </section>
---------*****--***********-----*--***********
+  
+
+  <!-- ================= MARKET ================= -->
+  
 <section id="market" class="card view">
-  <div class="market-top-bar">
-    <div class="pair-selector">
-      <img src="assets/images/btc.png" width="20">
-      <strong>BTC/USDT</strong>
-      <span class="percent positive">+0.27%</span>
-    </div>
-    <div class="market-icons">
-      <i class="chart-icon"></i>
-      <i class="dots-icon"></i>
-    </div>
-  </div>
 
-  <div class="trade-container">
-    <div class="trade-form">
-      <div class="trade-tabs">
-        <button class="tab-buy active">Acheter</button>
-        <button class="tab-sell">Vendre</button>
-      </div>
-
-      <div class="input-group">
-        <select class="market-type"><option>Marché</option></select>
-        <div class="price-input">Prix <span>USDT</span></div>
-        <input type="number" placeholder="Quantité" id="amount">
-      </div>
-
-      <button class="btn-action buy">Acheter BTC</button>
+  <!-- ===== MARKET HEADER ===== -->
+  <div class="market-header">
+    <div class="pair-info" id="pairBar">
+      <strong id="currentPair">BX / USDT</strong>
+      <span class="arrow">▼</span>
     </div>
 
-    <div class="order-book-binance">
-      <div class="book-header">
-        <span>Prix(USDT)</span>
-        <span>Montant(BTC)</span>
-      </div>
-      <div class="asks">
-        <div class="book-row sell"><span>89,536.85</span><span>0.00012</span></div>
-        <div class="book-row sell"><span>89,536.82</span><span>0.05573</span></div>
-      </div>
-      <div class="current-price">89,536.76</div>
-      <div class="bids">
-        <div class="book-row buy"><span>89,536.76</span><span>3.36907</span></div>
-        <div class="book-row buy"><span>89,536.75</span><span>0.00081</span></div>
-      </div>
+    <div class="price-info">
+      <span class="label">Last Price</span>
+      <strong id="lastPrice">—</strong>
     </div>
   </div>
-</section>
 
+  <!-- ===== MAIN MARKET LAYOUT ===== -->
+  <div class="market-layout">
+
+    <!-- ===== LEFT : ORDER PANEL ===== -->
+    <div class="market-order">
+
+      <div class="order-tabs">
+        <button class="active buy">Buy</button>
+        <button class="sell">Sell</button>
+      </div>
+
+      <div class="order-form">
+        <label>Amount</label>
+        <input id="amount" type="number" placeholder="Amount" />
+
+        <button class="btn buy">Buy BX</button>
+        <button class="btn sell">Sell BX</button>
+      </div>
+
+    </div>
+
+    <!-- ===== CENTER : CHART ===== -->
+    <div class="market-chart">
+      <canvas id="priceChart"></canvas>
+    </div>
+
+    <!-- ===== RIGHT : ORDER BOOK ===== -->
+    <div class="market-book">
+
+      <h4>Order Book</h4>
+
+      <ul id="orderBook" class="order-book">
+        <!-- Asks (Sell) -->
+        <li class="ask">
+          <span class="price">95,184.04</span>
+          <span class="amount">0.00313</span>
+        </li>
+
+        <!-- Bids (Buy) -->
+        <li class="bid">
+          <span class="price">95,183.94</span>
+          <span class="amount">2.69205</span>
+        </li>
+      </ul>
+
+    </div>
+
+  </div>
+
+  <!-- ===== RECENT TRADES ===== -->
+  <div class="market-trades">
+    <h4>Recent Trades</h4>
+
+    <ul class="trades-list" id="trades">
+      <li class="trade buy">
+        <span class="side">BUY</span>
+        <span class="amount">1 BX</span>
+        <span class="price">2.00</span>
+      </li>
+      <li class="trade sell">
+        <span class="side">SELL</span>
+        <span class="amount">1 BX</span>
+        <span class="price">1.99</span>
+      </li>
+    </ul>
+  </div>
+
+  </section>
