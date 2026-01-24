@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+  <title> Bloxio</title>
+
+  <!-- Favicon -->
+  <link rel="icon" href="assets/images/logo.png"/>
+
+  <!-- Main Styles -->
+  <link rel="stylesheet" href="assets/styles.css"/>
+
+  <!-- Sounds -->
+  <audio id="snd-click" src="assets/sounds/click.mp3" preload="auto"></audio>
+  <audio id="snd-win"   src="assets/sounds/win.mp3"   preload="auto"></audio>
+  <audio id="snd-lose"  src="assets/sounds/lose.mp3"  preload="auto"></audio>
+  <audio id="snd-spin"  src="assets/sounds/spin.mp3"  preload="auto"></audio>
+</head>
+
+<body
+  data-3d="on"
+  data-3d-level="medium"
+  data-motion="on"
+  data-sound="on"
+  data-performance="auto"
+  data-theme="dark"
+  data-ui="pro"
+  data-version="1.0.0"
+>
+
+<!-- ================= HEADER ================= -->
+<header class="app-header">
+  <div class="logo">
+    <img src="assets/images/logo.png" alt="BX"/>
+    <span>Bloxio</span>
+  </div>
+</header>
+
+<!-- ================= MAIN ================= -->
+<main class="app-container">
+
+  <!-- ================= WALLET ================= -->
+  <section id="wallet" class="card view active">
+
+  <!-- ================= TOP TOTAL ================= -->
+  <div class="wallet-top">
+    <span class="label">Est. Total Value</span>
+    <h1>
+      <span id="walletTotal">$0.00</span>
+      <small>USD</small>
+    </h1>
+  </div>
+
+  <!-- ================= MAIN ACTIONS ================= -->
+  <div class="wallet-actions">
+  <button class="btn primary">Deposit</button>
+  <button class="btn">Withdraw</button>
+  <button class="btn">Transfer</button>
+</div>
+
+  <!-- ================= BALANCES ================= -->
+  <div class="wallet-balances">
+
+    <h3>Balances</h3>
+
+    <!-- BX -->
+    <div class="wallet-row main">
+  <img src="assets/images/bx.png" alt="BX">
+      <div class="info">
+        <strong>BX</strong>
+        <span>Bloxio Token</span>
+      </div>
+      <div class="amount">
+        <strong id="bal-bx">0.00</strong>
+      </div>
+    </div>
+
+    <!-- USDT -->
+    <div class="wallet-row">
+ <img src="assets/images/usdt.png" alt="USDT">
+      <div class="info">
+        <strong>USDT</strong>
+        <span>Tether</span>
+      </div>
+      <div class="amount">
+        <strong id="bal-usdt">0.00</strong>
+      </div>
+    </div>
+
+    <!-- BNB -->
+    <div class="wallet-row">
+      <img src="assets/images/bnb.png" alt="BNB">
+      <div class="info">
+        <strong>BNB</strong>
+        <span>Binance Coin</span>
+      </div>
+      <div class="amount">
+        <strong id="bal-bnb">0.00</strong>
+      </div>
+    </div>
+
+    <!-- TON -->
+    <div class="wallet-row">
+      <img src="assets/images/ton.png" alt="TON">
+      <div class="info">
+        <strong>TON</strong>
+        <span>Toncoin</span>
+      </div>
+      <div class="amount">
+        <strong id="bal-ton">0.00</strong>
+      </div>
+    </div>
+
+    <!-- SOL -->
+    <div class="wallet-row">
+      <img src="assets/images/sol.png" alt="SOL">
+      <div class="info">
+        <strong>SOL</strong>
+        <span>Solana</span>
+      </div>
+      <div class="amount">
+        <strong id="bal-sol">0.00</strong>
+    </div>
+  </div>
+
+    <!-- BTC -->
+    <div class="wallet-row">
+      <img src="assets/images/btc.png" alt="BTC">
+      <div class="info">
+        <strong>BTC</strong>
+        <span>Bitcoin</span>
+      </div>
+      <div class="amount">
+        <strong id="bal-btc">0.0000</strong>
+      </div>
+    </div>
+
+  <!-- ================= TRANSFER PANEL ================= -->
+  <div class="wallet-transfer" id="transferPanel">
+
+    <h4>Transfer BX</h4>
+
+    <input
+      id="transferTelegram"
+      placeholder="Telegram ID ( @username )"
+    />
+
+    <input
+      id="transferAmount"
+      type="number"
+      placeholder="Amount BX"
+    />
+
+    <button class="btn confirm">
+      Confirm Transfer
+    </button>
+
+  </div>
+
+  <!-- ================= BOTTOM ACTIONS ================= -->
+  <div class="wallet-bottom">
+
+  <button class="wallet-btn pay">
+    Binance ID
+  </button>
+
+  <button class="wallet-btn ton">
+    WalletConnect
+  </button>
+
+</div>
+</section>
+  
+
+  <!-- ================= MARKET ================= -->
+  
+<section id="market" class="card view">
+
+  <!-- ===== MARKET HEADER ===== -->
+  <div class="market-header">
+    <div class="pair-info" id="pairBar">
+      <strong id="currentPair">BX / USDT</strong>
+      <span class="arrow">▼</span>
+    </div>
+
+    <div class="price-info">
+      <span class="label">Last Price</span>
+      <strong id="lastPrice">—</strong>
+    </div>
+  </div>
+
+  <!-- ===== MAIN MARKET LAYOUT ===== -->
+  <div class="market-layout">
+
+    <!-- ===== LEFT : ORDER PANEL ===== -->
+    <div class="market-order">
+
+      <div class="order-tabs">
+        <button class="active buy">Buy</button>
+        <button class="sell">Sell</button>
+      </div>
+
+      <div class="order-form">
+        <label>Amount</label>
+        <input id="amount" type="number" placeholder="Amount" />
+
+        <button class="btn buy">Buy BX</button>
+        <button class="btn sell">Sell BX</button>
+      </div>
+
+    </div>
+
+    <!-- ===== CENTER : CHART ===== -->
+    <div class="market-chart">
+      <canvas id="priceChart"></canvas>
+    </div>
+
+    <!-- ===== RIGHT : ORDER BOOK ===== -->
+    <div class="market-book">
+
+      <h4>Order Book</h4>
+
+      <ul id="orderBook" class="order-book">
+        <!-- Asks (Sell) -->
+        <li class="ask">
+          <span class="price">95,184.04</span>
+          <span class="amount">0.00313</span>
+        </li>
+
+        <!-- Bids (Buy) -->
+        <li class="bid">
+          <span class="price">95,183.94</span>
+          <span class="amount">2.69205</span>
+        </li>
+      </ul>
+
+    </div>
+
+  </div>
+
+  <!-- ===== RECENT TRADES ===== -->
+  <div class="market-trades">
+    <h4>Recent Trades</h4>
+
+    <ul class="trades-list" id="trades">
+      <li class="trade buy">
+        <span class="side">BUY</span>
+        <span class="amount">1 BX</span>
+        <span class="price">2.00</span>
+      </li>
+      <li class="trade sell">
+        <span class="side">SELL</span>
+        <span class="amount">1 BX</span>
+        <span class="price">1.99</span>
+      </li>
+    </ul>
+  </div>
+
+  </section>
+  <!-- ================= CASINO ================= -->
+  <section id="casino" class="card view">
+  <h2 class="casino-title">Casino</h2>
+
+  <!-- Casino Grid -->
+  <div class="casino-grid">
+
+    <div class="game" data-game="coinflip">
+      <img src="assets/images/coinflip.png" alt="Coin Flip">
+      <h4>Coin Flip</h4>
+    </div>
+
+    <div class="game" data-game="roulette">
+      <img src="assets/images/roulette.png" alt="Roulette">
+      <h4>Roulette</h4>
+    </div>
+
+    <div class="game" data-game="limbo">
+      <img src="assets/images/limbo.png" alt="Limbo">
+      <h4>Limbo</h4>
+    </div>
+
+    <div class="game" data-game="chicken">
+      <img src="assets/images/chicken.png" alt="Chicken Road">
+      <h4>Chicken Road</h4>
+    </div>
+
+    <div class="game" data-game="dice">
+      <img src="assets/images/dice.png" alt="Dice">
+      <h4>Dice</h4>
+    </div>
+
+    <div class="game" data-game="crash">
+      <img src="assets/images/crash.png" alt="Crash">
+      <h4>Crash</h4>
+    </div>
+
+    <div class="game" data-game="slot">
+      <img src="assets/images/slot.png" alt="Slot">
+      <h4>Slot</h4>
+    </div>
+
+    <div class="game" data-game="fortune">
+      <img src="assets/images/fortune.png" alt="Fortune">
+      <h4></h4>
+    </div>
+
+    <div class="game" data-game="coins4x4">
+      <img src="assets/images/coins4x4.png" alt="Coins 4x4">
+      <h4>Coins 4x4</h4>
+    </div>
+                 <!-- Air Boss -->
+<div class="game" data-game="airboss">
+  <img src="assets/images/airboss.png" alt="Air Boss">
+  <h4>Air Boss</h4>
+</div>
+
+<!-- Hi-Lo -->
+<div class="game" data-game="hilo">
+  <img src="assets/images/hilo.png" alt="Hi-Lo">
+  <h4>Hi-Lo</h4>
+</div>
+
+<!-- Plinko -->
+<div class="game" data-game="plinko">
+  <img src="assets/images/plinko.png" alt="Plinko">
+  <h4>Plinko</h4>
+</div>
+  </div>
+  </section>
+
+  <!-- ================= MINING ================= -->
+   <section id="mining" class="view card">
+
+  <h2 class="page-title">Mining</h2>
+
+  <!-- Tabs -->
+ <!-- Tabs -->
+<div class="mining-tabs">
+  <button class="active" data-coin="BX">
+    <img src="/assets/images/bx.png" alt="BX">
+    <span>BX</span>
+  </button>
+
+  <button data-coin="BNB">
+    <img src="/assets/images/bnb.png" alt="BNB">
+    <span>BNB</span>
+  </button>
+
+  <button data-coin="SOL">
+    <img src="/assets/images/sol.png" alt="SOL">
+    <span>SOL</span>
+  </button>
+</div> 
+    <div class="mining-plans" id="miningGrid"></div>
+
+</section>
+  <!-- ================= AIRDROP ================= -->
+  <section id="airdrop" class="card view">
+  <h2>Airdrop</h2>
+
+  <div class="airdrop-box">
+
+    <img src="assets/images/airdrop.png" alt="Airdrop"/>
+
+    <div class="airdrop-reward">
+      +2.5 BX
+    </div>
+
+    <!-- Casino Task -->
+    <div id="casinoTask" class="airdrop-task">
+      🎰 Play any casino game to earn 2.5 BX
+    </div>
+
+    <!-- Referral -->
+    <div class="airdrop-referral">
+      👥 Referrals: <strong id="refPoints">0</strong><br/>
+      Each referral = <strong>0.5 BX</strong>
+    </div>
+
+    <div id="airdropStatus" class="status"></div>
+
+  </div>
+    <!-- ================= PROMO / CASINO ADS ================= -->
+<div class="promo-grid">
+
+  <div class="promo-card-img">
+    <img src="assets/images/promo-casino.jpg" alt="Casino Bonus">
+    <div class="promo-overlay">
+      <strong>Casino Bonus</strong>
+      <span>Play any game & win extra BX</span>
+      <button>Play Now</button>
+    </div>
+  </div>
+
+  <div class="promo-card-img">
+    <img src="assets/images/promo-gift.jpg" alt="Daily Gift">
+    <div class="promo-overlay">
+      <strong>Daily Gift</strong>
+      <span>Claim free BX every day</span>
+      <button>Claim</button>
+    </div>
+  </div>
+
+  <div class="promo-card-img">
+    <img src="assets/images/promo-hot.jpg" alt="Hot Games">
+    <div class="promo-overlay">
+      <strong>Hot Games</strong>
+      <span>High multipliers available</span>
+      <button>View</button>
+    </div>
+  </div>
+</div>
+  </section>
+</main>
+
+<!-- ================= BOTTOM NAV ================= -->
+<nav class="bottom-nav">
+  <button data-tab="wallet" class="active">
+    <img src="assets/images/wallet.svg" alt="Wallet"/>
+    <span>Wallet</span>
+  </button>
+  <button data-tab="market">
+    <img src="assets/images/market.svg" alt="Market"/>
+    <span>Market</span>
+  </button>
+  <button data-tab="casino">
+    <img src="assets/images/casino.svg" alt="Casino"/>
+    <span>Casino</span>
+  </button>
+  <button data-tab="mining">
+    <img src="assets/images/mining.svg" alt="Mining"/>
+    <span>Mining</span>
+  </button>
+  <button data-tab="airdrop">
+    <img src="assets/images/airdrop.svg" alt="Airdrop"/>
+    <span>Airdrop</span>
+  </button>
+</nav>
+<script src="app.js"></script>
+</body>
+</html>
