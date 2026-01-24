@@ -136,7 +136,7 @@ h3{
 ===================================================== */
 
 #wallet{
-  padding-bottom: 100px; /* مساحة للبوتوم بار */
+  padding-bottom: 100px; 
 }
 
 /* ================= TOTAL VALUE ================= */
@@ -163,7 +163,7 @@ h3{
 /* ================= ACTION BUTTONS ================= */
 .wallet-actions{
   display: grid;
-  grid-template-columns: repeat(3, 1fr); /* 3 أزرار متساوية */
+  grid-template-columns: repeat(3, 1fr); 
   gap: 12px;
   margin-top: 16px;
 }
@@ -180,21 +180,20 @@ h3{
 }
 
 .wallet-actions .wallet-btn {
-  opacity: 0.9;          /* بدل 1 */
+  opacity: 0.9;          
 }
 
-/* Deposit */
 .wallet-actions .deposit {
-  box-shadow: none;      /* لا ظل ثقيل */
+  box-shadow: none;      
 }
-/* Withdraw */
+
 .wallet-actions .withdraw {
-  box-shadow: none;      /* لا ظل ثقيل */
+  box-shadow: none;      
 }
 
 /* Transfer */
 .wallet-actions .transfer {
-  box-shadow: none;      /* لا ظل ثقيل */
+  box-shadow: none;      
 }
 
 /* ================= BALANCES ================= */
@@ -249,7 +248,6 @@ h3{
   font-weight: 700;
 }
 
-/* Highlight main coin */
 .wallet-row.main{
   background: #0f172a;
   border-radius: 14px;
@@ -293,8 +291,8 @@ h3{
 
 /* ================= BOTTOM WALLET ACTIONS ================= */
 .wallet-actions button{
-  height: 38px;                 /* نفس الارتفاع */
-  width: 100%;                  /* يملأ العمود */
+  height: 38px;                
+  width: 100%;                 
   border-radius: 14px;
   font-size: 15px;
   font-weight: 800;
@@ -304,21 +302,37 @@ h3{
   white-space: nowrap;          /* يمنع كسر النص */
 }
 
+wallet-bottom{
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 16px;
+  background: #020617;
+  border-top: 1px solid #020617;
+}
+
+.wallet-connect {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.wallet-btn.pay {
+  background: #fcd535;
+  color: #111;
+}
+
+.wallet-btn.ton {
+  background: #1f2937;
+  color: #e5e7eb;
+}
+
 .view{ padding-bottom:120px; }
-
-.wallet-btn.pay{
-  height: 38px;
-  background: linear-gradient(135deg,#facc15,#f59e0b);
-  color: #111827;
-  font-weight: 800;
-}
-
-.wallet-btn.ton{
-  height: 38px;
-  background: linear-gradient(135deg,#0ea5e9,#2563eb);
-  color: #fff;
-  font-weight: 800;
-}
 
 /* =========================================================
    INPUTS
@@ -364,30 +378,6 @@ input{
   background: #3b82f6;
   color: white;
   font-weight: 600;
-}
-
-/* ================= BOTTOM ACTIONS ================= */
-.wallet-bottom{
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  padding: 16px;
-  background: #020617;
-  border-top: 1px solid #020617;
-}
-
-.wallet-btn.pay{
-  background: linear-gradient(135deg,#facc15,#f59e0b);
-  font-size: 14px;
-}
-
-.wallet-btn.ton{
-  background: linear-gradient(135deg,#0ea5e9,#2563eb);
-  font-size: 14px;
 }
 
 /* =========================================================
