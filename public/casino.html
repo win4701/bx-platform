@@ -1,77 +1,94 @@
-<section id="mining" class="view card">
-
-  <h2 class="page-title">Mining</h2>
-
-  <!-- Tabs -->
-  <div class="mining-tabs">
-    <button class="active">BX</button>
-    <button>BNB</button>
-    <button>SOL</button>
+<section id="market" class="card view">
+  <div class="market-top-bar">
+    <div class="pair-selector">
+      <img src="assets/images/btc.png" width="20">
+      <strong>BTC/USDT</strong>
+      <span class="percent positive">+0.27%</span>
+    </div>
+    <div class="market-icons">
+      <i class="chart-icon"></i>
+      <i class="dots-icon"></i>
+    </div>
   </div>
 
-  <!-- Plans -->
-  <div class="mining-plans">
+  <div class="trade-container">
+    <div class="trade-form">
+      <div class="trade-tabs">
+        <button class="tab-buy active">Acheter</button>
+        <button class="tab-sell">Vendre</button>
+      </div>
 
-    <!-- Starter -->
-    <div class="mining-plan">
-      <h4>Starter</h4>
-      <div class="mining-profit">1.2%</div>
-      <ul>
-        <li><span>Duration</span><strong>30 days</strong></li>
-        <li><span>Min</span><strong>10 BX</strong></li>
-        <li><span>Max</span><strong>500 BX</strong></li>
-      </ul>
-      <button>Subscribe</button>
+      <div class="input-group">
+        <select class="market-type"><option>Marché</option></select>
+        <div class="price-input">Prix <span>USDT</span></div>
+        <input type="number" placeholder="Quantité" id="amount">
+      </div>
+
+      <button class="btn-action buy">Acheter BTC</button>
     </div>
 
-    <!-- Silver -->
-    <div class="mining-plan">
-      <h4>Silver</h4>
-      <div class="mining-profit">4%</div>
-      <ul>
-        <li><span>Duration</span><strong>45 days</strong></li>
-        <li><span>Min</span><strong>100 BX</strong></li>
-        <li><span>Max</span><strong>2000 BX</strong></li>
-      </ul>
-      <button>Subscribe</button>
+    <div class="order-book-binance">
+      <div class="book-header">
+        <span>Prix(USDT)</span>
+        <span>Montant(BTC)</span>
+      </div>
+      <div class="asks">
+        <div class="book-row sell"><span>89,536.85</span><span>0.00012</span></div>
+        <div class="book-row sell"><span>89,536.82</span><span>0.05573</span></div>
+      </div>
+      <div class="current-price">89,536.76</div>
+      <div class="bids">
+        <div class="book-row buy"><span>89,536.76</span><span>3.36907</span></div>
+        <div class="book-row buy"><span>89,536.75</span><span>0.00081</span></div>
+      </div>
     </div>
-
-    <!-- Gold -->
-    <div class="mining-plan">
-      <h4>Gold</h4>
-      <div class="mining-profit">9%</div>
-      <ul>
-        <li><span>Duration</span><strong>60 days</strong></li>
-        <li><span>Min</span><strong>500 BX</strong></li>
-        <li><span>Max</span><strong>10000 BX</strong></li>
-      </ul>
-      <button>Subscribe</button>
-    </div>
-
-    <!-- VIP -->
-    <div class="mining-plan vip">
-      <h4>VIP</h4>
-      <div class="mining-profit">15%</div>
-      <ul>
-        <li><span>Duration</span><strong>90 days</strong></li>
-        <li><span>Min</span><strong>2000 BX</strong></li>
-        <li><span>Max</span><strong>50000 BX</strong></li>
-      </ul>
-      <button>Subscribe</button>
-    </div>
-
-    <!-- Platinum (نفس نسبة VIP) -->
-    <div class="mining-plan vip">
-      <h4>Platinum</h4>
-      <div class="mining-profit">15%</div>
-      <ul>
-        <li><span>Duration</span><strong>90 days</strong></li>
-        <li><span>Min</span><strong>2000 BX</strong></li>
-        <li><span>Max</span><strong>50000 BX</strong></li>
-      </ul>
-      <button>Subscribe</button>
-    </div>
-
   </div>
-
 </section>
+--------*****--***********-----*--***********
+<section id="market" class="card view">
+  <div class="market-top-bar">
+    <div class="pair-selector">
+      <img src="assets/images/btc.png" width="20">
+      <strong>BTC/USDT</strong>
+      <span class="percent positive">+0.27%</span>
+    </div>
+    <div class="market-icons">
+      <i class="chart-icon"></i>
+      <i class="dots-icon"></i>
+    </div>
+  </div>
+
+  <div class="trade-container">
+    <div class="trade-form">
+      <div class="trade-tabs">
+        <button class="tab-buy active">Acheter</button>
+        <button class="tab-sell">Vendre</button>
+      </div>
+
+      <div class="input-group">
+        <select class="market-type"><option>Marché</option></select>
+        <div class="price-input">Prix <span>USDT</span></div>
+        <input type="number" placeholder="Quantité" id="amount">
+      </div>
+
+      <button class="btn-action buy">Acheter BTC</button>
+    </div>
+
+    <div class="order-book-binance">
+      <div class="book-header">
+        <span>Prix(USDT)</span>
+        <span>Montant(BTC)</span>
+      </div>
+      <div class="asks">
+        <div class="book-row sell"><span>89,536.85</span><span>0.00012</span></div>
+        <div class="book-row sell"><span>89,536.82</span><span>0.05573</span></div>
+      </div>
+      <div class="current-price">89,536.76</div>
+      <div class="bids">
+        <div class="book-row buy"><span>89,536.76</span><span>3.36907</span></div>
+        <div class="book-row buy"><span>89,536.75</span><span>0.00081</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
