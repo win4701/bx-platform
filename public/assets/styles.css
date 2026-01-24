@@ -8,9 +8,9 @@
   --text:#e6f1ff;
   --muted:#9fb3c8;
 
-  --green:#6ee7a8;
-  --red:#ff8fa3;
-  --yellow:#facc15;
+  --green: #02C076; 
+  --red: #F84960;
+  --yellow: #FCD535;
 
   --radius:16px;
 }
@@ -125,11 +125,9 @@ h3{
   border:1px solid var(--border);
 }
 
-.btn.buy{
-  background:linear-gradient(180deg,#4adebb,#16a34a);
-  color:#043a2b;
+.btn.buy {
+  background: var(--green);
 }
-
 .btn.sell{
   background:linear-gradient(180deg,#ff8fa3,#ef4444);
   color:#3a0b10;
