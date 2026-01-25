@@ -376,6 +376,7 @@ input{
 /* =========================================================
    MARKET (CLEAN & STABLE)
 ========================================================= *
+
 .market-section{
   padding:16px;
   background:linear-gradient(180deg,#0b1220,#020617);
@@ -508,6 +509,7 @@ input{
 
 .trade-row.buy{ color:#4adebb; }
 .trade-row.sell{ color:#ff6b6b; }
+
 /* =========================================================
    CASINO – POSTER SYSTEM (MATCHES PROVIDED IMAGE)
 ========================================================= */
