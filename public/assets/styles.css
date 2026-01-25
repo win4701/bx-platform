@@ -197,9 +197,9 @@ h3{
 }
 
 .wallet-actions .withdraw{
-  background:#020617;
+  background:#FFCD18;
   border:1px solid #1e293b;
-  color:#FCD535;
+  color:#FFCD18;
 }
 
 .wallet-actions .transfer{
@@ -275,8 +275,8 @@ h3{
 
 /* Binance */
 .wallet-btn.binance {
-  background: #FCD535;
-  color: #111;
+  background: #111;
+  color: #FFCD18;
 }
 
 /* WalletConnect */
