@@ -234,7 +234,7 @@ h3{
 
 .wallet-row .info strong{
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 800;
 }
 
 .wallet-row .info span{
@@ -245,7 +245,7 @@ h3{
 .wallet-row .amount{
   margin-left: auto;
   font-size: 15px;
-  font-weight: 700;
+  font-weight: 800;
 }
 
 .wallet-row.main{
@@ -332,7 +332,7 @@ wallet-bottom{
   color: #e5e7eb;
 }
 
-.view{ padding-bottom:120px; }
+.view{ padding-bottom:180px; }
 
 /* =========================================================
    INPUTS
@@ -377,7 +377,7 @@ input{
   border-radius: 14px;
   background: #3b82f6;
   color: white;
-  font-weight: 600;
+  font-weight: 800;
 }
 
 /* =========================================================
@@ -651,7 +651,7 @@ input{
 
 .wallet-row .info strong{ font-size:14px; }
 .wallet-row .info span{ font-size:11px; color:#9ca3af; }
-.wallet-row .amount{ font-size:15px; font-weight:600; }
+.wallet-row .amount{ font-size:15px; font-weight:800; }
 
 /* ================= MINING ================= */
 
