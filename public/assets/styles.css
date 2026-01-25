@@ -290,48 +290,29 @@ h3{
 }
 
 /* ================= BOTTOM WALLET ACTIONS ================= */
-.wallet-actions button{
-  height: 38px;                
-  width: 100%;                 
-  border-radius: 14px;
-  font-size: 15px;
-  font-weight: 800;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  white-space: nowrap;          /* يمنع كسر النص */
+
+.wallet-bottom-actions{
+  display:flex;
+  gap:12px;
+  margin-top:16px;
 }
 
-wallet-bottom{
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  padding: 16px;
-  background: #020617;
-  border-top: 1px solid #020617;
+.wallet-bottom-actions .wallet-btn{
+  flex:1;                 
+  height:46px;
+  border-radius:14px;
+  font-weight:600;
+  font-size:14px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
 }
 
-.wallet-connect {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-top: 16px;
+.wallet-bottom-actions .binance-id,
+.wallet-bottom-actions .walletconnect{
+  background:#3b82f6;    
+  color:#ffffff;
 }
-
-.wallet-btn.pay {
-  background: #fcd535;
-  color: #111;
-}
-
-.wallet-btn.ton {
-  background: #1f2937;
-  color: #e5e7eb;
-}
-
 .view{ padding-bottom:180px; }
 
 /* =========================================================
