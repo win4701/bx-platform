@@ -171,8 +171,8 @@ h3{
 }
 
 .wallet-summary .value{
-  font-size:34px;
-  font-weight:900;
+  font-size:38px;
+  font-weight:800;
   margin-top:6px;
 }
 
@@ -185,9 +185,9 @@ h3{
 
 .wallet-actions button{
   flex:1;
-  height:44px;
+  height:38px;
   border-radius:14px;
-  font-weight:700;
+  font-weight:800;
   font-size:15px;
 }
 
@@ -238,7 +238,7 @@ h3{
 }
 
 .balance-info .name{
-  font-weight:700;
+  font-weight:800;
 }
 
 .balance-info .sub{
@@ -264,7 +264,7 @@ h3{
 
 .wallet-connect-row button{
   flex:1;                 
-  height:44px;
+  height:38px;
   border-radius:14px;
   font-weight:800;
   font-size:14px;
