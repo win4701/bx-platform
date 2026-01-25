@@ -299,7 +299,6 @@ input{
    MARKET – Golden STYLE (FINAL)
    ========================================================= */
 
-/* ---------- VISIBILITY CONTROL (FIX OVERLAP) ---------- */
 .view { display: none; }
 .view.active { display: block; }
 
@@ -472,6 +471,14 @@ input{
   color:#2a0c10;
 }
 
+.market-chart{
+  height:220px;
+  background:#0b1220;
+  border-radius:16px;
+  border:1px solid #1e293b;
+  padding:10px;
+  margin-bottom:14px;
+}
 /* ---------- ORDER BOOK ---------- */
 .order-book{
   background:#0b1220;
