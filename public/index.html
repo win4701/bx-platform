@@ -173,37 +173,54 @@
   
 
   <!-- ================= MARKET ================= -->
-  
+
 <section id="market" class="card view">
 
   <!-- ===== MARKET HEADER ===== -->
   <div class="market-header">
+
+    <!-- Pair Selector -->
     <div class="pair-info" id="pairBar">
       <strong id="currentPair">BX / USDT</strong>
       <span class="arrow">▼</span>
     </div>
 
+    <!-- Last Price -->
     <div class="price-info">
       <span class="label">Last Price</span>
       <strong id="lastPrice">—</strong>
     </div>
+
+  </div>
+
+  <!-- ===== PAIR LIST (BX BASE) ===== -->
+  <div class="pair-list" id="pairList">
+    <button data-pair="BX/USDT" class="active">BX / USDT</button>
+    <button data-pair="BX/BTC">BX / BTC</button>
+    <button data-pair="BX/TON">BX / TON</button>
+    <button data-pair="BX/BNB">BX / BNB</button>
+    <button data-pair="BX/SOL">BX / SOL</button>
   </div>
 
   <!-- ===== MAIN MARKET LAYOUT ===== -->
   <div class="market-layout">
 
     <!-- ===== LEFT : ORDER PANEL ===== -->
-    <div class="trade-box">
-  <div class="trade-tabs">
-    <button class="buy active">Buy</button>
-    <button class="sell">Sell</button>
-  </div>
+    <div class="market-order">
 
-  <input type="number" placeholder="Amount">
+      <div class="order-tabs">
+        <button class="active buy">Buy</button>
+        <button class="sell">Sell</button>
+      </div>
 
-  <button class="buy-btn">Buy BX</button>
-  <button class="sell-btn">Sell BX</button>
-</div>
+      <div class="order-form">
+        <label>Amount (BX)</label>
+        <input id="amount" type="number" placeholder="Amount BX" />
+
+        <button class="btn buy">Buy BX</button>
+        <button class="btn sell">Sell BX</button>
+      </div>
+
     </div>
 
     <!-- ===== CENTER : CHART ===== -->
@@ -217,22 +234,43 @@
       <h4>Order Book</h4>
 
       <ul id="orderBook" class="order-book">
-        <!-- Asks (Sell) -->
+        <!-- Asks -->
         <li class="ask">
-          <span class="price">95,184.04</span>
-          <span class="amount">0.00313</span>
+          <span class="price">—</span>
+          <span class="amount">—</span>
         </li>
 
-        <!-- Bids (Buy) -->
+        <!-- Bids -->
         <li class="bid">
-          <span class="price">95,183.94</span>
-          <span class="amount">2.69205</span>
+          <span class="price">—</span>
+          <span class="amount">—</span>
         </li>
       </ul>
 
     </div>
 
   </div>
+
+  <!-- ===== RECENT TRADES ===== -->
+  <div class="market-trades">
+    <h4>Recent Trades</h4>
+
+    <ul class="trades-list" id="trades">
+      <li class="trade buy">
+        <span class="side">BUY</span>
+        <span class="amount">1 BX</span>
+        <span class="price">—</span>
+      </li>
+      <li class="trade sell">
+        <span class="side">SELL</span>
+        <span class="amount">1 BX</span>
+        <span class="price">—</span>
+      </li>
+    </ul>
+
+  </div>
+
+</section>
 
   <!-- ===== RECENT TRADES ===== -->
   <div class="market-trades">
