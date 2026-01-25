@@ -299,9 +299,9 @@ h3{
 
 .wallet-bottom-actions .wallet-btn{
   flex:1;                 
-  height:46px;
+  height:38px;
   border-radius:14px;
-  font-weight:600;
+  font-weight:800;
   font-size:14px;
   display:flex;
   align-items:center;
