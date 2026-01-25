@@ -143,189 +143,111 @@ h3{
   color:#2a0c10;
 }
 
-/* =====================================================
-   WALLET – FINAL UI (APPROVED)
-===================================================== */
+/*=========================================================
+   WALLET – Golden STYLE (MATCH MARKET)
+========================================================= */
 
-#wallet{
-  padding-bottom: 100px; 
+.wallet{
+  padding:16px;
+  background:linear-gradient(180deg,#0b1220 0%,#020617 100%);
+  color:#e5e7eb;
+  min-height:calc(100vh - 120px);
 }
 
-/* ================= TOTAL VALUE ================= */
-.wallet-top{
-  padding: 18px 16px 10px;
+/* ---------- TOTAL VALUE CARD ---------- */
+.wallet-summary{
+  background:#0b1220;
+  border:1px solid #1e293b;
+  border-radius:18px;
+  padding:18px;
+  margin-bottom:16px;
 }
 
-.wallet-top .label{
-  font-size: 12px;
-  color: #94a3b8;
+.wallet-summary .label{
+  font-size:13px;
+  color:#94a3b8;
 }
 
-.wallet-top h1 {
-  font-size: 38px;
-  font-weight: 800;
+.wallet-summary .value{
+  font-size:34px;
+  font-weight:900;
+  margin-top:6px;
 }
 
-.wallet-top small{
-  font-size: 14px;
-  color: #94a3b8;
-  margin-left: 6px;
-}
-
-/* ================= ACTION BUTTONS ================= */
+/* ---------- ACTION BUTTONS ---------- */
 .wallet-actions{
-  display: grid;
-  grid-template-columns: repeat(3, 1fr); 
-  gap: 12px;
-  margin-top: 16px;
-}
-
-.wallet-btn{
-  height: 38px;
-  border-radius: 14px;
-  font-size: 14px;
-  font-weight: 800;
-  letter-spacing: .3px;
-  border: none;
-  cursor: pointer;
-  transition: all .15s ease;
-}
-
-.wallet-actions .wallet-btn {
-  opacity: 0.9;          
-}
-
-.wallet-actions .deposit {
-  box-shadow: none;      
-}
-
-.wallet-actions .withdraw {
-  box-shadow: none;      
-}
-
-/* Transfer */
-.wallet-actions .transfer {
-  box-shadow: none;      
-}
-
-/* ================= BALANCES ================= */
-.wallet-balances{
-  margin-top: 22px;
-  padding: 0 16px;
-}
-
-.wallet-balances h3{
-  font-size: 15px;
-  margin-bottom: 10px;
-  color: #cbd5f5;
-}
-
-/* ================= COIN ROW (COMPACT) ================= */
-.wallet-row{
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 0;
-  border-bottom: 1px solid #020617;
-}
-
-.wallet-row:last-child{
-  border-bottom: none;
-}
-
-.wallet-row img{
-  width: 28px;
-  height: 28px;
-  object-fit: contain;
-}
-
-.wallet-row .info{
-  display: flex;
-  flex-direction: column;
-}
-
-.wallet-row .info strong{
-  font-size: 14px;
-  font-weight: 800;
-}
-
-.wallet-row .info span{
-  font-size: 11px;
-  color: #94a3b8;
-}
-
-.wallet-row .amount{
-  margin-left: auto;
-  font-size: 15px;
-  font-weight: 800;
-}
-
-.wallet-row.main{
-  background: #0f172a;
-  border-radius: 14px;
-  padding: 14px;
-  margin-bottom: 10px;
-}
-
-/* ================= TRANSFER PANEL ================= */
-.wallet-transfer{
-  margin: 16px;
-  padding: 16px;
-  background: #0f172a;
-  border-radius: 16px;
-}
-
-.wallet-transfer h4{
-  margin-bottom: 12px;
-  font-size: 15px;
-}
-
-.wallet-transfer input{
-  width: 100%;
-  height: 38px;
-  padding: 0 12px;
-  margin-bottom: 10px;
-  border-radius: 12px;
-  border: none;
-  background: #020617;
-  color: #fff;
-  font-size: 14px;
-}
-
-.wallet-transfer .confirm{
-  height: 38px;
-  border-radius: 14px;
-  background: linear-gradient(135deg,#3b82f6,#2563eb);
-  color: #fff;
-  font-weight: 800;
-  border: none;
-}
-
-/* ================= BOTTOM WALLET ACTIONS ================= */
-
-.wallet-bottom-actions{
   display:flex;
-  gap:12px;
-  margin-top:16px;
+  gap:10px;
+  margin-top:14px;
 }
 
-.wallet-bottom-actions .wallet-btn{
-  flex:1;                 
-  height:38px;
+.wallet-actions button{
+  flex:1;
+  height:44px;
   border-radius:14px;
-  font-weight:800;
-  font-size:14px;
+  font-weight:700;
+  font-size:15px;
+}
+
+.wallet-actions .deposit{
+  background:#02c076;
+  color:#022c22;
+}
+
+.wallet-actions .withdraw{
+  background:#020617;
+  border:1px solid #1e293b;
+  color:#e5e7eb;
+}
+
+.wallet-actions .transfer{
+  background:#020617;
+  border:1px solid #1e293b;
+  color:#e5e7eb;
+}
+
+/* ---------- BALANCE LIST ---------- */
+.wallet-balances{
+  background:#0b1220;
+  border:1px solid #1e293b;
+  border-radius:18px;
+  padding:10px;
+}
+
+.balance-row{
   display:flex;
   align-items:center;
-  justify-content:center;
+  justify-content:space-between;
+  padding:10px 8px;
+  border-bottom:1px solid #020617;
 }
 
-.wallet-bottom-actions .binance-id,
-.wallet-bottom-actions .walletconnect{
-  background:#3b82f6;    
-  color:#ffffff;
+.balance-row:last-child{ border-bottom:none; }
+
+.balance-info{
+  display:flex;
+  align-items:center;
+  gap:10px;
 }
-.view{ padding-bottom:180px; }
+
+.balance-info img{
+  width:26px;
+  height:26px;
+}
+
+.balance-info .name{
+  font-weight:700;
+}
+
+.balance-info .sub{
+  font-size:12px;
+  color:#94a3b8;
+}
+
+.balance-amount{
+  font-weight:800;
+}
+
 
 /* =========================================================
    INPUTS
