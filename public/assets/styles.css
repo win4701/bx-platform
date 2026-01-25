@@ -68,11 +68,11 @@ img{
   min-height:100vh;
 }
 
-/* =========================================================
-   VIEW SYSTEM (SAFE)
-========================================================= */
+/* ===== VIEW SYSTEM FIX ===== */
 .view{
   display:none;
+  min-height:100vh;
+  padding-bottom:90px; 
 }
 
 .view.active{
