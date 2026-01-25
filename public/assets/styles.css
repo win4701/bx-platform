@@ -256,29 +256,33 @@ h3{
   color:#e5e7eb;
 }
 
-.wallet-connect-row{
-  display:flex;
-  gap:12px;
-  margin-top:14px;
+/* ================= WALLET CONNECT BUTTONS ================= */
+.wallet-bottom-actions {
+  display: flex;
+  gap: 12px;
+  margin: 16px;
 }
 
-.wallet-connect-row button{
-  flex:1;                 
-  height:38px;
-  border-radius:14px;
-  font-weight:800;
-  font-size:14px;
-  border:none;
+.wallet-btn {
+  flex: 1;
+  height: 38px;
+  border-radius: 14px;
+  font-weight: 800;
+  font-size: 14px;
+  border: none;
+  cursor: pointer;
 }
 
-.wallet-connect-row .binance{
-  background:#FCD535;     
-  color:#111827;
+/* Binance */
+.wallet-btn.binance {
+  background: #f0b90b;
+  color: #111;
 }
 
-.wallet-connect-row .walletconnect{
-  background:#3B82F6;     
-  color:#ffffff;
+/* WalletConnect */
+.wallet-btn.walletconnect {
+  background: #3b82f6;
+  color: #fff;
 }
 
 /* =========================================================
