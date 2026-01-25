@@ -1088,34 +1088,41 @@ function navigate(section) {
   APP_STATE.currentSection = section;
 
   // إخفاء كل الأقسام
-  document.querySelectorAll(".view").forEach(sec => {
-    sec.classList.remove("active");
-  });
+  document.addEventListener("DOMContentLoaded", () => {
 
-  // إظهار القسم المطلوب
-  const activeSection = document.getElementById(section);
-  if (activeSection) {
-    activeSection.classList.add("active");
+  const views = document.querySelectorAll(".view");
+  const navButtons = document.querySelectorAll("[data-view]");
+
+  function showView(viewId){
+    // إخفاء كل الأقسام
+    views.forEach(v => v.classList.remove("active"));
+
+    // إظهار القسم المطلوب
+    const target = document.getElementById(viewId);
+    if(target){
+      target.classList.add("active");
+    }
+
+    // تفعيل زر التنقل
+    navButtons.forEach(b => b.classList.remove("active"));
+    const btn = document.querySelector(`[data-view="${viewId}"]`);
+    if(btn){
+      btn.classList.add("active");
+    }
   }
 
-  // تحديث أزرار البوتوم ناف
-  document.querySelectorAll(".bottom-nav button").forEach(btn => {
-    btn.classList.toggle("active", btn.dataset.tab === section);
-  });
-
-  // تحميل بيانات حسب القسم
-  if (section === "wallet") loadWallet();
-  if (section === "mining") loadMining();
-  if (section === "airdrop") loadAirdrop();
-}
-
-function autoBindNavigation() {
-  document.querySelectorAll(".bottom-nav button").forEach(btn => {
+  // ربط الأزرار
+  navButtons.forEach(btn => {
     btn.addEventListener("click", () => {
-      navigate(btn.dataset.tab);
+      showView(btn.dataset.view);
     });
   });
-}
+
+  // العرض الافتراضي
+  showView("wallet");
+
+});
+   
 /* ================================================================================================
    FINAL INIT
 ================================================================================================ */
