@@ -276,12 +276,6 @@ function renderMarketPair(pair) {
    PRICE ENGINE
 ================================================================================================ */
 
-let MARKET_STATE = {
-  pair: "BX/USDT",
-  price: BX_FIXED_PRICE_USDT,
-  history: []
-};
-
 function renderMarketPrice() {
   if ($("lastPrice")) {
     $("lastPrice").textContent = MARKET_STATE.price.toFixed(6);
@@ -405,15 +399,6 @@ function sellBX(amount) {
 /**
  * Start market loop (only when market section active)
  */
-function startMarketLoop() {
-  setInterval(() => {
-    if (APP_STATE.currentSection !== "market") return;
-
-    tickMarketPrice();
-    generateMarketOrders();
-    renderMarketChart();
-  }, MARKET_TICK_MS);
-}
 
 /* ================================================================================================
    MARKET INITIALIZATION
