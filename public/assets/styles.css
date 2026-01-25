@@ -376,49 +376,138 @@ input{
 /* =========================================================
    MARKET (CLEAN & STABLE)
 ========================================================= *
-/* Couleurs Binance */
-:root {
-  --binance-yellow: #FCD535;
-  --binance-green: #02C076;
-  --binance-red: #F84960;
-  --binance-bg: #111417;
-  --binance-gray: #2B3139;
+.market-section{
+  padding:16px;
+  background:linear-gradient(180deg,#0b1220,#020617);
 }
 
-/* Boutons de Wallet */
-.btn-binance {
-  border: none;
-  padding: 8px 16px;
-  border-radius: 4px;
-  font-weight: 600;
-  cursor: pointer;
-  flex: 1;
-  margin: 0 4px;
-}
-.btn-binance.yellow { background: var(--binance-yellow); color: black; }
-.btn-binance.gray { background: var(--binance-gray); color: white; }
-
-/* Lignes d'actifs */
-.asset-row {
-  display: flex;
-  justify-content: space-between;
-  padding: 12px 0;
-  border-bottom: 1px solid #23272c;
+.market-pair{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:12px 14px;
+  border-radius:14px;
+  background:#0b1220;
+  border:1px solid #1e293b;
+  color:#e5e7eb;
+  font-weight:600;
 }
 
-/* Carnet d'ordres (Market) */
-.order-book-binance {
-  font-family: monospace;
-  font-size: 0.8rem;
+.market-pair span{
+  color:#9ca3af;
+  font-size:13px;
 }
-.book-row.sell { color: var(--binance-red); }
-.book-row.buy { color: var(--binance-green); }
 
-/* Boutons Achat/Vente */
-.btn-action.buy { 
-  background: var(--binance-green); 
-  width: 100%; padding: 12px; border: none; border-radius: 4px; color: white;
+.trade-tabs{
+  display:flex;
+  gap:8px;
+  margin:14px 0;
 }
+
+.trade-tabs button{
+  flex:1;
+  height:36px;
+  border-radius:10px;
+  background:#020617;
+  color:#94a3b8;
+  font-weight:600;
+}
+
+.trade-tabs .buy.active{
+  background:linear-gradient(135deg,#22c55e,#16a34a);
+  color:#022c22;
+}
+
+.trade-tabs .sell.active{
+  background:linear-gradient(135deg,#f87171,#dc2626);
+  color:#2a0c10;
+}
+
+.trade-box{
+  background:#0b1220;
+  border-radius:18px;
+  padding:16px;
+  border:1px solid #1e293b;
+}
+
+.trade-box input{
+  width:100%;
+  height:44px;
+  margin:10px 0;
+  border-radius:12px;
+  background:#020617;
+  border:1px solid #1e293b;
+  padding:0 14px;
+  font-size:15px;
+  color:#fff;
+}
+
+.trade-box input::placeholder{
+  color:#6b7280;
+}
+
+.trade-box input:focus{
+  outline:none;
+  border-color:#3b82f6;
+}
+
+.buy-btn,
+.sell-btn{
+  width:100%;
+  height:48px;
+  border-radius:14px;
+  font-size:16px;
+  font-weight:700;
+  margin-top:10px;
+}
+
+.buy-btn{
+  background:#02c076;
+  color:#022c22;
+}
+
+.sell-btn{
+  background:#f84960;
+  color:#2a0c10;
+}
+
+.trade-box.buy .sell-btn{ display:none; }
+.trade-box.sell .buy-btn{ display:none; }
+.market-panel{
+  margin-top:14px;
+  min-height:220px;
+  border-radius:16px;
+  background:linear-gradient(180deg,#020617,#0b1220);
+  border:1px dashed #1e293b;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#64748b;
+  font-size:13px;
+}
+
+.market-trades{
+  margin-top:16px;
+  background:#0b1220;
+  border-radius:16px;
+  padding:14px;
+  border:1px solid #1e293b;
+}
+
+.market-trades h4{
+  margin-bottom:10px;
+  color:#e5e7eb;
+}
+
+.trade-row{
+  display:flex;
+  justify-content:space-between;
+  font-size:13px;
+  padding:4px 0;
+}
+
+.trade-row.buy{ color:#4adebb; }
+.trade-row.sell{ color:#ff6b6b; }
 /* =========================================================
    CASINO – POSTER SYSTEM (MATCHES PROVIDED IMAGE)
 ========================================================= */
