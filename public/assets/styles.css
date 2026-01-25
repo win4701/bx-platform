@@ -248,6 +248,30 @@ h3{
   font-weight:800;
 }
 
+.wallet-connect-row{
+  display:flex;
+  gap:12px;
+  margin-top:14px;
+}
+
+.wallet-connect-row button{
+  flex:1;                 
+  height:44px;
+  border-radius:14px;
+  font-weight:800;
+  font-size:14px;
+  border:none;
+}
+
+.wallet-connect-row .binance{
+  background:#FCD535;     
+  color:#111827;
+}
+
+.wallet-connect-row .walletconnect{
+  background:#3B82F6;     
+  color:#ffffff;
+}
 
 /* =========================================================
    INPUTS
