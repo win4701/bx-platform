@@ -199,7 +199,7 @@ h3{
 .wallet-actions .withdraw{
   background:#020617;
   border:1px solid #1e293b;
-  color:#e5e7eb;
+  color:#FCD535;
 }
 
 .wallet-actions .transfer{
@@ -233,8 +233,8 @@ h3{
 }
 
 .balance-info img{
-  width:26px;
-  height:26px;
+  width:22px;
+  height:22px;
 }
 
 .balance-info .name{
@@ -275,7 +275,7 @@ h3{
 
 /* Binance */
 .wallet-btn.binance {
-  background: #f0b90b;
+  background: #FCD535;
   color: #111;
 }
 
