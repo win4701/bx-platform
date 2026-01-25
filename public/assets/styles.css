@@ -141,7 +141,7 @@ h3{
 }
 
 .sell-btn{
-  background:#f84960;
+  background:#D81484;
   color:#2a0c10;
 }
 
@@ -197,8 +197,8 @@ h3{
 }
 
 .wallet-actions .withdraw{
-  background:#FFCD18;
-  border:1px solid #1e293b;
+  background:#1e293b;
+  border:1px solid #FFCD18;
   color:#FFCD18;
 }
 
@@ -275,7 +275,7 @@ h3{
 
 /* Binance */
 .wallet-btn.binance {
-  background: #111;
+  background: #FFCD18;
   color: #FFCD18;
 }
 
@@ -372,7 +372,7 @@ input{
 .last-price{
   font-size:20px;
   font-weight:800;
-  color:#02c076;
+  color:#D81484;
 }
 
 /* ---------- PAIR SCROLL ---------- */
@@ -392,7 +392,7 @@ input{
   border-radius:10px;
   background:#020617;
   border:1px solid #1e293b;
-  color:#94a3b8;
+  color:#D81484;
   font-size:13px;
   font-weight:600;
   white-space:nowrap;
@@ -445,7 +445,7 @@ input{
 
 .trade-tabs .active#sellTab,
 .trade-tabs .active.sell{
-  background:#f84960;
+  background:#D81484;
 }
 
 /* ---------- FORM ---------- */
@@ -504,7 +504,7 @@ input{
 
 .trade-box.sell .action-btn{
   background:#f84960;
-  color:#2a0c10;
+  color:#D81484;
 }
 
 .market-chart{
@@ -532,7 +532,7 @@ input{
 }
 
 .order-book .buy{ color:#4adebb; }
-.order-book .sell{ color:#ff6b6b; }
+.order-book .sell{ color:#D81484; }
 
 /* ---------- RECENT TRADES ---------- */
 .recent-trades{
@@ -548,7 +548,7 @@ input{
 }
 
 .recent-trades .buy{ color:#4adebb; }
-.recent-trades .sell{ color:#ff6b6b; }
+.recent-trades .sell{ color:#D81484; }
 
 /* =========================================================
    CASINO – POSTER SYSTEM (MATCHES PROVIDED IMAGE)
