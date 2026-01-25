@@ -181,6 +181,15 @@ function toast(message) {
 /**
  * Wallet balances (display only)
  */
+let WALLET = {
+  BX: 0,
+  USDT: 0,
+  BNB: 0,
+  SOL: 0,
+  TON: 0,
+  BTC: 0
+};
+
 const map = {
   BX: "bal-bx",
   USDT: "bal-usdt",
@@ -389,9 +398,14 @@ function tickMarketPrice() {
  * Render market price
  */
 function renderMarketPrice() {
-  if ($("lastPrice").textContent = MARKET_STATE.price.toFixed(6);
-$("pairDisplay").textContent = pair;
+  if ($("lastPrice")) {
+    $("lastPrice").textContent = MARKET_STATE.price.toFixed(6);
   }
+
+  if ($("pairDisplay")) {
+    $("pairDisplay").textContent = MARKET_STATE.pair;
+  }
+}
 
   if ($("marketFixedPrice")) {
     $("marketFixedPrice").textContent =
@@ -1127,6 +1141,7 @@ function navigate(section) {
 document.addEventListener("DOMContentLoaded", () => {
 
   // 🔗 ربط أزرار التنقل
+   autoBindNavigation();
   function autoBindNavigation() {
   document.querySelectorAll("[data-view]").forEach(btn => {
     btn.addEventListener("click", () => {
