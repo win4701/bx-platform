@@ -248,6 +248,12 @@ h3{
   font-weight:800;
 }
 
+.wallet,
+.market{
+  background:linear-gradient(180deg,#0b1220 0%,#020617 100%);
+  color:#e5e7eb;
+}
+
 .wallet-connect-row{
   display:flex;
   gap:12px;
