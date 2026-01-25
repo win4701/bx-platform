@@ -4,67 +4,32 @@
    GLOBAL CORE
 ================================================================================================ */
 
-/**
- * Base API endpoint (Fly.io backend)
- */
 const API_BASE = "https://bx-backend.fly.dev";
 
-/**
- * Internal application state
- */
 const APP_STATE = {
   ready: false,
-  currentSection: "wallet",
-  lastTick: 0
+  currentSection: "wallet"
 };
 
-/**
- * Utility: safe DOM getter
- */
 function $(id) {
   return document.getElementById(id);
 }
 
-/**
- * Utility: logger (can be disabled in production)
- */
 function log(...args) {
-  if (window.DEBUG_MODE) {
-    console.log("[APP]", ...args);
-  }
+  if (window.DEBUG_MODE) console.log("[APP]", ...args);
 }
 
 /* ================================================================================================
    CONFIGURATION
 ================================================================================================ */
 
-/**
- * BX internal peg
- * This value NEVER changes on frontend
- */
-const BX_FIXED_PRICE_USDT = 2; // 1 BX = 2 USDT
-
-/**
- * BX chart visual bounds (for market animation only)
- */
+const BX_FIXED_PRICE_USDT = 2;
 const BX_CHART_MIN = BX_FIXED_PRICE_USDT * 0.9;
 const BX_CHART_MAX = BX_FIXED_PRICE_USDT * 1.1;
 const MARKET_TICK_MS = 1200;
 
-/**
- * Market pairs supported
- */
-const MARKET_PAIRS = [
-  "BX/USDT",
-  "BX/TON",
-  "BX/BNB",
-  "BX/SOL",
-  "BX/BTC"
-];
+const MARKET_PAIRS = ["BX/USDT", "BX/TON", "BX/BNB", "BX/SOL", "BX/BTC"];
 
-/**
- * Feature flags (do NOT remove existing sections, only toggle behavior)
- */
 const FEATURES = {
   WALLET: true,
   MARKET: true,
@@ -74,34 +39,19 @@ const FEATURES = {
   PARTNERS: true
 };
 
+
 /* ================================================================================================
    USER & AUTH
 ================================================================================================ */
 
-/**
- * User context (hydrated from backend after auth)
- */
 const USER = {
-  id: null,
-  username: null,
-  jwt: localStorage.getItem("jwt") || null,
-  telegramId: null,
-  binanceId: null,
-  connectedWallet: null
+  jwt: localStorage.getItem("jwt") || null
 };
 
-/**
- * Authorization headers helper
- */
 function authHeaders() {
-  return USER.jwt
-    ? { "Authorization": "Bearer " + USER.jwt }
-    : {};
+  return USER.jwt ? { Authorization: "Bearer " + USER.jwt } : {};
 }
 
-/**
- * Check if user is authenticated
- */
 function isAuthenticated() {
   return !!USER.jwt;
 }
@@ -178,9 +128,6 @@ function toast(message) {
    WALLET (DISPLAY + ACTION HOOKS)
 ================================================================================================ */
 
-/**
- * Wallet balances (display only)
- */
 let WALLET = {
   BX: 0,
   USDT: 0,
@@ -190,7 +137,7 @@ let WALLET = {
   BTC: 0
 };
 
-const map = {
+const BALANCE_IDS = {
   BX: "bal-bx",
   USDT: "bal-usdt",
   BNB: "bal-bnb",
@@ -199,44 +146,21 @@ const map = {
   BTC: "bal-btc"
 };
 
-Object.keys(WALLET).forEach(asset => {
-  const el = document.getElementById(map[asset]);
-  if (el) el.textContent = WALLET[asset];
-});
-
-/**
- * Load wallet balances from backend
- */
+function renderWallet() {
+  Object.keys(WALLET).forEach(asset => {
+    const el = $(BALANCE_IDS[asset]);
+    if (el) el.textContent = WALLET[asset];
+  });
+}
 async function loadWallet() {
   if (!FEATURES.WALLET || !isAuthenticated()) return;
-
   try {
-    const r = await fetch(API_BASE + "/wallet", {
-      headers: authHeaders()
-    });
+    const r = await fetch(API_BASE + "/wallet", { headers: authHeaders() });
     if (!r.ok) return;
     WALLET = await r.json();
     renderWallet();
   } catch (e) {
-    console.error("Wallet load error", e);
-  }
-}
-
-/**
- * Render wallet balances into UI
- */
-function renderWallet() {
-  Object.keys(WALLET).forEach(asset => {
-    const el = $(asset + "Balance");
-    if (el) {
-      el.textContent = WALLET[asset];
-    }
-  });
-
-  // BX value in USDT (informational only)
-  if ($("bxValueUSDT")) {
-    $("bxValueUSDT").textContent =
-      (WALLET.BX * BX_FIXED_PRICE_USDT).toFixed(2) + " USDT";
+    console.error("Wallet error", e);
   }
 }
 
@@ -352,65 +276,47 @@ function renderMarketPair(pair) {
    PRICE ENGINE
 ================================================================================================ */
 
-/**
- * External asset price (from global feed if available)
- */
-function getExternalAssetPrice(asset) {
-  return window.externalPrices?.[asset] || 1;
-}
+let MARKET_STATE = {
+  pair: "BX/USDT",
+  price: BX_FIXED_PRICE_USDT,
+  history: []
+};
 
-/**
- * Calculate base price for current pair
- */
-function calculateBasePrice(pair) {
-  const quote = pair.split("/")[1];
-
-  if (quote === "USDT") {
-    return BX_FIXED_PRICE_USDT;
-  }
-
-  return BX_FIXED_PRICE_USDT * getExternalAssetPrice(quote);
-}
-
-/**
- * Tick market price (visual movement only)
- */
-function tickMarketPrice() {
-  const base = calculateBasePrice(MARKET_STATE.pair);
-  const volatility = 0.02;
-  const drift = (Math.random() - 0.5) * volatility;
-
-  let nextPrice = base + base * drift;
-
-  nextPrice = Math.max(BX_CHART_MIN, Math.min(BX_CHART_MAX, nextPrice));
-
-  MARKET_STATE.price = +nextPrice.toFixed(6);
-  MARKET_STATE.history.push(MARKET_STATE.price);
-
-  if (MARKET_STATE.history.length > 300) {
-    MARKET_STATE.history.shift();
-  }
-
-  renderMarketPrice();
-}
-
-/**
- * Render market price
- */
 function renderMarketPrice() {
   if ($("lastPrice")) {
     $("lastPrice").textContent = MARKET_STATE.price.toFixed(6);
   }
-
   if ($("pairDisplay")) {
     $("pairDisplay").textContent = MARKET_STATE.pair;
   }
 }
 
-  if ($("marketFixedPrice")) {
-    $("marketFixedPrice").textContent =
-      BX_FIXED_PRICE_USDT.toFixed(2) + " USDT";
-  }
+function calculateBasePrice(pair) {
+  const quote = pair.split("/")[1];
+  return quote === "USDT" ? BX_FIXED_PRICE_USDT : BX_FIXED_PRICE_USDT;
+}
+function tickMarketPrice() {
+  const base = calculateBasePrice(MARKET_STATE.pair);
+  const drift = (Math.random() - 0.5) * 0.02;
+  let next = base + base * drift;
+  next = Math.max(BX_CHART_MIN, Math.min(BX_CHART_MAX, next));
+  MARKET_STATE.price = +next.toFixed(6);
+  renderMarketPrice();
+}
+
+let marketTimer = null;
+
+function startMarketLoop() {
+  if (marketTimer) return;
+  marketTimer = setInterval(() => {
+    if (APP_STATE.currentSection !== "market") return;
+    tickMarketPrice();
+  }, MARKET_TICK_MS);
+}
+
+function stopMarketLoop() {
+  clearInterval(marketTimer);
+  marketTimer = null;
 }
 
 /* ================================================================================================
@@ -1100,69 +1006,50 @@ function renderPartners() {
 /* ================================================================================================
    GLOBAL NAVIGATION
 ================================================================================================ */
+
 function navigate(section) {
   if (!section) return;
 
   APP_STATE.currentSection = section;
 
-  const views = document.querySelectorAll(".view");
-  const navButtons = document.querySelectorAll("[data-view]");
-
-  views.forEach(v => v.classList.remove("active"));
+  document.querySelectorAll(".view").forEach(v =>
+    v.classList.remove("active")
+  );
 
   const target = document.getElementById(section);
-  if (target) {
-    target.classList.add("active");
-  }
+  if (target) target.classList.add("active");
 
-  navButtons.forEach(b => b.classList.remove("active"));
-  const btn = document.querySelector(`[data-view="${section}"]`);
-  if (btn) {
-    btn.classList.add("active");
-  }
+  document.querySelectorAll("[data-view]").forEach(b =>
+    b.classList.remove("active")
+  );
+const btn = document.querySelector(`[data-view="${section}"]`);
+  if (btn) btn.classList.add("active");
+
+  if (section === "market") startMarketLoop();
+  else stopMarketLoop();
 }
 
-  // ربط الأزرار
-  navButtons.forEach(btn => {
-    btn.addEventListener("click", () => {
-      showView(btn.dataset.view);
-    });
-  });
-
-  // العرض الافتراضي
-  showView("wallet");
-
-});
-   
-/* ================================================================================================
-   FINAL INIT
-================================================================================================ */
-
-document.addEventListener("DOMContentLoaded", () => {
-
-  // 🔗 ربط أزرار التنقل
-   autoBindNavigation();
-  function autoBindNavigation() {
+function autoBindNavigation() {
   document.querySelectorAll("[data-view]").forEach(btn => {
     btn.addEventListener("click", () => {
       navigate(btn.dataset.view);
     });
   });
-  }
+                            }
+    
+      
+/* ================================================================================================
+   FINAL INIT
+================================================================================================ */
+document.addEventListener("DOMContentLoaded", () => {
+  autoBindNavigation();
+  navigate(APP_STATE.currentSection);
 
-  // 🧭 القسم الافتراضي
-  navigate(APP_STATE.currentSection || "wallet");
+  if (FEATURES.WALLET && isAuthenticated()) loadWallet();
+  if (FEATURES.MARKET) startMarketLoop();
+  if (FEATURES.AIRDROP && isAuthenticated()) loadAirdrop();
+  if (FEATURES.PARTNERS) renderPartners();
 
-  // 🎁 Airdrop + Referrals
-  if (FEATURES.AIRDROP) {
-    loadAirdrop();
-    loadReferrals();
-  }
-
-  // 🤝 Partners
-  if (FEATURES.PARTNERS) {
-    renderPartners();
-  }
-
-  log("Application fully initialized (FINAL)");
+  APP_STATE.ready = true;
+  log("APP READY");
 });
