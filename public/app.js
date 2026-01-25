@@ -181,14 +181,19 @@ function toast(message) {
 /**
  * Wallet balances (display only)
  */
-let WALLET = {
-  BX: 0,
-  USDT: 0,
-  TON: 0,
-  BNB: 0,
-  SOL: 0,
-  BTC: 0
+const map = {
+  BX: "bal-bx",
+  USDT: "bal-usdt",
+  BNB: "bal-bnb",
+  SOL: "bal-sol",
+  TON: "bal-ton",
+  BTC: "bal-btc"
 };
+
+Object.keys(WALLET).forEach(asset => {
+  const el = document.getElementById(map[asset]);
+  if (el) el.textContent = WALLET[asset];
+});
 
 /**
  * Load wallet balances from backend
@@ -384,8 +389,8 @@ function tickMarketPrice() {
  * Render market price
  */
 function renderMarketPrice() {
-  if ($("marketPrice")) {
-    $("marketPrice").textContent = MARKET_STATE.price.toFixed(6);
+  if ($("lastPrice").textContent = MARKET_STATE.price.toFixed(6);
+$("pairDisplay").textContent = pair;
   }
 
   if ($("marketFixedPrice")) {
@@ -1081,35 +1086,27 @@ function renderPartners() {
 /* ================================================================================================
    GLOBAL NAVIGATION
 ================================================================================================ */
-
 function navigate(section) {
   if (!section) return;
 
   APP_STATE.currentSection = section;
 
-  // إخفاء كل الأقسام
-  document.addEventListener("DOMContentLoaded", () => {
-
   const views = document.querySelectorAll(".view");
   const navButtons = document.querySelectorAll("[data-view]");
 
-  function showView(viewId){
-    // إخفاء كل الأقسام
-    views.forEach(v => v.classList.remove("active"));
+  views.forEach(v => v.classList.remove("active"));
 
-    // إظهار القسم المطلوب
-    const target = document.getElementById(viewId);
-    if(target){
-      target.classList.add("active");
-    }
-
-    // تفعيل زر التنقل
-    navButtons.forEach(b => b.classList.remove("active"));
-    const btn = document.querySelector(`[data-view="${viewId}"]`);
-    if(btn){
-      btn.classList.add("active");
-    }
+  const target = document.getElementById(section);
+  if (target) {
+    target.classList.add("active");
   }
+
+  navButtons.forEach(b => b.classList.remove("active"));
+  const btn = document.querySelector(`[data-view="${section}"]`);
+  if (btn) {
+    btn.classList.add("active");
+  }
+}
 
   // ربط الأزرار
   navButtons.forEach(btn => {
@@ -1130,7 +1127,13 @@ function navigate(section) {
 document.addEventListener("DOMContentLoaded", () => {
 
   // 🔗 ربط أزرار التنقل
-  autoBindNavigation();
+  function autoBindNavigation() {
+  document.querySelectorAll("[data-view]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      navigate(btn.dataset.view);
+    });
+  });
+  }
 
   // 🧭 القسم الافتراضي
   navigate(APP_STATE.currentSection || "wallet");
