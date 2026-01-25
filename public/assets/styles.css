@@ -587,6 +587,45 @@ input{
   display: none;
 }
 
+/* ================= BIG WINS ================= */
+.big-wins {
+  margin: 20px;
+  padding: 16px;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #0b1220, #060b14);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05);
+}
+
+.big-wins h3 {
+  margin-bottom: 12px;
+  font-size: 15px;
+  color: #f0b90b; /* Gold */
+}
+
+.big-win-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: 10px;
+  margin-bottom: 8px;
+  background: rgba(255,255,255,0.03);
+  font-size: 13px;
+}
+
+.big-win-row .user {
+  color: #bbb;
+}
+
+.big-win-row .game {
+  color: #7dd3fc;
+}
+
+.big-win-row .amount {
+  color: #22c55e;
+  font-weight: 600;
+}
+
 /* =====================================================
    MINING + WALLET – CLEAN & SAFE LAYOUT
 ===================================================== */
