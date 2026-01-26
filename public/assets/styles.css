@@ -188,7 +188,7 @@ h3{
   height:38px;
   border-radius:14px;
   font-weight:800;
-  font-size:15px;
+  font-size:16px;
 }
 
 .wallet-actions .deposit{
@@ -199,7 +199,7 @@ h3{
 .wallet-actions .withdraw{
   background:#1e293b;
   border:1px solid #FFCD18;
-  border-color:var(--yellow);
+  color:var(--yellow);
 }
 
 .wallet-actions .transfer{
@@ -268,7 +268,7 @@ h3{
   height: 38px;
   border-radius: 14px;
   font-weight: 800;
-  font-size: 14px;
+  font-size: 16px;
   border: none;
   cursor: pointer;
 }
@@ -276,7 +276,7 @@ h3{
 /* Binance */
 .wallet-btn.binance {
   background: #FFCD18;
-  border-color:var(--yellow);
+  color:var(--yellow);
 }
 
 /* WalletConnect */
@@ -360,7 +360,7 @@ input{
 
 .pair-display{
   font-size:15px;
-  font-weight:700;
+  font-weight:800;
   color:#f1f5f9;
 }
 
@@ -445,7 +445,7 @@ input{
 
 .trade-tabs .active#sellTab,
 .trade-tabs .active.sell{
-  background:#D81484;
+  background:#FE55A1;
 }
 
 /* ---------- FORM ---------- */
@@ -504,7 +504,7 @@ input{
 
 .trade-box.sell .action-btn{
   background:#f84960;
-  color:#D81484;
+  color:#FE55A1;
 }
 
 .market-chart{
@@ -532,7 +532,7 @@ input{
 }
 
 .order-book .buy{ color:#4adebb; }
-.order-book .sell{ color:#D81484; }
+.order-book .sell{ color:#FE55A1; }
 
 /* ---------- RECENT TRADES ---------- */
 .recent-trades{
@@ -548,7 +548,7 @@ input{
 }
 
 .recent-trades .buy{ color:#4adebb; }
-.recent-trades .sell{ color:#D81484; }
+.recent-trades .sell{ color:#FE55A1; }
 
 /* =========================================================
    CASINO – POSTER SYSTEM (MATCHES PROVIDED IMAGE)
@@ -589,7 +589,7 @@ input{
 
 /* ================= BIG WINS ================= */
 .big-wins {
-  margin: 20px;
+  margin: 22px;
   padding: 16px;
   border-radius: 16px;
   background: linear-gradient(180deg, #0b1220, #060b14);
@@ -623,7 +623,7 @@ input{
 
 .big-win-row .amount {
   color: #22c55e;
-  font-weight: 600;
+  font-weight: 800;
 }
 
 /* =====================================================
@@ -661,7 +661,7 @@ input{
 
 /* Colors */
 .wallet-btn.deposit{ background:#22c55e; color:#022c22; }
-.wallet-btn.withdraw{ background:#facc15; color:#111827; }
+.wallet-btn.withdraw{ background:#facc15; color:#FFCD18; }
 .wallet-btn.transfer{ background:#1f2937; color:#e5e7eb; }
 
 /* ================= BALANCES ================= */
@@ -769,7 +769,7 @@ input{
   left: 0;
   right: 0;
   bottom: 0;
-  height: 56px;
+  height: 48px;
   z-index: 999;
 }
 
@@ -911,8 +911,8 @@ input{
 }
 
 .bottom-nav img{
-  width:20px;
-  height:20px;
+  width:22px;
+  height:22px;
 }
 /* =========================================================
    UX – TAP FEEDBACK
@@ -939,7 +939,7 @@ button:active,
 }
 
 .btn.sell{
-  outline:2px solid rgba(255,143,163,.25);
+  outline:2px solid rgba(216,20,132,.25);
 }
 /* =========================================================
    UX – WALLET READABILITY
@@ -985,15 +985,15 @@ button:active,
 .balances img,
 .wallet img,
 .bottom-nav img{
-  width:20px;
-  height:20px;
+  width:22px;
+  height:22px;
   object-fit:contain;
 }
 
 /* Mining tabs icons (BX / TON / SOL) */
 .mining-tabs img{
-  width:28px;
-  height:28px;
+  width:24px;
+  height:24px;
   object-fit:contain;
 }
 
@@ -1054,7 +1054,7 @@ button:active,
     rgba(0,0,0,.15),
     rgba(0,0,0,.75)
   );
-  padding:14px;
+  padding:12px;
   display:flex;
   flex-direction:column;
   justify-content:flex-end;
@@ -1074,12 +1074,12 @@ button:active,
 
 /* Button */
 .promo-overlay button{
-  margin-top:6px;
+  margin-top:10px;
   align-self:flex-start;
-  padding:6px 12px;
+  padding:10px 16px;
   border-radius:10px;
   border:0;
-  font-size:12px;
+  font-size:16px;
   font-weight:800;
   background:linear-gradient(180deg,#6ee7a8,#16a34a);
   color:#042417;
@@ -1094,15 +1094,15 @@ button:active,
 /* ================= AIRDROP EXTRAS ================= */
 
 .airdrop-extras{
-  margin-top: 24px;
+  margin-top: 22px;
   display: grid;
-  gap: 20px;
+  gap: 22px;
 }
 
 .airdrop-partners h3,
 .airdrop-whitepaper h3{
   margin-bottom: 10px;
-  font-size: 16px;
+  font-size: 18px;
   color: #fff;
 }
 
@@ -1125,7 +1125,7 @@ button:active,
 
 .whitepaper-btn{
   display: inline-block;
-  padding: 12px 16px;
+  padding: 12px 18px;
   border-radius: 12px;
   background: linear-gradient(135deg,#20e3b2,#2cccff);
   color: #000;
@@ -1140,7 +1140,7 @@ button:active,
 
 .section-title {
   margin-bottom: 14px;
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 800;
   color: #fff;
 }
@@ -1161,7 +1161,7 @@ button:active,
 }
 
 .partner-item img {
-  max-width: 80%;
+  max-width: 100%;
   max-height: 38px;
   object-fit: contain;
   opacity: 0.9;
