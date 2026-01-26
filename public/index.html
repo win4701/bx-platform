@@ -370,36 +370,62 @@
     <div id="airdropStatus" class="status"></div>
 
   </div>
-    </div> <!-- نهاية airdrop-box -->
+    </div> 
 
-  <!-- ================= AIRDROP EXTRAS ================= -->
-  <div class="airdrop-extras">
+  <!-- ================= AIRDROP PARTNERS ================= -->
+<div class="airdrop-partners">
+  <h3 class="section-title">🤝 Partners</h3>
 
-    <!-- Partners -->
-    <div class="airdrop-partners">
-      <h3>🤝 Partners</h3>
-
-      <div class="partners-row">
-        <img src="assets/images/partner-binance.png" alt="Binance">
-        <img src="assets/images/partner-solana.png" alt="Solana">
-        <img src="assets/images/partner-ton.png" alt="TON">
-      </div>
+  <div class="partners-grid">
+    <div class="partner-item">
+      <img src="assets/images/aliexpress.png" alt="AliExpress">
     </div>
-
-    <!-- Whitepaper -->
-    <div class="airdrop-whitepaper">
-      <h3>📄 Whitepaper</h3>
-
-      <a
-        href="assets/whitepaper.pdf"
-        target="_blank"
-        class="btn whitepaper-btn"
-      >
-        View Whitepaper
-      </a>
+    <div class="partner-item">
+      <img src="assets/images/xiaomi.png" alt="Xiaomi">
     </div>
-
+    <div class="partner-item">
+      <img src="assets/images/nike.png" alt="Nike">
+    </div>
+    <div class="partner-item">
+      <img src="assets/images/samsung.png" alt="Samsung">
+    </div>
   </div>
+</div>
+    <!-- ================= WHITEPAPER ================= -->
+<div class="airdrop-whitepaper">
+  <h3 class="section-title">📄 Whitepaper</h3>
+
+  <button class="btn whitepaper-btn" onclick="openWhitepaper()">
+    Read Whitepaper
+  </button>
+</div>
+
+<!-- Whitepaper Modal -->
+<div id="whitepaperModal" class="modal hidden">
+  <div class="modal-content">
+    <h3>Bloxio (BX) Whitepaper</h3>
+
+    <p>
+      BX is a utility token powering the Bloxio ecosystem, including wallets,
+      trading, casino gaming, mining incentives, and Web3 publishing.
+    </p>
+
+    <ul>
+      <li>Total Supply: 210,000,000 BX</li>
+      <li>Utility-only (no equity or dividends)</li>
+      <li>Mining & Incentives: 40%</li>
+      <li>Liquidity & Markets: 20%</li>
+    </ul>
+
+    <a href="assets/BX_Whitepaper.pdf"
+       target="_blank"
+       class="btn secondary">
+      Open Full PDF
+    </a>
+
+    <button class="btn close" onclick="closeWhitepaper()">Close</button>
+  </div>
+</div>
     <!-- ================= PROMO / CASINO ADS ================= -->
 <div class="promo-grid">
 
