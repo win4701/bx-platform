@@ -709,28 +709,28 @@ const MINING_STATE = {
 
 const MINING_CONFIG = {
   BX: [
-    { id:"p10", name:"Starter",  days:10, roi:2 },
-    { id:"p21", name:"Basic",    days:21, roi:4.5 },
-    { id:"p30", name:"Growth",   days:30, roi:7 },
-    { id:"p45", name:"Advanced", days:45, roi:11 },
-    { id:"p60", name:"Pro",      days:60, roi:15 },
-    { id:"p90", name:"Infinity", days:90, roi:22, vip:true }
+    { id:"p10", name:"Starter",  days:10, roi:2.5 },
+    { id:"p21", name:"Basic",    days:21, roi:5 },
+    { id:"p30", name:"Golden",   days:30, roi:8 },
+    { id:"p45", name:"Advanced", days:45, roi:12 },
+    { id:"p60", name:"Platine",      days:60, roi:17 },
+    { id:"p90", name:"Infinity", days:90, roi:25, vip:true }
   ],
   SOL: [
     { id:"p10", name:"Starter",  days:10, roi:1 },
-    { id:"p21", name:"Basic",    days:21, roi:2.2 },
-    { id:"p30", name:"Growth",   days:30, roi:3.5 },
-    { id:"p45", name:"Advanced", days:45, roi:6 },
-    { id:"p60", name:"Pro",      days:60, roi:8 },
-    { id:"p90", name:"Infinity", days:90, roi:12, vip:true }
+    { id:"p21", name:"Basic",    days:21, roi:2.8 },
+    { id:"p30", name:"Golden",   days:30, roi:4 },
+    { id:"p45", name:"Advanced", days:45, roi:7 },
+    { id:"p60", name:"Platine",      days:60, roi:9 },
+    { id:"p90", name:"Infinity", days:90, roi:14, vip:true }
   ],
   BNB: [
     { id:"p10", name:"Starter",  days:10, roi:0.8 },
     { id:"p21", name:"Basic",    days:21, roi:1.8 },
-    { id:"p30", name:"Growth",   days:30, roi:2.8 },
-    { id:"p45", name:"Advanced", days:45, roi:4.5 },
-    { id:"p60", name:"Pro",      days:60, roi:6 },
-    { id:"p90", name:"Infinity", days:90, roi:9, vip:true }
+    { id:"p30", name:"Golden",   days:30, roi:3 },
+    { id:"p45", name:"Advanced", days:45, roi:5 },
+    { id:"p60", name:"Platine",      days:60, roi:7 },
+    { id:"p90", name:"Infinity", days:90, roi:11, vip:true }
   ]
 };
 
