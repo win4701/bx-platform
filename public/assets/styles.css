@@ -1132,3 +1132,37 @@ button:active,
   font-weight: 600;
   text-decoration: none;
 }
+/* ================= AIRDROP PARTNERS ================= */
+
+.airdrop-partners {
+  margin: 28px 0;
+}
+
+.section-title {
+  margin-bottom: 14px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.partners-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+
+.partner-item {
+  height: 64px;
+  background: rgba(255,255,255,0.04);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.partner-item img {
+  max-width: 80%;
+  max-height: 40px;
+  object-fit: contain;
+  opacity: 0.9;
+}
