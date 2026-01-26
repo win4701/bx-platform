@@ -685,7 +685,10 @@ let ACTIVE_MINING_COIN = "BX";
 ===================================================== */
 
 async function loadMining(){
-  if (!FEATURES.MINING || !isAuthenticated()) return;
+  if (!FEATURES.MINING) return;
+
+  renderMiningPlans();
+  if (!isAuthenticated()) return;
 
   try {
     const r = await fetch(API_BASE + "/mining/dashboard", {
@@ -699,7 +702,8 @@ async function loadMining(){
     MINING_STATE.activeSOL = data.sol || null;
     MINING_STATE.history  = data.history || [];
 
-    renderMining();
+    renderActiveMining();
+    renderMiningHistory();
   } catch (e) {
     console.error("Mining load error", e);
   }
@@ -1025,12 +1029,20 @@ function autoBindNavigation() {
 /* ================================================================================================
    FINAL INIT
 ================================================================================================ */
+
 document.addEventListener("DOMContentLoaded", () => {
   autoBindNavigation();
   navigate(APP_STATE.currentSection);
 
   if (FEATURES.WALLET && isAuthenticated()) loadWallet();
   if (FEATURES.MARKET) startMarketLoop();
+
+  /* =======================
+     MINING INIT (REQUIRED)
+  ======================= */
+  ACTIVE_MINING_COIN = "BX";   
+  renderMiningPlans();           
+
   if (FEATURES.AIRDROP && isAuthenticated()) loadAirdrop();
   if (FEATURES.PARTNERS) renderPartners();
 
