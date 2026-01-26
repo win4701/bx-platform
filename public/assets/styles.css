@@ -485,7 +485,7 @@ input{
   border:1px solid #1e293b;
   color:#94a3b8;
   font-size:13px;
-  font-weight:600;
+  font-weight:800;
 }
 
 /* ---------- ACTION BUTTON ---------- */
@@ -515,6 +515,7 @@ input{
   padding:10px;
   margin-bottom:14px;
 }
+
 /* ---------- ORDER BOOK ---------- */
 .order-book{
   background:#0b1220;
@@ -667,7 +668,7 @@ input{
 /* ================= BALANCES ================= */
 
 .wallet-balances{
-  margin-top: 24px;
+  margin-top: 22px;
   padding: 0 16px;
 }
 
@@ -746,7 +747,7 @@ input{
 }
 
 .mining-profit{
-  font-size:20px;
+  font-size:22px;
   font-weight:800;
   color:#22c55e;
   margin-bottom:12px;
@@ -754,11 +755,11 @@ input{
 
 .mining-plan button{
   width:100%;
-  height:40px;
+  height:38px;
   border-radius:14px;
   background:#22c55e;
   color:#022c22;
-  font-weight:700;
+  font-weight:800;
   border:none;
 }
 
@@ -769,7 +770,7 @@ input{
   left: 0;
   right: 0;
   bottom: 0;
-  height: 48px;
+  height: 52px;
   z-index: 999;
 }
 
@@ -992,14 +993,14 @@ button:active,
 
 /* Mining tabs icons (BX / TON / SOL) */
 .mining-tabs img{
-  width:24px;
-  height:24px;
+  width:22px;
+  height:22px;
   object-fit:contain;
 }
 
 /* Deposit / Payment logos */
 .deposit-method img{
-  width:38px;
+  width:48px;
   height:56px;
   object-fit:contain;
   margin-bottom:6px;
@@ -1064,7 +1065,7 @@ button:active,
 /* Text */
 .promo-overlay strong{
   font-size:15px;
-  font-weight:800;
+  font-weight:700;
 }
 
 .promo-overlay span{
@@ -1080,7 +1081,7 @@ button:active,
   border-radius:10px;
   border:0;
   font-size:16px;
-  font-weight:800;
+  font-weight:700;
   background:linear-gradient(180deg,#6ee7a8,#16a34a);
   color:#042417;
 }
@@ -1102,7 +1103,7 @@ button:active,
 .airdrop-partners h3,
 .airdrop-whitepaper h3{
   margin-bottom: 10px;
-  font-size: 18px;
+  font-size: 16px;
   color: #fff;
 }
 
@@ -1125,7 +1126,7 @@ button:active,
 
 .whitepaper-btn{
   display: inline-block;
-  padding: 12px 18px;
+  padding: 12px 16px;
   border-radius: 12px;
   background: linear-gradient(135deg,#20e3b2,#2cccff);
   color: #000;
@@ -1152,7 +1153,7 @@ button:active,
 }
 
 .partner-item {
-  height: 64px;
+  height: 56px;
   background: rgba(255,255,255,0.04);
   border-radius: 14px;
   display: flex;
@@ -1161,7 +1162,7 @@ button:active,
 }
 
 .partner-item img {
-  max-width: 100%;
+  max-width: 90%;
   max-height: 38px;
   object-fit: contain;
   opacity: 0.9;
