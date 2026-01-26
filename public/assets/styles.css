@@ -1126,11 +1126,11 @@ button:active,
 
 .whitepaper-btn{
   display: inline-block;
-  padding: 12px 16px;
+  padding: 12px 14px;
   border-radius: 12px;
   background: linear-gradient(135deg,#20e3b2,#2cccff);
   color: #000;
-  font-weight: 800;
+  font-weight: 1200;
   text-decoration: none;
 }
 /* ================= AIRDROP PARTNERS ================= */
