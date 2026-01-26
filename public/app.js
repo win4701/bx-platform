@@ -540,6 +540,50 @@ function handleCasinoResult(result) {
 }
 
 /* ================================================================================================
+   CASINO – RECENT BIG WINS (DYNAMIC)
+================================================================================================ */
+
+const BIG_WINS_GAMES = [
+  "Limbo", "Crash", "Roulette", "Plinko", "Hi-Lo", "Dice"
+];
+
+function generateFakeBigWin() {
+  const user = "@user" + Math.floor(Math.random() * 9000);
+  const game = BIG_WINS_GAMES[Math.floor(Math.random() * BIG_WINS_GAMES.length)];
+  const amount = Math.floor(Math.random() * 400 + 50); // 50 – 450 BX
+
+  return { user, game, amount };
+}
+
+function renderBigWin(win) {
+  const list = document.getElementById("bigWinsList");
+  if (!list) return;
+
+  const row = document.createElement("div");
+  row.className = "big-win-row";
+  row.innerHTML = `
+    <span class="user">${win.user}</span>
+    <span class="game">${win.game}</span>
+    <span class="amount">+${win.amount} BX</span>
+  `;
+
+  list.prepend(row);
+
+  // ✨ Animation
+  row.style.opacity = "0";
+  row.style.transform = "translateY(10px)";
+  setTimeout(() => {
+    row.style.transition = "all .25s ease";
+    row.style.opacity = "1";
+    row.style.transform = "translateY(0)";
+  }, 10);
+
+  // ⛔ حد أقصى 5 عناصر
+  if (list.children.length > 5) {
+    list.removeChild(list.lastChild);
+  }
+}
+/* ================================================================================================
    CASINO RESULT RENDER
 ================================================================================================ */
 
@@ -631,6 +675,22 @@ document.addEventListener("DOMContentLoaded", () => {
   // Start fake activity
   startCasinoBots();
 });
+
+let bigWinsTimer = null;
+
+function startBigWinsFeed() {
+  if (bigWinsTimer) return;
+
+  bigWinsTimer = setInterval(() => {
+    if (APP_STATE.currentSection !== "casino") return;
+    renderBigWin(generateFakeBigWin());
+  }, 2500);
+}
+
+function stopBigWinsFeed() {
+  clearInterval(bigWinsTimer);
+  bigWinsTimer = null;
+}
 
 /* ================================================================================================
    MINING STATE
@@ -1013,7 +1073,12 @@ function navigate(section) {
   );
 const btn = document.querySelector(`[data-view="${section}"]`);
   if (btn) btn.classList.add("active");
-
+   
+ if (section === "casino") {
+  startBigWinsFeed();
+} else {
+  stopBigWinsFeed();
+}
   if (section === "market") startMarketLoop();
   else stopMarketLoop();
 }
