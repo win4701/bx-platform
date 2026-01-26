@@ -150,7 +150,7 @@ h3{
 ========================================================= */
 
 .wallet{
-  padding:16px;
+  padding:18px;
   background:linear-gradient(180deg,#0b1220 0%,#020617 100%);
   color:#e5e7eb;
   min-height:calc(100vh - 120px);
@@ -166,7 +166,7 @@ h3{
 }
 
 .wallet-summary .label{
-  font-size:14px;
+  font-size:15px;
   color:#94a3b8;
 }
 
@@ -188,7 +188,7 @@ h3{
   height:38px;
   border-radius:14px;
   font-weight:800;
-  font-size:16px;
+  font-size:15px;
 }
 
 .wallet-actions .deposit{
@@ -295,7 +295,7 @@ input{
   background:#0b1f27;
   color:var(--text);
   border:1px solid var(--border);
-  font-size:16px;
+  font-size:15px;
 }
 
 
