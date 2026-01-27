@@ -1070,61 +1070,83 @@ button:active,
   object-fit:contain;
 }
 
-/* ================= AIRDROP PROMOS ================= */
+/* ===================================================================================================
+   AIRDROP PROMOS – FINAL RESPONSIVE FIX
+================================================================================================ */
 
 .airdrop-promos {
-  margin-top: 20px;
-  display: grid;
-  gap: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin: 18px 16px;
 }
 
+/* الكرت */
 .promo-card {
-  border-radius: 16px;
-  overflow: hidden;
+  display: flex;
+  flex-direction: column;          /* موبايل: عمودي */
   background: #0b1220;
+  border-radius: 18px;
+  overflow: hidden;
 }
 
+/* الصورة */
 .promo-card img {
   width: 100%;
-  height: 140px;
+  height: 160px;
   object-fit: cover;
+  display: block;
 }
 
+/* المحتوى */
 .promo-content {
-  padding: 14px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
+/* العنوان */
 .promo-content h4 {
-  margin-bottom: 6px;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 800;
 }
 
+/* الوصف */
 .promo-content p {
   font-size: 13px;
   opacity: 0.85;
-  margin-bottom: 10px;
+  line-height: 1.5;
 }
 
+/* الزر */
 .promo-btn {
+  margin-top: 10px;
   width: 100%;
-  height: 40px;
-  border-radius: 12px;
+  height: 42px;
+  border-radius: 14px;
   font-weight: 800;
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: #000;
 }
 
-/* Button */
-.promo-overlay button{
-  margin-top:10px;
-  align-self:flex-start;
-  padding:10px 16px;
-  border-radius:10px;
-  border:0;
-  font-size:16px;
-  font-weight:700;
-  background:linear-gradient(180deg,#6ee7a8,#16a34a);
-  color:#042417;
+/* ================= DESKTOP / TABLET ================= */
+@media (min-width: 768px) {
+  .promo-card {
+    flex-direction: row;          /* Desktop: أفقي */
+    align-items: center;
+  }
+
+  .promo-card img {
+    width: 45%;
+    height: 100%;
+  }
+
+  .promo-content {
+    width: 55%;
+  }
 }
+
 /* ===== FIX SUBSCRIBE BUTTON (FINAL) ===== */
 .mining-plan button{
   background: linear-gradient(135deg,#22c55e,#16a34a) !important;
