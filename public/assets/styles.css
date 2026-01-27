@@ -515,6 +515,10 @@ input{
   margin-bottom:14px;
 }
 
+.market-chart canvas{
+  width:100% !important;
+  height:200px !important;
+}
 /* ---------- ORDER BOOK ---------- */
 .order-book{
   background:#0b1220;
