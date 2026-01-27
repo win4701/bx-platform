@@ -704,55 +704,96 @@ function renderCasinoBotActivity(user, game, bet, win) {
   }
 }
 
-/* ================================================================================================
+/*================================================================================================
    CASINO INIT
 ================================================================================================ */
 
-document.addEventListener("DOMContentLoaded", () => {
-  if (!FEATURES.CASINO) return;
+const CASINO_STATE = {
+  isPlaying: false,
+  lastGame: null
+};
 
-  // Default game
-  selectCasinoGame(CASINO_GAMES[0].id);
+/* ================= CAN PLAY CHECK ================= */
 
-  // Start fake activity
-  startCasinoBots();
-});
-
-let bigWinsTimer = null;
-
-function startBigWinsFeed() {
-  if (bigWinsTimer) return;
-
-  bigWinsTimer = setInterval(() => {
-    if (APP_STATE.currentSection !== "casino") return;
-    renderBigWin(generateFakeBigWin());
-  }, 2500);
+function canPlayCasino() {
+  return isAuthenticated() && WALLET.BX > 0 && !CASINO_STATE.isPlaying;
 }
 
-function stopBigWinsFeed() {
-  clearInterval(bigWinsTimer);
-  bigWinsTimer = null;
-}
+/* ================= GAME BINDING ================= */
 
-document.querySelectorAll("#casino .game").forEach(card => {
-  card.addEventListener("click", () => {
-    if (!isAuthenticated()) {
-      toast("Please login first");
-      return;
-    }
+function bindCasinoGames() {
+  document.querySelectorAll("#casino .game").forEach(card => {
+    card.addEventListener("click", () => {
+      const game = card.dataset.game;
+      const betAmount = 1; // BX (قابل للتطوير لاحقًا)
 
-    if (WALLET.BX <= 0) {
-      toast("Insufficient BX balance");
-      return;
-    }
+      if (!isAuthenticated()) {
+        toast("Please login first");
+        return;
+      }
 
-    const game = card.dataset.game;
-    const bet = 1; // BX – لاحقًا Input
+      if (WALLET.BX < betAmount) {
+        toast("Insufficient BX balance");
+        return;
+      }
 
-    playCasino(game, bet);
+      playCasino(game, betAmount);
+    });
   });
-});
+}
 
+/* ================= PLAY CASINO ================= */
+
+async function playCasino(gameId, betAmount) {
+  if (CASINO_STATE.isPlaying) return;
+
+  if (WALLET.BX < betAmount) {
+    toast("Insufficient BX balance");
+    return;
+  }
+
+  CASINO_STATE.isPlaying = true;
+  CASINO_STATE.lastGame = gameId;
+
+  try {
+    const r = await fetch(API_BASE + "/casino/play", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...authHeaders()
+      },
+      body: JSON.stringify({
+        game: gameId,
+        bet: betAmount
+      })
+    });
+
+    if (!r.ok) throw new Error("Casino play failed");
+
+    const data = await r.json();
+
+    // تحديث الرصيد
+    WALLET.BX = data.balance;
+    renderWallet();
+
+    // Big Win (إن وجد)
+    if (data.win && data.amount >= 100) {
+      pushBigWin(gameId, data.amount);
+    }
+
+  } catch (e) {
+    console.error("Casino error", e);
+    toast("Casino error, try again");
+  } finally {
+    CASINO_STATE.isPlaying = false;
+  }
+}
+
+/* ================= INIT ================= */
+
+function initCasino() {
+  bindCasinoGames();
+}
 /*==================================================================
           MINING STATE
    
