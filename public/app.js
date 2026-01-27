@@ -542,58 +542,20 @@ function handleCasinoResult(result) {
 }
 
 /* ===============================================================================================
-   CASINO – RECENT BIG WINS (DYNAMIC | VERTICAL)
+   CASINO – RECENT RESULTS (WIN / LOSS | DYNAMIC | VERTICAL)
 ================================================================================================ */
 
-let bigWinsTimer = null;
+/* ================= CONFIG ================= */
 
-const BIG_WINS_GAMES = [
-  "Crash",
-  "Dice",
-  "Roulette",
-  "Plinko",
-  "Hilo",
-  "Limbo",
-  "Slots"
-];
-
-const BIG_WINS_USERS = [
-  "@nahla",
-  "@cryptofox",
-  "@winner",
-  "@luckyguy",
-  "@anon",
-  "@hamou",
-  "@dina",
-  "@dyson",
-  "@fati",
-  "@cora",
-  "@rubay",
-  "@fozah",
-  "@nelly",
-  "@daison",
-  "@socha",
-  "@kimu"
-];
-
-/* ================= GENERATOR ================= */
-
-function generateFakeBigWin() {
-  const user =
-    BIG_WINS_USERS[Math.floor(Math.random() * BIG_WINS_USERS.length)];
-
-  const game =
-    BIG_WINS_GAMES[Math.floor(Math.random() * BIG_WINS_GAMES.length)];
-
-  const amount =
-    Math.floor(Math.random() * 400 + 100); // 100 → 500 BX
-
-  return { user, game, amount };
-}
+const CASINO_RECENT = {
+  maxItems: 12,
+  winAmounts: [20,44,70,126,576,87,234,412,,97,35],
+  lossAmount:[ 5 ,7,17,23,8,34,21,56,15]    
+};
 
 /* ================= RENDER ================= */
 
-function renderBigWin(win) {
+function renderCasinoResult({ user, game, win, amount }) {
   const list = document.getElementById("bigWinsList");
   if (!list) return;
 
@@ -601,42 +563,19 @@ function renderBigWin(win) {
   row.className = "big-win-row";
 
   row.innerHTML = `
-    <span class="user">${win.user}</span>
-    <span class="game">${win.game}</span>
-    <span class="amount">+${win.amount} BX</span>
+    <span class="user">${user}</span>
+    <span class="game">${game}</span>
+    <span class="amount ${win ? "win" : "loss"}">
+      ${win ? "+" + amount : "-" + amount} BX
+    </span>
   `;
 
-  // إضافة في الأعلى (الأحدث أولًا)
   list.prepend(row);
 
   // حد أقصى للعناصر
-  if (list.children.length > 12) {
+  while (list.children.length > CASINO_RECENT.maxItems) {
     list.removeChild(list.lastChild);
   }
-}
-
-/* ================= FEED CONTROL ================= */
-
-function startBigWinsFeed() {
-  if (bigWinsTimer) return;
-
-  // عنصر أولي
-  renderBigWin(generateFakeBigWin());
-
-  bigWinsTimer = setInterval(() => {
-    renderBigWin(generateFakeBigWin());
-
-    // تمرير عمودي ناعم إلى الأعلى
-    const list = document.getElementById("bigWinsList");
-    if (list) {
-      list.scrollTop = 0;
-    }
-  }, 3000);
-}
-
-function stopBigWinsFeed() {
-  clearInterval(bigWinsTimer);
-  bigWinsTimer = null;
 }
 /* ================================================================================================
    CASINO RESULT RENDER
