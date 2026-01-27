@@ -542,13 +542,14 @@ function handleCasinoResult(result) {
 }
 
 /* ===============================================================================================
-   CASINO – RECENT BIG WINS (DYNAMIC)
+   CASINO – RECENT BIG WINS (DYNAMIC | VERTICAL)
 ================================================================================================ */
 
 let bigWinsTimer = null;
 
 const BIG_WINS_GAMES = [
   "Crash",
+  "Dice",
   "Roulette",
   "Plinko",
   "Hilo",
@@ -561,17 +562,16 @@ const BIG_WINS_USERS = [
   "@cryptofox",
   "@winner",
   "@luckyguy",
-  "@anon"
+  "@anon",
   "@hamou",
   "@dina",
   "@dyson",
   "@fati",
-  "@cora"
+  "@cora",
   "@rubay",
   "@fozah",
-  "@winner",
   "@nelly",
-  "@daison"
+  "@daison",
   "@socha",
   "@kimu"
 ];
@@ -594,8 +594,8 @@ function generateFakeBigWin() {
 /* ================= RENDER ================= */
 
 function renderBigWin(win) {
-  const track = document.getElementById("bigWinsList");
-  if (!track) return;
+  const list = document.getElementById("bigWinsList");
+  if (!list) return;
 
   const row = document.createElement("div");
   row.className = "big-win-row";
@@ -606,11 +606,12 @@ function renderBigWin(win) {
     <span class="amount">+${win.amount} BX</span>
   `;
 
-  track.prepend(row);
+  // إضافة في الأعلى (الأحدث أولًا)
+  list.prepend(row);
 
   // حد أقصى للعناصر
-  if (track.children.length > 15) {
-    track.removeChild(track.lastChild);
+  if (list.children.length > 12) {
+    list.removeChild(list.lastChild);
   }
 }
 
@@ -619,25 +620,24 @@ function renderBigWin(win) {
 function startBigWinsFeed() {
   if (bigWinsTimer) return;
 
-  // توليد أول عنصر فورًا
+  // عنصر أولي
   renderBigWin(generateFakeBigWin());
 
   bigWinsTimer = setInterval(() => {
     renderBigWin(generateFakeBigWin());
 
-    // تحريك أفقي ناعم
-    const track = document.getElementById("bigWinsList");
-    if (track) {
-      track.scrollLeft = 0;
+    // تمرير عمودي ناعم إلى الأعلى
+    const list = document.getElementById("bigWinsList");
+    if (list) {
+      list.scrollTop = 0;
     }
-  }, 2500);
+  }, 3000);
 }
 
 function stopBigWinsFeed() {
   clearInterval(bigWinsTimer);
   bigWinsTimer = null;
 }
-
 /* ================================================================================================
    CASINO RESULT RENDER
 ================================================================================================ */
