@@ -331,12 +331,11 @@ function stopMarketLoop() {
 ================================================================================================ */
 
 function renderMarketChart() {
-  if (typeof window.drawChart === "function") {
+  if (typeof window.drawChart=="function") {
     window.drawChart(MARKET_STATE.history);
   }
 }
 
-*/============================================================================================== */
 let priceChart = null;
 
 function initMarketChart() {
@@ -388,9 +387,6 @@ function generateMarketOrders() {
   renderOrderBook();
 }
 
-/**
- * Render order book into UI
- */
 function renderOrderBook() {
   if ($("buyOrders")) {
     $("buyOrders").innerHTML = MARKET_STATE.orders.buy
@@ -630,9 +626,6 @@ function updateCasinoUI(result) {
    PROVABLY FAIR VERIFY (CLIENT SIDE)
 ================================================================================================ */
 
-/**
- * Verify fairness locally (optional UI helper)
- */
 function verifyFairness(serverSeed, clientSeed, nonce) {
   if (!serverSeed || !clientSeed) return null;
 
@@ -649,9 +642,6 @@ function verifyFairness(serverSeed, clientSeed, nonce) {
    FAKE USERS / BOTS ACTIVITY
 ================================================================================================ */
 
-/**
- * Simulate fake users activity feed
- */
 function startCasinoBots() {
   if (!CASINO_STATE.botsEnabled) return;
 
@@ -717,7 +707,6 @@ function stopBigWinsFeed() {
   bigWinsTimer = null;
 }
 
-/*==================================================================*/
 document.querySelectorAll("#casino .game").forEach(card => {
   card.addEventListener("click", () => {
     if (!isAuthenticated()) {
@@ -738,7 +727,8 @@ document.querySelectorAll("#casino .game").forEach(card => {
 });
 
 /*==================================================================
-   MINING STATE
+          MINING STATE
+   
 ================================================================= */
 
 const MINING_STATE = {
