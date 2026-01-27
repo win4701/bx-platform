@@ -593,45 +593,70 @@ input{
   display: none;
 }
 
-/* ===== RECENT BIG WINS – HORIZONTAL ===== */
+/* ===============================================================================================
+   RECENT BIG WINS – FINAL (VERTICAL OVERRIDE)
+================================================================================================ */
+
 .big-wins {
-  margin: 22px 16px;
+  margin: 18px 16px;
   padding: 14px;
   border-radius: 16px;
   background: linear-gradient(180deg,#0b1220,#060b14);
-  overflow: hidden;
 }
 
+.big-wins-title {
+  margin-bottom: 10px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+}
+
+/* فرض العمودي */
 .big-wins-track {
-  display: flex;
-  gap: 12px;
-  overflow-x: auto;
-  scroll-behavior: smooth;
+  display: block !important;
+  max-height: 260px;
+  overflow-y: auto;
+  overflow-x: hidden !important;
 }
 
-.big-wins-track::-webkit-scrollbar {
-  display: none;
-}
-
+/* عنصر واحد */
 .big-win-row {
-  min-width: 220px;
-  flex-shrink: 0;
   display: flex;
   justify-content: space-between;
+  align-items: center;
   gap: 8px;
+  width: 100%;
   padding: 10px 12px;
+  margin-bottom: 10px;
   border-radius: 12px;
-  background: rgba(255,255,255,0.05);
+  background: rgba(255,255,255,0.06);
+  box-sizing: border-box;
+}
+
+.big-win-row:last-child {
+  margin-bottom: 0;
+}
+
+.big-win-row .user {
+  color: #9ca3af;
   font-size: 13px;
 }
 
-.big-win-row .user { color:#9ca3af; }
-.big-win-row .game { color:#7dd3fc; }
-.big-win-row .amount {
-  color:#22c55e;
-  font-weight:800;
+.big-win-row .game {
+  color: #7dd3fc;
+  font-size: 13px;
 }
 
+.big-win-row .amount {
+  color: #22c55e;
+  font-weight: 800;
+  font-size: 13px;
+}
+
+/* منع أي التفاف أفقي قديم */
+.big-win-row span {
+  white-space: normal !important;
+}
 /* =====================================================
    MINING + WALLET – CLEAN & SAFE LAYOUT
 ===================================================== */
