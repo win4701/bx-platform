@@ -224,49 +224,6 @@ document.addEventListener("DOMContentLoaded", () => {
   APP_STATE.ready = true;
 });
 
-
-/* ================================================================================================
-   MARKET STATE
-================================================================================================ */
-
-let MARKET_STATE = {
-  pair: "BX/USDT",
-  price: BX_FIXED_PRICE_USDT,
-  history: [],
-  orders: {
-    buy: [],
-    sell: []
-  },
-  lastUpdate: 0
-};
-
-/* ================================================================================================
-   MARKET PAIR MANAGEMENT
-================================================================================================ */
-
-/**
- * Switch active trading pair
- */
-function switchMarketPair(pair) {
-  if (!MARKET_PAIRS.includes(pair)) return;
-
-  MARKET_STATE.pair = pair;
-  MARKET_STATE.history = [];
-  MARKET_STATE.orders.buy = [];
-  MARKET_STATE.orders.sell = [];
-
-  renderMarketPair(pair);
-}
-
-/**
- * Render selected pair in UI
- */
-function renderMarketPair(pair) {
-  if ($("marketPair")) {
-    $("marketPair").textContent = pair;
-  }
-}
-
 /* ================================================================================================
    PRICE ENGINE
 ================================================================================================ */
