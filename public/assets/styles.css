@@ -256,37 +256,33 @@ h3{
   color:#e5e7eb;
 }
 
-/* ================= WALLET CONNECT BUTTONS ================= */
-..wallet-bottom-actions{
-  display:flex;
-  gap:12px;
-  align-items:center;
+/* ===== WALLET PAYMENT BUTTONS ===== */
+.wallet-bottom-actions {
+  display: flex;
+  gap: 12px;
+  margin: 20px 16px;
 }
 
-.wallet-bottom-actions button{
-  flex:1;
-  height:42px;
-  border-radius:14px;
-  font-weight:800;
-   }
-
-.wallet-btn {
+.wallet-bottom-actions button {
+  flex: 1;
+  height: 46px;
+  border-radius: 16px;
+  font-size: 15px;
+  font-weight: 800;
   display: flex;
   align-items: center;
   justify-content: center;
-  line-height: 1;
 }
 
-.wallet-actions .withdraw,
-.wallet-btn.withdraw {
+/* Binance Pay */
+.wallet-btn.binance-pay {
   background: #FFCD18;
   color: #000;
 }
 
-/* Binance Pay Button */
-.wallet-btn.binance,
-.wallet-btn.binance-pay {
-  background: #FFCD18;
+/* WalletConnect */
+.wallet-btn.walletconnect {
+  background: #ffffff;
   color: #000;
 }
 
@@ -597,43 +593,43 @@ input{
   display: none;
 }
 
-/* ================= BIG WINS ================= */
+/* ===== RECENT BIG WINS – HORIZONTAL ===== */
 .big-wins {
-  margin: 22px;
-  padding: 16px;
+  margin: 22px 16px;
+  padding: 14px;
   border-radius: 16px;
-  background: linear-gradient(180deg, #0b1220, #060b14);
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05);
+  background: linear-gradient(180deg,#0b1220,#060b14);
+  overflow: hidden;
 }
 
-.big-wins h3 {
-  margin-bottom: 12px;
-  font-size: 15px;
-  color: #f0b90b; /* Gold */
+.big-wins-track {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+}
+
+.big-wins-track::-webkit-scrollbar {
+  display: none;
 }
 
 .big-win-row {
+  min-width: 220px;
+  flex-shrink: 0;
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  gap: 8px;
   padding: 10px 12px;
-  border-radius: 10px;
-  margin-bottom: 8px;
-  background: rgba(255,255,255,0.03);
+  border-radius: 12px;
+  background: rgba(255,255,255,0.05);
   font-size: 13px;
 }
 
-.big-win-row .user {
-  color: #bbb;
-}
-
-.big-win-row .game {
-  color: #7dd3fc;
-}
-
+.big-win-row .user { color:#9ca3af; }
+.big-win-row .game { color:#7dd3fc; }
 .big-win-row .amount {
-  color: #22c55e;
-  font-weight: 800;
+  color:#22c55e;
+  font-weight:800;
 }
 
 /* =====================================================
