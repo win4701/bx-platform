@@ -276,12 +276,25 @@ function renderMarketPair(pair) {
    PRICE ENGINE
 ================================================================================================ */
 
-function renderMarketPrice() {
-  if ($("lastPrice")) {
-    $("lastPrice").textContent = MARKET_STATE.price.toFixed(6);
-  }
-  if ($("pairDisplay")) {
-    $("pairDisplay").textContent = MARKET_STATE.pair;
+function tickMarketPrice() {
+  const base = calculateBasePrice(MARKET_STATE.pair);
+  const drift = (Math.random() - 0.5) * 0.02;
+  let next = base + base * drift;
+
+  next = Math.max(BX_CHART_MIN, Math.min(BX_CHART_MAX, next));
+  MARKET_STATE.price = +next.toFixed(6);
+
+  renderMarketPrice();
+
+  if (priceChart) {
+    priceChart.data.labels.push("");
+    priceChart.data.datasets[0].data.push(MARKET_STATE.price);
+
+    if (priceChart.data.labels.length > 30) {
+      priceChart.data.labels.shift();
+      priceChart.data.datasets[0].data.shift();
+    }
+    priceChart.update();
   }
 }
 
@@ -317,22 +330,42 @@ function stopMarketLoop() {
    CHART
 ================================================================================================ */
 
-/**
- * Render chart (simple hook – actual chart lib handled elsewhere)
- */
 function renderMarketChart() {
   if (typeof window.drawChart === "function") {
     window.drawChart(MARKET_STATE.history);
   }
 }
 
-/* ================================================================================================
-   ORDER BOOK (FAKE / ACTIVE)
-================================================================================================ */
+*/============================================================================================== */
+let priceChart = null;
 
-/**
- * Generate fake orders to simulate active market
- */
+function initMarketChart() {
+  const ctx = document.getElementById("priceChart");
+  if (!ctx || priceChart) return;
+
+  priceChart = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: [],
+      datasets: [{
+        data: [],
+        borderColor: "#22c55e",
+        tension: 0.35,
+        borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: { x: { display: false }, y: { display: false } }
+    }
+  });
+}
+
+/* ====================================================================
+   ORDER BOOK (FAKE / ACTIVE)
+=============================================================== */
+
 function generateMarketOrders() {
   const buyOrders = [];
   const sellOrders = [];
@@ -391,14 +424,6 @@ function sellBX(amount) {
   if (!amount || amount <= 0) return;
   toast("Sell order placed");
 }
-
-/* ================================================================================================
-   MARKET LOOP
-================================================================================================ */
-
-/**
- * Start market loop (only when market section active)
- */
 
 /* ================================================================================================
    MARKET INITIALIZATION
@@ -578,11 +603,11 @@ function renderBigWin(win) {
     row.style.transform = "translateY(0)";
   }, 10);
 
-  // ⛔ حد أقصى 5 عناصر
   if (list.children.length > 5) {
     list.removeChild(list.lastChild);
   }
 }
+
 /* ================================================================================================
    CASINO RESULT RENDER
 ================================================================================================ */
@@ -692,9 +717,29 @@ function stopBigWinsFeed() {
   bigWinsTimer = null;
 }
 
-/* ================================================================================================
+/*==================================================================*/
+document.querySelectorAll("#casino .game").forEach(card => {
+  card.addEventListener("click", () => {
+    if (!isAuthenticated()) {
+      toast("Please login first");
+      return;
+    }
+
+    if (WALLET.BX <= 0) {
+      toast("Insufficient BX balance");
+      return;
+    }
+
+    const game = card.dataset.game;
+    const bet = 1; // BX – لاحقًا Input
+
+    playCasino(game, bet);
+  });
+});
+
+/*==================================================================
    MINING STATE
-================================================================================================ */
+================================================================= */
 
 const MINING_STATE = {
   activeBX: null,
