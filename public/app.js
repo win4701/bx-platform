@@ -711,12 +711,12 @@ const MINING_CONFIG = {
   ],
 
   SOL: [
-    { id:"p10", name:"Starter",  days:10, roi:1,   min:5,   max:50   },
-    { id:"p21", name:"Basic",    days:21, roi:2.8, min:20,  max:200  },
-    { id:"p30", name:"Golden",   days:30, roi:4,   min:50,  max:500  },
-    { id:"p45", name:"Advanced", days:45, roi:7,   min:100, max:1200 },
-    { id:"p60", name:"Platine",  days:60, roi:9,   min:200, max:3000 },
-    { id:"p90", name:"Infinity", days:90, roi:14,  min:500, max:7000, vip:true }
+    { id:"p10", name:"Starter",  days:10, roi:1,   min:1,   max:5   },
+    { id:"p21", name:"Basic",    days:21, roi:2.8, min:10,  max:50  },
+    { id:"p30", name:"Golden",   days:30, roi:4,   min:40,  max:160  },
+    { id:"p45", name:"Advanced", days:45, roi:7,   min:120, max:500 },
+    { id:"p60", name:"Platine",  days:60, roi:9,   min:200, max:1000 },
+    { id:"p90", name:"Infinity", days:90, roi:14,  min:500, max:2500, vip:true }
   ],
 
   BNB: [
