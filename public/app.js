@@ -276,16 +276,55 @@ function renderMarketPair(pair) {
    PRICE ENGINE
 ================================================================================================ */
 
+const BX_FIXED_PRICE_USDT = 2;
+const BX_CHART_MIN = BX_FIXED_PRICE_USDT * 0.9;
+const BX_CHART_MAX = BX_FIXED_PRICE_USDT * 1.1;
+const MARKET_TICK_MS = 1200;
+
+let MARKET_STATE = {
+  pair: "BX/USDT",
+  price: BX_FIXED_PRICE_USDT
+};
+
+let marketTimer = null;
+
+/* ================= BASE PRICE ================= */
+
+function calculateBasePrice(pair) {
+  const quote = pair.split("/")[1];
+
+  switch (quote) {
+    case "USDT": return BX_FIXED_PRICE_USDT;
+    case "BNB":  return BX_FIXED_PRICE_USDT * 0.95;
+    case "SOL":  return BX_FIXED_PRICE_USDT * 0.97;
+    case "TON":  return BX_FIXED_PRICE_USDT * 0.96;
+    case "BTC":  return BX_FIXED_PRICE_USDT * 1.05;
+    default:     return BX_FIXED_PRICE_USDT;
+  }
+}
+
+/* ================= PRICE TICK ================= */
+
 function tickMarketPrice() {
   const base = calculateBasePrice(MARKET_STATE.pair);
+
+  // نسبة التذبذب (±2%)
   const drift = (Math.random() - 0.5) * 0.02;
-  let next = base + base * drift;
 
-  next = Math.max(BX_CHART_MIN, Math.min(BX_CHART_MAX, next));
-  MARKET_STATE.price = +next.toFixed(6);
+  let nextPrice = base + base * drift;
 
+  // حماية النطاق السعري
+  nextPrice = Math.max(
+    BX_CHART_MIN,
+    Math.min(BX_CHART_MAX, nextPrice)
+  );
+
+  MARKET_STATE.price = +nextPrice.toFixed(6);
+
+  // تحديث السعر في الواجهة
   renderMarketPrice();
 
+  // تحديث الشارت إن كان مفعّل
   if (priceChart) {
     priceChart.data.labels.push("");
     priceChart.data.datasets[0].data.push(MARKET_STATE.price);
@@ -294,27 +333,16 @@ function tickMarketPrice() {
       priceChart.data.labels.shift();
       priceChart.data.datasets[0].data.shift();
     }
+
     priceChart.update();
   }
 }
 
-function calculateBasePrice(pair) {
-  const quote = pair.split("/")[1];
-  return quote === "USDT" ? BX_FIXED_PRICE_USDT : BX_FIXED_PRICE_USDT;
-}
-function tickMarketPrice() {
-  const base = calculateBasePrice(MARKET_STATE.pair);
-  const drift = (Math.random() - 0.5) * 0.02;
-  let next = base + base * drift;
-  next = Math.max(BX_CHART_MIN, Math.min(BX_CHART_MAX, next));
-  MARKET_STATE.price = +next.toFixed(6);
-  renderMarketPrice();
-}
-
-let marketTimer = null;
+/* ================= LOOP CONTROL ================= */
 
 function startMarketLoop() {
   if (marketTimer) return;
+
   marketTimer = setInterval(() => {
     if (APP_STATE.currentSection !== "market") return;
     tickMarketPrice();
@@ -325,7 +353,6 @@ function stopMarketLoop() {
   clearInterval(marketTimer);
   marketTimer = null;
 }
-
 /* ================================================================================================
    CHART
 ================================================================================================ */
