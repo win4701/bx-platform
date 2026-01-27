@@ -555,11 +555,23 @@ const BIG_WINS_GAMES = [
 ];
 
 const BIG_WINS_USERS = [
-  "@player01",
+  "@nahla",
   "@cryptofox",
   "@winner",
   "@luckyguy",
   "@anon"
+  "@hamou",
+  "@dina",
+  "@dyson",
+  "@fati",
+  "@cora"
+  "@rubay",
+  "@fozah",
+  "@winner",
+  "@nelly",
+  "@daison"
+  "@socha",
+  "@kimu",
 ];
 
 /* ================= GENERATOR ================= */
@@ -754,7 +766,7 @@ const MINING_CONFIG = {
     { id:"p30", name:"Golden",   days:30, roi:8 },
     { id:"p45", name:"Advanced", days:45, roi:12 },
     { id:"p60", name:"Platine",      days:60, roi:17 },
-    { id:"p90", name:"Infinity", days:90, roi:25, vip:true }
+    { id:"p90", name:"Infinity", days:90, roi:25, :true }
   ],
   SOL: [
     { id:"p10", name:"Starter",  days:10, roi:1 },
@@ -762,7 +774,7 @@ const MINING_CONFIG = {
     { id:"p30", name:"Golden",   days:30, roi:4 },
     { id:"p45", name:"Advanced", days:45, roi:7 },
     { id:"p60", name:"Platine",      days:60, roi:9 },
-    { id:"p90", name:"Infinity", days:90, roi:14, vip:true }
+    { id:"p90", name:"Infinity", days:90, roi:14,:true }
   ],
   BNB: [
     { id:"p10", name:"Starter",  days:10, roi:0.8 },
@@ -770,7 +782,7 @@ const MINING_CONFIG = {
     { id:"p30", name:"Golden",   days:30, roi:3 },
     { id:"p45", name:"Advanced", days:45, roi:5 },
     { id:"p60", name:"Platine",      days:60, roi:7 },
-    { id:"p90", name:"Infinity", days:90, roi:11, vip:true }
+    { id:"p90", name:"Infinity", days:90, roi:11,:true }
   ]
 };
 
