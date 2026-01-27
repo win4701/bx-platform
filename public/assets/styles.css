@@ -607,7 +607,7 @@ input{
 .big-wins-title {
   margin-bottom: 10px;
   font-size: 15px;
-  font-weight: 700;
+  font-weight: 800;
   color: #fff;
 }
 
@@ -653,10 +653,21 @@ input{
   font-size: 13px;
 }
 
+.big-win-row .amount.win {
+  color: #22c55e;
+  font-weight: 800;
+}
+
+.big-win-row .amount.loss {
+  color: #ef4444;
+  font-weight: 800;
+   
+}
 /* منع أي التفاف أفقي قديم */
 .big-win-row span {
   white-space: normal !important;
 }
+
 /* =====================================================
    MINING + WALLET – CLEAN & SAFE LAYOUT
 ===================================================== */
