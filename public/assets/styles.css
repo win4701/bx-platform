@@ -257,11 +257,18 @@ h3{
 }
 
 /* ================= WALLET CONNECT BUTTONS ================= */
-.wallet-bottom-actions {
-  display: flex;
-  gap: 12px;
-  margin: 16px;
+..wallet-bottom-actions{
+  display:flex;
+  gap:12px;
+  align-items:center;
 }
+
+.wallet-bottom-actions button{
+  flex:1;
+  height:42px;
+  border-radius:14px;
+  font-weight:800;
+   }
 
 .wallet-btn {
   display: flex;
@@ -270,7 +277,6 @@ h3{
   line-height: 1;
 }
 
-/* Withdraw Button */
 .wallet-actions .withdraw,
 .wallet-btn.withdraw {
   background: #FFCD18;
@@ -736,11 +742,21 @@ input{
   gap:16px;
 }
 
+/* ===== MINING ALIGNMENT FIX ===== */
+
 .mining-plan{
-  padding:16px;
-  border-radius:18px;
-  background:linear-gradient(180deg,#0e2730,#08161b);
-  border:1px solid #143743;
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+}
+
+.mining-plan ul{
+  padding-left:18px;
+  margin:10px 0;
+}
+
+.mining-plan li{
+  line-height:1.6;
 }
 
 .mining-plan h4{
