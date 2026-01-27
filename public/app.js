@@ -1130,10 +1130,7 @@ function navigate(section) {
 ================================================================================================ */
 document.addEventListener("DOMContentLoaded", () => {
   autoBindNavigation();
-  navigate("wallet");
-
-  if (FEATURES.MINING) loadMining();
-  if (FEATURES.AIRDROP && isAuthenticated()) loadAirdrop();
+  navigate("wallet"); 
 
   APP_STATE.ready = true;
   log("APP READY");
