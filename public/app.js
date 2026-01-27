@@ -1157,16 +1157,16 @@ function renderPartners() {
 
 /* ================================================================================================
    GLOBAL NAVIGATION
-================================================================================================ */
+================================================================= */
 
 function navigate(section) {
   if (!section) return;
 
   APP_STATE.currentSection = section;
 
-  document.querySelectorAll(".view").forEach(v =>
-    v.classList.remove("active")
-  );
+  document.querySelectorAll(".view").forEach(v => {
+    v.classList.remove("active");
+  });
 
   const target = document.getElementById(section);
   if (target) target.classList.add("active");
@@ -1174,24 +1174,24 @@ function navigate(section) {
   document.querySelectorAll("[data-view]").forEach(b =>
     b.classList.remove("active")
   );
-const btn = document.querySelector(`[data-view="${section}"]`);
-  if (btn) btn.classList.add("active");
-   
- if (section === "casino") {
-  startBigWinsFeed();
-} else {
-  stopBigWinsFeed();
-}
-  if (section === "market") startMarketLoop();
-  else stopMarketLoop();
-}
 
-function autoBindNavigation() {
-  document.querySelectorAll("[data-view]").forEach(btn => {
-    btn.addEventListener("click", () => {
-      navigate(btn.dataset.view);
-    });
-  });
+  const btn = document.querySelector(`[data-view="${section}"]`);
+  if (btn) btn.classList.add("active");
+
+  // Market
+  if (section === "market") {
+    initMarketChart();
+    startMarketLoop();
+  } else {
+    stopMarketLoop();
+  }
+
+  // Casino
+  if (section === "casino") {
+    startBigWinsFeed?.();
+  } else {
+    stopBigWinsFeed?.();
+  }
 }
          
 /* ================================================================================================
@@ -1199,11 +1199,9 @@ function autoBindNavigation() {
 ================================================================================================ */
 
 document.addEventListener("DOMContentLoaded", () => {
-  autoBindNavigation();
-  navigate(APP_STATE.currentSection);
-
-  if (FEATURES.WALLET && isAuthenticated()) loadWallet();
-  if (FEATURES.MARKET) startMarketLoop();
+  autoBindNavigation();     // 🔑 ربط الأزرار
+  navigate("wallet");      // 🔑 عرض الصفحة الأولى
+});
 
   /* =======================
      MINING INIT (REQUIRED)
