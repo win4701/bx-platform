@@ -1107,20 +1107,12 @@ function navigate(section) {
 /* ================================================================================================
    FINAL INIT
 ================================================================================================ */
-
 document.addEventListener("DOMContentLoaded", () => {
-  autoBindNavigation();     // 🔑 ربط الأزرار
-  navigate("wallet");      // 🔑 عرض الصفحة الأولى
-});
+  autoBindNavigation();
+  navigate("wallet");
 
-  /* =======================
-     MINING INIT (REQUIRED)
-  ======================= */
-  ACTIVE_MINING_COIN = "BX";   
-  renderMiningPlans();           
-
+  if (FEATURES.MINING) loadMining();
   if (FEATURES.AIRDROP && isAuthenticated()) loadAirdrop();
-  if (FEATURES.PARTNERS) renderPartners();
 
   APP_STATE.ready = true;
   log("APP READY");
