@@ -1065,11 +1065,13 @@ async function loadReferrals() {
 
 /* ================================================================================================
    GLOBAL NAVIGATION
-================================================================= */
+================================================================================================ */
+
 function autoBindNavigation() {
   document.querySelectorAll("[data-view]").forEach(btn => {
     btn.addEventListener("click", () => {
-      navigate(btn.dataset.view);
+      const section = btn.dataset.view;
+      if (section) navigate(section);
     });
   });
 }
@@ -1077,28 +1079,42 @@ function autoBindNavigation() {
 function navigate(section) {
   if (!section) return;
 
+  // حفظ الحالة الحالية
   APP_STATE.currentSection = section;
 
+  // إخفاء كل الأقسام
   document.querySelectorAll(".view").forEach(v => {
     v.classList.remove("active");
   });
 
+  // إظهار القسم المطلوب
   const target = document.getElementById(section);
-  if (target) target.classList.add("active");
+  if (!target) {
+    console.warn("Section not found:", section);
+    return;
+  }
+  target.classList.add("active");
 
-  document.querySelectorAll("[data-view]").forEach(b =>
+  // تحديث حالة أزرار الـ bottom nav
+  document.querySelectorAll(".bottom-nav button").forEach(b =>
     b.classList.remove("active")
   );
 
-  const btn = document.querySelector(`[data-view="${section}"]`);
+  const btn = document.querySelector(
+    `.bottom-nav button[data-view="${section}"]`
+  );
   if (btn) btn.classList.add("active");
+
+  /* =======================
+     SECTION SIDE EFFECTS
+  ======================= */
 
   // Market
   if (section === "market") {
-    initMarketChart();
-    startMarketLoop();
+    initMarketChart?.();
+    startMarketLoop?.();
   } else {
-    stopMarketLoop();
+    stopMarketLoop?.();
   }
 
   // Casino
