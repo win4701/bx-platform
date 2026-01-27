@@ -656,15 +656,6 @@ function renderCasinoBotActivity(user, game, bet, win) {
   }
 }
 
-/*================================================================================================
-   CASINO INIT
-================================================================================================ */
-
-const CASINO_STATE = {
-  isPlaying: false,
-  lastGame: null
-};
-
 /* ================= CAN PLAY CHECK ================= */
 
 function canPlayCasino() {
