@@ -23,11 +23,6 @@ function log(...args) {
    CONFIGURATION
 ================================================================================================ */
 
-const BX_FIXED_PRICE_USDT = 2;
-const BX_CHART_MIN = BX_FIXED_PRICE_USDT * 0.9;
-const BX_CHART_MAX = BX_FIXED_PRICE_USDT * 1.1;
-const MARKET_TICK_MS = 1200;
-
 const MARKET_PAIRS = ["BX/USDT", "BX/TON", "BX/BNB", "BX/SOL", "BX/BTC"];
 
 const FEATURES = {
