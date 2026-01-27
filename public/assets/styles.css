@@ -264,25 +264,24 @@ h3{
 }
 
 .wallet-btn {
-  flex: 1;
-  height: 38px;
-  border-radius: 14px;
-  font-weight: 800;
-  font-size: 16px;
-  border: none;
-  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
 }
 
-/* Binance */
-.wallet-btn.binance {
+/* Withdraw Button */
+.wallet-actions .withdraw,
+.wallet-btn.withdraw {
   background: #FFCD18;
-  color:var(--yellow);
+  color: #000;
 }
 
-/* WalletConnect */
-.wallet-btn.walletconnect {
-  background: #3b82f6;
-  color: #fff;
+/* Binance Pay Button */
+.wallet-btn.binance,
+.wallet-btn.binance-pay {
+  background: #FFCD18;
+  color: #000;
 }
 
 /* =========================================================
