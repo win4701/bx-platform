@@ -696,37 +696,38 @@ const MINING_STATE = {
   history: []
 };
 
-/* =====================================================
-   MINING CONFIG (SINGLE SOURCE OF TRUTH)
-===================================================== */
+/* ===============================================================================================
+   MINING CONFIG (DAYS-BASED | COMPACT)
+================================================================================================ */
 
 const MINING_CONFIG = {
   BX: [
-    { id:"p10", name:"Starter",  days:10, roi:2.5 },
-    { id:"p21", name:"Basic",    days:21, roi:5 },
-    { id:"p30", name:"Golden",   days:30, roi:8 },
-    { id:"p45", name:"Advanced", days:45, roi:12 },
-    { id:"p60", name:"Platine",      days:60, roi:17 },
-    { id:"p90", name:"Infinity", days:90, roi:25, vip:true }
+    { id:"p10", name:"Starter",  days:10, roi:2.5, min:10,  max:100  },
+    { id:"p21", name:"Basic",    days:21, roi:5,   min:50,  max:300  },
+    { id:"p30", name:"Golden",   days:30, roi:8,   min:100, max:800  },
+    { id:"p45", name:"Advanced", days:45, roi:12,  min:300, max:2000 },
+    { id:"p60", name:"Platine",  days:60, roi:17,  min:500, max:5000 },
+    { id:"p90", name:"Infinity", days:90, roi:25,  min:1000,max:10000, vip:true }
   ],
+
   SOL: [
-    { id:"p10", name:"Starter",  days:10, roi:1 },
-    { id:"p21", name:"Basic",    days:21, roi:2.8 },
-    { id:"p30", name:"Golden",   days:30, roi:4 },
-    { id:"p45", name:"Advanced", days:45, roi:7 },
-    { id:"p60", name:"Platine",      days:60, roi:9 },
-    { id:"p90", name:"Infinity", days:90, roi:14,vip:true }
+    { id:"p10", name:"Starter",  days:10, roi:1,   min:5,   max:50   },
+    { id:"p21", name:"Basic",    days:21, roi:2.8, min:20,  max:200  },
+    { id:"p30", name:"Golden",   days:30, roi:4,   min:50,  max:500  },
+    { id:"p45", name:"Advanced", days:45, roi:7,   min:100, max:1200 },
+    { id:"p60", name:"Platine",  days:60, roi:9,   min:200, max:3000 },
+    { id:"p90", name:"Infinity", days:90, roi:14,  min:500, max:7000, vip:true }
   ],
+
   BNB: [
-    { id:"p10", name:"Starter",  days:10, roi:0.8 },
-    { id:"p21", name:"Basic",    days:21, roi:1.8 },
-    { id:"p30", name:"Golden",   days:30, roi:3 },
-    { id:"p45", name:"Advanced", days:45, roi:5 },
-    { id:"p60", name:"Platine",      days:60, roi:7 },
-    { id:"p90", name:"Infinity", days:90, roi:11,vip:true }
+    { id:"p10", name:"Starter",  days:10, roi:0.8, min:0.05, max:1   },
+    { id:"p21", name:"Basic",    days:21, roi:1.8, min:0.1,  max:3   },
+    { id:"p30", name:"Golden",   days:30, roi:3,   min:0.3,  max:5   },
+    { id:"p45", name:"Advanced", days:45, roi:5,   min:0.5,  max:10  },
+    { id:"p60", name:"Platine",  days:60, roi:7,   min:1,    max:20  },
+    { id:"p90", name:"Infinity", days:90, roi:11,  min:2,    max:40, vip:true }
   ]
 };
-
 /* =====================================================
    STATE
 ===================================================== */
@@ -788,9 +789,9 @@ function renderMiningPlans(){
       <h4>${plan.name}</h4>
 <div class="mining-profit">${plan.roi}%</div>
       <ul>
-        <li><span>Duration</span><strong>${plan.days} days</strong></li>
-        <li><span>Min</span><strong>Auto</strong></li>
-        <li><span>Max</span><strong>Auto</strong></li>
+        <li><span>Time</span><strong>${plan.days} days</strong></li>
+<li><span>Min</span><strong>${plan.min} ${ACTIVE_MINING_COIN}</strong></li>
+<li><span>Max</span><strong>${plan.max} ${ACTIVE_MINING_COIN}</strong></li>
       </ul>
 
       <button onclick="subscribeMining('${plan.id}')">
