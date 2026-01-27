@@ -687,14 +687,6 @@ function bindCasinoGames() {
 
 /* ================= PLAY CASINO ================= */
 
-async function playCasino(gameId, betAmount) {
-  if (CASINO_STATE.isPlaying) return;
-
-  if (WALLET.BX < betAmount) {
-    toast("Insufficient BX balance");
-    return;
-  }
-
   CASINO_STATE.isPlaying = true;
   CASINO_STATE.lastGame = gameId;
 
