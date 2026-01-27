@@ -539,48 +539,89 @@ function handleCasinoResult(result) {
   loadWallet();
 }
 
-/* ================================================================================================
+/* ===============================================================================================
    CASINO – RECENT BIG WINS (DYNAMIC)
 ================================================================================================ */
 
+let bigWinsTimer = null;
+
 const BIG_WINS_GAMES = [
-  "Limbo", "Crash", "Roulette", "Plinko", "Hi-Lo", "Dice"
+  "Crash",
+  "Roulette",
+  "Plinko",
+  "Hilo",
+  "Limbo",
+  "Slots"
 ];
 
+const BIG_WINS_USERS = [
+  "@player01",
+  "@cryptofox",
+  "@winner",
+  "@luckyguy",
+  "@anon"
+];
+
+/* ================= GENERATOR ================= */
+
 function generateFakeBigWin() {
-  const user = "@user" + Math.floor(Math.random() * 9000);
-  const game = BIG_WINS_GAMES[Math.floor(Math.random() * BIG_WINS_GAMES.length)];
-  const amount = Math.floor(Math.random() * 400 + 50); // 50 – 450 BX
+  const user =
+    BIG_WINS_USERS[Math.floor(Math.random() * BIG_WINS_USERS.length)];
+
+  const game =
+    BIG_WINS_GAMES[Math.floor(Math.random() * BIG_WINS_GAMES.length)];
+
+  const amount =
+    Math.floor(Math.random() * 400 + 100); // 100 → 500 BX
 
   return { user, game, amount };
 }
 
+/* ================= RENDER ================= */
+
 function renderBigWin(win) {
-  const list = document.getElementById("bigWinsList");
-  if (!list) return;
+  const track = document.getElementById("bigWinsList");
+  if (!track) return;
 
   const row = document.createElement("div");
   row.className = "big-win-row";
+
   row.innerHTML = `
     <span class="user">${win.user}</span>
     <span class="game">${win.game}</span>
     <span class="amount">+${win.amount} BX</span>
   `;
 
-  list.prepend(row);
+  track.prepend(row);
 
-  // ✨ Animation
-  row.style.opacity = "0";
-  row.style.transform = "translateY(10px)";
-  setTimeout(() => {
-    row.style.transition = "all .25s ease";
-    row.style.opacity = "1";
-    row.style.transform = "translateY(0)";
-  }, 10);
-
-  if (list.children.length > 5) {
-    list.removeChild(list.lastChild);
+  // حد أقصى للعناصر
+  if (track.children.length > 15) {
+    track.removeChild(track.lastChild);
   }
+}
+
+/* ================= FEED CONTROL ================= */
+
+function startBigWinsFeed() {
+  if (bigWinsTimer) return;
+
+  // توليد أول عنصر فورًا
+  renderBigWin(generateFakeBigWin());
+
+  bigWinsTimer = setInterval(() => {
+    renderBigWin(generateFakeBigWin());
+
+    // تحريك أفقي ناعم
+    const track = document.getElementById("bigWinsList");
+    if (track) {
+      track.scrollLeft = 0;
+    }
+  }, 2500);
+}
+
+function stopBigWinsFeed() {
+  clearInterval(bigWinsTimer);
+  bigWinsTimer = null;
 }
 
 /* ================================================================================================
