@@ -685,43 +685,6 @@ function bindCasinoGames() {
   });
 }
 
-/* ================= PLAY CASINO ================= */
-
-  CASINO_STATE.isPlaying = true;
-  CASINO_STATE.lastGame = gameId;
-
-  try {
-    const r = await fetch(API_BASE + "/casino/play", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...authHeaders()
-      },
-      body: JSON.stringify({
-        game: gameId,
-        bet: betAmount
-      })
-    });
-
-    if (!r.ok) throw new Error("Casino play failed");
-
-    const data = await r.json();
-
-    WALLET.BX = data.balance;
-    renderWallet();
-
-    if (data.win && data.amount >= 100) {
-      pushBigWin(gameId, data.amount);
-    }
-
-  } catch (e) {
-    console.error("Casino error", e);
-    toast("Casino error, try again");
-  } finally {
-    CASINO_STATE.isPlaying = false;
-  }
-}
-
 /* ================= INIT ================= */
 
 function initCasino() {
