@@ -707,11 +707,9 @@ function bindCasinoGames() {
 
     const data = await r.json();
 
-    // تحديث الرصيد
     WALLET.BX = data.balance;
     renderWallet();
 
-    // Big Win (إن وجد)
     if (data.win && data.amount >= 100) {
       pushBigWin(gameId, data.amount);
     }
@@ -1068,6 +1066,13 @@ async function loadReferrals() {
 /* ================================================================================================
    GLOBAL NAVIGATION
 ================================================================= */
+function autoBindNavigation() {
+  document.querySelectorAll("[data-view]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      navigate(btn.dataset.view);
+    });
+  });
+}
 
 function navigate(section) {
   if (!section) return;
