@@ -1131,31 +1131,6 @@ async function loadReferrals() {
 }
 
 /* ================================================================================================
-   PARTNERS SECTION
-================================================================================================ */
-
-const PARTNERS = [
-  { name: "Temu",     logo: "/img/partners/temu.png" },
-  { name: "Samsung",  logo: "/img/partners/samsung.png" },
-  { name: "Apple",    logo: "/img/partners/apple.png" },
-  { name: "Nike",     logo: "/img/partners/nike.png" }
-];
-
-/**
- * Render partners
- */
-function renderPartners() {
-  if (!FEATURES.PARTNERS || !$("partners")) return;
-
-  $("partners").innerHTML = PARTNERS.map(p => `
-    <div class="partner">
-      <img src="${p.logo}" alt="${p.name}">
-      <span>${p.name}</span>
-    </div>
-  `).join("");
-}
-
-/* ================================================================================================
    GLOBAL NAVIGATION
 ================================================================= */
 
