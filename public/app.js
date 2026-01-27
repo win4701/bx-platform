@@ -235,7 +235,11 @@ const MARKET_TICK_MS = 1200;
 
 let MARKET_STATE = {
   pair: "BX/USDT",
-  price: BX_FIXED_PRICE_USDT
+  price: BX_FIXED_PRICE_USDT,
+  orders: {
+    buy: [],
+    sell: []
+  }
 };
 
 let marketTimer = null;
@@ -260,12 +264,10 @@ function calculateBasePrice(pair) {
 function tickMarketPrice() {
   const base = calculateBasePrice(MARKET_STATE.pair);
 
-  // نسبة التذبذب (±2%)
   const drift = (Math.random() - 0.5) * 0.02;
 
   let nextPrice = base + base * drift;
 
-  // حماية النطاق السعري
   nextPrice = Math.max(
     BX_CHART_MIN,
     Math.min(BX_CHART_MAX, nextPrice)
@@ -571,7 +573,7 @@ const BIG_WINS_USERS = [
   "@nelly",
   "@daison"
   "@socha",
-  "@kimu",
+  "@kimu"
 ];
 
 /* ================= GENERATOR ================= */
@@ -1141,12 +1143,40 @@ function navigate(section) {
   }
 }
          
-/* ================================================================================================
+/* ===================================================================
    FINAL INIT
-================================================================================================ */
+================================================================*/
 document.addEventListener("DOMContentLoaded", () => {
+
+  /* ===== GLOBAL NAVIGATION ===== */
   autoBindNavigation();
-  navigate("wallet"); 
+  navigate("wallet");
+
+  /* ===== WALLET ===== */
+  if (FEATURES.WALLET && isAuthenticated()) {
+    loadWallet();
+  }
+
+  /* ===== MARKET ===== */
+  if (FEATURES.MARKET) {
+    renderMarketPair?.(MARKET_STATE.pair);
+  }
+
+  /* ===== CASINO (المهم) ===== */
+  if (FEATURES.CASINO) {
+    initCasino();       
+    startCasinoBots();  
+  }
+
+  /* ===== MINING ===== */
+  if (FEATURES.MINING) {
+    loadMining();
+  }
+
+  /* ===== AIRDROP ===== */
+  if (FEATURES.AIRDROP && isAuthenticated()) {
+    loadAirdrop();
+  }
 
   APP_STATE.ready = true;
   log("APP READY");
