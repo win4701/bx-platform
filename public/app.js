@@ -775,26 +775,32 @@ function renderMining(){
   renderMiningHistory();
 }
 
-function renderMiningPlans() {
+function renderMiningPlans(){
   const grid = document.getElementById("miningGrid");
   if (!grid) return;
 
   grid.innerHTML = "";
-  
+
   MINING_CONFIG[ACTIVE_MINING_COIN].forEach(plan => {
+
     const card = document.createElement("div");
-    card.classList.add("mining-plan", plan.vip ? "vip" : "");
+    card.className = "mining-plan" + (plan.vip ? " vip" : "");
 
     card.innerHTML = `
+      ${plan.vip ? `<span class="badge">VIP</span>` : ""}
       <h4>${plan.name}</h4>
-      <div class="mining-profit">${plan.roi}% ROI</div>
+<div class="mining-profit">${plan.roi}%</div>
       <ul>
-        <li>Time: <strong>${plan.days} days</strong></li>
-        <li>Min: <strong>${plan.min} ${ACTIVE_MINING_COIN}</strong></li>
-        <li>Max: <strong>${plan.max} ${ACTIVE_MINING_COIN}</strong></li>
+        <li><span>Time</span><strong>${plan.days} days</strong></li>
+<li><span>Min</span><strong>${plan.min} ${ACTIVE_MINING_COIN}</strong></li>
+<li><span>Max</span><strong>${plan.max} ${ACTIVE_MINING_COIN}</strong></li>
       </ul>
-      <button onclick="subscribeMining('${plan.id}')">Subscribe</button>
+
+      <button onclick="subscribeMining('${plan.id}')">
+        Subscribe ${ACTIVE_MINING_COIN}
+      </button>
     `;
+
     grid.appendChild(card);
   });
 }
