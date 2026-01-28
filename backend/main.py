@@ -1,11 +1,6 @@
-# ======================================================
-# main.py
-# Bloxio Core API – Fly.io Ready
-# ======================================================
-
 import time
 import os
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 # ======================================================
@@ -18,11 +13,11 @@ from kyc import router as kyc_router
 
 # Public / Pricing
 from pricing import pricing_snapshot
+from bxing import start_mining, process_airdrop
 
 # ======================================================
 # APP CONFIG
 # ======================================================
-
 APP_NAME = "Bloxio Core API"
 APP_VERSION = "1.0.0"
 APP_ENV = os.getenv("APP_ENV", "production")
@@ -116,6 +111,31 @@ def public_rtp():
     Casino RTP transparency (read-only).
     """
     return rtp_stats()
+
+# ======================================================
+# NEW ROUTES FOR MINING AND AIRDROP
+# ======================================================
+@app.post("/start_mining")
+async def mining_handler(uid: int, investment: float, asset: str):
+    """
+    Endpoint to start mining for supported assets (BX, SOL, BNB).
+    """
+    try:
+        result = start_mining(investment, asset)
+        return {"status": "Mining started", "result": result}
+    except Exception as e:
+        raise HTTPException(500, f"Error starting mining: {str(e)}")
+
+@app.post("/airdrop")
+async def airdrop_handler(uid: int, asset: str, amount: float):
+    """
+    Endpoint to process airdrop based on the deposited amount.
+    """
+    try:
+        process_airdrop(uid, asset, amount)
+        return {"status": "Airdrop successful"}
+    except Exception as e:
+        raise HTTPException(500, f"Error processing airdrop: {str(e)}")
 
 # ======================================================
 # ROOT
