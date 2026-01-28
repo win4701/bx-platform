@@ -188,9 +188,6 @@ async function withdrawBNB(amount) {
   toast("Withdraw request submitted");
 }
 
-/**
- * Transfer BX to another user via Telegram ID
- */
 async function transferBX(targetTelegramId, amount) {
   if (!targetTelegramId || amount <= 0) return;
 
@@ -230,8 +227,8 @@ document.addEventListener("DOMContentLoaded", () => {
 ================================================================================================ */
 
 const BX_FIXED_PRICE_USDT = 2;
-const BX_CHART_MIN = BX_FIXED_PRICE_USDT * 0.9;
-const BX_CHART_MAX = BX_FIXED_PRICE_USDT * 1.1;
+const BX_CHART_MIN = 
+const BX_CHART_MAX = 
 const MARKET_TICK_MS = 1200;
 
 let MARKET_STATE = {
@@ -247,17 +244,17 @@ let marketTimer = null;
 
 /* ================= BASE PRICE ================= */
 
+const PRICE_RATES = {
+  USDT: 1,
+  BNB: 0.95,
+  SOL: 0.97,
+  TON: 0.96,
+  BTC: 1.05
+};
+
 function calculateBasePrice(pair) {
   const quote = pair.split("/")[1];
-
-  switch (quote) {
-    case "USDT": return BX_FIXED_PRICE_USDT;
-    case "BNB":  return BX_FIXED_PRICE_USDT * 0.95;
-    case "SOL":  return BX_FIXED_PRICE_USDT * 0.97;
-    case "TON":  return BX_FIXED_PRICE_USDT * 0.96;
-    case "BTC":  return BX_FIXED_PRICE_USDT * 1.05;
-    default:     return BX_FIXED_PRICE_USDT;
-  }
+  return BX_FIXED_PRICE_USDT * (PRICE_RATES[quote] || 1);
 }
 
 /* ================= PRICE TICK ================= */
@@ -274,12 +271,9 @@ function tickMarketPrice() {
     Math.min(BX_CHART_MAX, nextPrice)
   );
 
-  MARKET_STATE.price = +nextPrice.toFixed(6);
-
-  // تحديث السعر في الواجهة
+  MARKET_STATE.price = +nextPrice.toFixed(6)
+   
   renderMarketPrice();
-
-  // تحديث الشارت إن كان مفعّل
   if (priceChart) {
     priceChart.data.labels.push("");
     priceChart.data.datasets[0].data.push(MARKET_STATE.price);
@@ -388,17 +382,11 @@ function renderOrderBook() {
    BUY / SELL (UI HOOKS – SIMULATED)
 ================================================================================================ */
 
-/**
- * Buy BX (simulated)
- */
 function buyBX(amount) {
   if (!amount || amount <= 0) return;
   toast("Buy order placed");
 }
 
-/**
- * Sell BX (simulated)
- */
 function sellBX(amount) {
   if (!amount || amount <= 0) return;
   toast("Sell order placed");
@@ -449,9 +437,6 @@ const CASINO_GAMES = [
    CASINO UI
 ================================================================================================ */
 
-/**
- * Select casino game
- */
 function selectCasinoGame(gameId) {
   if (!CASINO_GAMES.find(g => g.id === gameId)) return;
 
@@ -486,9 +471,6 @@ function playCasinoSound(type) {
    CASINO PLAY (BACKEND)
 ================================================================================================ */
 
-/**
- * Play casino game
- */
 async function playCasino(gameId, betAmount) {
   if (!FEATURES.CASINO) return;
   if (CASINO_STATE.isPlaying) return;
@@ -525,9 +507,6 @@ async function playCasino(gameId, betAmount) {
   }
 }
 
-/**
- * Handle casino result
- */
 function handleCasinoResult(result) {
   if (!result) return;
 
@@ -546,8 +525,6 @@ function handleCasinoResult(result) {
 /* ===============================================================================================
    CASINO – RECENT RESULTS (WIN / LOSS | DYNAMIC | VERTICAL)
 ================================================================================================ */
-
-/* ================= CONFIG ================= */
 
 const CASINO_RECENT = {
   maxItems: 12,
@@ -573,8 +550,6 @@ function renderCasinoResult({ user, game, win, amount }) {
   `;
 
   list.prepend(row);
-
-  // حد أقصى للعناصر
   while (list.children.length > CASINO_RECENT.maxItems) {
     list.removeChild(list.lastChild);
   }
@@ -632,9 +607,6 @@ function startCasinoBots() {
   }, 2000);
 }
 
-/**
- * Render fake activity line
- */
 function renderCasinoBotActivity(user, game, bet, win) {
   if (!$("casinoActivity")) return;
 
@@ -664,7 +636,7 @@ function bindCasinoGames() {
   document.querySelectorAll("#casino .game").forEach(card => {
     card.addEventListener("click", () => {
       const game = card.dataset.game;
-      const betAmount = 1; // BX (قابل للتطوير لاحقًا)
+      const betAmount = 1; 
 
       if (!isAuthenticated()) {
         toast("Please login first");
@@ -775,32 +747,26 @@ function renderMining(){
   renderMiningHistory();
 }
 
-function renderMiningPlans(){
+function renderMiningPlans() {
   const grid = document.getElementById("miningGrid");
   if (!grid) return;
 
   grid.innerHTML = "";
-
+  
   MINING_CONFIG[ACTIVE_MINING_COIN].forEach(plan => {
-
     const card = document.createElement("div");
-    card.className = "mining-plan" + (plan.vip ? " vip" : "");
+    card.classList.add("mining-plan", plan.vip ? "vip" : "");
 
     card.innerHTML = `
-      ${plan.vip ? `<span class="badge">VIP</span>` : ""}
       <h4>${plan.name}</h4>
-<div class="mining-profit">${plan.roi}%</div>
+      <div class="mining-profit">${plan.roi}% ROI</div>
       <ul>
-        <li><span>Time</span><strong>${plan.days} days</strong></li>
-<li><span>Min</span><strong>${plan.min} ${ACTIVE_MINING_COIN}</strong></li>
-<li><span>Max</span><strong>${plan.max} ${ACTIVE_MINING_COIN}</strong></li>
+        <li>Time: <strong>${plan.days} days</strong></li>
+        <li>Min: <strong>${plan.min} ${ACTIVE_MINING_COIN}</strong></li>
+        <li>Max: <strong>${plan.max} ${ACTIVE_MINING_COIN}</strong></li>
       </ul>
-
-      <button onclick="subscribeMining('${plan.id}')">
-        Subscribe ${ACTIVE_MINING_COIN}
-      </button>
+      <button onclick="subscribeMining('${plan.id}')">Subscribe</button>
     `;
-
     grid.appendChild(card);
   });
 }
@@ -901,7 +867,6 @@ document.addEventListener("DOMContentLoaded", () => {
   loadMining();
 });
 
-      
 /* ================================================================================================
    AIRDROP STATE
 ================================================================================================ */
@@ -916,9 +881,6 @@ const AIRDROP_STATE = {
    AIRDROP ACTIONS
 ================================================================================================ */
 
-/**
- * Claim airdrop reward
- */
 async function claimAirdrop() {
   if (!FEATURES.AIRDROP || !isAuthenticated()) return;
 
@@ -941,10 +903,6 @@ async function claimAirdrop() {
     console.error("Airdrop claim error", e);
   }
 }
-
-/**
- * Load airdrop status
- */
 async function loadAirdrop() {
   if (!FEATURES.AIRDROP || !isAuthenticated()) return;
 
@@ -1002,9 +960,6 @@ function copyReferralLink() {
   toast("Referral link copied");
 }
 
-/**
- * Load referral stats
- */
 async function loadReferrals() {
   if (!isAuthenticated()) return;
 
@@ -1037,25 +992,20 @@ function autoBindNavigation() {
 }
 
 function navigate(section) {
-  if (!section) return;
-
-  // حفظ الحالة الحالية
-  APP_STATE.currentSection = section;
-
-  // إخفاء كل الأقسام
   document.querySelectorAll(".view").forEach(v => {
     v.classList.remove("active");
+    v.classList.add("fade-out");
   });
 
-  // إظهار القسم المطلوب
-  const target = document.getElementById(section);
-  if (!target) {
-    console.warn("Section not found:", section);
-    return;
-  }
-  target.classList.add("active");
-
-  // تحديث حالة أزرار الـ bottom nav
+  setTimeout(() => {
+    const target = document.getElementById(section);
+    if (!target) {
+      console.warn("Section not found:", section);
+      return;
+    }
+    target.classList.add("active", "fade-in");
+  }, 300);
+}
   document.querySelectorAll(".bottom-nav button").forEach(b =>
     b.classList.remove("active")
   );
@@ -1069,7 +1019,6 @@ function navigate(section) {
      SECTION SIDE EFFECTS
   ======================= */
 
-  // Market
   if (section === "market") {
     initMarketChart?.();
     startMarketLoop?.();
@@ -1077,7 +1026,6 @@ function navigate(section) {
     stopMarketLoop?.();
   }
 
-  // Casino
   if (section === "casino") {
     startBigWinsFeed?.();
   } else {
@@ -1090,32 +1038,26 @@ function navigate(section) {
 ================================================================*/
 document.addEventListener("DOMContentLoaded", () => {
 
-  /* ===== GLOBAL NAVIGATION ===== */
   autoBindNavigation();
   navigate("wallet");
-
-  /* ===== WALLET ===== */
+   
   if (FEATURES.WALLET && isAuthenticated()) {
     loadWallet();
   }
-
-  /* ===== MARKET ===== */
+   
   if (FEATURES.MARKET) {
     renderMarketPair?.(MARKET_STATE.pair);
   }
 
-  /* ===== CASINO (المهم) ===== */
   if (FEATURES.CASINO) {
     initCasino();       
     startCasinoBots();  
   }
 
-  /* ===== MINING ===== */
   if (FEATURES.MINING) {
     loadMining();
   }
 
-  /* ===== AIRDROP ===== */
   if (FEATURES.AIRDROP && isAuthenticated()) {
     loadAirdrop();
   }
