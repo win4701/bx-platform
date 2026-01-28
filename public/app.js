@@ -225,99 +225,6 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 
-/* =============================================================
-         Blockchain Ston.fi Bx
-================================================================ */
-
-class Blockchain {
-  constructor() {
-    this.provider = new ethers.providers.Web3Provider(window.ethereum);
-    this.signer = this.provider.getSigner();
-    this.contractAddress = "EQCRYlkaR6GlssLRrQlBH3HOPJSMk_vzfAAyyuhnriX-7a_a"; 
-    this.contractABI = [
-      "function swapTokens(address fromToken, address toToken, uint256 amount) external returns (bool)",
-      "function addLiquidity(address tokenA, address tokenB, uint256 amountA, uint256 amountB) external returns (bool)",
-      "function removeLiquidity(address tokenA, address tokenB, uint256 amount) external returns (bool)"
-    ];
-
-    this.contract = new ethers.Contract(this.contractAddress, this.contractABI, this.signer);
-  }
-
-  // دالة لتبديل TON إلى BX
-  async swapTONToBX(amountTON) {
-    try {
-      const transaction = await this.contract.swapTokens(
-        "TON", 
-        "BX", 
-        ethers.utils.parseUnits(amountTON.toString(), 18)
-      );
-      console.log("Transaction sent:", transaction);
-      const receipt = await transaction.wait();
-      console.log("Transaction confirmed:", receipt);
-      return receipt;
-    } catch (error) {
-      console.error("Error during swapTONToBX:", error);
-    }
-  }
-
-  // دالة لتبديل BX إلى TON
-  async swapBXToTON(amountBX) {
-    try {
-      const transaction = await this.contract.swapTokens(
-        "BX", 
-        "TON", 
-        ethers.utils.parseUnits(amountBX.toString(), 18)
-      );
-      console.log("Transaction sent:", transaction);
-      const receipt = await transaction.wait();
-      console.log("Transaction confirmed:", receipt);
-      return receipt;
-    } catch (error) {
-      console.error("Error during swapBXToTON:", error);
-    }
-  }
-
-  // دالة لإضافة السيولة
-  async addLiquidity(amountBX, amountTON) {
-    try {
-      const transaction = await this.contract.addLiquidity(
-        "BX", 
-        "TON", 
-        ethers.utils.parseUnits(amountBX.toString(), 18), 
-        ethers.utils.parseUnits(amountTON.toString(), 18)
-      );
-      console.log("Liquidity added:", transaction);
-      const receipt = await transaction.wait();
-      console.log("Liquidity added successfully:", receipt);
-      return receipt;
-    } catch (error) {
-      console.error("Error adding liquidity:", error);
-    }
-  }
-
-  // دالة لإزالة السيولة
-  async removeLiquidity(amountBX, amountTON) {
-    try {
-      const transaction = await this.contract.removeLiquidity(
-        "BX", 
-        "TON", 
-        ethers.utils.parseUnits(amountBX.toString(), 18),
-        ethers.utils.parseUnits(amountTON.toString(), 18)
-      );
-      console.log("Liquidity removed:", transaction);
-      const receipt = await transaction.wait();
-      console.log("Liquidity removed successfully:", receipt);
-      return receipt;
-    } catch (error) {
-      console.error("Error removing liquidity:", error);
-    }
-  }
-}
-
-// إنشاء كائن جديد من الفئة Blockchain للتفاعل مع العقد
-const blockchain = new Blockchain();
-
-
 /* ================================================================================================
    PRICE ENGINE
 ================================================================================================ */
@@ -401,6 +308,7 @@ function stopMarketLoop() {
   clearInterval(marketTimer);
   marketTimer = null;
 }
+
 /* ================================================================================================
    CHART
 ================================================================================================ */
