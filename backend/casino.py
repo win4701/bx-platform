@@ -105,8 +105,9 @@ class PlayRequest(BaseModel):
 # GAME LOGIC (PURE & SIMPLE)
 # ======================================================
 def play_coinflip(bet, rand):
-    win = rand <= probability(2, "coinflip")
-    return win, bet * 2 if win else 0
+    win = rand <= probability(2, "coinflip")  
+    payout = bet * 2 if win else 0
+    return win, payout
 
 def play_crash(bet, m, rand):
     if m < 1.01 or m > 100:
