@@ -230,8 +230,8 @@ document.addEventListener("DOMContentLoaded", () => {
 ================================================================================================ */
 
 const BX_FIXED_PRICE_USDT = 2;
-const BX_CHART_MIN = BX_FIXED_PRICE_USDT * 0.9;
-const BX_CHART_MAX = BX_FIXED_PRICE_USDT * 1.1;
+const BX_CHART_MIN = 
+const BX_CHART_MAX = 
 const MARKET_TICK_MS = 1200;
 
 let MARKET_STATE = {
@@ -247,17 +247,17 @@ let marketTimer = null;
 
 /* ================= BASE PRICE ================= */
 
+const PRICE_RATES = {
+  USDT: 1,
+  BNB: 0.95,
+  SOL: 0.97,
+  TON: 0.96,
+  BTC: 1.05
+};
+
 function calculateBasePrice(pair) {
   const quote = pair.split("/")[1];
-
-  switch (quote) {
-    case "USDT": return BX_FIXED_PRICE_USDT;
-    case "BNB":  return BX_FIXED_PRICE_USDT * 0.95;
-    case "SOL":  return BX_FIXED_PRICE_USDT * 0.97;
-    case "TON":  return BX_FIXED_PRICE_USDT * 0.96;
-    case "BTC":  return BX_FIXED_PRICE_USDT * 1.05;
-    default:     return BX_FIXED_PRICE_USDT;
-  }
+  return BX_FIXED_PRICE_USDT * (PRICE_RATES[quote] || 1);
 }
 
 /* ================= PRICE TICK ================= */
@@ -275,11 +275,7 @@ function tickMarketPrice() {
   );
 
   MARKET_STATE.price = +nextPrice.toFixed(6);
-
-  // تحديث السعر في الواجهة
   renderMarketPrice();
-
-  // تحديث الشارت إن كان مفعّل
   if (priceChart) {
     priceChart.data.labels.push("");
     priceChart.data.datasets[0].data.push(MARKET_STATE.price);
@@ -775,32 +771,26 @@ function renderMining(){
   renderMiningHistory();
 }
 
-function renderMiningPlans(){
+function renderMiningPlans() {
   const grid = document.getElementById("miningGrid");
   if (!grid) return;
 
   grid.innerHTML = "";
-
+  
   MINING_CONFIG[ACTIVE_MINING_COIN].forEach(plan => {
-
     const card = document.createElement("div");
-    card.className = "mining-plan" + (plan.vip ? " vip" : "");
+    card.classList.add("mining-plan", plan.vip ? "vip" : "");
 
     card.innerHTML = `
-      ${plan.vip ? `<span class="badge">VIP</span>` : ""}
       <h4>${plan.name}</h4>
-<div class="mining-profit">${plan.roi}%</div>
+      <div class="mining-profit">${plan.roi}% ROI</div>
       <ul>
-        <li><span>Time</span><strong>${plan.days} days</strong></li>
-<li><span>Min</span><strong>${plan.min} ${ACTIVE_MINING_COIN}</strong></li>
-<li><span>Max</span><strong>${plan.max} ${ACTIVE_MINING_COIN}</strong></li>
+        <li>Time: <strong>${plan.days} days</strong></li>
+        <li>Min: <strong>${plan.min} ${ACTIVE_MINING_COIN}</strong></li>
+        <li>Max: <strong>${plan.max} ${ACTIVE_MINING_COIN}</strong></li>
       </ul>
-
-      <button onclick="subscribeMining('${plan.id}')">
-        Subscribe ${ACTIVE_MINING_COIN}
-      </button>
+      <button onclick="subscribeMining('${plan.id}')">Subscribe</button>
     `;
-
     grid.appendChild(card);
   });
 }
@@ -1037,25 +1027,22 @@ function autoBindNavigation() {
 }
 
 function navigate(section) {
-  if (!section) return;
-
-  // حفظ الحالة الحالية
-  APP_STATE.currentSection = section;
-
-  // إخفاء كل الأقسام
+  // إخفاء كل الأقسام مع إضافة تأثير الانزلاق
   document.querySelectorAll(".view").forEach(v => {
     v.classList.remove("active");
+    v.classList.add("fade-out");
   });
 
-  // إظهار القسم المطلوب
-  const target = document.getElementById(section);
-  if (!target) {
-    console.warn("Section not found:", section);
-    return;
-  }
-  target.classList.add("active");
-
-  // تحديث حالة أزرار الـ bottom nav
+  setTimeout(() => {
+    // إظهار القسم المطلوب مع تأثير الانزلاق
+    const target = document.getElementById(section);
+    if (!target) {
+      console.warn("Section not found:", section);
+      return;
+    }
+    target.classList.add("active", "fade-in");
+  }, 300); // التأخير للسماح بالانزلاق
+}
   document.querySelectorAll(".bottom-nav button").forEach(b =>
     b.classList.remove("active")
   );
