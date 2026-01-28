@@ -992,20 +992,25 @@ function autoBindNavigation() {
 }
 
 function navigate(section) {
+  if (!section) return;
+
+  // حفظ الحالة الحالية
+  APP_STATE.currentSection = section;
+
+  // إخفاء كل الأقسام
   document.querySelectorAll(".view").forEach(v => {
     v.classList.remove("active");
-    v.classList.add("fade-out");
   });
 
-  setTimeout(() => {
-    const target = document.getElementById(section);
-    if (!target) {
-      console.warn("Section not found:", section);
-      return;
-    }
-    target.classList.add("active", "fade-in");
-  }, 300);
-}
+  // إظهار القسم المطلوب
+  const target = document.getElementById(section);
+  if (!target) {
+    console.warn("Section not found:", section);
+    return;
+  }
+  target.classList.add("active");
+
+  // تحديث حالة أزرار الـ bottom nav
   document.querySelectorAll(".bottom-nav button").forEach(b =>
     b.classList.remove("active")
   );
@@ -1014,11 +1019,7 @@ function navigate(section) {
     `.bottom-nav button[data-view="${section}"]`
   );
   if (btn) btn.classList.add("active");
-
-  /* =======================
-     SECTION SIDE EFFECTS
-  ======================= */
-
+   
   if (section === "market") {
     initMarketChart?.();
     startMarketLoop?.();
