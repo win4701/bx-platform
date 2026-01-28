@@ -50,7 +50,7 @@ GAME_INDEX = {
 # RTP
 # ======================================================
 RTP = {
-    "coinflip": 0.25,
+    "coinflip": 0.35,
     "roulette": 0.32,
     "limbo": 0.34,
     "chicken": 0.31,
