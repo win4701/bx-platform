@@ -1,10 +1,9 @@
-# bxing.py
+import requests
 from fastapi import HTTPException
 from decimal import Decimal
 import sqlite3
 from time import time
 
-# إعدادات قاعدة البيانات
 DB_PATH = "db/bxing.db"
 
 def db():
@@ -16,19 +15,75 @@ def close_connection(connection):
     connection.close()
 
 # ============================================
-#  Airdrop - توزيع المكافآت
+# عمليات بيع وشراء عبر ston.fi
 # ============================================
+
+def buy_bx(amount: float, token: str):
+    """
+    تنفيذ عملية شراء لعملة BX مقابل العملة المحددة (مثل USDT أو TON).
+    """
+    url = f"https://app.ston.fi/swap?chartVisible=false&ft={token}&tt=EQCRYlkaR6GlssLRrQlBH3HOPJSMk_vzfAAyyuhnriX-7a_a&fa=%221%22"
+    
+    payload = {
+        "amount": amount,
+        "from_token": token,
+        "to_token": "BX"
+    }
+
+    try:
+        response = requests.post(url, data=payload)
+
+        if response.status_code == 200:
+            transaction_data = response.json()
+            txid = transaction_data.get('txid')
+            # تسجيل المعاملة في قاعدة البيانات
+            return {"status": "success", "transaction": transaction_data}
+        else:
+            raise HTTPException(400, "Failed to buy BX")
+    except Exception as e:
+        raise HTTPException(500, f"Error during buy transaction: {str(e)}")
+
+def sell_bx(amount: float, token: str):
+    """
+    تنفيذ عملية بيع لعملة BX مقابل العملة المحددة (مثل USDT أو TON).
+    """
+    url = f"https://app.ston.fi/swap?chartVisible=false&ft=BX&tt=EQCRYlkaR6GlssLRrQlBH3HOPJSMk_vzfAAyyuhnriX-7a_a&fa=%221%22"
+    
+    payload = {
+        "amount": amount,
+        "from_token": "BX",
+        "to_token": token
+    }
+
+    try:
+        response = requests.post(url, data=payload)
+
+        if response.status_code == 200:
+            transaction_data = response.json()
+            txid = transaction_data.get('txid')
+            # تسجيل المعاملة في قاعدة البيانات
+            return {"status": "success", "transaction": transaction_data}
+        else:
+            raise HTTPException(400, "Failed to sell BX")
+    except Exception as e:
+        raise HTTPException(500, f"Error during sell transaction: {str(e)}")
+
+
+# ============================================
+# Airdrop - توزيع المكافآت
+# ============================================
+
 def process_airdrop(uid: int, asset: str, amount: float):
     """
-    يقوم هذا الدالة بمعالجة توزيع الـ Airdrop بناءً على معايير محددة مثل حجم الإيداع
+    معالجة توزيع الـ Airdrop بناءً على المعايير مثل حجم الإيداع.
     """
-    if asset not in ["BX", "SOL", "BNB"]:
-        raise HTTPException(400, "Airdrop is available only for BX, SOL, and BNB assets")
-    
+    if asset not in ["BX", "SOL", "BNB", "USDT"]:
+        raise HTTPException(400, "Airdrop is available only for BX, SOL, BNB, and USDT")
+
     if amount < 10:  # فرض شرط الحد الأدنى للإيداع
         raise HTTPException(400, "Airdrop minimum amount is 10 units of the asset")
-    
-    # تحقق من تأهيل المستخدم لتوزيع Airdrop
+
+    # تحقق من أهلية المستخدم لتوزيع Airdrop
     eligible = check_eligibility(uid)
     if eligible:
         distribute_airdrop(uid, asset, amount)
@@ -47,17 +102,62 @@ def distribute_airdrop(uid: int, asset: str, amount: float):
     """
     try:
         c = db().cursor()
-        # تنفيذ التوزيع في قاعدة البيانات
-        c.execute("INSERT INTO airdrop (uid, asset, amount, timestamp) VALUES (?, ?, ?, ?)",
-                  (uid, asset, amount, int(time())))
+        # تحديث الرصيد في قاعدة البيانات
+        c.execute("UPDATE wallets SET {0} = {0} + ? WHERE uid=?".format(asset), (amount, uid))
+        # إضافة المعاملة في سجل التاريخ
+        record_transaction(uid, "airdrop", asset, amount, "airdrop_txid_placeholder")
         close_connection(c.connection)
         print(f"Airdrop of {amount} {asset} distributed to user {uid}")
     except Exception as e:
         raise HTTPException(500, f"Error distributing airdrop: {str(e)}")
 
+
 # ============================================
-#  Mining - حساب العوائد
+# تسجيل المعاملات في قاعدة البيانات
 # ============================================
+
+def record_transaction(uid: int, action: str, asset: str, amount: float, txid: str):
+    """تسجيل المعاملة في قاعدة البيانات"""
+    c, conn = db().cursor(), db()
+    try:
+        c.execute(
+            """INSERT INTO history (uid, action, asset, amount, ref, ts)
+               VALUES (?,?,?,?,?,?)""",
+            (uid, action, asset, amount, txid, int(time()))
+        )
+        conn.commit()
+    except Exception as e:
+        raise HTTPException(500, f"Error recording transaction: {str(e)}")
+    finally:
+        close_connection(conn)
+
+
+# ============================================
+# تحديث المحفظة (Wallet)
+# ============================================
+
+def update_wallet(uid: int, asset: str, amount: float, action: str):
+    """تحديث رصيد المحفظة بعد إتمام المعاملة"""
+    c, conn = db().cursor(), db()
+    try:
+        if action == "buy":
+            c.execute(f"UPDATE wallets SET {asset} = {asset} + ? WHERE uid=?", (amount, uid))
+        elif action == "sell":
+            c.execute(f"UPDATE wallets SET {asset} = {asset} - ? WHERE uid=?", (amount, uid))
+        elif action == "airdrop":
+            c.execute(f"UPDATE wallets SET {asset} = {asset} + ? WHERE uid=?", (amount, uid))
+        
+        conn.commit()
+    except Exception as e:
+        raise HTTPException(500, f"Error updating wallet: {str(e)}")
+    finally:
+        close_connection(conn)
+
+
+# ============================================
+# عمليات التعدين (Mining)
+# ============================================
+
 MINING_PLANS = {
     "BX": [
         {"name": "Starter", "roi": 2.5, "min": 10, "max": 100, "days": 10},
