@@ -1,61 +1,19 @@
-# ======================================================
-# watcher.py
-# Blockchain Watcher – Production Ready
-# ======================================================
-
 import time
-import os
-import json
-import hmac
 import hashlib
-from fastapi import APIRouter, Request, Header, HTTPException, Depends
+import hmac
+from fastapi import APIRouter, HTTPException
+from database import db, close_connection, get_cursor
+from config import WATCHER_SECRET, WEBHOOK_WINDOW, WEBHOOK_LIMIT, NOTIFY_EMAILS
 
-from key import admin_guard
-from finance import (
-    credit_deposit,
-    db,
-    can_withdraw,
-    update_withdraw_status,
-)
-from finance import notify_telegram  # already defined in finance.py
-
-router = APIRouter(dependencies=[Depends(admin_guard)])
+router = APIRouter()
 
 # ======================================================
-# CONFIG / CONSTANTS
+# WEBHOOK VERIFICATION
 # ======================================================
-
-WATCHER_SECRET = os.getenv("WATCHER_SECRET", "CHANGE_ME")
-ADMIN_CHAT_ID = int(os.getenv("ADMIN_TELEGRAM_ID", "0"))
-
-# Assets
-ALLOWED_ASSETS = {"usdt", "ton", "sol", "btc", "bnb"}
-AUTO_CONFIRM_ASSETS = {"usdt","ton", "sol", "btc", "bnb"}
-
-MIN_DEPOSIT = {
-    "usdt": 10,
-    "ton": 5,
-    "sol": 0.07,
-    "btc": 0.0001,
-    "bnb": 0.01,
-}
-
-# Webhook rate-limit
-WEBHOOK_LIMIT = 20          # hits
-WEBHOOK_WINDOW = 60         # seconds
-
-# ======================================================
-# HELPERS
-# ======================================================
-
-def notify_admin(msg: str):
-    if ADMIN_CHAT_ID > 0:
-        notify_telegram(
-            chat_id=ADMIN_CHAT_ID,
-            text=f"🚨 *Watcher Alert*\n\n{msg}"
-        )
-
 def verify_signature(payload: bytes, signature: str):
+    """
+    Verify that the signature matches the expected signature for the webhook.
+    """
     expected = hmac.new(
         WATCHER_SECRET.encode(),
         payload,
@@ -66,7 +24,14 @@ def verify_signature(payload: bytes, signature: str):
         notify_admin("Invalid webhook signature")
         raise HTTPException(403, "INVALID_SIGNATURE")
 
+
+# ======================================================
+# RATE LIMITING
+# ======================================================
 def rate_limit(ip: str):
+    """
+    Check if the IP address has exceeded the rate limit for webhooks.
+    """
     now = int(time.time())
     c = db().cursor()
 
@@ -84,87 +49,103 @@ def rate_limit(ip: str):
         (ip, now)
     )
     c.connection.commit()
+    close_connection(c.connection)
 
+
+# ======================================================
+# DEPOSIT EXISTENCE CHECK
+# ======================================================
 def deposit_exists(txid: str) -> bool:
+    """
+    Check if a deposit with the given txid already exists in the database.
+    """
     c = db().cursor()
-    r = c.execute(
+    result = c.execute(
         "SELECT 1 FROM deposits WHERE txid=?",
         (txid,)
     ).fetchone()
-    return r is not None
 
-def parse_uid(memo: str) -> int:
-    # expected: "uid:123"
-    if not memo or "uid:" not in memo:
-        raise HTTPException(400, "UID_NOT_FOUND")
-    return int(memo.split("uid:")[1])
+    return result is not None
+
 
 # ======================================================
-# BLOCKCHAIN WEBHOOK (REAL)
+# NOTIFY ADMIN (for errors or important events)
 # ======================================================
-
-@router.post("/watcher/webhook")
-async def blockchain_webhook(
-    request: Request,
-    x_signature: str = Header(None)
-):
-    raw = await request.body()
-    ip = request.client.host
-
-    rate_limit(ip)
-    verify_signature(raw, x_signature)
-
-    data = json.loads(raw)
-    return handle_webhook_event(data)
-
-# ======================================================
-# HANDLE EVENTS
-# ======================================================
-
-def handle_webhook_event(data: dict):
+def notify_admin(message: str):
     """
-    Supports BNB Smart Chain + others
+    Send a notification to admins (you could integrate an email API here).
     """
-    asset = data.get("symbol", "").lower()
+    for email in NOTIFY_EMAILS:
+        # Placeholder for email sending functionality
+        print(f"Sending notification to admin: {email}, message: {message}")
 
-    if asset not in ALLOWED_ASSETS:
-        return {"status": "ignored"}
 
-    confirmations = int(data.get("confirmations", 0))
-    txid = data.get("txHash")
-    amount = float(data.get("value", 0))
-    memo = data.get("memo")
+# ======================================================
+# HANDLE WEBHOOK EVENTS
+# ======================================================
+@router.post("/webhook")
+async def handle_webhook(payload: dict, signature: str, ip: str):
+    """
+    Handle incoming webhook events, including verifying the signature
+    and processing the transaction.
+    """
+    try:
+        verify_signature(payload.encode(), signature)
+        rate_limit(ip)
+    except HTTPException as e:
+        raise e
 
-    if amount < MIN_DEPOSIT.get(asset, 0):
-        return {"status": "amount_too_small"}
+    # Assuming the payload contains a "txid" and "amount"
+    txid = payload.get("txid")
+    amount = payload.get("amount")
+    asset = payload.get("asset")
 
-    if confirmations < 10:
-        return {"status": "waiting_confirmations"}
-
+    # Check if the deposit is already recorded
     if deposit_exists(txid):
-        return {"status": "duplicate"}
+        return {"status": "ignored", "message": "Duplicate deposit"}
 
-    uid = parse_uid(memo)
+    # Process deposit
+    try:
+        # Example of updating wallet and saving deposit to the database
+        c = db().cursor()
+        c.execute(
+            "INSERT INTO deposits (txid, asset, amount, ts) VALUES (?, ?, ?, ?)",
+            (txid, asset, amount, int(time.time()))
+        )
+        c.connection.commit()
+        close_connection(c.connection)
 
-    credit_deposit(
-        uid=uid,
-        asset=asset,
-        amount=amount,
-        txid=txid,
-        source=data.get("chain", "webhook")
-    )
+        # Notify the admin about the new deposit
+        notify_admin(f"New deposit received: {amount} {asset}, txid: {txid}")
 
-    notify_admin(f"{asset.upper()} deposit confirmed: {amount} → UID {uid}")
-    return {"status": "confirmed"}
+        return {"status": "success", "message": "Deposit processed"}
+    except Exception as e:
+        print(f"Error processing deposit: {e}")
+        notify_admin(f"Error processing deposit {txid}: {str(e)}")
+        raise HTTPException(500, "Failed to process deposit")
+
 
 # ======================================================
-# WITHDRAWAL PROCESSING (QUEUE)
+# HANDLE WITHDRAWALS
 # ======================================================
-
-@router.post("/watcher/withdraw/process")
-def process_withdrawals(limit: int = 10):
+def can_withdraw(asset: str, amount: float) -> bool:
     """
-    Processes approved withdrawals from queue
+    Check if the withdrawal can proceed by ensuring sufficient funds
+    and no issues with the withdrawal limits.
+    """
+    c = db().cursor()
+    balance = c.execute(
+        f"SELECT {asset} FROM wallets WHERE uid=?",
+        (1,)  # Use actual user ID here
+    ).fetchone()[0]
+
+    return balance >= amount
+
+
+def process_withdrawals():
+    """
+    Process withdrawals from the queue. This will involve checking
+    the transaction data, verifying the signature, and sending the transaction.
     """
     c = db().cursor()
     rows = c.execute(
@@ -172,8 +153,7 @@ def process_withdrawals(limit: int = 10):
            FROM withdraw_queue
            WHERE status='approved'
            ORDER BY ts ASC
-           LIMIT ?""",
-        (limit,)
+           LIMIT 10"""
     ).fetchall()
 
     processed = []
@@ -183,58 +163,51 @@ def process_withdrawals(limit: int = 10):
             notify_admin(f"Hot wallet empty for {asset}")
             continue
 
-        # send tx (external signer / wallet)
-        txid = send_tx(asset, amount, address)
-
-        update_withdraw_status(wid, "sent", txid)
-        processed.append(wid)
-
-        notify_admin(
-            f"Withdraw sent: {amount} {asset} → {address}\nTX: {txid}"
-        )
+        try:
+            # send tx (external signer / wallet)
+            txid = send_tx(asset, amount, address)
+            update_withdraw_status(wid, "sent", txid)
+            processed.append(wid)
+            notify_admin(f"Withdraw sent: {amount} {asset} → {address}, TX: {txid}")
+        except Exception as e:
+            notify_admin(f"Withdraw processing failed: {str(e)}")
 
     return {"processed": processed}
 
-# ======================================================
-# TX SENDER (PLACEHOLDER – REAL SIGNER)
-# ======================================================
 
-def send_tx(asset: str, amount: float, address: str) -> str:
+def update_withdraw_status(wid: int, status: str, txid: str):
     """
-    This function must be connected to:
-    - BSC signer
-    - BTC signer
-    - SOL signer
+    Update the status of a withdrawal request in the database.
     """
-    # REAL IMPLEMENTATION GOES HERE
-    fake_txid = f"tx_{asset}_{int(time.time())}"
-    return fake_txid
-
-# ======================================================
-# LEDGER RECONCILIATION
-# ======================================================
-
-@router.get("/watcher/reconcile")
-def reconcile(asset: str):
     c = db().cursor()
+    c.execute(
+        "UPDATE withdraw_queue SET status=?, txid=? WHERE id=?",
+        (status, txid, wid)
+    )
+    c.connection.commit()
+    close_connection(c.connection)
 
-    wallets_sum = c.execute(
-        f"SELECT COALESCE(SUM({asset}),0) FROM wallets"
-    ).fetchone()[0]
 
-    vault = c.execute(
-        "SELECT hot_balance + cold_balance FROM wallet_vaults WHERE asset=?",
-        (asset,)
-    ).fetchone()[0]
+# ======================================================
+# SEND TX (For sending transactions to blockchain or another system)
+# ======================================================
+def send_tx(asset: str, amount: float, address: str):
+    """
+    Simulate sending a transaction (e.g., to a blockchain).
+    In a real system, this would interact with a blockchain API or wallet.
+    """
+    # Simulate transaction sending
+    print(f"Sending {amount} {asset} to {address}")
+    return "tx123456789"  # Example txid
 
-    diff = vault - wallets_sum
 
-    if abs(diff) > 0.0001:
-        notify_admin(f"Ledger mismatch {asset}: {diff}")
-
-    return {
-        "asset": asset,
-        "wallets_sum": wallets_sum,
-        "vault_total": vault,
-        "difference": diff
-    }
+# ======================================================
+# TESTING (Can be used for testing webhooks or other processes)
+# ======================================================
+@router.post("/test")
+async def test_webhook():
+    # Example test for webhook processing
+    payload = {"txid": "12345", "amount": 100, "asset": "USDT"}
+    signature = "signature"
+    ip = "127.0.0.1"
+    return await handle_webhook(payload, signature, ip)
