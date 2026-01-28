@@ -1,38 +1,47 @@
-import time
 import sqlite3
+import time
+from decimal import Decimal
 from typing import Dict, Optional
-
-DB_PATH = "db.sqlite"
-
-# ======================================================
-# FIXED INTERNAL REFERENCE (OFFICIAL)
-# ======================================================
-BX_PER_USDT = 0.5        # 1 USDT = 0.5 BX
-USDT_PER_BX = 2.0        # 1 BX   = 2 USDT
+from datetime import datetime
 
 # ======================================================
-# PRICE FEED RULES
+# CONFIGURATION
 # ======================================================
-MAX_PRICE_AGE_SEC = 60   # نرفض أي سعر خارجي أقدم من دقيقة
+DB_PATH = "db/prices.db"
+MAX_PRICE_AGE_SEC = 60 * 60  # 1 hour in seconds
+
+# Conversion rates (can be dynamic or retrieved from an API)
+BX_PER_USDT = Decimal(2)  # Example: 1 BX = 2 USDT
+USDT_PER_BX = Decimal(0.5)  # Example: 1 USDT = 0.5 BX
 
 # ======================================================
-# DB
+# DATABASE CONNECTION
 # ======================================================
 def db():
-    return sqlite3.connect(DB_PATH, check_same_thread=False)
+    """
+    Establish a connection to the SQLite database.
+    """
+    connection = sqlite3.connect(DB_PATH, check_same_thread=False)
+    return connection
+
+def close_connection(connection):
+    """
+    Commit the changes to the database and close the connection.
+    """
+    connection.commit()
+    connection.close()
 
 # ======================================================
-# EXTERNAL PRICES (READ ONLY)
+# GET PRICE (from DB)
 # ======================================================
-def get_price(asset: str) -> Optional[float]:
+def get_price(asset: str) -> Optional[Decimal]:
     """
-    يجلب السعر الخارجي الحقيقي للأصل (USDT)
-    - يُستخدم للحسابات المرجعية فقط
-    - لا يغيّر سعر BX
+    Retrieve the price of the asset in USDT from the database.
+    If the price is outdated (older than 1 hour), return None.
     """
     c = db().cursor()
     row = c.execute(
-        "SELECT price_usdt, updated_at FROM prices WHERE asset=?",
+        "SELECT price_usdt, updated_at FROM prices WHERE asset=?", 
         (asset,)
     ).fetchone()
 
@@ -40,49 +49,49 @@ def get_price(asset: str) -> Optional[float]:
         return None
 
     price, ts = row
-    if int(time.time()) - ts > MAX_PRICE_AGE_SEC:
-        return None
+    last_updated = datetime.fromtimestamp(ts)
+    if (datetime.now() - last_updated).seconds > MAX_PRICE_AGE_SEC:
+        return None  # Price is too old, ignore
 
-    return float(price)
+    return Decimal(price)
 
-def get_all_prices() -> Dict[str, Optional[float]]:
+# ======================================================
+# GET ALL PRICES
+# ======================================================
+def get_all_prices() -> Dict[str, Optional[Decimal]]:
     """
-    يعيد جميع الأسعار الخارجية الصالحة
+    Retrieve all prices in USDT from the database.
+    Only returns prices that are not outdated (within 1 hour).
     """
     c = db().cursor()
     rows = c.execute(
         "SELECT asset, price_usdt, updated_at FROM prices"
     ).fetchall()
 
-    out = {}
-    now = int(time.time())
-    for asset, price, ts in rows:
-        out[asset] = (
-            float(price)
-            if now - ts <= MAX_PRICE_AGE_SEC
-            else None
-        )
-    return out
+    now = datetime.now()
+    return {
+        asset: Decimal(price) if (now - datetime.fromtimestamp(ts)).seconds <= MAX_PRICE_AGE_SEC else None
+        for asset, price, ts in rows
+    }
 
 # ======================================================
-# CONVERSIONS (REFERENCE ONLY)
+# CONVERSION FUNCTIONS
 # ======================================================
-def usdt_to_bx(usdt: float) -> float:
+def usdt_to_bx(usdt: Decimal) -> Decimal:
     """
-    تحويل قياسي: USDT → BX
+    Convert USDT to BX using the conversion rate.
     """
-    return round(usdt * BX_PER_USDT, 6)
+    return usdt * BX_PER_USDT
 
-def bx_to_usdt(bx: float) -> float:
+def bx_to_usdt(bx: Decimal) -> Decimal:
     """
-    تحويل قياسي: BX → USDT
+    Convert BX to USDT using the conversion rate.
     """
-    return round(bx * USDT_PER_BX, 6)
+    return bx * USDT_PER_BX
 
-def external_asset_to_bx(asset: str) -> Optional[float]:
+def external_asset_to_bx(asset: str) -> Optional[Decimal]:
     """
-    تحويل سعر أصل خارجي (BTC / SOL / TON) إلى BX
-    عبر USDT فقط
+    Convert an external asset (like BTC or SOL) to BX via USDT.
     """
     price_usdt = get_price(asset)
     if price_usdt is None:
@@ -90,25 +99,14 @@ def external_asset_to_bx(asset: str) -> Optional[float]:
     return usdt_to_bx(price_usdt)
 
 # ======================================================
-# INTERNAL MARKET PRICE (FIXED)
-# ======================================================
-def get_bx_internal_price() -> float:
-    """
-    السعر الداخلي لـ BX
-    - ثابت
-    - غير مرتبط بتقلّبات الخارج
-    """
-    return BX_PER_USDT
-
-# ======================================================
-# SNAPSHOT FOR API / UI
+# PRICING SNAPSHOT (Gather all prices in one call)
 # ======================================================
 def pricing_snapshot() -> Dict:
     """
-    Snapshot كامل للأسعار:
-    - BX (ثابت)
-    - أسعار خارجية (USDT)
-    - تحويلها إلى BX للعرض فقط
+    Retrieve a snapshot of all prices (internal and external) and return them.
+    The snapshot includes:
+    - internal BX/USDT prices
+    - external asset prices in both USDT and BX
     """
     prices = get_all_prices()
 
@@ -120,11 +118,51 @@ def pricing_snapshot() -> Dict:
         "bx_internal_price": BX_PER_USDT,
         "external_prices_usdt": prices,
         "external_prices_bx": {
-            asset: (
-                usdt_to_bx(price)
-                if price is not None
-                else None
-            )
+            asset: (usdt_to_bx(price) if price is not None else None)
             for asset, price in prices.items()
         }
     }
+
+# ======================================================
+# ADD/UPDATE PRICES (For updating prices in the database)
+# ======================================================
+def update_price(asset: str, price: Decimal):
+    """
+    Update the price of an asset in the database.
+    If the asset already exists, update the price, otherwise insert a new record.
+    """
+    c = db().cursor()
+    c.execute(
+        "INSERT INTO prices (asset, price_usdt, updated_at) VALUES (?, ?, ?) "
+        "ON CONFLICT(asset) DO UPDATE SET price_usdt=excluded.price_usdt, updated_at=excluded.updated_at",
+        (asset, price, int(time.time()))
+    )
+    c.connection.commit()
+
+# ======================================================
+# EXTERNAL API PRICE FETCH (For integrating with external price sources)
+# ======================================================
+def fetch_external_prices():
+    """
+    Fetch external prices from a live API (example: from a crypto exchange).
+    This function should call the API, parse the response, and then update the prices in the database.
+    """
+    # Placeholder for actual API call
+    external_prices = {
+        "BTC": Decimal(50000),  # Example: 1 BTC = 50000 USDT
+        "BNB": Decimal(500),   # Example: 1 BNB = 500 USDT
+    }
+
+    for asset, price in external_prices.items():
+        update_price(asset, price)
+
+# ======================================================
+# MAIN (For testing purposes or direct script execution)
+# ======================================================
+if __name__ == "__main__":
+    # Update prices by fetching external data
+    fetch_external_prices()
+
+    # Print all prices snapshot
+    snapshot = pricing_snapshot()
+    print(snapshot)
