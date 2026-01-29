@@ -152,7 +152,9 @@ function renderWallet() {
 async function loadWallet() {
   if (!FEATURES.WALLET || !isAuthenticated()) return;
   try {
-    const r = await fetch(API_BASE + "/wallet", { headers: authHeaders() });
+    const r = await fetch(API_BASE + "/finance/wallet", {
+      headers: authHeaders()
+    });
     if (!r.ok) return;
     WALLET = await r.json();
     renderWallet();
@@ -1083,6 +1085,8 @@ function navigate(section) {
   }
 
   // Casino
+  window.startBigWinsFeed ??= function () {};
+window.stopBigWinsFeed ??= function () {}; 
   if (section === "casino") {
     startBigWinsFeed?.();
   } else {
@@ -1100,9 +1104,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (FEATURES.WALLET && isAuthenticated()) {
     loadWallet();
+    loadFairness();
   }
 
   if (FEATURES.MARKET) {
+    initMarketChart?.();
     startMarketLoop();
   }
 
@@ -1113,6 +1119,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (FEATURES.MINING) {
     loadMining();
+  }
+
+  if (FEATURES.AIRDROP) {
+    loadAirdrop();
   }
 
   APP_STATE.ready = true;
