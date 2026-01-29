@@ -1,4 +1,4 @@
-"use strict";
+'use strict';
 
 /* ================================================================================================
    GLOBAL CORE
@@ -55,8 +55,17 @@ function isAuthenticated() {
    PROVABLY FAIR (CLIENT SIDE)
 ================================================================================================ */
 
+/**
+ * Client Seed
+ * - Editable from UI
+ * - Stored in localStorage
+ * - Sent with every casino play
+ */
 let CLIENT_SEED = localStorage.getItem("client_seed") || "1.2.3.4";
 
+/**
+ * Update client seed
+ */
 function setClientSeed(seed) {
   if (!seed || typeof seed !== "string") return;
   CLIENT_SEED = seed;
@@ -64,6 +73,9 @@ function setClientSeed(seed) {
   log("Client seed updated:", seed);
 }
 
+/**
+ * Load current fairness state (server seed hash)
+ */
 async function loadFairness() {
   try {
     const r = await fetch(API_BASE + "/casino/fairness");
@@ -95,6 +107,9 @@ async function revealServerSeed() {
    UI NOTIFICATIONS
 ================================================================================================ */
 
+/**
+ * Simple toast notification
+ */
 function toast(message) {
   if (!message) return;
   const el = document.createElement("div");
@@ -137,9 +152,7 @@ function renderWallet() {
 async function loadWallet() {
   if (!FEATURES.WALLET || !isAuthenticated()) return;
   try {
-    const r = await fetch(API_BASE + "/finance/wallet", {
-      headers: authHeaders()
-    });
+    const r = await fetch(API_BASE + "/wallet", { headers: authHeaders() });
     if (!r.ok) return;
     WALLET = await r.json();
     renderWallet();
@@ -152,10 +165,16 @@ async function loadWallet() {
    WALLET ACTIONS (HOOKS ONLY)
 ------------------------------------------------------------------------------------------------ */
 
+/**
+ * Deposit (UI hook)
+ */
 function deposit() {
   toast("Deposit request initiated");
 }
 
+/**
+ * Withdraw BNB (request only)
+ */
 async function withdrawBNB(amount) {
   if (!amount || amount <= 0) return;
 
@@ -832,10 +851,10 @@ async function subscribeMining(planId) {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-  asset: ACTIVE_MINING_COIN,
-  investment: MINING_CONFIG[ACTIVE_MINING_COIN]
-    .find(p => p.id === planId)?.min || 0
-})
+        asset: ACTIVE_MINING_COIN,
+        investment: planId
+      })
+    });
 
     toast("Mining activated");
     loadMining();
@@ -1064,8 +1083,6 @@ function navigate(section) {
   }
 
   // Casino
-  window.startBigWinsFeed ??= function () {};
-window.stopBigWinsFeed ??= function () {}; 
   if (section === "casino") {
     startBigWinsFeed?.();
   } else {
@@ -1083,11 +1100,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (FEATURES.WALLET && isAuthenticated()) {
     loadWallet();
-    loadFairness();
   }
 
   if (FEATURES.MARKET) {
-    initMarketChart?.();
     startMarketLoop();
   }
 
@@ -1098,10 +1113,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (FEATURES.MINING) {
     loadMining();
-  }
-
-  if (FEATURES.AIRDROP) {
-    loadAirdrop();
   }
 
   APP_STATE.ready = true;
