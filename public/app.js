@@ -254,12 +254,12 @@ function calculateBasePrice(pair) {
 
   switch (quote) {
     case "USDT": return BX_FIXED_PRICE_USDT;
-    case "BNB":  return BX_FIXED_PRICE_USDT * 0.95;
-    case "SOL":  return  BX_FIXED_PRICE_USDT * 0.97;
-   case "ETH":  return      BX_FIXED_PRICE_USDT * 1.01;
+    case "BNB":  return BX_FIXED_PRICE_USDT * 0.99;
+    case "SOL":  return BX_FIXED_PRICE_USDT * 0.97;
+    case "ETH":  return BX_FIXED_PRICE_USDT * 1.02;
     case "TON":  return BX_FIXED_PRICE_USDT * 0.96;
     case "BTC":  return BX_FIXED_PRICE_USDT * 1.05;
-default:     return BX_FIXED_PRICE_USDT;
+default:         return BX_FIXED_PRICE_USDT;
         
   }
 }
