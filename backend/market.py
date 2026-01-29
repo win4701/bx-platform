@@ -83,7 +83,7 @@ def demand_premium():
             ).fetchone()[0]
 
         net = max(buy - sell, 0)
-        premium = net / 10000  # Every 10k BX = +1% increase
+        premium = net / 20000  # Every 20k BX = +1% increase
         return min(premium, MAX_DEMAND_PREMIUM)
     finally:
         release_db_connection(conn)
