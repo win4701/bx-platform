@@ -37,7 +37,7 @@ SPREADS = {
         "buy":  float(os.getenv("BX_BUY_SPREAD_BTC", 0)),
         "sell": float(os.getenv("BX_SELL_SPREAD_BTC", 0)),
     },
- "eth": {
+    "eth": {
         "buy":  float(os.getenv("BX_BUY_SPREAD_ETH", 0)),
         "sell": float(os.getenv("BX_SELL_SPREAD_ETH", 0)),
     },
