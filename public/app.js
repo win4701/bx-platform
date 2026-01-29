@@ -555,7 +555,7 @@ function handleCasinoResult(result) {
 
 const CASINO_RECENT = {
   maxItems: 12,
-  winAmounts: [20,44,70,126,576,87,234,412,,97,35],
+  winAmounts: [20,44,70,126,576,87,234,412,97,35],
   lossAmount:[ 5 ,7,17,23,8,34,21,56,15]    
 };
 
