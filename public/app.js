@@ -853,10 +853,10 @@ async function subscribeMining(planId) {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        asset: ACTIVE_MINING_COIN,
-        investment: planId
-      })
-    });
+  asset: ACTIVE_MINING_COIN,
+  investment: MINING_CONFIG[ACTIVE_MINING_COIN]
+    .find(p => p.id === planId)?.min || 0
+})
 
     toast("Mining activated");
     loadMining();
