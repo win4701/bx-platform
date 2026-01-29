@@ -259,7 +259,8 @@ function calculateBasePrice(pair) {
     case "ETH":  return       BX_FIXED_PRICE_USDT * 1.01;
     case "TON":  return BX_FIXED_PRICE_USDT * 0.96;
     case "BTC":  return BX_FIXED_PRICE_USDT * 1.05;
-    default:     return BX_FIXED_PRICE_USDT;
+     default:     return BX_FIXED_PRICE_USDT;
+        
   }
 }
 
