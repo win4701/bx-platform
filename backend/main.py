@@ -13,7 +13,7 @@ from kyc import router as kyc_router
 
 # Public / Pricing
 from pricing import pricing_snapshot
-from bxing import start_mining, process_airdrop
+from bxing import start_mining, process_airdrop, buy_bx, sell_bx
 
 # ======================================================
 # APP CONFIG
@@ -101,7 +101,7 @@ def public_prices():
     """
     Unified pricing snapshot:
     - BX internal floor (2 USDT)
-    - External prices (USDT / BTC / ETH / BNB / SOL / TON)
+    - External prices (USDT / BTC / BNB / SOL / TON)
     """
     return pricing_snapshot()
 
@@ -113,7 +113,7 @@ def public_rtp():
     return rtp_stats()
 
 # ======================================================
-# NEW ROUTES FOR MINING AND AIRDROP
+# NEW ROUTES FOR MINING AND BUY/SELL
 # ======================================================
 @app.post("/start_mining")
 async def mining_handler(uid: int, investment: float, asset: str):
@@ -126,16 +126,27 @@ async def mining_handler(uid: int, investment: float, asset: str):
     except Exception as e:
         raise HTTPException(500, f"Error starting mining: {str(e)}")
 
-@app.post("/airdrop")
-async def airdrop_handler(uid: int, asset: str, amount: float):
+@app.post("/buy_bx")
+async def buy_bx_handler(uid: int, amount: float, token: str):
     """
-    Endpoint to process airdrop based on the deposited amount.
+    Endpoint to process the purchase of BX using the provided token (e.g., USDT, TON).
     """
     try:
-        process_airdrop(uid, asset, amount)
-        return {"status": "Airdrop successful"}
+        result = buy_bx(amount, token)
+        return {"status": "Buy BX successful", "result": result}
     except Exception as e:
-        raise HTTPException(500, f"Error processing airdrop: {str(e)}")
+        raise HTTPException(500, f"Error buying BX: {str(e)}")
+
+@app.post("/sell_bx")
+async def sell_bx_handler(uid: int, amount: float, token: str):
+    """
+    Endpoint to process the sale of BX for the provided token (e.g., USDT, TON).
+    """
+    try:
+        result = sell_bx(amount, token)
+        return {"status": "Sell BX successful", "result": result}
+    except Exception as e:
+        raise HTTPException(500, f"Error selling BX: {str(e)}")
 
 # ======================================================
 # ROOT
