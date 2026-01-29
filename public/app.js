@@ -300,12 +300,11 @@ function tickMarketPrice() {
 /* ================= LOOP CONTROL ================= */
 
 function startMarketLoop() {
-  if (marketTimer) return;
-
+  stopMarketLoop();
   marketTimer = setInterval(() => {
     if (APP_STATE.currentSection !== "market") return;
     tickMarketPrice();
-  }, MARKET_TICK_MS);
+  }, 1200);
 }
 
 function stopMarketLoop() {
@@ -843,23 +842,25 @@ function renderMiningProgress(m){
    SUBSCRIBE
 ===================================================== */
 
-async function subscribeMining(planId){
-  const url =
-    ACTIVE_MINING_COIN === "BX"  ? "/mining/bx/subscribe"  :
-    ACTIVE_MINING_COIN === "BNB" ? "/mining/bnb/subscribe" :
-                                   "/mining/sol/subscribe";
+async function subscribeMining(planId) {
+  try {
+    await fetch(API_BASE + "/start_mining", {
+      method: "POST",
+      headers: {
+        ...authHeaders(),
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        asset: ACTIVE_MINING_COIN,
+        investment: planId
+      })
+    });
 
-  await fetch(API_BASE + url, {
-    method: "POST",
-    headers: {
-      ...authHeaders(),
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({ plan: planId })
-  });
-
-  toast(`${ACTIVE_MINING_COIN} mining activated`);
-  loadMining();
+    toast("Mining activated");
+    loadMining();
+  } catch (e) {
+    toast("Mining failed");
+  }
 }
 
 /* =====================================================
@@ -1094,36 +1095,25 @@ function navigate(section) {
 ================================================================*/
 document.addEventListener("DOMContentLoaded", () => {
 
-  /* ===== GLOBAL NAVIGATION ===== */
   autoBindNavigation();
   navigate("wallet");
 
-  /* ===== WALLET ===== */
   if (FEATURES.WALLET && isAuthenticated()) {
     loadWallet();
   }
 
-  /* ===== MARKET ===== */
   if (FEATURES.MARKET) {
-    renderMarketPair?.(MARKET_STATE.pair);
+    startMarketLoop();
   }
 
-  /* ===== CASINO (المهم) ===== */
   if (FEATURES.CASINO) {
-    initCasino();       
-    startCasinoBots();  
+    initCasino();
+    startCasinoBots();
   }
 
-  /* ===== MINING ===== */
   if (FEATURES.MINING) {
     loadMining();
   }
 
-  /* ===== AIRDROP ===== */
-  if (FEATURES.AIRDROP && isAuthenticated()) {
-    loadAirdrop();
-  }
-
   APP_STATE.ready = true;
-  log("APP READY");
 });
