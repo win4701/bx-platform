@@ -15,7 +15,7 @@ BX_BASE_PRICE_USDT = 2.0               # FLOOR PRICE
 MAX_DEMAND_PREMIUM = 0.50              # +50% max
 DB_URL = os.getenv("DATABASE_URL")
 
-ALLOWED_ASSETS = {"usdt", "ton", "sol", "btc", "bnb"}
+ALLOWED_ASSETS = {"usdt", "ton", "sol", "btc", "eth", "bnb"}
 
 # ======================================================
 # SPREADS (ENV)
@@ -36,6 +36,10 @@ SPREADS = {
     "btc": {
         "buy":  float(os.getenv("BX_BUY_SPREAD_BTC", 0)),
         "sell": float(os.getenv("BX_SELL_SPREAD_BTC", 0)),
+    },
+"eth": {
+        "buy":  float(os.getenv("BX_BUY_SPREAD_ETH", 0)),
+        "sell": float(os.getenv("BX_SELL_SPREAD_ETH", 0)),
     },
     "bnb": {
         "buy":  float(os.getenv("BX_BUY_SPREAD_BNB", 0)),
