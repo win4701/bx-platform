@@ -1,4 +1,13 @@
-'use strict';
+"use strict";
+
+/* ================================================================================================
+   SAFE STUBS (PREVENT CRASH)
+================================================================================================ */
+window.startBigWinsFeed ??= function () {};
+window.stopBigWinsFeed ??= function () {};
+window.renderMarketPair ??= function () {};
+window.drawChart ??= function () {};
+
 
 /* ================================================================================================
    GLOBAL CORE
@@ -55,17 +64,8 @@ function isAuthenticated() {
    PROVABLY FAIR (CLIENT SIDE)
 ================================================================================================ */
 
-/**
- * Client Seed
- * - Editable from UI
- * - Stored in localStorage
- * - Sent with every casino play
- */
 let CLIENT_SEED = localStorage.getItem("client_seed") || "1.2.3.4";
 
-/**
- * Update client seed
- */
 function setClientSeed(seed) {
   if (!seed || typeof seed !== "string") return;
   CLIENT_SEED = seed;
@@ -73,9 +73,6 @@ function setClientSeed(seed) {
   log("Client seed updated:", seed);
 }
 
-/**
- * Load current fairness state (server seed hash)
- */
 async function loadFairness() {
   try {
     const r = await fetch(API_BASE + "/casino/fairness");
@@ -107,9 +104,6 @@ async function revealServerSeed() {
    UI NOTIFICATIONS
 ================================================================================================ */
 
-/**
- * Simple toast notification
- */
 function toast(message) {
   if (!message) return;
   const el = document.createElement("div");
@@ -167,16 +161,10 @@ async function loadWallet() {
    WALLET ACTIONS (HOOKS ONLY)
 ------------------------------------------------------------------------------------------------ */
 
-/**
- * Deposit (UI hook)
- */
 function deposit() {
   toast("Deposit request initiated");
 }
 
-/**
- * Withdraw BNB (request only)
- */
 async function withdrawBNB(amount) {
   if (!amount || amount <= 0) return;
 
