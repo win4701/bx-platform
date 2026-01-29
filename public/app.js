@@ -1,5 +1,18 @@
-'use strict';
+"use strict";
 
+/* =====================================================
+   SAFE HELPERS (FIXES)
+===================================================== */
+
+// منع أخطاء الدوال غير المعرفة
+window.renderMarketPair ??= function () {};
+window.startBigWinsFeed ??= function () {};
+window.stopBigWinsFeed ??= function () {};
+window.drawChart ??= function () {};
+
+function safe(fn) {
+  try { fn?.(); } catch (e) { console.warn(e); }
+}
 /* ================================================================================================
    GLOBAL CORE
 ================================================================================================ */
@@ -300,11 +313,12 @@ function tickMarketPrice() {
 /* ================= LOOP CONTROL ================= */
 
 function startMarketLoop() {
-  if (marketTimer) return;
-
+  stopMarketLoop(); // ⬅️ مهم
   marketTimer = setInterval(() => {
-    if (APP_STATE.currentSection !== "market") return;
-    tickMarketPrice();
+    if (APP_STATE.currentSection === "market") {
+      tickMarketPrice();
+      generateMarketOrders();
+    }
   }, MARKET_TICK_MS);
 }
 
@@ -1094,36 +1108,29 @@ function navigate(section) {
 ================================================================*/
 document.addEventListener("DOMContentLoaded", () => {
 
-  /* ===== GLOBAL NAVIGATION ===== */
+  /* ===== NAVIGATION ===== */
   autoBindNavigation();
   navigate("wallet");
 
-  /* ===== WALLET ===== */
-  if (FEATURES.WALLET && isAuthenticated()) {
+  /* ===== AUTH ===== */
+  if (isAuthenticated()) {
     loadWallet();
-  }
-
-  /* ===== MARKET ===== */
-  if (FEATURES.MARKET) {
-    renderMarketPair?.(MARKET_STATE.pair);
-  }
-
-  /* ===== CASINO (المهم) ===== */
-  if (FEATURES.CASINO) {
-    initCasino();       
-    startCasinoBots();  
-  }
-
-  /* ===== MINING ===== */
-  if (FEATURES.MINING) {
+    loadFairness();
+    loadAirdrop();
     loadMining();
   }
 
-  /* ===== AIRDROP ===== */
-  if (FEATURES.AIRDROP && isAuthenticated()) {
-    loadAirdrop();
+  /* ===== FEATURES ===== */
+  if (FEATURES.MARKET) {
+    renderMarketPair(MARKET_STATE.pair);
+    startMarketLoop();
+  }
+
+  if (FEATURES.CASINO) {
+    initCasino();
+    startCasinoBots();
   }
 
   APP_STATE.ready = true;
-  log("APP READY");
+  log("APP READY (clean init)");
 });
