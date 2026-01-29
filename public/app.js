@@ -23,7 +23,7 @@ function log(...args) {
    CONFIGURATION
 ================================================================================================ */
 
-const MARKET_PAIRS = ["BX/USDT", "BX/TON", "BX/BNB", "BX/SOL", "BX/BTC"];
+const MARKET_PAIRS = ["BX/USDT", "BX/TON", "BX/BNB", "BX/ETH" ,"BX/SOL", "BX/BTC"];
 
 const FEATURES = {
   WALLET: true,
@@ -127,6 +127,7 @@ let WALLET = {
   BX: 0,
   USDT: 0,
   BNB: 0,
+  ETH: 0,
   SOL: 0,
   TON: 0,
   BTC: 0
@@ -136,6 +137,7 @@ const BALANCE_IDS = {
   BX: "bal-bx",
   USDT: "bal-usdt",
   BNB: "bal-bnb",
+  ETH: "bal-eth",
   SOL: "bal-sol",
   TON: "bal-ton",
   BTC: "bal-btc"
@@ -253,7 +255,9 @@ function calculateBasePrice(pair) {
   switch (quote) {
     case "USDT": return BX_FIXED_PRICE_USDT;
     case "BNB":  return BX_FIXED_PRICE_USDT * 0.95;
-    case "SOL":  return BX_FIXED_PRICE_USDT * 0.97;
+    case "SOL":  return  BX_FIXED_PRICE_USDT * 1;
+    case "ETH":  return       
+BX_FIXED_PRICE_USDT * 0.97;
     case "TON":  return BX_FIXED_PRICE_USDT * 0.96;
     case "BTC":  return BX_FIXED_PRICE_USDT * 1.05;
     default:     return BX_FIXED_PRICE_USDT;
