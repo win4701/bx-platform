@@ -101,7 +101,7 @@ def public_prices():
     """
     Unified pricing snapshot:
     - BX internal floor (2 USDT)
-    - External prices (USDT / BTC / BNB / SOL / TON)
+    - External prices (USDT / BTC / ETH / BNB / SOL / TON)
     """
     return pricing_snapshot()
 
