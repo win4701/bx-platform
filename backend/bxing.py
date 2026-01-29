@@ -68,49 +68,46 @@ def sell_bx(amount: float, token: str):
     except Exception as e:
         raise HTTPException(500, f"Error during sell transaction: {str(e)}")
 
+ # ======================================================
+# AIRDROP (SIMPLE & SAFE)
+# ======================================================
 
-# ============================================
-# Airdrop - توزيع المكافآت
-# ============================================
+# Mock storage (later replace with DB)
+AIRDROP_USERS = {}
 
-def process_airdrop(uid: int, asset: str, amount: float):
+@app.get("/airdrop/status")
+def airdrop_status(uid: int):
     """
-    معالجة توزيع الـ Airdrop بناءً على المعايير مثل حجم الإيداع.
+    Returns airdrop status for user
     """
-    if asset not in ["BX", "SOL", "BNB", "USDT"]:
-        raise HTTPException(400, "Airdrop is available only for BX, SOL, BNB, and USDT")
+    data = AIRDROP_USERS.get(uid, {
+        "claimed": False,
+        "referrals": 0,
+        "reward": 2.5
+    })
+    return data
 
-    if amount < 10:  # فرض شرط الحد الأدنى للإيداع
-        raise HTTPException(400, "Airdrop minimum amount is 10 units of the asset")
 
-    # تحقق من أهلية المستخدم لتوزيع Airdrop
-    eligible = check_eligibility(uid)
-    if eligible:
-        distribute_airdrop(uid, asset, amount)
-    else:
-        raise HTTPException(400, "User not eligible for airdrop")
-
-def check_eligibility(uid: int) -> bool:
+@app.post("/airdrop/claim")
+def airdrop_claim(uid: int):
     """
-    التحقق من أهلية المستخدم لتوزيع الـ Airdrop
+    Claim airdrop reward (once)
     """
-    return True  # فرضية أن المستخدم مؤهل
+    user = AIRDROP_USERS.get(uid)
 
-def distribute_airdrop(uid: int, asset: str, amount: float):
-    """
-    توزيع Airdrop فعليًا للمستخدم
-    """
-    try:
-        c = db().cursor()
-        # تحديث الرصيد في قاعدة البيانات
-        c.execute("UPDATE wallets SET {0} = {0} + ? WHERE uid=?".format(asset), (amount, uid))
-        # إضافة المعاملة في سجل التاريخ
-        record_transaction(uid, "airdrop", asset, amount, "airdrop_txid_placeholder")
-        close_connection(c.connection)
-        print(f"Airdrop of {amount} {asset} distributed to user {uid}")
-    except Exception as e:
-        raise HTTPException(500, f"Error distributing airdrop: {str(e)}")
+    if user and user.get("claimed"):
+        raise HTTPException(400, "Airdrop already claimed")
 
+    AIRDROP_USERS[uid] = {
+        "claimed": True,
+        "referrals": user["referrals"] if user else 0,
+        "reward": 2.5
+    }
+
+    return {
+        "status": "ok",
+        "reward": 2.5
+    }
 
 # ============================================
 # تسجيل المعاملات في قاعدة البيانات
