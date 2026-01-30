@@ -2,7 +2,8 @@ import time
 import hashlib
 import hmac
 from fastapi import APIRouter, HTTPException
-from database import db, close_connection, get_cursor
+
+from database import db, close_connection
 from config import WATCHER_SECRET, WEBHOOK_WINDOW, WEBHOOK_LIMIT, NOTIFY_EMAILS
 
 router = APIRouter()
@@ -14,6 +15,9 @@ def verify_signature(payload: bytes, signature: str):
     """
     Verify that the signature matches the expected signature for the webhook.
     """
+    if not signature:
+        raise HTTPException(403, "SIGNATURE_REQUIRED")
+
     expected = hmac.new(
         WATCHER_SECRET.encode(),
         payload,
@@ -33,7 +37,8 @@ def rate_limit(ip: str):
     Check if the IP address has exceeded the rate limit for webhooks.
     """
     now = int(time.time())
-    c = db().cursor()
+    conn = db()
+    c = conn.cursor()
 
     hits = c.execute(
         "SELECT COUNT(*) FROM webhook_hits WHERE ip=? AND ts>?",
@@ -42,14 +47,15 @@ def rate_limit(ip: str):
 
     if hits >= WEBHOOK_LIMIT:
         notify_admin(f"Webhook rate-limit exceeded from IP {ip}")
+        close_connection(conn)
         raise HTTPException(429, "RATE_LIMIT")
 
     c.execute(
         "INSERT INTO webhook_hits(ip, ts) VALUES (?,?)",
         (ip, now)
     )
-    c.connection.commit()
-    close_connection(c.connection)
+
+    close_connection(conn)
 
 
 # ======================================================
@@ -57,27 +63,30 @@ def rate_limit(ip: str):
 # ======================================================
 def deposit_exists(txid: str) -> bool:
     """
-    Check if a deposit with the given txid already exists in the database.
+    Check if a deposit with the given txid already exists (replay protection).
     """
-    c = db().cursor()
-    result = c.execute(
-        "SELECT 1 FROM deposits WHERE txid=?",
-        (txid,)
-    ).fetchone()
+    conn = db()
+    c = conn.cursor()
 
-    return result is not None
+    exists = c.execute(
+        "SELECT 1 FROM used_txs WHERE txid=?",
+        (txid,)
+    ).fetchone() is not None
+
+    close_connection(conn)
+    return exists
 
 
 # ======================================================
-# NOTIFY ADMIN (for errors or important events)
+# NOTIFY ADMIN
 # ======================================================
 def notify_admin(message: str):
     """
-    Send a notification to admins (you could integrate an email API here).
+    Notify admins about important watcher events.
     """
     for email in NOTIFY_EMAILS:
-        # Placeholder for email sending functionality
-        print(f"Sending notification to admin: {email}, message: {message}")
+        # Placeholder (email / telegram / slack)
+        print(f"[WATCHER] Notify {email}: {message}")
 
 
 # ======================================================
@@ -86,68 +95,98 @@ def notify_admin(message: str):
 @router.post("/webhook")
 async def handle_webhook(payload: dict, signature: str, ip: str):
     """
-    Handle incoming webhook events, including verifying the signature
-    and processing the transaction.
+    Handle incoming webhook events.
     """
-    try:
-        verify_signature(payload.encode(), signature)
-        rate_limit(ip)
-    except HTTPException as e:
-        raise e
+    verify_signature(str(payload).encode(), signature)
+    rate_limit(ip)
 
-    # Assuming the payload contains a "txid" and "amount"
     txid = payload.get("txid")
     amount = payload.get("amount")
     asset = payload.get("asset")
 
-    # Check if the deposit is already recorded
+    if not txid or not asset or amount is None:
+        raise HTTPException(400, "INVALID_PAYLOAD")
+
+    # Replay protection
     if deposit_exists(txid):
-        return {"status": "ignored", "message": "Duplicate deposit"}
+        return {"status": "ignored", "reason": "duplicate"}
 
-    # Process deposit
     try:
-        # Example of updating wallet and saving deposit to the database
-        c = db().cursor()
+        conn = db()
+        c = conn.cursor()
+
+        # Mark tx as used (replay protection)
         c.execute(
-            "INSERT INTO deposits (txid, asset, amount, ts) VALUES (?, ?, ?, ?)",
-            (txid, asset, amount, int(time.time()))
+            "INSERT OR IGNORE INTO used_txs (txid, asset, ts) VALUES (?, ?, ?)",
+            (txid, asset, int(time.time()))
         )
-        c.connection.commit()
-        close_connection(c.connection)
 
-        # Notify the admin about the new deposit
-        notify_admin(f"New deposit received: {amount} {asset}, txid: {txid}")
+        # Save as pending deposit (review / auto-approve later)
+        c.execute(
+            """INSERT OR IGNORE INTO pending_deposits
+               (txid, uid, asset, amount, reason, ts)
+               VALUES (?, ?, ?, ?, ?, ?)""",
+            (txid, 0, asset, amount, "watcher", int(time.time()))
+        )
 
-        return {"status": "success", "message": "Deposit processed"}
+        close_connection(conn)
+
+        notify_admin(f"New deposit detected: {amount} {asset} | txid={txid}")
+
+        return {"status": "received", "txid": txid}
+
     except Exception as e:
-        print(f"Error processing deposit: {e}")
-        notify_admin(f"Error processing deposit {txid}: {str(e)}")
-        raise HTTPException(500, "Failed to process deposit")
+        notify_admin(f"Watcher error: {str(e)}")
+        raise HTTPException(500, "WATCHER_ERROR")
 
 
 # ======================================================
-# HANDLE WITHDRAWALS
+# WITHDRAW HELPERS (INTERNAL)
 # ======================================================
 def can_withdraw(asset: str, amount: float) -> bool:
     """
-    Check if the withdrawal can proceed by ensuring sufficient funds
-    and no issues with the withdrawal limits.
+    Check hot wallet balance before sending withdrawals.
     """
-    c = db().cursor()
-    balance = c.execute(
-        f"SELECT {asset} FROM wallets WHERE uid=?",
-        (1,)  # Use actual user ID here
-    ).fetchone()[0]
+    conn = db()
+    c = conn.cursor()
 
-    return balance >= amount
+    row = c.execute(
+        f"SELECT {asset} FROM wallet_vaults WHERE asset=?",
+        (asset,)
+    ).fetchone()
+
+    close_connection(conn)
+
+    return bool(row and row[0] >= amount)
+
+
+def update_withdraw_status(wid: int, status: str, txid: str):
+    conn = db()
+    c = conn.cursor()
+
+    c.execute(
+        "UPDATE withdraw_queue SET status=?, txid=? WHERE id=?",
+        (status, txid, wid)
+    )
+
+    close_connection(conn)
+
+
+def send_tx(asset: str, amount: float, address: str) -> str:
+    """
+    Simulate sending a transaction.
+    """
+    print(f"[WATCHER] Sending {amount} {asset} → {address}")
+    return f"tx_{int(time.time())}"
 
 
 def process_withdrawals():
     """
-    Process withdrawals from the queue. This will involve checking
-    the transaction data, verifying the signature, and sending the transaction.
+    Process approved withdrawals (batch).
     """
-    c = db().cursor()
+    conn = db()
+    c = conn.cursor()
+
     rows = c.execute(
         """SELECT id, uid, asset, amount, address
            FROM withdraw_queue
@@ -156,58 +195,36 @@ def process_withdrawals():
            LIMIT 10"""
     ).fetchall()
 
+    close_connection(conn)
+
     processed = []
 
     for wid, uid, asset, amount, address in rows:
         if not can_withdraw(asset, amount):
-            notify_admin(f"Hot wallet empty for {asset}")
+            notify_admin(f"Insufficient hot balance for {asset}")
             continue
 
         try:
-            # send tx (external signer / wallet)
             txid = send_tx(asset, amount, address)
             update_withdraw_status(wid, "sent", txid)
             processed.append(wid)
-            notify_admin(f"Withdraw sent: {amount} {asset} → {address}, TX: {txid}")
+            notify_admin(f"Withdraw sent: {amount} {asset} → {address}")
         except Exception as e:
-            notify_admin(f"Withdraw processing failed: {str(e)}")
+            notify_admin(f"Withdraw failed: {str(e)}")
 
     return {"processed": processed}
 
 
-def update_withdraw_status(wid: int, status: str, txid: str):
-    """
-    Update the status of a withdrawal request in the database.
-    """
-    c = db().cursor()
-    c.execute(
-        "UPDATE withdraw_queue SET status=?, txid=? WHERE id=?",
-        (status, txid, wid)
-    )
-    c.connection.commit()
-    close_connection(c.connection)
-
-
 # ======================================================
-# SEND TX (For sending transactions to blockchain or another system)
-# ======================================================
-def send_tx(asset: str, amount: float, address: str):
-    """
-    Simulate sending a transaction (e.g., to a blockchain).
-    In a real system, this would interact with a blockchain API or wallet.
-    """
-    # Simulate transaction sending
-    print(f"Sending {amount} {asset} to {address}")
-    return "tx123456789"  # Example txid
-
-
-# ======================================================
-# TESTING (Can be used for testing webhooks or other processes)
+# TEST
 # ======================================================
 @router.post("/test")
 async def test_webhook():
-    # Example test for webhook processing
-    payload = {"txid": "12345", "amount": 100, "asset": "USDT"}
-    signature = "signature"
-    ip = "127.0.0.1"
-    return await handle_webhook(payload, signature, ip)
+    payload = {"txid": "test123", "amount": 10, "asset": "USDT"}
+    signature = hmac.new(
+        WATCHER_SECRET.encode(),
+        str(payload).encode(),
+        hashlib.sha256
+    ).hexdigest()
+
+    return await handle_webhook(payload, signature, "127.0.0.1")
