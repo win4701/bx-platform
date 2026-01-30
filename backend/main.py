@@ -18,15 +18,12 @@ from bxing import process_airdrop, start_mining
 # ======================================================
 # APP CONFIG
 # ======================================================
-APP_NAME = "Bloxio Core API"
-APP_VERSION = "1.0.0"
-APP_ENV = os.getenv("APP_ENV", "production")
 
-app = FastAPI(
-    title=APP_NAME,
-    version=APP_VERSION,
-    docs_url="/docs" if APP_ENV != "production" else None,
-    redoc_url=None,
+    app = FastAPI(
+    title="Bloxio API",
+    version="1.0.0",
+    docs_url="/docs",
+    redoc_url="/redoc"
 )
 
 # ======================================================
@@ -85,6 +82,26 @@ def root():
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+# ======================================================
+# WALLET (READ ONLY)
+# ======================================================
+
+@app.get("/finance/wallet")
+def wallet():
+    """
+    Read-only wallet endpoint
+    (values are placeholders until DB is connected)
+    """
+    return {
+        "BX": 0,
+        "USDT": 0,
+        "TON": 0,
+        "BNB": 0,
+        "BTC": 0,
+        "ETH": 0,
+        "SOL": 0
+    }
 
 # ======================================================
 # PUBLIC (READ ONLY)
