@@ -124,7 +124,7 @@ def wallet_me(uid: int):
     c, conn = get_cursor()
     try:
         r = c.execute(
-            "SELECT usdt, ton,  bnb, eth, sol, btc, bx FROM wallets WHERE uid=?", (uid,)
+            "SELECT usdt, ton, bnb, eth, sol, btc, bx FROM wallets WHERE uid=?", (uid,)
         ).fetchone()
 
         if not r:
