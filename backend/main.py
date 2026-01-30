@@ -10,16 +10,15 @@ from pydantic import BaseModel
 from finance import router as finance_router, rtp_stats
 from market import router as market_router
 from casino import router as casino_router
-
-# kyc اختياري – لا يكسر التطبيق لو غير موجود
+ 
 try:
     from kyc import router as kyc_router
 except Exception:
     kyc_router = None
 
 # Public / Pricing
-from pricing import pricing_snapshot
-from bxing import start_mining
+from pricing import pricing_snapshotfrom bxing import router as bxing_router
+app.include_router(bxing_router)
 
 # ======================================================
 # APP CONFIG
