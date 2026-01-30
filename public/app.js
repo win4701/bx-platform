@@ -756,11 +756,10 @@ async function loadMining(){
     if (!r.ok) return;
 
     const data = await r.json();
-    MINING_STATE.activeBX  = data.bx  || null;
-    MINING_STATE.activeBNB = data.bnb || null;
-    MINING_STATE.activeSOL = data.sol || null;
-    MINING_STATE.history  = data.history || [];
-
+    MINING_STATE.activeBX = data?.bx ?? null;
+MINING_STATE.activeBNB = data?.bnb ?? null;
+MINING_STATE.activeSOL = data?.sol ?? null;
+MINING_STATE.history  = data?.history ?? [];
     renderActiveMining();
     renderMiningHistory();
   } catch (e) {
