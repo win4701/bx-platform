@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS wallets (
   sol  REAL DEFAULT 0,
   btc  REAL DEFAULT 0,
   bnb  REAL DEFAULT 0,
+  eth  REAL DEFAULT 0,
   bx   REAL DEFAULT 0,
   created_at INTEGER,
   FOREIGN KEY(uid) REFERENCES users(uid)
