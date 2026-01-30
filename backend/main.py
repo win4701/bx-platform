@@ -1,7 +1,8 @@
-import time
 import os
-from fastapi import FastAPI, HTTPException
+import time
+from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 
 # ======================================================
 # Routers
@@ -9,17 +10,21 @@ from fastapi.middleware.cors import CORSMiddleware
 from finance import router as finance_router, rtp_stats
 from market import router as market_router
 from casino import router as casino_router
-from kyc import router as kyc_router
+
+# kyc اختياري – لا يكسر التطبيق لو غير موجود
+try:
+    from kyc import router as kyc_router
+except Exception:
+    kyc_router = None
 
 # Public / Pricing
 from pricing import pricing_snapshot
-from bxing import process_airdrop, start_mining 
+from bxing import start_mining
 
 # ======================================================
 # APP CONFIG
 # ======================================================
-
-    app = FastAPI(
+app = FastAPI(
     title="Bloxio API",
     version="1.0.0",
     docs_url="/docs",
@@ -32,9 +37,9 @@ from bxing import process_airdrop, start_mining
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-  "https://www.bloxio.online",
-  "https://bloxio.online"
-],
+        "https://www.bloxio.online",
+        "https://bloxio.online"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -61,11 +66,12 @@ app.include_router(
     tags=["casino"]
 )
 
-app.include_router(
-    kyc_router,
-    prefix="/kyc",
-    tags=["kyc"]
-)
+if kyc_router:
+    app.include_router(
+        kyc_router,
+        prefix="/kyc",
+        tags=["kyc"]
+    )
 
 # ======================================================
 # HEALTH CHECKS (FLY)
@@ -86,12 +92,11 @@ def health():
 # ======================================================
 # WALLET (READ ONLY)
 # ======================================================
-
 @app.get("/finance/wallet")
 def wallet():
     """
     Read-only wallet endpoint
-    (values are placeholders until DB is connected)
+    (placeholders until DB is connected)
     """
     return {
         "BX": 0,
@@ -102,10 +107,10 @@ def wallet():
         "ETH": 0,
         "SOL": 0
     }
+
 # ======================================================
 # MARKET (STON.FI RECORD ONLY)
 # ======================================================
-
 class MarketRecord(BaseModel):
     source: str
     pair: str
@@ -129,44 +134,44 @@ def record_market_action(data: MarketRecord):
         "side": data.side,
         "amount": data.amount
     }
-    
+
 # ======================================================
 # PUBLIC (READ ONLY)
 # ======================================================
 @app.get("/public/prices", tags=["public"])
 def public_prices():
     """
-    Unified pricing snapshot:
-    - BX internal floor (2 USDT)
-    - External prices (USDT / BTC / BNB / ETH / SOL / TON)
+    Unified pricing snapshot
     """
     return pricing_snapshot()
+
 
 @app.get("/public/rtp", tags=["public"])
 def public_rtp():
     """
-    Casino RTP transparency (read-only).
+    Casino RTP transparency (read-only)
     """
     return rtp_stats()
 
 # ======================================================
-# NEW ROUTES FOR MINING
+# MINING
 # ======================================================
 @app.post("/start_mining")
-async def mining_handler(uid: int, investment: float, asset: str):
+def mining_handler(uid: int, investment: float, asset: str):
     """
-    Endpoint to start mining for supported assets (BX, SOL, BNB).
+    Start mining for supported assets (BX, SOL, BNB)
     """
     try:
         result = start_mining(investment, asset)
-        return {"status": "Mining started", "result": result}
+        return {"status": "started", "result": result}
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(500, f"Error starting mining: {str(e)}")
+        raise HTTPException(500, str(e))
 
 # ======================================================
 # INTERNAL (WATCHER → API)
 # ======================================================
-
 @app.post("/internal/event")
 def internal_event(event: dict):
     """
