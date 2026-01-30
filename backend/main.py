@@ -13,7 +13,7 @@ from kyc import router as kyc_router
 
 # Public / Pricing
 from pricing import pricing_snapshot
-from bxing import buy_bx,sell_bx, process_airdrop, start_mining 
+from bxing import process_airdrop, start_mining 
 
 # ======================================================
 # APP CONFIG
@@ -34,7 +34,10 @@ app = FastAPI(
 # ======================================================
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],   # يمكن تقييدها لاحقًا (Fly secrets)
+    allow_origins=[
+  "https://www.bloxio.online",
+  "https://bloxio.online"
+],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
