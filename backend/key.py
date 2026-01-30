@@ -1,168 +1,133 @@
 import os
-import sqlite3
 import time
-from decimal import Decimal
-from typing import Dict, Optional
-from datetime import datetime
+import hmac
+import hashlib
+import logging
+from collections import deque
+from fastapi import HTTPException, Header, Request
 
 # ======================================================
-# CONFIGURATION
+# LOGGING
 # ======================================================
-DB_PATH = os.getenv("PRICES_DB_PATH", "db/prices.db")
-MAX_PRICE_AGE_SEC = 60 * 60  # 1 hour
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("security")
 
-# Internal reference price (can be dynamic later)
-BX_PER_USDT = Decimal("2")
-USDT_PER_BX = Decimal("0.5")
+# ======================================================
+# CONFIGURATION (ENV)
+# ======================================================
+API_KEY = os.getenv("API_KEY")
+ADMIN_TOKEN = os.getenv("ADMIN_TOKEN")
+AUDIT_TOKEN = os.getenv("AUDIT_TOKEN")
+HMAC_SECRET = os.getenv("HMAC_SECRET")
 
-ALLOWED_ASSETS = {
-    "usdt", "bx", "btc", "eth", "bnb", "sol", "ton"
+WEBHOOK_WINDOW = int(os.getenv("WEBHOOK_WINDOW", 60))
+WEBHOOK_LIMIT = int(os.getenv("WEBHOOK_LIMIT", 100))
+RATE_LIMIT_WINDOW = int(os.getenv("RATE_LIMIT_WINDOW", 60))
+
+RATE_LIMIT_MAX = {
+    "api": int(os.getenv("API_RATE_LIMIT", 100)),
+    "admin": int(os.getenv("ADMIN_RATE_LIMIT", 50)),
+    "audit": int(os.getenv("AUDIT_RATE_LIMIT", 30)),
 }
 
 # ======================================================
-# DATABASE
+# VALIDATION AT STARTUP (FAIL FAST)
 # ======================================================
-def db():
-    return sqlite3.connect(DB_PATH, check_same_thread=False)
+if not API_KEY:
+    logger.warning("API_KEY is not set")
 
-def fetch_one(query: str, params=()):
-    conn = db()
-    try:
-        c = conn.cursor()
-        return c.execute(query, params).fetchone()
-    finally:
-        conn.close()
+if not ADMIN_TOKEN:
+    logger.warning("ADMIN_TOKEN is not set")
 
-def fetch_all(query: str, params=()):
-    conn = db()
-    try:
-        c = conn.cursor()
-        return c.execute(query, params).fetchall()
-    finally:
-        conn.close()
-
-def execute(query: str, params=()):
-    conn = db()
-    try:
-        c = conn.cursor()
-        c.execute(query, params)
-        conn.commit()
-    finally:
-        conn.close()
+if not HMAC_SECRET:
+    logger.warning("HMAC_SECRET is not set")
 
 # ======================================================
-# GET PRICE (USDT)
+# RATE LIMITING (IN-MEMORY)
 # ======================================================
-def get_price(asset: str) -> Optional[Decimal]:
-    asset = asset.lower()
+_RATE_LIMIT = {k: deque() for k in RATE_LIMIT_MAX.keys()}
 
-    row = fetch_one(
-        "SELECT price_usdt, updated_at FROM prices WHERE asset=?",
-        (asset,)
-    )
+def _rate_limit(key: str, scope: str):
+    if not key:
+        key = "unknown"
 
-    if not row:
-        return None
+    now = int(time.time())
+    bucket = _RATE_LIMIT.setdefault(scope, deque())
 
-    price, ts = row
-    age = (datetime.now() - datetime.fromtimestamp(ts)).total_seconds()
+    while bucket and bucket[0] < now - RATE_LIMIT_WINDOW:
+        bucket.popleft()
 
-    if age > MAX_PRICE_AGE_SEC:
-        return None
+    limit = RATE_LIMIT_MAX.get(scope, 60)
+    if len(bucket) >= limit:
+        raise HTTPException(429, "TOO_MANY_REQUESTS")
 
-    return Decimal(str(price))
-
-# ======================================================
-# GET ALL PRICES
-# ======================================================
-def get_all_prices() -> Dict[str, Optional[Decimal]]:
-    rows = fetch_all(
-        "SELECT asset, price_usdt, updated_at FROM prices"
-    )
-
-    now = datetime.now()
-    result = {}
-
-    for asset, price, ts in rows:
-        age = (now - datetime.fromtimestamp(ts)).total_seconds()
-        result[asset] = (
-            Decimal(str(price)) if age <= MAX_PRICE_AGE_SEC else None
-        )
-
-    return result
+    bucket.append(now)
 
 # ======================================================
-# CONVERSION
+# HMAC VALIDATION (WEBHOOKS)
 # ======================================================
-def usdt_to_bx(usdt: Decimal) -> Decimal:
-    return usdt * BX_PER_USDT
+def verify_hmac(payload: bytes, signature: str):
+    if not HMAC_SECRET:
+        raise HTTPException(500, "HMAC_SECRET_NOT_SET")
 
-def bx_to_usdt(bx: Decimal) -> Decimal:
-    return bx * USDT_PER_BX
+    if not signature:
+        raise HTTPException(403, "SIGNATURE_REQUIRED")
 
-def external_asset_to_bx(asset: str) -> Optional[Decimal]:
-    price_usdt = get_price(asset)
-    if price_usdt is None:
-        return None
-    return usdt_to_bx(price_usdt)
+    expected = hmac.new(
+        HMAC_SECRET.encode(),
+        payload,
+        hashlib.sha256
+    ).hexdigest()
 
-# ======================================================
-# SNAPSHOT
-# ======================================================
-def pricing_snapshot() -> Dict:
-    prices = get_all_prices()
+    if not hmac.compare_digest(expected, signature):
+        raise HTTPException(403, "INVALID_SIGNATURE")
 
-    return {
-        "reference": {
-            "bx_per_usdt": BX_PER_USDT,
-            "usdt_per_bx": USDT_PER_BX
-        },
-        "bx_internal_price": BX_PER_USDT,
-        "external_prices_usdt": prices,
-        "external_prices_bx": {
-            asset: (usdt_to_bx(price) if price else None)
-            for asset, price in prices.items()
-        }
-    }
+    return True
 
 # ======================================================
-# UPDATE PRICE
+# API GUARD
 # ======================================================
-def update_price(asset: str, price: Decimal):
-    asset = asset.lower()
+def api_guard(
+    x_api_key: str = Header(None),
+    x_ip: str = Header(None)
+):
+    if x_api_key != API_KEY:
+        raise HTTPException(401, "INVALID_API_KEY")
 
-    if asset not in ALLOWED_ASSETS:
-        raise ValueError("INVALID_ASSET")
-
-    execute(
-        """INSERT INTO prices (asset, price_usdt, updated_at)
-           VALUES (?, ?, ?)
-           ON CONFLICT(asset)
-           DO UPDATE SET
-             price_usdt=excluded.price_usdt,
-             updated_at=excluded.updated_at""",
-        (asset, float(price), int(time.time()))
-    )
+    _rate_limit(x_ip or "api", "api")
+    return True
 
 # ======================================================
-# EXTERNAL PRICE FETCH (PLACEHOLDER)
+# ADMIN GUARD
 # ======================================================
-def fetch_external_prices():
-    """
-    Placeholder – replace with real price feeds later.
-    """
-    sample_prices = {
-        "btc": Decimal("50000"),
-        "bnb": Decimal("500"),
-        "eth": Decimal("2500"),
-    }
+def admin_guard(
+    x_admin_token: str = Header(None)
+):
+    if x_admin_token != ADMIN_TOKEN:
+        raise HTTPException(401, "INVALID_ADMIN_TOKEN")
 
-    for asset, price in sample_prices.items():
-        update_price(asset, price)
+    _rate_limit(x_admin_token, "admin")
+    return True
 
 # ======================================================
-# LOCAL TEST
+# AUDIT GUARD
 # ======================================================
-if __name__ == "__main__":
-    fetch_external_prices()
-    print(pricing_snapshot())
+def audit_guard(
+    x_audit_token: str = Header(None)
+):
+    if x_audit_token != AUDIT_TOKEN:
+        raise HTTPException(401, "INVALID_AUDIT_TOKEN")
+
+    _rate_limit(x_audit_token, "audit")
+    return True
+
+# ======================================================
+# WEBHOOK GUARD
+# ======================================================
+async def webhook_guard(
+    request: Request,
+    x_signature: str = Header(None)
+):
+    payload = await request.body()
+    verify_hmac(payload, x_signature)
+    return True
