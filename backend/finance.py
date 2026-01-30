@@ -124,14 +124,14 @@ def wallet_me(uid: int):
     c, conn = get_cursor()
     try:
         r = c.execute(
-            "SELECT usdt, ton, sol, btc, bx FROM wallets WHERE uid=?", (uid,)
+            "SELECT usdt, ton,  bnb, eth, sol, btc, bx FROM wallets WHERE uid=?", (uid,)
         ).fetchone()
 
         if not r:
             raise HTTPException(404, "WALLET_NOT_FOUND")
 
         return {
-            "wallet": dict(zip(["usdt", "ton", "sol", "btc", "bx"], r)),
+            "wallet": dict(zip(["usdt", "ton", "sol", "bnb", "eth", "btc", "bx"], r)),
             "deposit_status": "confirmed"
         }
     except Exception as e:
