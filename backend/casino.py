@@ -18,12 +18,6 @@ from finance import casino_debit, casino_credit, casino_history, rtp_stats
 router = APIRouter(dependencies=[Depends(api_guard)])
 
 # ======================================================
-# SIMPLE GLOBAL FLAGS (NO COMPLEX STATE)
-# ======================================================
-GAME_FREEZE = False
-AUDIT_MODE = False
-
-# ======================================================
 # CONFIG
 # ======================================================
 SERVER_SEED = os.getenv("SERVER_SEED", "CHANGE_ME")
@@ -94,7 +88,7 @@ def special_rule(client_seed: str, game: str, nonce: int):
 # REQUEST MODEL
 # ======================================================
 class PlayRequest(BaseModel):
-    uid: int
+    uid: int = 1
     game: str
     bet: float
     multiplier: Optional[float] = None
