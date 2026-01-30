@@ -1,159 +1,168 @@
 import os
+import sqlite3
 import time
-import hmac
-import hashlib
-from fastapi import HTTPException, Header, Request
+from decimal import Decimal
+from typing import Dict, Optional
+from datetime import datetime
 
 # ======================================================
-# CONFIGURATION - ENVIRONMENT VARIABLES
+# CONFIGURATION
 # ======================================================
-API_KEY = os.getenv("API_KEY")
-ADMIN_TOKEN = os.getenv("ADMIN_TOKEN")
-AUDIT_TOKEN = os.getenv("AUDIT_TOKEN")
-HMAC_SECRET = os.getenv("HMAC_SECRET")
-WEBHOOK_WINDOW = int(os.getenv("WEBHOOK_WINDOW", 60))  # in seconds
-WEBHOOK_LIMIT = int(os.getenv("WEBHOOK_LIMIT", 100))  # max requests per window
-RATE_LIMIT_WINDOW = int(os.getenv("RATE_LIMIT_WINDOW", 60))  # in seconds
-RATE_LIMIT_MAX = {
-    "api": int(os.getenv("API_RATE_LIMIT", 100)),
-    "admin": int(os.getenv("ADMIN_RATE_LIMIT", 50)),
-    "audit": int(os.getenv("AUDIT_RATE_LIMIT", 30))
+DB_PATH = os.getenv("PRICES_DB_PATH", "db/prices.db")
+MAX_PRICE_AGE_SEC = 60 * 60  # 1 hour
+
+# Internal reference price (can be dynamic later)
+BX_PER_USDT = Decimal("2")
+USDT_PER_BX = Decimal("0.5")
+
+ALLOWED_ASSETS = {
+    "usdt", "bx", "btc", "eth", "bnb", "sol", "ton"
 }
 
 # ======================================================
-# RATE LIMITING MECHANISM
+# DATABASE
 # ======================================================
-from collections import deque
+def db():
+    return sqlite3.connect(DB_PATH, check_same_thread=False)
 
-# Initialize with deque for better performance
-_RATE_LIMIT = {key: deque() for key in RATE_LIMIT_MAX.keys()}
-
-def _rate_limit(key: str, scope: str):
-    now = int(time.time())
-    bucket = _RATE_LIMIT.get(key, deque())
-    # Remove timestamps older than the rate limit window
-    while bucket and bucket[0] < now - RATE_LIMIT_WINDOW:
-        bucket.popleft()
-
-    limit = RATE_LIMIT_MAX.get(scope, 60)
-    if len(bucket) >= limit:
-        raise HTTPException(429, "TOO_MANY_REQUESTS")
-
-    bucket.append(now)
-    _RATE_LIMIT[key] = bucket
-
-# ======================================================
-# HMAC VALIDATION (FOR WEBHOOKS)
-# ======================================================
-def verify_hmac(payload: bytes, signature: str):
-    """
-    Verify HMAC-SHA256 signature to validate the authenticity of the webhook
-    signature = hex string
-    """
-    if not signature:
-        raise HTTPException(403, "SIGNATURE_REQUIRED")
-
-    # Generate the expected signature
-    mac = hmac.new(
-        HMAC_SECRET.encode(),
-        payload,
-        hashlib.sha256
-    ).hexdigest()
-
-    # Compare the signatures using a constant-time comparison to prevent timing attacks
-    if not hmac.compare_digest(mac, signature):
-        raise HTTPException(403, "INVALID_SIGNATURE")
-
-    return True
-
-# ======================================================
-# API GUARD (ACCESS CONTROL)
-# ======================================================
-def api_guard(x_api_key: str = Header(None), x_ip: str = Header(None)):
-    """
-    Guard to validate API key and rate limit requests from specific IP.
-    """
-    if x_api_key != API_KEY:
-        raise HTTPException(401, "INVALID_API_KEY")
-    
-    # Rate limit based on IP address
-    _rate_limit(f"api:{x_ip}", "api")
-    return True
-
-# ======================================================
-# ADMIN GUARD (ACCESS CONTROL)
-# ======================================================
-def admin_guard(x_admin_token: str = Header(None)):
-    """
-    Guard to validate Admin Token for admin-level routes.
-    """
-    if x_admin_token != ADMIN_TOKEN:
-        raise HTTPException(401, "INVALID_ADMIN_TOKEN")
-    
-    # Rate limit for admin access
-    _rate_limit(f"admin:{x_admin_token}", "admin")
-    return True
-
-# ======================================================
-# AUDIT GUARD (ACCESS CONTROL)
-# ======================================================
-def audit_guard(x_audit_token: str = Header(None)):
-    """
-    Guard to validate Audit Token for auditing-level routes.
-    """
-    if x_audit_token != AUDIT_TOKEN:
-        raise HTTPException(401, "INVALID_AUDIT_TOKEN")
-    
-    # Rate limit for audit access
-    _rate_limit(f"audit:{x_audit_token}", "audit")
-    return True
-
-# ======================================================
-# WEBHOOK GUARD (FOR BLOCKCHAIN / EXTERNAL SERVICES)
-# ======================================================
-def webhook_guard(request: Request, x_signature: str = Header(None)):
-    """
-    Guard to verify incoming webhook from external services (e.g., blockchain).
-    """
-    if not HMAC_SECRET:
-        raise HTTPException(500, "HMAC_SECRET_NOT_SET - Please set the HMAC_SECRET environment variable.")
-    
-    payload = request.body()
-    verify_hmac(payload, x_signature)  # Verifying the signature of the incoming request
-    return True
-
-# ======================================================
-# LOGGING (FOR DEBUGGING AND MONITORING)
-# ======================================================
-import logging
-
-logging.basicConfig(level=logging.INFO)
-
-def log_message(message: str):
-    """
-    Log messages for important events or errors
-    """
-    logging.info(message)
-
-def log_error(message: str):
-    """
-    Log errors for monitoring and troubleshooting
-    """
-    logging.error(message)
-
-# ======================================================
-# TESTING (Can be used for testing the guards and validation)
-# ======================================================
-@router.post("/test")
-async def test_webhook(payload: dict, signature: str, ip: str):
-    """
-    Endpoint for testing webhook signature and rate limiting
-    """
+def fetch_one(query: str, params=()):
+    conn = db()
     try:
-        verify_hmac(payload.encode(), signature)
-        _rate_limit(ip, "api")
-        log_message(f"Webhook processed successfully: {payload}")
-        return {"status": "success", "message": "Webhook processed successfully"}
-    except HTTPException as e:
-        log_error(f"Error processing webhook: {str(e)}")
-        raise e
+        c = conn.cursor()
+        return c.execute(query, params).fetchone()
+    finally:
+        conn.close()
+
+def fetch_all(query: str, params=()):
+    conn = db()
+    try:
+        c = conn.cursor()
+        return c.execute(query, params).fetchall()
+    finally:
+        conn.close()
+
+def execute(query: str, params=()):
+    conn = db()
+    try:
+        c = conn.cursor()
+        c.execute(query, params)
+        conn.commit()
+    finally:
+        conn.close()
+
+# ======================================================
+# GET PRICE (USDT)
+# ======================================================
+def get_price(asset: str) -> Optional[Decimal]:
+    asset = asset.lower()
+
+    row = fetch_one(
+        "SELECT price_usdt, updated_at FROM prices WHERE asset=?",
+        (asset,)
+    )
+
+    if not row:
+        return None
+
+    price, ts = row
+    age = (datetime.now() - datetime.fromtimestamp(ts)).total_seconds()
+
+    if age > MAX_PRICE_AGE_SEC:
+        return None
+
+    return Decimal(str(price))
+
+# ======================================================
+# GET ALL PRICES
+# ======================================================
+def get_all_prices() -> Dict[str, Optional[Decimal]]:
+    rows = fetch_all(
+        "SELECT asset, price_usdt, updated_at FROM prices"
+    )
+
+    now = datetime.now()
+    result = {}
+
+    for asset, price, ts in rows:
+        age = (now - datetime.fromtimestamp(ts)).total_seconds()
+        result[asset] = (
+            Decimal(str(price)) if age <= MAX_PRICE_AGE_SEC else None
+        )
+
+    return result
+
+# ======================================================
+# CONVERSION
+# ======================================================
+def usdt_to_bx(usdt: Decimal) -> Decimal:
+    return usdt * BX_PER_USDT
+
+def bx_to_usdt(bx: Decimal) -> Decimal:
+    return bx * USDT_PER_BX
+
+def external_asset_to_bx(asset: str) -> Optional[Decimal]:
+    price_usdt = get_price(asset)
+    if price_usdt is None:
+        return None
+    return usdt_to_bx(price_usdt)
+
+# ======================================================
+# SNAPSHOT
+# ======================================================
+def pricing_snapshot() -> Dict:
+    prices = get_all_prices()
+
+    return {
+        "reference": {
+            "bx_per_usdt": BX_PER_USDT,
+            "usdt_per_bx": USDT_PER_BX
+        },
+        "bx_internal_price": BX_PER_USDT,
+        "external_prices_usdt": prices,
+        "external_prices_bx": {
+            asset: (usdt_to_bx(price) if price else None)
+            for asset, price in prices.items()
+        }
+    }
+
+# ======================================================
+# UPDATE PRICE
+# ======================================================
+def update_price(asset: str, price: Decimal):
+    asset = asset.lower()
+
+    if asset not in ALLOWED_ASSETS:
+        raise ValueError("INVALID_ASSET")
+
+    execute(
+        """INSERT INTO prices (asset, price_usdt, updated_at)
+           VALUES (?, ?, ?)
+           ON CONFLICT(asset)
+           DO UPDATE SET
+             price_usdt=excluded.price_usdt,
+             updated_at=excluded.updated_at""",
+        (asset, float(price), int(time.time()))
+    )
+
+# ======================================================
+# EXTERNAL PRICE FETCH (PLACEHOLDER)
+# ======================================================
+def fetch_external_prices():
+    """
+    Placeholder – replace with real price feeds later.
+    """
+    sample_prices = {
+        "btc": Decimal("50000"),
+        "bnb": Decimal("500"),
+        "eth": Decimal("2500"),
+    }
+
+    for asset, price in sample_prices.items():
+        update_price(asset, price)
+
+# ======================================================
+# LOCAL TEST
+# ======================================================
+if __name__ == "__main__":
+    fetch_external_prices()
+    print(pricing_snapshot())
