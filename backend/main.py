@@ -73,28 +73,18 @@ app.include_router(
 # ======================================================
 # HEALTH CHECKS (FLY)
 # ======================================================
-@app.get("/health")
-def health():
-    """
-    Health check for Fly.io.
-    Used by Fly proxy & monitors.
-    """
+@app.get("/")
+def root():
     return {
-        "status": "ok",
-        "service": "api",
-        "env": APP_ENV,
-        "ts": int(time.time())
+        "status": "running",
+        "service": "bloxio-api",
+        "env": os.getenv("ENV", "production")
     }
 
-@app.get("/health/ready")
-def readiness():
-    """
-    Readiness probe (DB, deps can be added later).
-    """
-    return {
-        "ready": True,
-        "ts": int(time.time())
-    }
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
 
 # ======================================================
 # PUBLIC (READ ONLY)
@@ -132,7 +122,7 @@ async def mining_handler(uid: int, investment: float, asset: str):
 @app.post("/buy_bx")
 async def buy_bx_handler(uid: int, amount: float, token: str):
     """
-    Endpoint to process the purchase of BX using the provided token (e.g., USDT, TON).
+    Endpoint to process the purchase of BX using the provided token (e.g., USDT,BNB,ETH,TON,SOL,BTC).
     """
     try:
         result = buy_bx(amount, token)
@@ -143,7 +133,7 @@ async def buy_bx_handler(uid: int, amount: float, token: str):
 @app.post("/sell_bx")
 async def sell_bx_handler(uid: int, amount: float, token: str):
     """
-    Endpoint to process the sale of BX for the provided token (e.g., USDT, TON).
+    Endpoint to process the sale of BX for the provided token (e.g., USDT,BNB,ETH,TON,SOL,BTC).
     """
     try:
         result = sell_bx(amount, token)
@@ -164,35 +154,12 @@ def root():
     }
 
 # ======================================================
-# NOTES (IMPORTANT)
+# INTERNAL (WATCHER → API)
 # ======================================================
-"""
-Fly.io Deployment Notes:
 
-API Service:
--------------
-CMD: uvicorn main:app --host 0.0.0.0 --port 8080
-
-Ports:
-------
-internal_port = 8080
-external_port = 80 / 443 (Fly proxy)
-
-Watcher:
---------
-- watcher.py runs as a separate Fly app or process
-- NEVER run watcher inside FastAPI
-- Watcher listens to Webhooks / blockchain events only
-
-Env Vars (Fly Secrets):
-----------------------
-APP_ENV
-API_KEY
-ADMIN_TOKEN
-AUDIT_TOKEN
-HMAC_SECRET
-WATCHER_SECRET
-DATABASE_URL
-TELEGRAM_BOT_TOKEN
-ADMIN_TELEGRAM_ID
-"""
+@app.post("/internal/event")
+def internal_event(event: dict):
+    """
+    Called ONLY by watcher service
+    """
+    return {"status": "received"}
