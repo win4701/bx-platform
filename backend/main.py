@@ -12,7 +12,7 @@ from market import router as market_router
 from casino import router as casino_router
  
 try:
-    from kyc import router as kyc_router
+from kyc import router as kyc_router
 except Exception:
     kyc_router = None
 
