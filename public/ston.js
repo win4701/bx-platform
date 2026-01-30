@@ -141,11 +141,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // BX ↔ TON
-    if (id === "buyBX_TON") {
+    if (id === "buyTab") {
       swapBX({ pair: "BX_TON", side: "buy", amount: 1 });
     }
 
-    if (id === "sellBX_TON") {
+    if (id === "sellTab") {
       swapBX({ pair: "BX_TON", side: "sell", amount: 1 });
     }
 
