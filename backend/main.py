@@ -1,6 +1,5 @@
 import os
-import time
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -10,15 +9,18 @@ from pydantic import BaseModel
 from finance import router as finance_router, rtp_stats
 from market import router as market_router
 from casino import router as casino_router
- 
+
+# kyc اختياري (لا يكسر التطبيق لو غير موجود)
 try:
-from kyc import router as kyc_router
+    from kyc import router as kyc_router
 except Exception:
     kyc_router = None
 
 # Public / Pricing
-from pricing import pricing_snapshotfrom bxing import router as bxing_router
-app.include_router(bxing_router)
+from pricing import pricing_snapshot
+
+# bxing (mining + airdrop)
+from bxing import router as bxing_router
 
 # ======================================================
 # APP CONFIG
@@ -72,6 +74,9 @@ if kyc_router:
         tags=["kyc"]
     )
 
+# bxing (airdrop + mining)
+app.include_router(bxing_router)
+
 # ======================================================
 # HEALTH CHECKS (FLY)
 # ======================================================
@@ -83,13 +88,12 @@ def root():
         "env": os.getenv("ENV", "production")
     }
 
-
 @app.get("/health")
 def health():
     return {"status": "ok"}
 
 # ======================================================
-# WALLET (READ ONLY)
+# WALLET (READ ONLY / PLACEHOLDER)
 # ======================================================
 @app.get("/finance/wallet")
 def wallet():
@@ -119,7 +123,6 @@ class MarketRecord(BaseModel):
     quote: str
     contract: str
 
-
 @app.post("/market/record")
 def record_market_action(data: MarketRecord):
     """
@@ -144,29 +147,12 @@ def public_prices():
     """
     return pricing_snapshot()
 
-
 @app.get("/public/rtp", tags=["public"])
 def public_rtp():
     """
     Casino RTP transparency (read-only)
     """
     return rtp_stats()
-
-# ======================================================
-# MINING
-# ======================================================
-@app.post("/start_mining")
-def mining_handler(uid: int, investment: float, asset: str):
-    """
-    Start mining for supported assets (BX, SOL, BNB)
-    """
-    try:
-        result = start_mining(investment, asset)
-        return {"status": "started", "result": result}
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(500, str(e))
 
 # ======================================================
 # INTERNAL (WATCHER → API)
