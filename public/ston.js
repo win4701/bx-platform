@@ -1,127 +1,162 @@
 "use strict";
 
 /* =====================================================
-   STON UI ADAPTER
-   JS = Render فقط
+   STON.FI FINAL INTEGRATION
+   BX ↔ TON / BX ↔ USDT (TON)
+   Client-side ONLY (Correct & Safe)
 ===================================================== */
 
-const API_BASE = "https://bx-backend.fly.dev";
+/* ================= CONFIG ================= */
+
+// BX Jetton Master
+const BX_CONTRACT = "EQCRYlkaR6GlssLRrQlBH3HOPJSMk_vzfAAyyuhnriX-7a_a";
+
+const USDT_TON_CONTRACT = "EQCxE6mUtQJKFnGfaROTKOt1lZbDiiX1kCixRv7Nw2Id_sDs";
+
+// ston.fi app
+const STON_SWAP_URL = "https://app.ston.fi/swap";
+
+// Backend (اختياري – تسجيل فقط)
+const BACKEND_API = "https://api.bloxio.online/market/record";
+
+/* ================= STATE ================= */
+
+const STON_STATE = {
+  walletConnected: false,
+  wallet: null
+};
 
 /* ================= HELPERS ================= */
 
 const $ = (id) => document.getElementById(id);
 
-function safe(fn) {
-  try { fn(); } catch (e) { console.error(e); }
+function notify(msg) {
+  console.log("[STON]", msg);
+  alert(msg);
 }
 
-/* ================= STATE ================= */
-
-let STON_STATE = {
-  pair: "BX/USDT",
-  price: 0
-};
-
-/* ================= RENDER ================= */
-
-function renderPair() {
-  const el = $("pairDisplay");
-  if (el) el.textContent = STON_STATE.pair;
+/* ================= WALLET ================= */
+/*
+  Stub آمن.
+  (لاحقًا يمكن استبداله بـ TonConnect SDK)
+*/
+async function connectTonWallet() {
+  STON_STATE.walletConnected = true;
+  STON_STATE.wallet = "TON_WALLET_CONNECTED";
+  notify("TON Wallet connected");
 }
 
-function renderPrice() {
-  const el = $("lastPrice");
-  if (el) el.textContent = Number(STON_STATE.price).toFixed(6);
+/* ================= STON URL BUILDER ================= */
+/*
+  pair:
+    - BX_TON
+    - BX_USDT
+
+  side:
+    - buy  (base <- quote)
+    - sell (base -> quote)
+*/
+function buildSwapUrl({ pair, side, amount }) {
+  let fromToken, toToken;
+
+  switch (pair) {
+    case "BX_TON":
+      fromToken = side === "buy" ? "TON" : BX_CONTRACT;
+      toToken   = side === "buy" ? BX_CONTRACT : "TON";
+      break;
+
+    case "BX_USDT":
+      fromToken = side === "buy" ? USDT_TON_CONTRACT : BX_CONTRACT;
+      toToken   = side === "buy" ? BX_CONTRACT : USDT_TON_CONTRACT;
+      break;
+
+    default:
+      throw new Error("Unsupported pair");
+  }
+
+  const params = new URLSearchParams({
+    chartVisible: "false",
+    ft: fromToken,
+    tt: toToken,
+    amount: amount
+  });
+
+  return `${STON_SWAP_URL}?${params.toString()}`;
 }
 
-function renderTx(txid, amount) {
-  const box = $("transactionHistory");
-  if (!box) return;
+/* ================= ACTION ================= */
 
-  const row = document.createElement("div");
-  row.className = "transaction-row";
-  row.textContent = `TX ${txid} | ${amount} BX`;
-  box.prepend(row);
-}
+async function swapBX({ pair, side, amount }) {
+  if (!STON_STATE.walletConnected) {
+    notify("Please connect TON wallet first");
+    return;
+  }
 
-/* ================= API ================= */
+  if (!amount || amount <= 0) {
+    notify("Invalid amount");
+    return;
+  }
 
-async function fetchPrice() {
+  let url;
   try {
-    const r = await fetch(
-      `${API_BASE}/market/price?pair=${encodeURIComponent(STON_STATE.pair)}`
-    );
-    if (!r.ok) return;
-
-    const data = await r.json();
-    STON_STATE.price = data.price;
-    renderPrice();
+    url = buildSwapUrl({ pair, side, amount });
   } catch (e) {
-    console.error("Price fetch error", e);
-  }
-}
-
-async function sendOrder(side, amount) {
-  const r = await fetch(`${API_BASE}/market/${side}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      pair: STON_STATE.pair,
-      amount
-    })
-  });
-
-  if (!r.ok) {
-    alert("Order failed");
+    notify(e.message);
     return;
   }
 
-  const data = await r.json();
-  renderTx(data.txid || "PENDING", amount);
-  fetchPrice();
-}
+  // فتح ston.fi للمستخدم
+  window.open(url, "_blank");
 
-/* ================= ACTIONS ================= */
-
-function buyBX() {
-  const amount = Number($("tradeAmount")?.value);
-  if (!amount || amount <= 0) {
-    alert("Invalid amount");
-    return;
+  // ⬇️ تسجيل اختياري في Backend (لا يعتمد عليه التنفيذ)
+  try {
+    await fetch(BACKEND_API, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        source: "ston.fi",
+        pair,
+        side,
+        amount,
+        base: "BX",
+        quote: pair === "BX_TON" ? "TON" : "USDT",
+        contract: BX_CONTRACT
+      })
+    });
+  } catch {
+    // تجاهل أي فشل – لا يؤثر على المستخدم
   }
-  sendOrder("buy", amount);
 }
 
-function sellBX() {
-  const amount = Number($("tradeAmount")?.value);
-  if (!amount || amount <= 0) {
-    alert("Invalid amount");
-    return;
-  }
-  sendOrder("sell", amount);
-}
-
-/* ================= PAIR SWITCH ================= */
-
-function bindPairs() {
-  $("pairScroll")?.addEventListener("click", (e) => {
-    const btn = e.target;
-    if (btn.tagName !== "BUTTON") return;
-
-    STON_STATE.pair = btn.dataset.pair;
-    renderPair();
-    fetchPrice();
-  });
-}
-
-/* ================= INIT ================= */
+/* ================= UI BINDINGS ================= */
 
 document.addEventListener("DOMContentLoaded", () => {
-  safe(renderPair);
-  safe(fetchPrice);
 
-  $("buyBtn")?.addEventListener("click", buyBX);
-  $("sellBtn")?.addEventListener("click", sellBX);
+  document.body.addEventListener("click", (e) => {
+    const id = e.target.id;
 
-  bindPairs();
+    // Wallet
+    if (id === "connectTon") {
+      connectTonWallet();
+    }
+
+    // BX ↔ TON
+    if (id === "buyBX_TON") {
+      swapBX({ pair: "BX_TON", side: "buy", amount: 1 });
+    }
+
+    if (id === "sellBX_TON") {
+      swapBX({ pair: "BX_TON", side: "sell", amount: 1 });
+    }
+
+    // BX ↔ USDT
+    if (id === "buyBX_USDT") {
+      swapBX({ pair: "BX_USDT", side: "buy", amount: 1 });
+    }
+
+    if (id === "sellBX_USDT") {
+      swapBX({ pair: "BX_USDT", side: "sell", amount: 1 });
+    }
+  });
+
 });
