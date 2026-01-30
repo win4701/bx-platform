@@ -164,18 +164,6 @@ async def mining_handler(uid: int, investment: float, asset: str):
         raise HTTPException(500, f"Error starting mining: {str(e)}")
 
 # ======================================================
-# ROOT
-# ======================================================
-@app.get("/")
-def root():
-    return {
-        "name": APP_NAME,
-        "status": "running",
-        "env": APP_ENV,
-        "ts": int(time.time())
-    }
-
-# ======================================================
 # INTERNAL (WATCHER → API)
 # ======================================================
 
