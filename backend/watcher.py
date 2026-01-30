@@ -1,230 +1,294 @@
+import os
 import time
-import hashlib
-import hmac
-from fastapi import APIRouter, HTTPException
+import sqlite3
+from fastapi import APIRouter, HTTPException, Depends
+from fastapi.responses import StreamingResponse
 
-from database import db, close_connection
-from config import WATCHER_SECRET, WEBHOOK_WINDOW, WEBHOOK_LIMIT, NOTIFY_EMAILS
-
-router = APIRouter()
+from key import api_guard, admin_guard
 
 # ======================================================
-# WEBHOOK VERIFICATION
+# ROUTER
 # ======================================================
-def verify_signature(payload: bytes, signature: str):
-    """
-    Verify that the signature matches the expected signature for the webhook.
-    """
-    if not signature:
-        raise HTTPException(403, "SIGNATURE_REQUIRED")
-
-    expected = hmac.new(
-        WATCHER_SECRET.encode(),
-        payload,
-        hashlib.sha256
-    ).hexdigest()
-
-    if not hmac.compare_digest(expected, signature):
-        notify_admin("Invalid webhook signature")
-        raise HTTPException(403, "INVALID_SIGNATURE")
-
+router = APIRouter(dependencies=[Depends(api_guard)])
 
 # ======================================================
-# RATE LIMITING
+# CONFIG
 # ======================================================
-def rate_limit(ip: str):
-    """
-    Check if the IP address has exceeded the rate limit for webhooks.
-    """
-    now = int(time.time())
+DB_PATH = os.getenv("DB_PATH", "db/db.sqlite")
+
+MIN_WITHDRAW_USDT = 10.0
+MAX_WITHDRAW_RATIO = 0.5       # 50%
+MAX_WITHDRAW_MONTH = 15
+
+ALLOWED_ASSETS = {"usdt", "ton", "sol", "btc", "eth", "bnb", "bx"}
+
+# ======================================================
+# DB
+# ======================================================
+def db():
+    return sqlite3.connect(DB_PATH, check_same_thread=False)
+
+def get_cursor():
     conn = db()
-    c = conn.cursor()
+    return conn.cursor(), conn
 
-    hits = c.execute(
-        "SELECT COUNT(*) FROM webhook_hits WHERE ip=? AND ts>?",
-        (ip, now - WEBHOOK_WINDOW)
-    ).fetchone()[0]
-
-    if hits >= WEBHOOK_LIMIT:
-        notify_admin(f"Webhook rate-limit exceeded from IP {ip}")
-        close_connection(conn)
-        raise HTTPException(429, "RATE_LIMIT")
-
-    c.execute(
-        "INSERT INTO webhook_hits(ip, ts) VALUES (?,?)",
-        (ip, now)
-    )
-
-    close_connection(conn)
-
+def close_connection(conn):
+    conn.commit()
+    conn.close()
 
 # ======================================================
-# DEPOSIT EXISTENCE CHECK
+# LEDGER (DOUBLE ENTRY)
 # ======================================================
-def deposit_exists(txid: str) -> bool:
-    """
-    Check if a deposit with the given txid already exists (replay protection).
-    """
-    conn = db()
-    c = conn.cursor()
-
-    exists = c.execute(
-        "SELECT 1 FROM used_txs WHERE txid=?",
-        (txid,)
-    ).fetchone() is not None
-
-    close_connection(conn)
-    return exists
-
-
-# ======================================================
-# NOTIFY ADMIN
-# ======================================================
-def notify_admin(message: str):
-    """
-    Notify admins about important watcher events.
-    """
-    for email in NOTIFY_EMAILS:
-        # Placeholder (email / telegram / slack)
-        print(f"[WATCHER] Notify {email}: {message}")
-
-
-# ======================================================
-# HANDLE WEBHOOK EVENTS
-# ======================================================
-@router.post("/webhook")
-async def handle_webhook(payload: dict, signature: str, ip: str):
-    """
-    Handle incoming webhook events.
-    """
-    verify_signature(str(payload).encode(), signature)
-    rate_limit(ip)
-
-    txid = payload.get("txid")
-    amount = payload.get("amount")
-    asset = payload.get("asset")
-
-    if not txid or not asset or amount is None:
-        raise HTTPException(400, "INVALID_PAYLOAD")
-
-    # Replay protection
-    if deposit_exists(txid):
-        return {"status": "ignored", "reason": "duplicate"}
-
+def ledger(ref: str, debit_account: str, credit_account: str, amount: float):
+    ts = int(time.time())
+    c, conn = get_cursor()
     try:
-        conn = db()
-        c = conn.cursor()
-
-        # Mark tx as used (replay protection)
         c.execute(
-            "INSERT OR IGNORE INTO used_txs (txid, asset, ts) VALUES (?, ?, ?)",
-            (txid, asset, int(time.time()))
+            "INSERT INTO ledger(ref, account, debit, credit, ts) VALUES (?,?,?,?,?)",
+            (ref, debit_account, amount, 0, ts)
+        )
+        c.execute(
+            "INSERT INTO ledger(ref, account, debit, credit, ts) VALUES (?,?,?,?,?)",
+            (ref, credit_account, 0, amount, ts)
+        )
+    except Exception:
+        raise HTTPException(500, "LEDGER_ERROR")
+    finally:
+        close_connection(conn)
+
+# ======================================================
+# CREDIT DEPOSIT
+# ======================================================
+def credit_deposit(uid: int, asset: str, amount: float, txid: str):
+    if amount <= 0:
+        return
+
+    asset = asset.lower()
+    if asset not in ALLOWED_ASSETS:
+        raise HTTPException(400, "INVALID_ASSET")
+
+    c, conn = get_cursor()
+    try:
+        if c.execute(
+            "SELECT 1 FROM used_txs WHERE txid=?", (txid,)
+        ).fetchone():
+            return
+
+        c.execute(
+            f"UPDATE wallets SET {asset} = {asset} + ? WHERE uid=?",
+            (amount, uid)
         )
 
-        # Save as pending deposit (review / auto-approve later)
+        c.execute(
+            """INSERT INTO history (uid, action, asset, amount, ref, ts)
+               VALUES (?,?,?,?,?,?)""",
+            (uid, "deposit", asset, amount, txid, int(time.time()))
+        )
+
+        ledger(f"deposit:{asset}", f"treasury_{asset}", f"user_{asset}", amount)
+
+        c.execute(
+            "INSERT OR IGNORE INTO used_txs(txid, asset, ts) VALUES (?,?,?)",
+            (txid, asset, int(time.time()))
+        )
+    except Exception as e:
+        raise HTTPException(500, str(e))
+    finally:
+        close_connection(conn)
+
+# ======================================================
+# SAVE PENDING DEPOSIT
+# ======================================================
+def save_pending_deposit(uid: int, asset: str, amount: float, txid: str, reason: str):
+    asset = asset.lower()
+    if asset not in ALLOWED_ASSETS:
+        raise HTTPException(400, "INVALID_ASSET")
+
+    c, conn = get_cursor()
+    try:
         c.execute(
             """INSERT OR IGNORE INTO pending_deposits
                (txid, uid, asset, amount, reason, ts)
-               VALUES (?, ?, ?, ?, ?, ?)""",
-            (txid, 0, asset, amount, "watcher", int(time.time()))
+               VALUES (?,?,?,?,?,?)""",
+            (txid, uid, asset, amount, reason, int(time.time()))
         )
-
+    except Exception:
+        raise HTTPException(500, "PENDING_DEPOSIT_ERROR")
+    finally:
         close_connection(conn)
 
-        notify_admin(f"New deposit detected: {amount} {asset} | txid={txid}")
+# ======================================================
+# USER WALLET
+# ======================================================
+@router.get("/me")
+def wallet_me(uid: int):
+    c, conn = get_cursor()
+    try:
+        r = c.execute(
+            "SELECT usdt, ton, sol, bnb, eth, btc, bx FROM wallets WHERE uid=?",
+            (uid,)
+        ).fetchone()
 
-        return {"status": "received", "txid": txid}
+        if not r:
+            raise HTTPException(404, "WALLET_NOT_FOUND")
 
-    except Exception as e:
-        notify_admin(f"Watcher error: {str(e)}")
-        raise HTTPException(500, "WATCHER_ERROR")
-
+        return {
+            "wallet": dict(zip(
+                ["usdt", "ton", "sol", "bnb", "eth", "btc", "bx"], r
+            )),
+            "deposit_status": "confirmed"
+        }
+    finally:
+        close_connection(conn)
 
 # ======================================================
-# WITHDRAW HELPERS (INTERNAL)
+# WITHDRAW VALIDATION
 # ======================================================
-def can_withdraw(asset: str, amount: float) -> bool:
-    """
-    Check hot wallet balance before sending withdrawals.
-    """
-    conn = db()
-    c = conn.cursor()
+def validate_withdraw(uid: int, amount: float):
+    if amount < MIN_WITHDRAW_USDT:
+        raise HTTPException(400, "MIN_WITHDRAW_10")
 
-    row = c.execute(
-        f"SELECT {asset} FROM wallet_vaults WHERE asset=?",
-        (asset,)
-    ).fetchone()
+    c, conn = get_cursor()
+    try:
+        bal = c.execute(
+            "SELECT usdt FROM wallets WHERE uid=?", (uid,)
+        ).fetchone()
 
-    close_connection(conn)
+        if not bal:
+            raise HTTPException(404, "WALLET_NOT_FOUND")
 
-    return bool(row and row[0] >= amount)
+        if amount > bal[0] * MAX_WITHDRAW_RATIO:
+            raise HTTPException(400, "WITHDRAW_LIMIT_50_PERCENT")
 
+        month_start = int(time.time()) - 30 * 86400
+        count = c.execute(
+            """SELECT COUNT(*) FROM withdraw_queue
+               WHERE uid=? AND status='sent' AND ts>?""",
+            (uid, month_start)
+        ).fetchone()[0]
 
-def update_withdraw_status(wid: int, status: str, txid: str):
-    conn = db()
-    c = conn.cursor()
-
-    c.execute(
-        "UPDATE withdraw_queue SET status=?, txid=? WHERE id=?",
-        (status, txid, wid)
-    )
-
-    close_connection(conn)
-
-
-def send_tx(asset: str, amount: float, address: str) -> str:
-    """
-    Simulate sending a transaction.
-    """
-    print(f"[WATCHER] Sending {amount} {asset} → {address}")
-    return f"tx_{int(time.time())}"
-
-
-def process_withdrawals():
-    """
-    Process approved withdrawals (batch).
-    """
-    conn = db()
-    c = conn.cursor()
-
-    rows = c.execute(
-        """SELECT id, uid, asset, amount, address
-           FROM withdraw_queue
-           WHERE status='approved'
-           ORDER BY ts ASC
-           LIMIT 10"""
-    ).fetchall()
-
-    close_connection(conn)
-
-    processed = []
-
-    for wid, uid, asset, amount, address in rows:
-        if not can_withdraw(asset, amount):
-            notify_admin(f"Insufficient hot balance for {asset}")
-            continue
-
-        try:
-            txid = send_tx(asset, amount, address)
-            update_withdraw_status(wid, "sent", txid)
-            processed.append(wid)
-            notify_admin(f"Withdraw sent: {amount} {asset} → {address}")
-        except Exception as e:
-            notify_admin(f"Withdraw failed: {str(e)}")
-
-    return {"processed": processed}
-
+        if count >= MAX_WITHDRAW_MONTH:
+            raise HTTPException(400, "WITHDRAW_MONTH_LIMIT")
+    finally:
+        close_connection(conn)
 
 # ======================================================
-# TEST
+# WITHDRAW REQUEST
 # ======================================================
-@router.post("/test")
-async def test_webhook():
-    payload = {"txid": "test123", "amount": 10, "asset": "USDT"}
-    signature = hmac.new(
-        WATCHER_SECRET.encode(),
-        str(payload).encode(),
-        hashlib.sha256
-    ).hexdigest()
+@router.post("/withdraw")
+def request_withdraw(uid: int, amount: float, address: str):
+    validate_withdraw(uid, amount)
 
-    return await handle_webhook(payload, signature, "127.0.0.1")
+    c, conn = get_cursor()
+    try:
+        c.execute(
+            """INSERT INTO withdraw_queue
+               (uid, asset, amount, address, status, ts)
+               VALUES (?,?,?,?,?,?)""",
+            (uid, "usdt", amount, address, "requested", int(time.time()))
+        )
+        return {"status": "requested"}
+    finally:
+        close_connection(conn)
+
+# ======================================================
+# ADMIN — DEPOSITS
+# ======================================================
+@router.get("/admin/pending", dependencies=[Depends(admin_guard)])
+def admin_pending():
+    c, conn = get_cursor()
+    try:
+        return c.execute(
+            "SELECT * FROM pending_deposits ORDER BY ts DESC"
+        ).fetchall()
+    finally:
+        close_connection(conn)
+
+@router.post("/admin/approve", dependencies=[Depends(admin_guard)])
+def admin_approve(txid: str):
+    c, conn = get_cursor()
+    try:
+        row = c.execute(
+            "SELECT uid, asset, amount FROM pending_deposits WHERE txid=?",
+            (txid,)
+        ).fetchone()
+
+        if not row:
+            raise HTTPException(404, "NOT_FOUND")
+
+        uid, asset, amount = row
+        credit_deposit(uid, asset, amount, txid)
+
+        c.execute(
+            "DELETE FROM pending_deposits WHERE txid=?",
+            (txid,)
+        )
+        return {"status": "approved"}
+    finally:
+        close_connection(conn)
+
+# ======================================================
+# ADMIN — WITHDRAW
+# ======================================================
+@router.get("/admin/withdrawals", dependencies=[Depends(admin_guard)])
+def admin_withdrawals():
+    c, conn = get_cursor()
+    try:
+        return c.execute(
+            "SELECT * FROM withdraw_queue ORDER BY ts DESC"
+        ).fetchall()
+    finally:
+        close_connection(conn)
+
+@router.post("/admin/withdraw/approve", dependencies=[Depends(admin_guard)])
+def approve_withdraw(id: int):
+    c, conn = get_cursor()
+    try:
+        row = c.execute(
+            "SELECT uid, amount FROM withdraw_queue WHERE id=? AND status='requested'",
+            (id,)
+        ).fetchone()
+        if not row:
+            raise HTTPException(404)
+
+        uid, amount = row
+
+        c.execute(
+            "UPDATE wallets SET usdt = usdt - ? WHERE uid=?",
+            (amount, uid)
+        )
+
+        ledger("withdraw:usdt", "user_usdt", "treasury_usdt", amount)
+
+        c.execute(
+            "UPDATE withdraw_queue SET status='approved' WHERE id=?",
+            (id,)
+        )
+
+        return {"status": "approved"}
+    finally:
+        close_connection(conn)
+
+# ======================================================
+# EXPORT / AUDIT
+# ======================================================
+@router.get("/admin/ledger/export", dependencies=[Depends(admin_guard)])
+def export_ledger():
+    c, conn = get_cursor()
+    try:
+        rows = c.execute(
+            "SELECT ref, account, debit, credit, ts FROM ledger ORDER BY ts"
+        )
+
+        def gen():
+            yield "ref,account,debit,credit,ts\n"
+            for r in rows:
+                yield ",".join(map(str, r)) + "\n"
+
+        return StreamingResponse(
+            gen(),
+            media_type="text/csv",
+            headers={"Content-Disposition": "attachment; filename=ledger.csv"}
+        )
+    finally:
+        close_connection(conn)
