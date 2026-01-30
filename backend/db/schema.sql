@@ -208,3 +208,31 @@ CREATE TABLE IF NOT EXISTS jettons (
   decimals INTEGER,
   ts INTEGER
 );
+
+-- ===============================
+-- AIRDROP
+-- ===============================
+CREATE TABLE IF NOT EXISTS airdrops (
+  uid INTEGER PRIMARY KEY,
+  claimed INTEGER DEFAULT 0,
+  referrals INTEGER DEFAULT 0,
+  reward REAL DEFAULT 2.5,
+  ts INTEGER
+);
+
+-- ===============================
+-- MINING
+-- ===============================
+CREATE TABLE IF NOT EXISTS mining_orders (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  uid INTEGER,
+  asset TEXT,
+  plan TEXT,
+  investment REAL,
+  roi REAL,
+  days INTEGER,
+  started_at INTEGER,
+  ends_at INTEGER,
+  status TEXT,
+  FOREIGN KEY(uid) REFERENCES users(uid)
+);
