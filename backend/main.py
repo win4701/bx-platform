@@ -102,7 +102,34 @@ def wallet():
         "ETH": 0,
         "SOL": 0
     }
+# ======================================================
+# MARKET (STON.FI RECORD ONLY)
+# ======================================================
 
+class MarketRecord(BaseModel):
+    source: str
+    pair: str
+    side: str
+    amount: float
+    base: str
+    quote: str
+    contract: str
+
+
+@app.post("/market/record")
+def record_market_action(data: MarketRecord):
+    """
+    Called AFTER user performs swap on ston.fi
+    Backend DOES NOT execute swaps.
+    """
+    return {
+        "status": "recorded",
+        "source": data.source,
+        "pair": data.pair,
+        "side": data.side,
+        "amount": data.amount
+    }
+    
 # ======================================================
 # PUBLIC (READ ONLY)
 # ======================================================
