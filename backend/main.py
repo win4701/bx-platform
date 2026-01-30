@@ -150,7 +150,7 @@ def public_rtp():
     return rtp_stats()
 
 # ======================================================
-# NEW ROUTES FOR MINING AND BUY/SELL
+# NEW ROUTES FOR MINING
 # ======================================================
 @app.post("/start_mining")
 async def mining_handler(uid: int, investment: float, asset: str):
@@ -162,28 +162,6 @@ async def mining_handler(uid: int, investment: float, asset: str):
         return {"status": "Mining started", "result": result}
     except Exception as e:
         raise HTTPException(500, f"Error starting mining: {str(e)}")
-
-@app.post("/buy_bx")
-async def buy_bx_handler(uid: int, amount: float, token: str):
-    """
-    Endpoint to process the purchase of BX using the provided token (e.g., USDT,BNB,ETH,TON,SOL,BTC).
-    """
-    try:
-        result = buy_bx(amount, token)
-        return {"status": "Buy BX successful", "result": result}
-    except Exception as e:
-        raise HTTPException(500, f"Error buying BX: {str(e)}")
-
-@app.post("/sell_bx")
-async def sell_bx_handler(uid: int, amount: float, token: str):
-    """
-    Endpoint to process the sale of BX for the provided token (e.g., USDT,BNB,ETH,TON,SOL,BTC).
-    """
-    try:
-        result = sell_bx(amount, token)
-        return {"status": "Sell BX successful", "result": result}
-    except Exception as e:
-        raise HTTPException(500, f"Error selling BX: {str(e)}")
 
 # ======================================================
 # ROOT
