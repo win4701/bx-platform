@@ -521,6 +521,7 @@ function bindEvents() {
 ========================================================= */
 
 document.addEventListener("DOMContentLoaded", () => {
+   
   bindNavigation();
 
   loadWallet();
