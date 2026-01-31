@@ -544,15 +544,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
 function navigate(view) {
   if (!view) return;
-
+   
   APP_STATE.view = view;
-  document.querySelectorAll(".view").forEach(v =>
-    v.classList.remove("active")
-  );
+  document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
 
   const target = document.getElementById(view);
   if (target) target.classList.add("active");
 
+  // تحديث حالة الـ bottom navigation
   document.querySelectorAll(".bottom-nav button").forEach(b =>
     b.classList.remove("active")
   );
@@ -561,17 +560,6 @@ function navigate(view) {
     `.bottom-nav button[data-view="${view}"]`
   );
   if (btn) btn.classList.add("active");
-
-  if (view === "market") {
-    startMarket();
-  } else if (view === "casino") {
-    startCasino();
-  } else if (view === "mining") {
-    renderMiningPlans();  
-  } else {
-    stopMarket();
-    stopCasino();
-  }
 }
 
 /* =======================================================
