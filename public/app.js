@@ -427,7 +427,7 @@ function renderCasinoUI(result) {
 function renderMiningPlans() {
   if (!APP_STATE.ready || !MINING_STATE || !MINING_STATE.availablePlans) return;
 
-  const plansContainer = $("miningPlansContainer");
+  const plansContainer = $("miningGrid");
   if (!plansContainer) return;
 
   plansContainer.innerHTML = ""; // Clear existing plans
@@ -508,8 +508,6 @@ function bindEvents() {
   });
 }
 
-"use strict";
-
 /* ================================================================================================
    PART 5 — ORCHESTRATION & LIFECYCLE
    -----------------------------------------------------------------------------------------------
@@ -581,12 +579,13 @@ function navigate(view) {
     startMarket();
   } else if (view === "casino") {
     startCasino();
+  } else if (view === "mining") {
+    renderMiningPlans();  // تأكد من أن الخطط تظهر عند الانتقال إلى قسم التعدين
   } else {
     stopMarket();
     stopCasino();
   }
 }
-
 /* =======================================================
    5.3 — Start/Stop Market Loop (Simulate market behavior)
 ========================================================= */
