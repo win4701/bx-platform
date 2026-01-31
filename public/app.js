@@ -57,9 +57,6 @@ function isAuthenticated() {
 
 let CLIENT_SEED = localStorage.getItem("client_seed") || "1.2.3.4";
 
-/**
- * Update client seed
- */
 function setClientSeed(seed) {
   if (!seed || typeof seed !== "string") return;
   CLIENT_SEED = seed;
