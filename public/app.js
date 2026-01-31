@@ -307,9 +307,8 @@ async function startMining(asset, plan) {
   // تحديث حالة التعدين بعد البدء
   MINING_STATE.setPlan(plan);
   MINING_STATE.startMining();
-  renderMiningPlans(); // تحديث عرض خطط التعدين بعد البدء
+  renderMiningPlans(); // إعادة عرض خطط التعدين بعد البدء
 }
-
 
 /* =======================================================
    3.4 — Load Mining Status (Get active mining data)
@@ -416,6 +415,10 @@ function renderCasinoUI(result) {
     resultElement.textContent = `Result: ${result ? result.win ? "You Win!" : "You Lose!" : "Waiting..."}`;
   }
 }
+
+/* =======================================================
+   4.4 — Render Mining Plans (Display mining plans)
+========================================================= */
 
 /* =======================================================
    4.4 — Render Mining Plans (Display mining plans)
