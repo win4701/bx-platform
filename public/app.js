@@ -627,6 +627,10 @@ function bindNavigation() {
   });
 }
 
+document.addEventListener("DOMContentLoaded", () => {
+  bindNavigation(); 
+});
+
 /* =======================================================
    5.6 — Automatic Actions for Specific Views
 ========================================================= */
