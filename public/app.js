@@ -1,1052 +1,653 @@
-'use strict';
+"use strict";
 
 /* ================================================================================================
-   GLOBAL CORE
-================================================================================================ */
+   PART 1 — CORE & CONTRACT LAYER
+   -----------------------------------------------------------------------------------------------
+   - ثوابت عامة
+   - إعدادات التطبيق
+   - حالة عامة (APP_STATE)
+   - المستخدم والمصادقة
+   - Helpers (DOM, logging, toast)
+   - API contract (المسارات فقط)
+=============================================================== */
 
-const API_BASE = "https://bx-backend.fly.dev";
+/* =======================================================
+   1.1 — API Base URL
+========================================================= */
+
+const API_BASE = "https://bx-backend.fly.dev"; // اكتب رابط الـ API هنا
+
+/* =======================================================
+   1.2 — App State
+========================================================= */
 
 const APP_STATE = {
-  ready: false,
-  currentSection: "wallet"
+  ready: false, // تعني أن التطبيق جاهز
+  view: "wallet", // القسم النشط في الواجهة
+  user: null, // تفاصيل المستخدم
+  isLoading: false // حالة التحميل العامة
 };
 
+/* =======================================================
+   1.3 — USER (من الـ LocalStorage أو الـ Cookie)
+========================================================= */
+
+const USER = {
+  jwt: localStorage.getItem("jwt") || null, // JSON Web Token للمصادقة
+  isAuthenticated() {
+    return this.jwt !== null;
+  },
+  setToken(jwt) {
+    this.jwt = jwt;
+    localStorage.setItem("jwt", jwt);
+  }
+};
+
+/* =======================================================
+   1.4 — API Authorization Headers
+========================================================= */
+
+function authHeaders() {
+  return USER.isAuthenticated() ? { Authorization: "Bearer " + USER.jwt } : {};
+}
+
+/* =======================================================
+   1.5 — Helper functions (DOM, Toasts, Logging)
+========================================================= */
+
+// DOM helper (لإيجاد العناصر بسهولة)
 function $(id) {
   return document.getElementById(id);
 }
 
-function log(...args) {
-  if (window.DEBUG_MODE) console.log("[APP]", ...args);
-}
-
-/* ================================================================================================
-   CONFIGURATION
-================================================================================================ */
-
-const MARKET_PAIRS = ["BX/USDT", "BX/TON", "BX/BNB", "BX/ETH" ,"BX/SOL", "BX/BTC"];
-
-const FEATURES = {
-  WALLET: true,
-  MARKET: true,
-  CASINO: true,
-  MINING: true,
-  AIRDROP: true,
-  PARTNERS: true
-};
-
-
-/* ================================================================================================
-   USER & AUTH
-================================================================================================ */
-
-const USER = {
-  jwt: localStorage.getItem("jwt") || null
-};
-
-function authHeaders() {
-  return USER.jwt ? { Authorization: "Bearer " + USER.jwt } : {};
-}
-
-function isAuthenticated() {
-  return !!USER.jwt;
-}
-
-/* ================================================================================================
-   PROVABLY FAIR (CLIENT SIDE)
-================================================================================================ */
-
-let CLIENT_SEED = localStorage.getItem("client_seed") || "1.2.3.4";
-
-function setClientSeed(seed) {
-  if (!seed || typeof seed !== "string") return;
-  CLIENT_SEED = seed;
-  localStorage.setItem("client_seed", seed);
-  log("Client seed updated:", seed);
-}
-
-async function loadFairness() {
-  try {
-    const r = await fetch(API_BASE + "/casino/fairness");
-    if (!r.ok) return;
-    const data = await r.json();
-    if ($("serverSeedHash")) {
-      $("serverSeedHash").textContent = data.server_seed_hash;
-    }
-  } catch (e) {
-    console.error("Fairness load error", e);
-  }
-}
-
-async function revealServerSeed() {
-  try {
-    const r = await fetch(API_BASE + "/casino/reveal");
-    if (!r.ok) return;
-    const data = await r.json();
-    alert("Server Seed:\n" + data.server_seed);
-  } catch (e) {
-    console.error("Reveal error", e);
-  }
-}
-
-/* ================================================================================================
-   UI NOTIFICATIONS
-================================================================================================ */
-
+// توست للرسائل التنبيهية
 function toast(message) {
   if (!message) return;
   const el = document.createElement("div");
   el.className = "toast";
   el.textContent = message;
   document.body.appendChild(el);
-  setTimeout(() => el.remove(), 3000);
+  setTimeout(() => el.remove(), 3000); // الرسالة تختفي بعد 3 ثواني
 }
 
-/* ================================================================================================
-   WALLET (DISPLAY + ACTION HOOKS)
-================================================================================================ */
-
-let WALLET = {
-  BX: 0,
-  USDT: 0,
-  BNB: 0,
-  ETH: 0,
-  SOL: 0,
-  TON: 0,
-  BTC: 0
-};
-
-const BALANCE_IDS = {
-  BX: "bal-bx",
-  USDT: "bal-usdt",
-  BNB: "bal-bnb",
-  ETH: "bal-eth",
-  SOL: "bal-sol",
-  TON: "bal-ton",
-  BTC: "bal-btc"
-};
-
-function renderWallet() {
-  Object.keys(WALLET).forEach(asset => {
-    const el = $(BALANCE_IDS[asset]);
-    if (el) el.textContent = WALLET[asset];
-  });
-}
-async function loadWallet() {
-  if (!FEATURES.WALLET || !isAuthenticated()) return;
-  try {
-    const r = await fetch(API_BASE + "/wallet", { headers: authHeaders() });
-    if (!r.ok) return;
-    WALLET = await r.json();
-    renderWallet();
-  } catch (e) {
-    console.error("Wallet error", e);
-  }
+// تسجيل الأخطاء في الـ console
+function log(message) {
+  console.log(message);
 }
 
-/* -----------------------------------------------------------------------------------------------
-   WALLET ACTIONS (HOOKS ONLY)
------------------------------------------------------------------------------------------------- */
+/* =======================================================
+   1.6 — API Contract: Paths for FastAPI endpoints
+========================================================= */
 
-function deposit() {
-  toast("Deposit request initiated");
-}
-
-async function withdrawBNB(amount) {
-  if (!amount || amount <= 0) return;
-
-  await fetch(API_BASE + "/withdraw/bnb", {
-    method: "POST",
-    headers: {
-      ...authHeaders(),
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({ amount })
-  });
-
-  toast("Withdraw request submitted");
-}
-
-async function transferBX(targetTelegramId, amount) {
-  if (!targetTelegramId || amount <= 0) return;
-
-  await fetch(API_BASE + "/wallet/transfer", {
-    method: "POST",
-    headers: {
-      ...authHeaders(),
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      telegram_id: targetTelegramId,
-      amount
-    })
-  });
-
-  toast("BX transfer sent");
-}
-
-/* ================================================================================================
-   INITIALIZATION (PART 1)
-================================================================================================ */
-
-document.addEventListener("DOMContentLoaded", () => {
-  log("App initializing (Part 1)");
-
-  if (isAuthenticated()) {
-    loadWallet();
-    loadFairness();
-  }
-
-  APP_STATE.ready = true;
-});
-
-
-/* ================================================================================================
-   PRICE ENGINE
-================================================================================================ */
-
-const BX_FIXED_PRICE_USDT = 2;
-const BX_CHART_MIN = BX_FIXED_PRICE_USDT * 0.9;
-const BX_CHART_MAX = BX_FIXED_PRICE_USDT * 1.1;
-const MARKET_TICK_MS = 1200;
-
-let MARKET_STATE = {
-  pair: "BX/USDT",
-  price: BX_FIXED_PRICE_USDT,
-  orders: {
-    buy: [],
-    sell: []
+const API = {
+  wallet: "/finance/wallet", // بيانات المحفظة
+  casino: {
+    play: "/casino/play", // لعب الكازينو
+    history: "/casino/history"
+  },
+  mining: {
+    start: "/bxing/mining/start", // بداية التعدين
+    status: "/bxing/mining/status"
+  },
+  airdrop: {
+    status: "/bxing/airdrop/status", // حالة الـ air drop
+    claim: "/bxing/airdrop/claim" // المطالبة بالـ air drop
   }
 };
 
-let marketTimer = null;
-
-/* ================= BASE PRICE ================= */
-
-function calculateBasePrice(pair) {
-  const quote = pair.split("/")[1];
-
-  switch (quote) {
-    case "USDT": return BX_FIXED_PRICE_USDT;
-    case "BNB":  return BX_FIXED_PRICE_USDT * 0.99;
-    case "SOL":  return BX_FIXED_PRICE_USDT * 0.97;
-    case "ETH":  return BX_FIXED_PRICE_USDT * 1.02;
-    case "TON":  return BX_FIXED_PRICE_USDT * 0.96;
-    case "BTC":  return BX_FIXED_PRICE_USDT * 1.05;
-default:         return BX_FIXED_PRICE_USDT;
-        
-  }
-}
-
-/* ================= PRICE TICK ================= */
-
-function tickMarketPrice() {
-  const base = calculateBasePrice(MARKET_STATE.pair);
-
-  const drift = (Math.random() - 0.5) * 0.02;
-
-  let nextPrice = base + base * drift;
-
-  nextPrice = Math.max(
-    BX_CHART_MIN,
-    Math.min(BX_CHART_MAX, nextPrice)
-  );
-
-  MARKET_STATE.price = +nextPrice.toFixed(6);
-
-  renderMarketPrice()
-   
-  if (priceChart) {
-    priceChart.data.labels.push("");
-    priceChart.data.datasets[0].data.push(MARKET_STATE.price);
-
-    if (priceChart.data.labels.length > 30) {
-      priceChart.data.labels.shift();
-      priceChart.data.datasets[0].data.shift();
-    }
-
-    priceChart.update();
-  }
-}
-
-/* ================= LOOP CONTROL ================= */
-
-function startMarketLoop() {
-  stopMarketLoop();
-  marketTimer = setInterval(() => {
-    if (APP_STATE.currentSection !== "market") return;
-    tickMarketPrice();
-  }, 1200);
-}
-
-function stopMarketLoop() {
-  clearInterval(marketTimer);
-  marketTimer = null;
-}
-
 /* ================================================================================================
-   CHART
-================================================================================================ */
-
-function renderMarketChart() {
-  if (typeof window.drawChart=="function") {
-    window.drawChart(MARKET_STATE.history);
-  }
-}
-
-let priceChart = null;
-
-function initMarketChart() {
-  const ctx = document.getElementById("priceChart");
-  if (!ctx || priceChart) return;
-
-  priceChart = new Chart(ctx, {
-    type: "line",
-    data: {
-      labels: [],
-      datasets: [{
-        data: [],
-        borderColor: "#22c55e",
-        tension: 0.35,
-        borderWidth: 2
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: { legend: { display: false } },
-      scales: { x: { display: false }, y: { display: false } }
-    }
-  });
-}
-
-/* ====================================================================
-   ORDER BOOK (FAKE / ACTIVE)
+   PART 2 — STATE & DATA LAYER (SINGLE SOURCE OF TRUTH)
+   -----------------------------------------------------------------------------------------------
+   - كل الحالات (Wallet / Market / Casino / Mining / Airdrop)
+   - قيم افتراضية
+   - بدون DOM
+   - بدون fetch
 =============================================================== */
 
-function generateMarketOrders() {
-  const buyOrders = [];
-  const sellOrders = [];
+/* =======================================================
+   2.1 — Wallet State
+========================================================= */
 
-  for (let i = 0; i < 12; i++) {
-    buyOrders.push({
-      price: +(MARKET_STATE.price * (1 - Math.random() / 40)).toFixed(6),
-      amount: +(Math.random() * 100).toFixed(2)
-    });
+const WALLET_STATE = {
+  BX: 0.0,
+  USDT: 0.0,
+  BNB: 0.0,
+  ETH: 0.0,
+  SOL: 0.0,
+  TON: 0.0,
+  BTC: 0.0,
 
-    sellOrders.push({
-      price: +(MARKET_STATE.price * (1 + Math.random() / 40)).toFixed(6),
-      amount: +(Math.random() * 100).toFixed(2)
-    });
+  set(walletData) {
+    this.BX = walletData.BX || 0;
+    this.USDT = walletData.USDT || 0;
+    this.BNB = walletData.BNB || 0;
+    this.ETH = walletData.ETH || 0;
+    this.SOL = walletData.SOL || 0;
+    this.TON = walletData.TON || 0;
+    this.BTC = walletData.BTC || 0;
+  },
+
+  update(asset, amount) {
+    if (this.hasOwnProperty(asset)) {
+      this[asset] += amount;
+    }
   }
+};
 
-  MARKET_STATE.orders.buy = buyOrders.sort((a, b) => b.price - a.price);
-  MARKET_STATE.orders.sell = sellOrders.sort((a, b) => a.price - b.price);
+/* =======================================================
+   2.2 — Market State (Market Price)
+========================================================= */
 
-  renderOrderBook();
-}
-
-function renderOrderBook() {
-  if ($("buyOrders")) {
-    $("buyOrders").innerHTML = MARKET_STATE.orders.buy
-      .map(o => `<div>${o.price} / ${o.amount}</div>`)
-      .join("");
+const MARKET_STATE = {
+  price: 0.0,
+  pair: "BX/USDT",  // يمكن تغييره حسب السوق
+  spread: 0.02,     // مثال: spread between buy and sell price
+  set(price) {
+    this.price = price;
+  },
+  updatePrice(newPrice) {
+    this.price = newPrice;
+  },
+  setPair(pair) {
+    this.pair = pair;
   }
+};
 
-  if ($("sellOrders")) {
-    $("sellOrders").innerHTML = MARKET_STATE.orders.sell
-      .map(o => `<div>${o.price} / ${o.amount}</div>`)
-      .join("");
-  }
-}
-
-/* ================================================================================================
-   BUY / SELL (UI HOOKS – SIMULATED)
-================================================================================================ */
-
-function buyBX(amount) {
-  if (!amount || amount <= 0) return;
-  toast("Buy order placed");
-}
-
-/**
- * Sell BX (simulated)
- */
-function sellBX(amount) {
-  if (!amount || amount <= 0) return;
-  toast("Sell order placed");
-}
-
-/* ================================================================================================
-   MARKET INITIALIZATION
-================================================================================================ */
-
-document.addEventListener("DOMContentLoaded", () => {
-  if (!FEATURES.MARKET) return;
-
-  renderMarketPair(MARKET_STATE.pair);
-  startMarketLoop();
-});
-
-/* ================================================================================================
-   CASINO STATE
-================================================================================================ */
+/* =======================================================
+   2.3 — Casino State
+========================================================= */
 
 const CASINO_STATE = {
   activeGame: null,
   isPlaying: false,
-  lastResult: null,
-  botsEnabled: true
+  result: null,
+
+  setGame(gameId) {
+    this.activeGame = gameId;
+    this.result = null;
+  },
+
+  setResult(result) {
+    this.result = result;
+  },
+
+  startGame() {
+    this.isPlaying = true;
+  },
+
+  stopGame() {
+    this.isPlaying = false;
+  }
 };
 
-/* ================================================================================================
-   CASINO GAMES REGISTRY (12)
-================================================================================================ */
-
-const CASINO_GAMES = [
-  { id: "coinflip",     name: "Coin Flip" },
-  { id: "roulette",    name: "Roulette" },
-  { id: "limbo",       name: "Limbo" },
-  { id: "chickenroad", name: "Chicken Road" },
-  { id: "dice",        name: "Dice" },
-  { id: "crash",       name: "Crash" },
-  { id: "slot7",       name: "Slot 7" },
-  { id: "fortune",     name: "Wheel of Fortune" },
-  { id: "coins4x4",    name: "Coins 4x4" },
-  { id: "plinko",      name: "Plinko" },
-  { id: "hilo",        name: "Hi-Lo" },
-  { id: "airboss",     name: "Air Boss" }
-];
-
-/* ================================================================================================
-   CASINO UI
-================================================================================================ */
-
-function selectCasinoGame(gameId) {
-  if (!CASINO_GAMES.find(g => g.id === gameId)) return;
-
-  CASINO_STATE.activeGame = gameId;
-  CASINO_STATE.lastResult = null;
-
-  if ($("casinoGameName")) {
-    const game = CASINO_GAMES.find(g => g.id === gameId);
-    $("casinoGameName").textContent = game.name;
-  }
-}
-
-/* ================================================================================================
-   CASINO SOUND & ANIMATION (ISOLATED)
-================================================================================================ */
-
-const CASINO_SOUNDS = {
-  click: new Audio("/sounds/casino/click.mp3"),
-  win:   new Audio("/sounds/casino/win.mp3"),
-  lose:  new Audio("/sounds/casino/lose.mp3")
-};
-
-function playCasinoSound(type) {
-  if (!FEATURES.CASINO) return;
-  const sound = CASINO_SOUNDS[type];
-  if (!sound) return;
-  sound.currentTime = 0;
-  sound.play().catch(()=>{});
-}
-
-/* ================================================================================================
-   CASINO PLAY (BACKEND)
-================================================================================================ */
-
-async function playCasino(gameId, betAmount) {
-  if (!FEATURES.CASINO) return;
-  if (CASINO_STATE.isPlaying) return;
-  if (!CASINO_GAMES.find(g => g.id === gameId)) return;
-  if (!betAmount || betAmount <= 0) return;
-
-  CASINO_STATE.isPlaying = true;
-  playCasinoSound("click");
-
-  try {
-    const r = await fetch(API_BASE + "/casino/play", {
-      method: "POST",
-      headers: {
-        ...authHeaders(),
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        game: gameId,
-        bet: betAmount,
-        client_seed: CLIENT_SEED
-      })
-    });
-
-    if (!r.ok) throw new Error("Casino play failed");
-
-    const result = await r.json();
-    CASINO_STATE.lastResult = result;
-
-    handleCasinoResult(result);
-  } catch (e) {
-    console.error("Casino error", e);
-  } finally {
-    CASINO_STATE.isPlaying = false;
-  }
-}
-
-function handleCasinoResult(result) {
-  if (!result) return;
-
-  if (result.win) {
-    playCasinoSound("win");
-    toast("You Win!");
-  } else {
-    playCasinoSound("lose");
-    toast("You Lose!");
-  }
-
-  updateCasinoUI(result);
-  loadWallet();
-}
-
-/* ===============================================================================================
-   CASINO – RECENT RESULTS (WIN / LOSS | DYNAMIC | VERTICAL)
-================================================================================================ */
-
-/* ================= CONFIG ================= */
-
-const CASINO_RECENT = {
-  maxItems: 12,
-  winAmounts: [20,44,70,126,576,87,234,412,97,35],
-  lossAmount:[ 5 ,7,17,23,8,34,21,56,15]    
-};
-
-function renderCasinoResult({ user, game, win, amount }) {
-  const list = document.getElementById("bigWinsList");
-  if (!list) return;
-
-  const row = document.createElement("div");
-  row.className = "big-win-row";
-
-  row.innerHTML = `
-    <span class="user">${user}</span>
-    <span class="game">${game}</span>
-    <span class="amount ${win ? "win" : "loss"}">
-      ${win ? "+" + amount : "-" + amount} BX
-    </span>
-  `;
-
-  list.prepend(row);
-
-  while (list.children.length > CASINO_RECENT.maxItems) {
-    list.removeChild(list.lastChild);
-  }
-}
-
-/* ================================================================================================
-   CASINO RESULT RENDER
-================================================================================================ */
-
-function updateCasinoUI(result) {
-  if ($("casinoResult")) {
-    $("casinoResult").textContent = JSON.stringify(result, null, 2);
-  }
-
-  if ($("casinoNonce")) {
-    $("casinoNonce").textContent = result.nonce ?? "-";
-  }
-
-  if ($("casinoServerHash")) {
-    $("casinoServerHash").textContent = result.server_seed_hash ?? "-";
-  }
-}
-
-/* ================================================================================================
-   PROVABLY FAIR VERIFY (CLIENT SIDE)
-================================================================================================ */
-
-function verifyFairness(serverSeed, clientSeed, nonce) {
-  if (!serverSeed || !clientSeed) return null;
-
-  const input = `${serverSeed}:${clientSeed}:${nonce}`;
-  return crypto.subtle.digest("SHA-256", new TextEncoder().encode(input))
-    .then(buf => {
-      return Array.from(new Uint8Array(buf))
-        .map(b => b.toString(16).padStart(2, "0"))
-        .join("");
-    });
-}
-
-/* ================================================================================================
-   FAKE USERS / BOTS ACTIVITY
-================================================================================================ */
-
-function startCasinoBots() {
-  if (!CASINO_STATE.botsEnabled) return;
-
-  setInterval(() => {
-    if (APP_STATE.currentSection !== "casino") return;
-
-    const fakeUser = "User" + Math.floor(Math.random() * 9000);
-    const fakeGame = CASINO_GAMES[Math.floor(Math.random() * CASINO_GAMES.length)].name;
-    const fakeBet = (Math.random() * 10).toFixed(2);
-    const fakeWin = Math.random() > 0.6;
-
-    renderCasinoBotActivity(fakeUser, fakeGame, fakeBet, fakeWin);
-  }, 2000);
-}
-
-function renderCasinoBotActivity(user, game, bet, win) {
-  if (!$("casinoActivity")) return;
-
-  const line = document.createElement("div");
-  line.className = win ? "win" : "lose";
-  line.textContent =
-    `${user} played ${game} with ${bet} BX ${win ? "and WON" : "and LOST"}`;
-
-  $("casinoActivity").prepend(line);
-
-  if ($("casinoActivity").children.length > 20) {
-    $("casinoActivity").removeChild(
-      $("casinoActivity").lastChild
-    );
-  }
-}
-
-/* ================= CAN PLAY CHECK ================= */
-
-function canPlayCasino() {
-  return isAuthenticated() && WALLET.BX > 0 && !CASINO_STATE.isPlaying;
-}
-
-/* ================= GAME BINDING ================= */
-
-function bindCasinoGames() {
-  document.querySelectorAll("#casino .game").forEach(card => {
-    card.addEventListener("click", () => {
-      const game = card.dataset.game;
-      const betAmount = 1; 
-
-      if (!isAuthenticated()) {
-        toast("Please login first");
-        return;
-      }
-
-      if (WALLET.BX < betAmount) {
-        toast("Insufficient BX balance");
-        return;
-      }
-
-      playCasino(game, betAmount);
-    });
-  });
-}
-
-/* ================= INIT ================= */
-
-function initCasino() {
-  bindCasinoGames();
-}
-/*==================================================================
-          MINING STATE
-   
-================================================================= */
+/* =======================================================
+   2.4 — Mining State
+========================================================= */
 
 const MINING_STATE = {
-  activeBX: null,
-  activeBNB: null,
-  activeSOL: null,   
-  history: []
+  activePlan: null,
+  isMining: false,
+  estimatedReturn: 0.0,
+  setPlan(plan) {
+    this.activePlan = plan;
+  },
+
+  startMining() {
+    this.isMining = true;
+  },
+
+  stopMining() {
+    this.isMining = false;
+  },
+
+  setEstimatedReturn(returnAmount) {
+    this.estimatedReturn = returnAmount;
+  }
 };
 
-/* ===============================================================================================
-   MINING CONFIG (DAYS-BASED | COMPACT)
-================================================================================================ */
-
-const MINING_CONFIG = {
-  BX: [
-    { id:"p10", name:"Starter",  days:10, roi:2.5, min:10,  max:100  },
-    { id:"p21", name:"Basic",    days:21, roi:5,   min:50,  max:300  },
-    { id:"p30", name:"Golden",   days:30, roi:8,   min:200, max:800  },
-    { id:"p45", name:"Advanced", days:45, roi:12,  min:400, max:2500 },
-    { id:"p60", name:"Platine",  days:60, roi:17,  min:750, max:9000 },
-    { id:"p90", name:"Infinity", days:90, roi:25,  min:1000,max:20000, vip:true }
-  ],
-
-  SOL: [
-    { id:"p10", name:"Starter",  days:10, roi:1,   min:1,   max:5   },
-    { id:"p21", name:"Basic",    days:21, roi:2.8, min:10,  max:50  },
-    { id:"p30", name:"Golden",   days:30, roi:4,   min:40,  max:160  },
-    { id:"p45", name:"Advanced", days:45, roi:7,   min:120, max:500 },
-    { id:"p60", name:"Platine",  days:60, roi:9,   min:200, max:1000 },
-    { id:"p90", name:"Infinity", days:90, roi:14,  min:500, max:2500, vip:true }
-  ],
-
-  BNB: [
-    { id:"p10", name:"Starter",  days:10, roi:0.8, min:0.05, max:1   },
-    { id:"p21", name:"Basic",    days:21, roi:1.8, min:1,  max:4  },
-    { id:"p30", name:"Golden",   days:30, roi:3,   min:5,  max:50   },
-    { id:"p45", name:"Advanced", days:45, roi:5,   min:10,  max:100  },
-    { id:"p60", name:"Platine",  days:60, roi:7,   min:15,    max:150  },
-    { id:"p90", name:"Infinity", days:90, roi:11,  min:25,    max:200, vip:true }
-  ]
-};
-/* =====================================================
-   STATE
-===================================================== */
-
-let ACTIVE_MINING_COIN = "BX";
-
-/* =====================================================
-   LOAD MINING
-===================================================== */
-
-async function loadMining(){
-  if (!FEATURES.MINING) return;
-
-  renderMiningPlans();
-  if (!isAuthenticated()) return;
-
-  try {
-    const r = await fetch(API_BASE + "/mining/dashboard", {
-      headers: authHeaders()
-    });
-    if (!r.ok) return;
-
-    const data = await r.json();
-    MINING_STATE.activeBX = data?.bx ?? null;
-MINING_STATE.activeBNB = data?.bnb ?? null;
-MINING_STATE.activeSOL = data?.sol ?? null;
-MINING_STATE.history  = data?.history ?? [];
-    renderActiveMining();
-    renderMiningHistory();
-  } catch (e) {
-    console.error("Mining load error", e);
-  }
-}
-
-/* =====================================================
-   RENDER
-===================================================== */
-
-function renderMining(){
-  renderMiningPlans();
-  renderActiveMining();
-  renderMiningHistory();
-}
-
-function renderMiningPlans(){
-  const grid = document.getElementById("miningGrid");
-  if (!grid) return;
-
-  grid.innerHTML = "";
-
-  MINING_CONFIG[ACTIVE_MINING_COIN].forEach(plan => {
-
-    const card = document.createElement("div");
-    card.className = "mining-plan" + (plan.vip ? " vip" : "");
-
-    card.innerHTML = `
-      ${plan.vip ? `<span class="badge">VIP</span>` : ""}
-      <h4>${plan.name}</h4>
-<div class="mining-profit">${plan.roi}%</div>
-      <ul>
-        <li><span>Time</span><strong>${plan.days} days</strong></li>
-<li><span>Min</span><strong>${plan.min} ${ACTIVE_MINING_COIN}</strong></li>
-<li><span>Max</span><strong>${plan.max} ${ACTIVE_MINING_COIN}</strong></li>
-      </ul>
-
-      <button onclick="subscribeMining('${plan.id}')">
-        Subscribe ${ACTIVE_MINING_COIN}
-      </button>
-    `;
-
-    grid.appendChild(card);
-  });
-}
-
-/* =====================================================
-   ACTIVE MINING
-===================================================== */
-
-function renderActiveMining(){
-  if (MINING_STATE.activeBX && document.getElementById("activeBXMining")) {
-    document.getElementById("activeBXMining").innerHTML =
-      renderMiningProgress(MINING_STATE.activeBX);
-  }
-  if (MINING_STATE.activeBNB && document.getElementById("activeBNBMining")) {
-    document.getElementById("activeBNBMining").innerHTML =
-      renderMiningProgress(MINING_STATE.activeBNB);
-  }
-  if (MINING_STATE.activeSOL && document.getElementById("activeSOLMining")) {
-    document.getElementById("activeSOLMining").innerHTML =
-      renderMiningProgress(MINING_STATE.activeSOL);
-  }
-}
-
-function renderMiningProgress(m){
-  const p = (m.days_completed / m.total_days) * 100;
-  return `
-    <div class="mining-progress">
-      <div class="bar"><div style="width:${p}%"></div></div>
-      <small>${m.days_completed} / ${m.total_days} days</small>
-      <small>Earned: ${m.total_earned}</small>
-    </div>
-  `;
-}
-
-/* =====================================================
-   SUBSCRIBE
-===================================================== */
-
-async function subscribeMining(planId) {
-  try {
-    await fetch(API_BASE + "/start_mining", {
-      method: "POST",
-      headers: {
-        ...authHeaders(),
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        asset: ACTIVE_MINING_COIN,
-        investment: planId
-      })
-    });
-
-    toast("Mining activated");
-    loadMining();
-  } catch (e) {
-    toast("Mining failed");
-  }
-}
-
-/* =====================================================
-   HISTORY
-===================================================== */
-
-function renderMiningHistory(){
-  const box = document.getElementById("miningHistory");
-  if (!box) return;
-
-  box.innerHTML = MINING_STATE.history.map(h => `
-    <div class="history-item">
-      <span>${h.date}</span>
-      <span>${h.coin}</span>
-      <span>${h.amount}</span>
-    </div>
-  `).join("");
-}
-
-/* =====================================================
-   COIN SWITCH
-===================================================== */
-
-document.addEventListener("DOMContentLoaded", () => {
-  document.querySelectorAll(".mining-tabs button").forEach(btn => {
-    btn.addEventListener("click", () => {
-      document
-        .querySelectorAll(".mining-tabs button")
-        .forEach(b => b.classList.remove("active"));
-
-      btn.classList.add("active");
-      ACTIVE_MINING_COIN = btn.dataset.coin;
-      renderMiningPlans();
-    });
-  });
-});
-/* =====================================================
-   INIT
-===================================================== */
-
-document.addEventListener("DOMContentLoaded", () => {
-  if (!FEATURES.MINING) return;
-  loadMining();
-});
-
-      
-/* ================================================================================================
-   AIRDROP STATE
-================================================================================================ */
+/* =======================================================
+   2.5 — Airdrop State
+========================================================= */
 
 const AIRDROP_STATE = {
   claimed: false,
-  referrals: 0,
-  rewardBX: 0
+  reward: 2.5,  // Example reward
+  setStatus(claimed, reward) {
+    this.claimed = claimed;
+    this.reward = reward || 2.5;
+  },
+
+  claimAirdrop() {
+    this.claimed = true;
+  }
 };
 
 /* ================================================================================================
-   AIRDROP ACTIONS
-================================================================================================ */
+   PART 3 — API ACTIONS LAYER (BACKEND CONTRACT)
+   -----------------------------------------------------------------------------------------------
+   - التعامل مع API (Backend)
+   - تحديث البيانات (STATE)
+   - لا يتعامل مع DOM
+   - لا يتعامل مع UI مباشرة
+=============================================================== */
 
-async function claimAirdrop() {
-  if (!FEATURES.AIRDROP || !isAuthenticated()) return;
+/* =======================================================
+   3.1 — Load Wallet (Get user wallet data)
+========================================================= */
 
-  try {
-    const r = await fetch(API_BASE + "/airdrop/claim", {
-      method: "POST",
-      headers: authHeaders()
-    });
-
-    if (!r.ok) return;
-
-    const data = await r.json();
-    AIRDROP_STATE.claimed = true;
-    AIRDROP_STATE.rewardBX = data.reward || 0;
-
-    toast("Airdrop claimed");
-    loadWallet();
-    renderAirdrop();
-  } catch (e) {
-    console.error("Airdrop claim error", e);
-  }
-}
-
-async function loadAirdrop() {
-  if (!FEATURES.AIRDROP || !isAuthenticated()) return;
-
-  try {
-    const r = await fetch(API_BASE + "/airdrop/status", {
-      headers: authHeaders()
-    });
-
-    if (!r.ok) return;
-
-    const data = await r.json();
-    AIRDROP_STATE.claimed = data.claimed;
-    AIRDROP_STATE.referrals = data.referrals;
-    AIRDROP_STATE.rewardBX = data.reward;
-
-    renderAirdrop();
-  } catch (e) {
-    console.error("Airdrop load error", e);
-  }
-}
-
-/* ================================================================================================
-   AIRDROP RENDER
-================================================================================================ */
-
-function renderAirdrop() {
-  if ($("airdropStatus")) {
-    $("airdropStatus").textContent =
-      AIRDROP_STATE.claimed ? "Claimed" : "Available";
-  }
-
-  if ($("airdropReward")) {
-    $("airdropReward").textContent =
-      AIRDROP_STATE.rewardBX + " BX";
-  }
-
-  if ($("airdropReferrals")) {
-    $("airdropReferrals").textContent =
-      AIRDROP_STATE.referrals;
-  }
-}
-
-/* ================================================================================================
-   REFERRAL SYSTEM
-================================================================================================ */
-
-function copyReferralLink() {
-  if (!USER.id) return;
-
-  const link = `${location.origin}/?ref=${USER.id}`;
-  navigator.clipboard.writeText(link);
-  toast("Referral link copied");
-}
-
-async function loadReferrals() {
-  if (!isAuthenticated()) return;
-
-  try {
-    const r = await fetch(API_BASE + "/referrals", {
-      headers: authHeaders()
-    });
-    if (!r.ok) return;
-
-    const data = await r.json();
-    AIRDROP_STATE.referrals = data.count || 0;
-
-    renderAirdrop();
-  } catch (e) {
-    console.error("Referral load error", e);
-  }
-}
-
-/* ================================================================================================
-   GLOBAL NAVIGATION
-================================================================================================ */
-
-function autoBindNavigation() {
-  document.querySelectorAll("[data-view]").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const section = btn.dataset.view;
-      if (section) navigate(section);
-    });
-  });
-}
-
-function navigate(section) {
-  if (!section) return;
-
-  APP_STATE.currentSection = section;
-  document.querySelectorAll(".view").forEach(v => {
-    v.classList.remove("active");
-  });
-
-  const target = document.getElementById(section);
-  if (!target) {
-    console.warn("Section not found:", section);
+async function loadWallet() {
+  const data = await safeFetch(API.wallet);
+  if (!data) {
+    toast("Failed to load wallet.");
     return;
   }
-  target.classList.add("active");
+
+  // تحديث حالة wallet بعد استلام البيانات
+  WALLET_STATE.set(data);
+  renderWallet(); // بعد تحديث الـ STATE، رندر الواجهة
+}
+
+/* =======================================================
+   3.2 — Play Casino (Send play request to the backend)
+========================================================= */
+
+async function playCasino(gameId, betAmount) {
+  if (!gameId || betAmount <= 0) {
+    toast("Invalid game or bet amount.");
+    return;
+  }
+
+  const result = await safeFetch(API.casino.play, {
+    method: "POST",
+    body: JSON.stringify({
+      game: gameId,
+      bet: betAmount,
+      client_seed: localStorage.getItem("client_seed") || "default"
+    })
+  });
+
+  if (!result) {
+    toast("Casino service unavailable");
+    return;
+  }
+
+  // تحديث حالة الكازينو بعد اللعب
+  CASINO_STATE.setResult(result);
+  renderCasinoUI(result); // عرض النتيجة
+}
+
+/* =======================================================
+   3.3 — Start Mining (Send mining request)
+========================================================= */
+
+async function startMining(asset, plan) {
+  if (!asset || !plan) {
+    toast("Invalid asset or plan.");
+    return;
+  }
+
+  const result = await safeFetch(API.mining.start, {
+    method: "POST",
+    body: JSON.stringify({
+      asset,
+      plan
+    })
+  });
+
+  if (!result) {
+    toast("Mining service unavailable");
+    return;
+  }
+
+  // تحديث حالة التعدين بعد البدء
+  MINING_STATE.setPlan(plan);
+  MINING_STATE.startMining();
+  renderMiningPlans(); // عرض الخطط المتاحة بعد البدء
+}
+
+/* =======================================================
+   3.4 — Load Mining Status (Get active mining data)
+========================================================= */
+
+async function loadMiningStatus() {
+  const data = await safeFetch(API.mining.status);
+  if (!data) {
+    toast("Failed to load mining status.");
+    return;
+  }
+
+  // تحديث حالة التعدين النشطة
+  MINING_STATE.setPlan(data.plan);
+  MINING_STATE.setEstimatedReturn(data.estimatedReturn);
+  renderActiveMining(); // عرض حالة التعدين النشطة
+}
+
+/* =======================================================
+   3.5 — Airdrop Status (Get user airdrop status)
+========================================================= */
+
+async function loadAirdropStatus() {
+  const data = await safeFetch(API.airdrop.status);
+  if (!data) {
+    toast("Failed to load airdrop status.");
+    return;
+  }
+
+  // تحديث حالة الـ airdrop
+  AIRDROP_STATE.setStatus(data.claimed, data.reward);
+  renderAirdrop(); // عرض حالة الـ airdrop
+}
+
+/* =======================================================
+   3.6 — Claim Airdrop (Send claim request)
+========================================================= */
+
+async function claimAirdrop() {
+  const result = await safeFetch(API.airdrop.claim, { method: "POST" });
+
+  if (!result) {
+    toast("Airdrop service unavailable");
+    return;
+  }
+
+  // تحديث حالة الـ airdrop بعد المطالبة
+  AIRDROP_STATE.claimAirdrop();
+  renderAirdrop(); // عرض حالة الـ airdrop
+  }
+
+/* ================================================================================================
+   PART 4 — UI RENDERING & USER INTERACTION
+   -----------------------------------------------------------------------------------------------
+   - التعامل مع DOM فقط
+   - قراءة STATE
+   - رسم البيانات
+   - bind events البسيطة
+   - بدون fetch
+=============================================================== */
+
+/* =======================================================
+   4.1 — Render Wallet (Update wallet data in UI)
+========================================================= */
+
+function renderWallet() {
+  if (!APP_STATE.ready || !WALLET_STATE) return;
+
+  Object.entries(WALLET_STATE).forEach(([asset, amount]) => {
+    const elementId = `bal-${asset.toLowerCase()}`;
+    const element = $(elementId);
+    if (element) element.textContent = amount.toFixed(2);
+  });
+}
+
+/* =======================================================
+   4.2 — Render Market Price (Display market price)
+========================================================= */
+
+function renderMarketPrice() {
+  if (!APP_STATE.ready || MARKET_STATE.price === 0) return;
+
+  const priceElement = $("lastPrice");
+  if (priceElement) {
+    priceElement.textContent = MARKET_STATE.price.toFixed(4);
+  }
+}
+
+/* =======================================================
+   4.3 — Render Casino UI (Display active game and result)
+========================================================= */
+
+function renderCasinoUI(result) {
+  if (!APP_STATE.ready || !CASINO_STATE) return;
+
+  const gameElement = $("activeGame");
+  const resultElement = $("gameResult");
+
+  if (gameElement) {
+    gameElement.textContent = `Active Game: ${CASINO_STATE.activeGame || "None"}`;
+  }
+
+  if (resultElement) {
+    resultElement.textContent = `Result: ${result ? result.win ? "You Win!" : "You Lose!" : "Waiting..."}`;
+  }
+}
+
+/* =======================================================
+   4.4 — Render Mining Plans (Display mining plans)
+========================================================= */
+
+function renderMiningPlans() {
+  if (!APP_STATE.ready || !MINING_STATE) return;
+
+  const plansContainer = $("miningPlansContainer");
+  if (!plansContainer) return;
+
+  plansContainer.innerHTML = ""; // Clear existing plans
+
+  // Example of rendering predefined mining plans (you may adjust based on actual state)
+  const plans = [
+    { name: "Starter", roi: 0.025, min: 10, max: 100, days: 10 },
+    { name: "Basic", roi: 0.05, min: 50, max: 300, days: 21 },
+    { name: "Golden", roi: 0.08, min: 200, max: 800, days: 30 }
+  ];
+
+  plans.forEach(plan => {
+    const planElement = document.createElement("div");
+    planElement.classList.add("miningPlan");
+    planElement.innerHTML = `
+      <div>${plan.name}</div>
+      <div>ROI: ${plan.roi * 100}%</div>
+      <div>Investment: ${plan.min} - ${plan.max}</div>
+      <div>Duration: ${plan.days} days</div>
+    `;
+    plansContainer.appendChild(planElement);
+  });
+}
+
+/* =======================================================
+   4.5 — Render Active Mining (Display active mining status)
+========================================================= */
+
+function renderActiveMining() {
+  if (!APP_STATE.ready || !MINING_STATE) return;
+
+  const activeMiningElement = $("activeMining");
+  const roiElement = $("activeMiningROI");
+  const returnElement = $("estimatedReturn");
+
+  if (activeMiningElement) {
+    activeMiningElement.textContent = `Active Plan: ${MINING_STATE.activePlan || "None"}`;
+  }
+
+  if (roiElement && MINING_STATE.activePlan) {
+    roiElement.textContent = `ROI: ${MINING_STATE.activePlan.roi * 100}%`;
+  }
+
+  if (returnElement && MINING_STATE.estimatedReturn) {
+    returnElement.textContent = `Estimated Return: ${MINING_STATE.estimatedReturn.toFixed(2)} USDT`;
+  }
+}
+
+/* =======================================================
+   4.6 — Render Airdrop (Display airdrop status)
+========================================================= */
+
+function renderAirdrop() {
+  if (!APP_STATE.ready || !AIRDROP_STATE) return;
+
+  const airdropStatusElement = $("airdropStatus");
+  const airdropRewardElement = $("airdropReward");
+
+  if (airdropStatusElement) {
+    airdropStatusElement.textContent = AIRDROP_STATE.claimed ? "Claimed" : "Not Claimed";
+  }
+
+  if (airdropRewardElement) {
+    airdropRewardElement.textContent = `Reward: ${AIRDROP_STATE.reward} USDT`;
+  }
+}
+
+/* =======================================================
+   4.7 — Bind Events (Add event listeners)
+========================================================= */
+
+function bindEvents() {
+  // Example for button clicks (can be expanded)
+  $("claimAirdropButton")?.addEventListener("click", () => {
+    claimAirdrop();
+  });
+
+  $("startMiningButton")?.addEventListener("click", () => {
+    startMining("BX", "Starter");
+  });
+
+  $("playCasinoButton")?.addEventListener("click", () => {
+    playCasino("blackjack", 10);
+  });
+}
+
+"use strict";
+
+/* ================================================================================================
+   PART 5 — ORCHESTRATION & LIFECYCLE
+   -----------------------------------------------------------------------------------------------
+   - التحكم في التوقيت
+   - navigation
+   - loops (start/stop)
+   - DOMContentLoaded
+   - ربط الأجزاء السابقة
+=============================================================== */
+
+/* =======================================================
+   5.1 — Initialize Application (On DOMContentLoaded)
+========================================================= */
+
+document.addEventListener("DOMContentLoaded", () => {
+  // إعداد الـ navigation بين الأقسام
+  bindNavigation();
+
+  // تحميل البيانات الأولية (wallet)
+  loadWallet();
+
+  // التحقق من حالة التعدين
+  loadMiningStatus();
+
+  // التحقق من حالة الـ airdrop
+  loadAirdropStatus();
+
+  // بدء التفاعل مع السوق (Market)
+  startMarket();
+
+  // تحديد أن التطبيق جاهز
+  APP_STATE.ready = true;
+
+  // تحميل البيانات الافتراضية
+  navigate(APP_STATE.view);
+});
+
+/* =======================================================
+   5.2 — Navigation (Control view transitions)
+========================================================= */
+
+function navigate(view) {
+  if (!view) return;
+
+  // تحديث الحالة الحالية (view)
+  APP_STATE.view = view;
+
+  // إخفاء جميع الأقسام
+  document.querySelectorAll(".view").forEach(v =>
+    v.classList.remove("active")
+  );
+
+  // إظهار القسم الحالي
+  const target = document.getElementById(view);
+  if (target) target.classList.add("active");
+
+  // تحديث حالة الـ bottom navigation
   document.querySelectorAll(".bottom-nav button").forEach(b =>
     b.classList.remove("active")
   );
 
   const btn = document.querySelector(
-    `.bottom-nav button[data-view="${section}"]`
+    `.bottom-nav button[data-view="${view}"]`
   );
   if (btn) btn.classList.add("active");
 
-  /* =======================
-     SECTION SIDE EFFECTS
-  ======================= */
-   
-  if (section === "market") {
-    initMarketChart?.();
-    startMarketLoop?.();
+  // تنفيذ أي عمليات بناء على القسم الحالي
+  if (view === "market") {
+    startMarket();
+  } else if (view === "casino") {
+    startCasino();
   } else {
-    stopMarketLoop?.();
-  }
-
-  if (section === "casino") {
-    startBigWinsFeed?.();
-  } else {
-    stopBigWinsFeed?.();
+    stopMarket();
+    stopCasino();
   }
 }
-         
-/* ===================================================================
-   FINAL INIT
-================================================================*/
-document.addEventListener("DOMContentLoaded", () => {
 
-  autoBindNavigation();
-  navigate("wallet");
+/* =======================================================
+   5.3 — Start/Stop Market Loop (Simulate market behavior)
+========================================================= */
 
-  if (FEATURES.WALLET && isAuthenticated()) {
-    loadWallet();
+let marketLoopTimer = null;
+
+function startMarket() {
+  if (marketLoopTimer) return; // لا نبدأ إلا إذا كانت الدورة متوقفة
+  marketLoopTimer = setInterval(() => {
+    if (!APP_STATE.ready || APP_STATE.view !== "market") return;
+    MARKET_STATE.price += (Math.random() - 0.5) * 0.02;
+    renderMarketPrice(); // تحديث عرض السعر
+  }, 1200); // كل 1.2 ثانية
+}
+
+function stopMarket() {
+  if (marketLoopTimer) {
+    clearInterval(marketLoopTimer);
+    marketLoopTimer = null;
+  }
+}
+
+/* =======================================================
+   5.4 — Start/Stop Casino (Start/Stop game bots)
+========================================================= */
+
+let casinoBotsTimer = null;
+
+function startCasino() {
+  if (casinoBotsTimer) return; // لا نبدأ إلا إذا كانت الدورة متوقفة
+  casinoBotsTimer = setInterval(() => {
+    if (!APP_STATE.ready || APP_STATE.view !== "casino") return;
+    playCasino("blackjack", 10); // المثال: بدء لعبة كازينو افتراضية
+  }, 5000); // كل 5 ثواني
+}
+
+function stopCasino() {
+  if (casinoBotsTimer) {
+    clearInterval(casinoBotsTimer);
+    casinoBotsTimer = null;
+  }
+}
+
+/* =======================================================
+   5.5 — Auto Bind Navigation (To link navigation events)
+========================================================= */
+
+function bindNavigation() {
+  // ربط الأزرار بالأحداث
+  document.querySelectorAll("[data-view]").forEach(btn => {
+    btn.onclick = () => navigate(btn.dataset.view);
+  });
+}
+
+/* =======================================================
+   5.6 — Automatic Actions for Specific Views
+========================================================= */
+
+function startAutoActions() {
+  if (APP_STATE.view === "market") {
+    startMarket(); // ابدأ السوق مباشرة
   }
 
-  if (FEATURES.MARKET) {
-    startMarketLoop();
+  if (APP_STATE.view === "casino") {
+    startCasino(); // ابدأ الكازينو مباشرة
   }
-
-  if (FEATURES.CASINO) {
-    initCasino();
-    startCasinoBots();
-  }
-
-  if (FEATURES.MINING) {
-    loadMining();
-  }
-
-  APP_STATE.ready = true;
-});
+                          }
