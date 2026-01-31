@@ -478,7 +478,7 @@ function renderActiveMining() {
   const returnElement = $("estimatedReturn");
 
   if (activeMiningElement) {
-    activeMiningElement.textContent = `Active Plan: ${MINING_STATE.activePlan || "None"}`;
+    activeMiningElement.textContent = `Active Plan: ${MINING_STATE.activePlan ? MINING_STATE.activePlan.name : "None"}`;
   }
 
   if (roiElement && MINING_STATE.activePlan) {
@@ -488,6 +488,16 @@ function renderActiveMining() {
   if (returnElement && MINING_STATE.estimatedReturn) {
     returnElement.textContent = `Estimated Return: ${MINING_STATE.estimatedReturn.toFixed(2)} USDT`;
   }
+}
+
+/* =======================================================
+   Select Mining Plan (When user selects a plan)
+========================================================= */
+
+function selectMiningPlan(plan) {
+  MINING_STATE.setPlan(plan);
+  MINING_STATE.startMining();
+  renderActiveMining(); // Update the active mining status
 }
 
 /* =======================================================
@@ -616,7 +626,7 @@ function startMarket() {
   if (marketLoopTimer) return; // لا نبدأ إلا إذا كانت الدورة متوقفة
   marketLoopTimer = setInterval(() => {
     if (!APP_STATE.ready || APP_STATE.view !== "market") return;
-    MARKET_STATE.price += (Math.random() - 0.5) * 0.02;
+    MARKET_STATE.price += (Math.random() - 2.5) * 0.02;
     renderMarketPrice(); // تحديث عرض السعر
   }, 1200); // كل 1.2 ثانية
 }
