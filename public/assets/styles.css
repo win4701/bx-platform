@@ -619,7 +619,6 @@ input{
   overflow-x: hidden !important;
 }
 
-/* عنصر واحد */
 .big-win-row {
   display: flex;
   justify-content: space-between;
@@ -663,7 +662,7 @@ input{
   font-weight: 800;
    
 }
-/* منع أي التفاف أفقي قديم */
+
 .big-win-row span {
   white-space: normal !important;
 }
@@ -736,24 +735,20 @@ input{
 }
 
 .mining-tabs{
-  display:flex;
-  gap:12px;
+  display: flex;
+  justify-content: space-around;
   margin-bottom: 20px;
 }
 
 .mining-tabs button{
-  flex:1;
-  height:42px;
-  border-radius:18px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:8px;
-  background:#020617;
-  border:1px solid #1e293b;
-  color:#94a3b8;
-  font-weight:800;
+  background-color: #222;
+  color: white;
+  padding: 10px 20px;
+  border: 1px solid #444;
+  border-radius: 8px;
+  cursor: pointer;
 }
+
 
 .mining-tabs button img{
   width:22px;
@@ -761,9 +756,7 @@ input{
 }
 
 .mining-tabs button.active{
-  background:linear-gradient(135deg,#22c55e,#6ee7a8);
-  color:#022c22;
-  border:none;
+  background-color: #44c8b2;
 }
 
 /* ================= MINING PLANS ================= */
