@@ -188,6 +188,11 @@ const MINING_STATE = {
   activePlan: null,
   isMining: false,
   estimatedReturn: 0.0,
+  availablePlans: [
+    { name: "Starter", roi: 0.025, min: 10, max: 100, days: 10 },
+    { name: "Basic", roi: 0.05, min: 50, max: 300, days: 21 },
+    { name: "Golden", roi: 0.08, min: 200, max: 800, days: 30 }
+  ], // الخطط الافتراضية
   setPlan(plan) {
     this.activePlan = plan;
   },
@@ -302,8 +307,9 @@ async function startMining(asset, plan) {
   // تحديث حالة التعدين بعد البدء
   MINING_STATE.setPlan(plan);
   MINING_STATE.startMining();
-  renderMiningPlans(); // عرض الخطط المتاحة بعد البدء
+  renderMiningPlans(); // تحديث عرض خطط التعدين بعد البدء
 }
+
 
 /* =======================================================
    3.4 — Load Mining Status (Get active mining data)
@@ -416,21 +422,15 @@ function renderCasinoUI(result) {
 ========================================================= */
 
 function renderMiningPlans() {
-  if (!APP_STATE.ready || !MINING_STATE) return;
+  if (!APP_STATE.ready || !MINING_STATE || !MINING_STATE.availablePlans) return;
 
   const plansContainer = $("miningPlansContainer");
   if (!plansContainer) return;
 
   plansContainer.innerHTML = ""; // Clear existing plans
 
-  // Example of rendering predefined mining plans (you may adjust based on actual state)
-  const plans = [
-    { name: "Starter", roi: 0.025, min: 10, max: 100, days: 10 },
-    { name: "Basic", roi: 0.05, min: 50, max: 300, days: 21 },
-    { name: "Golden", roi: 0.08, min: 200, max: 800, days: 30 }
-  ];
-
-  plans.forEach(plan => {
+  // عرض الخطط المتاحة بناءً على MINING_STATE
+  MINING_STATE.availablePlans.forEach(plan => {
     const planElement = document.createElement("div");
     planElement.classList.add("miningPlan");
     planElement.innerHTML = `
