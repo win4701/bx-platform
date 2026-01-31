@@ -561,19 +561,15 @@ document.addEventListener("DOMContentLoaded", () => {
 function navigate(view) {
   if (!view) return;
 
-  // تحديث الحالة الحالية (view)
   APP_STATE.view = view;
 
-  // إخفاء جميع الأقسام
   document.querySelectorAll(".view").forEach(v =>
     v.classList.remove("active")
   );
 
-  // إظهار القسم الحالي
   const target = document.getElementById(view);
   if (target) target.classList.add("active");
 
-  // تحديث حالة الـ bottom navigation
   document.querySelectorAll(".bottom-nav button").forEach(b =>
     b.classList.remove("active")
   );
@@ -583,18 +579,18 @@ function navigate(view) {
   );
   if (btn) btn.classList.add("active");
 
-  // تنفيذ أي عمليات بناء على القسم الحالي
   if (view === "market") {
     startMarket();
   } else if (view === "casino") {
     startCasino();
   } else if (view === "mining") {
-    renderMiningPlans();  // تأكد من أن الخطط تظهر عند الانتقال إلى قسم التعدين
+    renderMiningPlans();  
   } else {
     stopMarket();
     stopCasino();
   }
 }
+
 /* =======================================================
    5.3 — Start/Stop Market Loop (Simulate market behavior)
 ========================================================= */
