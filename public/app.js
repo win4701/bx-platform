@@ -557,7 +557,6 @@ document.addEventListener("DOMContentLoaded", () => {
 /* =======================================================
    5.2 — Navigation (Control view transitions)
 ========================================================= */
-
 // دالة لتنقل بين الأقسام وتعيين "active" بشكل صحيح
 function navigate(view) {
   if (!view) return;
