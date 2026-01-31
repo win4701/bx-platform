@@ -1,16 +1,5 @@
 "use strict";
 
-/* ================================================================================================
-   PART 1 — CORE & CONTRACT LAYER
-   -----------------------------------------------------------------------------------------------
-   - ثوابت عامة
-   - إعدادات التطبيق
-   - حالة عامة (APP_STATE)
-   - المستخدم والمصادقة
-   - Helpers (DOM, logging, toast)
-   - API contract (المسارات فقط)
-=============================================================== */
-
 /* =======================================================
    1.1 — API Base URL
 ========================================================= */
@@ -23,7 +12,7 @@ const API_BASE = "https://bx-backend.fly.dev"; // اكتب رابط الـ API �
 
 const APP_STATE = {
   ready: false, // تعني أن التطبيق جاهز
-  view: "wallet", // القسم النشط في الواجهة
+  view: "wallet", 
   user: null, // تفاصيل المستخدم
   isLoading: false // حالة التحميل العامة
 };
@@ -95,15 +84,6 @@ const API = {
   }
 };
 
-/* ================================================================================================
-   PART 2 — STATE & DATA LAYER (SINGLE SOURCE OF TRUTH)
-   -----------------------------------------------------------------------------------------------
-   - كل الحالات (Wallet / Market / Casino / Mining / Airdrop)
-   - قيم افتراضية
-   - بدون DOM
-   - بدون fetch
-=============================================================== */
-
 /* =======================================================
    2.1 — Wallet State
 ========================================================= */
@@ -140,8 +120,9 @@ const WALLET_STATE = {
 
 const MARKET_STATE = {
   price: 0.0,
-  pair: "BX/USDT",  // يمكن تغييره حسب السوق
-  spread: 0.02,     // مثال: spread between buy and sell price
+  pair: "BX/USDT",  
+  spread: 0.22,    
+  between buy and sell price
   set(price) {
     this.price = price;
   },
@@ -255,15 +236,6 @@ const AIRDROP_STATE = {
   }
 };
 
-/* ================================================================================================
-   PART 3 — API ACTIONS LAYER (BACKEND CONTRACT)
-   -----------------------------------------------------------------------------------------------
-   - التعامل مع API (Backend)
-   - تحديث البيانات (STATE)
-   - لا يتعامل مع DOM
-   - لا يتعامل مع UI مباشرة
-=============================================================== */
-
 /* =======================================================
    3.1 — Load Wallet (Get user wallet data)
 ========================================================= */
@@ -277,7 +249,7 @@ async function loadWallet() {
 
   // تحديث حالة wallet بعد استلام البيانات
   WALLET_STATE.set(data);
-  renderWallet(); // بعد تحديث الـ STATE، رندر الواجهة
+  renderWallet(); STATE، 
 }
 
 /* =======================================================
@@ -386,16 +358,6 @@ async function claimAirdrop() {
   renderAirdrop(); // عرض حالة الـ airdrop
   }
 
-/* ================================================================================================
-   PART 4 — UI RENDERING & USER INTERACTION
-   -----------------------------------------------------------------------------------------------
-   - التعامل مع DOM فقط
-   - قراءة STATE
-   - رسم البيانات
-   - bind events البسيطة
-   - بدون fetch
-=============================================================== */
-
 /* =======================================================
    4.1 — Render Wallet (Update wallet data in UI)
 ========================================================= */
@@ -445,15 +407,15 @@ function renderCasinoUI(result) {
 /* =======================================================
    4.4 — Render Mining Plans (Display mining plans)
 ========================================================= */
+
 function renderMiningPlans() {
   if (!APP_STATE.ready || !MINING_STATE || !MINING_STATE.availablePlans) return;
 
   const plansContainer = $("miningGrid");
   if (!plansContainer) return;
 
-  plansContainer.innerHTML = ""; // مسح الخطط السابقة
+  plansContainer.innerHTML = ""; 
 
-  // عرض الخطط بناءً على العملة النشطة
   const activePlans = MINING_STATE.availablePlans[ACTIVE_MINING_COIN];
 
   activePlans.forEach(plan => {
@@ -469,11 +431,12 @@ function renderMiningPlans() {
         <div><strong>Investment:</strong> ${plan.min} - ${plan.max}</div>
         <div><strong>Duration:</strong> ${plan.days} days</div>
       </div>
-      <button class="subscribe-button" onclick="subscribeMining('${plan.id}')">Subscribe</button>
+      <button class="subscribe-button" onclick="selectMiningPlan('${plan.id}')">Subscribe</button>
     `;
     plansContainer.appendChild(planElement);
   });
 }
+
 /* =======================================================
    4.5 — Render Active Mining (Display active mining status)
 ========================================================= */
@@ -507,7 +470,6 @@ document.querySelectorAll(".mining-tabs button").forEach(btn => {
     // تعيين العملة النشطة
     ACTIVE_MINING_COIN = btn.dataset.coin;
 
-    // تحديث الخطط المعروضة بناءً على العملة النشطة
     renderMiningPlans();
   });
 });
@@ -516,10 +478,17 @@ document.querySelectorAll(".mining-tabs button").forEach(btn => {
    Select Mining Plan (When user selects a plan)
 ========================================================= */
 
-function selectMiningPlan(plan) {
-  MINING_STATE.setPlan(plan);
+function selectMiningPlan(planId) {
+  const selectedPlan = MINING_STATE.availablePlans[ACTIVE_MINING_COIN].find(plan => plan.id === planId);
+  
+  if (!selectedPlan) {
+    toast("Invalid mining plan selected.");
+    return;
+  }
+
+  MINING_STATE.setPlan(ACTIVE_MINING_COIN, selectedPlan);
   MINING_STATE.startMining();
-  renderActiveMining(); // Update the active mining status
+  renderActiveMining();  
 }
 
 /* =======================================================
@@ -560,16 +529,6 @@ function bindEvents() {
   });
 }
 
-/* ================================================================================================
-   PART 5 — ORCHESTRATION & LIFECYCLE
-   -----------------------------------------------------------------------------------------------
-   - التحكم في التوقيت
-   - navigation
-   - loops (start/stop)
-   - DOMContentLoaded
-   - ربط الأجزاء السابقة
-=============================================================== */
-
 /* =======================================================
    5.1 — Initialize Application (On DOMContentLoaded)
 ========================================================= */
@@ -590,10 +549,8 @@ document.addEventListener("DOMContentLoaded", () => {
   // بدء التفاعل مع السوق (Market)
   startMarket();
 
-  // تحديد أن التطبيق جاهز
   APP_STATE.ready = true;
 
-  // تحميل البيانات الافتراضية
   navigate(APP_STATE.view);
 });
 
