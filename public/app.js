@@ -77,7 +77,7 @@ const API = {
   },
   airdrop: {
     status: "/bxing/airdrop/status", 
-    claim: "/bxing/airdrop/claim" /
+    claim: "/bxing/airdrop/claim" 
   }
 };
 
