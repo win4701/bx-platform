@@ -11,10 +11,10 @@ const API_BASE = "https://bx-backend.fly.dev"; // اكتب رابط الـ API �
 ========================================================= */
 
 const APP_STATE = {
-  ready: false, // تعني أن التطبيق جاهز
+  ready: false, 
   view: "wallet", 
-  user: null, // تفاصيل المستخدم
-  isLoading: false // حالة التحميل العامة
+  user: null, 
+  isLoading: false 
 };
 
 /* =======================================================
@@ -22,7 +22,7 @@ const APP_STATE = {
 ========================================================= */
 
 const USER = {
-  jwt: localStorage.getItem("jwt") || null, // JSON Web Token للمصادقة
+  jwt: localStorage.getItem("jwt") || null, 
   isAuthenticated() {
     return this.jwt !== null;
   },
@@ -44,19 +44,17 @@ function authHeaders() {
    1.5 — Helper functions (DOM, Toasts, Logging)
 ========================================================= */
 
-// DOM helper (لإيجاد العناصر بسهولة)
 function $(id) {
   return document.getElementById(id);
 }
 
-// توست للرسائل التنبيهية
 function toast(message) {
   if (!message) return;
   const el = document.createElement("div");
   el.className = "toast";
   el.textContent = message;
   document.body.appendChild(el);
-  setTimeout(() => el.remove(), 3000); // الرسالة تختفي بعد 3 ثواني
+  setTimeout(() => el.remove(), 3000); 
 }
 
 function log(message) {
@@ -68,17 +66,17 @@ function log(message) {
 ========================================================= */
 
 const API = {
-  wallet: "/finance/wallet", // بيانات المحفظة
+  wallet: "/finance/wallet", 
   casino: {
-    play: "/casino/play", // لعب الكازينو
+    play: "/casino/play", 
     history: "/casino/history"
   },
   mining: {
-    start: "/bxing/mining/start", // بداية التعدين
+    start: "/bxing/mining/start", 
     status: "/bxing/mining/status"
   },
   airdrop: {
-    status: "/bxing/airdrop/status", // حالة الـ air drop
+    status: "/bxing/airdrop/status", 
     claim: "/bxing/airdrop/claim" /
   }
 };
@@ -544,14 +542,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
 function navigate(view) {
   if (!view) return;
-   
+
   APP_STATE.view = view;
+
   document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
 
   const target = document.getElementById(view);
   if (target) target.classList.add("active");
 
-  // تحديث حالة الـ bottom navigation
   document.querySelectorAll(".bottom-nav button").forEach(b =>
     b.classList.remove("active")
   );
@@ -609,15 +607,15 @@ function stopCasino() {
    5.5 — Auto Bind Navigation (To link navigation events)
 ========================================================= */
 
+document.addEventListener("DOMContentLoaded", () => {
+  bindNavigation();  
+});
+
 function bindNavigation() {
   document.querySelectorAll("[data-view]").forEach(btn => {
-    btn.onclick = () => navigate(btn.dataset.view);
+    btn.onclick = () => navigate(btn.dataset.view); 
   });
 }
-
-document.addEventListener("DOMContentLoaded", () => {
-  bindNavigation(); 
-});
 
 /* =======================================================
    5.6 — Automatic Actions for Specific Views
