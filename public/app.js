@@ -4,7 +4,7 @@
    1.1 — API Base URL
 ========================================================= */
 
-const API_BASE = "https://bx-backend.fly.dev"; // اكتب رابط الـ API هنا
+const API_BASE = "https://bx-backend.fly.dev"; 
 
 /* =======================================================
    1.2 — App State
@@ -118,7 +118,7 @@ const WALLET_STATE = {
 const MARKET_STATE = {
   price: 0.0,
   pair: "BX/USDT",  
-  spread: 0.22,    
+  spread: 0.32,    
   between buy and sell price
   set(price) {
     this.price = price;
