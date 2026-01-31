@@ -445,19 +445,35 @@ function renderCasinoUI(result) {
 /* =======================================================
    4.4 — Render Mining Plans (Display mining plans)
 ========================================================= */
-function selectMiningPlan(planId) {
-  const selectedPlan = MINING_STATE.availablePlans[MINING_STATE.activeCoin].find(plan => plan.id === planId);
-  
-  if (!selectedPlan) {
-    alert("Invalid plan selected");
-    return;
-  }
+function renderMiningPlans() {
+  if (!APP_STATE.ready || !MINING_STATE || !MINING_STATE.availablePlans) return;
 
-  MINING_STATE.setPlan(MINING_STATE.activeCoin, selectedPlan);
-  alert(`Selected: ${selectedPlan.name}`);
-  renderActiveMining();  // Update mining status UI
+  const plansContainer = $("miningGrid");
+  if (!plansContainer) return;
+
+  plansContainer.innerHTML = ""; // مسح الخطط السابقة
+
+  // عرض الخطط بناءً على العملة النشطة
+  const activePlans = MINING_STATE.availablePlans[ACTIVE_MINING_COIN];
+
+  activePlans.forEach(plan => {
+    const planElement = document.createElement("div");
+    planElement.classList.add("mining-plan");
+    planElement.innerHTML = `
+      <div class="plan-header">
+        <h3>${plan.name}</h3>
+        ${plan.vip ? `<span class="badge vip">VIP</span>` : ""}
+      </div>
+      <div class="plan-details">
+        <div><strong>ROI:</strong> ${plan.roi * 100}%</div>
+        <div><strong>Investment:</strong> ${plan.min} - ${plan.max}</div>
+        <div><strong>Duration:</strong> ${plan.days} days</div>
+      </div>
+      <button class="subscribe-button" onclick="subscribeMining('${plan.id}')">Subscribe</button>
+    `;
+    plansContainer.appendChild(planElement);
+  });
 }
-
 /* =======================================================
    4.5 — Render Active Mining (Display active mining status)
 ========================================================= */
@@ -474,6 +490,27 @@ function renderActiveMining() {
     estimatedReturnElement.textContent = `Estimated Return: ${MINING_STATE.estimatedReturn} BX`;
   }
 }
+
+/*====================================================
+   button Mining  (When user selects a plan)
+========================================================= */
+
+document.querySelectorAll(".mining-tabs button").forEach(btn => {
+  btn.addEventListener("click", () => {
+    // إزالة الفئة active عن جميع الأزرار
+    document.querySelectorAll(".mining-tabs button")
+      .forEach(b => b.classList.remove("active"));
+
+    // إضافة الفئة active على العملة المحددة
+    btn.classList.add("active");
+
+    // تعيين العملة النشطة
+    ACTIVE_MINING_COIN = btn.dataset.coin;
+
+    // تحديث الخطط المعروضة بناءً على العملة النشطة
+    renderMiningPlans();
+  });
+});
 
 /* =======================================================
    Select Mining Plan (When user selects a plan)
@@ -611,7 +648,7 @@ function startMarket() {
   if (marketLoopTimer) return; // لا نبدأ إلا إذا كانت الدورة متوقفة
   marketLoopTimer = setInterval(() => {
     if (!APP_STATE.ready || APP_STATE.view !== "market") return;
-    MARKET_STATE.price += (Math.random() - 2.5) * 0.02;
+    MARKET_STATE.price += (Math.random() - 0.5) * 0.32;
     renderMarketPrice(); // تحديث عرض السعر
   }, 1200); // كل 1.2 ثانية
 }
