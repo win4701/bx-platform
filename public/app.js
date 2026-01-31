@@ -521,21 +521,20 @@ function bindEvents() {
 ========================================================= */
 
 document.addEventListener("DOMContentLoaded", () => {
-   
   bindNavigation();
-
   loadWallet();
-
   loadMiningStatus();
-
   loadAirdropStatus();
-
   startMarket();
-
   APP_STATE.ready = true;
-
   navigate(APP_STATE.view);
 });
+
+function bindNavigation() {
+  document.querySelectorAll("[data-view]").forEach(btn => {
+    btn.onclick = () => navigate(btn.dataset.view); 
+  });
+}
 
 /* =======================================================
    5.2 — Navigation (Control view transitions)
