@@ -59,7 +59,6 @@ function toast(message) {
   setTimeout(() => el.remove(), 3000); // الرسالة تختفي بعد 3 ثواني
 }
 
-// تسجيل الأخطاء في الـ console
 function log(message) {
   console.log(message);
 }
@@ -80,7 +79,7 @@ const API = {
   },
   airdrop: {
     status: "/bxing/airdrop/status", // حالة الـ air drop
-    claim: "/bxing/airdrop/claim" // المطالبة بالـ air drop
+    claim: "/bxing/airdrop/claim" /
   }
 };
 
@@ -207,7 +206,6 @@ const MINING_STATE = {
       throw new Error("No mining plan selected");
     }
     this.isMining = true;
-    // Logica for mining start can go here
   },
 
   stopMining() {
@@ -225,7 +223,7 @@ const MINING_STATE = {
 
 const AIRDROP_STATE = {
   claimed: false,
-  reward: 2.5,  // Example reward
+  reward: 2.5,  
   setStatus(claimed, reward) {
     this.claimed = claimed;
     this.reward = reward || 2.5;
@@ -247,7 +245,6 @@ async function loadWallet() {
     return;
   }
 
-  // تحديث حالة wallet بعد استلام البيانات
   WALLET_STATE.set(data);
   renderWallet(); STATE، 
 }
@@ -276,9 +273,8 @@ async function playCasino(gameId, betAmount) {
     return;
   }
 
-  // تحديث حالة الكازينو بعد اللعب
   CASINO_STATE.setResult(result);
-  renderCasinoUI(result); // عرض النتيجة
+  renderCasinoUI(result); 
 }
 
 /* =======================================================
@@ -304,10 +300,9 @@ async function startMining(asset, plan) {
     return;
   }
 
-  // تحديث حالة التعدين بعد البدء
   MINING_STATE.setPlan(plan);
   MINING_STATE.startMining();
-  renderMiningPlans(); // إعادة عرض خطط التعدين بعد البدء
+  renderMiningPlans(); 
 }
 
 /* =======================================================
@@ -321,10 +316,9 @@ async function loadMiningStatus() {
     return;
   }
 
-  // تحديث حالة التعدين النشطة
   MINING_STATE.setPlan(data.plan);
   MINING_STATE.setEstimatedReturn(data.estimatedReturn);
-  renderActiveMining(); // عرض حالة التعدين النشطة
+  renderActiveMining(); 
 }
 
 /* =======================================================
@@ -338,7 +332,7 @@ async function loadAirdropStatus() {
     return;
   }
   AIRDROP_STATE.setStatus(data.claimed, data.reward);
-  renderAirdrop(); // عرض حالة الـ airdrop
+  renderAirdrop(); 
 }
 
 /* =======================================================
@@ -353,9 +347,8 @@ async function claimAirdrop() {
     return;
   }
 
-  // تحديث حالة الـ airdrop بعد المطالبة
   AIRDROP_STATE.claimAirdrop();
-  renderAirdrop(); // عرض حالة الـ airdrop
+  renderAirdrop(); 
   }
 
 /* =======================================================
@@ -423,7 +416,7 @@ function renderMiningPlans() {
     planElement.classList.add("mining-plan");
     planElement.innerHTML = `
       <div class="plan-header">
-        <h3>${plan.name}</h3>
+        <h4>${plan.name}</h4>
         ${plan.vip ? `<span class="badge vip">VIP</span>` : ""}
       </div>
       <div class="plan-details">
@@ -460,14 +453,11 @@ function renderActiveMining() {
 
 document.querySelectorAll(".mining-tabs button").forEach(btn => {
   btn.addEventListener("click", () => {
-    // إزالة الفئة active عن جميع الأزرار
     document.querySelectorAll(".mining-tabs button")
       .forEach(b => b.classList.remove("active"));
 
-    // إضافة الفئة active على العملة المحددة
     btn.classList.add("active");
 
-    // تعيين العملة النشطة
     ACTIVE_MINING_COIN = btn.dataset.coin;
 
     renderMiningPlans();
@@ -515,7 +505,6 @@ function renderAirdrop() {
 ========================================================= */
 
 function bindEvents() {
-  // Example for button clicks (can be expanded)
   $("claimAirdropButton")?.addEventListener("click", () => {
     claimAirdrop();
   });
@@ -534,19 +523,14 @@ function bindEvents() {
 ========================================================= */
 
 document.addEventListener("DOMContentLoaded", () => {
-  // إعداد الـ navigation بين الأقسام
   bindNavigation();
 
-  // تحميل البيانات الأولية (مثل المحفظة)
   loadWallet();
 
-  // التحقق من حالة التعدين
   loadMiningStatus();
 
-  // التحقق من حالة الـ airdrop
   loadAirdropStatus();
 
-  // بدء التفاعل مع السوق (Market)
   startMarket();
 
   APP_STATE.ready = true;
@@ -557,22 +541,18 @@ document.addEventListener("DOMContentLoaded", () => {
 /* =======================================================
    5.2 — Navigation (Control view transitions)
 ========================================================= */
+
 function navigate(view) {
   if (!view) return;
 
-  // تحديث الحالة الحالية (view)
   APP_STATE.view = view;
-
-  // إخفاء جميع الأقسام
   document.querySelectorAll(".view").forEach(v =>
     v.classList.remove("active")
   );
 
-  // إظهار القسم الحالي
   const target = document.getElementById(view);
   if (target) target.classList.add("active");
 
-  // تحديث حالة الـ bottom navigation
   document.querySelectorAll(".bottom-nav button").forEach(b =>
     b.classList.remove("active")
   );
@@ -582,13 +562,12 @@ function navigate(view) {
   );
   if (btn) btn.classList.add("active");
 
-  // تنفيذ أي عمليات بناء على القسم الحالي
   if (view === "market") {
     startMarket();
   } else if (view === "casino") {
     startCasino();
   } else if (view === "mining") {
-    renderMiningPlans();  // تأكد من أن الخطط تظهر عند الانتقال إلى قسم التعدين
+    renderMiningPlans();  
   } else {
     stopMarket();
     stopCasino();
@@ -602,12 +581,12 @@ function navigate(view) {
 let marketLoopTimer = null;
 
 function startMarket() {
-  if (marketLoopTimer) return; // لا نبدأ إلا إذا كانت الدورة متوقفة
+  if (marketLoopTimer) return; 
   marketLoopTimer = setInterval(() => {
     if (!APP_STATE.ready || APP_STATE.view !== "market") return;
     MARKET_STATE.price += (Math.random() - 0.5) * 0.32;
-    renderMarketPrice(); // تحديث عرض السعر
-  }, 1200); // كل 1.2 ثانية
+    renderMarketPrice(); 
+  }, 1200); 
 }
 
 function stopMarket() {
@@ -624,11 +603,11 @@ function stopMarket() {
 let casinoBotsTimer = null;
 
 function startCasino() {
-  if (casinoBotsTimer) return; // لا نبدأ إلا إذا كانت الدورة متوقفة
+  if (casinoBotsTimer) return; 
   casinoBotsTimer = setInterval(() => {
     if (!APP_STATE.ready || APP_STATE.view !== "casino") return;
-    playCasino("blackjack", 10); // المثال: بدء لعبة كازينو افتراضية
-  }, 5000); // كل 5 ثواني
+    playCasino("blackjack", 10); 
+  }, 5000); 
 }
 
 function stopCasino() {
@@ -643,7 +622,6 @@ function stopCasino() {
 ========================================================= */
 
 function bindNavigation() {
-  // ربط الأزرار بالأحداث
   document.querySelectorAll("[data-view]").forEach(btn => {
     btn.onclick = () => navigate(btn.dataset.view);
   });
@@ -655,10 +633,10 @@ function bindNavigation() {
 
 function startAutoActions() {
   if (APP_STATE.view === "market") {
-    startMarket(); // ابدأ السوق مباشرة
+    startMarket(); 
   }
-
+   
   if (APP_STATE.view === "casino") {
-    startCasino(); // ابدأ الكازينو مباشرة
+    startCasino(); 
   }
 }
