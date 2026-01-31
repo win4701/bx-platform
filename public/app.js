@@ -558,18 +558,21 @@ document.addEventListener("DOMContentLoaded", () => {
    5.2 — Navigation (Control view transitions)
 ========================================================= */
 
+// دالة لتنقل بين الأقسام وتعيين "active" بشكل صحيح
 function navigate(view) {
   if (!view) return;
 
+  // تحديث الحالة الحالية (view)
   APP_STATE.view = view;
 
-  document.querySelectorAll(".view").forEach(v =>
-    v.classList.remove("active")
-  );
+  // إخفاء جميع الأقسام
+  document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
 
+  // إظهار القسم الحالي
   const target = document.getElementById(view);
   if (target) target.classList.add("active");
 
+  // تحديث حالة الـ bottom navigation
   document.querySelectorAll(".bottom-nav button").forEach(b =>
     b.classList.remove("active")
   );
@@ -579,12 +582,13 @@ function navigate(view) {
   );
   if (btn) btn.classList.add("active");
 
+  // تنفيذ أي عمليات بناء على القسم الحالي
   if (view === "market") {
     startMarket();
   } else if (view === "casino") {
     startCasino();
   } else if (view === "mining") {
-    renderMiningPlans();  
+    renderMiningPlans();  // تأكد من أن الخطط تظهر عند الانتقال إلى قسم التعدين
   } else {
     stopMarket();
     stopCasino();
@@ -657,4 +661,4 @@ function startAutoActions() {
   if (APP_STATE.view === "casino") {
     startCasino(); // ابدأ الكازينو مباشرة
   }
-                          }
+}
