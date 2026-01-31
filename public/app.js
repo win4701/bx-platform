@@ -525,7 +525,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // إعداد الـ navigation بين الأقسام
   bindNavigation();
 
-  // تحميل البيانات الأولية (wallet)
+  // تحميل البيانات الأولية (مثل المحفظة)
   loadWallet();
 
   // التحقق من حالة التعدين
