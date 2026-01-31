@@ -151,9 +151,6 @@ function deposit() {
   toast("Deposit request initiated");
 }
 
-/**
- * Withdraw BNB (request only)
- */
 async function withdrawBNB(amount) {
   if (!amount || amount <= 0) return;
 
