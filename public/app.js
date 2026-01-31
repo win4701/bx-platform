@@ -557,7 +557,6 @@ document.addEventListener("DOMContentLoaded", () => {
 /* =======================================================
    5.2 — Navigation (Control view transitions)
 ========================================================= */
-// دالة لتنقل بين الأقسام وتعيين "active" بشكل صحيح
 function navigate(view) {
   if (!view) return;
 
@@ -565,7 +564,9 @@ function navigate(view) {
   APP_STATE.view = view;
 
   // إخفاء جميع الأقسام
-  document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+  document.querySelectorAll(".view").forEach(v =>
+    v.classList.remove("active")
+  );
 
   // إظهار القسم الحالي
   const target = document.getElementById(view);
