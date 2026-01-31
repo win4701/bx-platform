@@ -337,8 +337,6 @@ async function loadAirdropStatus() {
     toast("Failed to load airdrop status.");
     return;
   }
-
-  // تحديث حالة الـ airdrop
   AIRDROP_STATE.setStatus(data.claimed, data.reward);
   renderAirdrop(); // عرض حالة الـ airdrop
 }
