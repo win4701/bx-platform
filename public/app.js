@@ -214,7 +214,8 @@ const MINING_STATE = {
     { id:"p45", name:"Advanced", days:45, roi:5,   min:10,  max:100  },
     { id:"p60", name:"Platine",  days:60, roi:7,   min:15,    max:150  },
     { id:"p90", name:"Infinity", days:90, roi:11,  min:25,    max:200, vip:true }
-  ];
+  ]
+};
   setPlan(plan) {
     this.activePlan = plan;
   },
