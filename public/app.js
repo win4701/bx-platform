@@ -445,53 +445,33 @@ function renderCasinoUI(result) {
 /* =======================================================
    4.4 — Render Mining Plans (Display mining plans)
 ========================================================= */
-
-/* =======================================================
-   4.4 — Render Mining Plans (Display mining plans)
-========================================================= */
-
-function renderActiveMining() {
-  if (!APP_STATE.ready || !MINING_STATE) return;
-
-  const activeMiningElement = $("activeMining");
-  const roiElement = $("activeMiningROI");
-  const returnElement = $("estimatedReturn");
-
-  if (activeMiningElement) {
-    activeMiningElement.textContent = `Active Plan: ${MINING_STATE.activePlan ? MINING_STATE.activePlan.name : "None"}`;
+function selectMiningPlan(planId) {
+  const selectedPlan = MINING_STATE.availablePlans[MINING_STATE.activeCoin].find(plan => plan.id === planId);
+  
+  if (!selectedPlan) {
+    alert("Invalid plan selected");
+    return;
   }
 
-  if (roiElement && MINING_STATE.activePlan) {
-    roiElement.textContent = `ROI: ${MINING_STATE.activePlan.roi * 100}%`;
-  }
-
-  if (returnElement && MINING_STATE.estimatedReturn) {
-    returnElement.textContent = `Estimated Return: ${MINING_STATE.estimatedReturn.toFixed(2)} USDT`;
-  }
+  MINING_STATE.setPlan(MINING_STATE.activeCoin, selectedPlan);
+  alert(`Selected: ${selectedPlan.name}`);
+  renderActiveMining();  // Update mining status UI
 }
-
 
 /* =======================================================
    4.5 — Render Active Mining (Display active mining status)
 ========================================================= */
 
 function renderActiveMining() {
-  if (!APP_STATE.ready || !MINING_STATE) return;
+  const activePlanElement = document.getElementById("activeMiningPlan");
+  const estimatedReturnElement = document.getElementById("estimatedReturn");
 
-  const activeMiningElement = $("activeMining");
-  const roiElement = $("activeMiningROI");
-  const returnElement = $("estimatedReturn");
-
-  if (activeMiningElement) {
-    activeMiningElement.textContent = `Active Plan: ${MINING_STATE.activePlan ? MINING_STATE.activePlan.name : "None"}`;
+  if (activePlanElement) {
+    activePlanElement.textContent = `Active Plan: ${MINING_STATE.activePlan ? MINING_STATE.activePlan.name : "None"}`;
   }
 
-  if (roiElement && MINING_STATE.activePlan) {
-    roiElement.textContent = `ROI: ${MINING_STATE.activePlan.roi * 100}%`;
-  }
-
-  if (returnElement && MINING_STATE.estimatedReturn) {
-    returnElement.textContent = `Estimated Return: ${MINING_STATE.estimatedReturn.toFixed(2)} USDT`;
+  if (estimatedReturnElement && MINING_STATE.estimatedReturn) {
+    estimatedReturnElement.textContent = `Estimated Return: ${MINING_STATE.estimatedReturn} BX`;
   }
 }
 
