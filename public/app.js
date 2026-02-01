@@ -1,4 +1,4 @@
-"use strict";
+fee"use strict";
 
 /* ================================================================================================
    PART 1 — CORE & CONTRACT LAYER
@@ -215,26 +215,31 @@ const MINING_STATE = {
     ]
   },
   
-  setPlan(coin, plan) {
-    this.activePlan = plan;
-    this.activeCoin = coin;
-    this.isMining = true;
-  },
-
-  startMining() {
-    if (!this.activePlan) {
-      throw new Error("No mining plan selected");
+  setPlan(planName) {
+    const plan = this.availablePlans.find(p => p.name === planName);
+    if (plan) {
+      this.activePlan = plan;
+      this.estimatedReturn = this.calculateEstimatedReturn(plan);
     }
-    this.isMining = true;
-    // Logica for mining start can go here
+  },
+   
+  calculateEstimatedReturn(plan) {
+    const minInvestment = plan.min;
+    const maxInvestment = plan.max;
+    const roi = plan.roi;
+    return ((minInvestment + maxInvestment) / 2) * roi;
   },
 
+  // بدء التعدين
+  startMining() {
+    if (this.activePlan) {
+      this.isMining = true;
+    }
+  },
+
+  // إيقاف التعدين
   stopMining() {
     this.isMining = false;
-  },
-
-  setEstimatedReturn(returnAmount) {
-    this.estimatedReturn = returnAmount;
   }
 };
 
@@ -445,31 +450,32 @@ function renderCasinoUI(result) {
    4.4 — Render Mining Plans (Display mining plans)
 ========================================================= */
 function renderMiningPlans() {
-  const plansContainer = document.getElementById("miningGrid");
+  if (!APP_STATE.ready || !MINING_STATE || !MINING_STATE.availablePlans) return;
+
+  const plansContainer = $("miningGrid");
   if (!plansContainer) return;
 
-  const plans = MINING_STATE.availablePlans[ACTIVE_MINING_COIN];
-  if (!plans) return;
+  plansContainer.innerHTML = ""; // مسح الخطط السابقة
 
-  plansContainer.innerHTML = "";
+  // عرض الخطط بناءً على العملة النشطة
+  const activePlans = MINING_STATE.availablePlans[ACTIVE_MINING_COIN];
 
   activePlans.forEach(plan => {
     const planElement = document.createElement("div");
     planElement.classList.add("mining-plan");
     planElement.innerHTML = `
       <div class="plan-header">
-        <h4>${plan.name}</h4>
+        <h3>${plan.name}</h3>
         ${plan.vip ? `<span class="badge vip">VIP</span>` : ""}
       </div>
       <div class="plan-details">
-        <div><strong>ROI:</strong> ${plan.roi 100*}%</div>
+        <div><strong>ROI:</strong> ${plan.roi * 100}%</div>
         <div><strong>Investment:</strong> ${plan.min} - ${plan.max}</div>
         <div><strong>Duration:</strong> ${plan.days} days</div>
       </div>
-      <button class="subscribe-button" onclick="subscribeMining('${plan.id}')">Subscribe</button>
+      <button class="subscribe-button" onclick="selectMiningPlan('${plan.id}')">Subscribe</button>
     `;
-
-    plansContainer.appendChild(el);
+    plansContainer.appendChild(planElement);
   });
 }
 
@@ -478,15 +484,24 @@ function renderMiningPlans() {
 ========================================================= */
 
 function renderActiveMining() {
-  const activePlanElement = document.getElementById("activeMiningPlan");
-  const estimatedReturnElement = document.getElementById("estimatedReturn");
+  if (!APP_STATE.ready || !MINING_STATE || !MINING_STATE.activePlan) return;
 
-  if (activePlanElement) {
-    activePlanElement.textContent = `Active Plan: ${MINING_STATE.activePlan ? MINING_STATE.activePlan.name : "None"}`;
+  const activeMiningElement = $("activeMining");
+  const roiElement = $("activeMiningROI");
+  const returnElement = $("estimatedReturn");
+
+  // عرض الخطة النشطة
+  if (activeMiningElement) {
+    activeMiningElement.textContent = `Active Plan: ${MINING_STATE.activePlan.name}`;
   }
 
-  if (estimatedReturnElement && MINING_STATE.estimatedReturn) {
-    estimatedReturnElement.textContent = `Estimated Return: ${MINING_STATE.estimatedReturn} BX`;
+  // عرض العائد المتوقع
+  if (roiElement && MINING_STATE.activePlan) {
+    roiElement.textContent = `ROI: ${MINING_STATE.activePlan.roi * 100}%`;
+  }
+
+  if (returnElement && MINING_STATE.estimatedReturn) {
+    returnElement.textContent = `Estimated Return: ${MINING_STATE.estimatedReturn.toFixed(2)} Bx`;
   }
 }
 
@@ -551,7 +566,7 @@ function renderAirdrop() {
   }
 
   if (airdropRewardElement) {
-    airdropRewardElement.textContent = `Reward: ${AIRDROP_STATE.reward} USDT`;
+    airdropRewardElement.textContent = `Reward: ${AIRDROP_STATE.reward} Bx`;
   }
 }
 
