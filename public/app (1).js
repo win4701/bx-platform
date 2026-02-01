@@ -1,11 +1,12 @@
 "use strict";
 
 /* =========================================================
-   PART 1 — CORE & GLOBAL STATE (FOUNDATION)
-   هذا الجزء لا يلمس UI مباشرة
+   PART 1 — CORE & GLOBAL STATE (FINAL)
+   هذا الجزء هو الأساس ولا يجب كسره
 ========================================================= */
 
 /* ================= DOM HELPERS ================= */
+/* آمنة — لا ترمي أخطاء */
 
 const $ = (id) => document.getElementById(id);
 const $$ = (selector) => document.querySelectorAll(selector);
@@ -15,6 +16,10 @@ const $$ = (selector) => document.querySelectorAll(selector);
 const API_BASE = "https://bx-backend.fly.dev";
 
 /* ================= USER / AUTH ================= */
+/*
+  USER هو المصدر الوحيد للمصادقة
+  ممنوع قراءة localStorage خارج هذا الكائن
+*/
 
 const USER = {
   jwt: null,
@@ -22,16 +27,17 @@ const USER = {
 
   load() {
     const token = localStorage.getItem("jwt");
-    if (token) {
+    if (token && typeof token === "string") {
       this.jwt = token;
       this.authenticated = true;
     }
   },
 
-  set(jwt) {
-    this.jwt = jwt;
+  set(token) {
+    if (!token) return;
+    this.jwt = token;
     this.authenticated = true;
-    localStorage.setItem("jwt", jwt);
+    localStorage.setItem("jwt", token);
   },
 
   clear() {
@@ -41,20 +47,19 @@ const USER = {
   }
 };
 
+function isAuthenticated() {
+  return USER.authenticated === true;
+}
+
 function authHeaders() {
   return USER.jwt
     ? { Authorization: "Bearer " + USER.jwt }
     : {};
 }
 
-function isAuthenticated() {
-  return USER.authenticated === true;
-}
-
 /* ================= APP STATE ================= */
 /*
-  APP هو المصدر الوحيد للحالة العامة
-  لا تُنشئ state خارجه
+  APP هو المصدر الوحيد لحالة التطبيق العامة
 */
 
 const APP = {
@@ -72,6 +77,7 @@ const APP = {
   fetch موحّد:
   - لا crash
   - لا silent fail
+  - لا رمي exceptions
 */
 
 async function safeFetch(path, options = {}) {
@@ -86,36 +92,26 @@ async function safeFetch(path, options = {}) {
     });
 
     if (!res.ok) {
-      console.error("API ERROR", path, res.status);
+      console.error("API ERROR:", path, res.status);
       return null;
     }
 
     return await res.json();
   } catch (err) {
-    console.error("NETWORK ERROR", path, err);
+    console.error("NETWORK ERROR:", path, err);
     return null;
   }
-}
-
-/* ================= BOOT GUARD ================= */
-/*
-  يمنع أي كود من العمل قبل الجاهزية
-*/
-
-function whenReady(fn) {
-  if (APP.ready) fn();
-  else document.addEventListener("DOMContentLoaded", fn);
-}
+   }
 /* =========================================================
-   PART 2 — NAVIGATION SYSTEM
-   التحكم الكامل في الأقسام + bottom navigation
+   PART 2 — NAVIGATION SYSTEM (FINAL)
+   التحكم الكامل في الأقسام بدون أي side effects
 ========================================================= */
 
-/* ================= VIEWS REGISTRY ================= */
+/* ================= VIEW REGISTRY ================= */
 /*
-  أي section يجب:
-  - يكون له id مطابق
-  - يكون له class="view"
+  أي View:
+  - لازم يكون له id مطابق
+  - class="view"
 */
 
 const VIEWS = ["wallet", "market", "casino", "mining", "airdrop"];
@@ -123,50 +119,54 @@ const VIEWS = ["wallet", "market", "casino", "mining", "airdrop"];
 /* ================= NAVIGATE ================= */
 
 function navigate(view) {
+  if (!APP.ready) return;
+
   if (!VIEWS.includes(view)) {
-    console.warn("Unknown view:", view);
+    console.warn("navigate(): unknown view →", view);
     return;
   }
 
-  // إخفاء كل الأقسام
+  // 1️⃣ إخفاء كل الأقسام
   VIEWS.forEach(v => {
     const el = $(v);
     if (el) el.classList.remove("active");
   });
 
-  // إظهار القسم المطلوب
+  // 2️⃣ إظهار القسم المطلوب
   const target = $(view);
   if (!target) {
-    console.error("View element not found:", view);
+    console.error("navigate(): missing DOM element →", view);
     return;
   }
   target.classList.add("active");
 
-  // تحديث حالة التطبيق
+  // 3️⃣ تحديث الحالة العامة
   APP.view = view;
 
-  // تحديث أزرار التنقل
+  // 4️⃣ تحديث أزرار التنقل
   updateNavButtons(view);
 
-  // Side-effects آمنة (بدون منطق)
+  // 5️⃣ Hook دخول القسم (آمن)
   onViewEnter(view);
 }
 
-/* ================= NAV BUTTONS ================= */
+/* ================= NAV BUTTON STATE ================= */
 
 function updateNavButtons(activeView) {
   const buttons = $$(".bottom-nav button");
 
   buttons.forEach(btn => {
     const view = btn.dataset.view;
+    if (!view) return;
+
     btn.classList.toggle("active", view === activeView);
   });
 }
 
-/* ================= VIEW HOOK ================= */
+/* ================= VIEW ENTER HOOK ================= */
 /*
-  لا منطق هنا
-  فقط نقاط دخول نظيفة
+  لا منطق ثقيل هنا
+  فقط استدعاء دوال إن وُجدت
 */
 
 function onViewEnter(view) {
@@ -194,6 +194,9 @@ function onViewEnter(view) {
 }
 
 /* ================= BIND NAVIGATION ================= */
+/*
+  يُستدعى مرة واحدة فقط في bootstrap
+*/
 
 function bindNavigation() {
   const buttons = $$(".bottom-nav button");
@@ -206,27 +209,29 @@ function bindNavigation() {
       navigate(view);
     });
   });
-       }
+   }
 /* =========================================================
-   PART 3 — WALLET ENGINE
-   عرض الرصيد + تحميله بشكل آمن
+   PART 3 — WALLET ENGINE (FINAL)
+   تحميل + عرض الرصيد بشكل آمن
 ========================================================= */
 
 /* ================= WALLET STATE ================= */
+/*
+  WALLET هو المصدر الوحيد لبيانات الرصيد
+*/
 
 const WALLET = {
   BX: 0,
   BNB: 0,
   SOL: 0,
   USDT: 0,
-
   loaded: false
 };
 
 /* ================= WALLET DOM MAP ================= */
 /*
-  يربط العملة بالعنصر في HTML
-  لو عنصر غير موجود → لا crash
+  ربط العملة بالعنصر في HTML
+  لو عنصر غير موجود → تجاهل بدون crash
 */
 
 const WALLET_DOM = {
@@ -250,8 +255,8 @@ function renderWallet() {
 
 /* ================= LOAD WALLET ================= */
 /*
-  - لا يعمل إذا المستخدم غير مسجل
-  - لا يرمي exceptions
+  - لا يعمل بدون مصادقة
+  - لا يرمي Exceptions
   - fallback آمن
 */
 
@@ -263,7 +268,7 @@ async function loadWallet() {
 
   const data = await safeFetch("/finance/wallet");
 
-  if (!data) {
+  if (!data || typeof data !== "object") {
     console.warn("Wallet API unavailable, using local state");
     renderWallet();
     return;
@@ -272,10 +277,12 @@ async function loadWallet() {
   applyWalletData(data);
 }
 
-/* ================= APPLY DATA ================= */
+/* ================= APPLY BACKEND DATA ================= */
+/*
+  تطبيع البيانات لحماية اختلاف backend
+*/
 
 function applyWalletData(data) {
-  // حماية من backend ناقص
   WALLET.BX   = Number(data.BX   ?? data.bx   ?? 0);
   WALLET.BNB  = Number(data.BNB  ?? data.bnb  ?? 0);
   WALLET.SOL  = Number(data.SOL  ?? data.sol  ?? 0);
@@ -285,7 +292,7 @@ function applyWalletData(data) {
   renderWallet();
 }
 
-/* ================= RESET ================= */
+/* ================= RESET WALLET ================= */
 
 function resetWallet() {
   WALLET.BX = 0;
@@ -295,75 +302,75 @@ function resetWallet() {
   WALLET.loaded = false;
 
   renderWallet();
-                       }
+}
 /* =========================================================
-   PART 4 — MARKET & CASINO (SAFE STUBS)
-   بدون loops — بدون fetch — بدون مخاطرة
+   PART 4 — MARKET & CASINO (FINAL SAFE LAYER)
+   Stubs مستقرة بدون أي مخاطرة
 ========================================================= */
 
 /* ================= MARKET ================= */
 
 const MARKET = {
-  initialized: false,
-  price: 0
+  initialized: false
 };
 
 function initMarket() {
   if (MARKET.initialized) return;
-
   MARKET.initialized = true;
-  renderMarketPlaceholder();
+  renderMarket();
 }
 
-function renderMarketPlaceholder() {
-  const el = $("marketPlaceholder");
-  if (!el) return;
+function renderMarket() {
+  const container = $("market");
+  if (!container) return;
 
-  el.textContent = "Market loading…";
+  const placeholder = container.querySelector(".market-placeholder");
+  if (placeholder) {
+    placeholder.textContent = "Market ready";
+  }
 }
 
 /* ================= CASINO ================= */
 
 const CASINO = {
-  initialized: false,
-  activeGame: null
+  initialized: false
 };
 
 function initCasino() {
   if (CASINO.initialized) return;
-
   CASINO.initialized = true;
-  renderCasinoPlaceholder();
+  renderCasino();
 }
 
-function renderCasinoPlaceholder() {
-  const el = $("casinoPlaceholder");
-  if (!el) return;
+function renderCasino() {
+  const container = $("casino");
+  if (!container) return;
 
-  el.textContent = "Casino ready";
+  const placeholder = container.querySelector(".casino-placeholder");
+  if (placeholder) {
+    placeholder.textContent = "Casino ready";
+  }
 }
 
-/* ================= SAFE EXIT ================= */
+/* ================= SAFE EXIT HOOKS ================= */
 /*
-  Hooks مستقبلية لو حبيت:
-  stopMarket()
-  stopCasino()
-  (حاليًا فارغة لتجنّب أي loop)
+  Hooks مستقبلية — فارغة عن قصد
+  لا loops
+  لا cleanup الآن
 */
 
 function stopMarket() {}
 function stopCasino() {}
-
 /* =========================================================
    PART 5 — MINING ENGINE (FINAL)
-   3 Coins × 6 Plans — Zero ambiguity
+   3 Coins × 6 Plans — Stable & Predictable
 ========================================================= */
 
 /* ================= MINING STATE ================= */
 
 const MINING = {
-  coin: "BX",
-  subscription: null // { coin, planId, startedAt }
+  coin: "BX",            // BX | BNB | SOL
+  subscription: null     // { coin, planId, startedAt }
 };
 
 /* ================= MINING CONFIG ================= */
@@ -371,15 +378,15 @@ const MINING = {
 const MINING_COINS = ["BX", "BNB", "SOL"];
 
 const MINING_PLANS = [
-  { id: "starter",   name: "Starter",   roi: 2.5,  days: 10, min: 10,    max: 100 },
-  { id: "basic",     name: "Basic",     roi: 5,    days: 21, min: 50,    max: 300 },
-  { id: "golden",    name: "Golden",    roi: 8,    days: 30, min: 200,   max: 800 },
-  { id: "advanced",  name: "Advanced",  roi: 12,   days: 45, min: 400,   max: 2500 },
-  { id: "platine",   name: "Platine",   roi: 17,   days: 60, min: 750,   max: 9000 },
-  { id: "infinity",  name: "Infinity",  roi: 25,   days: 90, min: 1000,  max: 20000 }
+  { id: "starter",  name: "Starter",  roi: 2.5,  days: 10, min: 10,    max: 100 },
+  { id: "basic",    name: "Basic",    roi: 5,    days: 21, min: 50,    max: 300 },
+  { id: "golden",   name: "Golden",   roi: 8,    days: 30, min: 200,   max: 800 },
+  { id: "advanced", name: "Advanced", roi: 12,   days: 45, min: 400,   max: 2500 },
+  { id: "platine",  name: "Platine",  roi: 17,   days: 60, min: 750,   max: 9000 },
+  { id: "infinity", name: "Infinity", roi: 25,   days: 90, min: 1000,  max: 20000 }
 ];
 
-/* ================= RENDER ================= */
+/* ================= ENTRY ================= */
 
 function renderMining() {
   renderMiningTabs();
@@ -398,6 +405,7 @@ function renderMiningTabs() {
     btn.classList.toggle("active", coin === MINING.coin);
 
     btn.onclick = () => {
+      if (MINING.coin === coin) return;
       MINING.coin = coin;
       renderMining();
     };
@@ -413,13 +421,13 @@ function renderMiningPlans() {
   grid.innerHTML = "";
 
   MINING_PLANS.forEach(plan => {
-    const card = document.createElement("div");
-    card.className = "card mining-plan";
-
-    const subscribed =
+    const isActive =
       MINING.subscription &&
       MINING.subscription.planId === plan.id &&
       MINING.subscription.coin === MINING.coin;
+
+    const card = document.createElement("div");
+    card.className = "card mining-plan";
 
     card.innerHTML = `
       <h4>${plan.name}</h4>
@@ -429,13 +437,14 @@ function renderMiningPlans() {
         <li>Min: ${plan.min} ${MINING.coin}</li>
         <li>Max: ${plan.max} ${MINING.coin}</li>
       </ul>
-      <button ${subscribed ? "disabled" : ""}>
-        ${subscribed ? "Active" : "Subscribe"}
+      <button ${isActive ? "disabled" : ""}>
+        ${isActive ? "Active" : "Subscribe"}
       </button>
     `;
 
-    card.querySelector("button").onclick = () => {
-      if (!subscribed) subscribeMining(plan.id);
+    const btn = card.querySelector("button");
+    btn.onclick = () => {
+      if (!isActive) subscribeMining(plan.id);
     };
 
     grid.appendChild(card);
@@ -445,6 +454,7 @@ function renderMiningPlans() {
 /* ================= SUBSCRIBE ================= */
 
 function subscribeMining(planId) {
+  // حماية من تعدد الاشتراكات
   if (MINING.subscription) {
     alert("You already have an active mining subscription.");
     return;
@@ -460,16 +470,17 @@ function subscribeMining(planId) {
   };
 
   renderMining();
-}
+       }
 /* =========================================================
-   PART 6 — AIRDROP + BOOTSTRAP (FINAL GLUE)
-   ترتيب الإقلاع + ربط كل الأجزاء
+   PART 6 — BOOTSTRAP & AIRDROP (FINAL)
+   الإقلاع النهائي وربط كل الأجزاء
 ========================================================= */
 
 /* ================= AIRDROP ================= */
 /*
-  Airdrop هنا UI-safe فقط
+  Airdrop UI-only
   لا توزيع أموال حقيقية
+  لا API إجباري
 */
 
 const AIRDROP = {
@@ -477,36 +488,40 @@ const AIRDROP = {
 };
 
 function initAirdrop() {
-  const btn = $("airdropClaim");
-  const status = $("airdropStatus");
+  const claimBtn = $("airdropClaim");
+  const statusEl = $("airdropStatus");
 
-  if (!btn || !status) return;
+  if (!claimBtn || !statusEl) return;
 
-  btn.disabled = AIRDROP.claimed;
+  claimBtn.disabled = AIRDROP.claimed;
 
-  btn.onclick = () => {
+  claimBtn.onclick = () => {
     if (AIRDROP.claimed) return;
 
     AIRDROP.claimed = true;
-    btn.disabled = true;
-    status.textContent = "Airdrop claimed successfully";
+    claimBtn.disabled = true;
+    statusEl.textContent = "Airdrop claimed successfully";
   };
 }
 
 /* ================= BOOTSTRAP ================= */
 /*
-  نقطة الإقلاع الوحيدة
-  ممنوع تشغيل أي شيء خارجها
+  نقطة البداية الوحيدة للتطبيق
+  ممنوع تشغيل أي جزء خارجها
 */
 
 function bootstrap() {
   // 1️⃣ تهيئة الأساس
-  APP.init();
+  if (typeof APP !== "undefined" && typeof APP.init === "function") {
+    APP.init();
+  }
 
-  // 2️⃣ ربط التنقل
-  bindNavigation();
+  // 2️⃣ ربط التنقل (مرة واحدة)
+  if (typeof bindNavigation === "function") {
+    bindNavigation();
+  }
 
-  // 3️⃣ ربط Mining Tabs (آمن حتى لو mining غير ظاهر)
+  // 3️⃣ تهيئة Mining Tabs (حتى لو القسم غير ظاهر)
   if (typeof renderMining === "function") {
     renderMining();
   }
@@ -516,13 +531,15 @@ function bootstrap() {
     loadWallet();
   }
 
-  // 5️⃣ الانتقال الافتراضي
-  navigate(APP.view);
+  // 5️⃣ الانتقال إلى القسم الافتراضي
+  if (typeof navigate === "function") {
+    navigate(APP.view);
+  }
 }
 
 /* ================= START ================= */
 /*
-  لا DOM قبل الجاهزية
+  لا تنفيذ قبل DOM جاهز
 */
 
 document.addEventListener("DOMContentLoaded", bootstrap);
