@@ -411,52 +411,49 @@ function renderCasinoHistory() {
     `)
     .join("");
      }
+
 /* =========================================================
-   PART 5 — MINING (General Update)
+   PART 5 — MINING (Per-Coin Plans)
+   لكل عملة خصائصها بدون كسر app.js
 ========================================================= */
+
+/* ================= STATE ================= */
 
 const MINING = {
   coin: "BX",
   subscription: null // { coin, planId }
 };
 
-/* ================= RISK CONFIG ================= */
+/* ================= PLANS BY COIN ================= */
 
-const MINING_RISK = {
-  BX: { multiplier: 2.5, label: "High" },
-  BNB: { multiplier: 1.35, label: "Low" },
-  SOL: { multiplier: 1.7, label: "Medium" }
-};
-
-/* ================= PLANS ================= */
-
-const MINING_PLANS = {
+const MINING_PLANS_BY_COIN = {
   BX: [
-    { id:"p10", name:"Starter",  days:10, roi:2.5, min:10,  max:100  },
-    { id:"p21", name:"Basic",    days:21, roi:5,   min:50,  max:300  },
-    { id:"p30", name:"Golden",   days:30, roi:8,   min:200, max:800  },
-    { id:"p45", name:"Pro",       days:45, roi:12,  min:400, max:2500 },
-    { id:"p60", name:"Platine",  days:60, roi:17,  min:750, max:9000 },
-    { id:"p90", name:"Infinity", days:90, roi:25,  min:1000,max:20000, }
+    { id:"p10", name:"Starter",  days:10, roi:2.5, min:10,   max:100  },
+    { id:"p21", name:"Basic",    days:21, roi:5,   min:50,   max:300  },
+    { id:"p30", name:"Golden",   days:30, roi:8,   min:200,  max:800  },
+    { id:"p45", name:"Advanced", days:45, roi:12,  min:400,  max:2500 },
+    { id:"p60", name:"Platine",  days:60, roi:17,  min:750,  max:9000 },
+    { id:"p90", name:"Infinity", days:90, roi:25,  min:1000, max:20000, vip:true }
+  ],
 
   SOL: [
-    { id:"p10", name:"Starter",  days:10, roi:1,   min:1,   max:5   },
-    { id:"p21", name:"Basic",    days:21, roi:2.8, min:10,  max:50  },
-    { id:"p30", name:"Golden",   days:30, roi:4,   min:40,  max:160  },
-   { id:"p45", name:"Pro",   days:45, roi:7,   min:120, max:500 },
-    { id:"p60", name:"Platine",  days:60, roi:9,   min:200, max:1000 },
-    { id:"p90", name:"Infinity", days:90, roi:14,  min:500, max:2500, }]
+    { id:"p10", name:"Starter",  days:10, roi:1,   min:1,    max:5   },
+    { id:"p21", name:"Basic",    days:21, roi:2.8, min:10,   max:50  },
+    { id:"p30", name:"Golden",   days:30, roi:4,   min:40,   max:160 },
+    { id:"p45", name:"Advanced", days:45, roi:7,   min:120,  max:500 },
+    { id:"p60", name:"Platine",  days:60, roi:9,   min:200,  max:1000 },
+    { id:"p90", name:"Infinity", days:90, roi:14,  min:500,  max:2500, vip:true }
+  ],
 
   BNB: [
     { id:"p10", name:"Starter",  days:10, roi:0.8, min:0.05, max:1   },
-    { id:"p21", name:"Basic",    days:21, roi:1.8, min:1,  max:4  },
-    { id:"p30", name:"Golden",   days:30, roi:3,   min:5,  max:50   },
-    { id:"p45", name:"Pro",  days:45, roi:5,   min:10,  max:100  },
-    { id:"p60", name:"Platine",  days:60, roi:7,   min:15,    max:150  },
-    { id:"p90", name:"Infinity", days:90, roi:11,  min:25,    max:200, }
-  ]};
-  });
- }
+    { id:"p21", name:"Basic",    days:21, roi:1.8, min:1,    max:4   },
+    { id:"p30", name:"Golden",   days:30, roi:3,   min:5,    max:50  },
+    { id:"p45", name:"Advanced", days:45, roi:5,   min:10,   max:100 },
+    { id:"p60", name:"Platine",  days:60, roi:7,   min:15,   max:150 },
+    { id:"p90", name:"Infinity", days:90, roi:11,  min:25,   max:200, vip:true }
+  ]
+};
 
 /* ================= ENTRY ================= */
 
@@ -472,7 +469,7 @@ function bindMiningTabs() {
 
   buttons.forEach(btn => {
     const coin = btn.dataset.coin;
-    if (!MINING_RISK[coin]) return;
+    if (!MINING_PLANS_BY_COIN[coin]) return;
 
     btn.classList.toggle("active", coin === MINING.coin);
 
@@ -480,7 +477,7 @@ function bindMiningTabs() {
       if (MINING.coin === coin) return;
       MINING.coin = coin;
       renderMining();
-      log.info("Mining coin changed:", coin);
+      log.info("Mining coin switched:", coin);
     };
   });
 }
@@ -491,27 +488,24 @@ function renderMiningPlans() {
   const grid = $("miningGrid");
   if (!grid) return;
 
+  const plans = MINING_PLANS_BY_COIN[MINING.coin] || [];
   grid.innerHTML = "";
 
-  const risk = MINING_RISK[MINING.coin];
-
-  MINING_PLANS.forEach(plan => {
-    const adjustedRoi = (plan.roi * risk.multiplier).toFixed(1);
-
+  plans.forEach(plan => {
     const isActive =
       MINING.subscription &&
-      MINING.subscription.planId === plan.id &&
-      MINING.subscription.coin === MINING.coin;
+      MINING.subscription.coin === MINING.coin &&
+      MINING.subscription.planId === plan.id;
 
     const card = document.createElement("div");
     card.className = "card mining-plan";
 
     card.innerHTML = `
-      <h4>${plan.name}</h4>
-      <div class="mining-profit">
-        ${adjustedRoi}%
-        <span class="risk-tag">${risk.label}</span>
-      </div>
+      <h4>
+        ${plan.name}
+        ${plan.vip ? '<span class="vip-tag">VIP</span>' : ''}
+      </h4>
+      <div class="mining-profit">${plan.roi}%</div>
       <ul>
         <li>Duration: ${plan.days} days</li>
         <li>Min: ${plan.min} ${MINING.coin}</li>
@@ -522,8 +516,7 @@ function renderMiningPlans() {
       </button>
     `;
 
-    const btn = card.querySelector("button");
-    btn.onclick = () => {
+    card.querySelector("button").onclick = () => {
       if (!isActive) subscribeMining(plan.id);
     };
 
@@ -539,17 +532,15 @@ function subscribeMining(planId) {
     return;
   }
 
-  const plan = MINING_PLANS.find(p => p.id === planId);
-  if (!plan) return;
-
   MINING.subscription = {
     coin: MINING.coin,
-    planId: plan.id
+    planId
   };
 
-  log.info("Mining subscribed:", MINING.subscription);
+  log.info("Mining subscription:", MINING.subscription);
   renderMining();
-}
+       }
+
 /* =========================================================
    PART 6 — BOOTSTRAP (General Update)
 ========================================================= */
