@@ -435,7 +435,45 @@
     </div>
   </div>
   </section>
+  
+<!-- ================= SETTINGS ================= -->
+<section id="settings" class="view">
 
+  <h2 class="page-title">Settings</h2>
+
+  <!-- REFERRAL -->
+  <div class="card">
+    <h3>🔗 Referral</h3>
+    <p>Your referral link:</p>
+    <code id="ref-link">Loading...</code>
+    <button class="btn" onclick="copyReferral()">Copy</button>
+  </div>
+
+  <!-- AIRDROP -->
+  <div class="card">
+    <h3>🎁 Airdrop</h3>
+    <p id="airdrop-status">Loading...</p>
+    <button
+      id="claim-airdrop"
+      class="btn primary hidden"
+      onclick="claimAirdrop()">
+      Claim Airdrop
+    </button>
+  </div>
+
+  <!-- BADGES -->
+  <div class="card">
+    <h3>🏅 Badges</h3>
+    <ul id="badges-list"></ul>
+  </div>
+
+  <!-- LEADERBOARD -->
+  <div class="card">
+    <h3>🏆 Referral Leaderboard</h3>
+    <ol id="ref-leaderboard"></ol>
+  </div>
+
+</section>
 <!-- ================= BOTTOM NAV ================= -->
 <nav class="bottom-nav">
   <button data-view="wallet" class="active">
