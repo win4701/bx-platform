@@ -4,129 +4,124 @@
    GLOBAL CORE
 ================================================================================================ */
 
-const API_BASE = "https://bx-backend.fly.dev";
+const API_BASE = "https://bx-backend.fly.dev"; // اكتب رابط الـ API هنا
+
+/* =======================================================
+   1.2 — App State
+========================================================= */
 
 const APP_STATE = {
-  ready: false,
-  currentSection: "wallet"
+  ready: false, // تعني أن التطبيق جاهز
+  view: "wallet", // القسم النشط في الواجهة
+  user: null, // تفاصيل المستخدم
+  isLoading: false // حالة التحميل العامة
 };
 
+/* =======================================================
+   1.3 — USER (من الـ LocalStorage أو الـ Cookie)
+========================================================= */
+
+const USER = {
+  jwt: localStorage.getItem("jwt") || null, // JSON Web Token للمصادقة
+  isAuthenticated() {
+    return this.jwt !== null;
+  },
+  setToken(jwt) {
+    this.jwt = jwt;
+    localStorage.setItem("jwt", jwt);
+  }
+};
+
+/* =======================================================
+   1.4 — API Authorization Headers
+========================================================= */
+
+function authHeaders() {
+  return USER.isAuthenticated() ? { Authorization: "Bearer " + USER.jwt } : {};
+}
+
+/* =======================================================
+   1.5 — Helper functions (DOM, Toasts, Logging)
+========================================================= */
+
+// DOM helper (لإيجاد العناصر بسهولة)
 function $(id) {
   return document.getElementById(id);
 }
 
-function log(...args) {
-  if (window.DEBUG_MODE) console.log("[APP]", ...args);
-}
-
-/* ================================================================================================
-   CONFIGURATION
-================================================================================================ */
-
-const MARKET_PAIRS = ["BX/USDT", "BX/TON", "BX/BNB", "BX/ETH" ,"BX/SOL", "BX/BTC"];
-
-const FEATURES = {
-  WALLET: true,
-  MARKET: true,
-  CASINO: true,
-  MINING: true,
-  AIRDROP: true,
-  PARTNERS: true
-};
-
-
-/* ================================================================================================
-   USER & AUTH
-================================================================================================ */
-
-const USER = {
-  jwt: localStorage.getItem("jwt") || null
-};
-
-function authHeaders() {
-  return USER.jwt ? { Authorization: "Bearer " + USER.jwt } : {};
-}
-
-function isAuthenticated() {
-  return !!USER.jwt;
-}
-
-/* ================================================================================================
-   PROVABLY FAIR (CLIENT SIDE)
-================================================================================================ */
-
-let CLIENT_SEED = localStorage.getItem("client_seed") || "1.2.3.4";
-
-/**
- * Update client seed
- */
-function setClientSeed(seed) {
-  if (!seed || typeof seed !== "string") return;
-  CLIENT_SEED = seed;
-  localStorage.setItem("client_seed", seed);
-  log("Client seed updated:", seed);
-}
-
-async function loadFairness() {
-  try {
-    const r = await fetch(API_BASE + "/casino/fairness");
-    if (!r.ok) return;
-    const data = await r.json();
-    if ($("serverSeedHash")) {
-      $("serverSeedHash").textContent = data.server_seed_hash;
-    }
-  } catch (e) {
-    console.error("Fairness load error", e);
-  }
-}
-
-async function revealServerSeed() {
-  try {
-    const r = await fetch(API_BASE + "/casino/reveal");
-    if (!r.ok) return;
-    const data = await r.json();
-    alert("Server Seed:\n" + data.server_seed);
-  } catch (e) {
-    console.error("Reveal error", e);
-  }
-}
-
-/* ================================================================================================
-   UI NOTIFICATIONS
-================================================================================================ */
-
+// توست للرسائل التنبيهية
 function toast(message) {
   if (!message) return;
   const el = document.createElement("div");
   el.className = "toast";
   el.textContent = message;
   document.body.appendChild(el);
-  setTimeout(() => el.remove(), 3000);
+  setTimeout(() => el.remove(), 3000); // الرسالة تختفي بعد 3 ثواني
 }
+
+// تسجيل الأخطاء في الـ console
+function log(message) {
+  console.log(message);
+}
+
+/* =======================================================
+   1.6 — API Contract: Paths for FastAPI endpoints
+========================================================= */
+
+const API = {
+  wallet: "/finance/wallet", // بيانات المحفظة
+  casino: {
+    play: "/casino/play", // لعب الكازينو
+    history: "/casino/history"
+  },
+  mining: {
+    start: "/bxing/mining/start", // بداية التعدين
+    status: "/bxing/mining/status"
+  },
+  airdrop: {
+    status: "/bxing/airdrop/status", // حالة الـ air drop
+    claim: "/bxing/airdrop/claim" // المطالبة بالـ air drop
+  }
+};
+
+/* ================================================================================================
+   PART 2 — STATE & DATA LAYER (SINGLE SOURCE OF TRUTH)
+   ------------------------------
+
+/* =======================================================
+   2.1 — Wallet State
+========================================================= */
+
+const WALLET_STATE = {
+  BX: 0.0,
+  USDT: 0.0,
+  BNB: 0.0,
+  ETH: 0.0,
+  SOL: 0.0,
+  TON: 0.0,
+  BTC: 0.0,
+
+  set(walletData) {
+    this.BX = walletData.BX || 0;
+    this.USDT = walletData.USDT || 0;
+    this.BNB = walletData.BNB || 0;
+    this.ETH = walletData.ETH || 0;
+    this.SOL = walletData.SOL || 0;
+    this.TON = walletData.TON || 0;
+    this.BTC = walletData.BTC || 0;
+  },
+
+  update(asset, amount) {
+    if (this.hasOwnProperty(asset)) {
+      this[asset] += amount;
+    }
+  }
+};
 
 /* ================================================================================================
    WALLET (DISPLAY + ACTION HOOKS)
 ================================================================================================ */
 
-let WALLET = {
-  BX: 0,
-  USDT: 0,
-  BNB: 0,
-  ETH: 0,
-  SOL: 0,
-  TON: 0,
-  BTC: 0
-};
-
-const BALANCE_IDS = {
-  BX: "bal-bx",
-  USDT: "bal-usdt",
-  BNB: "bal-bnb",
-  ETH: "bal-eth",
-  SOL: "bal-sol",
-  TON: "bal-ton",
-  BTC: "bal-btc"
-};
 
 function renderWallet() {
   Object.keys(WALLET).forEach(asset => {
