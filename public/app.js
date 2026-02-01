@@ -2,11 +2,7 @@
 
 /* =========================================================
    PART 1 — CORE / CONFIG / DEBUG
-   لا يلمس HTML ولا CSS
 ========================================================= */
-
-/* ================= HELPERS ================= */
-/* آمنة حتى لو DOM غير جاهز */
 
 const $ = (id) => document.getElementById(id);
 const $$ = (selector) => document.querySelectorAll(selector);
@@ -16,12 +12,6 @@ const $$ = (selector) => document.querySelectorAll(selector);
 const API_BASE = "https://bx-backend.fly.dev";
 
 /* ================= DEBUG MODE ================= */
-/*
-  Production: الوضع الافتراضي (DEBUG = false)
-  Debug:
-    - ?debug=1
-    - localStorage.setItem("DEBUG","1")
-*/
 
 const DEBUG = (() => {
   try {
@@ -46,10 +36,6 @@ const log = {
 };
 
 /* ================= USER / AUTH ================= */
-/*
-  USER هو المصدر الوحيد للمصادقة
-  لا قراءة localStorage خارج هذا الكائن
-*/
 
 const USER = {
   jwt: null,
@@ -99,13 +85,10 @@ function authHeaders() {
 }
 
 /* ================= APP STATE ================= */
-/*
-  APP هو الحالة العامة الوحيدة
-*/
 
 const APP = {
   ready: false,
-  view: "wallet", // القيمة الافتراضية
+  view: "wallet", 
 
   init() {
     USER.load();
@@ -115,12 +98,6 @@ const APP = {
 };
 
 /* ================= SAFE FETCH ================= */
-/*
-  fetch موحّد:
-  - لا crash
-  - لا silent fail
-  - لا كسر production
-*/
 
 async function safeFetch(path, options = {}) {
   try {
@@ -149,15 +126,11 @@ async function safeFetch(path, options = {}) {
     return null;
   }
   }
+
 /* =========================================================
    PART 2 — NAVIGATION (General Update)
    لا يلمس CSS ولا يغيّر HTML
 ========================================================= */
-
-/* ================= VIEWS REGISTRY ================= */
-/*
-  يجب أن تتطابق مع ids الموجودة في HTML
-*/
 
 const VIEWS = ["wallet", "market", "casino", "mining", "airdrop"];
 
@@ -171,13 +144,11 @@ function navigate(view) {
     return;
   }
 
-  // إخفاء كل الأقسام
   VIEWS.forEach(v => {
     const el = $(v);
     if (el) el.classList.remove("active");
   });
 
-  // إظهار القسم المطلوب
   const target = $(view);
   if (!target) {
     log.error("navigate(): missing section", view);
@@ -185,13 +156,10 @@ function navigate(view) {
   }
   target.classList.add("active");
 
-  // تحديث حالة التطبيق
   APP.view = view;
 
-  // تحديث أزرار التنقل
   syncNavButtons(view);
 
-  // Hook دخول القسم (آمن)
   onViewEnter(view);
 
   log.info("Navigated to", view);
@@ -211,10 +179,6 @@ function syncNavButtons(activeView) {
 }
 
 /* ================= VIEW ENTER HOOK ================= */
-/*
-  لا منطق ثقيل هنا
-  فقط استدعاء دوال إن وُجدت
-*/
 
 function onViewEnter(view) {
   switch (view) {
@@ -241,9 +205,6 @@ function onViewEnter(view) {
 }
 
 /* ================= BIND NAVIGATION ================= */
-/*
-  يُستدعى مرة واحدة في PART 6 (bootstrap)
-*/
 
 function bindNavigation() {
   const buttons = $$(".bottom-nav button");
@@ -278,9 +239,6 @@ const WALLET = {
 };
 
 /* ================= DOM MAP ================= */
-/*
-  ids مأخوذة حرفيًا من HTML
-*/
 
 const WALLET_DOM = {
   BX: "bal-bx",
@@ -313,22 +271,17 @@ function renderWallet() {
 }
 
 /* ================= LOAD WALLET ================= */
-/*
-  UI-safe:
-  - لا crash
-  - لا يفترض backend
-*/
 
 function loadWallet() {
   // حالياً بيانات افتراضية (Production UI)
   if (!WALLET.loaded) {
-    WALLET.BX = 125.50;
-    WALLET.USDT = 342.10;
-    WALLET.BNB = 1.24;
-    WALLET.ETH = 0.18;
-    WALLET.TON = 55.0;
-    WALLET.SOL = 3.6;
-    WALLET.BTC = 0.004;
+    WALLET.BX = 0.00;
+    WALLET.USDT = 0.00;
+    WALLET.BNB = 0.00;
+    WALLET.ETH = 0.00;
+    WALLET.TON = 0.00;
+    WALLET.SOL = 0.00;
+    WALLET.BTC = 0.00;
     WALLET.loaded = true;
 
     log.info("Wallet loaded (UI fallback)");
@@ -339,10 +292,6 @@ function loadWallet() {
 }
 
 /* ================= CONNECTION STATUS ================= */
-/*
-  WalletConnect / Binance
-  (واجهة فقط — صادق)
-*/
 
 function renderWalletConnections() {
   const wcBtn = $("walletConnectBtn");
@@ -357,17 +306,16 @@ function renderWalletConnections() {
     binanceBtn.disabled = true;
     binanceBtn.textContent = "Binance (Coming Soon)";
   }
-       }
+}
+
 /* =========================================================
    PART 4 — MARKET + CASINO (General Update)
    تفاعل UI فقط — بدون كسر HTML/CSS
 ========================================================= */
 
-/* ================= MARKET STATE ================= */
-
 const MARKET = {
   pair: "BX/USDT",
-  price: 1.0000,
+  price: 2.0000,
   timer: null
 };
 
@@ -394,9 +342,6 @@ function stopMarket() {
 }
 
 /* ================= MARKET PAIRS ================= */
-/*
-  يعتمد على buttons[data-pair]
-*/
 
 function bindMarketPairs() {
   const buttons = $$(".market-pair");
@@ -434,8 +379,6 @@ function renderMarket() {
    CASINO
 ================================================= */
 
-/* ================= CASINO STATE ================= */
-
 const CASINO = {
   history: []
 };
@@ -443,7 +386,6 @@ const CASINO = {
 /* ================= INIT CASINO ================= */
 
 function initCasino() {
-  // نضيف نتيجة وهمية عند كل دخول
   addCasinoResult();
   log.info("Casino initialized");
 }
@@ -451,14 +393,13 @@ function initCasino() {
 /* ================= ADD RESULT ================= */
 
 function addCasinoResult() {
-  const win = Math.random() > 0.5;
+  const win = Math.random() > 2.5;
 
   CASINO.history.unshift({
     result: win ? "WIN" : "LOSE",
     time: new Date().toLocaleTimeString()
   });
 
-  // نحتفظ بآخر 10 نتائج
   CASINO.history.splice(10);
 
   renderCasinoHistory();
@@ -483,8 +424,6 @@ function renderCasinoHistory() {
    UI Mining Engine — بدون كسر HTML/CSS
 ========================================================= */
 
-/* ================= MINING STATE ================= */
-
 const MINING = {
   coin: "BX",
   subscription: null // { coin, planId }
@@ -493,15 +432,12 @@ const MINING = {
 /* ================= RISK CONFIG ================= */
 
 const MINING_RISK = {
-  BX: { multiplier: 1.0, label: "Low risk" },
-  BNB: { multiplier: 1.35, label: "Medium risk" },
-  SOL: { multiplier: 1.8, label: "High risk" }
+  BX: { multiplier: 1.0, label: "Low" },
+  BNB: { multiplier: 1.35, label: "Medium" },
+  SOL: { multiplier: 1.8, label: "High" }
 };
 
 /* ================= PLANS ================= */
-/*
-  6 خطط — ثابتة
-*/
 
 const MINING_PLANS = [
   { id: "starter",  name: "Starter",  roi: 2.5,  days: 10, min: 10,    max: 100 },
@@ -520,9 +456,6 @@ function renderMining() {
 }
 
 /* ================= COIN TABS ================= */
-/*
-  يعتمد على .mining-tabs button[data-coin]
-*/
 
 function bindMiningTabs() {
   const buttons = $$(".mining-tabs button");
@@ -589,9 +522,6 @@ function renderMiningPlans() {
 }
 
 /* ================= SUBSCRIBE ================= */
-/*
-  اشتراك واحد فقط — UI guard
-*/
 
 function subscribeMining(planId) {
   if (MINING.subscription) {
@@ -612,27 +542,21 @@ function subscribeMining(planId) {
 }
 /* =========================================================
    PART 6 — BOOTSTRAP (General Update)
-   ربط وتشغيل كل الأجزاء بدون كسر HTML/CSS
 ========================================================= */
 
 function bootstrap() {
-  // 1️⃣ تهيئة التطبيق (PART 1)
   if (typeof APP !== "undefined" && typeof APP.init === "function") {
     APP.init();
   }
 
-  // 2️⃣ ربط التنقل (PART 2)
   if (typeof bindNavigation === "function") {
     bindNavigation();
   }
 
-  // 3️⃣ تهيئة Wallet مبدئيًا (PART 3)
   if (typeof loadWallet === "function") {
     loadWallet();
   }
 
-  // 4️⃣ تهيئة Market / Casino بشكل كسول (PART 4)
-  // لن تعمل إلا عند الدخول للأقسام
   if (APP.view === "market" && typeof initMarket === "function") {
     initMarket();
   }
@@ -641,12 +565,10 @@ function bootstrap() {
     initCasino();
   }
 
-  // 5️⃣ تهيئة Mining UI (PART 5)
   if (typeof renderMining === "function") {
     renderMining();
   }
 
-  // 6️⃣ إظهار القسم الافتراضي
   if (typeof navigate === "function") {
     navigate(APP.view);
   }
@@ -655,8 +577,5 @@ function bootstrap() {
 }
 
 /* ================= START ================= */
-/*
-  لا تنفيذ قبل DOM جاهز
-*/
 
 document.addEventListener("DOMContentLoaded", bootstrap);
