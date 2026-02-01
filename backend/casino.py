@@ -1,12 +1,13 @@
 # ======================================================
 # casino.py
-# Core Casino Logic (Simple & Clean)
+# Core Casino Logic (Hardened – Production Safe)
 # ======================================================
 
 import time
 import os
 import hmac
 import hashlib
+import secrets
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Depends
@@ -18,13 +19,20 @@ from finance import casino_debit, casino_credit, casino_history, rtp_stats
 router = APIRouter(dependencies=[Depends(api_guard)])
 
 # ======================================================
-# CONFIG
+# CONFIG (SAFE)
 # ======================================================
-SERVER_SEED = os.getenv("SERVER_SEED", "CHANGE_ME")
+
+SERVER_SEED = os.getenv("SERVER_SEED")
+if not SERVER_SEED:
+    raise RuntimeError("SERVER_SEED must be set for casino security")
+
+GAME_FREEZE = bool(int(os.getenv("GAME_FREEZE", "0")))
+AUDIT_MODE  = bool(int(os.getenv("AUDIT_MODE", "0")))
 
 # ======================================================
 # GAME INDEX (12 GAMES – FIXED)
 # ======================================================
+
 GAME_INDEX = {
     "coinflip": 1,
     "roulette": 2,
@@ -43,6 +51,7 @@ GAME_INDEX = {
 # ======================================================
 # RTP
 # ======================================================
+
 RTP = {
     "coinflip": 0.35,
     "roulette": 0.32,
@@ -64,6 +73,7 @@ def probability(multiplier: float, game: str) -> float:
 # ======================================================
 # PROVABLY FAIR
 # ======================================================
+
 def server_seed_hash():
     return hashlib.sha256(SERVER_SEED.encode()).hexdigest()
 
@@ -73,8 +83,9 @@ def provably_random(seed: str, nonce: int) -> float:
     return int(h[:8], 16) / 0xFFFFFFFF
 
 # ======================================================
-# CLIENT SEED RULE (1.2.3.4)
+# CLIENT SEED RULE
 # ======================================================
+
 def parse_client_seed(seed: str) -> int:
     return sum(int(x) for x in seed.split(".") if x.isdigit())
 
@@ -87,8 +98,9 @@ def special_rule(client_seed: str, game: str, nonce: int):
 # ======================================================
 # REQUEST MODEL
 # ======================================================
+
 class PlayRequest(BaseModel):
-    uid: int = 1
+    uid: int
     game: str
     bet: float
     multiplier: Optional[float] = None
@@ -96,12 +108,12 @@ class PlayRequest(BaseModel):
     client_seed: str
 
 # ======================================================
-# GAME LOGIC (PURE & SIMPLE)
+# GAME LOGIC (UNCHANGED)
 # ======================================================
+
 def play_coinflip(bet, rand):
-    win = rand <= probability(2, "coinflip")  
-    payout = bet * 2 if win else 0
-    return win, payout
+    win = rand <= probability(2, "coinflip")
+    return win, bet * 2 if win else 0
 
 def play_crash(bet, m, rand):
     if m < 1.01 or m > 100:
@@ -151,8 +163,9 @@ def play_airboss(bet, m, rand):
     return win, bet * m if win else 0
 
 # ======================================================
-# GAME REGISTRY
+# GAME REGISTRY (8 EXECUTABLE)
 # ======================================================
+
 GAMES = {
     "coinflip": lambda r, rand: play_coinflip(r.bet, rand),
     "crash":    lambda r, rand: play_crash(r.bet, r.multiplier or 2, rand),
@@ -165,8 +178,9 @@ GAMES = {
 }
 
 # ======================================================
-# PLAY ENDPOINT
+# PLAY ENDPOINT (SAFE)
 # ======================================================
+
 @router.post("/play")
 def play(req: PlayRequest):
 
@@ -177,19 +191,20 @@ def play(req: PlayRequest):
         raise HTTPException(400, "INVALID_BET")
 
     if req.game not in GAMES:
-        raise HTTPException(400, "UNKNOWN_GAME")
+        raise HTTPException(400, "GAME_NOT_SUPPORTED")
 
-    nonce = int(time.time() * 1000)
+    nonce = int(time.time() * 1000) + secrets.randbelow(1000)
     numeric, seed = special_rule(req.client_seed, req.game, nonce)
     rand = provably_random(seed, nonce)
 
     casino_debit(req.uid, req.bet, req.game)
-    win, payout = GAMES[req.game](req, rand)
 
-    if win:
-        casino_credit(req.uid, payout, req.game)
-
-    casino_history(req.uid, req.game, req.bet, payout if win else 0, win)
+    try:
+        win, payout = GAMES[req.game](req, rand)
+        if win:
+            casino_credit(req.uid, payout, req.game)
+    finally:
+        casino_history(req.uid, req.game, req.bet, payout if win else 0, win)
 
     response = {
         "game": req.game,
@@ -209,6 +224,7 @@ def play(req: PlayRequest):
 # ======================================================
 # ADMIN – RTP
 # ======================================================
+
 @router.get("/admin/rtp", dependencies=[Depends(admin_guard)])
 def live_rtp():
     return {"theoretical": RTP, "real": rtp_stats()}
