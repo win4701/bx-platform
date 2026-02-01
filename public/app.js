@@ -129,7 +129,6 @@ async function safeFetch(path, options = {}) {
 
 /* =========================================================
    PART 2 — NAVIGATION (General Update)
-   لا يلمس CSS ولا يغيّر HTML
 ========================================================= */
 
 const VIEWS = ["wallet", "market", "casino", "mining", "airdrop"];
@@ -222,10 +221,7 @@ function bindNavigation() {
 }
 /* =========================================================
    PART 3 — WALLET (General Update)
-   لا يلمس CSS ولا يغيّر HTML
 ========================================================= */
-
-/* ================= WALLET STATE ================= */
 
 const WALLET = {
   BX: 0,
