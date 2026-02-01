@@ -303,7 +303,6 @@ function renderWalletConnections() {
 
 /* =========================================================
    PART 4 — MARKET + CASINO (General Update)
-   تفاعل UI فقط — بدون كسر HTML/CSS
 ========================================================= */
 
 const MARKET = {
