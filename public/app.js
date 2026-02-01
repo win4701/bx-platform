@@ -333,9 +333,8 @@ async function startMining(asset, plan) {
   }
 
   // تحديث حالة التعدين بعد البدء
-  MINING_STATE.setPlan(plan);
-  MINING_STATE.startMining();
-  renderMiningPlans(); // إعادة عرض خطط التعدين بعد البدء
+MINING_STATE.setPlan(asset, plan); MINING_STATE.startMining();
+  renderMiningPlans(); 
 }
 
 /* =======================================================
@@ -352,7 +351,7 @@ async function loadMiningStatus() {
   // تحديث حالة التعدين النشطة
   MINING_STATE.setPlan(data.plan);
   MINING_STATE.setEstimatedReturn(data.estimatedReturn);
-  renderActiveMining(); // عرض حالة التعدين النشطة
+  renderActiveMining();
 }
 
 /* =======================================================
@@ -504,7 +503,8 @@ document.querySelectorAll(".mining-tabs button").forEach(btn => {
     btn.classList.add("active");
 
     // تعيين العملة النشطة
-    ACTIVE_MINING_COIN = btn.dataset.coin;
+    ACTIVE_MINING_COIN = "BX";
+    btn.dataset.coin;
 
     // تحديث الخطط المعروضة بناءً على العملة النشطة
     renderMiningPlans();
