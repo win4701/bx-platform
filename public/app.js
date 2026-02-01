@@ -446,34 +446,35 @@ function renderCasinoUI(result) {
    4.4 — Render Mining Plans (Display mining plans)
 ========================================================= */
 function renderMiningPlans() {
-  if (!APP_STATE.ready || !MINING_STATE || !MINING_STATE.availablePlans) return;
+  if (!MINING_STATE?.availablePlans) return;
 
-  const plansContainer = $("miningGrid");
+  const plansContainer = document.getElementById("miningGrid");
   if (!plansContainer) return;
 
-  plansContainer.innerHTML = ""; // مسح الخطط السابقة
+  const plans = MINING_STATE.availablePlans[ACTIVE_MINING_COIN];
+  if (!plans) return;
 
-  // عرض الخطط بناءً على العملة النشطة
-  const activePlans = MINING_STATE.availablePlans[ACTIVE_MINING_COIN];
+  plansContainer.innerHTML = "";
 
-  activePlans.forEach(plan => {
-    const planElement = document.createElement("div");
-    planElement.classList.add("mining-plan");
-    planElement.innerHTML = `
-      <div class="plan-header">
-        <h4>${plan.name}</h4>
-        ${plan.vip ? `<span class="badge vip">VIP</span>` : ""}
-      </div>
-      <div class="plan-details">
-        <div><strong>ROI:</strong> ${plan.roi * 100}%</div>
-        <div><strong>Investment:</strong> ${plan.min} - ${plan.max}</div>
-        <div><strong>Duration:</strong> ${plan.days} days</div>
-      </div>
-      <button class="subscribe-button" onclick="subscribeMining('${plan.id}')">Subscribe</button>
+  plans.forEach(plan => {
+    const el = document.createElement("div");
+    el.className = "mining-plan card";
+
+    el.innerHTML = `
+      <h4>${plan.name} ${plan.vip ? "🔥 VIP" : ""}</h4>
+      <ul>
+        <li>Duration: ${plan.days} days</li>
+        <li>ROI: ${plan.roi}%</li>
+        <li>Min: ${plan.min}</li>
+        <li>Max: ${plan.max}</li>
+      </ul>
+      <button onclick="subscribeMining('${plan.id}')">Subscribe</button>
     `;
-    plansContainer.appendChild(planElement);
+
+    plansContainer.appendChild(el);
   });
 }
+
 /* =======================================================
    4.5 — Render Active Mining (Display active mining status)
 ========================================================= */
