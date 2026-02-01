@@ -55,12 +55,6 @@ function isAuthenticated() {
    PROVABLY FAIR (CLIENT SIDE)
 ================================================================================================ */
 
-/**
- * Client Seed
- * - Editable from UI
- * - Stored in localStorage
- * - Sent with every casino play
- */
 let CLIENT_SEED = localStorage.getItem("client_seed") || "1.2.3.4";
 
 /**
@@ -73,9 +67,6 @@ function setClientSeed(seed) {
   log("Client seed updated:", seed);
 }
 
-/**
- * Load current fairness state (server seed hash)
- */
 async function loadFairness() {
   try {
     const r = await fetch(API_BASE + "/casino/fairness");
@@ -89,9 +80,6 @@ async function loadFairness() {
   }
 }
 
-/**
- * Reveal server seed (after round)
- */
 async function revealServerSeed() {
   try {
     const r = await fetch(API_BASE + "/casino/reveal");
@@ -107,9 +95,6 @@ async function revealServerSeed() {
    UI NOTIFICATIONS
 ================================================================================================ */
 
-/**
- * Simple toast notification
- */
 function toast(message) {
   if (!message) return;
   const el = document.createElement("div");
@@ -165,16 +150,10 @@ async function loadWallet() {
    WALLET ACTIONS (HOOKS ONLY)
 ------------------------------------------------------------------------------------------------ */
 
-/**
- * Deposit (UI hook)
- */
 function deposit() {
   toast("Deposit request initiated");
 }
 
-/**
- * Withdraw BNB (request only)
- */
 async function withdrawBNB(amount) {
   if (!amount || amount <= 0) return;
 
@@ -190,9 +169,6 @@ async function withdrawBNB(amount) {
   toast("Withdraw request submitted");
 }
 
-/**
- * Transfer BX to another user via Telegram ID
- */
 async function transferBX(targetTelegramId, amount) {
   if (!targetTelegramId || amount <= 0) return;
 
@@ -280,10 +256,8 @@ function tickMarketPrice() {
 
   MARKET_STATE.price = +nextPrice.toFixed(6);
 
-  // تحديث السعر في الواجهة
   renderMarketPrice();
 
-  // تحديث الشارت إن كان مفعّل
   if (priceChart) {
     priceChart.data.labels.push("");
     priceChart.data.datasets[0].data.push(MARKET_STATE.price);
@@ -391,17 +365,11 @@ function renderOrderBook() {
    BUY / SELL (UI HOOKS – SIMULATED)
 ================================================================================================ */
 
-/**
- * Buy BX (simulated)
- */
 function buyBX(amount) {
   if (!amount || amount <= 0) return;
   toast("Buy order placed");
 }
 
-/**
- * Sell BX (simulated)
- */
 function sellBX(amount) {
   if (!amount || amount <= 0) return;
   toast("Sell order placed");
@@ -452,9 +420,6 @@ const CASINO_GAMES = [
    CASINO UI
 ================================================================================================ */
 
-/**
- * Select casino game
- */
 function selectCasinoGame(gameId) {
   if (!CASINO_GAMES.find(g => g.id === gameId)) return;
 
@@ -489,9 +454,6 @@ function playCasinoSound(type) {
    CASINO PLAY (BACKEND)
 ================================================================================================ */
 
-/**
- * Play casino game
- */
 async function playCasino(gameId, betAmount) {
   if (!FEATURES.CASINO) return;
   if (CASINO_STATE.isPlaying) return;
@@ -550,15 +512,11 @@ function handleCasinoResult(result) {
    CASINO – RECENT RESULTS (WIN / LOSS | DYNAMIC | VERTICAL)
 ================================================================================================ */
 
-/* ================= CONFIG ================= */
-
 const CASINO_RECENT = {
   maxItems: 12,
   winAmounts: [20,44,70,126,576,87,234,412,97,35],
   lossAmount:[ 5 ,7,17,23,8,34,21,56,15]    
 };
-
-/* ================= RENDER ================= */
 
 function renderCasinoResult({ user, game, win, amount }) {
   const list = document.getElementById("bigWinsList");
@@ -577,11 +535,11 @@ function renderCasinoResult({ user, game, win, amount }) {
 
   list.prepend(row);
 
-  // حد أقصى للعناصر
   while (list.children.length > CASINO_RECENT.maxItems) {
     list.removeChild(list.lastChild);
   }
 }
+
 /* ================================================================================================
    CASINO RESULT RENDER
 ================================================================================================ */
@@ -635,9 +593,6 @@ function startCasinoBots() {
   }, 2000);
 }
 
-/**
- * Render fake activity line
- */
 function renderCasinoBotActivity(user, game, bet, win) {
   if (!$("casinoActivity")) return;
 
@@ -667,7 +622,7 @@ function bindCasinoGames() {
   document.querySelectorAll("#casino .game").forEach(card => {
     card.addEventListener("click", () => {
       const game = card.dataset.game;
-      const betAmount = 1; // BX (قابل للتطوير لاحقًا)
+      const betAmount = 1; 
 
       if (!isAuthenticated()) {
         toast("Please login first");
@@ -697,7 +652,7 @@ function initCasino() {
 const MINING_STATE = {
   activeBX: null,
   activeBNB: null,
-  activeSOL: null,   // ✅ جديد
+  activeSOL: null,   
   history: []
 };
 
