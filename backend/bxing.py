@@ -2,29 +2,35 @@ import sqlite3
 from fastapi import APIRouter, HTTPException
 from decimal import Decimal
 from time import time
+from contextlib import contextmanager
 
 router = APIRouter(prefix="/bxing", tags=["bxing"])
 
 DB_PATH = "db/bxing.db"
 
 # ======================================================
-# DB
+# DB (SAFE)
 # ======================================================
-def db():
-    return sqlite3.connect(DB_PATH, check_same_thread=False)
+@contextmanager
+def get_db():
+    conn = sqlite3.connect(DB_PATH, check_same_thread=False)
+    try:
+        yield conn
+        conn.commit()
+    finally:
+        conn.close()
 
 # ======================================================
 # AIRDROP
 # ======================================================
 @router.get("/airdrop/status")
 def airdrop_status(uid: int):
-    conn = db()
-    c = conn.cursor()
-
-    row = c.execute(
-        "SELECT claimed, referrals, reward FROM airdrops WHERE uid=?",
-        (uid,)
-    ).fetchone()
+    with get_db() as conn:
+        c = conn.cursor()
+        row = c.execute(
+            "SELECT claimed, referrals, reward FROM airdrops WHERE uid=?",
+            (uid,)
+        ).fetchone()
 
     if not row:
         return {"claimed": False, "referrals": 0, "reward": 2.5}
@@ -38,115 +44,134 @@ def airdrop_status(uid: int):
 
 @router.post("/airdrop/claim")
 def airdrop_claim(uid: int):
-    conn = db()
-    c = conn.cursor()
+    with get_db() as conn:
+        c = conn.cursor()
+        row = c.execute(
+            "SELECT claimed FROM airdrops WHERE uid=?",
+            (uid,)
+        ).fetchone()
 
-    row = c.execute(
-        "SELECT claimed FROM airdrops WHERE uid=?",
-        (uid,)
-    ).fetchone()
+        if row and row[0]:
+            raise HTTPException(400, "AIRDROP_ALREADY_CLAIMED")
 
-    if row and row[0]:
-        raise HTTPException(400, "AIRDROP_ALREADY_CLAIMED")
-
-    c.execute(
-        """INSERT INTO airdrops (uid, claimed, referrals, reward, ts)
-           VALUES (?,1,0,2.5,?)
-           ON CONFLICT(uid) DO UPDATE SET claimed=1""",
-        (uid, int(time()))
-    )
-
-    conn.commit()
-    conn.close()
+        c.execute(
+            """INSERT INTO airdrops (uid, claimed, referrals, reward, ts)
+               VALUES (?,1,0,2.5,?)
+               ON CONFLICT(uid) DO UPDATE SET claimed=1""",
+            (uid, int(time()))
+        )
 
     return {"status": "ok", "reward": 2.5}
 
 # ======================================================
-# MINING
+# MINING PLANS (PER COIN)
 # ======================================================
 MINING_PLANS = {
     "BX": [
-        {"name": "Starter", "roi": Decimal("0.025"), "min": 10, "max": 100, "days": 10},
-        {"name": "Basic", "roi": Decimal("0.05"), "min": 50, "max": 300, "days": 21},
-        {"name": "Golden", "roi": Decimal("0.08"), "min": 200, "max": 800, "days": 30},
-    ],
-    "BNB": [
-        {"name": "Starter", "roi": Decimal("0.008"), "min": 0.05, "max": 1, "days": 10},
-        {"name": "Basic", "roi": Decimal("0.018"), "min": 1, "max": 4, "days": 21},
+        {"id":"p10","name":"Starter","roi":Decimal("0.025"),"min":10,"max":100,"days":10},
+        {"id":"p21","name":"Basic","roi":Decimal("0.05"),"min":50,"max":300,"days":21},
+        {"id":"p30","name":"Golden","roi":Decimal("0.08"),"min":200,"max":800,"days":30},
+        {"id":"p45","name":"Advanced","roi":Decimal("0.12"),"min":400,"max":2500,"days":45},
+        {"id":"p60","name":"Platine","roi":Decimal("0.17"),"min":750,"max":9000,"days":60},
+        {"id":"p90","name":"Infinity","roi":Decimal("0.25"),"min":1000,"max":20000,"days":90,"sub":True},
     ],
     "SOL": [
-        {"name": "Starter", "roi": Decimal("0.01"), "min": 1, "max": 5, "days": 10},
-    ]
+        {"id":"p10","name":"Starter","roi":Decimal("0.01"),"min":1,"max":5,"days":10},
+        {"id":"p21","name":"Basic","roi":Decimal("0.028"),"min":10,"max":50,"days":21},
+        {"id":"p30","name":"Golden","roi":Decimal("0.04"),"min":40,"max":160,"days":30},
+        {"id":"p45","name":"Advanced","roi":Decimal("0.07"),"min":120,"max":500,"days":45},
+        {"id":"p60","name":"Platine","roi":Decimal("0.09"),"min":200,"max":1000,"days":60},
+        {"id":"p90","name":"Infinity","roi":Decimal("0.14"),"min":500,"max":2500,"days":90,"sub":True},
+    ],
+    "BNB": [
+        {"id":"p10","name":"Starter","roi":Decimal("0.008"),"min":Decimal("0.05"),"max":1,"days":10},
+        {"id":"p21","name":"Basic","roi":Decimal("0.018"),"min":1,"max":4,"days":21},
+        {"id":"p30","name":"Golden","roi":Decimal("0.03"),"min":5,"max":50,"days":30},
+        {"id":"p45","name":"Advanced","roi":Decimal("0.05"),"min":10,"max":100,"days":45},
+        {"id":"p60","name":"Platine","roi":Decimal("0.07"),"min":15,"max":150,"days":60},
+        {"id":"p90","name":"Infinity","roi":Decimal("0.11"),"min":25,"max":200,"days":90,"sub":True},
+    ],
 }
 
-def find_plan(asset: str, investment: Decimal):
-    plans = MINING_PLANS.get(asset)
+def get_mining_plans_by_coin(asset: str):
+    return MINING_PLANS.get(asset.upper())
+
+def find_plan(asset: str, plan_id: str):
+    plans = get_mining_plans_by_coin(asset)
     if not plans:
         raise HTTPException(400, "MINING_NOT_AVAILABLE")
 
     for p in plans:
-        if p["min"] <= investment <= p["max"]:
+        if p["id"] == plan_id:
             return p
 
-    raise HTTPException(400, "NO_MATCHING_PLAN")
+    raise HTTPException(400, "PLAN_NOT_FOUND")
 
-
+# ======================================================
+# START MINING
+# ======================================================
 @router.post("/mining/start")
-def start_mining(uid: int, asset: str, investment: float):
-    investment = Decimal(str(investment))
+def start_mining(uid: int, asset: str, plan_id: str, investment: float):
     asset = asset.upper()
+    investment = Decimal(str(investment))
 
-    plan = find_plan(asset, investment)
+    plan = find_plan(asset, plan_id)
 
-    roi = investment * plan["roi"] * plan["days"]
-    now = int(time())
+    if not (plan["min"] <= investment <= plan["max"]):
+        raise HTTPException(400, "INVALID_INVESTMENT_RANGE")
 
-    conn = db()
-    c = conn.cursor()
+    with get_db() as conn:
+        c = conn.cursor()
 
-    c.execute(
-        """INSERT INTO mining_orders
-           (uid, asset, plan, investment, roi, days, started_at, ends_at, status)
-           VALUES (?,?,?,?,?,?,?,?,?)""",
-        (
-            uid,
-            asset,
-            plan["name"],
-            float(investment),
-            float(roi),
-            plan["days"],
-            now,
-            now + plan["days"] * 86400,
-            "active"
+        active = c.execute(
+            "SELECT 1 FROM mining_orders WHERE uid=? AND status='active'",
+            (uid,)
+        ).fetchone()
+
+        if active:
+            raise HTTPException(400, "MINING_ALREADY_ACTIVE")
+
+        roi_total = investment * plan["roi"] * plan["days"]
+        now = int(time())
+
+        c.execute(
+            """INSERT INTO mining_orders
+               (uid, asset, plan, investment, roi, days, started_at, ends_at, status)
+               VALUES (?,?,?,?,?,?,?,?,?)""",
+            (
+                uid,
+                asset,
+                plan["name"],
+                float(investment),
+                float(roi_total),
+                plan["days"],
+                now,
+                now + plan["days"] * 86400,
+                "active"
+            )
         )
-    )
-
-    conn.commit()
-    conn.close()
 
     return {
         "status": "started",
         "asset": asset,
         "plan": plan["name"],
         "investment": float(investment),
-        "estimated_return": float(roi),
+        "estimated_return": float(roi_total),
         "days": plan["days"]
     }
 
-
+# ======================================================
+# ACTIVE MINING
+# ======================================================
 @router.get("/mining/active")
 def active_mining(uid: int):
-    conn = db()
-    c = conn.cursor()
-
-    rows = c.execute(
-        """SELECT asset, plan, investment, roi, days, ends_at
-           FROM mining_orders
-           WHERE uid=? AND status='active'""",
-        (uid,)
-    ).fetchall()
-
-    conn.close()
+    with get_db() as conn:
+        rows = conn.execute(
+            """SELECT asset, plan, investment, roi, days, ends_at
+               FROM mining_orders
+               WHERE uid=? AND status='active'""",
+            (uid,)
+        ).fetchall()
 
     return [
         {
@@ -158,4 +183,4 @@ def active_mining(uid: int):
             "ends_at": r[5]
         }
         for r in rows
-    ]
+]
