@@ -430,7 +430,7 @@ const MINING_RISK = {
 
 /* ================= PLANS ================= */
 
-const MINING_PLANS = {
+const MINING_PLANS = 
   BX: [
     { id:"p10", name:"Starter",  days:10, roi:2.5, min:10,  max:100  },
     { id:"p21", name:"Basic",    days:21, roi:5,   min:50,  max:300  },
@@ -456,8 +456,8 @@ const MINING_PLANS = {
     { id:"p45", name:"Pro", days:45, roi:5,   min:10,  max:100  },
     { id:"p60", name:"Platine",  days:60, roi:7,   min:15,    max:150  },
     { id:"p90", name:"Infinity", days:90, roi:11,  min:25,    max:200, }
-  ]
-};
+  ];
+
 
 /* ================= ENTRY ================= */
 
