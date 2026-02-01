@@ -1,707 +1,528 @@
 "use strict";
 
-/* ================================================================================================
-   PART 1 — CORE & CONTRACT LAYER
-   -----------------------------------------------------------------------------------------------
-   - ثوابت عامة
-   - إعدادات التطبيق
-   - حالة عامة (APP_STATE)
-   - المستخدم والمصادقة
-   - Helpers (DOM, logging, toast)
-   - API contract (المسارات فقط)
-=============================================================== */
-
-/* =======================================================
-   1.1 — API Base URL
+/* =========================================================
+   PART 1 — CORE & GLOBAL STATE (FOUNDATION)
+   هذا الجزء لا يلمس UI مباشرة
 ========================================================= */
 
-const API_BASE = "https://bx-backend.fly.dev"; // اكتب رابط الـ API هنا
+/* ================= DOM HELPERS ================= */
 
-/* =======================================================
-   1.2 — App State
-========================================================= */
+const $ = (id) => document.getElementById(id);
+const $$ = (selector) => document.querySelectorAll(selector);
 
-const APP_STATE = {
-  ready: false, // تعني أن التطبيق جاهز
-  view: "wallet", // القسم النشط في الواجهة
-  user: null, // تفاصيل المستخدم
-  isLoading: false // حالة التحميل العامة
-};
+/* ================= CONFIG ================= */
 
-/* =======================================================
-   1.3 — USER (من الـ LocalStorage أو الـ Cookie)
-========================================================= */
+const API_BASE = "https://bx-backend.fly.dev";
+
+/* ================= USER / AUTH ================= */
 
 const USER = {
-  jwt: localStorage.getItem("jwt") || null, // JSON Web Token للمصادقة
-  isAuthenticated() {
-    return this.jwt !== null;
+  jwt: null,
+  authenticated: false,
+
+  load() {
+    const token = localStorage.getItem("jwt");
+    if (token) {
+      this.jwt = token;
+      this.authenticated = true;
+    }
   },
-  setToken(jwt) {
+
+  set(jwt) {
     this.jwt = jwt;
+    this.authenticated = true;
     localStorage.setItem("jwt", jwt);
+  },
+
+  clear() {
+    this.jwt = null;
+    this.authenticated = false;
+    localStorage.removeItem("jwt");
   }
 };
-
-/* =======================================================
-   1.4 — API Authorization Headers
-========================================================= */
 
 function authHeaders() {
-  return USER.isAuthenticated() ? { Authorization: "Bearer " + USER.jwt } : {};
+  return USER.jwt
+    ? { Authorization: "Bearer " + USER.jwt }
+    : {};
 }
 
-/* =======================================================
-   1.5 — Helper functions (DOM, Toasts, Logging)
-========================================================= */
-
-// DOM helper (لإيجاد العناصر بسهولة)
-function $(id) {
-  return document.getElementById(id);
+function isAuthenticated() {
+  return USER.authenticated === true;
 }
 
-// توست للرسائل التنبيهية
-function toast(message) {
-  if (!message) return;
-  const el = document.createElement("div");
-  el.className = "toast";
-  el.textContent = message;
-  document.body.appendChild(el);
-  setTimeout(() => el.remove(), 3000); // الرسالة تختفي بعد 3 ثواني
-}
+/* ================= APP STATE ================= */
+/*
+  APP هو المصدر الوحيد للحالة العامة
+  لا تُنشئ state خارجه
+*/
 
-// تسجيل الأخطاء في الـ console
-function log(message) {
-  console.log(message);
-}
+const APP = {
+  ready: false,
+  view: "wallet", // wallet | market | casino | mining | airdrop
 
-/* =======================================================
-   1.6 — API Contract: Paths for FastAPI endpoints
-========================================================= */
-
-const API = {
-  wallet: "/finance/wallet", // بيانات المحفظة
-  casino: {
-    play: "/casino/play", // لعب الكازينو
-    history: "/casino/history"
-  },
-  mining: {
-    start: "/bxing/mining/start", // بداية التعدين
-    status: "/bxing/mining/status"
-  },
-  airdrop: {
-    status: "/bxing/airdrop/status", // حالة الـ air drop
-    claim: "/bxing/airdrop/claim" // المطالبة بالـ air drop
+  init() {
+    USER.load();
+    this.ready = true;
   }
 };
 
-/* ================================================================================================
-   PART 2 — STATE & DATA LAYER (SINGLE SOURCE OF TRUTH)
-   -----------------------------------------------------------------------------------------------
-   - كل الحالات (Wallet / Market / Casino / Mining / Airdrop)
-   - قيم افتراضية
-   - بدون DOM
-   - بدون fetch
-=============================================================== */
+/* ================= SAFE FETCH ================= */
+/*
+  fetch موحّد:
+  - لا crash
+  - لا silent fail
+*/
 
-/* =======================================================
-   2.1 — Wallet State
-========================================================= */
+async function safeFetch(path, options = {}) {
+  try {
+    const res = await fetch(API_BASE + path, {
+      headers: {
+        "Content-Type": "application/json",
+        ...authHeaders(),
+        ...(options.headers || {})
+      },
+      ...options
+    });
 
-const WALLET_STATE = {
-  BX: 0.0,
-  USDT: 0.0,
-  BNB: 0.0,
-  ETH: 0.0,
-  SOL: 0.0,
-  TON: 0.0,
-  BTC: 0.0,
-
-  set(walletData) {
-    this.BX = walletData.BX || 0;
-    this.USDT = walletData.USDT || 0;
-    this.BNB = walletData.BNB || 0;
-    this.ETH = walletData.ETH || 0;
-    this.SOL = walletData.SOL || 0;
-    this.TON = walletData.TON || 0;
-    this.BTC = walletData.BTC || 0;
-  },
-
-  update(asset, amount) {
-    if (this.hasOwnProperty(asset)) {
-      this[asset] += amount;
+    if (!res.ok) {
+      console.error("API ERROR", path, res.status);
+      return null;
     }
-  }
-};
 
-/* =======================================================
-   2.2 — Market State (Market Price)
-========================================================= */
-
-const MARKET_STATE = {
-  price: 0.0,
-  pair: "BX/USDT",  // يمكن تغييره حسب السوق
-  spread: 0.02,     // مثال: spread between buy and sell price
-  set(price) {
-    this.price = price;
-  },
-  updatePrice(newPrice) {
-    this.price = newPrice;
-  },
-  setPair(pair) {
-    this.pair = pair;
-  }
-};
-
-/* =======================================================
-   2.3 — Casino State
-========================================================= */
-
-const CASINO_STATE = {
-  activeGame: null,
-  isPlaying: false,
-  result: null,
-
-  setGame(gameId) {
-    this.activeGame = gameId;
-    this.result = null;
-  },
-
-  setResult(result) {
-    this.result = result;
-  },
-
-  startGame() {
-    this.isPlaying = true;
-  },
-
-  stopGame() {
-    this.isPlaying = false;
-  }
-};
-
-/* =======================================================
-   2.4 — Mining State
-========================================================= */
-
-const MINING_STATE = {
-  activePlan: null,
-  isMining: false,
-  estimatedReturn: 0.0,
-  availablePlans: {
-    BX: [
-      { id:"p10", name:"Starter",  days:10, roi:2.5, min:10,  max:100 },
-      { id:"p21", name:"Basic",    days:21, roi:5,   min:50,  max:300 },
-      { id:"p30", name:"Golden",   days:30, roi:8,   min:200, max:800 },
-      { id:"p45", name:"Advanced", days:45, roi:12,  min:400, max:2500 },
-      { id:"p60", name:"Platine",  days:60, roi:17,  min:750, max:9000 },
-      { id:"p90", name:"Infinity", days:90, roi:25,  min:1000,max:20000, vip:true }
-    ],
-    SOL: [
-      { id:"p10", name:"Starter",  days:10, roi:1,   min:1,   max:5 },
-      { id:"p21", name:"Basic",    days:21, roi:2.8, min:10,  max:50 },
-      { id:"p30", name:"Golden",   days:30, roi:4,   min:40,  max:160 },
-      { id:"p45", name:"Advanced", days:45, roi:7,   min:120, max:500 },
-      { id:"p60", name:"Platine",  days:60, roi:9,   min:200, max:1000 },
-      { id:"p90", name:"Infinity", days:90, roi:14,  min:500, max:2500, vip:true }
-    ],
-    BNB: [
-      { id:"p10", name:"Starter",  days:10, roi:0.8, min:0.05, max:1 },
-      { id:"p21", name:"Basic",    days:21, roi:1.8, min:1,   max:4 },
-      { id:"p30", name:"Golden",   days:30, roi:3,   min:5,   max:50 },
-      { id:"p45", name:"Advanced", days:45, roi:5,   min:10,  max:100 },
-      { id:"p60", name:"Platine",  days:60, roi:7,   min:15,  max:150 },
-      { id:"p90", name:"Infinity", days:90, roi:11,  min:25,  max:200, vip:true }
-    ]
-  },
-  
-  setPlan(coin, plan) {
-    this.activePlan = plan;
-    this.activeCoin = coin;
-    this.isMining = true;
-  },
-
-  startMining() {
-    if (!this.activePlan) {
-      throw new Error("No mining plan selected");
-    }
-    this.isMining = true;
-    // Logica for mining start can go here
-  },
-
-  stopMining() {
-    this.isMining = false;
-  },
-
-  setEstimatedReturn(returnAmount) {
-    this.estimatedReturn = returnAmount;
-  }
-};
-
-/* =======================================================
-   2.5 — Airdrop State
-========================================================= */
-
-const AIRDROP_STATE = {
-  claimed: false,
-  reward: 2.5,  // Example reward
-  setStatus(claimed, reward) {
-    this.claimed = claimed;
-    this.reward = reward || 2.5;
-  },
-
-  claimAirdrop() {
-    this.claimed = true;
-  }
-};
-
-/* ================================================================================================
-   PART 3 — API ACTIONS LAYER (BACKEND CONTRACT)
-   -----------------------------------------------------------------------------------------------
-   - التعامل مع API (Backend)
-   - تحديث البيانات (STATE)
-   - لا يتعامل مع DOM
-   - لا يتعامل مع UI مباشرة
-=============================================================== */
-
-/* =======================================================
-   3.1 — Load Wallet (Get user wallet data)
-========================================================= */
-
-async function loadWallet() {
-  const data = await safeFetch(API.wallet);
-  if (!data) {
-    toast("Failed to load wallet.");
-    return;
-  }
-
-  // تحديث حالة wallet بعد استلام البيانات
-  WALLET_STATE.set(data);
-  renderWallet(); // بعد تحديث الـ STATE، رندر الواجهة
-}
-
-/* =======================================================
-   3.2 — Play Casino (Send play request to the backend)
-========================================================= */
-
-async function playCasino(gameId, betAmount) {
-  if (!gameId || betAmount <= 0) {
-    toast("Invalid game or bet amount.");
-    return;
-  }
-
-  const result = await safeFetch(API.casino.play, {
-    method: "POST",
-    body: JSON.stringify({
-      game: gameId,
-      bet: betAmount,
-      client_seed: localStorage.getItem("client_seed") || "default"
-    })
-  });
-
-  if (!result) {
-    toast("Casino service unavailable");
-    return;
-  }
-
-  // تحديث حالة الكازينو بعد اللعب
-  CASINO_STATE.setResult(result);
-  renderCasinoUI(result); // عرض النتيجة
-}
-
-/* =======================================================
-   3.3 — Start Mining (Send mining request)
-========================================================= */
-
-async function startMining(asset, plan) {
-  if (!asset || !plan) {
-    toast("Invalid asset or plan.");
-    return;
-  }
-
-  const result = await safeFetch(API.mining.start, {
-    method: "POST",
-    body: JSON.stringify({
-      asset,
-      plan
-    })
-  });
-
-  if (!result) {
-    toast("Mining service unavailable");
-    return;
-  }
-
-  // تحديث حالة التعدين بعد البدء
-  MINING_STATE.setPlan(plan);
-  MINING_STATE.startMining();
-  renderMiningPlans(); // إعادة عرض خطط التعدين بعد البدء
-}
-
-/* =======================================================
-   3.4 — Load Mining Status (Get active mining data)
-========================================================= */
-
-async function loadMiningStatus() {
-  const data = await safeFetch(API.mining.status);
-  if (!data) {
-    toast("Failed to load mining status.");
-    return;
-  }
-
-  // تحديث حالة التعدين النشطة
-  MINING_STATE.setPlan(data.plan);
-  MINING_STATE.setEstimatedReturn(data.estimatedReturn);
-  renderActiveMining(); // عرض حالة التعدين النشطة
-}
-
-/* =======================================================
-   3.5 — Airdrop Status (Get user airdrop status)
-========================================================= */
-
-async function loadAirdropStatus() {
-  const data = await safeFetch(API.airdrop.status);
-  if (!data) {
-    toast("Failed to load airdrop status.");
-    return;
-  }
-  AIRDROP_STATE.setStatus(data.claimed, data.reward);
-  renderAirdrop(); // عرض حالة الـ airdrop
-}
-
-/* =======================================================
-   3.6 — Claim Airdrop (Send claim request)
-========================================================= */
-
-async function claimAirdrop() {
-  const result = await safeFetch(API.airdrop.claim, { method: "POST" });
-
-  if (!result) {
-    toast("Airdrop service unavailable");
-    return;
-  }
-
-  // تحديث حالة الـ airdrop بعد المطالبة
-  AIRDROP_STATE.claimAirdrop();
-  renderAirdrop(); // عرض حالة الـ airdrop
-  }
-
-/* ================================================================================================
-   PART 4 — UI RENDERING & USER INTERACTION
-   -----------------------------------------------------------------------------------------------
-   - التعامل مع DOM فقط
-   - قراءة STATE
-   - رسم البيانات
-   - bind events البسيطة
-   - بدون fetch
-=============================================================== */
-
-/* =======================================================
-   4.1 — Render Wallet (Update wallet data in UI)
-========================================================= */
-
-function renderWallet() {
-  if (!APP_STATE.ready || !WALLET_STATE) return;
-
-  Object.entries(WALLET_STATE).forEach(([asset, amount]) => {
-    const elementId = `bal-${asset.toLowerCase()}`;
-    const element = $(elementId);
-    if (element) element.textContent = amount.toFixed(2);
-  });
-}
-
-/* =======================================================
-   4.2 — Render Market Price (Display market price)
-========================================================= */
-
-function renderMarketPrice() {
-  if (!APP_STATE.ready || MARKET_STATE.price === 0) return;
-
-  const priceElement = $("lastPrice");
-  if (priceElement) {
-    priceElement.textContent = MARKET_STATE.price.toFixed(4);
+    return await res.json();
+  } catch (err) {
+    console.error("NETWORK ERROR", path, err);
+    return null;
   }
 }
 
-/* =======================================================
-   4.3 — Render Casino UI (Display active game and result)
-========================================================= */
+/* ================= BOOT GUARD ================= */
+/*
+  يمنع أي كود من العمل قبل الجاهزية
+*/
 
-function renderCasinoUI(result) {
-  if (!APP_STATE.ready || !CASINO_STATE) return;
-
-  const gameElement = $("activeGame");
-  const resultElement = $("gameResult");
-
-  if (gameElement) {
-    gameElement.textContent = `Active Game: ${CASINO_STATE.activeGame || "None"}`;
-  }
-
-  if (resultElement) {
-    resultElement.textContent = `Result: ${result ? result.win ? "You Win!" : "You Lose!" : "Waiting..."}`;
-  }
+function whenReady(fn) {
+  if (APP.ready) fn();
+  else document.addEventListener("DOMContentLoaded", fn);
 }
-
-/* =======================================================
-   4.4 — Render Mining Plans (Display mining plans)
-========================================================= */
-function renderMiningPlans() {
-  if (!APP_STATE.ready || !MINING_STATE || !MINING_STATE.availablePlans) return;
-
-  const plansContainer = $("miningGrid");
-  if (!plansContainer) return;
-
-  plansContainer.innerHTML = ""; // مسح الخطط السابقة
-
-  // عرض الخطط بناءً على العملة النشطة
-  const activePlans = MINING_STATE.availablePlans[ACTIVE_MINING_COIN];
-
-  activePlans.forEach(plan => {
-    const planElement = document.createElement("div");
-    planElement.classList.add("mining-plan");
-    planElement.innerHTML = `
-      <div class="plan-header">
-        <h3>${plan.name}</h3>
-        ${plan.vip ? `<span class="badge vip">VIP</span>` : ""}
-      </div>
-      <div class="plan-details">
-        <div><strong>ROI:</strong> ${plan.roi * 100}%</div>
-        <div><strong>Investment:</strong> ${plan.min} - ${plan.max}</div>
-        <div><strong>Duration:</strong> ${plan.days} days</div>
-      </div>
-      <button class="subscribe-button" onclick="subscribeMining('${plan.id}')">Subscribe</button>
-    `;
-    plansContainer.appendChild(planElement);
-  });
-}
-/* =======================================================
-   4.5 — Render Active Mining (Display active mining status)
+/* =========================================================
+   PART 2 — NAVIGATION SYSTEM
+   التحكم الكامل في الأقسام + bottom navigation
 ========================================================= */
 
-function renderActiveMining() {
-  const activePlanElement = document.getElementById("activeMiningPlan");
-  const estimatedReturnElement = document.getElementById("estimatedReturn");
+/* ================= VIEWS REGISTRY ================= */
+/*
+  أي section يجب:
+  - يكون له id مطابق
+  - يكون له class="view"
+*/
 
-  if (activePlanElement) {
-    activePlanElement.textContent = `Active Plan: ${MINING_STATE.activePlan ? MINING_STATE.activePlan.name : "None"}`;
-  }
+const VIEWS = ["wallet", "market", "casino", "mining", "airdrop"];
 
-  if (estimatedReturnElement && MINING_STATE.estimatedReturn) {
-    estimatedReturnElement.textContent = `Estimated Return: ${MINING_STATE.estimatedReturn} BX`;
-  }
-}
-
-/*====================================================
-   button Mining  (When user selects a plan)
-========================================================= */
-
-document.querySelectorAll(".mining-tabs button").forEach(btn => {
-  btn.addEventListener("click", () => {
-    // إزالة الفئة active عن جميع الأزرار
-    document.querySelectorAll(".mining-tabs button")
-      .forEach(b => b.classList.remove("active"));
-
-    // إضافة الفئة active على العملة المحددة
-    btn.classList.add("active");
-
-    // تعيين العملة النشطة
-    ACTIVE_MINING_COIN = btn.dataset.coin;
-
-    // تحديث الخطط المعروضة بناءً على العملة النشطة
-    renderMiningPlans();
-  });
-});
-
-/* =======================================================
-   Select Mining Plan (When user selects a plan)
-========================================================= */
-
-function selectMiningPlan(plan) {
-  MINING_STATE.setPlan(plan);
-  MINING_STATE.startMining();
-  renderActiveMining(); // Update the active mining status
-}
-
-/* =======================================================
-   4.6 — Render Airdrop (Display airdrop status)
-========================================================= */
-
-function renderAirdrop() {
-  if (!APP_STATE.ready || !AIRDROP_STATE) return;
-
-  const airdropStatusElement = $("airdropStatus");
-  const airdropRewardElement = $("airdropReward");
-
-  if (airdropStatusElement) {
-    airdropStatusElement.textContent = AIRDROP_STATE.claimed ? "Claimed" : "Not Claimed";
-  }
-
-  if (airdropRewardElement) {
-    airdropRewardElement.textContent = `Reward: ${AIRDROP_STATE.reward} USDT`;
-  }
-}
-
-/* =======================================================
-   4.7 — Bind Events (Add event listeners)
-========================================================= */
-
-function bindEvents() {
-  // Example for button clicks (can be expanded)
-  $("claimAirdropButton")?.addEventListener("click", () => {
-    claimAirdrop();
-  });
-
-  $("startMiningButton")?.addEventListener("click", () => {
-    startMining("BX", "Starter");
-  });
-
-  $("playCasinoButton")?.addEventListener("click", () => {
-    playCasino("blackjack", 10);
-  });
-}
-
-/* ================================================================================================
-   PART 5 — ORCHESTRATION & LIFECYCLE
-   -----------------------------------------------------------------------------------------------
-   - التحكم في التوقيت
-   - navigation
-   - loops (start/stop)
-   - DOMContentLoaded
-   - ربط الأجزاء السابقة
-=============================================================== */
-
-/* =======================================================
-   5.1 — Initialize Application (On DOMContentLoaded)
-========================================================= */
-
-document.addEventListener("DOMContentLoaded", () => {
-  // إعداد الـ navigation بين الأقسام
-  bindNavigation();
-
-  // تحميل البيانات الأولية (مثل المحفظة)
-  loadWallet();
-
-  // التحقق من حالة التعدين
-  loadMiningStatus();
-
-  // التحقق من حالة الـ airdrop
-  loadAirdropStatus();
-
-  // بدء التفاعل مع السوق (Market)
-  startMarket();
-
-  // تحديد أن التطبيق جاهز
-  APP_STATE.ready = true;
-
-  // تحميل البيانات الافتراضية
-  navigate(APP_STATE.view);
-});
-
-/* =======================================================
-   5.2 — Navigation (Control view transitions)
-========================================================= */
+/* ================= NAVIGATE ================= */
 
 function navigate(view) {
-  if (!view) return;
-
-  // تحديث الحالة الحالية (view)
-  APP_STATE.view = view;
-
-  // إخفاء جميع الأقسام
-  document.querySelectorAll(".view").forEach(v =>
-    v.classList.remove("active")
-  );
-
-  // إظهار القسم الحالي
-  const target = document.getElementById(view);
-  if (target) target.classList.add("active");
-
-  // تحديث حالة الـ bottom navigation
-  document.querySelectorAll(".bottom-nav button").forEach(b =>
-    b.classList.remove("active")
-  );
-
-  const btn = document.querySelector(
-    `.bottom-nav button[data-view="${view}"]`
-  );
-  if (btn) btn.classList.add("active");
-
-  // تنفيذ أي عمليات بناء على القسم الحالي
-  if (view === "market") {
-    startMarket();
-  } else if (view === "casino") {
-    startCasino();
-  } else if (view === "mining") {
-    renderMiningPlans();  // تأكد من أن الخطط تظهر عند الانتقال إلى قسم التعدين
-  } else {
-    stopMarket();
-    stopCasino();
+  if (!VIEWS.includes(view)) {
+    console.warn("Unknown view:", view);
+    return;
   }
-}
-/* =======================================================
-   5.3 — Start/Stop Market Loop (Simulate market behavior)
-========================================================= */
 
-let marketLoopTimer = null;
+  // إخفاء كل الأقسام
+  VIEWS.forEach(v => {
+    const el = $(v);
+    if (el) el.classList.remove("active");
+  });
 
-function startMarket() {
-  if (marketLoopTimer) return; // لا نبدأ إلا إذا كانت الدورة متوقفة
-  marketLoopTimer = setInterval(() => {
-    if (!APP_STATE.ready || APP_STATE.view !== "market") return;
-    MARKET_STATE.price += (Math.random() - 0.5) * 0.32;
-    renderMarketPrice(); // تحديث عرض السعر
-  }, 1200); // كل 1.2 ثانية
-}
-
-function stopMarket() {
-  if (marketLoopTimer) {
-    clearInterval(marketLoopTimer);
-    marketLoopTimer = null;
+  // إظهار القسم المطلوب
+  const target = $(view);
+  if (!target) {
+    console.error("View element not found:", view);
+    return;
   }
+  target.classList.add("active");
+
+  // تحديث حالة التطبيق
+  APP.view = view;
+
+  // تحديث أزرار التنقل
+  updateNavButtons(view);
+
+  // Side-effects آمنة (بدون منطق)
+  onViewEnter(view);
 }
 
-/* =======================================================
-   5.4 — Start/Stop Casino (Start/Stop game bots)
-========================================================= */
+/* ================= NAV BUTTONS ================= */
 
-let casinoBotsTimer = null;
+function updateNavButtons(activeView) {
+  const buttons = $$(".bottom-nav button");
 
-function startCasino() {
-  if (casinoBotsTimer) return; // لا نبدأ إلا إذا كانت الدورة متوقفة
-  casinoBotsTimer = setInterval(() => {
-    if (!APP_STATE.ready || APP_STATE.view !== "casino") return;
-    playCasino("blackjack", 10); // المثال: بدء لعبة كازينو افتراضية
-  }, 5000); // كل 5 ثواني
-}
-
-function stopCasino() {
-  if (casinoBotsTimer) {
-    clearInterval(casinoBotsTimer);
-    casinoBotsTimer = null;
-  }
-}
-
-/* =======================================================
-   5.5 — Auto Bind Navigation (To link navigation events)
-========================================================= */
-
-function bindNavigation() {
-  // ربط الأزرار بالأحداث
-  document.querySelectorAll("[data-view]").forEach(btn => {
-    btn.onclick = () => navigate(btn.dataset.view);
+  buttons.forEach(btn => {
+    const view = btn.dataset.view;
+    btn.classList.toggle("active", view === activeView);
   });
 }
 
-/* =======================================================
-   5.6 — Automatic Actions for Specific Views
+/* ================= VIEW HOOK ================= */
+/*
+  لا منطق هنا
+  فقط نقاط دخول نظيفة
+*/
+
+function onViewEnter(view) {
+  switch (view) {
+    case "wallet":
+      if (typeof loadWallet === "function") loadWallet();
+      break;
+
+    case "market":
+      if (typeof initMarket === "function") initMarket();
+      break;
+
+    case "casino":
+      if (typeof initCasino === "function") initCasino();
+      break;
+
+    case "mining":
+      if (typeof renderMining === "function") renderMining();
+      break;
+
+    case "airdrop":
+      if (typeof initAirdrop === "function") initAirdrop();
+      break;
+  }
+}
+
+/* ================= BIND NAVIGATION ================= */
+
+function bindNavigation() {
+  const buttons = $$(".bottom-nav button");
+
+  buttons.forEach(btn => {
+    const view = btn.dataset.view;
+    if (!view) return;
+
+    btn.addEventListener("click", () => {
+      navigate(view);
+    });
+  });
+       }
+/* =========================================================
+   PART 3 — WALLET ENGINE
+   عرض الرصيد + تحميله بشكل آمن
 ========================================================= */
 
-function startAutoActions() {
-  if (APP_STATE.view === "market") {
-    startMarket(); // ابدأ السوق مباشرة
+/* ================= WALLET STATE ================= */
+
+const WALLET = {
+  BX: 0,
+  BNB: 0,
+  SOL: 0,
+  USDT: 0,
+
+  loaded: false
+};
+
+/* ================= WALLET DOM MAP ================= */
+/*
+  يربط العملة بالعنصر في HTML
+  لو عنصر غير موجود → لا crash
+*/
+
+const WALLET_DOM = {
+  BX: "bal-bx",
+  BNB: "bal-bnb",
+  SOL: "bal-sol",
+  USDT: "bal-usdt"
+};
+
+/* ================= RENDER WALLET ================= */
+
+function renderWallet() {
+  Object.keys(WALLET_DOM).forEach(symbol => {
+    const el = $(WALLET_DOM[symbol]);
+    if (!el) return;
+
+    const value = Number(WALLET[symbol] || 0);
+    el.textContent = value.toFixed(2);
+  });
+}
+
+/* ================= LOAD WALLET ================= */
+/*
+  - لا يعمل إذا المستخدم غير مسجل
+  - لا يرمي exceptions
+  - fallback آمن
+*/
+
+async function loadWallet() {
+  if (!isAuthenticated()) {
+    resetWallet();
+    return;
   }
 
-  if (APP_STATE.view === "casino") {
-    startCasino(); // ابدأ الكازينو مباشرة
+  const data = await safeFetch("/finance/wallet");
+
+  if (!data) {
+    console.warn("Wallet API unavailable, using local state");
+    renderWallet();
+    return;
   }
-                          }
+
+  applyWalletData(data);
+}
+
+/* ================= APPLY DATA ================= */
+
+function applyWalletData(data) {
+  // حماية من backend ناقص
+  WALLET.BX   = Number(data.BX   ?? data.bx   ?? 0);
+  WALLET.BNB  = Number(data.BNB  ?? data.bnb  ?? 0);
+  WALLET.SOL  = Number(data.SOL  ?? data.sol  ?? 0);
+  WALLET.USDT = Number(data.USDT ?? data.usdt ?? 0);
+
+  WALLET.loaded = true;
+  renderWallet();
+}
+
+/* ================= RESET ================= */
+
+function resetWallet() {
+  WALLET.BX = 0;
+  WALLET.BNB = 0;
+  WALLET.SOL = 0;
+  WALLET.USDT = 0;
+  WALLET.loaded = false;
+
+  renderWallet();
+                       }
+/* =========================================================
+   PART 4 — MARKET & CASINO (SAFE STUBS)
+   بدون loops — بدون fetch — بدون مخاطرة
+========================================================= */
+
+/* ================= MARKET ================= */
+
+const MARKET = {
+  initialized: false,
+  price: 0
+};
+
+function initMarket() {
+  if (MARKET.initialized) return;
+
+  MARKET.initialized = true;
+  renderMarketPlaceholder();
+}
+
+function renderMarketPlaceholder() {
+  const el = $("marketPlaceholder");
+  if (!el) return;
+
+  el.textContent = "Market loading…";
+}
+
+/* ================= CASINO ================= */
+
+const CASINO = {
+  initialized: false,
+  activeGame: null
+};
+
+function initCasino() {
+  if (CASINO.initialized) return;
+
+  CASINO.initialized = true;
+  renderCasinoPlaceholder();
+}
+
+function renderCasinoPlaceholder() {
+  const el = $("casinoPlaceholder");
+  if (!el) return;
+
+  el.textContent = "Casino ready";
+}
+
+/* ================= SAFE EXIT ================= */
+/*
+  Hooks مستقبلية لو حبيت:
+  stopMarket()
+  stopCasino()
+  (حاليًا فارغة لتجنّب أي loop)
+*/
+
+function stopMarket() {}
+function stopCasino() {}
+
+/* =========================================================
+   PART 5 — MINING ENGINE (FINAL)
+   3 Coins × 6 Plans — Zero ambiguity
+========================================================= */
+
+/* ================= MINING STATE ================= */
+
+const MINING = {
+  coin: "BX",
+  subscription: null // { coin, planId, startedAt }
+};
+
+/* ================= MINING CONFIG ================= */
+
+const MINING_COINS = ["BX", "BNB", "SOL"];
+
+const MINING_PLANS = [
+  { id: "starter",   name: "Starter",   roi: 2.5,  days: 10, min: 10,    max: 100 },
+  { id: "basic",     name: "Basic",     roi: 5,    days: 21, min: 50,    max: 300 },
+  { id: "golden",    name: "Golden",    roi: 8,    days: 30, min: 200,   max: 800 },
+  { id: "advanced",  name: "Advanced",  roi: 12,   days: 45, min: 400,   max: 2500 },
+  { id: "platine",   name: "Platine",   roi: 17,   days: 60, min: 750,   max: 9000 },
+  { id: "infinity",  name: "Infinity",  roi: 25,   days: 90, min: 1000,  max: 20000 }
+];
+
+/* ================= RENDER ================= */
+
+function renderMining() {
+  renderMiningTabs();
+  renderMiningPlans();
+}
+
+/* ================= TABS ================= */
+
+function renderMiningTabs() {
+  const buttons = $$(".mining-tabs button");
+
+  buttons.forEach(btn => {
+    const coin = btn.dataset.coin;
+    if (!MINING_COINS.includes(coin)) return;
+
+    btn.classList.toggle("active", coin === MINING.coin);
+
+    btn.onclick = () => {
+      MINING.coin = coin;
+      renderMining();
+    };
+  });
+}
+
+/* ================= PLANS ================= */
+
+function renderMiningPlans() {
+  const grid = $("miningGrid");
+  if (!grid) return;
+
+  grid.innerHTML = "";
+
+  MINING_PLANS.forEach(plan => {
+    const card = document.createElement("div");
+    card.className = "card mining-plan";
+
+    const subscribed =
+      MINING.subscription &&
+      MINING.subscription.planId === plan.id &&
+      MINING.subscription.coin === MINING.coin;
+
+    card.innerHTML = `
+      <h4>${plan.name}</h4>
+      <div class="mining-profit">${plan.roi}%</div>
+      <ul>
+        <li>Duration: ${plan.days} days</li>
+        <li>Min: ${plan.min} ${MINING.coin}</li>
+        <li>Max: ${plan.max} ${MINING.coin}</li>
+      </ul>
+      <button ${subscribed ? "disabled" : ""}>
+        ${subscribed ? "Active" : "Subscribe"}
+      </button>
+    `;
+
+    card.querySelector("button").onclick = () => {
+      if (!subscribed) subscribeMining(plan.id);
+    };
+
+    grid.appendChild(card);
+  });
+}
+
+/* ================= SUBSCRIBE ================= */
+
+function subscribeMining(planId) {
+  if (MINING.subscription) {
+    alert("You already have an active mining subscription.");
+    return;
+  }
+
+  const plan = MINING_PLANS.find(p => p.id === planId);
+  if (!plan) return;
+
+  MINING.subscription = {
+    coin: MINING.coin,
+    planId: plan.id,
+    startedAt: Date.now()
+  };
+
+  renderMining();
+}
+/* =========================================================
+   PART 6 — AIRDROP + BOOTSTRAP (FINAL GLUE)
+   ترتيب الإقلاع + ربط كل الأجزاء
+========================================================= */
+
+/* ================= AIRDROP ================= */
+/*
+  Airdrop هنا UI-safe فقط
+  لا توزيع أموال حقيقية
+*/
+
+const AIRDROP = {
+  claimed: false
+};
+
+function initAirdrop() {
+  const btn = $("airdropClaim");
+  const status = $("airdropStatus");
+
+  if (!btn || !status) return;
+
+  btn.disabled = AIRDROP.claimed;
+
+  btn.onclick = () => {
+    if (AIRDROP.claimed) return;
+
+    AIRDROP.claimed = true;
+    btn.disabled = true;
+    status.textContent = "Airdrop claimed successfully";
+  };
+}
+
+/* ================= BOOTSTRAP ================= */
+/*
+  نقطة الإقلاع الوحيدة
+  ممنوع تشغيل أي شيء خارجها
+*/
+
+function bootstrap() {
+  // 1️⃣ تهيئة الأساس
+  APP.init();
+
+  // 2️⃣ ربط التنقل
+  bindNavigation();
+
+  // 3️⃣ ربط Mining Tabs (آمن حتى لو mining غير ظاهر)
+  if (typeof renderMining === "function") {
+    renderMining();
+  }
+
+  // 4️⃣ تحميل المحفظة إن أمكن
+  if (typeof loadWallet === "function") {
+    loadWallet();
+  }
+
+  // 5️⃣ الانتقال الافتراضي
+  navigate(APP.view);
+}
+
+/* ================= START ================= */
+/*
+  لا DOM قبل الجاهزية
+*/
+
+document.addEventListener("DOMContentLoaded", bootstrap);
