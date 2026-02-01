@@ -432,7 +432,7 @@ const MINING_PLANS_BY_COIN = {
     { id:"p30", name:"Golden",   days:30, roi:8,   min:200,  max:800  },
     { id:"p45", name:"Pro", days:45, roi:12,  min:400,  max:2500 },
     { id:"p60", name:"Platine",  days:60, roi:17,  min:750,  max:9000 },
-    { id:"p90", name:"Infinity", days:90, roi:25,  min:1000, max:20000, :true }
+    { id:"p90", name:"Infinity", days:90, roi:25,  min:1000, max:20000, sub:true }
   ],
 
   SOL: [
@@ -441,7 +441,7 @@ const MINING_PLANS_BY_COIN = {
     { id:"p30", name:"Golden",   days:30, roi:4,   min:40,   max:160 },
     { id:"p45", name:"Pro", days:45, roi:7,   min:120,  max:500 },
     { id:"p60", name:"Platine",  days:60, roi:9,   min:200,  max:1000 },
-    { id:"p90", name:"Infinity", days:90, roi:14,  min:500,  max:2500, :true }
+    { id:"p90", name:"Infinity", days:90, roi:14,  min:500,  max:2500, sub:true }
   ],
 
   BNB: [
@@ -450,7 +450,7 @@ const MINING_PLANS_BY_COIN = {
     { id:"p30", name:"Golden",   days:30, roi:3,   min:5,    max:50  },
     { id:"p45", name:"Pro", days:45, roi:5,   min:10,   max:100 },
     { id:"p60", name:"Platine",  days:60, roi:7,   min:15,   max:150 },
-    { id:"p90", name:"Infinity", days:90, roi:11,  min:25,   max:200, :true }
+    { id:"p90", name:"Infinity", days:90, roi:11,  min:25,   max:200, sub:true }
   ]
 };
 
@@ -501,7 +501,8 @@ function renderMiningPlans() {
 
     card.innerHTML = `
       <h4>
-        ${plan.name} <span class="coin-tag">Coin</span>' : ''}
+        ${plan.name}
+        ${plan.sub ? '<span class="sub-tag">SUB</span>' : ''}
       </h4>
       <div class="mining-profit">${plan.roi}%</div>
       <ul>
