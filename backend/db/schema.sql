@@ -236,3 +236,8 @@ CREATE TABLE IF NOT EXISTS mining_orders (
   status TEXT,
   FOREIGN KEY(uid) REFERENCES users(uid)
 );
+-- ===============================
+-- Télégramme 
+-- ===============================
+ALTER TABLE users ADD COLUMN telegram_id BIGINT UNIQUE;
+ALTER TABLE users ADD COLUMN telegram_code VARCHAR(10);
