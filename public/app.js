@@ -413,7 +413,6 @@ function renderCasinoHistory() {
      }
 /* =========================================================
    PART 5 — MINING (General Update)
-   UI Mining Engine — بدون كسر HTML/CSS
 ========================================================= */
 
 const MINING = {
