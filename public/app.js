@@ -462,7 +462,7 @@ function renderMiningPlans() {
         ${plan.vip ? `<span class="badge vip">VIP</span>` : ""}
       </div>
       <div class="plan-details">
-        <div><strong>ROI:</strong> ${plan.roi * 100}%</div>
+        <div><strong>ROI:</strong> ${plan.roi *}%</div>
         <div><strong>Investment:</strong> ${plan.min} - ${plan.max}</div>
         <div><strong>Duration:</strong> ${plan.days} days</div>
       </div>
