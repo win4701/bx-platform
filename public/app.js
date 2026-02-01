@@ -2,11 +2,7 @@
 
 /* =========================================================
    PART 1 — CORE & GLOBAL STATE (FINAL)
-   هذا الجزء هو الأساس ولا يجب كسره
 ========================================================= */
-
-/* ================= DOM HELPERS ================= */
-/* آمنة — لا ترمي أخطاء */
 
 const $ = (id) => document.getElementById(id);
 const $$ = (selector) => document.querySelectorAll(selector);
@@ -16,10 +12,6 @@ const $$ = (selector) => document.querySelectorAll(selector);
 const API_BASE = "https://bx-backend.fly.dev";
 
 /* ================= USER / AUTH ================= */
-/*
-  USER هو المصدر الوحيد للمصادقة
-  ممنوع قراءة localStorage خارج هذا الكائن
-*/
 
 const USER = {
   jwt: null,
@@ -58,9 +50,6 @@ function authHeaders() {
 }
 
 /* ================= APP STATE ================= */
-/*
-  APP هو المصدر الوحيد لحالة التطبيق العامة
-*/
 
 const APP = {
   ready: false,
@@ -73,12 +62,6 @@ const APP = {
 };
 
 /* ================= SAFE FETCH ================= */
-/*
-  fetch موحّد:
-  - لا crash
-  - لا silent fail
-  - لا رمي exceptions
-*/
 
 async function safeFetch(path, options = {}) {
   try {
@@ -103,16 +86,8 @@ async function safeFetch(path, options = {}) {
   }
    }
 /* =========================================================
-   PART 2 — NAVIGATION SYSTEM (FINAL)
-   التحكم الكامل في الأقسام بدون أي side effects
+   PART 2 — NAVIGATION SYSTEM (FINAL). side effects
 ========================================================= */
-
-/* ================= VIEW REGISTRY ================= */
-/*
-  أي View:
-  - لازم يكون له id مطابق
-  - class="view"
-*/
 
 const VIEWS = ["wallet", "market", "casino", "mining", "airdrop"];
 
@@ -126,13 +101,11 @@ function navigate(view) {
     return;
   }
 
-  // 1️⃣ إخفاء كل الأقسام
   VIEWS.forEach(v => {
     const el = $(v);
     if (el) el.classList.remove("active");
   });
 
-  // 2️⃣ إظهار القسم المطلوب
   const target = $(view);
   if (!target) {
     console.error("navigate(): missing DOM element →", view);
@@ -140,13 +113,10 @@ function navigate(view) {
   }
   target.classList.add("active");
 
-  // 3️⃣ تحديث الحالة العامة
   APP.view = view;
 
-  // 4️⃣ تحديث أزرار التنقل
   updateNavButtons(view);
 
-  // 5️⃣ Hook دخول القسم (آمن)
   onViewEnter(view);
 }
 
@@ -164,10 +134,6 @@ function updateNavButtons(activeView) {
 }
 
 /* ================= VIEW ENTER HOOK ================= */
-/*
-  لا منطق ثقيل هنا
-  فقط استدعاء دوال إن وُجدت
-*/
 
 function onViewEnter(view) {
   switch (view) {
@@ -194,9 +160,6 @@ function onViewEnter(view) {
 }
 
 /* ================= BIND NAVIGATION ================= */
-/*
-  يُستدعى مرة واحدة فقط في bootstrap
-*/
 
 function bindNavigation() {
   const buttons = $$(".bottom-nav button");
@@ -212,33 +175,31 @@ function bindNavigation() {
    }
 /* =========================================================
    PART 3 — WALLET ENGINE (FINAL)
-   تحميل + عرض الرصيد بشكل آمن
 ========================================================= */
 
 /* ================= WALLET STATE ================= */
-/*
-  WALLET هو المصدر الوحيد لبيانات الرصيد
-*/
 
 const WALLET = {
   BX: 0,
-  BNB: 0,
-  SOL: 0,
   USDT: 0,
+  BNB: 0,
+  ETH: 0,
+  TON: 0,
+  SOL: 0,
+  BTC: 0,
   loaded: false
 };
 
 /* ================= WALLET DOM MAP ================= */
-/*
-  ربط العملة بالعنصر في HTML
-  لو عنصر غير موجود → تجاهل بدون crash
-*/
 
 const WALLET_DOM = {
   BX: "bal-bx",
+  USDT: "bal-usdt",
   BNB: "bal-bnb",
+  ETH: "bal-eth"
+  TON: "bal-ton",
   SOL: "bal-sol",
-  USDT: "bal-usdt"
+  BTC: "bal-btc"
 };
 
 /* ================= RENDER WALLET ================= */
@@ -254,11 +215,6 @@ function renderWallet() {
 }
 
 /* ================= LOAD WALLET ================= */
-/*
-  - لا يعمل بدون مصادقة
-  - لا يرمي Exceptions
-  - fallback آمن
-*/
 
 async function loadWallet() {
   if (!isAuthenticated()) {
@@ -278,15 +234,15 @@ async function loadWallet() {
 }
 
 /* ================= APPLY BACKEND DATA ================= */
-/*
-  تطبيع البيانات لحماية اختلاف backend
-*/
 
 function applyWalletData(data) {
   WALLET.BX   = Number(data.BX   ?? data.bx   ?? 0);
+  WALLET.USDT  = Number(data.USDT  ?? data.usdt  ?? 0);
   WALLET.BNB  = Number(data.BNB  ?? data.bnb  ?? 0);
+  WALLET.ETH = Number(data.ETH ?? data.eth ?? 0);
+  WALLET.TON  = Number(data.TON  ?? data.ton  ?? 0);
   WALLET.SOL  = Number(data.SOL  ?? data.sol  ?? 0);
-  WALLET.USDT = Number(data.USDT ?? data.usdt ?? 0);
+  WALLET.BTC = Number(data.BTC ?? data.btc ?? 0);
 
   WALLET.loaded = true;
   renderWallet();
@@ -296,19 +252,19 @@ function applyWalletData(data) {
 
 function resetWallet() {
   WALLET.BX = 0;
-  WALLET.BNB = 0;
-  WALLET.SOL = 0;
   WALLET.USDT = 0;
+  WALLET.BNB = 0;
+  WALLET.ETH = 0;
+  WALLET.TON = 0;
+  WALLET.SOL = 0;
+  WALLET.BTC = 0;
   WALLET.loaded = false;
 
   renderWallet();
 }
 /* =========================================================
    PART 4 — MARKET & CASINO (FINAL SAFE LAYER)
-   Stubs مستقرة بدون أي مخاطرة
 ========================================================= */
-
-/* ================= MARKET ================= */
 
 const MARKET = {
   initialized: false
@@ -353,20 +309,14 @@ function renderCasino() {
 }
 
 /* ================= SAFE EXIT HOOKS ================= */
-/*
-  Hooks مستقبلية — فارغة عن قصد
-  لا loops
-  لا cleanup الآن
-*/
 
 function stopMarket() {}
 function stopCasino() {}
+
 /* =========================================================
    PART 5 — MINING ENGINE (FINAL)
    3 Coins × 6 Plans — Stable & Predictable
 ========================================================= */
-
-/* ================= MINING STATE ================= */
 
 const MINING = {
   coin: "BX",            // BX | BNB | SOL
@@ -454,7 +404,6 @@ function renderMiningPlans() {
 /* ================= SUBSCRIBE ================= */
 
 function subscribeMining(planId) {
-  // حماية من تعدد الاشتراكات
   if (MINING.subscription) {
     alert("You already have an active mining subscription.");
     return;
@@ -473,15 +422,9 @@ function subscribeMining(planId) {
        }
 /* =========================================================
    PART 6 — BOOTSTRAP & AIRDROP (FINAL)
-   الإقلاع النهائي وربط كل الأجزاء
 ========================================================= */
 
 /* ================= AIRDROP ================= */
-/*
-  Airdrop UI-only
-  لا توزيع أموال حقيقية
-  لا API إجباري
-*/
 
 const AIRDROP = {
   claimed: false
@@ -504,42 +447,30 @@ function initAirdrop() {
   };
 }
 
-/* ================= BOOTSTRAP ================= */
-/*
-  نقطة البداية الوحيدة للتطبيق
-  ممنوع تشغيل أي جزء خارجها
-*/
+/* ================= BOOTSTRAP =================*/
 
 function bootstrap() {
-  // 1️⃣ تهيئة الأساس
   if (typeof APP !== "undefined" && typeof APP.init === "function") {
     APP.init();
   }
 
-  // 2️⃣ ربط التنقل (مرة واحدة)
   if (typeof bindNavigation === "function") {
     bindNavigation();
   }
 
-  // 3️⃣ تهيئة Mining Tabs (حتى لو القسم غير ظاهر)
   if (typeof renderMining === "function") {
     renderMining();
   }
 
-  // 4️⃣ تحميل المحفظة إن أمكن
   if (typeof loadWallet === "function") {
     loadWallet();
   }
 
-  // 5️⃣ الانتقال إلى القسم الافتراضي
   if (typeof navigate === "function") {
     navigate(APP.view);
   }
 }
 
 /* ================= START ================= */
-/*
-  لا تنفيذ قبل DOM جاهز
-*/
 
 document.addEventListener("DOMContentLoaded", bootstrap);
