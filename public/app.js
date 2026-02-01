@@ -141,7 +141,7 @@ const WALLET_STATE = {
 const MARKET_STATE = {
   price: 0.0,
   pair: "BX/USDT",  // يمكن تغييره حسب السوق
-  spread: 0.02,     // مثال: spread between buy and sell price
+  spread: 0.32,     // مثال: spread between buy and sell price
   set(price) {
     this.price = price;
   },
@@ -461,7 +461,7 @@ function renderMiningPlans() {
     planElement.classList.add("mining-plan");
     planElement.innerHTML = `
       <div class="plan-header">
-        <h3>${plan.name}</h3>
+        <h4>${plan.name}</h4>
         ${plan.vip ? `<span class="badge vip">VIP</span>` : ""}
       </div>
       <div class="plan-details">
