@@ -455,10 +455,9 @@ document.querySelectorAll(".mining-tabs button").forEach(btn => {
       .forEach(b => b.classList.remove("active"));
 
     btn.classList.add("active");
+    ACTIVE_MINING_COIN = btn.dataset.coin;  
 
-    ACTIVE_MINING_COIN = btn.dataset.coin;
-
-    renderMiningPlans();
+    renderMiningPlans(); 
   });
 });
 
