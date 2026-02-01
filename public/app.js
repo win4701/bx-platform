@@ -132,7 +132,7 @@ function renderWallet() {
 async function loadWallet() {
   if (!FEATURES.WALLET || !isAuthenticated()) return;
   try {
-    const r = await fetch(API_BASE + "/wallet", { headers: authHeaders() });
+    const r = await fetch(API_BASE + "/finance/wallet", { headers: authHeaders() });
     if (!r.ok) return;
     WALLET = await r.json();
     renderWallet();
@@ -485,9 +485,6 @@ async function playCasino(gameId, betAmount) {
   }
 }
 
-/**
- * Handle casino result
- */
 function handleCasinoResult(result) {
   if (!result) return;
 
@@ -794,7 +791,7 @@ function renderMiningProgress(m){
 
 async function subscribeMining(planId) {
   try {
-    await fetch(API_BASE + "/start_mining", {
+    await fetch(API_BASE + "/bxing/mining/start", {
       method: "POST",
       headers: {
         ...authHeaders(),
@@ -878,7 +875,7 @@ async function claimAirdrop() {
   if (!FEATURES.AIRDROP || !isAuthenticated()) return;
 
   try {
-    const r = await fetch(API_BASE + "/airdrop/claim", {
+    const r = await fetch(API_BASE + "bxing/airdrop/claim", {
       method: "POST",
       headers: authHeaders()
     });
@@ -904,7 +901,7 @@ async function loadAirdrop() {
   if (!FEATURES.AIRDROP || !isAuthenticated()) return;
 
   try {
-    const r = await fetch(API_BASE + "/airdrop/status", {
+    const r = await fetch(API_BASE + "/bxing/airdrop/status", {
       headers: authHeaders()
     });
 
@@ -946,9 +943,6 @@ function renderAirdrop() {
    REFERRAL SYSTEM
 ================================================================================================ */
 
-/**
- * Copy referral link
- */
 function copyReferralLink() {
   if (!USER.id) return;
 
