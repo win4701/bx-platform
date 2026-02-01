@@ -453,19 +453,20 @@ function renderMiningPlans() {
 
   plansContainer.innerHTML = "";
 
-  plans.forEach(plan => {
-    const el = document.createElement("div");
-    el.className = "mining-plan card";
-
-    el.innerHTML = `
-      <h4>${plan.name} ${plan.vip ? "🔥 VIP" : ""}</h4>
-      <ul>
-        <li>Duration: ${plan.days} days</li>
-        <li>ROI: ${plan.roi}%</li>
-        <li>Min: ${plan.min}</li>
-        <li>Max: ${plan.max}</li>
-      </ul>
-      <button onclick="subscribeMining('${plan.id}')">Subscribe</button>
+  activePlans.forEach(plan => {
+    const planElement = document.createElement("div");
+    planElement.classList.add("mining-plan");
+    planElement.innerHTML = `
+      <div class="plan-header">
+        <h4>${plan.name}</h4>
+        ${plan.vip ? `<span class="badge vip">VIP</span>` : ""}
+      </div>
+      <div class="plan-details">
+        <div><strong>ROI:</strong> ${plan.roi * 100}%</div>
+        <div><strong>Investment:</strong> ${plan.min} - ${plan.max}</div>
+        <div><strong>Duration:</strong> ${plan.days} days</div>
+      </div>
+      <button class="subscribe-button" onclick="subscribeMining('${plan.id}')">Subscribe</button>
     `;
 
     plansContainer.appendChild(el);
