@@ -446,8 +446,6 @@ function renderCasinoUI(result) {
    4.4 — Render Mining Plans (Display mining plans)
 ========================================================= */
 function renderMiningPlans() {
-  if (!MINING_STATE?.availablePlans) return;
-
   const plansContainer = document.getElementById("miningGrid");
   if (!plansContainer) return;
 
@@ -518,9 +516,9 @@ document.querySelectorAll(".mining-tabs button").forEach(btn => {
 ========================================================= */
 
 function selectMiningPlan(plan) {
-  MINING_STATE.setPlan(plan);
-  MINING_STATE.startMining();
-  renderActiveMining(); // Update the active mining status
+MINING_STATE.setPlan(asset, plan);
+MINING_STATE.startMining();
+renderMiningPlans();
 }
 
 /* =======================================================
@@ -528,23 +526,12 @@ function selectMiningPlan(plan) {
 ========================================================= */
 
 function subscribeMining(planId) {
-  // جلب الخطط الخاصة بالعملة النشطة
   const plans = MINING_STATE.availablePlans[ACTIVE_MINING_COIN];
+  if (!plans) return toast("No plans available");
 
-  if (!plans) {
-    toast("No mining plans available");
-    return;
-  }
-
-  // البحث عن الخطة المختارة
   const plan = plans.find(p => p.id === planId);
+  if (!plan) return toast("Plan not found");
 
-  if (!plan) {
-    toast("Mining plan not found");
-    return;
-  }
-
-  // بدء التعدين (API → STATE → UI)
   startMining(ACTIVE_MINING_COIN, plan);
 }
 
@@ -609,6 +596,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // التحقق من حالة التعدين
   loadMiningStatus();
+  APP_STATE.ready = true;
 
   // التحقق من حالة الـ airdrop
   loadAirdropStatus();
