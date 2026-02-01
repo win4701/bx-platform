@@ -266,10 +266,7 @@ function renderWallet() {
   }
 }
 
-/* ================= LOAD WALLET ================= */
-
 function loadWallet() {
-  // حالياً بيانات افتراضية (Production UI)
   if (!WALLET.loaded) {
     WALLET.BX = 0.00;
     WALLET.USDT = 0.00;
