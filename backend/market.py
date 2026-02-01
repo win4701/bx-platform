@@ -1,5 +1,6 @@
 import time
 import os
+from contextlib import contextmanager
 from fastapi import APIRouter, HTTPException, Depends
 from key import api_guard
 from pricing import get_price
@@ -24,7 +25,7 @@ MAX_DEMAND_PREMIUM = 0.50
 ALLOWED_ASSETS = {"usdt", "ton", "sol", "btc", "eth", "bnb"}
 
 # ======================================================
-# SPREADS
+# SPREADS (ENV DRIVEN)
 # ======================================================
 SPREADS = {
     asset: {
@@ -35,37 +36,42 @@ SPREADS = {
 }
 
 # ======================================================
-# DB POOL
+# DB POOL (SAFE)
 # ======================================================
 db_pool = pool.SimpleConnectionPool(1, 20, dsn=DB_URL)
 
-def db():
-    return db_pool.getconn()
-
-def release(conn):
-    db_pool.putconn(conn)
+@contextmanager
+def get_db():
+    conn = db_pool.getconn()
+    try:
+        yield conn
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        db_pool.putconn(conn)
 
 # ======================================================
-# DEMAND-BASED PREMIUM
+# DEMAND-BASED PREMIUM (LAST 1H)
 # ======================================================
 def demand_premium() -> float:
-    conn = db()
-    try:
+    with get_db() as conn:
         with conn.cursor() as c:
             c.execute(
-                """SELECT
-                     COALESCE(SUM(CASE WHEN action='market_buy' THEN amount END),0),
-                     COALESCE(SUM(CASE WHEN action='market_sell' THEN amount END),0)
-                   FROM history
-                   WHERE ts > extract(epoch from now()) - 3600"""
+                """
+                SELECT
+                    COALESCE(SUM(CASE WHEN action='market_buy' THEN amount END),0),
+                    COALESCE(SUM(CASE WHEN action='market_sell' THEN amount END),0)
+                FROM history
+                WHERE ts > extract(epoch from now()) - 3600
+                """
             )
             buy, sell = c.fetchone()
 
-        net = max(buy - sell, 0)
-        premium = net / 20000
-        return min(premium, MAX_DEMAND_PREMIUM)
-    finally:
-        release(conn)
+    net = max(buy - sell, 0)
+    premium = net / 20000
+    return min(premium, MAX_DEMAND_PREMIUM)
 
 def bx_price_usdt() -> float:
     return BX_BASE_PRICE_USDT * (1 + demand_premium())
@@ -85,7 +91,7 @@ def quote(asset: str, side: str, amount: float):
         raise HTTPException(400, "INVALID_AMOUNT")
 
     asset_usdt = 1 if asset == "usdt" else get_price(asset)
-    if asset_usdt is None:
+    if not asset_usdt or asset_usdt <= 0:
         raise HTTPException(400, "PRICE_UNAVAILABLE")
 
     bx_usdt = bx_price_usdt()
@@ -102,10 +108,11 @@ def quote(asset: str, side: str, amount: float):
         "total": round(price * amount, 8),
         "bx_usdt": round(bx_usdt, 4),
         "spread": spread,
+        "ts": int(time.time())
     }
 
 # ======================================================
-# EXECUTE TRADE (INTERNAL LEDGER ONLY)
+# EXECUTE TRADE (ATOMIC)
 # ======================================================
 @router.post("/execute")
 def execute(payload: dict):
@@ -119,24 +126,27 @@ def execute(payload: dict):
 
     q = quote(asset, side, amount)
 
-    conn = db()
-    try:
+    with get_db() as conn:
         with conn.cursor() as c:
             ts = int(time.time())
 
             if side == "buy":
                 c.execute(
-                    f"""UPDATE wallets
-                        SET {asset}={asset}-%s, bx=bx+%s
-                        WHERE uid=%s AND {asset}>=%s""",
+                    f"""
+                    UPDATE wallets
+                    SET {asset}={asset}-%s, bx=bx+%s
+                    WHERE uid=%s AND {asset}>=%s
+                    """,
                     (amount, q["total"], uid, amount)
                 )
                 action = "market_buy"
             else:
                 c.execute(
-                    f"""UPDATE wallets
-                        SET bx=bx-%s, {asset}={asset}+%s
-                        WHERE uid=%s AND bx>=%s""",
+                    f"""
+                    UPDATE wallets
+                    SET bx=bx-%s, {asset}={asset}+%s
+                    WHERE uid=%s AND bx>=%s
+                    """,
                     (amount, q["total"], uid, amount)
                 )
                 action = "market_sell"
@@ -145,39 +155,36 @@ def execute(payload: dict):
                 raise HTTPException(400, "INSUFFICIENT_BALANCE")
 
             c.execute(
-                """INSERT INTO history(uid, action, asset, amount, price, ts)
-                   VALUES (%s,%s,%s,%s,%s,%s)""",
+                """
+                INSERT INTO history(uid, action, asset, amount, price, ts)
+                VALUES (%s,%s,%s,%s,%s,%s)
+                """,
                 (uid, action, asset, amount, q["price"], ts)
             )
 
-            conn.commit()
-
-        return {"status": "filled", **q}
-    finally:
-        release(conn)
+    return {"status": "filled", **q}
 
 # ======================================================
 # CHART (BX / BNB)
 # ======================================================
 @router.get("/chart/bx_bnb")
 def chart_bx_bnb(limit: int = 100):
-    conn = db()
-    try:
+    with get_db() as conn:
         with conn.cursor() as c:
             c.execute(
-                """SELECT price, ts
-                   FROM history
-                   WHERE asset='bnb'
-                   AND action IN ('market_buy','market_sell')
-                   ORDER BY ts DESC
-                   LIMIT %s""",
+                """
+                SELECT price, ts
+                FROM history
+                WHERE asset='bnb'
+                  AND action IN ('market_buy','market_sell')
+                ORDER BY ts DESC
+                LIMIT %s
+                """,
                 (limit,)
             )
             rows = c.fetchall()
 
-        return [
-            {"price": float(price), "ts": int(ts)}
-            for price, ts in reversed(rows)
-        ]
-    finally:
-        release(conn)
+    return [
+        {"price": float(price), "ts": int(ts)}
+        for price, ts in reversed(rows)
+    ]
