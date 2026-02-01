@@ -414,7 +414,6 @@ function renderCasinoHistory() {
 
 /* =========================================================
    PART 5 — MINING (Per-Coin Plans)
-   لكل عملة خصائصها بدون كسر app.js
 ========================================================= */
 
 /* ================= STATE ================= */
@@ -503,7 +502,7 @@ function renderMiningPlans() {
     card.innerHTML = `
       <h4>
         ${plan.name}
-        ${plan.vip ? '<span class="vip-tag">VIP</span>' : ''}
+        ${plan ? '<span class="tag"></span>' : ''}
       </h4>
       <div class="mining-profit">${plan.roi}%</div>
       <ul>
