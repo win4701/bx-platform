@@ -707,7 +707,7 @@ async function loadMining(){
   if (!isAuthenticated()) return;
 
   try {
-    const r = await fetch(API_BASE + "bxing/mining/dashboard", {
+    const r = await fetch(API_BASE + "/bxing/mining/start", {
       headers: authHeaders()
     });
     if (!r.ok) return;
@@ -801,7 +801,7 @@ function renderMiningProgress(m){
 
 async function subscribeMining(planId) {
   try {
-    await fetch(API_BASE + "/start_mining", {
+    await fetch(API_BASE + "/bxing/mining/subscribe", {
       method: "POST",
       headers: {
         ...authHeaders(),
