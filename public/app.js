@@ -524,6 +524,31 @@ function selectMiningPlan(plan) {
 }
 
 /* =======================================================
+   Select Mining Plan (When user clicks Subscribe)
+========================================================= */
+
+function subscribeMining(planId) {
+  // جلب الخطط الخاصة بالعملة النشطة
+  const plans = MINING_STATE.availablePlans[ACTIVE_MINING_COIN];
+
+  if (!plans) {
+    toast("No mining plans available");
+    return;
+  }
+
+  // البحث عن الخطة المختارة
+  const plan = plans.find(p => p.id === planId);
+
+  if (!plan) {
+    toast("Mining plan not found");
+    return;
+  }
+
+  // بدء التعدين (API → STATE → UI)
+  startMining(ACTIVE_MINING_COIN, plan);
+}
+
+/* =======================================================
    4.6 — Render Airdrop (Display airdrop status)
 ========================================================= */
 
