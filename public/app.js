@@ -501,8 +501,7 @@ function renderMiningPlans() {
 
     card.innerHTML = `
       <h4>
-        ${plan.name}
-        ${plan ? '<span class="tag"></span>' : ''}
+        ${plan.name} <span class="tabs-coin">Coin</span>' : ''}
       </h4>
       <div class="mining-profit">${plan.roi}%</div>
       <ul>
