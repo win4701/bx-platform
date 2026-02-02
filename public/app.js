@@ -297,7 +297,7 @@ function renderWalletConnections() {
 
   if (binanceBtn) {
     binanceBtn.disabled = true;
-    binanceBtn.textContent = "Binance (Coming Soon)";
+    binanceBtn.textContent = "Binance Pay (Coming Soon)";
   }
 }
 
