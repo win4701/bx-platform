@@ -109,15 +109,18 @@ def binance_pay(user_id: int, amount: float, recipient_address: str):
 # ================== Ston.fi ==================
 class BuyBXOrder(BaseModel):
     ton_amount: float  
+
 @app.get("/stonfi/bx_price")
 def get_bx_price():
- """ BX swap TON/USDT Ston """
-    return {"price": 2}  
+    """ Get BX price for TON/USDT """
+    return {"price": 8}  # 
 
 @app.post("/stonfi/buy")
 def buy_bx(order: BuyBXOrder):
-    """ buy BX TON/USDT """
-
+    """ Buy BX using TON/USDT """
+    if order.ton_amount <= 0:
+        raise HTTPException(status_code=400, detail="The TON amount must be greater than zero.")
+    
     price_data = get_bx_price()  
     price = price_data["price"]
     bx_amount = order.ton_amount / price
