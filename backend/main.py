@@ -10,7 +10,7 @@ from finance import router as finance_router, rtp_stats
 from market import router as market_router
 from casino import router as casino_router
 
-# kyc اختياري (لا يكسر التطبيق لو غير موجود)
+# kyc 
 try:
     from kyc import router as kyc_router
 except Exception:
