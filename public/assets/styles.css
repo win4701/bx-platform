@@ -1244,7 +1244,7 @@ button:active,
 }
 
 #claim-airdrop:hover {
-  background-color: #45a049;
+  background-color: #5cd65c;
 }
 
 #claim-airdrop.hidden {
@@ -1253,7 +1253,7 @@ button:active,
 
 .airdrop-box {
   padding: 20px;
-  background-color: #f9f9f9;
+  background-color: #b3d9ff;
   border-radius: 10px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   text-align: center;
