@@ -1229,7 +1229,7 @@ button:active,
 #airdrop-status {
   font-size: 18px;
   text-align: center;
-  color: #333;
+  color: #fff;
 }
 
 #claim-airdrop {
@@ -1247,7 +1247,6 @@ button:active,
   background-color: #45a049;
 }
 
-/* Hidden button (when claimed) */
 #claim-airdrop.hidden {
   display: none;
 }
