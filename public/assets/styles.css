@@ -1235,7 +1235,7 @@ button:active,
 #claim-airdrop {
   width: 100%;
   padding: 10px;
-  background-color: #8ac7db;
+  background-color: #33cccc;
   color: lightblue;
   font-size: 18px;
   border: none;
@@ -1253,9 +1253,9 @@ button:active,
 
 .airdrop-box {
   padding: 20px;
-  background-color: #b3d9ff;
+  background-color: #33cccc;
   border-radius: 10px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 6px rgba(51, 166, 204, 0.1);
   text-align: center;
   margin-top: 20px;
 }
