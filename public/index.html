@@ -344,12 +344,12 @@
   <div class="mining-plans" id="miningGrid"></div>
    </section>
   <!-- ================= AIRDROP ================= -->
-  <section id="airdrop" class="view">
-  <h2>Airdrop</h2>
+  
+<section id="airdrop" class="view">
+  <h2> Airdrop</h2>
 
   <div class="airdrop-box">
-
-    <img src="assets/images/airdrop.png" alt="Airdrop"/>
+    <img src="assets/images/airdrop.png" alt="Airdrop" />
 
     <div class="airdrop-reward">
       +2.5 BX
@@ -357,17 +357,17 @@
 
     <!-- Casino Task -->
     <div id="casinoTask" class="airdrop-task">
-       Play any Game to earn 2.5 BX
+      Play any game to earn 2.5 BX
     </div>
 
     <!-- Referral -->
     <div class="airdrop-referral">
-       Referrals: <strong id="refPoints">0</strong><br/>
+      Referrals: <strong id="refPoints">0</strong><br />
       Each referral = <strong>0.5 BX</strong>
     </div>
 
-    <div id="airdropStatus" class="status"></div>
-
+    <div id="airdrop-status" class="status">Loading...</div>
+    <button id="claim-airdrop" class="btn primary hidden" onclick="claimAirdrop()">Claim Airdrop</button>
   </div>
 
   <!-- ================= AIRDROP PARTNERS ================= -->
@@ -451,7 +451,7 @@
 
   <!-- AIRDROP -->
   <div class="card">
-    <h3>🎁 Airdrop</h3>
+    <h3> Airdrop</h3>
     <p id="airdrop-status">Loading...</p>
     <button
       id="claim-airdrop"
@@ -463,13 +463,13 @@
 
   <!-- BADGES -->
   <div class="card">
-    <h3>🏅 Badges</h3>
+    <h3> Badges</h3>
     <ul id="badges-list"></ul>
   </div>
 
   <!-- LEADERBOARD -->
   <div class="card">
-    <h3>🏆 Referral Leaderboard</h3>
+    <h3> Referral Leaderboard</h3>
     <ol id="ref-leaderboard"></ol>
   </div>
 
