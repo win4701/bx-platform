@@ -107,20 +107,21 @@ def binance_pay(user_id: int, amount: float, recipient_address: str):
     return {"status": "success", "message": f"Successfully paid {amount} to {recipient_address} via Binance Pay."}
 
 # ================== Ston.fi ==================
-
+class BuyBXOrder(BaseModel):
+    ton_amount: float  
 @app.get("/stonfi/bx_price")
 def get_bx_price():
-    """ prix BX Ston.fi """
+ """ BX swap TON/USDT Ston """
     return {"price": 2}  
 
 @app.post("/stonfi/buy")
-def buy_bx(user_id: int, amount: float, price: float):
-    """ buy BX Ston.fi """
-    total_price = amount * price
-    return {"status": "success", "message": f"Bought {amount} BX for {total_price} USDT."}
+def buy_bx(order: BuyBXOrder):
+    """ buy BX TON/USDT """
 
-@app.post("/stonfi/sell")
-def sell_bx(user_id: int, amount: float, price: float):
-    """ sell BX Ston.fi """
-    total_price = amount * price
-    return {"status": "success", "message": f"Sold {amount} BX for {total_price} USDT."}
+    price_data = get_bx_price()  
+    price = price_data["price"]
+    bx_amount = order.ton_amount / price
+    
+    response = {"status": "success", "message": f"Bought {bx_amount} BX for {order.ton_amount} TON."}
+    
+    return response
