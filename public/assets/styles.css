@@ -1142,13 +1142,6 @@ button:active,
   }
 }
 
-/* ===== FIX SUBSCRIBE BUTTON (FINAL) ===== */
-.mining-plan button{
-  background: linear-gradient(135deg,#22c55e,#16a34a) !important;
-  color: #022c22 !important;
-  border: none !important;
-}
-
 /* ================= AIRDROP EXTRAS ================= */
 
 .airdrop-extras{
@@ -1226,9 +1219,9 @@ button:active,
   opacity: 0.9;
 }
 
-#airdrop h2 {
-  font-size: 24px;
-  margin-bottom: 20px;
+#airdrop h3 {
+  font-size: 22px;
+  margin-bottom: 22px;
   color: #4caf50;
   text-align: center;
 }
