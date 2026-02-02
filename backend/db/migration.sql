@@ -19,7 +19,8 @@ CREATE TABLE IF NOT EXISTS users (
   uid INTEGER PRIMARY KEY,
   telegram_id BIGINT UNIQUE,
   username TEXT,
-  created_at INTEGER
+  created_at INTEGER,
+  telegram_code VARCHAR(10)
 );
 
 -- =====================================================
@@ -34,7 +35,8 @@ CREATE TABLE IF NOT EXISTS wallets (
   bnb  REAL DEFAULT 0,
   eth  REAL DEFAULT 0,
   bx   REAL DEFAULT 0,
-  created_at INTEGER
+  created_at INTEGER,
+  FOREIGN KEY(uid) REFERENCES users(uid)
 );
 
 -- =====================================================
@@ -49,7 +51,7 @@ CREATE TABLE IF NOT EXISTS wallet_vaults (
 
 -- Seed vaults (safe)
 INSERT OR IGNORE INTO wallet_vaults(asset) VALUES
- ('usdt'), ('ton'), ('sol'), ('btc'), ('bnb'), ('bx');
+ ('usdt'), ('ton'), ('sol'), ('btc'), ('bnb'), ('eth'), ('bx');
 
 -- =====================================================
 -- LEDGER (DOUBLE ENTRY)
@@ -74,7 +76,8 @@ CREATE TABLE IF NOT EXISTS history (
   amount REAL,
   ref TEXT,
   meta TEXT,
-  ts INTEGER
+  ts INTEGER,
+  FOREIGN KEY(uid) REFERENCES users(uid)
 );
 
 -- =====================================================
@@ -85,7 +88,9 @@ CREATE TABLE IF NOT EXISTS transfers (
   from_uid INTEGER,
   to_uid INTEGER,
   amount REAL,
-  ts INTEGER
+  ts INTEGER,
+  FOREIGN KEY(from_uid) REFERENCES users(uid),
+  FOREIGN KEY(to_uid) REFERENCES users(uid)
 );
 
 -- =====================================================
@@ -106,7 +111,8 @@ CREATE TABLE IF NOT EXISTS pending_deposits (
   asset TEXT,
   amount REAL,
   reason TEXT,
-  ts INTEGER
+  ts INTEGER,
+  FOREIGN KEY(uid) REFERENCES users(uid)
 );
 
 -- =====================================================
@@ -118,9 +124,10 @@ CREATE TABLE IF NOT EXISTS withdraw_queue (
   asset TEXT,
   amount REAL,
   address TEXT,
-  status TEXT,
+  status TEXT,    -- pending / approved / sent / confirmed / rejected
   txid TEXT,
-  ts INTEGER
+  ts INTEGER,
+  FOREIGN KEY(uid) REFERENCES users(uid)
 );
 
 -- =====================================================
@@ -130,7 +137,8 @@ CREATE TABLE IF NOT EXISTS kyc (
   uid INTEGER PRIMARY KEY,
   level INTEGER,
   status TEXT,
-  updated_at INTEGER
+  updated_at INTEGER,
+  FOREIGN KEY(uid) REFERENCES users(uid)
 );
 
 CREATE TABLE IF NOT EXISTS kyc_requests (
@@ -142,7 +150,8 @@ CREATE TABLE IF NOT EXISTS kyc_requests (
   document_number TEXT,
   document_path TEXT,
   status TEXT,
-  ts INTEGER
+  ts INTEGER,
+  FOREIGN KEY(uid) REFERENCES users(uid)
 );
 
 -- =====================================================
@@ -194,6 +203,7 @@ CREATE INDEX IF NOT EXISTS idx_webhook_ip_ts
 
 COMMIT;
 PRAGMA foreign_keys = ON;
+
 -- ===============================
 -- AIRDROP
 -- ===============================
@@ -202,7 +212,8 @@ CREATE TABLE IF NOT EXISTS airdrops (
   claimed INTEGER DEFAULT 0,
   referrals INTEGER DEFAULT 0,
   reward REAL DEFAULT 2.5,
-  ts INTEGER
+  ts INTEGER,
+  FOREIGN KEY(uid) REFERENCES users(uid)
 );
 
 -- ===============================
