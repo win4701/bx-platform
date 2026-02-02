@@ -79,11 +79,7 @@ app.include_router(bxing_router)
 # ======================================================
 @app.get("/")
 def root():
-    return {
-        "status": "running",
-        "service": "bloxio-api",
-        "env": os.getenv("ENV", "production")
-    }
+    return {"status": "running", "service": "bloxio-api", "env": os.getenv("ENV", "production")}
 
 @app.get("/health")
 def health():
