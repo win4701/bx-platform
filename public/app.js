@@ -392,7 +392,7 @@ function addCasinoResult() {
     time: new Date().toLocaleTimeString()
   });
 
-  CASINO.history.splice(10);
+  CASINO.history.splice(8);
 
   renderCasinoHistory();
 }
