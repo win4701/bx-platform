@@ -37,10 +37,7 @@ app = FastAPI(
 # ======================================================
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://www.bloxio.online",
-        "https://bloxio.online"
-    ],
+    allow_origins=["https://www.bloxio.online", "https://bloxio.online"],  
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
