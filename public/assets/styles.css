@@ -1080,16 +1080,14 @@ button:active,
   margin: 18px 16px;
 }
 
-/* الكرت */
 .promo-card {
   display: flex;
-  flex-direction: column;          /* موبايل: عمودي */
+  flex-direction: column;         
   background: #0b1220;
   border-radius: 18px;
   overflow: hidden;
 }
 
-/* الصورة */
 .promo-card img {
   width: 100%;
   height: 160px;
@@ -1097,7 +1095,6 @@ button:active,
   display: block;
 }
 
-/* المحتوى */
 .promo-content {
   padding: 16px;
   display: flex;
@@ -1118,7 +1115,6 @@ button:active,
   line-height: 1.5;
 }
 
-/* الزر */
 .promo-btn {
   margin-top: 10px;
   width: 100%;
@@ -1132,7 +1128,7 @@ button:active,
 /* ================= DESKTOP / TABLET ================= */
 @media (min-width: 768px) {
   .promo-card {
-    flex-direction: row;          /* Desktop: أفقي */
+    flex-direction: row;          
     align-items: center;
   }
 
@@ -1227,4 +1223,62 @@ button:active,
   max-height: 38px;
   object-fit: contain;
   opacity: 0.9;
+}
+
+/* Section Header */
+#airdrop h2 {
+  font-size: 24px;
+  margin-bottom: 20px;
+  color: #4caf50;
+  text-align: center;
+}
+
+/* Status Text */
+#airdrop-status {
+  font-size: 18px;
+  text-align: center;
+  color: #333;
+}
+
+/* Claim Button */
+#claim-airdrop {
+  width: 100%;
+  padding: 10px;
+  background-color: #4caf50;
+  color: white;
+  font-size: 18px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+#claim-airdrop:hover {
+  background-color: #45a049;
+}
+
+/* Hidden button (when claimed) */
+#claim-airdrop.hidden {
+  display: none;
+}
+
+/* Airdrop box (visual container) */
+.airdrop-box {
+  padding: 20px;
+  background-color: #f9f9f9;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  margin-top: 20px;
+}
+
+.airdrop-reward {
+  font-size: 20px;
+  color: #ff9800;
+  margin-top: 15px;
+}
+
+.airdrop-task,
+.airdrop-referral {
+  margin-top: 20px;
+  font-size: 16px;
 }
