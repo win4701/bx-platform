@@ -5,9 +5,10 @@ PRAGMA foreign_keys = ON;
 -- =====================================================
 CREATE TABLE IF NOT EXISTS users (
   uid INTEGER PRIMARY KEY,
-  telegram_id BIGINT UNIQUE,
+  telegram_id BIGINT UNIQUE,  -- تم إضافة هذه العمود سابقًا
   username TEXT,
-  created_at INTEGER
+  created_at INTEGER,
+  telegram_code VARCHAR(10)  -- تم إضافة هذا العمود سابقًا
 );
 
 -- =====================================================
@@ -236,6 +237,7 @@ CREATE TABLE IF NOT EXISTS mining_orders (
   status TEXT,
   FOREIGN KEY(uid) REFERENCES users(uid)
 );
+
 -- ===============================
 -- Télégramme 
 -- ===============================
