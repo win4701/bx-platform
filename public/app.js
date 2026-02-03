@@ -409,6 +409,11 @@ function bindPairSelector() {
   };
 }
 
+function bindTradeTabs() {
+  $("buyTab")?.addEventListener("click", () => setTradeSide("buy"));
+  $("sellTab")?.addEventListener("click", () => setTradeSide("sell"));
+}
+
 function highlightActivePair() {
   document.querySelectorAll("#pairScroll button").forEach(btn => {
     btn.classList.toggle("active", btn.dataset.pair === MARKET.pair);
@@ -547,10 +552,6 @@ function renderMarketPrice() {
   const el = $("marketPrice");
   if (el) el.textContent = MARKET.price.toFixed(4);
 }
-
-function renderTradeAction() {
-  const btn = $("actionBtn");
-  if (!btn) return;
 
 function renderTradeAction() {
   const btn = $("actionBtn");
