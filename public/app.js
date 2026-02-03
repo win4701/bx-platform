@@ -341,6 +341,27 @@ function renderConnectionButton(id, state) {
   btn.classList.add("disconnected");
 }
 
+/* ================= CONNECTION  Handlers.  ================ */
+
+function bindWalletConnections() {
+  const wc = $("walletConnectBtn");
+  const binance = $("binanceConnectBtn");
+
+  if (wc) {
+    wc.onclick = () => {
+      CONNECTIONS.walletconnect.connected = true;
+      renderWalletConnections();
+      log.info("WalletConnect connected (mock)");
+    };
+  }
+
+  if (binance) {
+    binance.onclick = () => {
+      alert("Binance Pay coming soon");
+    };
+  }
+}
+
 /* =========================================================
    PART 4 — MARKET + CASINO (General Update)
 ========================================================= */
@@ -459,22 +480,6 @@ function initChart() {
 
 /* ================= CHART DATA ================= */
 
-function initMarketChart() {
-  const chart = LightweightCharts.createChart(
-    document.getElementById("marketChart"),
-    {
-      layout: { background: { color: "#020617" }, textColor: "#94a3b8" },
-      grid: { vertLines: { color: "#020617" }, horzLines: { color: "#020617" } },
-      timeScale: { borderColor: "#020617" }
-    }
-  );
-
-  MARKET.priceSeries = chart.addLineSeries({
-    color: "#22c55e",
-    lineWidth: 2
-  });
-}
-
 function updateLastPriceMarker() {
   if (!candleSeries || !MARKET.price) return;
 
@@ -521,13 +526,8 @@ function setTradeSide(side) {
   $("buyTab")?.classList.toggle("active", side === "buy");
   $("sellTab")?.classList.toggle("active", side === "sell");
 
-  const box = document.querySelector(".trade-box");
-  if (box) {
-    box.classList.remove("buy", "sell");
-    box.classList.add(side);
-  }
-
   renderTradeAction();
+  updateMarketPrice(); 
 }
 
 /* ================= RENDER ================= */
@@ -552,11 +552,14 @@ function renderTradeAction() {
   const btn = $("actionBtn");
   if (!btn) return;
 
-  btn.textContent = MARKET.side === "buy" ? "Buy BX" : "Sell BX";
-  btn.classList.remove("buy", "sell");
-  btn.classList.add(MARKET.side);
-}
+function renderTradeAction() {
+  const btn = $("actionBtn");
+  if (!btn) return;
 
+  btn.textContent = MARKET.side === "buy" ? "Buy BX" : "Sell BX";
+  btn.className = `action-btn ${MARKET.side}`;
+}
+   
 /* ================= INIT / LOOP ================= */
 
 function refreshMarket() {
