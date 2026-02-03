@@ -141,9 +141,10 @@ h3{
   color:#022c22;
 }
 
-.sell-btn{
-  background:#D81484;
-  color:#2a0c10;
+.trade-tabs .active.sell,
+.trade-box.sell .action-btn{
+  background: linear-gradient(135deg,#f84960,#FE55A1);
+  color:#020617;
 }
 
 /*=========================================================
@@ -158,6 +159,7 @@ h3{
 }
 
 /* ---------- TOTAL VALUE CARD ---------- */
+
 .wallet-summary{
   background:#0b1220;
   border:1px solid #1e293b;
@@ -258,6 +260,7 @@ h3{
 }
 
 /* ===== WALLET PAYMENT BUTTONS ===== */
+
 .wallet-bottom-actions {
   display: flex;
   gap: 12px;
@@ -299,8 +302,6 @@ input{
   border:1px solid var(--border);
   font-size:15px;
 }
-
-
 
 /* ================= TRANSFER PANEL ================= */
 .wallet-transfer{
@@ -413,6 +414,7 @@ input{
 .trade-box.sell{ box-shadow:0 0 0 1px rgba(248,73,96,.15); }
 
 /* ---------- BUY / SELL TABS ---------- */
+
 .trade-tabs{
   display:flex;
   gap:8px;
@@ -511,14 +513,16 @@ input{
   font-weight:800;
 }
 
+.trade-tabs .active.buy,
 .trade-box.buy .action-btn{
-  background:#02c076;
+  background: linear-gradient(135deg,#02c076,#6ee7a8);
   color:#022c22;
 }
 
+.trade-tabs .active.sell,
 .trade-box.sell .action-btn{
-  background:#f84960;
-  color:#FE55A1;
+  background: linear-gradient(135deg,#f84960,#FE55A1);
+  color:#020617;
 }
 
 .market-chart{
@@ -868,7 +872,6 @@ input{
   gap:12px;
 }
 
-/* Card */
 .promo-card{
   display:flex;
   align-items:center;
@@ -879,7 +882,6 @@ input{
   background:linear-gradient(180deg,#0b1f27,#081a21);
 }
 
-/* Variants */
 .promo-card.casino{
   box-shadow:0 0 0 1px rgba(110,231,168,.25);
 }
@@ -892,7 +894,6 @@ input{
   box-shadow:0 0 0 1px rgba(255,99,132,.25);
 }
 
-/* Icon */
 .promo-icon{
   width:48px;
   height:48px;
@@ -905,7 +906,6 @@ input{
   flex-shrink:0;
 }
 
-/* Text */
 .promo-text{
   display:flex;
   flex-direction:column;
@@ -922,7 +922,6 @@ input{
   color:var(--muted);
 }
 
-/* Button */
 .promo-btn{
   background:linear-gradient(180deg,#6ee7a8,#16a34a);
   color:#042417;
@@ -1106,13 +1105,11 @@ button:active,
   gap: 8px;
 }
 
-/* العنوان */
 .promo-content h4 {
   font-size: 16px;
   font-weight: 800;
 }
 
-/* الوصف */
 .promo-content p {
   font-size: 13px;
   opacity: 0.85;
