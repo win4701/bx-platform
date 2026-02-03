@@ -141,10 +141,10 @@ h3{
   color:#022c22;
 }
 
-.trade-tabs .active.sell,
-.trade-box.sell .action-btn{
-  background: linear-gradient(135deg,#f84960,#FE55A1);
-  color:#020617;
+.trade-tabs .active.buy,
+.trade-box.buy .action-btn{
+  background: linear-gradient(135deg,#02c076,#6ee7a8);
+  color:#022c22;
 }
 
 /*=========================================================
@@ -539,6 +539,7 @@ input{
   height:200px !important;
 }
 /* ---------- ORDER BOOK ---------- */
+
 .order-book{
   background:#0b1220;
   border-radius:16px;
@@ -554,10 +555,8 @@ input{
   padding:4px 0;
 }
 
-.order-book .buy{ color:#4adebb; }
-.order-book .sell{ color:#FE55A1; }
-
 /* ---------- RECENT TRADES ---------- */
+
 .recent-trades{
   background:#0b1220;
   border-radius:16px;
@@ -710,7 +709,6 @@ input{
   font-weight: 800;
 }
 
-/* Colors */
 .wallet-btn.deposit{ background:#22c55e; color:#022c22; }
 .wallet-btn.withdraw{ background:#facc15; color:#FFCD18; }
 .wallet-btn.transfer{ background:#1f2937; color:#e5e7eb; }
@@ -995,6 +993,7 @@ button:active,
 .btn.sell{
   outline:2px solid rgba(216,20,132,.25);
 }
+
 /* =========================================================
    UX – WALLET READABILITY
 ========================================================= */
@@ -1127,6 +1126,7 @@ button:active,
 }
 
 /* ================= DESKTOP / TABLET ================= */
+
 @media (min-width: 768px) {
   .promo-card {
     flex-direction: row;          
