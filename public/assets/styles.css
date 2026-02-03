@@ -182,8 +182,8 @@ h3{
 /* ---------- ACTION BUTTONS ---------- */
 .wallet-actions{
   display:flex;
-  gap:10px;
-  margin-top:14px;
+  gap:12px;
+  margin-top:16px;
 }
 
 .wallet-actions button{
@@ -264,7 +264,7 @@ h3{
 .wallet-bottom-actions {
   display: flex;
   gap: 12px;
-  margin: 20px 16px;
+  margin-top: 16px;
 }
 
 .wallet-bottom-actions button {
@@ -290,17 +290,21 @@ h3{
   color: #000;
 }
 
+.wallet-btn {
+  flex: 1;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px dashed #1e293b;
+  background: #020617;
+  color: #94a3b8;
+  font-weight: 800;
+}
+
 .wallet-btn.connected {
   background: linear-gradient(135deg,#02c076,#6ee7a8);
   color:#022c22;
+  border: none;
 }
-
-.wallet-btn.disconnected {
-  background:#020617;
-  color:#94a3b8;
-  border:1px dashed #1e293b;
-}
-
 /* =========================================================
    INPUTS
 ========================================================= */
