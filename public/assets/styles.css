@@ -529,14 +529,16 @@ input{
   transition: 0.2s;
 }
 
-.action-btn.buy {
-  background: #02c076;
-  color: #021f13;
+.trade-box.buy .action-btn {
+  background: linear-gradient(135deg, #00c076, #00a85a);
 }
 
-.action-btn.sell {
-  background: #f84960;
-  color: #2a0208;
+.trade-box.sell .action-btn {
+  background: linear-gradient(135deg, #ff5fa2, #ff3b7d);
+}
+
+.trade-tabs button.active {
+  border: 1px solid #00c076;
 }
 
 #marketChart canvas {
