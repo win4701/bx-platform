@@ -19,8 +19,8 @@ DB_URL = os.getenv("DATABASE_URL")
 if not DB_URL:
     raise RuntimeError("DATABASE_URL is not set")
 
-BX_BASE_PRICE_USDT = 5.0
-MAX_DEMAND_PREMIUM = 0.20
+BX_BASE_PRICE_USDT = 12.0
+MAX_DEMAND_PREMIUM = 0.08333
 
 ALLOWED_ASSETS = {"usdt", "ton", "sol", "btc", "eth", "bnb"}
 
