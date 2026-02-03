@@ -328,7 +328,8 @@ function bindPairSelector() {
 /* ================= MARKET ================= */
 
 function initMarket() {
-  bindMarketPairs();
+   bindPairSelector(); 
+   bindMarketPairs();
 
   if (MARKET.timer) return;
 
@@ -437,12 +438,40 @@ function updateMarketPrice() {
 /* ================= RENDER MARKET ================= */
 
 function renderMarket() {
-  const pairEl = $("marketPair");
+  const pairEl  = $("marketPair");
   const priceEl = $("marketPrice");
+  const actionBtn = $("actionBtn");
 
-  if (pairEl) pairEl.textContent = MARKET.pair;
-  if (priceEl) priceEl.textContent = MARKET.price.toFixed(4);
-}
+  if (pairEl) {
+    pairEl.textContent = MARKET.pair.replace("/", " / ");
+  }
+
+  if (priceEl) {
+    priceEl.textContent = MARKET.price.toFixed(4);
+  }
+
+  // ===== Sync BUY / SELL UI =====
+  if (actionBtn) {
+    if (MARKET.side === "buy") {
+      actionBtn.textContent = "Buy BX";
+      actionBtn.classList.remove("sell");
+      actionBtn.classList.add("buy");
+    } else {
+      actionBtn.textContent = "Sell BX";
+      actionBtn.classList.remove("buy");
+      actionBtn.classList.add("sell");
+    }
+  }
+
+  // ===== Update chart every render =====
+  updateChart();
+
+  log.info("Market rendered", {
+    pair: MARKET.pair,
+    price: MARKET.price,
+    side: MARKET.side
+  });
+  }
 
 /* =================================================
    CASINO
