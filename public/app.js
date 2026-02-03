@@ -309,7 +309,7 @@ const MARKET = {
   pair: "BX/USDT",
   price: 2.0000,
   chart: [],
-  side: "buy"
+  side: "buy",
   timer: null
 };
 
