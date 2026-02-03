@@ -441,8 +441,8 @@ function setTradeSide(side) {
     }
   }
 }
-/* ================= MARKET PAIRS 
-================= */
+
+/* ================= MARKET PAIRS ================= */
 
 function bindMarketPairs() {
   const buttons = $$(".market-pair");
@@ -451,50 +451,45 @@ function bindMarketPairs() {
     const pair = btn.dataset.pair;
     if (!pair) return;
 
-    btn.addEventListener("click", () => {
+    btn.onclick = () => {
+      if (MARKET.pair === pair) return;
+
       MARKET.pair = pair;
+      highlightActivePair();
       renderMarket();
-      log.info("Market pair changed:", pair);
-    });
+
+      log.info("Market pair changed", pair);
+    };
+  });
+}
+
+function highlightActivePair() {
+  $$(".market-pair").forEach(btn => {
+    btn.classList.toggle(
+      "active",
+      btn.dataset.pair === MARKET.pair
+    );
   });
 }
 
 /* ================= PRICE UPDATE ================= */
+/* مؤقت: سيتم استبداله بسعر market.py */
 
 function updateMarketPrice() {
-  const drift = (Math.random() - 0.5) * 0.03;
-  MARKET.price = Math.max(0.1, MARKET.price + drift);
+  if (typeof MARKET.price !== "number" || MARKET.price <= 0) {
+    MARKET.price = 1;
+  }
+
+  const drift = (Math.random() - 0.5) * 0.02;
+  MARKET.price = Math.max(0.0001, MARKET.price + drift);
 }
 
 /* ================= RENDER MARKET ================= */
 
 function renderMarket() {
-  const pairEl  = $("marketPair");
-  const priceEl = $("marketPrice");
-  const actionBtn = $("actionBtn");
-
-  if (pairEl) {
-    pairEl.textContent = MARKET.pair.replace("/", " / ");
-  }
-
-  if (priceEl) {
-    priceEl.textContent = MARKET.price.toFixed(4);
-  }
-
-  // ===== Sync BUY / SELL UI =====
-  if (actionBtn) {
-    if (MARKET.side === "buy") {
-      actionBtn.textContent = "Buy BX";
-      actionBtn.classList.remove("sell");
-      actionBtn.classList.add("buy");
-    } else {
-      actionBtn.textContent = "Sell BX";
-      actionBtn.classList.remove("buy");
-      actionBtn.classList.add("sell");
-    }
-  }
-
-  // ===== Update chart every render =====
+  renderMarketPair();
+  renderMarketPrice();
+  renderTradeAction();
   updateChart();
 
   log.info("Market rendered", {
@@ -502,7 +497,32 @@ function renderMarket() {
     price: MARKET.price,
     side: MARKET.side
   });
-  }
+}
+
+function renderMarketPair() {
+  const el = $("marketPair");
+  if (!el) return;
+
+  el.textContent = MARKET.pair.replace("/", " / ");
+}
+
+function renderMarketPrice() {
+  const el = $("marketPrice");
+  if (!el) return;
+
+  el.textContent = Number(MARKET.price).toFixed(4);
+}
+
+function renderTradeAction() {
+  const btn = $("actionBtn");
+  if (!btn) return;
+
+  const side = MARKET.side || "buy";
+
+  btn.textContent = side === "buy" ? "Buy BX" : "Sell BX";
+  btn.classList.remove("buy", "sell");
+  btn.classList.add(side);
+}
 
 /* =================================================
    CASINO
