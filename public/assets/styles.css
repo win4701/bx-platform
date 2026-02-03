@@ -472,6 +472,24 @@ input{
   color:#6b7280;
 }
 
+/* ===== FIX OVERRIDES ===== */
+
+.market .pair-display {
+  cursor: pointer;
+}
+
+.trade-tabs button {
+  transition: all .2s ease;
+}
+
+.trade-tabs button.active {
+  transform: scale(1.02);
+}
+
+.market-chart {
+  overflow: hidden;
+}
+
 /* ---------- PERCENT BUTTONS ---------- */
 .percent-row{
   display:flex;
@@ -491,6 +509,7 @@ input{
 }
 
 /* ---------- ACTION BUTTON ---------- */
+
 .action-btn{
   width:100%;
   height:48px;
@@ -575,12 +594,11 @@ input{
   overflow:hidden;
 }
 
-
 #casino .game img{
   width:100%;
-  height:auto;          /* 🔑 هذا هو الحل */
+  height:auto;          
   display:block;
-  object-fit:contain;   /* 🔑 بدون قص */
+  object-fit:contain;   
 }
 
 #casino .game h4{
@@ -589,14 +607,13 @@ input{
   transition: .25s ease;
 }
 
-/* ===== CASINO – HIDE GAME TITLES ===== */
 #casino .game h4{
   display: none;
 }
 
-/* ===============================================================================================
+/* =================================================================
    RECENT BIG WINS – FINAL (VERTICAL OVERRIDE)
-================================================================================================ */
+=============================================================== */
 
 .big-wins {
   margin: 18px 16px;
@@ -612,7 +629,6 @@ input{
   color: #fff;
 }
 
-/* فرض العمودي */
 .big-wins-track {
   display: block !important;
   max-height: 260px;
@@ -620,7 +636,6 @@ input{
   overflow-x: hidden !important;
 }
 
-/* عنصر واحد */
 .big-win-row {
   display: flex;
   justify-content: space-between;
@@ -664,20 +679,16 @@ input{
   font-weight: 800;
    
 }
-/* منع أي التفاف أفقي قديم */
+
 .big-win-row span {
   white-space: normal !important;
 }
-
-/* =====================================================
-   MINING + WALLET – CLEAN & SAFE LAYOUT
-===================================================== */
 
 /* ================= GLOBAL VIEW FIX ================= */
 
 .view{
   min-height: 100vh;
-  padding-bottom: 120px; /* مساحة للـ bottom nav */
+  padding-bottom: 120px; 
   overflow-y: auto;
 }
 
