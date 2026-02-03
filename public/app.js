@@ -380,21 +380,35 @@ function updateChart() {
 
 /*================= BUY & SELL 
 ================= */
-MARKET.side = "buy";
 
 function setTradeSide(side) {
   MARKET.side = side;
 
-  $("buyTab")?.classList.toggle("active", side === "buy");
-  $("sellTab")?.classList.toggle("active", side === "sell");
-
+  const buyTab = $("buyTab");
+  const sellTab = $("sellTab");
   const box = document.querySelector(".trade-box");
+  const actionBtn = $("actionBtn");
+
+  buyTab?.classList.toggle("active", side === "buy");
+  sellTab?.classList.toggle("active", side === "sell");
+
   if (box) {
-    box.classList.toggle("buy", side === "buy");
-    box.classList.toggle("sell", side === "sell");
+    box.classList.remove("buy", "sell");
+    box.classList.add(side);
+  }
+
+  if (actionBtn) {
+    if (side === "buy") {
+      actionBtn.textContent = "Buy BX";
+      actionBtn.classList.remove("sell");
+      actionBtn.classList.add("buy");
+    } else {
+      actionBtn.textContent = "Sell BX";
+      actionBtn.classList.remove("buy");
+      actionBtn.classList.add("sell");
+    }
   }
 }
-
 /* ================= MARKET PAIRS 
 ================= */
 
