@@ -366,25 +366,26 @@ document.addEventListener("DOMContentLoaded", () => {
 
 /* =========================================================
    PART 4 — MARKET + CASINO (General Update)
-========================================================= */
+=================================*/
 
 const MARKET = {
   pair: "BX/USDT",
-  price: 12,
   side: "buy",
-  timer: null
+  price: 12,
+
   chart: null,
   candleSeries: null,
+
+  depthChart: null,
+  bidSeries: null,
+  askSeries: null,
+
+  timer: null
 };
 
-const MARKET_PAIRS = [
-  "BX/USDT",
-  "BX/BTC",
-  "BX/BNB",
-  "BX/ETH",
-  "BX/SOL",
-  "BX/TON"
-];
+/* ================= HELPERS ================= */
+
+const $ = id => document.getElementById(id);
 
 /* ================= MARKET PAIRS ================= */
 
@@ -403,7 +404,7 @@ function bindMarketPairs() {
 
 function bindPairSelector() {
   const selector = $("pairSelector");
-  if (!selector) return;
+  if (!selector || !window.MARKET_PAIRS) return;
 
   selector.onclick = () => {
     const i = MARKET_PAIRS.indexOf(MARKET.pair);
@@ -411,11 +412,6 @@ function bindPairSelector() {
     highlightActivePair();
     refreshMarket();
   };
-}
-
-function bindTradeTabs() {
-  $("buyTab")?.addEventListener("click", () => setTradeSide("buy"));
-  $("sellTab")?.addEventListener("click", () => setTradeSide("sell"));
 }
 
 function highlightActivePair() {
@@ -428,36 +424,24 @@ function highlightActivePair() {
 
 async function updateMarketPrice() {
   try {
-    const asset = MARKET.pair.split("/")[1].toLowerCase();
-
-    const res = await fetch(API_BASE + "/market/quote", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        asset,
-        side: MARKET.side,
-        amount: 1
-      })
-    });
-
+    const res = await fetch(`/market/quote?pair=${MARKET.pair}`);
     const data = await res.json();
+
     if (typeof data.price === "number") {
       MARKET.price = data.price;
     }
-  } catch {
+  } catch (e) {
     console.warn("Market price fetch failed");
   }
 }
 
-/* ================= CHART ENGINE ================= */
-
-let chart, candleSeries, volumeSeries;
+/* ================= CHART (CANDLES) ================= */
 
 function initChart() {
-  const el = document.getElementById("marketChart");
-  if (!el || chart) return;
+  const el = $("marketChart");
+  if (!el || MARKET.chart) return;
 
-  chart = LightweightCharts.createChart(el, {
+  MARKET.chart = LightweightCharts.createChart(el, {
     layout: {
       background: { color: "#020617" },
       textColor: "#94a3b8"
@@ -471,7 +455,7 @@ function initChart() {
     timeScale: { borderColor: "#1e293b", timeVisible: true }
   });
 
-  candleSeries = chart.addCandlestickSeries({
+  MARKET.candleSeries = MARKET.chart.addCandlestickSeries({
     upColor: "#02c076",
     downColor: "#f84960",
     borderUpColor: "#02c076",
@@ -479,20 +463,24 @@ function initChart() {
     wickUpColor: "#02c076",
     wickDownColor: "#f84960"
   });
-
-  volumeSeries = chart.addHistogramSeries({
-    color: "#334155",
-    priceFormat: { type: "volume" },
-    priceScaleId: ""
-  });
 }
 
-/* ================= CHART DATA ================= */
+async function loadChartData() {
+  if (!MARKET.candleSeries) return;
+
+  try {
+    const res = await fetch(`/market/candles?pair=${MARKET.pair}`);
+    const data = await res.json();
+    MARKET.candleSeries.setData(data);
+  } catch {
+    console.warn("Candles load failed");
+  }
+}
 
 function updateLastPriceMarker() {
-  if (!candleSeries || !MARKET.price) return;
+  if (!MARKET.candleSeries || !MARKET.price) return;
 
-  candleSeries.setMarkers([{
+  MARKET.candleSeries.setMarkers([{
     time: Math.floor(Date.now() / 1000),
     position: "inBar",
     color: MARKET.side === "buy" ? "#02c076" : "#f84960",
@@ -504,30 +492,50 @@ function updateLastPriceMarker() {
 /* ================= DEPTH CHART ================= */
 
 function initDepthChart() {
-  const chart = LightweightCharts.createChart(
-    document.getElementById("depthChart"),
-    {
-      layout: { background: { color: "#020617" }, textColor: "#64748b" },
-      grid: { vertLines: { visible: false }, horzLines: { visible: false } }
-    }
-  );
+  const el = $("depthChart");
+  if (!el || MARKET.depthChart) return;
 
-  MARKET.depthSeries = chart.addHistogramSeries({
-    color: "#38bdf8"
+  MARKET.depthChart = LightweightCharts.createChart(el, {
+    layout: { background: { color: "#020617" }, textColor: "#64748b" },
+    grid: { vertLines: { visible: false }, horzLines: { visible: false } }
+  });
+
+  MARKET.bidSeries = MARKET.depthChart.addHistogramSeries({
+    color: "#02c076",
+    priceFormat: { type: "volume" }
+  });
+
+  MARKET.askSeries = MARKET.depthChart.addHistogramSeries({
+    color: "#f84960",
+    priceFormat: { type: "volume" }
   });
 }
 
 async function loadDepth() {
-  if (!bidSeries || !askSeries) return;
+  if (!MARKET.bidSeries || !MARKET.askSeries) return;
 
-  const res = await fetch(`/market/depth?pair=${MARKET.pair}`);
-  const d = await res.json();
+  try {
+    const res = await fetch(`/market/depth?pair=${MARKET.pair}`);
+    const d = await res.json();
 
-  bidSeries.setData(d.bids.map(b => ({ time: b[0], value: b[1] })));
-  askSeries.setData(d.asks.map(a => ({ time: a[0], value: a[1] })));
+    MARKET.bidSeries.setData(
+      d.bids.map(b => ({ time: b[0], value: b[1] }))
+    );
+
+    MARKET.askSeries.setData(
+      d.asks.map(a => ({ time: a[0], value: a[1] }))
+    );
+  } catch {
+    console.warn("Depth load failed");
+  }
 }
 
-/* ================= BUY & SELL ================= */
+/* ================= BUY / SELL ================= */
+
+function bindTradeTabs() {
+  $("buyTab")?.addEventListener("click", () => setTradeSide("buy"));
+  $("sellTab")?.addEventListener("click", () => setTradeSide("sell"));
+}
 
 function setTradeSide(side) {
   MARKET.side = side;
@@ -536,7 +544,6 @@ function setTradeSide(side) {
   $("sellTab")?.classList.toggle("active", side === "sell");
 
   renderTradeAction();
-  updateMarketPrice(); 
 }
 
 /* ================= RENDER ================= */
@@ -554,7 +561,7 @@ function renderMarketPair() {
 
 function renderMarketPrice() {
   const el = $("marketPrice");
-  if (el) el.textContent = MARKET.price.toFixed(4);
+  if (el) el.textContent = MARKET.price ? MARKET.price.toFixed(6) : "0.00";
 }
 
 function renderTradeAction() {
@@ -564,7 +571,7 @@ function renderTradeAction() {
   btn.textContent = MARKET.side === "buy" ? "Buy BX" : "Sell BX";
   btn.className = `action-btn ${MARKET.side}`;
 }
-   
+
 /* ================= INIT / LOOP ================= */
 
 function refreshMarket() {
@@ -577,6 +584,8 @@ function refreshMarket() {
 function initMarket() {
   bindMarketPairs();
   bindPairSelector();
+  bindTradeTabs();
+
   initChart();
   initDepthChart();
   refreshMarket();
@@ -584,7 +593,7 @@ function initMarket() {
   if (MARKET.timer) return;
 
   MARKET.timer = setInterval(() => {
-    if (APP.view === "market") {
+    if (window.APP?.view === "market") {
       refreshMarket();
       updateLastPriceMarker();
     }
@@ -594,7 +603,8 @@ function initMarket() {
 function stopMarket() {
   clearInterval(MARKET.timer);
   MARKET.timer = null;
-}
+      }
+
 
 /* =================================================
    CASINO
