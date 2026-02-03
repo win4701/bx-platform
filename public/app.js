@@ -359,6 +359,9 @@ function bindWalletConnections() {
     binance.onclick = () => {
       alert("Binance Pay coming soon");
     };
+     
+   if (typeof bindWalletConnections === "function") {
+  bindWalletConnections();
   }
 }
 
@@ -426,7 +429,7 @@ async function updateMarketPrice() {
   try {
     const asset = MARKET.pair.split("/")[1].toLowerCase();
 
-    const res = await fetch("/market/quote", {
+    const res = await fetch(API_BASE + "/market/quote", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -805,6 +808,15 @@ async function claimAirdrop() {
     alert(" Something went wrong while claiming your Airdrop.");
   }
 }
+  
+   
+/* ================= Airdrop Click ================= */
+const apiGet = (url) => safeFetch(url, { method: "GET" });
+const apiPost = (url, body = {}) =>
+  safeFetch(url, {
+    method: "POST",
+    body: JSON.stringify(body)
+  });
 
 /* ================= Airdrop Loader ================= */
 
