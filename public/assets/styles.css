@@ -290,6 +290,17 @@ h3{
   color: #000;
 }
 
+.wallet-btn.connected {
+  background: linear-gradient(135deg,#02c076,#6ee7a8);
+  color:#022c22;
+}
+
+.wallet-btn.disconnected {
+  background:#020617;
+  color:#94a3b8;
+  border:1px dashed #1e293b;
+}
+
 /* =========================================================
    INPUTS
 ========================================================= */
