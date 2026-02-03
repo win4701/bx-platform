@@ -308,7 +308,8 @@ function renderWalletConnections() {
 const MARKET = {
   pair: "BX/USDT",
   price: 12,
-  side: "buy" // buy | sell
+  side: "buy",
+  timer: null
 };
 
 const MARKET_PAIRS = [
@@ -382,6 +383,44 @@ async function updateMarketPrice() {
     console.warn("Quote fetch failed");
   }
 }
+
+/* ================= CHART ENGINE ================= */
+
+let chart, candleSeries, volumeSeries;
+
+function initChart() {
+  const el = document.getElementById("marketChart");
+  if (!el || chart) return;
+
+  chart = LightweightCharts.createChart(el, {
+    layout: {
+      background: { color: "#020617" },
+      textColor: "#94a3b8"
+    },
+    grid: {
+      vertLines: { color: "#0f172a" },
+      horzLines: { color: "#0f172a" }
+    },
+    crosshair: { mode: 1 },
+    rightPriceScale: { borderColor: "#1e293b" },
+    timeScale: { borderColor: "#1e293b", timeVisible: true }
+  });
+
+  candleSeries = chart.addCandlestickSeries({
+    upColor: "#02c076",
+    downColor: "#f84960",
+    borderUpColor: "#02c076",
+    borderDownColor: "#f84960",
+    wickUpColor: "#02c076",
+    wickDownColor: "#f84960"
+  });
+
+  volumeSeries = chart.addHistogramSeries({
+    color: "#334155",
+    priceFormat: { type: "volume" },
+    priceScaleId: ""
+  });
+     }
 /* ================= MARKET ================= */
 
 function initMarket() {
@@ -406,36 +445,88 @@ function stopMarket() {
 }
 
 /* ================= CHART MARKET ================= */
-let chartData = [];
 
-function updateChart() {
-  const canvas = $("marketChart");
-  if (!canvas) return;
-
-  const ctx = canvas.getContext("2d");
-  canvas.width = canvas.offsetWidth;
-  canvas.height = 200;
-
-  chartData.push(MARKET.price);
-  if (chartData.length > 30) chartData.shift();
-
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.beginPath();
-
-  chartData.forEach((p, i) => {
-    const x = (i / 29) * canvas.width;
-    const y = canvas.height - (p / Math.max(...chartData)) * canvas.height;
-    if (i === 0) ctx.moveTo(x, y);
-    else ctx.lineTo(x, y);
+async function loadChartData() {
+  const res = await fetch("/market/ohlc", {
+    method: "POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({ pair: MARKET.pair })
   });
 
-  ctx.strokeStyle = "#02c076";
-  ctx.lineWidth = 2;
-  ctx.stroke();
+  const data = await res.json();
+
+  candleSeries.setData(data.map(c => ({
+    time: c.time,
+    open: c.open,
+    high: c.high,
+    low: c.low,
+    close: c.close
+  })));
+
+  volumeSeries.setData(data.map(c => ({
+    time: c.time,
+    value: c.volume,
+    color: c.close >= c.open ? "#02c076" : "#f84960"
+  })));
+}
+
+function updateLastPriceMarker() {
+  if (!candleSeries || !MARKET.price) return;
+
+  candleSeries.setMarkers([{
+    time: Math.floor(Date.now()/1000),
+    position: "inBar",
+    color: MARKET.side === "buy" ? "#02c076" : "#f84960",
+    shape: "circle",
+    text: MARKET.price.toFixed(4)
+  }]);
+}
+
+/*================= depthChart
+================= */
+let depthChart, bidSeries, askSeries;
+
+function initDepthChart() {
+  const el = document.getElementById("depthChart");
+  if (!el || depthChart) return;
+
+  depthChart = LightweightCharts.createChart(el, {
+    layout:{ background:{color:"#020617"}, textColor:"#64748b" },
+    rightPriceScale:{ visible:false },
+    timeScale:{ visible:false },
+    grid:{ vertLines:{visible:false}, horzLines:{visible:false} }
+  });
+
+  bidSeries = depthChart.addAreaSeries({
+    topColor: "rgba(2,192,118,.4)",
+    bottomColor: "rgba(2,192,118,.05)",
+    lineColor: "#02c076"
+  });
+
+  askSeries = depthChart.addAreaSeries({
+    topColor: "rgba(248,73,96,.4)",
+    bottomColor: "rgba(248,73,96,.05)",
+    lineColor: "#f84960"
+  });
+}
+
+async function loadDepth() {
+  const res = await fetch(`/market/depth?pair=${MARKET.pair}`);
+  const d = await res.json();
+
+  bidSeries.setData(d.bids.map(b => ({ time: b[0], value: b[1] })));
+  askSeries.setData(d.asks.map(a => ({ time: a[0], value: a[1] })));
 }
 
 
+/*================= initMarketCharts================= */
 
+function initMarketCharts() {
+  initChart();
+  initDepthChart();
+  loadChartData();
+  loadDepth();
+}
 /*================= BUY & SELL 
 ================= */
 
