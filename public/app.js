@@ -308,6 +308,8 @@ function renderWalletConnections() {
 const MARKET = {
   pair: "BX/USDT",
   price: 2.0000,
+  chart: [],
+  side: "buy"
   timer: null
 };
 
@@ -347,7 +349,37 @@ function stopMarket() {
   MARKET.timer = null;
 }
 
-/* ================= MARKET PAIRS ================= */
+/* ================= CHART MARKET ================= */
+let chartData = [];
+
+function updateChart() {
+  const canvas = $("marketChart");
+  if (!canvas) return;
+
+  const ctx = canvas.getContext("2d");
+  canvas.width = canvas.offsetWidth;
+  canvas.height = 200;
+
+  chartData.push(MARKET.price);
+  if (chartData.length > 30) chartData.shift();
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.beginPath();
+
+  chartData.forEach((p, i) => {
+    const x = (i / 29) * canvas.width;
+    const y = canvas.height - (p / Math.max(...chartData)) * canvas.height;
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  });
+
+  ctx.strokeStyle = "#02c076";
+  ctx.lineWidth = 2;
+  ctx.stroke();
+}
+
+/* ================= MARKET PAIRS 
+================= */
 
 function bindMarketPairs() {
   const buttons = $$(".market-pair");
