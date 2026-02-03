@@ -525,19 +525,14 @@ input{
   color:#020617;
 }
 
-.market-chart{
-  height:220px;
-  background:#0b1220;
-  border-radius:16px;
-  border:1px solid #1e293b;
-  padding:10px;
-  margin-bottom:14px;
+#marketChart canvas {
+  filter: drop-shadow(0 0 14px rgba(2,192,118,.15));
 }
 
-.market-chart canvas{
-  width:100% !important;
-  height:200px !important;
+#depthChart canvas {
+  filter: drop-shadow(0 0 10px rgba(248,73,96,.12));
 }
+
 /* ---------- ORDER BOOK ---------- */
 
 .order-book{
