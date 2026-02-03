@@ -284,7 +284,7 @@ function loadWallet() {
   renderWalletConnections();
 }
 
-/* ================= CONNECTION TYPE ================= */
+/* ================= CONNECTION STATE (SSOT) ================= */
 
 const CONNECTIONS = {
   walletconnect: {
@@ -299,29 +299,20 @@ const CONNECTIONS = {
   }
 };
 
-/* ================= CONNECTION STATUS ================= */
+/* ================= CONNECTION RENDER ================= */
 
 function renderWalletConnections() {
-  renderConnectionButton(
-    "walletConnectBtn",
-    CONNECTIONS.walletconnect
-  );
-
-  renderConnectionButton(
-    "binanceConnectBtn",
-    CONNECTIONS.binance
-  );
+  renderConnectionButton("walletConnectBtn", CONNECTIONS.walletconnect);
+  renderConnectionButton("binanceConnectBtn", CONNECTIONS.binance);
 }
 
 function renderConnectionButton(id, state) {
-  const btn = $(id);
+  const btn = document.getElementById(id);
   if (!btn) return;
 
-  // reset
   btn.classList.remove("connected", "disconnected");
   btn.disabled = false;
 
-  // unavailable
   if (!state.available) {
     btn.textContent = `${state.label} (Coming Soon)`;
     btn.disabled = true;
@@ -329,41 +320,49 @@ function renderConnectionButton(id, state) {
     return;
   }
 
-  // connected
   if (state.connected) {
     btn.textContent = `${state.label} Connected`;
     btn.classList.add("connected");
     return;
   }
 
-  // available but not connected
   btn.textContent = `Connect ${state.label}`;
   btn.classList.add("disconnected");
 }
 
-/* ================= CONNECTION  Handlers.  ================ */
+/* ================= CONNECTION HANDLERS ================= */
 
 function bindWalletConnections() {
-  const wc = $("walletConnectBtn");
-  const binance = $("binanceConnectBtn");
+  const wc = document.getElementById("walletConnectBtn");
+  const binance = document.getElementById("binanceConnectBtn");
 
   if (wc) {
-    wc.onclick = () => {
-      CONNECTIONS.walletconnect.connected = true;
-      renderWalletConnections();
-      log.info("WalletConnect connected (mock)");
-    };
+    wc.addEventListener("click", onWalletConnect);
   }
 
   if (binance) {
-    binance.onclick = () => {
-      alert("Binance Pay coming soon");
-    };
-     
-   if (typeof bindWalletConnections === "function") {
-  bindWalletConnections();
+    binance.addEventListener("click", onBinancePay);
   }
 }
+
+function onWalletConnect() {
+  // mock connect (جاهز للربط الحقيقي)
+  CONNECTIONS.walletconnect.connected = true;
+  renderWalletConnections();
+
+  console.log("WalletConnect connected (mock)");
+}
+
+function onBinancePay() {
+  alert("Binance Pay coming soon");
+}
+
+/* ================= INIT ================= */
+
+document.addEventListener("DOMContentLoaded", () => {
+  bindWalletConnections();
+  renderWalletConnections();
+});
 
 /* =========================================================
    PART 4 — MARKET + CASINO (General Update)
