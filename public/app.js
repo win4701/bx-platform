@@ -307,22 +307,53 @@ function renderWalletConnections() {
 
 const MARKET = {
   pair: "BX/USDT",
-  price: 2.0000,
-  timer: null
+  price: 0,
+  side: "buy" // buy | sell
 };
 
-/*================= MARKET SNAP ================= */
-const MARKET_PAIRS = ["BX/USDT", "BX/BNB", "BX/ETH", "BX/TON", "BX/SOL", "BX/BTC"];
+const MARKET_PAIRS = [
+  "BX/USDT",
+  "BX/BTC",
+  "BX/BNB",
+  "BX/ETH",
+  "BX/SOL",
+  "BX/TON"
+];
+
+/* ================= MARKET BINDINGS ================= */
+
+function bindMarketPairs() {
+  const buttons = document.querySelectorAll("#pairScroll button");
+
+  buttons.forEach(btn => {
+    btn.onclick = () => {
+      const pair = btn.dataset.pair;
+      if (!pair || pair === MARKET.pair) return;
+
+      MARKET.pair = pair;
+      highlightActivePair();
+      renderMarket();
+    };
+  });
+}
 
 function bindPairSelector() {
-  const el = $("pairSelector");
-  if (!el) return;
+  const selector = $("pairSelector");
+  if (!selector) return;
 
-  el.onclick = () => {
+  selector.onclick = () => {
     const i = MARKET_PAIRS.indexOf(MARKET.pair);
     MARKET.pair = MARKET_PAIRS[(i + 1) % MARKET_PAIRS.length];
+
+    highlightActivePair();
     renderMarket();
   };
+}
+
+function highlightActivePair() {
+  document.querySelectorAll("#pairScroll button").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.pair === MARKET.pair);
+  });
 }
 
 /* ================= MARKET ================= */
