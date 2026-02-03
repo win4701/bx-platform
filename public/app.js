@@ -378,6 +378,25 @@ function updateChart() {
   ctx.stroke();
 }
 
+
+
+/*================= BUY & SELL 
+================= */
+MARKET.side = "buy";
+
+function setTradeSide(side) {
+  MARKET.side = side;
+
+  $("buyTab")?.classList.toggle("active", side === "buy");
+  $("sellTab")?.classList.toggle("active", side === "sell");
+
+  const box = document.querySelector(".trade-box");
+  if (box) {
+    box.classList.toggle("buy", side === "buy");
+    box.classList.toggle("sell", side === "sell");
+  }
+}
+
 /* ================= MARKET PAIRS 
 ================= */
 
