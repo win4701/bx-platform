@@ -356,6 +356,32 @@ function highlightActivePair() {
   });
 }
 
+/* ================= MARKET PRICE (SSOT) ================= */
+
+async function updateMarketPrice() {
+  try {
+    // BX/USDT → asset = usdt
+    const asset = MARKET.pair.split("/")[1].toLowerCase();
+
+    const res = await fetch("/market/quote", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        asset,        // usdt / bnb / eth / ton ...
+        side: MARKET.side, // buy | sell
+        amount: 1     // price per 1 BX
+      })
+    });
+
+    const data = await res.json();
+
+    if (!data || typeof data.price !== "number") return;
+
+    MARKET.price = data.price;
+  } catch (e) {
+    console.warn("Quote fetch failed");
+  }
+}
 /* ================= MARKET ================= */
 
 function initMarket() {
@@ -369,7 +395,7 @@ function initMarket() {
       updateMarketPrice();
       renderMarket();
     }
-  }, 1200);
+  }, 1500);
 
   log.info("Market initialized");
 }
