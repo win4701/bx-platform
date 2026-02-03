@@ -344,9 +344,6 @@ function renderConnectionButton(id, state) {
 /* =========================================================
    PART 4 — MARKET + CASINO (General Update)
 ========================================================= */
-/* =====================================================
-   MARKET MODULE — Production Clean
-===================================================== */
 
 const MARKET = {
   pair: "BX/USDT",
@@ -462,30 +459,20 @@ function initChart() {
 
 /* ================= CHART DATA ================= */
 
-async function loadChartData() {
-  if (!candleSeries) return;
+function initMarketChart() {
+  const chart = LightweightCharts.createChart(
+    document.getElementById("marketChart"),
+    {
+      layout: { background: { color: "#020617" }, textColor: "#94a3b8" },
+      grid: { vertLines: { color: "#020617" }, horzLines: { color: "#020617" } },
+      timeScale: { borderColor: "#020617" }
+    }
+  );
 
-  const res = await fetch("/market/ohlc", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ pair: MARKET.pair })
+  MARKET.priceSeries = chart.addLineSeries({
+    color: "#22c55e",
+    lineWidth: 2
   });
-
-  const data = await res.json();
-
-  candleSeries.setData(data.map(c => ({
-    time: c.time,
-    open: c.open,
-    high: c.high,
-    low: c.low,
-    close: c.close
-  })));
-
-  volumeSeries.setData(data.map(c => ({
-    time: c.time,
-    value: c.volume,
-    color: c.close >= c.open ? "#02c076" : "#f84960"
-  })));
 }
 
 function updateLastPriceMarker() {
@@ -502,29 +489,17 @@ function updateLastPriceMarker() {
 
 /* ================= DEPTH CHART ================= */
 
-let depthChart, bidSeries, askSeries;
-
 function initDepthChart() {
-  const el = document.getElementById("depthChart");
-  if (!el || depthChart) return;
+  const chart = LightweightCharts.createChart(
+    document.getElementById("depthChart"),
+    {
+      layout: { background: { color: "#020617" }, textColor: "#64748b" },
+      grid: { vertLines: { visible: false }, horzLines: { visible: false } }
+    }
+  );
 
-  depthChart = LightweightCharts.createChart(el, {
-    layout: { background: { color: "#020617" }, textColor: "#64748b" },
-    rightPriceScale: { visible: false },
-    timeScale: { visible: false },
-    grid: { vertLines: { visible: false }, horzLines: { visible: false } }
-  });
-
-  bidSeries = depthChart.addAreaSeries({
-    topColor: "rgba(2,192,118,.4)",
-    bottomColor: "rgba(2,192,118,.05)",
-    lineColor: "#02c076"
-  });
-
-  askSeries = depthChart.addAreaSeries({
-    topColor: "rgba(248,73,96,.4)",
-    bottomColor: "rgba(248,73,96,.05)",
-    lineColor: "#f84960"
+  MARKET.depthSeries = chart.addHistogramSeries({
+    color: "#38bdf8"
   });
 }
 
