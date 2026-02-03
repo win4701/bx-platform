@@ -202,8 +202,8 @@
   <div class="trade-box buy" id="tradeBox">
 
     <div class="trade-tabs">
-      <button id="buyTab" onclick="setTradeSide('buy')">Buy</button>
-<button id="sellTab" onclick="setTradeSide('sell')">Sell</button>
+      <button id="buyTab">Buy</button>
+<button id="sellTab">Sell</button>
     </div>
 
     <div class="trade-form">
@@ -345,30 +345,31 @@
     <img src="assets/images/airdrop.png" alt="Airdrop" />
 
     <div class="airdrop-reward">
-      +2.5 BX
+      +1.5 BX
     </div>
 
-    <!-- Casino Task -->
-    <div id="casinoTask" class="airdrop-task">
-      Play any game to earn 2.5 BX
+    <!-- TASK -->
+    <div id="airdrop-task" class="airdrop-task">
+       Play any casino game 
     </div>
 
-    <!-- Referral -->
+    <!-- REFERRAL SUMMARY -->
     <div class="airdrop-referral">
-      Referrals: <strong id="refPoints">0</strong><br />
+      Referrals:
+      <strong id="airdrop-ref-count">0</strong><br />
       Each referral = <strong>0.5 BX</strong>
     </div>
-    <!-- REFERRAL -->
-<div class="card">
-  <h3>🔗 Referral</h3>
-  <p>Your referral link:</p>
-  <code id="ref-link">Loading...</code>
-  <button class="btn" onclick="copyReferral()">Copy</button>
-</div>
 
-    <div id="airdrop-status" class="status">Loading...</div>
-    <button id="claim-airdrop" class="btn primary hidden" onclick="claimAirdrop()">Claim Airdrop</button>
-  </div>
+    <!-- REFERRAL CARD -->
+    <div class="card">
+      <h3> Referral</h3>
+      <p>Your referral link:</p>
+      <code id="airdrop-ref-link">Loading...</code>
+      <button id="copy-ref-btn" class="btn">Copy</button>
+    </div>
+
+    <!-- STATUS -->
+    <div id="airdrop-status" class="status">Checking eligibility...</div>
 
   <!-- ================= AIRDROP PARTNERS ================= -->
 <div class="airdrop-partners">
