@@ -307,7 +307,7 @@ function renderWalletConnections() {
 
 const MARKET = {
   pair: "BX/USDT",
-  price: 0,
+  price: 2,
   side: "buy" // buy | sell
 };
 
