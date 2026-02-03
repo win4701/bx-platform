@@ -8,38 +8,49 @@
       +2.5 BX
     </div>
 
-    <!-- Casino Task -->
-    <div id="casinoTask" class="airdrop-task">
-      Play any game to earn 2.5 BX
+    <!-- TASK -->
+    <div id="airdrop-task" class="airdrop-task">
+      🎰 Play any casino game to earn 2.5 BX
     </div>
 
-    <!-- Referral -->
+    <!-- REFERRAL SUMMARY -->
     <div class="airdrop-referral">
-      Referrals: <strong id="refPoints">0</strong><br />
+      Referrals:
+      <strong id="airdrop-ref-count">0</strong><br />
       Each referral = <strong>0.5 BX</strong>
     </div>
-    <!-- REFERRAL -->
-<div class="card">
-  <h3>🔗 Referral</h3>
-  <p>Your referral link:</p>
-  <code id="ref-link">Loading...</code>
-  <button class="btn" onclick="copyReferral()">Copy</button>
-</div>
 
-    <div id="airdrop-status" class="status">Loading...</div>
-    <button id="claim-airdrop" class="btn primary hidden" onclick="claimAirdrop()">Claim Airdrop</button>
+    <!-- REFERRAL CARD -->
+    <div class="card">
+      <h3>🔗 Referral</h3>
+      <p>Your referral link:</p>
+      <code id="airdrop-ref-link">Loading...</code>
+      <button id="copy-ref-btn" class="btn">Copy</button>
+    </div>
+
+    <!-- STATUS -->
+    <div id="airdrop-status" class="status">Checking eligibility...</div>
+
+    <!-- ACTION -->
+    <button
+      id="airdrop-claim-btn"
+      class="btn primary hidden"
+    >
+      Claim Airdrop
+    </button>
   </div>
-<div class="airdrop-promos">
 
-  <div class="promo-card">
-    <img src="assets/images/promo-casino.jpg" alt="Casino Promo">
-    <div class="promo-content">
-      <h4> Casino Bonus</h4>
-      <p>Play casino games and earn extra BX rewards.</p>
-      <button class="promo-btn" onclick="navigate('casino')">
-        Go to Casino
-      </button>
+  <!-- PROMO -->
+  <div class="airdrop-promos">
+    <div class="promo-card">
+      <img src="assets/images/promo-casino.jpg" alt="Casino Promo" />
+      <div class="promo-content">
+        <h4>🎰 Casino Bonus</h4>
+        <p>Play casino games and earn extra BX rewards.</p>
+        <button class="promo-btn" onclick="navigate('casino')">
+          Go to Casino
+        </button>
+      </div>
     </div>
   </div>
-  </section>
-  
+</section>
