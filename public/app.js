@@ -311,6 +311,20 @@ const MARKET = {
   timer: null
 };
 
+/*================= MARKET SNAP ================= */
+const MARKET_PAIRS = ["BX/USDT", "BX/BNB", "BX/ETH", "BX/TON", "BX/SOL", "BX/BTC"];
+
+function bindPairSelector() {
+  const el = $("pairSelector");
+  if (!el) return;
+
+  el.onclick = () => {
+    const i = MARKET_PAIRS.indexOf(MARKET.pair);
+    MARKET.pair = MARKET_PAIRS[(i + 1) % MARKET_PAIRS.length];
+    renderMarket();
+  };
+}
+
 /* ================= MARKET ================= */
 
 function initMarket() {
