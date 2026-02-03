@@ -11,8 +11,8 @@ DB_PATH = "db/prices.db"
 MAX_PRICE_AGE_SEC = 60 * 60  # 1 hour in seconds
 
 # Conversion rates (can be dynamic or retrieved from an API)
-BX_PER_USDT = Decimal(5)  # Example: 1 BX = 5 USDT
-USDT_PER_BX = Decimal(0.2)  # Example: 1 USDT = 0.2 BX
+BX_PER_USDT = Decimal(12)  # Example: 1 BX = 12 USDT
+USDT_PER_BX = Decimal(0.08333)  # Example: 1 USDT = 0.08333 BX
 
 # ======================================================
 # DATABASE CONNECTION
@@ -91,7 +91,7 @@ def bx_to_usdt(bx: Decimal) -> Decimal:
 
 def external_asset_to_bx(asset: str) -> Optional[Decimal]:
     """
-    Convert an external asset (like BTC or SOL) to BX via USDT.
+    Convert an external asset (like BTC or BNB) to BX via USDT.
     """
     price_usdt = get_price(asset)
     if price_usdt is None:
