@@ -333,13 +333,6 @@ input{
   font-weight: 800;
 }
 
-/* =========================================================
-   MARKET – Golden STYLE (FINAL)
-   ========================================================= */
-
-.view { display: none; }
-.view.active { display: block; }
-
 /* ---------- MARKET BASE ---------- */
 .market{
   padding:16px;
