@@ -383,10 +383,6 @@ const MARKET = {
   timer: null
 };
 
-/* ================= HELPERS ================= */
-
-const $ = id => document.getElementById(id);
-
 /* ================= MARKET PAIRS ================= */
 
 function bindMarketPairs() {
