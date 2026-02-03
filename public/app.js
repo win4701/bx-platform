@@ -468,48 +468,6 @@ function setTradeSide(side) {
   }
 }
 
-/* ================= MARKET PAIRS ================= */
-
-function bindMarketPairs() {
-  const buttons = $$(".market-pair");
-
-  buttons.forEach(btn => {
-    const pair = btn.dataset.pair;
-    if (!pair) return;
-
-    btn.onclick = () => {
-      if (MARKET.pair === pair) return;
-
-      MARKET.pair = pair;
-      highlightActivePair();
-      renderMarket();
-
-      log.info("Market pair changed", pair);
-    };
-  });
-}
-
-function highlightActivePair() {
-  $$(".market-pair").forEach(btn => {
-    btn.classList.toggle(
-      "active",
-      btn.dataset.pair === MARKET.pair
-    );
-  });
-}
-
-/* ================= PRICE UPDATE ================= */
-/* مؤقت: سيتم استبداله بسعر market.py */
-
-function updateMarketPrice() {
-  if (typeof MARKET.price !== "number" || MARKET.price <= 0) {
-    MARKET.price = 1;
-  }
-
-  const drift = (Math.random() - 0.5) * 0.02;
-  MARKET.price = Math.max(0.0001, MARKET.price + drift);
-}
-
 /* ================= RENDER MARKET ================= */
 
 function renderMarket() {
