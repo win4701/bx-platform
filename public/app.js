@@ -373,6 +373,8 @@ const MARKET = {
   price: 12,
   side: "buy",
   timer: null
+  chart: null,
+  candleSeries: null,
 };
 
 const MARKET_PAIRS = [
