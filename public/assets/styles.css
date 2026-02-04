@@ -866,35 +866,6 @@ input{
 }
 
 /* =========================================================
-   AIRDROP
-========================================================= */
-
-.airdrop-box img{
-  width:48px;   
-  height:48px;
-  margin-bottom:8px;
-}
-.airdrop-reward{
-  font-size:22px;
-  font-weight:800;
-  color:var(--green);
-  margin:10px 0;
-}
-
-.airdrop-task{
-  background:#081a21;
-  border:1px solid var(--border);
-  border-radius:14px;
-  padding:12px;
-  margin-top:12px;
-}
-
-.airdrop-task.done{
-  border-color:var(--green);
-  color:var(--green);
-}
-
-/* =========================================================
    PROMO / ADS SECTION
 ========================================================= */
 
