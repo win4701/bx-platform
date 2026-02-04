@@ -36,6 +36,27 @@ body {
   font-family: system-ui, -apple-system, sans-serif;
 }
 
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+.game img,
+.promo-card img {
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: 12px;
+}
+
+.app-container {
+  padding-bottom: 90px; /* مساحة للـ bottom nav */
+  overflow-x: hidden;
+}
+
+body {
+  overflow-x: hidden;
+}
 /* =====================================================
    PART 2 — LAYOUT & NAVIGATION
 ===================================================== */
