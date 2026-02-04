@@ -1187,7 +1187,6 @@ button:active,
 }
 
 .whitepaper-btn::after {
-  content: " ↗";
   display: inline-block;
   padding: 12px 14px;
   border-radius: 12px;
