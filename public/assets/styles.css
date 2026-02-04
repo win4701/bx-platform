@@ -1186,7 +1186,7 @@ button:active,
   transform: scale(0.9);
 }
 
-.whitepaper-btn::after {
+.whitepaper-btn: {
   display: inline-block;
   padding: 12px 14px;
   border-radius: 12px;
