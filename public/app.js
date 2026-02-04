@@ -358,148 +358,178 @@ document.addEventListener("DOMContentLoaded", () => {
 /* =========================================================
    PART 4 — MARKET + CASINO (General Update)
 =================================*/
- /* =====================================================
-   MARKET STATE (SSOT)
-===================================================== */
-const MARKET = {
+
   pair: "BX/USDT",
-  price: 12.0,
-  side: "buy"
+  side: "buy",
+  price: 12,
+
+  chart: null,
+  candleSeries: null,
+
+  depthChart: null,
+  bidSeries: null,
+  askSeries: null,
+
+  timer: null,
+  initialized: false
 };
 
-/* =====================================================
-   INIT
-===================================================== */
-document.addEventListener("DOMContentLoaded", () => {
-  bindMarketPairs();
-  bindTradeTabs();
-  initChart();
-  updateMarketUI();
-});
+/* ================= PAIRS ================= */
 
-/* =====================================================
-   PAIR SWITCHING
-===================================================== */
 function bindMarketPairs() {
-  $$("#pairScroll button").forEach(btn => {
-    btn.addEventListener("click", () => {
+  document.querySelectorAll("[data-pair]").forEach(btn => {
+    btn.onclick = () => {
       const pair = btn.dataset.pair;
       if (!pair || pair === MARKET.pair) return;
 
       MARKET.pair = pair;
       highlightActivePair();
-      fetchMarketPrice();
-    });
+      reloadMarket();
+    };
   });
 }
 
 function highlightActivePair() {
-  $$("#pairScroll button").forEach(btn => {
+  document.querySelectorAll("[data-pair]").forEach(btn => {
     btn.classList.toggle("active", btn.dataset.pair === MARKET.pair);
   });
 
-  $("#marketPair").textContent = MARKET.pair;
+  const pairLabel = document.getElementById("marketPair");
+  if (pairLabel) pairLabel.textContent = MARKET.pair.replace("/", " / ");
 }
 
-/* =====================================================
-   BUY / SELL TABS
-===================================================== */
+/* ================= PRICE (SSOT) ================= */
+
+async function fetchMarketPrice() {
+  const data = await safeFetch(`/market/quote?pair=${MARKET.pair}`);
+  if (!data || typeof data.price !== "number") return;
+
+  MARKET.price = data.price;
+
+  const priceEl = document.getElementById("marketPrice");
+  if (priceEl) priceEl.textContent = MARKET.price.toFixed(6);
+}
+
+/* ================= CHART ================= */
+
+function initMarketChart() {
+  const el = document.getElementById("marketChart");
+  if (!el || MARKET.chart) return;
+
+  MARKET.chart = LightweightCharts.createChart(el, {
+    layout: {
+      background: { color: "#020617" },
+      textColor: "#94a3b8"
+    },
+    grid: {
+      vertLines: { color: "#0f172a" },
+      horzLines: { color: "#0f172a" }
+    },
+    rightPriceScale: { borderColor: "#1e293b" },
+    timeScale: { borderColor: "#1e293b", timeVisible: true }
+  });
+
+  MARKET.candleSeries = MARKET.chart.addCandlestickSeries({
+    upColor: "#22c55e",
+    downColor: "#ef4444",
+    borderVisible: false,
+    wickUpColor: "#22c55e",
+    wickDownColor: "#ef4444"
+  });
+}
+
+async function loadCandles() {
+  if (!MARKET.candleSeries) return;
+
+  const data = await safeFetch(`/market/candles?pair=${MARKET.pair}`);
+  if (!Array.isArray(data)) return;
+
+  MARKET.candleSeries.setData(data);
+}
+
+/* ================= BUY / SELL ================= */
+
 function bindTradeTabs() {
-  $("#buyTab").addEventListener("click", () => switchSide("buy"));
-  $("#sellTab").addEventListener("click", () => switchSide("sell"));
+  document.getElementById("buyTab")?.addEventListener("click", () => setSide("buy"));
+  document.getElementById("sellTab")?.addEventListener("click", () => setSide("sell"));
 }
 
-function switchSide(side) {
+function setSide(side) {
   MARKET.side = side;
 
-  $("#buyTab").classList.toggle("active", side === "buy");
-  $("#sellTab").classList.toggle("active", side === "sell");
+  document.getElementById("buyTab")?.classList.toggle("active", side === "buy");
+  document.getElementById("sellTab")?.classList.toggle("active", side === "sell");
 
-  const box = $("#tradeBox");
-  box.classList.toggle("buy", side === "buy");
-  box.classList.toggle("sell", side === "sell");
+  const btn = document.getElementById("actionBtn");
+  if (!btn) return;
 
-  const btn = $("#actionBtn");
   btn.textContent = side === "buy" ? "Buy BX" : "Sell BX";
   btn.className = `action-btn ${side}`;
 }
 
-/* =====================================================
-   MARKET PRICE (Mock – ready for backend)
-===================================================== */
-function fetchMarketPrice() {
-  // Placeholder – اربطه لاحقاً بـ API أو WebSocket
-  MARKET.price = (Math.random() * 0.002 + 0.0005).toFixed(6);
-  updateMarketUI();
-  updateChart();
+/* ================= DEPTH ================= */
+
+function initDepthChart() {
+  const el = document.getElementById("depthChart");
+  if (!el || MARKET.depthChart) return;
+
+  MARKET.depthChart = LightweightCharts.createChart(el, {
+    layout: { background: { color: "#020617" }, textColor: "#64748b" },
+    grid: { vertLines: { visible: false }, horzLines: { visible: false } }
+  });
+
+  MARKET.bidSeries = MARKET.depthChart.addHistogramSeries({
+    color: "#22c55e",
+    priceFormat: { type: "volume" }
+  });
+
+  MARKET.askSeries = MARKET.depthChart.addHistogramSeries({
+    color: "#ef4444",
+    priceFormat: { type: "volume" }
+  });
 }
 
-function updateMarketUI() {
-  $("#marketPrice").textContent = MARKET.price;
+async function loadDepth() {
+  if (!MARKET.bidSeries || !MARKET.askSeries) return;
+
+  const data = await safeFetch(`/market/depth?pair=${MARKET.pair}`);
+  if (!data) return;
+
+  MARKET.bidSeries.setData(data.bids.map(b => ({ time: b[0], value: b[1] })));
+  MARKET.askSeries.setData(data.asks.map(a => ({ time: a[0], value: a[1] })));
 }
 
-/* =====================================================
-   CHART (Lightweight Charts)
-===================================================== */
-let chart, series;
+/* ================= RELOAD ================= */
 
-function initChart() {
-  const container = $("#marketChart");
-  if (!container) return;
+async function reloadMarket() {
+  await fetchMarketPrice();
+  await loadCandles();
+  await loadDepth();
+}
 
-  chart = LightweightCharts.createChart(container, {
-    layout: {
-      background: { color: "#0b1220" },
-      textColor: "#cfe9ff"
-    },
-    grid: {
-      vertLines: { color: "#162233" },
-      horzLines: { color: "#162233" }
-    },
-    timeScale: {
-      timeVisible: true,
-      secondsVisible: false
+/* ================= INIT ================= */
+
+function initMarket() {
+  if (MARKET.initialized) return;
+  MARKET.initialized = true;
+
+  bindMarketPairs();
+  bindTradeTabs();
+
+  initMarketChart();
+  initDepthChart();
+
+  highlightActivePair();
+  reloadMarket();
+
+  MARKET.timer = setInterval(() => {
+    if (APP.view === "market") {
+      fetchMarketPrice();
     }
-  });
+  }, 2000);
 
-  series = chart.addLineSeries({
-    color: "#00e5a8",
-    lineWidth: 2
-  });
-
-  seedChart();
-}
-
-function seedChart() {
-  const now = Math.floor(Date.now() / 1000);
-  const data = [];
-
-  for (let i = 30; i >= 0; i--) {
-    data.push({
-      time: now - i * 60,
-      value: Math.random() * 0.002 + 0.0005
-    });
-  }
-
-  series.setData(data);
-}
-
-function updateChart() {
-  if (!series) return;
-
-  series.update({
-    time: Math.floor(Date.now() / 1000),
-    value: Number(MARKET.price)
-  });
-}
-
-/* =====================================================
-   ACTION BUTTON
-===================================================== */
-$("#actionBtn")?.addEventListener("click", () => {
-  alert(`${MARKET.side.toUpperCase()} ${MARKET.pair} @ ${MARKET.price}`);
-});
-
+  console.log("Market initialized ✔");
+     }
 
 /* =================================================
    CASINO
