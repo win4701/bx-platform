@@ -1,0 +1,1285 @@
+/* =========================================================
+   ROOT / THEME
+========================================================= */
+:root{
+  --bg:#0b0f14;
+  --card:#0f1a1f;
+  --border:#12323f;
+  --text:#e6f1ff;
+  --muted:#9fb3c8;
+
+  --green: #02C076; 
+  --red: #F84960;
+  --yellow: #FFCD18;
+}
+
+/* =========================================================
+   RESET / BASE
+========================================================= */
+*{
+  box-sizing:border-box;
+  -webkit-tap-highlight-color:transparent;
+}
+
+html,body{
+  margin:0;
+  padding:0;
+  min-height:100%;
+  background:var(--bg);
+  color:var(--text);
+  font-family:system-ui,-apple-system,Segoe UI,Roboto;
+}
+
+img{
+  display:block;
+  max-width:100%;
+}
+
+/* =========================================================
+   HEADER
+========================================================= */
+.app-header{
+  position:sticky;
+  top:0;
+  z-index:50;
+  background:rgba(11,15,20,.95);
+  backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--border);
+  padding:12px 16px;
+}
+
+.logo{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  font-weight:700;
+}
+
+.logo img{
+  width:36px;
+  height:36px;
+}
+
+/* =========================================================
+   MAIN CONTAINER
+========================================================= */
+.app-container{
+  padding:14px 14px 120px;
+  min-height:100vh;
+}
+
+/* ===================== VIEW SYSTEM FIX ===================== */
+.view {
+  display: none;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity .25s ease, transform .25s ease;
+}
+
+.view.active {
+  display: block;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* =========================================================
+   CARD
+========================================================= */
+.card{
+  background:linear-gradient(180deg,#10252c,#0f1a1f);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:14px;
+  box-shadow:0 16px 36px rgba(0,0,0,.35);
+}
+
+h2{
+  margin:4px 0 12px;
+  font-size:18px;
+}
+
+h3{
+  margin:12px 0 8px;
+  font-size:14px;
+  color:var(--muted);
+}
+
+/* =========================================================
+   BUTTONS
+========================================================= */
+.btn{
+  border:0;
+  border-radius:14px;
+  padding:14px;
+  font-weight:800;
+  cursor:pointer;
+}
+
+.btn.primary{
+  background:linear-gradient(180deg,#6ee7a8,#16a34a);
+  color:#042417;
+}
+
+.btn.secondary{
+  background:#0b1f27;
+  color:var(--text);
+  border:1px solid var(--border);
+}
+
+.buy-btn,
+.sell-btn{
+  width:100%;
+  height:38px;
+  border-radius:14px;
+  font-size:16px;
+  font-weight:800;
+  margin-top:10px;
+}
+
+.buy-btn{
+  background:#02c076;
+  color:#022c22;
+}
+
+.trade-tabs .active.buy,
+.trade-box.buy .action-btn{
+  background: linear-gradient(135deg,#02c076,#6ee7a8);
+  color:#022c22;
+}
+
+/*=========================================================
+   WALLET – Golden STYLE (MATCH MARKET)
+========================================================= */
+
+.wallet{
+  padding:18px;
+  background:linear-gradient(180deg,#0b1220 0%,#020617 100%);
+  color:#e5e7eb;
+  min-height:calc(100vh - 120px);
+}
+
+/* ---------- TOTAL VALUE CARD ---------- */
+
+.wallet-summary{
+  background:#0b1220;
+  border:1px solid #1e293b;
+  border-radius:18px;
+  padding:18px;
+  margin-bottom:16px;
+}
+
+.wallet-summary .label{
+  font-size:15px;
+  color:#94a3b8;
+}
+
+.wallet-summary .value{
+  font-size:38px;
+  font-weight:800;
+  margin-top:6px;
+}
+
+/* ---------- ACTION BUTTONS ---------- */
+.wallet-actions{
+  display:flex;
+  gap:12px;
+  margin-top:16px;
+}
+
+.wallet-actions button{
+  flex:1;
+  height:38px;
+  border-radius:14px;
+  font-weight:800;
+  font-size:15px;
+}
+
+.wallet-actions .deposit{
+  background:#02c076;
+  color:#022c22;
+}
+
+.wallet-actions .withdraw{
+  background:#1e293b;
+  border:1px solid #FFCD18;
+  color:var(--yellow);
+}
+
+.wallet-actions .transfer{
+  background:#020617;
+  border:1px solid #1e293b;
+  color:#e5e7eb;
+}
+
+/* ---------- BALANCE LIST ---------- */
+.wallet-balances{
+  background:#0b1220;
+  border:1px solid #1e293b;
+  border-radius:16px;
+  padding:10px;
+}
+
+.balance-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:10px 8px;
+  border-bottom:1px solid #020617;
+}
+
+.balance-row:last-child{ border-bottom:none; }
+
+.balance-info{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+.balance-info img{
+  width:22px;
+  height:22px;
+}
+
+.balance-info .name{
+  font-weight:800;
+}
+
+.balance-info .sub{
+  font-size:12px;
+  color:#94a3b8;
+}
+
+.balance-amount{
+  font-weight:800;
+}
+
+.wallet,
+.market{
+  background:linear-gradient(180deg,#0b1220 0%,#020617 100%);
+  color:#e5e7eb;
+}
+
+/* ===== WALLET PAYMENT BUTTONS ===== */
+
+.wallet-bottom-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.wallet-bottom-actions button {
+  flex: 1;
+  height: 46px;
+  border-radius: 16px;
+  font-size: 15px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Binance Pay */
+.wallet-btn.binance-pay {
+  background: #FFCD18;
+  color: #000;
+}
+
+/* WalletConnect */
+.wallet-btn.walletconnect {
+  background: #ffffff;
+  color: #000;
+}
+
+.wallet-btn {
+  flex: 1;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px dashed #1e293b;
+  background: #020617;
+  color: #94a3b8;
+  font-weight: 800;
+}
+
+.wallet-btn.connected {
+  background: linear-gradient(135deg,#02c076,#6ee7a8);
+  color:#022c22;
+  border: none;
+}
+/* =========================================================
+   INPUTS
+========================================================= */
+input{
+  width:100%;
+  border-radius:14px;
+  padding:14px;
+  background:#0b1f27;
+  color:var(--text);
+  border:1px solid var(--border);
+  font-size:15px;
+}
+
+/* ================= TRANSFER PANEL ================= */
+.wallet-transfer{
+  margin: 16px;
+  padding: 16px;
+  background: #0f172a;
+  border-radius: 16px;
+}
+
+.wallet-transfer h4{
+  margin-bottom: 10px;
+}
+
+.wallet-transfer input{
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 10px;
+  border: none;
+  background: #020617;
+  color: white;
+}
+
+.wallet-transfer .confirm{
+  width: 100%;
+  padding: 12px;
+  border-radius: 14px;
+  background: #3b82f6;
+  color: white;
+  font-weight: 800;
+}
+
+/* ---------- MARKET BASE ---------- */
+.market{
+  padding:16px;
+  background:linear-gradient(180deg,#0b1220 0%,#020617 100%);
+  color:#e5e7eb;
+  min-height:calc(100vh - 120px);
+}
+
+/* ---------- HEADER ---------- */
+.market-top{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:12px 14px;
+  border-radius:14px;
+  background:#0b1220;
+  border:1px solid #1e293b;
+  margin-bottom:12px;
+}
+
+.pair-display{
+  font-size:15px;
+  font-weight:800;
+  color:#f1f5f9;
+}
+
+.pair-display span{
+  font-size:12px;
+  opacity:.6;
+}
+
+.last-price{
+  font-size:20px;
+  font-weight:800;
+  color:#D81484;
+}
+
+/* ---------- PAIR SCROLL ---------- */
+.pair-scroll{
+  display:flex;
+  gap:8px;
+  overflow-x:auto;
+  padding-bottom:6px;
+  margin-bottom:14px;
+}
+
+.pair-scroll::-webkit-scrollbar{ display:none; }
+
+.pair-scroll button{
+  flex:0 0 auto;
+  padding:6px 12px;
+  border-radius:10px;
+  background:#020617;
+  border:1px solid #1e293b;
+  color:#D81484;
+  font-size:13px;
+  font-weight:600;
+  white-space:nowrap;
+}
+
+.pair-scroll button.active{
+  background:#111827;
+  color:#e5e7eb;
+  border-color:#02c076;
+}
+
+/* ---------- TRADE BOX ---------- */
+.trade-box{
+  background:#0b1220;
+  border:1px solid #1e293b;
+  border-radius:18px;
+  padding:16px;
+  margin-bottom:14px;
+  transition:background .2s ease;
+}
+
+.trade-box.buy{ box-shadow:0 0 0 1px rgba(2,192,118,.15); }
+.trade-box.sell{ box-shadow:0 0 0 1px rgba(248,73,96,.15); }
+
+/* ---------- BUY / SELL TABS ---------- */
+
+.trade-tabs{
+  display:flex;
+  gap:8px;
+  margin-bottom:12px;
+}
+
+.trade-tabs button{
+  flex:1;
+  height:36px;
+  border-radius:10px;
+  background:#020617;
+  color:#94a3b8;
+  font-weight:700;
+  font-size:14px;
+}
+
+.trade-tabs .active{
+  color:#020617;
+}
+
+.trade-tabs .active#buyTab,
+.trade-tabs .active.buy{
+  background:#02c076;
+}
+
+.trade-tabs .active#sellTab,
+.trade-tabs .active.sell{
+  background:#FE55A1;
+}
+
+/* ---------- FORM ---------- */
+.trade-form label{
+  font-size:13px;
+  color:#94a3b8;
+}
+
+.trade-form input{
+  width:100%;
+  height:46px;
+  margin:8px 0 10px;
+  border-radius:12px;
+  background:#020617;
+  border:1px solid #1e293b;
+  padding:0 14px;
+  font-size:15px;
+  color:#fff;
+}
+
+.trade-form input::placeholder{
+  color:#6b7280;
+}
+
+/* ===== FIX OVERRIDES ===== */
+
+.market .pair-display {
+  cursor: pointer;
+}
+
+.trade-tabs button {
+  transition: all .2s ease;
+}
+
+.trade-tabs button.active {
+  transform: scale(1.02);
+}
+
+.market-chart {
+  overflow: hidden;
+}
+
+/* ---------- PERCENT BUTTONS ---------- */
+.percent-row{
+  display:flex;
+  gap:8px;
+  margin-bottom:12px;
+}
+
+.percent-row button{
+  flex:1;
+  height:32px;
+  border-radius:8px;
+  background:#020617;
+  border:1px solid #1e293b;
+  color:#94a3b8;
+  font-size:13px;
+  font-weight:800;
+}
+
+/* ---------- ACTION BUTTON ---------- */
+
+.action-btn {
+  width: 100%;
+  padding: 14px;
+  border-radius: 14px;
+  font-weight: bold;
+  border: none;
+  transition: 0.2s;
+}
+
+.trade-box.buy .action-btn {
+  background: linear-gradient(135deg, #00c076, #00a85a);
+}
+
+.trade-box.sell .action-btn {
+  background: linear-gradient(135deg, #ff5fa2, #ff3b7d);
+}
+
+.trade-tabs button.active {
+  border: 1px solid #00c076;
+}
+
+#marketChart canvas {
+  filter: drop-shadow(0 0 14px rgba(2,192,118,.15));
+}
+
+#depthChart canvas {
+  filter: drop-shadow(0 0 10px rgba(248,73,96,.12));
+}
+
+/* ---------- ORDER BOOK ---------- */
+
+.order-book{
+  background:#0b1220;
+  border-radius:16px;
+  border:1px solid #1e293b;
+  padding:12px;
+  margin-bottom:14px;
+}
+
+.order-book .row{
+  font-size:13px;
+  display:flex;
+  justify-content:space-between;
+  padding:4px 0;
+}
+
+/* ---------- RECENT TRADES ---------- */
+
+.recent-trades{
+  background:#0b1220;
+  border-radius:16px;
+  border:1px solid #1e293b;
+  padding:12px;
+}
+
+.recent-trades .trade{
+  font-size:13px;
+  padding:4px 0;
+}
+
+.recent-trades .buy{ color:#4adebb; }
+.recent-trades .sell{ color:#FE55A1; }
+
+/* =========================================================
+   CASINO – POSTER SYSTEM (MATCHES PROVIDED IMAGE)
+========================================================= */
+
+#casino .casino-grid{
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+
+#casino .game{
+  background:#0b0b0b;
+  border-radius:22px;
+  overflow:hidden;
+}
+
+#casino .game img{
+  width:100%;
+  height:auto;          
+  display:block;
+  object-fit:contain;   
+}
+
+#casino .game h4{
+  opacity: 0;
+  transform: translateY(10px);
+  transition: .25s ease;
+}
+
+#casino .game h4{
+  display: none;
+}
+
+/* =================================================================
+   RECENT BIG WINS – FINAL (VERTICAL OVERRIDE)
+=============================================================== */
+
+.big-wins {
+  margin: 18px 16px;
+  padding: 14px;
+  border-radius: 16px;
+  background: linear-gradient(180deg,#0b1220,#060b14);
+}
+
+.big-wins-title {
+  margin-bottom: 10px;
+  font-size: 15px;
+  font-weight: 800;
+  color: #fff;
+}
+
+.big-wins-track {
+  display: block !important;
+  max-height: 260px;
+  overflow-y: auto;
+  overflow-x: hidden !important;
+}
+
+.big-win-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.06);
+  box-sizing: border-box;
+}
+
+.big-win-row:last-child {
+  margin-bottom: 0;
+}
+
+.big-win-row .user {
+  color: #9ca3af;
+  font-size: 13px;
+}
+
+.big-win-row .game {
+  color: #7dd3fc;
+  font-size: 13px;
+}
+
+.big-win-row .amount {
+  color: #22c55e;
+  font-weight: 800;
+  font-size: 13px;
+}
+
+.big-win-row .amount.win {
+  color: #22c55e;
+  font-weight: 800;
+}
+
+.big-win-row .amount.loss {
+  color: #ef4444;
+  font-weight: 800;
+   
+}
+
+.big-win-row span {
+  white-space: normal !important;
+}
+
+/* ================= GLOBAL VIEW FIX ================= */
+
+.view{
+  min-height: 100vh;
+  padding-bottom: 120px; 
+  overflow-y: auto;
+}
+
+.view.card{
+  overflow: visible;
+}
+
+/* ================= WALLET ACTIONS ================= */
+
+.wallet-actions{
+  display: grid;
+  grid-template-columns: repeat(3,1fr);
+  gap: 12px;
+  padding: 0 18px;
+  margin-top: 16px;
+}
+
+.wallet-btn{
+  height: 38px;
+  font-size: 15px;
+  border-radius: 14px;
+  font-weight: 800;
+}
+
+.wallet-btn.deposit{ background:#22c55e; color:#022c22; }
+.wallet-btn.withdraw{ background:#facc15; color:#FFCD18; }
+.wallet-btn.transfer{ background:#1f2937; color:#e5e7eb; }
+
+/* ================= BALANCES ================= */
+
+.wallet-balances{
+  margin-top: 22px;
+  padding: 0 16px;
+}
+
+.wallet-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding: 10px 0;
+}
+
+.wallet-row img{
+  width: 22px;
+  height: 22px;
+}
+
+.wallet-row .info strong{ font-size:15px; }
+.wallet-row .info span{ font-size:11px; color:#9ca3af; }
+.wallet-row .amount{ font-size:15px; font-weight:800; }
+
+/* ================= MINING ================= */
+
+#mining{
+  padding: 16px;
+}
+
+.mining-tabs{
+  display:flex;
+  gap:12px;
+  margin-bottom: 20px;
+}
+
+.mining-tabs button{
+  flex:1;
+  height:38px;
+  border-radius:18px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  background:#020617;
+  border:1px solid #1e293b;
+  color:#94a3b8;
+  font-weight:800;
+}
+
+.mining-tabs button img{
+  width:22px;
+  height:22px;
+}
+
+.mining-tabs button.active{
+  background:linear-gradient(135deg,#22c55e,#6ee7a8);
+  color:#022c22;
+  border:none;
+}
+
+/* ================= MINING PLANS ================= */
+
+.mining-plans{
+  display:grid;
+  grid-template-columns: repeat(2,1fr);
+  gap:16px;
+}
+
+.mining-plan{
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+}
+
+.mining-plan ul{
+  padding-left:18px;
+  margin:10px 0;
+}
+
+.mining-plan li{
+  line-height:0.95;
+}
+
+.mining-plan h4{
+  font-size:14px;
+  font-weight:800;
+  margin-bottom:6px;
+}
+
+.mining-profit{
+  font-size:22px;
+  font-weight:800;
+  color:#22c55e;
+  margin-bottom:12px;
+}
+
+.mining-plan button{
+  width:100%;
+  height:38px;
+  border-radius:14px;
+  background:#22c55e;
+  color:#022c22;
+  font-weight:800;
+  border:none;
+}
+
+/* ================= BOTTOM NAV ================= */
+
+.bottom-nav{
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 48px;
+  z-index: 999;
+}
+
+/* =========================================================
+   AIRDROP
+========================================================= */
+
+.airdrop-box img{
+  width:48px;   
+  height:48px;
+  margin-bottom:8px;
+}
+.airdrop-reward{
+  font-size:22px;
+  font-weight:800;
+  color:var(--green);
+  margin:10px 0;
+}
+
+.airdrop-task{
+  background:#081a21;
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:12px;
+  margin-top:12px;
+}
+
+.airdrop-task.done{
+  border-color:var(--green);
+  color:var(--green);
+}
+
+/* =========================================================
+   PROMO / ADS SECTION
+========================================================= */
+
+.promo-section{
+  margin-top:16px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
+.promo-card{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:14px;
+  border-radius:16px;
+  border:1px solid var(--border);
+  background:linear-gradient(180deg,#0b1f27,#081a21);
+}
+
+.promo-card.casino{
+  box-shadow:0 0 0 1px rgba(110,231,168,.25);
+}
+
+.promo-card.gift{
+  box-shadow:0 0 0 1px rgba(250,204,21,.25);
+}
+
+.promo-card.hot{
+  box-shadow:0 0 0 1px rgba(255,99,132,.25);
+}
+
+.promo-icon{
+  width:48px;
+  height:48px;
+  border-radius:12px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:20px;
+  background:#081a21;
+  flex-shrink:0;
+}
+
+.promo-text{
+  display:flex;
+  flex-direction:column;
+  flex:1;
+}
+
+.promo-text strong{
+  font-size:14px;
+  font-weight:800;
+}
+
+.promo-text span{
+  font-size:12px;
+  color:var(--muted);
+}
+
+.promo-btn{
+  background:linear-gradient(180deg,#6ee7a8,#16a34a);
+  color:#042417;
+  border:0;
+  border-radius:12px;
+  padding:8px 12px;
+  font-size:12px;
+  font-weight:800;
+  cursor:pointer;
+}
+
+/* =========================================================
+   BOTTOM NAV
+========================================================= */
+.bottom-nav{
+  position:fixed;
+  bottom:0;
+  left:0;
+  right:0;
+  background:#0b0f14;
+  border-top:1px solid var(--border);
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  padding:6px 0 env(safe-area-inset-bottom);
+  z-index:100;
+}
+
+.bottom-nav button{
+  background:none;
+  border:0;
+  color:var(--muted);
+  font-size:11px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:4px;
+}
+
+.bottom-nav button.active{
+  color:var(--green);
+}
+
+.bottom-nav img{
+  width:22px;
+  height:22px;
+}
+/* =========================================================
+   UX – TAP FEEDBACK
+========================================================= */
+button,
+.deposit-method,
+.game,
+.trade,
+.mining-plan{
+  transition:transform .12s ease, box-shadow .12s ease;
+}
+
+button:active,
+.deposit-method:active,
+.game:active,
+.mining-plan:active{
+  transform:scale(0.9);
+}
+/* =========================================================
+   UX – MARKET EMPHASIS
+========================================================= */
+.btn.buy{
+  outline:2px solid rgba(74,222,187,.25);
+}
+
+.btn.sell{
+  outline:2px solid rgba(216,20,132,.25);
+}
+
+/* =========================================================
+   UX – WALLET READABILITY
+========================================================= */
+.balances li{
+  justify-content:space-between;
+}
+
+.balances li span{
+  font-size:15px;
+  letter-spacing:.3px;
+}
+/* =========================================================
+   UX – MICRO HOVER
+========================================================= */
+.trade:hover,
+.deposit-method:hover,
+.mining-plan:hover{
+  border-color:var(--green);
+}
+/* =========================================================
+   UX – ERROR STATES
+========================================================= */
+.status.error{
+  background:rgba(255,143,163,.08);
+  border:1px solid rgba(255,143,163,.4);
+  padding:8px;
+  border-radius:10px;
+}
+
+.status.success{
+  background:rgba(110,231,168,.08);
+  border:1px solid rgba(110,231,168,.4);
+  padding:8px;
+  border-radius:10px;
+}
+
+/* =========================================================
+   IMAGE SYSTEM – SCOPED & SAFE (REPLACEMENT)
+========================================================= */
+
+/* ===== ICON SYSTEM (Small icons) ===== */
+.balances img,
+.wallet img,
+.bottom-nav img{
+  width:22px;
+  height:22px;
+  object-fit:contain;
+}
+
+/* Mining tabs icons (BX / TON / SOL) */
+.mining-tabs img{
+  width:22px;
+  height:22px;
+  object-fit:contain;
+}
+
+/* Deposit / Payment logos */
+.deposit-method img{
+  width:48px;
+  height:56px;
+  object-fit:contain;
+  margin-bottom:6px;
+}
+
+#casino .game img[src*="icon"],
+#casino .game img[src*="logo"]{
+  object-fit:contain;
+  padding:18px;
+}
+
+/* ===== AIRDROP ===== */
+.airdrop-box img{
+  width:48px;
+  height:48px;
+  object-fit:contain;
+}
+
+/* ===================================================================================================
+   AIRDROP PROMOS – FINAL RESPONSIVE FIX
+================================================================================================ */
+
+.airdrop-promos {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin: 18px 16px;
+}
+
+.promo-card {
+  display: flex;
+  flex-direction: column;         
+  background: #0b1220;
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+.promo-card img {
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+  display: block;
+}
+
+.promo-content {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.promo-content h4 {
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.promo-content p {
+  font-size: 13px;
+  opacity: 0.85;
+  line-height: 1.5;
+}
+
+.promo-btn {
+  margin-top: 10px;
+  width: 100%;
+  height: 42px;
+  border-radius: 14px;
+  font-weight: 800;
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: #000;
+}
+
+/* ================= DESKTOP / TABLET ================= */
+
+@media (min-width: 768px) {
+  .promo-card {
+    flex-direction: row;          
+    align-items: center;
+  }
+
+  .promo-card img {
+    width: 45%;
+    height: 100%;
+  }
+
+  .promo-content {
+    width: 55%;
+  }
+}
+
+/* ================= AIRDROP EXTRAS ================= */
+
+.airdrop-extras{
+  margin-top: 22px;
+  display: grid;
+  gap: 22px;
+}
+
+.airdrop-partners h3,
+.airdrop-whitepaper h3{
+  margin-bottom: 10px;
+  font-size: 16px;
+  color: #fff;
+}
+
+.partners-row{
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.partners-row img{
+  height: 38px;
+  opacity: .85;
+  transition: opacity .2s ease, transform .2s ease;
+}
+
+.partners-row img:hover{
+  opacity: 1;
+  transform: scale(0.9);
+}
+
+.whitepaper-btn{
+  display: inline-block;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: linear-gradient(135deg,#20e3b2,#2cccff);
+  color: #000;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+/* ================= AIRDROP PARTNERS ================= */
+
+.airdrop-partners {
+  margin: 22px 0;
+}
+
+.section-title {
+  margin-bottom: 14px;
+  font-size: 16px;
+  font-weight: 800;
+  color: #fff;
+}
+
+.partners-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+
+.partner-item {
+  height: 56px;
+  background: rgba(255,255,255,0.04);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.partner-item img {
+  max-width: 100%;
+  max-height: 38px;
+  object-fit: contain;
+  opacity: 0.9;
+}
+
+#airdrop h3 {
+  font-size: 22px;
+  margin-bottom: 22px;
+  color: #4caf50;
+  text-align: center;
+}
+
+#airdrop-status {
+  font-size: 18px;
+  text-align: center;
+  color: #fff;
+}
+
+#claim-airdrop {
+  width: 100%;
+  padding: 10px;
+  background-color: #5effe0;
+  color: lightgreen;
+  font-size: 18px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+#claim-airdrop:hover {
+  background-color: #5cd65c;
+}
+
+#claim-airdrop.hidden {
+  display: none;
+}
+
+.airdrop-box {
+  padding: 20px;
+  background-color: #5effe0;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(94, 255, 224, 0.1);
+  text-align: center;
+  margin-top: 20px;
+}
+
+.airdrop-reward {
+  font-size: 20px;
+  color: #ff9800;
+  margin-top: 15px;
+}
+
+.airdrop-task,
+.airdrop-referral {
+  margin-top: 20px;
+  font-size: 16px;
+}
