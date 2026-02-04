@@ -370,7 +370,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   pair: "BX/USDT",
   side: "buy",
-  price: 12,
+  price: 0,
 
   chart: null,
   candleSeries: null,
