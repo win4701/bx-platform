@@ -363,6 +363,8 @@ const MARKET = {
   pair: "BX/USDT",
   side: "buy",
   price: 12,
+  orderBook: [],
+
 
   chart: null,
   candleSeries: null,
