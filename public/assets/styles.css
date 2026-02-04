@@ -1075,215 +1075,117 @@ button:active,
   padding:18px;
 }
 
-/* ===== AIRDROP ===== */
-.airdrop-box img{
-  width:48px;
-  height:48px;
-  object-fit:contain;
-}
+/* ================= AIRDROP – CLEAN FIX ================= */
 
-/* ===================================================================================================
-   AIRDROP PROMOS – FINAL RESPONSIVE FIX
-================================================================================================ */
-
-.airdrop-promos {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-  margin: 18px 16px;
-}
-
-.promo-card {
-  display: flex;
-  flex-direction: column;         
-  background: #0b1220;
-  border-radius: 18px;
-  overflow: hidden;
-}
-
-.promo-card img {
-  width: 100%;
-  height: 160px;
-  object-fit: cover;
-  display: block;
-}
-
-.promo-content {
+#airdrop {
   padding: 16px;
+}
+
+#airdrop .airdrop-container {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 20px;
 }
 
-.promo-content h4 {
-  font-size: 16px;
+/* ---------- MAIN BOX ---------- */
+
+#airdrop .airdrop-box {
+  background: linear-gradient(180deg,#0b1220,#020617);
+  border: 1px solid #1e293b;
+  border-radius: 18px;
+  padding: 20px;
+  text-align: center;
+}
+
+#airdrop .airdrop-box img {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 10px;
+}
+
+#airdrop .airdrop-reward {
+  font-size: 24px;
   font-weight: 800;
+  color: #22c55e;
+  margin-bottom: 12px;
 }
 
-.promo-content p {
-  font-size: 13px;
-  opacity: 0.85;
-  line-height: 1.5;
-}
-
-.promo-btn {
-  margin-top: 10px;
+#airdrop .airdrop-action {
   width: 100%;
   height: 42px;
   border-radius: 14px;
+  border: none;
   font-weight: 800;
-  background: linear-gradient(135deg, #22c55e, #16a34a);
-  color: #000;
-}
-
-/* ================= DESKTOP / TABLET ================= */
-
-@media (min-width: 768px) {
-  .promo-card {
-    flex-direction: row;          
-    align-items: center;
-  }
-
-  .promo-card img {
-    width: 45%;
-    height: 100%;
-  }
-
-  .promo-content {
-    width: 55%;
-  }
-
-/* ================= AIRDROP EXTRAS ================= */
-
-.airdrop-extras{
-  margin-top: 22px;
-  display: grid;
-  gap: 22px;
-}
-
-.airdrop-partners h3,
-.airdrop-whitepaper h3{
-  margin-bottom: 10px;
-  font-size: 16px;
-  color: #22c55e; /* BX green */
-}
-
-.partners-row{
-  display: flex;
-  gap: 12px;
-  align-items: center;
-}
-
-.partners-row img{
-  height: 38px;
-  opacity: .9;
-  transition: opacity .2s ease, transform .2s ease;
-}
-
-.partners-row img:hover{
-  opacity: 1;
-  transform: scale(0.9);
-}
-
-.whitepaper-btn: {
-  display: inline-block;
-  padding: 12px 14px;
-  border-radius: 12px;
-  background: linear-gradient(135deg,#22c55e,#16a34a); 
+  background: linear-gradient(135deg,#22c55e,#16a34a);
   color: #022c22;
-  font-weight: 800;
-  text-decoration: none;
 }
 
-/* ================= AIRDROP PARTNERS ================= */
-
-.airdrop-partners {
-  margin: 22px 0;
-}
-
-.section-title {
-  margin-bottom: 14px;
-  font-size: 16px;
-  font-weight: 800;
-  color: #050b1a;
-}
-
-.partners-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-}
-
-.partner-item {
-  height: 48px;
-  background: rgba(5, 11, 26, 1);
-  border: 1px solid #1e293b;
-  border-radius: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.partner-item img {
-  max-width: 100%;
-  max-height: 38px;
-  object-fit: contain;
-  opacity: 0.9;
-}
-
-/* ================= AIRDROP MAIN ================= */
-
-#airdrop h3 {
-  font-size: 22px;
-  margin-bottom: 22px;
-  color: #22c55e;
-  text-align: center;
-}
-
-#airdrop-status {
-  font-size: 18px;
-  text-align: center;
+#airdrop .airdrop-status {
+  margin-top: 10px;
+  font-size: 13px;
   color: #94a3b8;
 }
 
-#claim-airdrop {
-  width: 100%;
-  padding: 10px;
-  background: linear-gradient(135deg,#22c55e,#16a34a);
-  color: #022c22;
-  font-size: 18px;
-  border: none;
-  cursor: pointer;
-  transition: background .3s ease;
+/* ---------- REFERRAL ---------- */
+
+#airdrop .airdrop-referral {
+  background:#0b1220;
+  border:1px solid #1e293b;
+  border-radius:16px;
+  padding:16px;
 }
 
-#claim-airdrop:hover {
-  background: linear-gradient(135deg,#16a34a,#15803d);
+#airdrop .referral-box {
+  display:flex;
+  gap:10px;
+  margin-top:10px;
 }
 
-#claim-airdrop.hidden {
-  display: none;
+#airdrop .referral-box span {
+  flex:1;
+  background:#020617;
+  padding:10px;
+  border-radius:12px;
+  font-size:13px;
+  color:#94a3b8;
 }
 
-.airdrop-box {
-  padding: 20px;
-  background: linear-gradient(180deg,#0b1220,#020617);
-  border: 1px solid #1e293b;
-  border-radius: 14px;
-  box-shadow: 0 10px 30px rgba(0,0,0,.45);
-  text-align: center;
-  margin-top: 20px;
+#airdrop .referral-box button {
+  padding:0 14px;
+  border-radius:12px;
+  font-weight:800;
 }
 
-.airdrop-reward {
-  font-size: 20px;
-  color: #22c55e;
-  margin-top: 15px;
+/* ---------- PARTNERS ---------- */
+
+#airdrop .airdrop-partners h3 {
+  margin-bottom:10px;
+  color:#22c55e;
 }
 
-.airdrop-task,
-.airdrop-referral {
-  margin-top: 20px;
-  font-size: 16px;
-  color: #e5e7eb;
-   }
+#airdrop .partners-grid {
+  display:grid;
+  grid-template-columns: repeat(4,1fr);
+  gap:14px;
+}
+
+#airdrop .partners-grid img {
+  height:34px;
+  margin:auto;
+  object-fit:contain;
+}
+
+/* ---------- WHITEPAPER ---------- */
+
+#airdrop .whitepaper-btn {
+  display:block;
+  width:100%;
+  text-align:center;
+  padding:14px;
+  border-radius:14px;
+  font-weight:800;
+  background:#020617;
+  border:1px solid #22c55e;
+  color:#22c55e;
+}
+
