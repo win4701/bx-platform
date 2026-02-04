@@ -349,16 +349,20 @@ input{
   font-weight: 800;
 }
 
-/* ---------- MARKET BASE ---------- */
-.market{
+/* ===================================================
+   MARKET MODULE – ISOLATED & SAFE
+=================================================== */
+
+.market {
   padding:16px;
   background:linear-gradient(180deg,#0b1220 0%,#020617 100%);
   color:#e5e7eb;
   min-height:calc(100vh - 120px);
 }
 
-/* ---------- HEADER ---------- */
-.market-top{
+/* ---------------- HEADER ---------------- */
+
+.market .market-top{
   display:flex;
   justify-content:space-between;
   align-items:center;
@@ -369,25 +373,21 @@ input{
   margin-bottom:12px;
 }
 
-.pair-display{
+.market .pair-display{
   font-size:15px;
   font-weight:800;
   color:#f1f5f9;
 }
 
-.pair-display span{
-  font-size:12px;
-  opacity:.6;
-}
-
-.last-price{
+.market .last-price{
   font-size:20px;
   font-weight:800;
   color:#D81484;
 }
 
-/* ---------- PAIR SCROLL ---------- */
-.pair-scroll{
+/* ---------------- PAIRS ---------------- */
+
+.market .pair-scroll{
   display:flex;
   gap:8px;
   overflow-x:auto;
@@ -395,10 +395,11 @@ input{
   margin-bottom:14px;
 }
 
-.pair-scroll::-webkit-scrollbar{ display:none; }
+.market .pair-scroll::-webkit-scrollbar{ display:none; }
 
-.pair-scroll button{
-  flex:0 0 auto;
+.market .pair-scroll button{
+  all:unset;
+  cursor:pointer;
   padding:6px 12px;
   border-radius:10px;
   background:#020617;
@@ -406,67 +407,70 @@ input{
   color:#D81484;
   font-size:13px;
   font-weight:600;
-  white-space:nowrap;
 }
 
-.pair-scroll button.active{
+.market .pair-scroll button.active{
   background:#111827;
   color:#e5e7eb;
   border-color:#02c076;
 }
 
-/* ---------- TRADE BOX ---------- */
-.trade-box{
+/* ---------------- TRADE BOX ---------------- */
+
+.market .trade-box{
   background:#0b1220;
   border:1px solid #1e293b;
   border-radius:18px;
   padding:16px;
   margin-bottom:14px;
-  transition:background .2s ease;
 }
 
-.trade-box.buy{ box-shadow:0 0 0 1px rgba(2,192,118,.15); }
-.trade-box.sell{ box-shadow:0 0 0 1px rgba(248,73,96,.15); }
+.market .trade-box.buy{
+  box-shadow:0 0 0 1px rgba(2,192,118,.2);
+}
 
-/* ---------- BUY / SELL TABS ---------- */
+.market .trade-box.sell{
+  box-shadow:0 0 0 1px rgba(248,73,96,.2);
+}
 
-.trade-tabs{
+/* ---------------- BUY / SELL TABS ---------------- */
+
+.market .trade-tabs{
   display:flex;
   gap:8px;
   margin-bottom:12px;
 }
 
-.trade-tabs button{
+.market .trade-tabs button{
+  all:unset;
   flex:1;
+  text-align:center;
   height:36px;
   border-radius:10px;
   background:#020617;
   color:#94a3b8;
   font-weight:700;
-  font-size:14px;
+  cursor:pointer;
 }
 
-.trade-tabs .active{
+.market .trade-tabs button.active.buy{
+  background:#02c076;
   color:#020617;
 }
 
-.trade-tabs .active#buyTab,
-.trade-tabs .active.buy{
-  background:#02c076;
-}
-
-.trade-tabs .active#sellTab,
-.trade-tabs .active.sell{
+.market .trade-tabs button.active.sell{
   background:#FE55A1;
+  color:#020617;
 }
 
-/* ---------- FORM ---------- */
-.trade-form label{
+/* ---------------- FORM ---------------- */
+
+.market .trade-form label{
   font-size:13px;
   color:#94a3b8;
 }
 
-.trade-form input{
+.market .trade-form input{
   width:100%;
   height:46px;
   margin:8px 0 10px;
@@ -478,27 +482,47 @@ input{
   color:#fff;
 }
 
-.trade-form input::placeholder{
-  color:#6b7280;
+/* ---------------- PERCENT ---------------- */
+
+.market .percent-row{
+  display:flex;
+  gap:8px;
+  margin-bottom:12px;
 }
 
-/* ===== FIX OVERRIDES ===== */
-
-.market .pair-display {
-  cursor: pointer;
+.market .percent-row button{
+  all:unset;
+  flex:1;
+  text-align:center;
+  height:32px;
+  border-radius:8px;
+  background:#020617;
+  border:1px solid #1e293b;
+  color:#94a3b8;
+  font-weight:700;
+  cursor:pointer;
 }
 
-.trade-tabs button {
-  transition: all .2s ease;
+/* ---------------- ACTION ---------------- */
+
+.market .action-btn{
+  width:100%;
+  padding:14px;
+  border-radius:14px;
+  font-weight:800;
+  border:none;
+  cursor:pointer;
 }
 
-.trade-tabs button.active {
-  transform: scale(1.02);
+.market .trade-box.buy .action-btn{
+  background:linear-gradient(135deg,#00c076,#00a85a);
+  color:#020617;
 }
 
-.market-chart {
-  overflow: hidden;
-}
+.market .trade-box.sell .action-btn{
+  background:linear-gradient(135deg,#ff5fa2,#ff3b7d);
+  color:#020617;
+     }
 
 /* ---------- PERCENT BUTTONS ---------- */
 .percent-row{
