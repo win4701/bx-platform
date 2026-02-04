@@ -1198,88 +1198,87 @@ button:active,
 
 /* ================= AIRDROP PARTNERS ================= */
 
-.airdrop-partners {
-  margin: 22px 0;
+#airdrop {
+  padding: 18px;
+  background: linear-gradient(180deg,#0b1220,#020617);
 }
-
-.section-title {
-  margin-bottom: 14px;
-  font-size: 16px;
-  font-weight: 800;
-  color: #fff;
-}
-
-.partners-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 14px;
-}
-
-.partner-item {
-  height: 56px;
-  background: rgba(255,255,255,0.04);
-  border-radius: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.partner-item img {
-  max-width: 100%;
-  max-height: 38px;
-  object-fit: contain;
-  opacity: 0.9;
-}
-
-#airdrop h3 {
-  font-size: 22px;
-  margin-bottom: 22px;
-  color: #4caf50;
-  text-align: center;
-}
-
-#airdrop-status {
-  font-size: 18px;
-  text-align: center;
-  color: #fff;
-}
-
-#claim-airdrop {
-  width: 100%;
-  padding: 10px;
-  background-color: #5effe0;
-  color: lightgreen;
-  font-size: 18px;
-  border: none;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-#claim-airdrop:hover {
-  background-color: #5cd65c;
-}
-
-#claim-airdrop.hidden {
-  display: none;
-}
-
 .airdrop-box {
-  padding: 20px;
-  background-color: #5effe0;
-  border-radius: 10px;
-  box-shadow: 0 4px 6px rgba(94, 255, 224, 0.1);
+  background: linear-gradient(135deg,#0f172a,#020617);
+  border: 1px solid #1e293b;
+  border-radius: 20px;
+  padding: 22px;
   text-align: center;
-  margin-top: 20px;
+  box-shadow: 0 20px 40px rgba(0,0,0,.45);
+}
+
+.airdrop-box img {
+  width: 56px;
+  margin: 0 auto 10px;
 }
 
 .airdrop-reward {
-  font-size: 20px;
-  color: #ff9800;
-  margin-top: 15px;
+  font-size: 28px;
+  font-weight: 900;
+  color: #22c55e;
+  margin: 12px 0;
+}  
+.airdrop-task {
+  background: linear-gradient(135deg,#022c22,#064e3b);
+  border: 1px solid #22c55e;
+  border-radius: 16px;
+  padding: 14px;
+  color: #a7f3d0;
+  font-weight: 800;
+  margin-top: 14px;
+}
+.airdrop-referral {
+  margin-top: 18px;
+  background: #0b1220;
+  border: 1px dashed #22c55e;
+  border-radius: 16px;
+  padding: 16px;
+  text-align: center;
 }
 
-.airdrop-task,
-.airdrop-referral {
-  margin-top: 20px;
-  font-size: 16px;
+.airdrop-referral h4 {
+  font-size: 18px;
+  color: #22c55e;
+  margin-bottom: 8px;
+}
+
+.airdrop-referral .link {
+  font-size: 13px;
+  color: #93c5fd;
+  word-break: break-all;
+  margin-bottom: 10px;
+}
+
+.airdrop-referral button {
+  background: linear-gradient(135deg,#22c55e,#16a34a);
+  color: #022c22;
+  border: none;
+  border-radius: 12px;
+  padding: 10px 16px;
+  font-weight: 800;
+}
+.airdrop-status {
+  margin-top: 14px;
+  font-size: 13px;
+  color: #94a3b8;
+  opacity: .8;
+}
+.partners-grid {
+  display: grid;
+  grid-template-columns: repeat(4,1fr);
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.partner-item {
+  background: rgba(255,255,255,.04);
+  border-radius: 14px;
+  height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
