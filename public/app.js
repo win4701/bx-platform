@@ -136,33 +136,24 @@ const VIEWS = ["wallet", "market", "casino", "mining", "airdrop"];
 /* ================= NAVIGATE ================= */
 
 function navigate(view) {
-  if (!APP.ready) return;
-
-  if (!VIEWS.includes(view)) {
-    log.warn("navigate(): unknown view", view);
-    return;
+  // 1. إخفاء جميع الأقسام
+  document.querySelectorAll('section').forEach(s => s.classList.remove('active'));
+  
+  // 2. إظهار القسم المطلوب
+  const targetSection = document.getElementById(view);
+  if (targetSection) {
+    targetSection.classList.add('active');
+    APP.view = view; // تحديث الحالة العامة
+  } else {
+    console.error("القسم غير موجود: " + view);
   }
 
-  VIEWS.forEach(v => {
-    const el = $(v);
-    if (el) el.classList.remove("active");
+  // 3. تحديث أزرار القائمة السفلية
+  document.querySelectorAll('.bottom-nav button').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.view === view);
   });
-
-  const target = $(view);
-  if (!target) {
-    log.error("navigate(): missing section", view);
-    return;
-  }
-  target.classList.add("active");
-
-  APP.view = view;
-
-  syncNavButtons(view);
-
-  onViewEnter(view);
-
-  log.info("Navigated to", view);
 }
+
 
 /* ================= NAV BUTTONS ================= */
 
