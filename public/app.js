@@ -368,12 +368,6 @@ const MARKET = {
 };
 
 /* =====================================================
-   DOM HELPERS
-===================================================== */
-const $  = (q) => document.querySelector(q);
-const $$ = (q) => document.querySelectorAll(q);
-
-/* =====================================================
    INIT
 ===================================================== */
 document.addEventListener("DOMContentLoaded", () => {
