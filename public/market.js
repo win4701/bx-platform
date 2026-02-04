@@ -1,209 +1,367 @@
-/* ================= MARKET PAIRS ================= */
+"use strict";
 
-function bindMarketPairs() {
-  document.querySelectorAll("#pairScroll button").forEach(btn => {
-    btn.onclick = () => {
-      const pair = btn.dataset.pair;
-      if (!pair || pair === MARKET.pair) return;
+/* =========================================================
+   PART 1 — CORE / CONFIG / SECURITY / DEBUG (FINAL)
+========================================================= */
 
-      MARKET.pair = pair;
-      highlightActivePair();
-      refreshMarket();
-    };
-  });
-}
+/* ========= DOM HELPERS ========= */
+const $  = (id) => document.getElementById(id);
+const $$ = (q)  => document.querySelectorAll(q);
 
-function bindPairSelector() {
-  const selector = $("pairSelector");
-  if (!selector) return;
+/* ========= ENV / CONFIG ========= */
+const CONFIG = {
+  API_BASE: "https://bx-backend.fly.dev",
+  APP_NAME: "BX App",
+  VERSION: "1.0.0"
+};
 
-  selector.onclick = () => {
-    const i = MARKET_PAIRS.indexOf(MARKET.pair);
-    MARKET.pair = MARKET_PAIRS[(i + 1) % MARKET_PAIRS.length];
-    highlightActivePair();
-    refreshMarket();
-  };
-}
-
-function bindTradeTabs() {
-  $("buyTab")?.addEventListener("click", () => setTradeSide("buy"));
-  $("sellTab")?.addEventListener("click", () => setTradeSide("sell"));
-}
-
-function highlightActivePair() {
-  document.querySelectorAll("#pairScroll button").forEach(btn => {
-    btn.classList.toggle("active", btn.dataset.pair === MARKET.pair);
-  });
-}
-
-/* ================= MARKET PRICE (SSOT) ================= */
-
-async function updateMarketPrice() {
+/* ========= DEBUG MODE ========= */
+const DEBUG = (() => {
   try {
-    const asset = MARKET.pair.split("/")[1].toLowerCase();
+    if (location.search.includes("debug=1")) return true;
+    if (localStorage.getItem("DEBUG") === "1") return true;
+  } catch (_) {}
+  return false;
+})();
 
-    const res = await fetch(API_BASE + "/market/quote", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        asset,
-        side: MARKET.side,
-        amount: 1
-      })
+/* ========= LOGGER ========= */
+const log = Object.freeze({
+  info: (...a) => DEBUG && console.log("[INFO]", ...a),
+  warn: (...a) => DEBUG && console.warn("[WARN]", ...a),
+  error: (...a) => console.error("[ERROR]", ...a)
+});
+
+/* ========= USER / AUTH STATE ========= */
+const USER = {
+  jwt: null,
+  authenticated: false,
+
+  load() {
+    try {
+      const token = localStorage.getItem("jwt");
+      if (typeof token === "string" && token.length > 20) {
+        this.jwt = token;
+        this.authenticated = true;
+        log.info("JWT loaded");
+      }
+    } catch (e) {
+      log.warn("JWT load failed");
+    }
+  },
+
+  set(token) {
+    if (!token || typeof token !== "string") return;
+    this.jwt = token;
+    this.authenticated = true;
+    try {
+      localStorage.setItem("jwt", token);
+    } catch (_) {}
+    log.info("JWT stored");
+  },
+
+  clear() {
+    this.jwt = null;
+    this.authenticated = false;
+    try {
+      localStorage.removeItem("jwt");
+    } catch (_) {}
+    log.info("JWT cleared");
+  }
+};
+
+/* ========= AUTH HELPERS ========= */
+function isAuthenticated() {
+  return USER.authenticated === true;
+}
+
+function authHeaders() {
+  return USER.jwt
+    ? { Authorization: "Bearer " + USER.jwt }
+    : {};
+}
+
+/* ========= GLOBAL APP STATE ========= */
+const APP = {
+  ready: false,
+  view: "wallet",
+
+  init() {
+    USER.load();
+    this.ready = true;
+    log.info("APP initialized", CONFIG.VERSION);
+  }
+};
+
+/* ========= SAFE FETCH (SSOT NETWORK LAYER) ========= */
+async function safeFetch(path, options = {}) {
+  try {
+    const res = await fetch(CONFIG.API_BASE + path, {
+      method: options.method || "GET",
+      headers: {
+        "Content-Type": "application/json",
+        ...authHeaders(),
+        ...(options.headers || {})
+      },
+      body: options.body ? JSON.stringify(options.body) : undefined
     });
 
-    const data = await res.json();
-    if (typeof data.price === "number") {
-      MARKET.price = data.price;
+    if (!res.ok) {
+      log.error("API ERROR", path, res.status);
+      return null;
     }
-  } catch {
-    console.warn("Market price fetch failed");
+
+    return await res.json();
+
+  } catch (err) {
+    log.error("NETWORK ERROR", path, err);
+    return null;
   }
 }
 
-/* ================= CHART ENGINE ================= */
+/* ========= HARD SAFETY RULES ========= */
+/*
+ - ❌ لا fetch مباشر خارج safeFetch
+ - ❌ لا localStorage مباشر خارج USER
+ - ❌ لا console.log خارج log
+ - ✔ هذا الجزء لا يعرف market / casino / mining
+*/
+/* =========================================================
+   PART 2 — NAVIGATION / ROUTER / VIEW CONTROL (FINAL)
+========================================================= */
 
-let chart, candleSeries, volumeSeries;
+/* ========= VIEW REGISTRY ========= */
+/*
+  كل الأقسام المعرفة هنا فقط
+  أي view غير موجود هنا لن يُفتح
+*/
+const VIEWS = Object.freeze([
+  "wallet",
+  "market",
+  "casino",
+  "mining",
+  "airdrop",
+  "settings"
+]);
 
-function initChart() {
-  const el = document.getElementById("marketChart");
-  if (!el || chart) return;
+/* ========= ROUTER ========= */
+function navigate(view) {
+  if (!VIEWS.includes(view)) {
+    log.warn("Unknown view:", view);
+    return;
+  }
 
-  chart = LightweightCharts.createChart(el, {
-    layout: {
-      background: { color: "#020617" },
-      textColor: "#94a3b8"
-    },
-    grid: {
-      vertLines: { color: "#0f172a" },
-      horzLines: { color: "#0f172a" }
-    },
-    crosshair: { mode: 1 },
-    rightPriceScale: { borderColor: "#1e293b" },
-    timeScale: { borderColor: "#1e293b", timeVisible: true }
+  // إخفاء جميع الأقسام
+  $$("section").forEach(sec => {
+    sec.classList.remove("active");
+    sec.setAttribute("aria-hidden", "true");
   });
 
-  candleSeries = chart.addCandlestickSeries({
-    upColor: "#02c076",
-    downColor: "#f84960",
-    borderUpColor: "#02c076",
-    borderDownColor: "#f84960",
-    wickUpColor: "#02c076",
-    wickDownColor: "#f84960"
+  // إظهار القسم المطلوب
+  const target = $(view);
+  if (!target) {
+    log.error("View element not found:", view);
+    return;
+  }
+
+  target.classList.add("active");
+  target.setAttribute("aria-hidden", "false");
+
+  // تحديث حالة التطبيق
+  APP.view = view;
+
+  // تحديث أزرار التنقل
+  $$(".bottom-nav button").forEach(btn => {
+    btn.classList.toggle(
+      "active",
+      btn.dataset.view === view
+    );
   });
 
-  volumeSeries = chart.addHistogramSeries({
-    color: "#334155",
-    priceFormat: { type: "volume" },
-    priceScaleId: ""
-  });
-}
-
-/* ================= CHART DATA ================= */
-
-function updateLastPriceMarker() {
-  if (!candleSeries || !MARKET.price) return;
-
-  candleSeries.setMarkers([{
-    time: Math.floor(Date.now() / 1000),
-    position: "inBar",
-    color: MARKET.side === "buy" ? "#02c076" : "#f84960",
-    shape: "circle",
-    text: MARKET.price.toFixed(4)
-  }]);
-}
-
-/* ================= DEPTH CHART ================= */
-
-function initDepthChart() {
-  const chart = LightweightCharts.createChart(
-    document.getElementById("depthChart"),
-    {
-      layout: { background: { color: "#020617" }, textColor: "#64748b" },
-      grid: { vertLines: { visible: false }, horzLines: { visible: false } }
-    }
+  // Hook عام لباقي الأجزاء
+  document.dispatchEvent(
+    new CustomEvent("view:change", {
+      detail: view
+    })
   );
 
-  MARKET.depthSeries = chart.addHistogramSeries({
-    color: "#38bdf8"
+  log.info("Navigate →", view);
+}
+
+/* ========= NAVIGATION BINDING ========= */
+function bindNavigation() {
+  const buttons = $$(".bottom-nav button");
+
+  if (!buttons.length) {
+    log.warn("No navigation buttons found");
+    return;
+  }
+
+  buttons.forEach(btn => {
+    const view = btn.dataset.view;
+    if (!view) return;
+
+    btn.addEventListener("click", () => {
+      if (APP.view === view) return; // لا إعادة تحميل
+      navigate(view);
+    });
   });
 }
 
-async function loadDepth() {
-  if (!bidSeries || !askSeries) return;
+/* ========= INITIAL VIEW ========= */
+function initRouter() {
+  // تأكيد أن view الافتراضي موجود
+  const initial = VIEWS.includes(APP.view)
+    ? APP.view
+    : VIEWS[0];
 
-  const res = await fetch(`/market/depth?pair=${MARKET.pair}`);
-  const d = await res.json();
-
-  bidSeries.setData(d.bids.map(b => ({ time: b[0], value: b[1] })));
-  askSeries.setData(d.asks.map(a => ({ time: a[0], value: a[1] })));
+  navigate(initial);
 }
 
-/* ================= BUY & SELL ================= */
+/* ========= SAFETY GUARD ========= */
+/*
+  منع أي تنقّل قبل جاهزية التطبيق
+*/
+document.addEventListener("DOMContentLoaded", () => {
+  if (!APP.ready) {
+    log.warn("Router initialized before APP ready");
+  }
+});
+/* =========================================================
+   PART 3 — WALLET / CONNECTIONS / BALANCE (FINAL)
+========================================================= */
 
-function setTradeSide(side) {
-  MARKET.side = side;
+/* ========= WALLET STATE ========= */
+const WALLET = Object.seal({
+  connected: false,
+  address: null,
+  network: null,
 
-  $("buyTab")?.classList.toggle("active", side === "buy");
-  $("sellTab")?.classList.toggle("active", side === "sell");
+  balances: {
+    BX: 0,
+    USDT: 0,
+    TON: 0,
+    BNB: 0,
+    SOL: 0
+  }
+});
 
-  renderTradeAction();
-  updateMarketPrice(); 
+/* ========= WALLET DOM MAP ========= */
+const WALLET_DOM = Object.freeze({
+  BX: "bal-bx",
+  USDT: "bal-usdt",
+  TON: "bal-ton",
+  BNB: "bal-bnb",
+  SOL: "bal-sol",
+  ADDRESS: "walletAddress",
+  STATUS: "walletStatus"
+});
+
+/* ========= CONNECTION STATUS ========= */
+function setWalletStatus(connected) {
+  WALLET.connected = connected === true;
+
+  const statusEl = $(WALLET_DOM.STATUS);
+  if (statusEl) {
+    statusEl.textContent = WALLET.connected
+      ? "Connected"
+      : "Not Connected";
+    statusEl.classList.toggle("online", WALLET.connected);
+    statusEl.classList.toggle("offline", !WALLET.connected);
+  }
 }
 
-/* ================= RENDER ================= */
+/* ========= RENDER WALLET ========= */
+function renderWallet() {
+  Object.entries(WALLET.balances).forEach(([sym, val]) => {
+    const el = $(WALLET_DOM[sym]);
+    if (!el) return;
+    el.textContent = Number(val).toFixed(4);
+  });
 
-function renderMarket() {
-  renderMarketPair();
-  renderMarketPrice();
-  renderTradeAction();
+  const addrEl = $(WALLET_DOM.ADDRESS);
+  if (addrEl) {
+    addrEl.textContent = WALLET.address
+      ? WALLET.address.slice(0, 6) + "..." + WALLET.address.slice(-4)
+      : "--";
+  }
 }
 
-function renderMarketPair() {
-  const el = $("marketPair");
-  if (el) el.textContent = MARKET.pair.replace("/", " / ");
-}
+/* ========= LOAD BALANCE (SAFE) ========= */
+async function loadWalletBalance() {
+  if (!USER.authenticated) {
+    log.warn("Balance load skipped (not authenticated)");
+    return;
+  }
 
-function renderMarketPrice() {
-  const el = $("marketPrice");
-  if (el) el.textContent = MARKET.price.toFixed(4);
-}
+  const data = await safeFetch("/wallet/balance");
+  if (!data) return;
 
-function renderTradeAction() {
-  const btn = $("actionBtn");
-  if (!btn) return;
-
-  btn.textContent = MARKET.side === "buy" ? "Buy BX" : "Sell BX";
-  btn.className = `action-btn ${MARKET.side}`;
-}
-   
-/* ================= INIT / LOOP ================= */
-
-function refreshMarket() {
-  updateMarketPrice();
-  loadChartData();
-  loadDepth();
-  renderMarket();
-}
-
-function initMarket() {
-  bindMarketPairs();
-  bindPairSelector();
-  initChart();
-  initDepthChart();
-  refreshMarket();
-
-  if (MARKET.timer) return;
-
-  MARKET.timer = setInterval(() => {
-    if (APP.view === "market") {
-      refreshMarket();
-      updateLastPriceMarker();
+  Object.keys(WALLET.balances).forEach(sym => {
+    if (typeof data[sym] === "number") {
+      WALLET.balances[sym] = data[sym];
     }
-  }, 1500);
+  });
+
+  renderWallet();
+  log.info("Wallet balance updated");
 }
 
-function stopMarket() {
-  clearInterval(MARKET.timer);
-  MARKET.timer = null;
+/* ========= CONNECT WALLET (ABSTRACT) ========= */
+/*
+  هذا مجرد Bridge
+  التنفيذ الحقيقي (TON / Binance / etc)
+  يتم حقنه لاحقًا بدون كسر هذا الجزء
+*/
+async function connectWallet(provider) {
+  log.info("Connecting wallet:", provider);
+
+  // Placeholder آمن
+  WALLET.connected = true;
+  WALLET.address = "0xFAKE...ADDR";
+  WALLET.network = provider || "unknown";
+
+  setWalletStatus(true);
+  renderWallet();
+
+  document.dispatchEvent(
+    new CustomEvent("wallet:connected", {
+      detail: {
+        provider: WALLET.network,
+        address: WALLET.address
+      }
+    })
+  );
 }
+
+/* ========= DISCONNECT ========= */
+function disconnectWallet() {
+  WALLET.connected = false;
+  WALLET.address = null;
+  WALLET.network = null;
+
+  setWalletStatus(false);
+  renderWallet();
+
+  document.dispatchEvent(
+    new CustomEvent("wallet:disconnected")
+  );
+}
+
+/* ========= WALLET GUARDS ========= */
+function requireWallet() {
+  if (!WALLET.connected) {
+    alert("Please connect your wallet first");
+    return false;
+  }
+  return true;
+}
+
+/* ========= AUTO LOAD ON VIEW ========= */
+document.addEventListener("view:change", (e) => {
+  if (e.detail === "wallet") {
+    renderWallet();
+    if (USER.authenticated) {
+      loadWalletBalance();
+    }
+  }
+});
