@@ -186,8 +186,9 @@ function onViewEnter(view) {
       break;
 
     case "market":
-      if (typeof initMarket === "function") initMarket();
-      break;
+  if (typeof initMarket === "function") initMarket();
+  startMarket();          
+  break;
 
     case "casino":
       if (typeof initCasino === "function") initCasino();
