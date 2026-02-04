@@ -1166,7 +1166,7 @@ button:active,
 .airdrop-whitepaper h3{
   margin-bottom: 10px;
   font-size: 16px;
-  color: #fff;
+  color: #22c55e; /* BX green */
 }
 
 .partners-row{
@@ -1190,8 +1190,8 @@ button:active,
   display: inline-block;
   padding: 12px 14px;
   border-radius: 12px;
-  background: linear-gradient(135deg,#20e3b2,#2cccff);
-  color: #000;
+  background: linear-gradient(135deg,#22c55e,#16a34a); /* green theme */
+  color: #022c22;
   font-weight: 800;
   text-decoration: none;
 }
@@ -1206,7 +1206,7 @@ button:active,
   margin-bottom: 14px;
   font-size: 16px;
   font-weight: 800;
-  color: #fff;
+  color: #22c55e;
 }
 
 .partners-grid {
@@ -1217,7 +1217,8 @@ button:active,
 
 .partner-item {
   height: 56px;
-  background: rgba(255,255,255,0.04);
+  background: rgba(255,255,255,0.03);
+  border: 1px solid #1e293b;
   border-radius: 14px;
   display: flex;
   align-items: center;
@@ -1231,32 +1232,34 @@ button:active,
   opacity: 0.9;
 }
 
+/* ================= AIRDROP MAIN ================= */
+
 #airdrop h3 {
   font-size: 22px;
   margin-bottom: 22px;
-  color: #4caf50;
+  color: #22c55e;
   text-align: center;
 }
 
 #airdrop-status {
   font-size: 18px;
   text-align: center;
-  color: #fff;
+  color: #94a3b8;
 }
 
 #claim-airdrop {
   width: 100%;
   padding: 10px;
-  background-color: #5effe0;
-  color: lightgreen;
+  background: linear-gradient(135deg,#22c55e,#16a34a);
+  color: #022c22;
   font-size: 18px;
   border: none;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: background .3s ease;
 }
 
 #claim-airdrop:hover {
-  background-color: #5cd65c;
+  background: linear-gradient(135deg,#16a34a,#15803d);
 }
 
 #claim-airdrop.hidden {
@@ -1265,16 +1268,17 @@ button:active,
 
 .airdrop-box {
   padding: 20px;
-  background-color: #5effe0;
-  border-radius: 10px;
-  box-shadow: 0 4px 6px rgba(94, 255, 224, 0.1);
+  background: linear-gradient(180deg,#0b1220,#020617);
+  border: 1px solid #1e293b;
+  border-radius: 14px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.45);
   text-align: center;
   margin-top: 20px;
 }
 
 .airdrop-reward {
   font-size: 20px;
-  color: #ff9800;
+  color: #22c55e;
   margin-top: 15px;
 }
 
@@ -1282,4 +1286,5 @@ button:active,
 .airdrop-referral {
   margin-top: 20px;
   font-size: 16px;
-}
+  color: #e5e7eb;
+   }
