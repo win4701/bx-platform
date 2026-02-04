@@ -521,20 +521,17 @@ input{
 /* ---------- ACTION BUTTON ---------- */
 
 .action-btn {
-  width: 100%;
-  padding: 14px;
-  border-radius: 14px;
-  font-weight: bold;
-  border: none;
-  transition: 0.2s;
+  transition: background 0.2s ease;
 }
 
-.trade-box.buy .action-btn {
-  background: linear-gradient(135deg, #00c076, #00a85a);
+.action-btn.buy {
+  background: linear-gradient(135deg, #02c076, #16a34a);
+  color: #fff;
 }
 
-.trade-box.sell .action-btn {
-  background: linear-gradient(135deg, #ff5fa2, #ff3b7d);
+.action-btn.sell {
+  background: linear-gradient(135deg, #f84960, #dc2626);
+  color: #fff;
 }
 
 .trade-tabs button.active {
