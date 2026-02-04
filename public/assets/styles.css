@@ -841,78 +841,77 @@ input{
   z-index: 999;
 }
 
-/* =========================================================
-   PROMO / ADS SECTION
-========================================================= */
+/*==================================================================
+   AIRDROP PROMOS – FINAL 
+===================================================== */
 
-.promo-section{
-  margin-top:16px;
-  display:flex;
-  flex-direction:column;
-  gap:12px;
+.airdrop-promos {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin: 18px 16px;
 }
 
-.promo-card{
-  display:flex;
-  align-items:center;
-  gap:12px;
-  padding:14px;
-  border-radius:16px;
-  border:1px solid var(--border);
-  background:linear-gradient(180deg,#0b1f27,#081a21);
+.promo-card {
+  display: flex;
+  flex-direction: column;         
+  background: #0b1220;
+  border-radius: 18px;
+  overflow: hidden;
 }
 
-.promo-card.casino{
-  box-shadow:0 0 0 1px rgba(110,231,168,.25);
+.promo-card img {
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+  display: block;
 }
 
-.promo-card.gift{
-  box-shadow:0 0 0 1px rgba(250,204,21,.25);
+.promo-content {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.promo-card.hot{
-  box-shadow:0 0 0 1px rgba(255,99,132,.25);
+.promo-content h3 {
+  font-size: 16px;
+  font-weight: 800;
 }
 
-.promo-icon{
-  width:48px;
-  height:48px;
-  border-radius:12px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size:20px;
-  background:#081a21;
-  flex-shrink:0;
+.promo-content p {
+  font-size: 13px;
+  opacity: 0.85;
+  line-height: 1.5;
 }
 
-.promo-text{
-  display:flex;
-  flex-direction:column;
-  flex:1;
+.promo-btn {
+  margin-top: 10px;
+  width: 100%;
+  height: 42px;
+  border-radius: 14px;
+  font-weight: 800;
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: #000;
 }
 
-.promo-text strong{
-  font-size:14px;
-  font-weight:800;
-}
+/* ================= DESKTOP / TABLET ================= */
 
-.promo-text span{
-  font-size:12px;
-  color:var(--muted);
-}
+@media (min-width: 768px) {
+  .promo-card {
+    flex-direction: row;          
+    align-items: center;
+  }
 
-.promo-btn{
-  background:linear-gradient(180deg,#6ee7a8,#16a34a);
-  color:#042417;
-  border:0;
-  border-radius:12px;
-  padding:8px 12px;
-  font-size:12px;
-  font-weight:800;
-  cursor:pointer;
-}
+  .promo-card img {
+    width: 45%;
+    height: 100%;
+  }
 
+  .promo-content {
+    width: 55%;
+  }
+}
 /* =========================================================
    BOTTOM NAV
 ========================================================= */
