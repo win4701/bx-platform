@@ -1086,13 +1086,6 @@ button:active,
    AIRDROP PROMOS – FINAL RESPONSIVE FIX
 ================================================================================================ */
 
-.airdrop-promos {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-  margin: 18px 16px;
-}
-
 .promo-card {
   display: flex;
   flex-direction: column;         
@@ -1212,13 +1205,13 @@ button:active,
 }
 
 .airdrop-box img {
-  width: 56px;
+  width: 48px;
   margin: 0 auto 10px;
 }
 
 .airdrop-reward {
   font-size: 28px;
-  font-weight: 900;
+  font-weight: 800;
   color: #22c55e;
   margin: 12px 0;
 }  
