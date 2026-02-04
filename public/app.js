@@ -133,26 +133,35 @@ async function safeFetch(path, options = {}) {
 
 const VIEWS = ["wallet", "market", "casino", "mining", "airdrop"];
 
-/* ================= NAVIGATE ================= */
+/*================= APP ROUTER ================= */
 
-function navigate(view) {
-  // 1. إخفاء جميع الأقسام
-  document.querySelectorAll('section').forEach(s => s.classList.remove('active'));
-  
-  // 2. إظهار القسم المطلوب
-  const targetSection = document.getElementById(view);
-  if (targetSection) {
-    targetSection.classList.add('active');
-    APP.view = view; // تحديث الحالة العامة
-  } else {
-    console.error("القسم غير موجود: " + view);
+document.addEventListener("DOMContentLoaded", () => {
+  const views = document.querySelectorAll(".view");
+  const navButtons = document.querySelectorAll(".bottom-nav button");
+
+  function showView(id) {
+    views.forEach(v => v.classList.remove("active"));
+    const target = document.getElementById(id);
+    if (target) target.classList.add("active");
+
+    navButtons.forEach(b =>
+      b.classList.toggle("active", b.dataset.view === id)
+    );
+
+    // إشعار الأقسام (hooks)
+    document.dispatchEvent(new CustomEvent("view:change", { detail: id }));
   }
 
-  // 3. تحديث أزرار القائمة السفلية
-  document.querySelectorAll('.bottom-nav button').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.view === view);
+  navButtons.forEach(btn => {
+    btn.addEventListener("click", () => {
+      const view = btn.dataset.view;
+      if (view) showView(view);
+    });
   });
-}
+
+  // view افتراضي
+  showView("wallet");
+});
 
 
 /* ================= NAV BUTTONS ================= */
