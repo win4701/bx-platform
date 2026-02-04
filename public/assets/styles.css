@@ -36,12 +36,6 @@ body {
   font-family: system-ui, -apple-system, sans-serif;
 }
 
-img {
-  max-width: 100%;
-  height: auto;
-  display: block;
-}
-
 .game img,
 .promo-card img {
   aspect-ratio: 16 / 9;
@@ -57,6 +51,30 @@ img {
 body {
   overflow-x: hidden;
 }
+
+/* ===== VIEW SYSTEM (CRITICAL) ===== */
+.view {
+  display: none;
+  width: 100%;
+  min-height: calc(100vh - 80px);
+}
+
+.view.active {
+  display: block;
+}
+
+/* منع أي تمدد جانبي */
+html, body {
+  overflow-x: hidden;
+}
+
+/* أي صورة لا تكسر التصميم */
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
 /* =====================================================
    PART 2 — LAYOUT & NAVIGATION
 ===================================================== */
