@@ -689,12 +689,6 @@ input{
 
 /* ================= GLOBAL VIEW FIX ================= */
 
-.view{
-  min-height: 100vh;
-  padding-bottom: 120px; 
-  overflow-y: auto;
-}
-
 .view.card{
   overflow: visible;
 }
