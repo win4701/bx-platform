@@ -456,9 +456,34 @@ function updatePriceUI() {
   }
 }
 
-/* =========================
-   CHART
-========================= */
+/* ================= exchange ================= */
+
+const EXCHANGE_WS = "wss://YOUR-FLY-APP.fly.dev/ws/exchange";
+
+function connectExchange() {
+  MARKET.ws = new WebSocket(EXCHANGE_WS);
+
+  MARKET.ws.onmessage = e => {
+    const msg = JSON.parse(e.data);
+
+    if (msg.book) renderOrderBook(msg.book);
+    if (msg.trades) renderTrades(msg.trades);
+  };
+}
+
+function submitLimitOrder(amount, price) {
+  MARKET.ws.send(JSON.stringify({
+    type: "order",
+    uid: USER.uid,           // من auth
+    pair: MARKET.pair,
+    side: MARKET.side,
+    price,
+    amount
+  }));
+}
+
+/* =============== CHART ========================= */
+
 function initMarketChart() {
   const el = document.getElementById("marketChart");
   if (!el || MARKET.chart) return;
@@ -493,9 +518,8 @@ function initMarketChart() {
   });
 }
 
-/* =========================
-   CANDLE + VOLUME
-========================= */
+/* ============= CANDLE + VOLUME ================ */
+
 function updateLiveCandle() {
   if (!MARKET.candleSeries) return;
 
