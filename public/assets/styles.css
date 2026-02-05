@@ -400,7 +400,7 @@ input{
 
 .market-price{
   font-size:22px;
-  font-weight:800;
+  font-weight:900;
   letter-spacing:.4px;
 }
 
@@ -424,7 +424,7 @@ input{
   border:1px solid var(--border);
   color:var(--text-soft);
   font-size:13px;
-  font-weight:800;
+  font-weight:700;
   white-space:nowrap;
 }
 
@@ -528,7 +528,7 @@ input{
   border:1px solid var(--border);
   color:var(--text-soft);
   font-size:13px;
-  font-weight:800;
+  font-weight:900;
 }
 
 .percent-row button:hover{
@@ -538,33 +538,23 @@ input{
 
 /* ================= ACTION BUTTON ================= */
 
-.market .action-btn{
+.action-btn{
   width:100%;
-  min-height:48px;
+  height:46px;
   border-radius:14px;
   font-size:15px;
-  font-weight:800;
+  font-weight:900;
   border:none;
-
-  touch-action:manipulation;
-
-  transition:
-    background .18s ease,
-    box-shadow .18s ease,
-    transform .12s ease;
+  transition:all .2s ease;
 }
 
-.market .action-btn:active{
-  transform:scale(.95);
-}
-
-.market .action-btn.buy{
+.action-btn.buy{
   background:linear-gradient(135deg,var(--buy),var(--buy-dark));
   color:#fff;
   box-shadow:0 0 18px rgba(2,192,118,.45);
 }
 
-.market .action-btn.sell{
+.action-btn.sell{
   background:linear-gradient(135deg,var(--sell),var(--sell-dark));
   color:#fff;
   box-shadow:0 0 22px rgba(254,85,161,.5);
@@ -639,7 +629,7 @@ input{
 
 .market-price.flash-down{
   animation:priceDown .6s ease;
-   }
+}
    
 /* =========================================================
    CASINO – POSTER SYSTEM (MATCHES PROVIDED IMAGE)
