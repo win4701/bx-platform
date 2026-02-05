@@ -591,27 +591,6 @@ input{
   padding:12px;
 }
 
-.market .order-book{
-  font-size:13px;
-}
-
-.market .ob-header,
-.market .ob-row{
-  display:flex;
-  justify-content:space-between;
-}
-
-.market .ob-header{
-  color:#94a3b8;
-  margin-bottom:6px;
-}
-
-.market .ob-row{
-  padding:3px 0;
-}
-
-.market .ob-row.buy{ color:var(--buy); }
-.market .ob-row.sell{ color:var(--sell); }
 /* ================= RECENT TRADES ================= */
 
 .market .recent-trades{
