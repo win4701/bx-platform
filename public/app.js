@@ -177,49 +177,67 @@ function syncNavButtons(activeView) {
   });
 }
 
-/* ================= VIEW ENTER HOOK ================= */
+/* =========================
+   VIEW BINDING (SSOT)
+========================= */
 
-function onViewEnter(view) {
+let CURRENT_VIEW = null;
+
+document.addEventListener("view:change", (e) => {
+  const view = e.detail;
+  if (!view || view === CURRENT_VIEW) return;
+
+  log.info("VIEW CHANGE:", CURRENT_VIEW, "→", view);
+
+   /* ========= EXIT OLD VIEW ========= */
+  switch (CURRENT_VIEW) {
+    case "market":
+      stopMarket();
+      if (MARKET.ws) {
+        MARKET.ws.close();
+        MARKET.ws = null;
+        log.info("Market WS closed");
+      }
+      break;
+  }
+
+   /* ========= ENTER NEW VIEW ========= */
   switch (view) {
     case "wallet":
-      if (typeof loadWallet === "function") loadWallet();
+      loadWallet();
       break;
 
     case "market":
-  if (typeof initMarket === "function") initMarket();
-  startMarket();          
-  break;
+      initMarket();
+      startMarket();
+      connectExchange();   
+
+      // إصلاح chart (بعد إظهار view)
+      setTimeout(() => {
+        if (MARKET.chart) {
+          MARKET.chart.applyOptions({
+            width: document.getElementById("marketChart").clientWidth
+          });
+        }
+      }, 80);
+      break;
 
     case "casino":
-      if (typeof initCasino === "function") initCasino();
+      initCasino();
       break;
 
     case "mining":
-      if (typeof renderMining === "function") renderMining();
+      renderMining();
       break;
 
     case "airdrop":
-      if (typeof initAirdrop === "function") initAirdrop();
+      loadAirdrop();
       break;
   }
-}
 
-/* ================= BIND NAVIGATION ================= */
+  CURRENT_VIEW = view;
+});
 
-function bindNavigation() {
-  const buttons = $$(".bottom-nav button");
-
-  buttons.forEach(btn => {
-    const view = btn.dataset.view;
-    if (!view) return;
-
-    btn.addEventListener("click", () => {
-      navigate(view);
-    });
-  });
-
-  log.info("Navigation bound");
-}
 /* =========================================================
    PART 3 — WALLET (General Update)
 ========================================================= */
