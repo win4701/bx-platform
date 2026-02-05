@@ -1130,9 +1130,9 @@ button:active,
 
 /* ================= CASINO CARD – VERTICAL FIX ================= */
 
-.casino-card{
+.min-card{
   display: flex;
-  flex-direction: column;     /* 🔥 عمودي */
+  flex-direction: column;     
   width: 100%;
   max-width: 100%;
   background: linear-gradient(180deg,#0b1220,#020617);
@@ -1142,27 +1142,27 @@ button:active,
   margin-bottom: 20px;
 }
 
-.casino-card img{
+.min-card img{
   width: 100%;
   height: auto;
   display: block;
   object-fit: cover;          
 }
 
-.casino-card h3{
+.min-card h3{
   margin: 14px 16px 6px;
   font-size: 18px;
   font-weight: 800;
 }
 
-.casino-card p{
+.min-card p{
   margin: 0 16px 14px;
   font-size: 14px;
   color: #9ca3af;
   line-height: 1.4;
 }
 
-.casino-card button{
+.min-card button{
   margin: 0 16px 16px;
   height: 40px;
   border-radius: 14px;
