@@ -369,14 +369,11 @@ document.addEventListener("DOMContentLoaded", () => {
    PART 4 — MARKET + CASINO (General Update)
 =================================*/
 
-/* =========================================================
-   MARKET — FINAL CLEAN UPDATE
-========================================================= */
-
 const MARKET = {
   pair: "BX/USDT",
   side: "buy",
   price: 0,
+  prevPrice: 0,
 
   chart: null,
   candleSeries: null,
@@ -405,14 +402,14 @@ function initMarket() {
 ========================= */
 function bindMarketPairs() {
   document.querySelectorAll("[data-pair]").forEach(btn => {
-    btn.addEventListener("click", () => {
+    btn.onclick = () => {
       const pair = btn.dataset.pair;
       if (!pair || pair === MARKET.pair) return;
 
       MARKET.pair = pair;
       updatePairLabel();
       reloadMarket();
-    });
+    };
   });
 }
 
@@ -426,37 +423,39 @@ function updatePairLabel() {
 }
 
 /* =========================
-   PRICE (SSOT)
+   PRICE (UI SAFE UPDATE)
 ========================= */
 async function fetchMarketPrice() {
   const data = await safeFetch(`/market/quote?pair=${MARKET.pair}`);
   if (!data || typeof data.price !== "number") return;
 
+  MARKET.prevPrice = MARKET.price;
   MARKET.price = data.price;
 
   const el = document.getElementById("marketPrice");
-  if (el) el.textContent = MARKET.price.toFixed(6);
+  if (el) {
+    el.textContent = MARKET.price.toFixed(6);
+    el.classList.remove("up", "down");
 
-  if (MARKET.candleSeries) {
-    const t = Math.floor(Date.now() / 1000);
-    MARKET.candleSeries.update({
-      time: t,
-      open: data.price,
-      high: data.price,
-      low: data.price,
-      close: data.price
-    });
+    if (MARKET.prevPrice) {
+      el.classList.add(
+        MARKET.price > MARKET.prevPrice ? "up" : "down"
+      );
+    }
   }
+
+  updateLiveCandle(MARKET.price);
 }
 
 /* =========================
-   CHART (CANDLES)
+   CHART
 ========================= */
 function initMarketChart() {
   const el = document.getElementById("marketChart");
   if (!el || MARKET.chart) return;
 
   MARKET.chart = LightweightCharts.createChart(el, {
+    height: 300,
     layout: {
       background: { color: "#020617" },
       textColor: "#94a3b8"
@@ -479,7 +478,24 @@ function initMarketChart() {
 }
 
 /* =========================
-   BUY / SELL (UI)
+   CANDLE UPDATE (SAFE)
+========================= */
+function updateLiveCandle(price) {
+  if (!MARKET.candleSeries) return;
+
+  const t = Math.floor(Date.now() / 1000);
+
+  MARKET.candleSeries.update({
+    time: t,
+    open: MARKET.prevPrice || price,
+    high: Math.max(MARKET.prevPrice || price, price),
+    low: Math.min(MARKET.prevPrice || price, price),
+    close: price
+  });
+}
+
+/* =========================
+   BUY / SELL (UI ONLY – SAFE)
 ========================= */
 function bindTradeTabs() {
   document.getElementById("buyTab")?.addEventListener("click", () => setSide("buy"));
@@ -500,7 +516,7 @@ function setSide(side) {
 }
 
 /* =========================
-   LIFECYCLE
+   LIFECYCLE (NO BREAK)
 ========================= */
 function startMarket() {
   if (MARKET.timer) return;
@@ -516,7 +532,15 @@ function stopMarket() {
 }
 
 async function reloadMarket() {
-  await fetchMarketPrice();
+  stopMarket();
+  MARKET.price = 0;
+  MARKET.prevPrice = 0;
+
+  const el = document.getElementById("marketPrice");
+  if (el) el.textContent = "--";
+
+  fetchMarketPrice();
+  startMarket();
 }
 
 /* =================================================
