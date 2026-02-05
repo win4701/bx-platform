@@ -1,15 +1,19 @@
 /*=========================================================
-   PART 4 — MARKET + CASINO (General Update)
-=================================*/
+   MARKET — FINAL STABLE (SAFE / NO BREAK)
+=========================================================*/
 
 const MARKET = {
   pair: "BX/USDT",
   side: "buy",
+
   price: 0,
   prevPrice: 0,
 
   chart: null,
   candleSeries: null,
+  volumeSeries: null,
+
+  trades: [],
 
   timer: null,
   initialized: false
@@ -56,7 +60,7 @@ function updatePairLabel() {
 }
 
 /* =========================
-   PRICE (UI SAFE UPDATE)
+   PRICE + CANDLE
 ========================= */
 async function fetchMarketPrice() {
   const data = await safeFetch(`/market/quote?pair=${MARKET.pair}`);
@@ -65,19 +69,25 @@ async function fetchMarketPrice() {
   MARKET.prevPrice = MARKET.price;
   MARKET.price = data.price;
 
-  const el = document.getElementById("marketPrice");
-  if (el) {
-    el.textContent = MARKET.price.toFixed(6);
-    el.classList.remove("up", "down");
-
-    if (MARKET.prevPrice) {
-      el.classList.add(
-        MARKET.price > MARKET.prevPrice ? "up" : "down"
-      );
-    }
-  }
-
+  updatePriceUI();
   updateLiveCandle(MARKET.price);
+}
+
+/* =========================
+   PRICE UI
+========================= */
+function updatePriceUI() {
+  const el = document.getElementById("marketPrice");
+  if (!el) return;
+
+  el.textContent = MARKET.price.toFixed(6);
+  el.classList.remove("up", "down");
+
+  if (MARKET.prevPrice) {
+    el.classList.add(
+      MARKET.price > MARKET.prevPrice ? "up" : "down"
+    );
+  }
 }
 
 /* =========================
@@ -108,10 +118,16 @@ function initMarketChart() {
     wickDownColor: "#ef4444",
     borderVisible: false
   });
+
+  MARKET.volumeSeries = MARKET.chart.addHistogramSeries({
+    priceFormat: { type: "volume" },
+    priceScaleId: "",
+    scaleMargins: { top: 0.75, bottom: 0 }
+  });
 }
 
 /* =========================
-   CANDLE UPDATE (SAFE)
+   CANDLE UPDATE
 ========================= */
 function updateLiveCandle(price) {
   if (!MARKET.candleSeries) return;
@@ -128,18 +144,47 @@ function updateLiveCandle(price) {
 }
 
 /* =========================
-   BUY / SELL (UI ONLY – SAFE)
+   VOLUME (BX TRADES)
+========================= */
+function pushTrade(trade) {
+  MARKET.trades.unshift(trade);
+  MARKET.trades.splice(20);
+
+  updateVolume(trade);
+}
+
+function updateVolume(trade) {
+  if (!MARKET.volumeSeries) return;
+
+  MARKET.volumeSeries.update({
+    time: Math.floor(trade.time || Date.now() / 1000),
+    value: trade.amount,
+    color:
+      trade.side === "buy"
+        ? "rgba(34,197,94,0.8)"
+        : "rgba(239,68,68,0.8)"
+  });
+}
+
+/* =========================
+   BUY / SELL UI
 ========================= */
 function bindTradeTabs() {
-  document.getElementById("buyTab")?.addEventListener("click", () => setSide("buy"));
-  document.getElementById("sellTab")?.addEventListener("click", () => setSide("sell"));
+  document.getElementById("buyTab")
+    ?.addEventListener("click", () => setSide("buy"));
+
+  document.getElementById("sellTab")
+    ?.addEventListener("click", () => setSide("sell"));
 }
 
 function setSide(side) {
   MARKET.side = side;
 
-  document.getElementById("buyTab")?.classList.toggle("active", side === "buy");
-  document.getElementById("sellTab")?.classList.toggle("active", side === "sell");
+  document.getElementById("buyTab")
+    ?.classList.toggle("active", side === "buy");
+
+  document.getElementById("sellTab")
+    ?.classList.toggle("active", side === "sell");
 
   const btn = document.getElementById("actionBtn");
   if (btn) {
@@ -149,7 +194,7 @@ function setSide(side) {
 }
 
 /* =========================
-   LIFECYCLE (NO BREAK)
+   LIFECYCLE (SAFE)
 ========================= */
 function startMarket() {
   if (MARKET.timer) return;
@@ -166,6 +211,7 @@ function stopMarket() {
 
 async function reloadMarket() {
   stopMarket();
+
   MARKET.price = 0;
   MARKET.prevPrice = 0;
 
@@ -174,5 +220,4 @@ async function reloadMarket() {
 
   fetchMarketPrice();
   startMarket();
-      }
-      
+}
