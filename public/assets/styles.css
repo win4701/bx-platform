@@ -500,6 +500,9 @@ input{
   overflow: hidden;
 }
 
+.market-price.up { color:#22c55e; }
+.market-price.down { color:#ef4444; }
+
 /* ---------- PERCENT BUTTONS ---------- */
 .percent-row{
   display:flex;
