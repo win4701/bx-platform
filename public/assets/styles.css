@@ -609,6 +609,28 @@ input{
 .recent-trades .buy{ color:var(--buy); }
 .recent-trades .sell{ color:var(--sell); }
 
+/*==================================================*/
+
+@keyframes priceUp {
+  0%   { background:rgba(2,192,118,.0); }
+  30%  { background:rgba(2,192,118,.25); }
+  100% { background:rgba(2,192,118,0); }
+}
+
+@keyframes priceDown {
+  0%   { background:rgba(254,85,161,0); }
+  30%  { background:rgba(254,85,161,.25); }
+  100% { background:rgba(254,85,161,0); }
+}
+
+.market-price.flash-up{
+  animation:priceUp .6s ease;
+}
+
+.market-price.flash-down{
+  animation:priceDown .6s ease;
+   }
+
 
 /* =========================================================
    CASINO – POSTER SYSTEM (MATCHES PROVIDED IMAGE)
