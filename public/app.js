@@ -347,7 +347,7 @@ function bindWalletConnections() {
 }
 
 function onWalletConnect() {
-  // mock
+  // mock connect (جاهز للربط الحقيقي)
   CONNECTIONS.walletconnect.connected = true;
   renderWalletConnections();
 
@@ -369,98 +369,134 @@ document.addEventListener("DOMContentLoaded", () => {
    PART 4 — MARKET + CASINO (General Update)
 =================================*/
 
-/* ===================== MARKET ENGINE ===================== */
+/* =========================================================
+   MARKET — FINAL CLEAN UPDATE
+========================================================= */
 
-const marketState = {
-  pair: 'BX/USDT',
-  price: 0.00012,
-  candles: [],
-  orderBook: { bids: [], asks: [] }
+const MARKET = {
+  pair: "BX/USDT",
+  side: "buy",
+  price: 0,
+
+  chart: null,
+  candleSeries: null,
+
+  timer: null,
+  initialized: false
 };
 
-/* -------- CHART (Candles Canvas) -------- */
-const canvas = document.getElementById('marketChart');
-const ctx = canvas?.getContext('2d');
+/* =========================
+   INIT
+========================= */
+function initMarket() {
+  if (MARKET.initialized) return;
+  MARKET.initialized = true;
 
-function drawChart() {
-  if (!ctx) return;
-  ctx.clearRect(0,0,canvas.width,canvas.height);
+  bindMarketPairs();
+  bindTradeTabs();
+  initMarketChart();
+  updatePairLabel();
 
-  const w = canvas.width / marketState.candles.length;
-  marketState.candles.forEach((c,i)=>{
-    const x = i * w + w/2;
-    const high = canvas.height - c.h * 1000000;
-    const low  = canvas.height - c.l * 1000000;
-    const open = canvas.height - c.o * 1000000;
-    const close= canvas.height - c.c * 1000000;
+  console.log("[Market] initialized");
+}
 
-    ctx.strokeStyle = c.c >= c.o ? '#02C076' : '#F84960';
-    ctx.beginPath();
-    ctx.moveTo(x, high);
-    ctx.lineTo(x, low);
-    ctx.stroke();
+/* =========================
+   PAIRS
+========================= */
+function bindMarketPairs() {
+  document.querySelectorAll("[data-pair]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const pair = btn.dataset.pair;
+      if (!pair || pair === MARKET.pair) return;
 
-    ctx.lineWidth = w/3;
-    ctx.beginPath();
-    ctx.moveTo(x, open);
-    ctx.lineTo(x, close);
-    ctx.stroke();
+      MARKET.pair = pair;
+      updatePairLabel();
+      reloadMarket();
+    });
   });
 }
 
-/* -------- ORDER BOOK -------- */
-function renderOrderBook() {
-  const bids = document.getElementById('bids');
-  const asks = document.getElementById('asks');
-  if (!bids || !asks) return;
+function updatePairLabel() {
+  document.querySelectorAll("[data-pair]").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.pair === MARKET.pair);
+  });
 
-  bids.innerHTML = marketState.orderBook.bids
-    .map(o=>`<div class="row"><span>${o.p}</span><span>${o.q}</span></div>`).join('');
-
-  asks.innerHTML = marketState.orderBook.asks
-    .map(o=>`<div class="row"><span>${o.p}</span><span>${o.q}</span></div>`).join('');
+  const label = document.getElementById("marketPair");
+  if (label) label.textContent = MARKET.pair.replace("/", " / ");
 }
 
-/* -------- MOCK WEBSOCKET -------- */
-setInterval(()=>{
-  const last = marketState.price;
-  const next = +(last + (Math.random()-0.5)*0.000002).toFixed(6);
-  marketState.price = next;
+/* =========================
+   PRICE (SSOT)
+========================= */
+async function fetchMarketPrice() {
+  const data = await safeFetch(`/market/quote?pair=${MARKET.pair}`);
+  if (!data || typeof data.price !== "number") return;
 
-  const candle = {
-    o:last,
-    c:next,
-    h:Math.max(last,next),
-    l:Math.min(last,next)
-  };
-  marketState.candles.push(candle);
-  if (marketState.candles.length > 30) marketState.candles.shift();
+  MARKET.price = data.price;
 
-  marketState.orderBook.bids = Array.from({length:5},(_,i)=>({
-    p:(next - i*0.000001).toFixed(6),
-    q:(Math.random()*100).toFixed(2)
-  }));
+  const el = document.getElementById("marketPrice");
+  if (el) el.textContent = MARKET.price.toFixed(6);
 
-  marketState.orderBook.asks = Array.from({length:5},(_,i)=>({
-    p:(next + i*0.000001).toFixed(6),
-    q:(Math.random()*100).toFixed(2)
-  }));
+  if (MARKET.candleSeries) {
+    const t = Math.floor(Date.now() / 1000);
+    MARKET.candleSeries.update({
+      time: t,
+      open: data.price,
+      high: data.price,
+      low: data.price,
+      close: data.price
+    });
+  }
+}
 
-  const priceEl = document.querySelector('.last-price');
-  if (priceEl) priceEl.textContent = next.toFixed(6);
+/* =========================
+   CHART (CANDLES)
+========================= */
+function initMarketChart() {
+  const el = document.getElementById("marketChart");
+  if (!el || MARKET.chart) return;
 
-  drawChart();
-  renderOrderBook();
-}, 1000);
-
-/* -------- INIT -------- */
-for(let i=0;i<20;i++){
-  marketState.candles.push({
-    o:marketState.price,
-    c:marketState.price,
-    h:marketState.price,
-    l:marketState.price
+  MARKET.chart = LightweightCharts.createChart(el, {
+    layout: {
+      background: { color: "#020617" },
+      textColor: "#94a3b8"
+    },
+    grid: {
+      vertLines: { color: "#0f172a" },
+      horzLines: { color: "#0f172a" }
+    },
+    rightPriceScale: { borderColor: "#1e293b" },
+    timeScale: { borderColor: "#1e293b", timeVisible: true }
   });
+
+  MARKET.candleSeries = MARKET.chart.addCandlestickSeries({
+    upColor: "#22c55e",
+    downColor: "#ef4444",
+    wickUpColor: "#22c55e",
+    wickDownColor: "#ef4444",
+    borderVisible: false
+  });
+}
+
+/* =========================
+   BUY / SELL (UI)
+========================= */
+function bindTradeTabs() {
+  document.getElementById("buyTab")?.addEventListener("click", () => setSide("buy"));
+  document.getElementById("sellTab")?.addEventListener("click", () => setSide("sell"));
+}
+
+function setSide(side) {
+  MARKET.side = side;
+
+  document.getElementById("buyTab")?.classList.toggle("active", side === "buy");
+  document.getElementById("sellTab")?.classList.toggle("active", side === "sell");
+
+  const btn = document.getElementById("actionBtn");
+  if (btn) {
+    btn.textContent = side === "buy" ? "Buy BX" : "Sell BX";
+    btn.className = `action-btn ${side}`;
+  }
 }
 
 /* =========================
