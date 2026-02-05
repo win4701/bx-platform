@@ -1,6 +1,6 @@
 # ======================================================
 # casino.py
-# Core Casino Logic (Hardened – Production Safe)
+# Casino Engine — 12 Games (Telegram Compatible)
 # ======================================================
 
 import time
@@ -19,52 +19,52 @@ from finance import casino_debit, casino_credit, casino_history, rtp_stats
 router = APIRouter(dependencies=[Depends(api_guard)])
 
 # ======================================================
-# CONFIG (SAFE)
+# CONFIG
 # ======================================================
 
 SERVER_SEED = os.getenv("SERVER_SEED")
 if not SERVER_SEED:
-    raise RuntimeError("SERVER_SEED must be set for casino security")
+    raise RuntimeError("SERVER_SEED must be set")
 
 GAME_FREEZE = bool(int(os.getenv("GAME_FREEZE", "0")))
 AUDIT_MODE  = bool(int(os.getenv("AUDIT_MODE", "0")))
 
 # ======================================================
-# GAME INDEX (12 GAMES – FIXED)
+# GAME INDEX (12 GAMES — FINAL)
 # ======================================================
 
 GAME_INDEX = {
     "coinflip": 1,
-    "roulette": 2,
+    "crash": 2,
     "limbo": 3,
-    "chicken": 4,
-    "dice": 5,
-    "crash": 6,
-    "slot": 7,
-    "fortune": 8,
-    "coins4x4": 9,
-    "plinko": 10,
-    "hilo": 11,
-    "airboss": 12,
+    "dice": 4,
+    "slot": 5,
+    "plinko": 6,
+    "hilo": 7,
+    "airboss": 8,
+    "fruit_party": 9,
+    "banana_farm": 10,
+    "blackjack_fast": 11,
+    "birds_party": 12,
 }
 
 # ======================================================
-# RTP
+# RTP (THEORETICAL)
 # ======================================================
 
 RTP = {
     "coinflip": 0.35,
-    "roulette": 0.32,
-    "limbo": 0.34,
-    "chicken": 0.31,
-    "dice": 0.36,
     "crash": 0.33,
+    "limbo": 0.34,
+    "dice": 0.36,
     "slot": 0.34,
-    "fortune": 0.31,
-    "coins4x4": 0.31,
     "plinko": 0.31,
     "hilo": 0.31,
     "airboss": 0.31,
+    "fruit_party": 0.32,
+    "banana_farm": 0.32,
+    "blackjack_fast": 0.30,
+    "birds_party": 0.31,
 }
 
 def probability(multiplier: float, game: str) -> float:
@@ -83,7 +83,7 @@ def provably_random(seed: str, nonce: int) -> float:
     return int(h[:8], 16) / 0xFFFFFFFF
 
 # ======================================================
-# CLIENT SEED RULE
+# CLIENT SEED
 # ======================================================
 
 def parse_client_seed(seed: str) -> int:
@@ -108,77 +108,47 @@ class PlayRequest(BaseModel):
     client_seed: str
 
 # ======================================================
-# GAME LOGIC (UNCHANGED)
+# GAME LOGIC (12)
 # ======================================================
 
-def play_coinflip(bet, rand):
-    win = rand <= probability(2, "coinflip")
-    return win, bet * 2 if win else 0
-
-def play_crash(bet, m, rand):
-    if m < 1.01 or m > 100:
-        raise HTTPException(400, "INVALID_MULTIPLIER")
-    win = rand <= probability(m, "crash")
+def simple_rng(bet, m, rand, game):
+    win = rand <= probability(m, game)
     return win, bet * m if win else 0
 
-def play_limbo(bet, m, rand):
-    if m <= 1:
-        raise HTTPException(400, "INVALID_TARGET")
-    win = rand <= (0.99 / m)
-    return win, bet * m if win else 0
-
-def play_dice(bet, m, rand):
-    if m < 1.01 or m > 100:
-        raise HTTPException(400, "INVALID_MULTIPLIER")
-    win = rand <= probability(m, "dice")
-    return win, bet * m if win else 0
-
-def play_slot(bet, rand):
+def play_slot_like(bet, rand):
     if rand < 0.7:
         return False, 0
     if rand < 0.9:
         return True, bet * 2
     if rand < 0.97:
         return True, bet * 5
-    if rand < 0.995:
-        return True, bet * 20
-    return True, bet * 100
+    return True, bet * 10
 
-def play_plinko(bet, m, rand):
-    if m < 1.5 or m > 10:
-        raise HTTPException(400, "INVALID_MULTIPLIER")
-    win = rand <= probability(m, "plinko")
-    return win, bet * m if win else 0
-
-def play_hilo(bet, choice, rand):
-    if choice not in ("high", "low"):
-        raise HTTPException(400, "INVALID_CHOICE")
-    win = rand <= probability(2, "hilo")
+def play_blackjack_fast(bet, rand):
+    win = rand < 0.48
     return win, bet * 2 if win else 0
 
-def play_airboss(bet, m, rand):
-    if m < 1.2 or m > 50:
-        raise HTTPException(400, "INVALID_MULTIPLIER")
-    win = rand <= probability(m, "airboss")
-    return win, bet * m if win else 0
-
 # ======================================================
-# GAME REGISTRY (8 EXECUTABLE)
+# GAME REGISTRY
 # ======================================================
 
 GAMES = {
-    "coinflip": lambda r, rand: play_coinflip(r.bet, rand),
-    "crash":    lambda r, rand: play_crash(r.bet, r.multiplier or 2, rand),
-    "limbo":    lambda r, rand: play_limbo(r.bet, r.multiplier or 2, rand),
-    "dice":     lambda r, rand: play_dice(r.bet, r.multiplier or 2, rand),
-    "slot":     lambda r, rand: play_slot(r.bet, rand),
-    "plinko":   lambda r, rand: play_plinko(r.bet, r.multiplier or 2, rand),
-    "hilo":     lambda r, rand: play_hilo(r.bet, r.choice, rand),
-    "airboss":  lambda r, rand: play_airboss(r.bet, r.multiplier or 2, rand),
+    "coinflip":       lambda r, rand: simple_rng(r.bet, 2, rand, "coinflip"),
+    "crash":          lambda r, rand: simple_rng(r.bet, r.multiplier or 2, rand, "crash"),
+    "limbo":          lambda r, rand: simple_rng(r.bet, r.multiplier or 2, rand, "limbo"),
+    "dice":           lambda r, rand: simple_rng(r.bet, r.multiplier or 2, rand, "dice"),
+    "slot":           lambda r, rand: play_slot_like(r.bet, rand),
+    "plinko":         lambda r, rand: simple_rng(r.bet, r.multiplier or 2, rand, "plinko"),
+    "hilo":           lambda r, rand: simple_rng(r.bet, 2, rand, "hilo"),
+    "airboss":        lambda r, rand: simple_rng(r.bet, r.multiplier or 2, rand, "airboss"),
+    "fruit_party":    lambda r, rand: play_slot_like(r.bet, rand),
+    "banana_farm":    lambda r, rand: play_slot_like(r.bet, rand),
+    "blackjack_fast": lambda r, rand: play_blackjack_fast(r.bet, rand),
+    "birds_party":    lambda r, rand: simple_rng(r.bet, 2, rand, "birds_party"),
 }
 
 # ======================================================
-# PLAY ENDPOINT (SAFE)
+# PLAY ENDPOINT
 # ======================================================
 
 @router.post("/play")
@@ -204,27 +174,31 @@ def play(req: PlayRequest):
         if win:
             casino_credit(req.uid, payout, req.game)
     finally:
-        casino_history(req.uid, req.game, req.bet, payout if win else 0, win)
+        casino_history(
+            req.uid,
+            req.game,
+            req.bet,
+            payout if win else 0,
+            win
+        )
 
-    response = {
+    return {
         "game": req.game,
         "win": win,
         "payout": payout if win else 0,
         "seed": seed,
-        "numeric": numeric,
         "nonce": nonce,
         "server_seed_hash": server_seed_hash()
     }
 
-    if AUDIT_MODE:
-        response["audit"] = {"rand": rand}
-
-    return response
-
 # ======================================================
-# ADMIN – RTP
+# ADMIN
 # ======================================================
 
 @router.get("/admin/rtp", dependencies=[Depends(admin_guard)])
-def live_rtp():
-    return {"theoretical": RTP, "real": rtp_stats()}
+def admin_rtp():
+    return {
+        "enabled_games": list(GAMES.keys()),
+        "theoretical": RTP,
+        "real": rtp_stats()
+    }
