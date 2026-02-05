@@ -611,17 +611,9 @@ input{
 
 ================= RECENT key ================= */
 
-  @keyframes priceUp {
-  0%   { background:rgba(2,192,118,.0); }
-  30%  { background:rgba(2,192,118,.25); }
-  100% { background:rgba(2,192,118,0); }
-}
+.market-price.up { color:#02c076; }
 
-@keyframes priceDown {
-  0%   { background:rgba(254,85,161,0); }
-  30%  { background:rgba(254,85,161,.25); }
-  100% { background:rgba(254,85,161,0); }
-}
+.market-price.down { color:#FE55A1; }
 
 .market-price.flash-up{
   animation:priceUp .6s ease;
