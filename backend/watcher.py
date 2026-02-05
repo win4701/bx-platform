@@ -9,7 +9,7 @@ from key import api_guard, admin_guard
 # ======================================================
 # ROUTER
 # ======================================================
-router = APIRouter(dependencies=[Depends(api_guard)])
+router = APIRouter(prefix="/watcher", dependencies=[Depends(api_guard)])
 
 # ======================================================
 # CONFIG
@@ -17,29 +17,33 @@ router = APIRouter(dependencies=[Depends(api_guard)])
 DB_PATH = os.getenv("DB_PATH", "db/db.sqlite")
 
 MIN_WITHDRAW_USDT = 10.0
-MAX_WITHDRAW_RATIO = 0.5       # 50%
+MAX_WITHDRAW_RATIO = 0.5        # 50%
 MAX_WITHDRAW_MONTH = 15
 
 ALLOWED_ASSETS = {"usdt", "ton", "sol", "btc", "eth", "bnb", "bx"}
 
 # ======================================================
-# DB
+# DB HELPERS (FLY SAFE)
 # ======================================================
 def db():
     return sqlite3.connect(DB_PATH, check_same_thread=False)
 
 def get_cursor():
     conn = db()
+    conn.row_factory = sqlite3.Row
     return conn.cursor(), conn
 
-def close_connection(conn):
+def close(conn):
     conn.commit()
     conn.close()
 
 # ======================================================
-# LEDGER (DOUBLE ENTRY)
+# LEDGER (DOUBLE ENTRY — SAFE)
 # ======================================================
 def ledger(ref: str, debit_account: str, credit_account: str, amount: float):
+    if amount <= 0:
+        return
+
     ts = int(time.time())
     c, conn = get_cursor()
     try:
@@ -54,10 +58,10 @@ def ledger(ref: str, debit_account: str, credit_account: str, amount: float):
     except Exception:
         raise HTTPException(500, "LEDGER_ERROR")
     finally:
-        close_connection(conn)
+        close(conn)
 
 # ======================================================
-# CREDIT DEPOSIT
+# CREDIT DEPOSIT (IDEMPOTENT)
 # ======================================================
 def credit_deposit(uid: int, asset: str, amount: float, txid: str):
     if amount <= 0:
@@ -69,8 +73,10 @@ def credit_deposit(uid: int, asset: str, amount: float, txid: str):
 
     c, conn = get_cursor()
     try:
+        # idempotency
         if c.execute(
-            "SELECT 1 FROM used_txs WHERE txid=?", (txid,)
+            "SELECT 1 FROM used_txs WHERE txid=?",
+            (txid,)
         ).fetchone():
             return
 
@@ -80,7 +86,8 @@ def credit_deposit(uid: int, asset: str, amount: float, txid: str):
         )
 
         c.execute(
-            """INSERT INTO history (uid, action, asset, amount, ref, ts)
+            """INSERT INTO history
+               (uid, action, asset, amount, ref, ts)
                VALUES (?,?,?,?,?,?)""",
             (uid, "deposit", asset, amount, txid, int(time.time()))
         )
@@ -88,16 +95,16 @@ def credit_deposit(uid: int, asset: str, amount: float, txid: str):
         ledger(f"deposit:{asset}", f"treasury_{asset}", f"user_{asset}", amount)
 
         c.execute(
-            "INSERT OR IGNORE INTO used_txs(txid, asset, ts) VALUES (?,?,?)",
+            "INSERT INTO used_txs(txid, asset, ts) VALUES (?,?,?)",
             (txid, asset, int(time.time()))
         )
     except Exception as e:
         raise HTTPException(500, str(e))
     finally:
-        close_connection(conn)
+        close(conn)
 
 # ======================================================
-# SAVE PENDING DEPOSIT
+# PENDING DEPOSITS
 # ======================================================
 def save_pending_deposit(uid: int, asset: str, amount: float, txid: str, reason: str):
     asset = asset.lower()
@@ -112,13 +119,11 @@ def save_pending_deposit(uid: int, asset: str, amount: float, txid: str, reason:
                VALUES (?,?,?,?,?,?)""",
             (txid, uid, asset, amount, reason, int(time.time()))
         )
-    except Exception:
-        raise HTTPException(500, "PENDING_DEPOSIT_ERROR")
     finally:
-        close_connection(conn)
+        close(conn)
 
 # ======================================================
-# USER WALLET
+# USER WALLET (READ)
 # ======================================================
 @router.get("/me")
 def wallet_me(uid: int):
@@ -133,13 +138,11 @@ def wallet_me(uid: int):
             raise HTTPException(404, "WALLET_NOT_FOUND")
 
         return {
-            "wallet": dict(zip(
-                ["usdt", "ton", "sol", "bnb", "eth", "btc", "bx"], r
-            )),
+            "wallet": dict(r),
             "deposit_status": "confirmed"
         }
     finally:
-        close_connection(conn)
+        close(conn)
 
 # ======================================================
 # WITHDRAW VALIDATION
@@ -151,26 +154,27 @@ def validate_withdraw(uid: int, amount: float):
     c, conn = get_cursor()
     try:
         bal = c.execute(
-            "SELECT usdt FROM wallets WHERE uid=?", (uid,)
+            "SELECT usdt FROM wallets WHERE uid=?",
+            (uid,)
         ).fetchone()
 
         if not bal:
             raise HTTPException(404, "WALLET_NOT_FOUND")
 
-        if amount > bal[0] * MAX_WITHDRAW_RATIO:
+        if amount > bal["usdt"] * MAX_WITHDRAW_RATIO:
             raise HTTPException(400, "WITHDRAW_LIMIT_50_PERCENT")
 
         month_start = int(time.time()) - 30 * 86400
         count = c.execute(
-            """SELECT COUNT(*) FROM withdraw_queue
+            """SELECT COUNT(*) AS c FROM withdraw_queue
                WHERE uid=? AND status='sent' AND ts>?""",
             (uid, month_start)
-        ).fetchone()[0]
+        ).fetchone()["c"]
 
         if count >= MAX_WITHDRAW_MONTH:
             raise HTTPException(400, "WITHDRAW_MONTH_LIMIT")
     finally:
-        close_connection(conn)
+        close(conn)
 
 # ======================================================
 # WITHDRAW REQUEST
@@ -189,10 +193,10 @@ def request_withdraw(uid: int, amount: float, address: str):
         )
         return {"status": "requested"}
     finally:
-        close_connection(conn)
+        close(conn)
 
 # ======================================================
-# ADMIN — DEPOSITS
+# ADMIN — PENDING DEPOSITS
 # ======================================================
 @router.get("/admin/pending", dependencies=[Depends(admin_guard)])
 def admin_pending():
@@ -202,7 +206,7 @@ def admin_pending():
             "SELECT * FROM pending_deposits ORDER BY ts DESC"
         ).fetchall()
     finally:
-        close_connection(conn)
+        close(conn)
 
 @router.post("/admin/approve", dependencies=[Depends(admin_guard)])
 def admin_approve(txid: str):
@@ -216,8 +220,7 @@ def admin_approve(txid: str):
         if not row:
             raise HTTPException(404, "NOT_FOUND")
 
-        uid, asset, amount = row
-        credit_deposit(uid, asset, amount, txid)
+        credit_deposit(row["uid"], row["asset"], row["amount"], txid)
 
         c.execute(
             "DELETE FROM pending_deposits WHERE txid=?",
@@ -225,7 +228,7 @@ def admin_approve(txid: str):
         )
         return {"status": "approved"}
     finally:
-        close_connection(conn)
+        close(conn)
 
 # ======================================================
 # ADMIN — WITHDRAW
@@ -238,7 +241,7 @@ def admin_withdrawals():
             "SELECT * FROM withdraw_queue ORDER BY ts DESC"
         ).fetchall()
     finally:
-        close_connection(conn)
+        close(conn)
 
 @router.post("/admin/withdraw/approve", dependencies=[Depends(admin_guard)])
 def approve_withdraw(id: int):
@@ -248,17 +251,16 @@ def approve_withdraw(id: int):
             "SELECT uid, amount FROM withdraw_queue WHERE id=? AND status='requested'",
             (id,)
         ).fetchone()
+
         if not row:
             raise HTTPException(404)
 
-        uid, amount = row
-
         c.execute(
             "UPDATE wallets SET usdt = usdt - ? WHERE uid=?",
-            (amount, uid)
+            (row["amount"], row["uid"])
         )
 
-        ledger("withdraw:usdt", "user_usdt", "treasury_usdt", amount)
+        ledger("withdraw:usdt", "user_usdt", "treasury_usdt", row["amount"])
 
         c.execute(
             "UPDATE withdraw_queue SET status='approved' WHERE id=?",
@@ -267,10 +269,10 @@ def approve_withdraw(id: int):
 
         return {"status": "approved"}
     finally:
-        close_connection(conn)
+        close(conn)
 
 # ======================================================
-# EXPORT / AUDIT
+# ADMIN — LEDGER EXPORT
 # ======================================================
 @router.get("/admin/ledger/export", dependencies=[Depends(admin_guard)])
 def export_ledger():
@@ -288,7 +290,9 @@ def export_ledger():
         return StreamingResponse(
             gen(),
             media_type="text/csv",
-            headers={"Content-Disposition": "attachment; filename=ledger.csv"}
+            headers={
+                "Content-Disposition": "attachment; filename=ledger.csv"
+            }
         )
     finally:
-        close_connection(conn)
+        close(conn)
