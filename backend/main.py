@@ -8,6 +8,7 @@ from pydantic import BaseModel
 # ======================================================
 from finance import router as finance_router, rtp_stats
 from market import router as market_router
+from exchange import ORDER_BOOKS, TRADES, place_order
 from casino import router as casino_router
 
 # kyc 
@@ -214,6 +215,31 @@ def binance_pay(user_id: int, amount: float, recipient_address: str):
     }
     
     return {"status": "success", "message": f"Successfully paid {amount} to {recipient_address} via Binance Pay."}
+
+# ================= Exchange ==================
+
+@app.websocket("/ws/exchange")
+async def exchange_ws(ws: WebSocket):
+    await ws.accept()
+
+    while True:
+        data = await ws.receive_json()
+
+        if data["type"] == "order":
+            place_order(
+                uid=data["uid"],
+                pair=data["pair"],
+                side=data["side"],
+                price=data["price"],
+                amount=data["amount"]
+            )
+
+            await ws.send_json({
+                "type": "update",
+                "pair": data["pair"],
+                "book": ORDER_BOOKS[data["pair"]],
+                "trades": TRADES[data["pair"]][-50:]
+            })
 
 # ================== Ston.fi ==================
 class BuyBXOrder(BaseModel):
