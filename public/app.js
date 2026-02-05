@@ -380,8 +380,6 @@ const MARKET = {
   candleSeries: null,
   volumeSeries: null,
 
-  trades: [],
-
   timer: null,
   initialized: false
 };
@@ -398,7 +396,7 @@ function initMarket() {
   initMarketChart();
   updatePairLabel();
 
-  console.log("[Market] initialized");
+  console.log("[Market] ready");
 }
 
 /* =========================
@@ -427,7 +425,7 @@ function updatePairLabel() {
 }
 
 /* =========================
-   PRICE + CANDLE
+   PRICE FETCH
 ========================= */
 async function fetchMarketPrice() {
   const data = await safeFetch(`/market/quote?pair=${MARKET.pair}`);
@@ -437,7 +435,8 @@ async function fetchMarketPrice() {
   MARKET.price = data.price;
 
   updatePriceUI();
-  updateLiveCandle(MARKET.price);
+  updateLiveCandle();
+  updateVolume();
 }
 
 /* =========================
@@ -465,6 +464,7 @@ function initMarketChart() {
   if (!el || MARKET.chart) return;
 
   MARKET.chart = LightweightCharts.createChart(el, {
+    width: el.clientWidth,
     height: 300,
     layout: {
       background: { color: "#020617" },
@@ -494,42 +494,33 @@ function initMarketChart() {
 }
 
 /* =========================
-   CANDLE UPDATE
+   CANDLE + VOLUME
 ========================= */
-function updateLiveCandle(price) {
+function updateLiveCandle() {
   if (!MARKET.candleSeries) return;
 
   const t = Math.floor(Date.now() / 1000);
+  const open = MARKET.prevPrice || MARKET.price;
 
   MARKET.candleSeries.update({
     time: t,
-    open: MARKET.prevPrice || price,
-    high: Math.max(MARKET.prevPrice || price, price),
-    low: Math.min(MARKET.prevPrice || price, price),
-    close: price
+    open,
+    high: Math.max(open, MARKET.price),
+    low: Math.min(open, MARKET.price),
+    close: MARKET.price
   });
 }
 
-/* =========================
-   VOLUME (BX TRADES)
-========================= */
-function pushTrade(trade) {
-  MARKET.trades.unshift(trade);
-  MARKET.trades.splice(20);
-
-  updateVolume(trade);
-}
-
-function updateVolume(trade) {
+function updateVolume() {
   if (!MARKET.volumeSeries) return;
 
   MARKET.volumeSeries.update({
-    time: Math.floor(trade.time || Date.now() / 1000),
-    value: trade.amount,
+    time: Math.floor(Date.now() / 1000),
+    value: Math.random() * 100 + 10, // demo volume
     color:
-      trade.side === "buy"
-        ? "rgba(34,197,94,0.8)"
-        : "rgba(239,68,68,0.8)"
+      MARKET.price >= MARKET.prevPrice
+        ? "rgba(34,197,94,.8)"
+        : "rgba(239,68,68,.8)"
   });
 }
 
@@ -553,6 +544,12 @@ function setSide(side) {
   document.getElementById("sellTab")
     ?.classList.toggle("active", side === "sell");
 
+  const box = document.getElementById("tradeBox");
+  if (box) {
+    box.classList.toggle("buy", side === "buy");
+    box.classList.toggle("sell", side === "sell");
+  }
+
   const btn = document.getElementById("actionBtn");
   if (btn) {
     btn.textContent = side === "buy" ? "Buy BX" : "Sell BX";
@@ -561,7 +558,7 @@ function setSide(side) {
 }
 
 /* =========================
-   LIFECYCLE (SAFE)
+   LIFECYCLE
 ========================= */
 function startMarket() {
   if (MARKET.timer) return;
@@ -576,18 +573,36 @@ function stopMarket() {
   }
 }
 
-async function reloadMarket() {
+function reloadMarket() {
   stopMarket();
-
   MARKET.price = 0;
   MARKET.prevPrice = 0;
 
   const el = document.getElementById("marketPrice");
   if (el) el.textContent = "--";
 
-  fetchMarketPrice();
   startMarket();
-       }
+}
+
+/* =========================
+   VIEW BINDING (CRITICAL)
+========================= */
+document.addEventListener("view:change", (e) => {
+  if (e.detail === "market") {
+    initMarket();
+    startMarket();
+    setTimeout(() => {
+      if (MARKET.chart) {
+        MARKET.chart.applyOptions({
+          width: document.getElementById("marketChart").clientWidth
+        });
+      }
+    }, 60);
+  } else {
+    stopMarket();
+  }
+});
+
 /* =================================================
    CASINO
 ================================================= */
