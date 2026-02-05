@@ -1,106 +1,180 @@
-# backend/exchange.py
-from collections import defaultdict
 import time
-from finance import ledger
-from finance import get_db  # نفس DB و Pool
+import threading
+from collections import defaultdict, deque
+from typing import Dict, List
+
+from finance import debit_wallet
 
 # ======================================================
-# STATE (IN-MEMORY ORDER BOOK)
+# DATA STRUCTURES (IN-MEMORY — FAST)
 # ======================================================
-ORDER_BOOKS = defaultdict(lambda: {"bids": [], "asks": []})
-TRADES = defaultdict(list)
+
+ORDER_BOOKS: Dict[str, Dict[str, List[dict]]] = defaultdict(
+    lambda: {"buy": [], "sell": []}
+)
+
+TRADES: Dict[str, deque] = defaultdict(lambda: deque(maxlen=500))
+
+LOCK = threading.Lock()
 
 # ======================================================
-# PLACE LIMIT ORDER
+# HELPERS
 # ======================================================
-def place_order(uid: int, pair: str, side: str, price: float, amount: float):
+
+def now():
+    return int(time.time())
+
+def sort_books(pair: str):
+    # Buy: highest price first
+    ORDER_BOOKS[pair]["buy"].sort(key=lambda o: (-o["price"], o["ts"]))
+    # Sell: lowest price first
+    ORDER_BOOKS[pair]["sell"].sort(key=lambda o: (o["price"], o["ts"]))
+
+# ======================================================
+# PLACE ORDER (CORE ENTRY)
+# ======================================================
+
+def place_order(
+    uid: int,
+    pair: str,
+    side: str,
+    price: float,
+    amount: float
+):
+    """
+    side: buy | sell
+    pair: BX/USDT
+    """
+
+    if amount <= 0 or price <= 0:
+        raise ValueError("INVALID_AMOUNT_OR_PRICE")
+
     base, quote = pair.lower().split("/")
 
-    order = {
-        "uid": uid,
-        "price": price,
-        "amount": amount,
-        "ts": int(time.time())
-    }
+    # --------------------------------------------------
+    # 🔒 ATOMIC SECTION
+    # --------------------------------------------------
+    with LOCK:
+        # ----------------------------------------------
+        # 💸 REAL BALANCE DEBIT (FINANCE = SOURCE OF TRUTH)
+        # ----------------------------------------------
+        if side == "buy":
+            cost = price * amount
+            debit_wallet(
+                uid=uid,
+                asset=quote,
+                amount=cost,
+                ref=f"exchange_buy:{pair}"
+            )
+        elif side == "sell":
+            debit_wallet(
+                uid=uid,
+                asset=base,
+                amount=amount,
+                ref=f"exchange_sell:{pair}"
+            )
+        else:
+            raise ValueError("INVALID_SIDE")
 
-    book = ORDER_BOOKS[pair]
+        # ----------------------------------------------
+        # 📝 ADD ORDER
+        # ----------------------------------------------
+        order = {
+            "uid": uid,
+            "pair": pair,
+            "side": side,
+            "price": price,
+            "amount": amount,
+            "remaining": amount,
+            "ts": now()
+        }
 
-    if side == "buy":
-        book["bids"].append(order)
-        book["bids"].sort(key=lambda x: -x["price"])
-    else:
-        book["asks"].append(order)
-        book["asks"].sort(key=lambda x: x["price"])
+        ORDER_BOOKS[pair][side].append(order)
 
-    match(pair)
+        # ----------------------------------------------
+        # ⚡ MATCH
+        # ----------------------------------------------
+        match(pair)
 
 # ======================================================
-# MATCHING ENGINE
+# MATCHING ENGINE (SIMPLE & SAFE)
 # ======================================================
+
 def match(pair: str):
-    book = ORDER_BOOKS[pair]
-    base, quote = pair.lower().split("/")
+    buys = ORDER_BOOKS[pair]["buy"]
+    sells = ORDER_BOOKS[pair]["sell"]
 
-    while book["bids"] and book["asks"]:
-        bid = book["bids"][0]
-        ask = book["asks"][0]
+    sort_books(pair)
 
-        if bid["price"] < ask["price"]:
+    while buys and sells:
+        buy = buys[0]
+        sell = sells[0]
+
+        if buy["price"] < sell["price"]:
             break
 
-        qty = min(bid["amount"], ask["amount"])
-        price = ask["price"]
-        ts = int(time.time())
+        trade_price = sell["price"]
+        trade_amount = min(buy["remaining"], sell["remaining"])
 
-        # ================= WALLET UPDATE =================
-        with get_db() as conn:
-            c = conn.cursor()
-
-            # BUYER
-            c.execute(
-                f"""
-                UPDATE wallets
-                SET {quote} = {quote} - %s,
-                    {base}  = {base}  + %s
-                WHERE uid=%s AND {quote} >= %s
-                """,
-                (qty * price, qty, bid["uid"], qty * price)
-            )
-
-            # SELLER
-            c.execute(
-                f"""
-                UPDATE wallets
-                SET {base}  = {base}  - %s,
-                    {quote} = {quote} + %s
-                WHERE uid=%s AND {base} >= %s
-                """,
-                (qty, qty * price, ask["uid"], qty)
-            )
-
-            if c.rowcount == 0:
-                break
-
-        # ================= LEDGER =================
-        ledger(
-            f"trade:{pair}",
-            f"user_{quote}",
-            f"user_{base}",
-            qty * price
-        )
-
-        # ================= TRADE =================
-        TRADES[pair].append({
+        # ----------------------------------------------
+        # RECORD TRADE
+        # ----------------------------------------------
+        trade = {
             "pair": pair,
-            "price": price,
-            "amount": qty,
-            "time": ts
-        })
+            "price": trade_price,
+            "amount": trade_amount,
+            "buy_uid": buy["uid"],
+            "sell_uid": sell["uid"],
+            "ts": now()
+        }
+        TRADES[pair].append(trade)
 
-        bid["amount"] -= qty
-        ask["amount"] -= qty
+        # ----------------------------------------------
+        # UPDATE REMAINING
+        # ----------------------------------------------
+        buy["remaining"] -= trade_amount
+        sell["remaining"] -= trade_amount
 
-        if bid["amount"] <= 0:
-            book["bids"].pop(0)
-        if ask["amount"] <= 0:
-            book["asks"].pop(0)
+        # ----------------------------------------------
+        # CLEAN FILLED ORDERS
+        # ----------------------------------------------
+        if buy["remaining"] <= 0:
+            buys.pop(0)
+
+        if sell["remaining"] <= 0:
+            sells.pop(0)
+
+# ======================================================
+# SNAPSHOTS (USED BY WS / API)
+# ======================================================
+
+def order_book_snapshot(pair: str):
+    return {
+        "buy": [
+            {
+                "price": o["price"],
+                "amount": o["remaining"]
+            }
+            for o in ORDER_BOOKS[pair]["buy"][:20]
+        ],
+        "sell": [
+            {
+                "price": o["price"],
+                "amount": o["remaining"]
+            }
+            for o in ORDER_BOOKS[pair]["sell"][:20]
+        ]
+    }
+
+def trades_snapshot(pair: str, limit: int = 50):
+    return list(TRADES[pair])[-limit:]
+
+# ======================================================
+# RESET (ADMIN / TEST ONLY)
+# ======================================================
+
+def reset_pair(pair: str):
+    with LOCK:
+        ORDER_BOOKS[pair]["buy"].clear()
+        ORDER_BOOKS[pair]["sell"].clear()
+        TRADES[pair].clear()
