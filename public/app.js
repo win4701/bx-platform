@@ -646,12 +646,17 @@ document.addEventListener("view:change", (e) => {
 });
 
 /* =================================================
-   CASINO
+   CASINO (Telegram + WebApp Compatible)
 ================================================= */
 
 const CASINO = {
-  history: []
+  history: [],
+  currentGame: null
 };
+
+/* =================================================
+   GAMES (12 — FINAL)
+================================================= */
 
 const CASINO_GAMES = {
   coinflip: true,
@@ -662,47 +667,113 @@ const CASINO_GAMES = {
   plinko: true,
   hilo: true,
   airboss: true,
-
-  // غير مفعلة
-  roulette: false,
-  chicken: false,
-  fortune: false,
-  coins4x4: false
+  fruit_party: true,
+  banana_farm: true,
+  blackjack_fast: true,
+  birds_party: true
 };
 
-/*============== Bind CASINO ================= */
-	function bindCasinoGames() {
-  document.querySelectorAll("[data-casino-game]").forEach(card => {
-    const game = card.dataset.casinoGame;
+/* =================================================
+   GAME UI SCHEMA
+================================================= */
+
+const GAME_UI = {
+  coinflip: ["bet"],
+  crash: ["bet", "multiplier"],
+  limbo: ["bet", "multiplier"],
+  dice: ["bet", "multiplier"],
+  slot: ["bet"],
+  plinko: ["bet", "multiplier"],
+  hilo: ["bet", "choice"],
+  airboss: ["bet", "multiplier"],
+  fruit_party: ["bet"],
+  banana_farm: ["bet"],
+  blackjack_fast: ["bet"],
+  birds_party: ["bet"]
+};
+
+/* =================================================
+   BIND CASINO CARDS
+================================================= */
+
+function bindCasinoGames() {
+  document.querySelectorAll("[data-game]").forEach(card => {
+    const game = card.dataset.game;
 
     if (!CASINO_GAMES[game]) {
       card.classList.add("disabled");
-      card.onclick = () => {
-        alert(" This game is coming soon");
-      };
+      card.onclick = () => alert(" Coming Soon");
       return;
     }
 
-    card.onclick = () => startCasinoGame(game);
+    card.onclick = () => openCasinoGame(game);
   });
 }
-/*=============== Start Casino ================= */
-	
-async function startCasinoGame(game) {
+
+/* =================================================
+   OPEN GAME UI
+================================================= */
+
+function openCasinoGame(game) {
+  CASINO.currentGame = game;
+  renderGameUI(game);
+}
+
+/* =================================================
+   RENDER GAME UI
+================================================= */
+
+function renderGameUI(game) {
+  const box = $("casinoGameBox");
+  if (!box) return;
+
+  const fields = GAME_UI[game] || ["bet"];
+
+  let html = `<h3>${game.replace("_", " ").toUpperCase()}</h3>`;
+
+  fields.forEach(f => {
+    if (f === "choice") {
+      html += `
+        <select id="choice">
+          <option value="high">High</option>
+          <option value="low">Low</option>
+        </select>`;
+    } else {
+      html += `<input id="${f}" placeholder="${f}" type="number">`;
+    }
+  });
+
+  html += `<button onclick="startCasinoGame()">Play</button>`;
+
+  box.innerHTML = html;
+}
+
+/* =================================================
+   START GAME
+================================================= */
+
+async function startCasinoGame() {
   if (!isAuthenticated()) {
     alert("Please login first");
     return;
   }
 
-  const bet = Number(prompt(`Enter bet amount for ${game}`));
-  if (!bet || bet <= 0) return;
+  const game = CASINO.currentGame;
+  if (!game) return;
 
   const payload = {
     uid: USER.uid,
     game,
-    bet,
+    bet: Number($("bet")?.value || 0),
+    multiplier: Number($("multiplier")?.value || null),
+    choice: $("choice")?.value || null,
     client_seed: Date.now().toString()
   };
+
+  if (!payload.bet || payload.bet <= 0) {
+    alert("Invalid bet");
+    return;
+  }
 
   const res = await safeFetch("/casino/play", {
     method: "POST",
@@ -714,39 +785,34 @@ async function startCasinoGame(game) {
     return;
   }
 
-  alert(
-    res.win
-      ? ` You WIN!\nPayout: ${res.payout}`
-      : ` You lost`
-  );
-
-  addCasinoResult();
+  handleCasinoResult(res);
 }
 
-/* ================= INIT CASINO ================= */
+/* =================================================
+   HANDLE RESULT
+================================================= */
 
-function initCasino() {
-  bindCasinoGames();   
-  addCasinoResult();
-  log.info("Casino initialized");
-}
+function handleCasinoResult(res) {
+  const msg = res.win
+    ? ` WIN!\nPayout: ${res.payout}`
+    : ` LOSE`;
 
-/* ================= ADD RESULT ================= */
-
-function addCasinoResult() {
-  const win = Math.random() > 2.5;
+  alert(msg);
 
   CASINO.history.unshift({
-    result: win ? "WIN" : "LOSE",
+    game: res.game,
+    result: res.win ? "WIN" : "LOSE",
+    payout: res.payout,
     time: new Date().toLocaleTimeString()
   });
 
-  CASINO.history.splice(8);
-
+  CASINO.history.splice(10);
   renderCasinoHistory();
 }
 
-/* ================= RENDER HISTORY ================= */
+/* =================================================
+   HISTORY
+================================================= */
 
 function renderCasinoHistory() {
   const el = $("casinoHistory");
@@ -755,11 +821,23 @@ function renderCasinoHistory() {
   el.innerHTML = CASINO.history
     .map(item => `
       <div class="casino-row ${item.result.toLowerCase()}">
-        ${item.result} — ${item.time}
+         ${item.game} — ${item.result}
+        ${item.payout ? `|  ${item.payout}` : ""}
+        <span>${item.time}</span>
       </div>
     `)
     .join("");
-     }
+}
+
+/* =================================================
+   INIT
+================================================= */
+
+function initCasino() {
+  bindCasinoGames();
+  renderCasinoHistory();
+  log.info("Casino initialized");
+	}
 
 /* =========================================================
    PART 5 — MINING (Per-Coin Plans)
