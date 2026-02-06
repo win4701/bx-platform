@@ -1,29 +1,84 @@
+<!-- ================= MARKET ================= -->
+<div class="market-view view" id="market">
+
+  <!-- Pair Header -->
+  <div class="market-header">
+    <div class="pair-title">
+      <span id="marketPair">BX / USDT</span>
+    </div>
+
+    <div class="price-box">
+      <div id="marketPrice">12.00 USDT</div>
+      <div id="marketApprox" class="approx">≈ 12.00 USDT</div>
+    </div>
+  </div>
+
+  <!-- Pairs -->
+  <div class="market-pairs" id="pairBtn">
+    <button class="pair-btn active" data-pair="BX/USDT">BX/USDT</button>
+    <button class="pair-btn" data-pair="BX/BNB">BX/BNB</button>
+    <button class="pair-btn" data-pair="BX/ETH">BX/ETH</button>
+    <button class="pair-btn" data-pair="BX/TON">BX/TON</button>
+    <button class="pair-btn" data-pair="BX/SOL">BX/SOL</button>
+    <button class="pair-btn" data-pair="BX/BTC">BX/BTC</button>
+  </div>
+
+  <!-- Chart -->
+  <div class="chart-box">
+    <div id="marketChart"></div>
+  </div>
+
+  <!-- Depth Chart -->
+  <div class="depth-box">
+    <div class="depth-title">Market Depth</div>
+    <div id="depthChart"></div>
+  </div>
+
   <!-- Trade Box -->
   <div class="trade-box buy" id="tradeBox">
 
+    <!-- Buy / Sell Tabs -->
     <div class="trade-tabs">
-      <button id="buyTab">Buy</button>
-<button id="sellTab">Sell</button>
+      <button id="buyTab" class="active">Buy</button>
+      <button id="sellTab">Sell</button>
     </div>
 
+    <!-- Trade Form -->
     <div class="trade-form">
       <label>Amount (BX)</label>
-      <input type="number" placeholder="0.00">
+      <input
+        id="orderAmount"
+        type="number"
+        placeholder="0.00"
+        inputmode="decimal"
+      >
 
       <div class="percent-row">
-        <button>10%</button>
-        <button>25%</button>
-        <button>50%</button>
-        <button>MAX</button>
+        <button data-percent="10">10%</button>
+        <button data-percent="25">25%</button>
+        <button data-percent="50">50%</button>
+        <button data-percent="100">MAX</button>
       </div>
 
-      <button class="action-btn buy" id="actionBtn">Buy BX</button>
+      <button
+        class="action-btn buy"
+        id="actionBtn"
+        onclick="submitLimitOrder()"
+      >
+        Buy BX (BX/USDT)
+      </button>
     </div>
+  </div>
 
- <!-- Chart -->
-  <div id="marketChart" style="height:300px"></div>
-<div id="orderBook">
-  <div class="row buy">0.001 — 120 BX</div>
-  <div class="row sell">0.002 — 119 BX</div>
+  <!-- Order Book (Simple / Demo) -->
+  <div class="orderbook">
+    <div class="orderbook-title">Order Book</div>
+
+    <div id="orderBook">
+      <div class="row buy">0.001 — 120 BX</div>
+      <div class="row sell">0.002 — 119 BX</div>
+    </div>
+  </div>
+
 </div>
- </div>
+<!-- =============== END MARKET =============== -->
