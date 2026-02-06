@@ -191,11 +191,11 @@
   <!-- Pair Selector -->
   <div class="pair-btn" id="pairBtn">
     <button data-pair="BX/USDT" class="active">BX/USDT</button>
-    <button data-pair="BX/BTC">BX/BTC</button>
     <button data-pair="BX/BNB">BX/BNB</button>
     <button data-pair="BX/ETH">BX/ETH</button>
-    <button data-pair="BX/SOL">BX/SOL</button>
     <button data-pair="BX/TON">BX/TON</button>
+    <button data-pair="BX/SOL">BX/SOL</button>
+    <button data-pair="BX/BTC">BX/BTC</button>
   </div>
   <!-- Trade Box -->
   <div class="trade-box buy" id="tradeBox">
@@ -231,7 +231,7 @@
   <section id="casino" class="view">
   <h2 class="casino-title">Casino</h2>
 
-  <!-- Casino Grid -->
+  <!-- ================= CASINO GRID ================= -->
   <div class="casino-grid">
 
     <div class="game" data-game="coinflip">
@@ -279,28 +279,28 @@
       <h4>Blackjack</h4>
     </div>
 
-    <!-- Air Boss -->
     <div class="game" data-game="airboss">
       <img src="assets/images/airboss.png" alt="Air Boss">
       <h4>Air Boss</h4>
     </div>
 
-    <!-- Hi-Lo -->
     <div class="game" data-game="hilo">
       <img src="assets/images/hilo.png" alt="Hi-Lo">
       <h4>Hi-Lo</h4>
     </div>
 
-    <!-- Plinko -->
     <div class="game" data-game="plinko">
       <img src="assets/images/plinko.png" alt="Plinko">
       <h4>Plinko</h4>
     </div>
-
   </div>
 
-  <!-- ================= RECENT BIG WINS ================= -->
+  <!-- ================= GAME ACTION BOX ================= -->
+  <div id="casinoGameBox" class="casino-game-box">
+    <p class="hint">Select a game to start playing </p>
+  </div>
 
+  <!-- ================= BIG WINS ================= -->
   <div class="big-wins">
     <h3 class="big-wins-title">Recent Big Wins</h3>
 
@@ -308,7 +308,6 @@
       id="bigWinsList"
       class="big-wins-track"
       aria-live="polite">
-
       <div class="big-win-row">
         <span class="user">@player01</span>
         <span class="game">Crash</span>
@@ -317,7 +316,7 @@
 
     </div>
   </div>
-</section>
+  </section>
   <!-- ================= MINING ================= -->
    <section id="mining" class="view">
   <h2 class="page-title">Mining</h2>
