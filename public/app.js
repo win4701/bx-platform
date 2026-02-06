@@ -133,36 +133,33 @@ async function safeFetch(path, options = {}) {
 
 const VIEWS = ["wallet", "market", "casino", "mining", "airdrop"];
 
-/*================= APP ROUTER ================= */
+/* ================= ACTION ROUTER (AIRDROP / CARDS) ================= */
 
-document.addEventListener("DOMContentLoaded", () => {
-  const views = document.querySelectorAll(".view");
-  const navButtons = document.querySelectorAll(".bottom-nav button");
+document.addEventListener("click", e => {
+  const btn = e.target.closest("[data-action]");
+  if (!btn) return;
 
-  function showView(id) {
-    views.forEach(v => v.classList.remove("active"));
-    const target = document.getElementById(id);
-    if (target) target.classList.add("active");
+  const ACTION_MAP = {
+    "go-wallet": "wallet",
+    "go-market": "market",
+    "go-casino": "casino",
+    "go-mining": "mining",
+    "go-airdrop": "airdrop"
+  };
 
-    navButtons.forEach(b =>
-      b.classList.toggle("active", b.dataset.view === id)
-    );
+  const action = btn.dataset.action;
+  const targetView = ACTION_MAP[action];
 
-    // إشعار الأقسام (hooks)
-    document.dispatchEvent(new CustomEvent("view:change", { detail: id }));
+  if (!targetView) {
+    log.warn("Unknown data-action:", action);
+    return;
   }
 
-  navButtons.forEach(btn => {
-    btn.addEventListener("click", () => {
-      const view = btn.dataset.view;
-      if (view) showView(view);
-    });
-  });
-
-  // view افتراضي
-  showView("wallet");
+  // هذا هو الربط الصحيح مع Router الحالي
+  document.dispatchEvent(
+    new CustomEvent("view:change", { detail: targetView })
+  );
 });
-
 
 /* ================= NAV BUTTONS ================= */
 
