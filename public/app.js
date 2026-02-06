@@ -140,7 +140,6 @@ document.addEventListener("click", e => {
   if (!btn) return;
 
   const ACTION_MAP = {
-    "go-home": "home",
     "go-wallet": "wallet",
     "go-market": "market",
     "go-casino": "casino",
@@ -151,18 +150,35 @@ document.addEventListener("click", e => {
   const action = btn.dataset.action;
   const targetView = ACTION_MAP[action];
 
-  if (!targetView) {
-    console.warn("Unknown data-action:", action);
-    return;
+  if (!targetView) return;
+
+  showView(targetView);
+});
+
+  function showView(id) {
+    views.forEach(v => v.classList.remove("active"));
+    const target = document.getElementById(id);
+    if (target) target.classList.add("active");
+
+    navButtons.forEach(b =>
+      b.classList.toggle("active", b.dataset.view === id)
+    );
+
+    // إشعار الأقسام (hooks)
+    document.dispatchEvent(new CustomEvent("view:change", { detail: id }));
   }
 
-  // 👇 هذا هو المهم
-  if (typeof switchView === "function") {
-    switchView(targetView);
-  } else {
-    console.error("switchView is not defined");
-  }
+  navButtons.forEach(btn => {
+    btn.addEventListener("click", () => {
+      const view = btn.dataset.view;
+      if (view) showView(view);
+    });
+  });
+
+  // view افتراضي
+  showView("wallet");
 });
+
 /* ================= NAV BUTTONS ================= */
 
 function syncNavButtons(activeView) {
