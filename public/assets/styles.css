@@ -718,7 +718,7 @@ input{
 .big-win-row .amount {
   color: #22c55e;
   font-weight: 800;
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .big-win-row .amount.win {
@@ -735,6 +735,32 @@ input{
 .big-win-row span {
   white-space: normal !important;
 }
+
+/* ===== WIN / LOSE ANIMATIONS ===== */
+
+.game.win {
+  animation: winPulse 0.8s ease;
+  box-shadow: 0 0 25px rgba(0, 255, 150, 0.9);
+}
+
+.game.lose {
+  animation: loseShake 0.4s ease;
+  box-shadow: 0 0 20px rgba(255, 60, 60, 0.9);
+}
+
+@keyframes winPulse {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.06); }
+  100% { transform: scale(1); }
+}
+
+@keyframes loseShake {
+  0%   { transform: translateX(0); }
+  25%  { transform: translateX(-4px); }
+  50%  { transform: translateX(4px); }
+  75%  { transform: translateX(-4px); }
+  100% { transform: translateX(0); }
+                               }
 
 /* ================= GLOBAL VIEW FIX ================= */
 
