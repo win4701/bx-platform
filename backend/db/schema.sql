@@ -243,3 +243,12 @@ CREATE TABLE IF NOT EXISTS mining_orders (
 -- ===============================
 ALTER TABLE users ADD COLUMN telegram_id BIGINT UNIQUE;
 ALTER TABLE users ADD COLUMN telegram_code VARCHAR(10);
+--- =========================
+-- Casino 
+-- ===============================
+CREATE TABLE IF NOT EXISTS game_stats (
+  game TEXT,
+  bets REAL DEFAULT 0,
+  payouts REAL DEFAULT 0,
+  rounds INTEGER DEFAULT 0
+);
