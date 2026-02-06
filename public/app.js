@@ -389,8 +389,9 @@ const MARKET = {
   pair: "BX/USDT",
   side: "buy",
 
-  price: 0,
-  prevPrice: 0,
+  basePrice: 12,     
+  price: 12,
+  prevPrice: 12,
 
   chart: null,
   candleSeries: null,
@@ -403,6 +404,7 @@ const MARKET = {
 /* =========================
    INIT
 ========================= */
+
 function initMarket() {
   if (MARKET.initialized) return;
   MARKET.initialized = true;
@@ -411,13 +413,16 @@ function initMarket() {
   bindTradeTabs();
   initMarketChart();
   updatePairLabel();
+  updatePriceUI();
+  loadStaticChart();
 
-  console.log("[Market] ready");
+  console.log("[Market] ready (static)");
 }
 
 /* =========================
    PAIRS
 ========================= */
+
 function bindMarketPairs() {
   document.querySelectorAll("[data-pair]").forEach(btn => {
     btn.onclick = () => {
@@ -441,64 +446,20 @@ function updatePairLabel() {
 }
 
 /* =========================
-   PRICE FETCH
+   STATIC PRICE
 ========================= */
-async function fetchMarketPrice() {
-  const data = await safeFetch(`/market/quote?pair=${MARKET.pair}`);
-  if (!data || typeof data.price !== "number") return;
 
-  MARKET.prevPrice = MARKET.price;
-  MARKET.price = data.price;
-
-  updatePriceUI();
-  updateLiveCandle();
-  updateVolume();
-}
-
-/* =========================
-   PRICE UI
-========================= */
 function updatePriceUI() {
   const el = document.getElementById("marketPrice");
   if (!el) return;
 
-  el.textContent = MARKET.price.toFixed(6);
+  el.textContent = MARKET.basePrice.toFixed(2);
   el.classList.remove("up", "down");
-
-  if (MARKET.prevPrice) {
-    el.classList.add(
-      MARKET.price > MARKET.prevPrice ? "up" : "down"
-    );
-  }
 }
 
-/* ================= exchange ================= */
-
-const EXCHANGE_WS = "wss://YOUR-FLY-APP.fly.dev/ws/exchange";
-
-function connectExchange() {
-  MARKET.ws = new WebSocket(EXCHANGE_WS);
-
-  MARKET.ws.onmessage = e => {
-    const msg = JSON.parse(e.data);
-
-    if (msg.book) renderOrderBook(msg.book);
-    if (msg.trades) renderTrades(msg.trades);
-  };
-}
-
-function submitLimitOrder(amount, price) {
-  MARKET.ws.send(JSON.stringify({
-    type: "order",
-    uid: USER.uid,           
-    pair: MARKET.pair,
-    side: MARKET.side,
-    price,
-    amount
-  }));
-}
-
-/* =============== CHART ========================= */
+/* =========================
+   CHART
+========================= */
 
 function initMarketChart() {
   const el = document.getElementById("marketChart");
@@ -535,39 +496,40 @@ function initMarketChart() {
   });
 }
 
-/* ============= CANDLE + VOLUME ================ */
+/* =========================
+   STATIC CHART DATA
+========================= */
 
-function updateLiveCandle() {
+function loadStaticChart() {
   if (!MARKET.candleSeries) return;
 
-  const t = Math.floor(Date.now() / 1000);
-  const open = MARKET.prevPrice || MARKET.price;
+  const now = Math.floor(Date.now() / 1000);
+  const data = [];
 
-  MARKET.candleSeries.update({
-    time: t,
-    open,
-    high: Math.max(open, MARKET.price),
-    low: Math.min(open, MARKET.price),
-    close: MARKET.price
-  });
-}
+  for (let i = 30; i >= 0; i--) {
+    const t = now - i * 60;
+    data.push({
+      time: t,
+      open: 12,
+      high: 12.1,
+      low: 11.9,
+      close: 12
+    });
 
-function updateVolume() {
-  if (!MARKET.volumeSeries) return;
+    MARKET.volumeSeries.update({
+      time: t,
+      value: Math.random() * 80 + 20,
+      color: "rgba(34,197,94,.7)"
+    });
+  }
 
-  MARKET.volumeSeries.update({
-    time: Math.floor(Date.now() / 1000),
-    value: Math.random() * 100 + 10, // demo volume
-    color:
-      MARKET.price >= MARKET.prevPrice
-        ? "rgba(34,197,94,.8)"
-        : "rgba(239,68,68,.8)"
-  });
+  MARKET.candleSeries.setData(data);
 }
 
 /* =========================
    BUY / SELL UI
 ========================= */
+
 function bindTradeTabs() {
   document.getElementById("buyTab")
     ?.addEventListener("click", () => setSide("buy"));
@@ -585,65 +547,73 @@ function setSide(side) {
   document.getElementById("sellTab")
     ?.classList.toggle("active", side === "sell");
 
-  const box = document.getElementById("tradeBox");
-  if (box) {
-    box.classList.toggle("buy", side === "buy");
-    box.classList.toggle("sell", side === "sell");
-  }
-
   const btn = document.getElementById("actionBtn");
   if (btn) {
-    btn.textContent = side === "buy" ? "Buy BX" : "Sell BX";
+    btn.textContent = side === "buy" ? "Buy BX @ 12" : "Sell BX @ 12";
     btn.className = `action-btn ${side}`;
   }
 }
 
 /* =========================
-   LIFECYCLE
+   ORDERS (STATIC DEMO)
 ========================= */
-function startMarket() {
-  if (MARKET.timer) return;
-  fetchMarketPrice();
-  MARKET.timer = setInterval(fetchMarketPrice, 2000);
-}
 
-function stopMarket() {
-  if (MARKET.timer) {
-    clearInterval(MARKET.timer);
-    MARKET.timer = null;
+function submitLimitOrder() {
+  const amount = parseFloat(
+    document.getElementById("orderAmount")?.value
+  );
+
+  if (!amount || amount <= 0) {
+    alert("Invalid amount");
+    return;
   }
-}
 
-function reloadMarket() {
-  stopMarket();
-  MARKET.price = 0;
-  MARKET.prevPrice = 0;
+  const total = amount * MARKET.basePrice;
 
-  const el = document.getElementById("marketPrice");
-  if (el) el.textContent = "--";
-
-  startMarket();
+  alert(
+    `${MARKET.side.toUpperCase()} ${amount} BX @ 12 USDT\nTotal: ${total} USDT`
+  );
 }
 
 /* =========================
-   VIEW BINDING (CRITICAL)
+   LIFECYCLE
 ========================= */
-document.addEventListener("view:change", (e) => {
+
+function startMarket() {
+  updatePriceUI();
+}
+
+function stopMarket() {
+  // static mode — nothing to stop
+}
+
+function reloadMarket() {
+  MARKET.price = MARKET.basePrice;
+  MARKET.prevPrice = MARKET.basePrice;
+  updatePriceUI();
+  loadStaticChart();
+}
+
+/* =========================
+   VIEW BINDING
+========================= */
+
+document.addEventListener("view:change", e => {
   if (e.detail === "market") {
     initMarket();
     startMarket();
+
     setTimeout(() => {
       if (MARKET.chart) {
-        MARKET.chart.applyOptions({
-          width: document.getElementById("marketChart").clientWidth
-        });
+        MARKET.chart.resize(
+          document.getElementById("marketChart").clientWidth,
+          300
+        );
       }
-    }, 60);
-  } else {
-    stopMarket();
+    }, 80);
   }
 });
-
+    
 /* =====================================================
    CASINO.JS — FULL UPDATE (Telegram + WebApp Safe)
 ===================================================== */
