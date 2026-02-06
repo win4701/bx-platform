@@ -1145,6 +1145,10 @@ button:active,
   object-fit:contain;
 }
 
+#airdrop .airdrop-partners {
+  margin-top: 28px;     
+}
+
 /* ---------- WHITEPAPER ---------- */
 
 #airdrop .whitepaper-btn {
@@ -1171,6 +1175,10 @@ button:active,
   border-radius: 18px;
   overflow: hidden;
   margin-bottom: 20px;
+}
+
+#airdrop .min-card {
+  margin-top: 24px;     
 }
 
 .min-card img{
