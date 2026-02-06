@@ -407,30 +407,36 @@ input{
 .market-price.up{ color:var(--buy); }
 .market-price.down{ color:var(--sell); }
 
-/* ================= PAIRS ================= */
+/* ===== MARKET PAIRS LAYOUT FIX ===== */
 
-.pair-btn,
-.pair-scroll{
+.market-pairs{
   display:flex;
   gap:8px;
+  padding:6px 10px;
   overflow-x:auto;
-  margin-bottom:14px;
+  overflow-y:hidden;
+  white-space:nowrap;
 }
 
-.pair-btn button{
+.market-pairs::-webkit-scrollbar{
+  display:none;
+}
+
+.market-pairs .pair-btn{
+  flex:0 0 auto;
   padding:6px 14px;
-  border-radius:10px;
+  border-radius:12px;
   background:var(--bg-main);
   border:1px solid var(--border);
   color:var(--text-soft);
   font-size:13px;
-  font-weight:700;
-  white-space:nowrap;
+  font-weight:800;
 }
 
-.pair-btn button.active{
+.market-pairs .pair-btn.active{
   color:#fff;
   border-color:var(--buy);
+  box-shadow:0 0 0 1px rgba(2,192,118,.35);
 }
 
 /* ================= TRADE BOX ================= */
