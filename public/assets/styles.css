@@ -676,7 +676,7 @@ input{
 
 .big-wins-title {
   margin-bottom: 10px;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 800;
   color: #fff;
 }
@@ -718,7 +718,7 @@ input{
 .big-win-row .amount {
   color: #22c55e;
   font-weight: 800;
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .big-win-row .amount.win {
