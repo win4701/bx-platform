@@ -645,37 +645,19 @@ document.addEventListener("view:change", (e) => {
   }
 });
 
-/* =================================================
-   CASINO (Telegram + WebApp Compatible)
-================================================= */
+/* =====================================================
+   CASINO.JS — FULL UPDATE (Telegram + WebApp Safe)
+===================================================== */
 
 const CASINO = {
-  history: [],
-  currentGame: null
+  currentGame: null,
+  flags: {},
+  ws: null
 };
 
-/* =================================================
-   GAMES (12 — FINAL)
-================================================= */
-
-const CASINO_GAMES = {
-  coinflip: true,
-  crash: true,
-  limbo: true,
-  dice: true,
-  slot: true,
-  plinko: true,
-  hilo: true,
-  airboss: true,
-  fruit_party: true,
-  banana_farm: true,
-  blackjack_fast: true,
-  birds_party: true
-};
-
-/* =================================================
-   GAME UI SCHEMA
-================================================= */
+/* =====================================================
+   GAME UI SCHEMA (12 GAMES)
+===================================================== */
 
 const GAME_UI = {
   coinflip: ["bet"],
@@ -692,43 +674,83 @@ const GAME_UI = {
   birds_party: ["bet"]
 };
 
-/* =================================================
+/* =====================================================
+   SOUND FX (Telegram-friendly)
+===================================================== */
+
+const sounds = {
+  win: new Audio("/assets/sounds/win.mp3"),
+  lose: new Audio("/assets/sounds/lose.mp3")
+};
+
+function playSound(type) {
+  try {
+    sounds[type].currentTime = 0;
+    sounds[type].play();
+  } catch (_) {}
+}
+
+/* =====================================================
+   CARD ANIMATION (WIN / LOSE)
+===================================================== */
+
+function animateGameResult(game, win) {
+  const card = document.querySelector(`.game[data-game="${game}"]`);
+  if (!card) return;
+
+  card.classList.remove("win", "lose");
+  card.classList.add(win ? "win" : "lose");
+
+  setTimeout(() => {
+    card.classList.remove("win", "lose");
+  }, 900);
+}
+
+/* =====================================================
    BIND CASINO CARDS
-================================================= */
+===================================================== */
 
 function bindCasinoGames() {
-  document.querySelectorAll("[data-game]").forEach(card => {
+  document.querySelectorAll(".game[data-game]").forEach(card => {
     const game = card.dataset.game;
 
-    if (!CASINO_GAMES[game]) {
+    if (CASINO.flags[game] === false) {
       card.classList.add("disabled");
-      card.onclick = () => alert(" Coming Soon");
+      card.onclick = () => alert(" Game disabled");
       return;
     }
 
+    card.classList.remove("disabled");
     card.onclick = () => openCasinoGame(game);
   });
 }
 
-/* =================================================
-   OPEN GAME UI
-================================================= */
+/* =====================================================
+   OPEN GAME
+===================================================== */
 
 function openCasinoGame(game) {
   CASINO.currentGame = game;
+
+  document.querySelectorAll(".game").forEach(g =>
+    g.classList.remove("active")
+  );
+
+  const card = document.querySelector(`.game[data-game="${game}"]`);
+  if (card) card.classList.add("active");
+
   renderGameUI(game);
 }
 
-/* =================================================
+/* =====================================================
    RENDER GAME UI
-================================================= */
+===================================================== */
 
 function renderGameUI(game) {
   const box = $("casinoGameBox");
   if (!box) return;
 
   const fields = GAME_UI[game] || ["bet"];
-
   let html = `<h3>${game.replace("_", " ").toUpperCase()}</h3>`;
 
   fields.forEach(f => {
@@ -739,18 +761,19 @@ function renderGameUI(game) {
           <option value="low">Low</option>
         </select>`;
     } else {
-      html += `<input id="${f}" placeholder="${f}" type="number">`;
+      html += `<input id="${f}" type="number" placeholder="${f}">`;
     }
   });
 
-  html += `<button onclick="startCasinoGame()">Play</button>`;
-
+  html += `<button id="playBtn">Play</button>`;
   box.innerHTML = html;
+
+  $("playBtn").onclick = startCasinoGame;
 }
 
-/* =================================================
+/* =====================================================
    START GAME
-================================================= */
+===================================================== */
 
 async function startCasinoGame() {
   if (!isAuthenticated()) {
@@ -761,19 +784,20 @@ async function startCasinoGame() {
   const game = CASINO.currentGame;
   if (!game) return;
 
+  const bet = Number($("bet")?.value || 0);
+  if (bet <= 0) {
+    alert("Invalid bet");
+    return;
+  }
+
   const payload = {
     uid: USER.uid,
     game,
-    bet: Number($("bet")?.value || 0),
+    bet,
     multiplier: Number($("multiplier")?.value || null),
     choice: $("choice")?.value || null,
     client_seed: Date.now().toString()
   };
-
-  if (!payload.bet || payload.bet <= 0) {
-    alert("Invalid bet");
-    return;
-  }
 
   const res = await safeFetch("/casino/play", {
     method: "POST",
@@ -788,57 +812,80 @@ async function startCasinoGame() {
   handleCasinoResult(res);
 }
 
-/* =================================================
+/* =====================================================
    HANDLE RESULT
-================================================= */
+===================================================== */
 
 function handleCasinoResult(res) {
-  const msg = res.win
-    ? ` WIN!\nPayout: ${res.payout}`
-    : ` LOSE`;
+  animateGameResult(res.game, res.win);
+  playSound(res.win ? "win" : "lose");
 
-  alert(msg);
-
-  CASINO.history.unshift({
-    game: res.game,
-    result: res.win ? "WIN" : "LOSE",
-    payout: res.payout,
-    time: new Date().toLocaleTimeString()
-  });
-
-  CASINO.history.splice(10);
-  renderCasinoHistory();
+  alert(
+    res.win
+      ? ` WIN!\nPayout: ${res.payout}`
+      : ` LOSE`
+  );
 }
 
-/* =================================================
-   HISTORY
-================================================= */
+/* =====================================================
+   BIG WINS — WEBSOCKET TICKER
+===================================================== */
 
-function renderCasinoHistory() {
-  const el = $("casinoHistory");
-  if (!el) return;
+function initBigWinsTicker() {
+  try {
+    CASINO.ws = new WebSocket(
+      `${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/ws/big-wins`
+    );
 
-  el.innerHTML = CASINO.history
-    .map(item => `
-      <div class="casino-row ${item.result.toLowerCase()}">
-         ${item.game} — ${item.result}
-        ${item.payout ? `|  ${item.payout}` : ""}
-        <span>${item.time}</span>
-      </div>
-    `)
-    .join("");
+    CASINO.ws.onmessage = e => {
+      const w = JSON.parse(e.data);
+      pushBigWin(w);
+    };
+  } catch (_) {}
 }
 
-/* =================================================
+function pushBigWin(w) {
+  const box = $("bigWinsList");
+  if (!box) return;
+
+  const row = document.createElement("div");
+  row.className = "big-win-row";
+  row.innerHTML = `
+    <span>${w.user}</span>
+    <span>${w.game}</span>
+    <strong>+${w.amount} BX</strong>
+  `;
+
+  box.prepend(row);
+  setTimeout(() => row.remove(), 8000);
+}
+
+/* =====================================================
+   GAME FLAGS (ADMIN LIVE TOGGLE)
+===================================================== */
+
+async function refreshGameFlags() {
+  try {
+    const res = await fetch("/casino/flags");
+    if (!res.ok) return;
+
+    CASINO.flags = await res.json();
+    bindCasinoGames();
+  } catch (_) {}
+}
+
+/* =====================================================
    INIT
-================================================= */
+===================================================== */
 
 function initCasino() {
-  bindCasinoGames();
-  renderCasinoHistory();
-  log.info("Casino initialized");
-	}
+  refreshGameFlags();
+  initBigWinsTicker();
 
+  setInterval(refreshGameFlags, 10000);
+  console.info("Casino initialized");
+}
+  
 /* =========================================================
    PART 5 — MINING (Per-Coin Plans)
 ========================================================= */
