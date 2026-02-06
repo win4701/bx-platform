@@ -148,7 +148,6 @@ document.addEventListener("DOMContentLoaded", () => {
       b.classList.toggle("active", b.dataset.view === id)
     );
 
-    // إشعار الأقسام (hooks)
     document.dispatchEvent(new CustomEvent("view:change", { detail: id }));
   }
 
@@ -159,7 +158,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  // view افتراضي
   showView("wallet");
 });
 
@@ -492,7 +490,7 @@ function connectExchange() {
 function submitLimitOrder(amount, price) {
   MARKET.ws.send(JSON.stringify({
     type: "order",
-    uid: USER.uid,           // من auth
+    uid: USER.uid,           
     pair: MARKET.pair,
     side: MARKET.side,
     price,
@@ -504,7 +502,12 @@ function submitLimitOrder(amount, price) {
 
 function initMarketChart() {
   const el = document.getElementById("marketChart");
-  if (!el || MARKET.chart) return;
+  if (!el) return;
+
+  if (MARKET.chart) {
+    MARKET.chart.resize(el.clientWidth, 300);
+    return;
+  }
 
   MARKET.chart = LightweightCharts.createChart(el, {
     width: el.clientWidth,
@@ -516,16 +519,12 @@ function initMarketChart() {
     grid: {
       vertLines: { color: "#0f172a" },
       horzLines: { color: "#0f172a" }
-    },
-    rightPriceScale: { borderColor: "#1e293b" },
-    timeScale: { borderColor: "#1e293b", timeVisible: true }
+    }
   });
 
   MARKET.candleSeries = MARKET.chart.addCandlestickSeries({
     upColor: "#22c55e",
     downColor: "#ef4444",
-    wickUpColor: "#22c55e",
-    wickDownColor: "#ef4444",
     borderVisible: false
   });
 
