@@ -133,13 +133,14 @@ async function safeFetch(path, options = {}) {
 
 const VIEWS = ["wallet", "market", "casino", "mining", "airdrop"];
 
-/* ================= ACTION ROUTER (AIRDROP / CARDS) ================= */
+/* ================= ACTION ROUTER (SAFE) ================= */
 
 document.addEventListener("click", e => {
   const btn = e.target.closest("[data-action]");
   if (!btn) return;
 
   const ACTION_MAP = {
+    "go-home": "home",
     "go-wallet": "wallet",
     "go-market": "market",
     "go-casino": "casino",
@@ -151,14 +152,16 @@ document.addEventListener("click", e => {
   const targetView = ACTION_MAP[action];
 
   if (!targetView) {
-    log.warn("Unknown data-action:", action);
+    console.warn("Unknown data-action:", action);
     return;
   }
 
-  // هذا هو الربط الصحيح مع Router الحالي
-  document.dispatchEvent(
-    new CustomEvent("view:change", { detail: targetView })
-  );
+  // 👇 هذا هو المهم
+  if (typeof switchView === "function") {
+    switchView(targetView);
+  } else {
+    console.error("switchView is not defined");
+  }
 });
 /* ================= NAV BUTTONS ================= */
 
