@@ -129,11 +129,55 @@ async function safeFetch(path, options = {}) {
 
 /* =========================================================
    PART 2 — NAVIGATION (General Update)
-========================================================= */
+======================================================*/
+/* =====================================================
+   APP STATE
+===================================================== */
 
-const VIEWS = ["wallet", "market", "casino", "mining", "airdrop"];
+const APP = {
+  view: "wallet"
+};
 
-/* ================= ACTION ROUTER (SAFE) ================= */
+/* =====================================================
+   DOM REFERENCES (CRITICAL FIX)
+===================================================== */
+
+const views = document.querySelectorAll(".view");
+const navButtons = document.querySelectorAll(".bottom-nav button");
+
+/* =====================================================
+   CORE VIEW ROUTER (SSOT)
+===================================================== */
+
+function showView(id) {
+  if (!id) return;
+
+  // hide all
+  views.forEach(v => v.classList.remove("active"));
+
+  const target = document.getElementById(id);
+  if (!target) {
+    console.warn("View not found:", id);
+    return;
+  }
+
+  target.classList.add("active");
+  APP.view = id;
+
+  // bottom nav active state
+  navButtons.forEach(b =>
+    b.classList.toggle("active", b.dataset.view === id)
+  );
+
+  // notify listeners (market / casino / mining)
+  document.dispatchEvent(
+    new CustomEvent("view:change", { detail: id })
+  );
+}
+
+/* =====================================================
+   ACTION ROUTER (AIRDROP / CARDS / BUTTONS)
+===================================================== */
 
 document.addEventListener("click", e => {
   const btn = e.target.closest("[data-action]");
@@ -150,109 +194,60 @@ document.addEventListener("click", e => {
   const action = btn.dataset.action;
   const targetView = ACTION_MAP[action];
 
-  if (!targetView) return;
+  if (!targetView) {
+    console.warn("Unknown data-action:", action);
+    return;
+  }
 
   showView(targetView);
 });
 
-  function showView(id) {
-    views.forEach(v => v.classList.remove("active"));
-    const target = document.getElementById(id);
-    if (target) target.classList.add("active");
+/* =====================================================
+   BOTTOM NAVIGATION
+===================================================== */
 
-    navButtons.forEach(b =>
-      b.classList.toggle("active", b.dataset.view === id)
-    );
-
-    // إشعار الأقسام (hooks)
-    document.dispatchEvent(new CustomEvent("view:change", { detail: id }));
-  }
-
-  navButtons.forEach(btn => {
-    btn.addEventListener("click", () => {
-      const view = btn.dataset.view;
-      if (view) showView(view);
-    });
+navButtons.forEach(btn => {
+  btn.addEventListener("click", () => {
+    const view = btn.dataset.view;
+    showView(view);
   });
-
-  // view افتراضي
-  showView("wallet");
 });
 
-/* ================= NAV BUTTONS ================= */
+/* =====================================================
+   VIEW BINDING (SINGLE SOURCE)
+===================================================== */
 
-function syncNavButtons(activeView) {
-  const buttons = $$(".bottom-nav button");
-
-  buttons.forEach(btn => {
-    const view = btn.dataset.view;
-    if (!view) return;
-
-    btn.classList.toggle("active", view === activeView);
-  });
-}
-
-/* =========================
-   VIEW BINDING (SSOT)
-========================= */
-
-let CURRENT_VIEW = null;
-
-/* ================= ACTION ROUTER  ================= */
-
-document.addEventListener("view:change", (e) => {
+document.addEventListener("view:change", e => {
   const view = e.detail;
-  if (!view || view === CURRENT_VIEW) return;
 
-  log.info("VIEW CHANGE:", CURRENT_VIEW, "→", view);
-
-   /* ========= EXIT OLD VIEW ========= */
-  switch (CURRENT_VIEW) {
-    case "market":
-      stopMarket();
-      if (MARKET.ws) {
-        MARKET.ws.close();
-        MARKET.ws = null;
-        log.info("Market WS closed");
-      }
-      break;
+  if (view === "market" && typeof initMarket === "function") {
+    initMarket();
   }
 
-   /* ========= ENTER NEW VIEW ========= */
-  switch (view) {
-    case "wallet":
-      loadWallet();
-      break;
-
-    case "market":
-      initMarket();
-      startMarket();
-      connectExchange();   
-
-      // إصلاح chart (بعد إظهار view)
-      setTimeout(() => {
-        if (MARKET.chart) {
-          MARKET.chart.applyOptions({
-            width: document.getElementById("marketChart").clientWidth
-          });
-        }
-      }, 80);
-      break;
-
-    case "casino":
-      initCasino();
-      break;
-
-    case "mining":
-      renderMining();
-      break;
-
-    case "airdrop":
-      loadAirdrop();
-      break;
+  if (view !== "market" && typeof stopMarket === "function") {
+    stopMarket();
   }
 
-  CURRENT_VIEW = view;
+  if (view === "casino" && typeof initCasino === "function") {
+    initCasino();
+  }
+
+  if (view === "mining" && typeof initMining === "function") {
+    initMining();
+  }
+
+  if (view === "wallet" && typeof initWallet === "function") {
+    initWallet();
+  }
+});
+
+/* =====================================================
+   BOOTSTRAP
+===================================================== */
+
+document.addEventListener("DOMContentLoaded", () => {
+  showView(APP.view);
+  console.info("App initialized");
 });
 
 /* =========================================================
