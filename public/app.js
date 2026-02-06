@@ -133,6 +133,54 @@ async function safeFetch(path, options = {}) {
 
 const VIEWS = ["wallet", "market", "casino", "mining", "airdrop"];
 
+/* ================= ACTION ROUTER ================= */
+
+document.addEventListener("DOMContentLoaded", () => {
+  const views = document.querySelectorAll(".view");
+  const navButtons = document.querySelectorAll(".bottom-nav button");
+
+  function showView(id) {
+    views.forEach(v => v.classList.remove("active"));
+    const target = document.getElementById(id);
+    if (target) target.classList.add("active");
+
+    navButtons.forEach(b =>
+      b.classList.toggle("active", b.dataset.view === id)
+    );
+
+    // إشعار الأقسام (hooks)
+    document.dispatchEvent(new CustomEvent("view:change", { detail: id }));
+  }
+
+  navButtons.forEach(btn => {
+    btn.addEventListener("click", () => {
+      const view = btn.dataset.view;
+      if (view) showView(view);
+    });
+  });
+
+  showView("wallet");
+});
+
+/* ================= NAV BUTTONS ================= */
+
+function syncNavButtons(activeView) {
+  const buttons = $$(".bottom-nav button");
+
+  buttons.forEach(btn => {
+    const view = btn.dataset.view;
+    if (!view) return;
+
+    btn.classList.toggle("active", view === activeView);
+  });
+}
+
+/* =========================
+   VIEW BINDING (SSOT)
+========================= */
+
+let CURRENT_VIEW = null;
+
 /* ================= ACTION ROUTER (AIRDROP / CARDS) ================= */
 
 document.addEventListener("click", e => {
@@ -160,31 +208,6 @@ document.addEventListener("click", e => {
     new CustomEvent("view:change", { detail: targetView })
   );
 });
-
-/* ================= NAV BUTTONS ================= */
-
-function syncNavButtons(activeView) {
-  const buttons = $$(".bottom-nav button");
-
-  buttons.forEach(btn => {
-    const view = btn.dataset.view;
-    if (!view) return;
-
-    btn.classList.toggle("active", view === activeView);
-  });
-}
-
-/* =========================
-   VIEW BINDING (SSOT)
-========================= */
-
-let CURRENT_VIEW = null;
-
-document.addEventListener("view:change", (e) => {
-  const view = e.detail;
-  if (!view || view === CURRENT_VIEW) return;
-
-  log.info("VIEW CHANGE:", CURRENT_VIEW, "→", view);
 
    /* ========= EXIT OLD VIEW ========= */
   switch (CURRENT_VIEW) {
