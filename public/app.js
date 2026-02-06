@@ -181,33 +181,13 @@ function syncNavButtons(activeView) {
 
 let CURRENT_VIEW = null;
 
-/* ================= ACTION ROUTER (AIRDROP / CARDS) ================= */
+/* ================= ACTION ROUTER  ================= */
 
-document.addEventListener("click", e => {
-  const btn = e.target.closest("[data-action]");
-  if (!btn) return;
+document.addEventListener("view:change", (e) => {
+  const view = e.detail;
+  if (!view || view === CURRENT_VIEW) return;
 
-  const ACTION_MAP = {
-    "go-wallet": "wallet",
-    "go-market": "market",
-    "go-casino": "casino",
-    "go-mining": "mining",
-    "go-airdrop": "airdrop"
-  };
-
-  const action = btn.dataset.action;
-  const targetView = ACTION_MAP[action];
-
-  if (!targetView) {
-    log.warn("Unknown data-action:", action);
-    return;
-  }
-
-  // هذا هو الربط الصحيح مع Router الحالي
-  document.dispatchEvent(
-    new CustomEvent("view:change", { detail: targetView })
-  );
-});
+  log.info("VIEW CHANGE:", CURRENT_VIEW, "→", view);
 
    /* ========= EXIT OLD VIEW ========= */
   switch (CURRENT_VIEW) {
