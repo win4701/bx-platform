@@ -41,7 +41,8 @@
 <main class="app-container">
 
   <!-- ================= WALLET ================= -->
-  <section id="wallet" class=" view active">
+  <!-- ================= WALLET ================= -->
+<section id="wallet" class="view active">
 
   <!-- ================= TOP TOTAL ================= -->
   <div class="wallet-top">
@@ -54,120 +55,129 @@
 
   <!-- ================= MAIN ACTIONS ================= -->
   <div class="wallet-actions">
-  <button class="btn primary">Deposit</button>
-  <button class="btn">Withdraw</button>
-  <button class="btn">Transfer</button>
-</div>
+    <button class="btn primary">Deposit</button>
+    <button class="btn">Withdraw</button>
+    <button class="btn">Transfer</button>
+  </div>
 
   <!-- ================= BALANCES ================= -->
   <div class="wallet-balances">
-
     <h3>Balances</h3>
+
     <!-- BX -->
     <div class="wallet-row main">
-  <img src="assets/images/bx.png" alt="BX">
-      <div class="info">
-        <strong>BX</strong>
-        <span>Bloxio </span>
+      <div class="left">
+        <img src="assets/images/bx.png" alt="BX">
+        <div class="info">
+          <strong>BX</strong>
+          <span>Bloxio</span>
+        </div>
       </div>
-      <div class="amount">
-        <strong id="bal-bx">0.00</strong>
-      </div>
+      <div class="amount"><strong id="bal-bx">0.00</strong></div>
     </div>
 
     <!-- USDT -->
     <div class="wallet-row">
- <img src="assets/images/usdt.png" alt="USDT">
-      <div class="info">
-        <strong>USDT</strong>
-        <span>Tether</span>
+      <div class="left">
+        <img src="assets/images/usdt.png" alt="USDT">
+        <div class="info">
+          <strong>USDT</strong>
+          <span>Tether</span>
+        </div>
       </div>
-      <div class="amount">
-        <strong id="bal-usdt">0.00</strong>
-      </div>
+      <div class="amount"><strong id="bal-usdt">0.00</strong></div>
     </div>
+
     <!-- BTC -->
     <div class="wallet-row">
-      <img src="assets/images/btc.png" alt="BTC">
-      <div class="info">
-        <strong>BTC</strong>
-        <span>Bitcoin</span>
+      <div class="left">
+        <img src="assets/images/btc.png" alt="BTC">
+        <div class="info">
+          <strong>BTC</strong>
+          <span>Bitcoin</span>
+        </div>
       </div>
-      <div class="amount">
-        <strong id="bal-btc">0.00</strong>
-      </div>
+      <div class="amount"><strong id="bal-btc">0.00</strong></div>
+    </div>
+
     <!-- BNB -->
     <div class="wallet-row">
-      <img src="assets/images/bnb.png" alt="BNB">
-      <div class="info">
-        <strong>BNB</strong>
-        <span>Binance </span>
+      <div class="left">
+        <img src="assets/images/bnb.png" alt="BNB">
+        <div class="info">
+          <strong>BNB</strong>
+          <span>Binance</span>
+        </div>
       </div>
-      <div class="amount">
-        <strong id="bal-bnb">0.00</strong>
-      </div>
+      <div class="amount"><strong id="bal-bnb">0.00</strong></div>
     </div>
- <!-- ETH -->
+
+    <!-- ETH -->
     <div class="wallet-row">
-      <img src="assets/images/eth.png" alt="ETH">
-      <div class="info">
-        <strong>ETH</strong>
-        <span>Ethereum</span>
+      <div class="left">
+        <img src="assets/images/eth.png" alt="ETH">
+        <div class="info">
+          <strong>ETH</strong>
+          <span>Ethereum</span>
+        </div>
       </div>
-      <div class="amount">
-        <strong id="bal-eth">0.00</strong>
-      </div>
+      <div class="amount"><strong id="bal-eth">0.00</strong></div>
     </div>
+
     <!-- AVAX -->
     <div class="wallet-row">
-      <img src="assets/images/avax.png" alt="AVAX">
-      <div class="info">
-        <strong>AVAX</strong>
-        <span>Avalanche</span>
+      <div class="left">
+        <img src="assets/images/avax.png" alt="AVAX">
+        <div class="info">
+          <strong>AVAX</strong>
+          <span>Avalanche</span>
+        </div>
       </div>
-      <div class="amount">
-        <strong id="bal-eth">0.00</strong>
-      </div>
+      <div class="amount"><strong id="bal-avax">0.00</strong></div>
     </div>
+
     <!-- TON -->
     <div class="wallet-row">
-      <img src="assets/images/ton.png" alt="TON">
-      <div class="info">
-        <strong>TON</strong>
-        <span>Toncoin</span>
+      <div class="left">
+        <img src="assets/images/ton.png" alt="TON">
+        <div class="info">
+          <strong>TON</strong>
+          <span>Toncoin</span>
+        </div>
       </div>
-      <div class="amount">
-        <strong id="bal-ton">0.00</strong>
-      </div>
+      <div class="amount"><strong id="bal-ton">0.00</strong></div>
     </div>
+
     <!-- SOL -->
     <div class="wallet-row">
-      <img src="assets/images/sol.png" alt="SOL">
-      <div class="info">
-        <strong>SOL</strong>
-        <span>Solana</span>
+      <div class="left">
+        <img src="assets/images/sol.png" alt="SOL">
+        <div class="info">
+          <strong>SOL</strong>
+          <span>Solana</span>
+        </div>
       </div>
-      <div class="amount">
-        <strong id="bal-sol">0.00</strong>
+      <div class="amount"><strong id="bal-sol">0.00</strong></div>
     </div>
-  </div>
 
     <!-- LTC -->
     <div class="wallet-row">
-      <img src="assets/images/ltc.png" alt="LTC">
-      <div class="info">
-        <strong>LTC</strong>
-        <span>Litecoin</span>
+      <div class="left">
+        <img src="assets/images/ltc.png" alt="LTC">
+        <div class="info">
+          <strong>LTC</strong>
+          <span>Litecoin</span>
+        </div>
       </div>
-      <div class="amount">
-        <strong id="bal-ltc">0.00</strong>
-      </div>
+      <div class="amount"><strong id="bal-ltc">0.00</strong></div>
     </div>
+
+  </div>
 
   <!-- ================= TRANSFER PANEL ================= -->
   <div class="wallet-transfer" id="transferPanel">
-
     <h4>Transfer BX</h4>
+
     <input
       id="transferTelegram"
       placeholder="Telegram ID ( @username )"
@@ -182,14 +192,19 @@
     <button class="btn confirm">
       Confirm Transfer
     </button>
-
   </div>
 
   <!-- ================= BOTTOM ACTIONS ================= -->
   <div class="wallet-bottom-actions">
-  <button id="walletConnectBtn" class="wallet-btn"> Walletconect</button>
-<button id="binanceConnectBtn" class="wallet-btn">Binance Pay </button>
-</div>
+    <button id="walletConnectBtn" class="wallet-btn walletconnect">
+      WalletConnect
+    </button>
+
+    <button id="binanceConnectBtn" class="wallet-btn binance-pay">
+      Binance Pay
+    </button>
+  </div>
+
 </section>
   
      <!-- ================= MARKET ================= -->
