@@ -219,6 +219,7 @@ const WALLET = {
   USDT: 0,
   BNB: 0,
   ETH: 0,
+  AVAX: 0,
   TON: 0,
   SOL: 0,
   BTC: 0,
@@ -232,6 +233,7 @@ const WALLET_DOM = {
   USDT: "bal-usdt",
   BNB: "bal-bnb",
   ETH: "bal-eth",
+  AVAX: "bal-avax",
   TON: "bal-ton",
   SOL: "bal-sol",
   BTC: "bal-btc"
@@ -263,6 +265,7 @@ function loadWallet() {
     WALLET.USDT = 0.00;
     WALLET.BNB = 0.00;
     WALLET.ETH = 0.00;
+    WALLET.AVAX = 0.00;
     WALLET.TON = 0.00;
     WALLET.SOL = 0.00;
     WALLET.BTC = 0.00;
@@ -365,6 +368,7 @@ const FEE_RATE = 0.001; // 0.1%
 const FALLBACK_PRICES = {
   USDT: 1,
   ETH: 2070,
+  AVAX: 9,
   BNB: 630,
   BTC: 69000,
   SOL: 86,
@@ -400,7 +404,7 @@ const MARKET = {
 /* ================= PRICE ENGINE ================= */
 
 async function fetchRealPrices() {
-  const symbols = ["ETHUSDT", "BNBUSDT", "BTCUSDT", "SOLUSDT", "TONUSDT"];
+  const symbols = ["ETHUSDT", "AVAXUSDT", "BNBUSDT", "BTCUSDT", "SOLUSDT", "TONUSDT"];
   for (const s of symbols) {
     try {
       const res = await fetch(
@@ -536,6 +540,7 @@ function connectDepthWS() {
   const MAP = {
     USDT: "ethusdt",
     ETH: "ethusdt",
+    AVAX: "avaxusdt",
     BNB: "bnbusdt",
     BTC: "btcusdt",
     SOL: "solusdt",
