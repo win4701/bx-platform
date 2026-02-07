@@ -1,52 +1,57 @@
 <!-- ================= MARKET ================= -->
 <div class="market-view view" id="market">
 
-  <!-- Header -->
+  <!-- ===== Header ===== -->
   <div class="market-header">
+
+    <!-- Pair -->
     <div class="pair-title">
-      <span id="marketPair">BX / USDT</span>
+      <span class="base">BX</span>
+      <span class="arrow">→</span>
+      <span class="quote" id="quoteAsset">USDT</span>
     </div>
 
+    <!-- Price -->
     <div class="price-box">
-      <div id="marketPrice">12.00 USDT</div>
+      <div id="marketPrice" class="price-main">12.00 USDT</div>
       <div id="marketApprox" class="approx">≈ 12.00 USDT</div>
     </div>
   </div>
 
-  <!-- Wallet -->
-  <div class="wallet-box">
-    <div>BX: <span id="walletBX">0</span></div>
-    <div>USDT: <span id="walletUSDT">0</span></div>
+  <!-- ===== Wallet ===== -->
+  <div class="wallet-box compact">
+    <div>BX <strong id="walletBX">0</strong></div>
+    <div>USDT <strong id="walletUSDT">0</strong></div>
   </div>
 
-  <!-- Pairs -->
-  <div class="market-pairs" id="pairBtn">
-    <button class="pair-btn active" data-pair="BX/USDT">BX/USDT</button>
-    <button class="pair-btn" data-pair="BX/BNB">BX/BNB</button>
-    <button class="pair-btn" data-pair="BX/ETH">BX/ETH</button>
-    <button class="pair-btn" data-pair="BX/TON">BX/TON</button>
-    <button class="pair-btn" data-pair="BX/SOL">BX/SOL</button>
-    <button class="pair-btn" data-pair="BX/BTC">BX/BTC</button>
+  <!-- ===== Pairs Tabs ===== -->
+  <div class="market-pairs tabs" id="pairBtn">
+    <button class="pair-btn active" data-pair="BX/USDT">USDT</button>
+    <button class="pair-btn" data-pair="BX/BNB">BNB</button>
+    <button class="pair-btn" data-pair="BX/ETH">ETH</button>
+    <button class="pair-btn" data-pair="BX/TON">TON</button>
+    <button class="pair-btn" data-pair="BX/SOL">SOL</button>
+    <button class="pair-btn" data-pair="BX/BTC">BTC</button>
   </div>
 
-  <!-- Chart -->
+  <!-- ===== Chart ===== -->
   <div class="chart-box">
     <div id="marketChart"></div>
   </div>
 
-  <!-- Indicators Legend -->
+  <!-- ===== Indicators ===== -->
   <div class="indicator-legend">
     <span class="ema">EMA</span>
     <span class="vwap">VWAP</span>
   </div>
 
-  <!-- Depth Chart -->
+  <!-- ===== Depth Chart ===== -->
   <div class="depth-box">
     <div class="depth-title">Market Depth</div>
     <div id="depthChart"></div>
   </div>
 
-  <!-- Trade Box -->
+  <!-- ===== Trade Box ===== -->
   <div class="trade-box buy" id="tradeBox">
 
     <div class="trade-tabs">
@@ -75,32 +80,32 @@
         id="actionBtn"
         onclick="submitLimitOrder()"
       >
-        Buy BX (BX/USDT)
+        Buy BX
       </button>
     </div>
   </div>
 
-  <!-- Order Book -->
+  <!-- ===== Order Book ===== -->
   <div class="orderbook">
     <div class="orderbook-title">Order Book</div>
 
     <div class="orderbook-grid">
       <div class="ob-col">
-        <div class="ob-head">Bids</div>
-        <div id="bids"></div>
+        <div class="ob-head buy">Bids</div>
+        <div id="bids" class="ob-list"></div>
       </div>
 
       <div class="ob-col">
-        <div class="ob-head">Asks</div>
-        <div id="asks"></div>
+        <div class="ob-head sell">Asks</div>
+        <div id="asks" class="ob-list"></div>
       </div>
     </div>
   </div>
 
-  <!-- Trades Stream -->
+  <!-- ===== Trades ===== -->
   <div class="trades">
     <div class="trades-title">Recent Trades</div>
-    <div id="tradesList"></div>
+    <div id="tradesList" class="trades-list"></div>
   </div>
 
 </div>
