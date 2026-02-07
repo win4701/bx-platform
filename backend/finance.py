@@ -22,7 +22,7 @@ MIN_WITHDRAW_USDT = 10.0
 MAX_WITHDRAW_RATIO = 0.5
 MAX_WITHDRAW_MONTH = 15
 
-ALLOWED_ASSETS = {"usdt", "ton", "bnb", "eth", "avax", "sol", "btc", "bx"}
+ALLOWED_ASSETS = {"usdt", "ton", "bnb", "eth", "avax", "sol", "btc", "ltc", "bx"}
 
 # ======================================================
 # DB HELPERS (ATOMIC & FLY SAFE)
