@@ -359,16 +359,16 @@ document.addEventListener("DOMContentLoaded", () => {
    MARKET — FULL ENGINE (BX EXCHANGE)
 ================================================= */
 
-const BX_USDT_PRICE = 12;
+const BX_USDT_PRICE = 7.5;
 const FEE_RATE = 0.001; // 0.1%
 
 const FALLBACK_PRICES = {
   USDT: 1,
-  ETH: 3000,
-  BNB: 300,
-  BTC: 60000,
-  SOL: 100,
-  TON: 2.5
+  ETH: 2070,
+  BNB: 630,
+  BTC: 69000,
+  SOL: 86,
+  TON: 1.5
 };
 
 const MARKET_PRICES = { ...FALLBACK_PRICES };
