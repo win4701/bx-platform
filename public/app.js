@@ -133,34 +133,37 @@ async function safeFetch(path, options = {}) {
 
 const VIEWS = ["wallet", "market", "casino", "mining", "airdrop"];
 
-/*================= APP ROUTER ================= */
+/* ================= SIMPLE ROUTER (FIXED) ================= */
 
-document.addEventListener("DOMContentLoaded", () => {
-  const views = document.querySelectorAll(".view");
-  const navButtons = document.querySelectorAll(".bottom-nav button");
+const VIEWS = document.querySelectorAll(".view");
+const NAV_BTNS = document.querySelectorAll(".bottom-nav button");
 
-  function showView(id) {
-    views.forEach(v => v.classList.remove("active"));
-    const target = document.getElementById(id);
-    if (target) target.classList.add("active");
+function switchView(viewId) {
+  VIEWS.forEach(v => v.classList.remove("active"));
+  NAV_BTNS.forEach(b => b.classList.remove("active"));
 
-    navButtons.forEach(b =>
-      b.classList.toggle("active", b.dataset.view === id)
-    );
+  const view = document.getElementById(viewId);
+  const btn = document.querySelector(`[data-view="${viewId}"]`);
 
-    document.dispatchEvent(new CustomEvent("view:change", { detail: id }));
-  }
+  if (view) view.classList.add("active");
+  if (btn) btn.classList.add("active");
 
-  navButtons.forEach(btn => {
-    btn.addEventListener("click", () => {
-      const view = btn.dataset.view;
-      if (view) showView(view);
-    });
+  document.dispatchEvent(
+    new CustomEvent("view:change", { detail: viewId })
+  );
+}
+
+NAV_BTNS.forEach(btn => {
+  btn.addEventListener("click", () => {
+    const view = btn.dataset.view;
+    if (view) switchView(view);
   });
-
-  showView("wallet");
 });
 
+/* default */
+document.addEventListener("DOMContentLoaded", () => {
+  switchView("wallet");
+});
 
 /* ================= NAV BUTTONS ================= */
 
@@ -200,6 +203,9 @@ document.addEventListener("view:change", (e) => {
   }
 
    /* ========= ENTER NEW VIEW ========= */
+   document.addEventListener("view:change", e => {
+  const view = e.detail;
+
   switch (view) {
     case "wallet":
       loadWallet();
@@ -207,17 +213,8 @@ document.addEventListener("view:change", (e) => {
 
     case "market":
       initMarket();
-      startMarket();
-      connectExchange();   
-
-      // إصلاح chart (بعد إظهار view)
-      setTimeout(() => {
-        if (MARKET.chart) {
-          MARKET.chart.applyOptions({
-            width: document.getElementById("marketChart").clientWidth
-          });
-        }
-      }, 80);
+      startPriceFeed();
+      connectDepthWS();
       break;
 
     case "casino":
@@ -232,8 +229,6 @@ document.addEventListener("view:change", (e) => {
       loadAirdrop();
       break;
   }
-
-  CURRENT_VIEW = view;
 });
 
 /* =========================================================
