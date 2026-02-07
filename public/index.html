@@ -29,7 +29,6 @@
   data-ui="pro"
   data-version="1.0.0"
 >
-
 <!-- ================= HEADER ================= -->
 <header class="app-header">
   <div class="logo">
@@ -64,7 +63,6 @@
   <div class="wallet-balances">
 
     <h3>Balances</h3>
-
     <!-- BX -->
     <div class="wallet-row main">
   <img src="assets/images/bx.png" alt="BX">
@@ -88,7 +86,6 @@
         <strong id="bal-usdt">0.00</strong>
       </div>
     </div>
-
     <!-- BNB -->
     <div class="wallet-row">
       <img src="assets/images/bnb.png" alt="BNB">
@@ -122,7 +119,6 @@
         <strong id="bal-ton">0.00</strong>
       </div>
     </div>
-
     <!-- SOL -->
     <div class="wallet-row">
       <img src="assets/images/sol.png" alt="SOL">
@@ -151,7 +147,6 @@
   <div class="wallet-transfer" id="transferPanel">
 
     <h4>Transfer BX</h4>
-
     <input
       id="transferTelegram"
       placeholder="Telegram ID ( @username )"
@@ -176,85 +171,56 @@
 </div>
 </section>
   
-        <!-- ================= MARKET ================= -->
-<div class="market-view view" id="market">
+     <!-- ================= MARKET ================= -->
+  <section <div class="market-view view" id="market">
 
-  <!-- ===== Header ===== -->
-  <div class="market-header global">
-    <div class="pair-left">
-      <div class="pair-title">
-        <span id="marketPair">BX / USDT</span>
-      </div>
-      <div class="price-main" id="marketPrice">12.00 USDT</div>
-      <div class="price-approx" id="marketApprox">≈ 12.00 USDT</div>
+  <!-- Header -->
+  <div class="market-header">
+    <div class="pair-title">
+      <span id="marketPair">BX / USDT</span>
     </div>
-
-    <div class="pair-stats">
-      <div>
-        <span class="label">24h</span>
-        <span id="statChange" class="pos">+0.00%</span>
-      </div>
-      <div>
-        <span class="label">High</span>
-        <span id="statHigh">12.00</span>
-      </div>
-      <div>
-        <span class="label">Low</span>
-        <span id="statLow">12.00</span>
-      </div>
-      <div>
-        <span class="label">Vol</span>
-        <span id="statVol">0</span>
-      </div>
+    <div class="price-box">
+      <div id="marketPrice">12.00 USDT</div>
+      <div id="marketApprox" class="approx">≈ 12.00 USDT</div>
     </div>
   </div>
 
-  <!-- ===== Wallet ===== -->
-  <div class="wallet-box compact">
-    <div>BX <strong id="walletBX">0</strong></div>
-    <div>USDT <strong id="walletUSDT">0</strong></div>
+  <!-- Wallet -->
+  <div class="wallet-box">
+    <div>BX: <span id="walletBX">0</span></div>
+    <div>USDT: <span id="walletUSDT">0</span></div>
   </div>
-
-  <!-- ===== Pairs Tabs ===== -->
-  <div class="market-pairs tabs" id="pairBtn">
-    <button class="pair-btn active" data-pair="BX/USDT">USDT</button>
-    <button class="pair-btn" data-pair="BX/BNB">BNB</button>
-    <button class="pair-btn" data-pair="BX/ETH">ETH</button>
-    <button class="pair-btn" data-pair="BX/TON">TON</button>
-    <button class="pair-btn" data-pair="BX/SOL">SOL</button>
-    <button class="pair-btn" data-pair="BX/BTC">BTC</button>
+  <!-- Pairs -->
+  <div class="market-pairs" id="pairBtn">
+    <button class="pair-btn active" data-pair="BX/USDT">BX/USDT</button>
+    <button class="pair-btn" data-pair="BX/BNB">BX/BNB</button>
+    <button class="pair-btn" data-pair="BX/ETH">BX/ETH</button>
+    <button class="pair-btn" data-pair="BX/TON">BX/TON</button>
+    <button class="pair-btn" data-pair="BX/SOL">BX/SOL</button>
+    <button class="pair-btn" data-pair="BX/BTC">BX/BTC</button>
   </div>
-
-  <!-- ===== Chart ===== -->
-  <div class="chart-box global">
-    <div class="chart-toolbar">
-      <div class="tf">
-        <button data-tf="1m">1m</button>
-        <button data-tf="5m" class="active">5m</button>
-        <button data-tf="1h">1h</button>
-      </div>
-      <div class="indicators">
-        <span class="ema">EMA</span>
-        <span class="vwap">VWAP</span>
-      </div>
-    </div>
+  <!-- Chart -->
+  <div class="chart-box">
     <div id="marketChart"></div>
   </div>
 
-  <!-- ===== Depth ===== -->
+  <!-- Indicators Legend -->
+  <div class="indicator-legend">
+    <span class="ema">EMA</span>
+    <span class="vwap">VWAP</span>
+  </div>
+  <!-- Depth Chart -->
   <div class="depth-box">
     <div class="depth-title">Market Depth</div>
     <div id="depthChart"></div>
   </div>
-
-  <!-- ===== Trade Box ===== -->
+  <!-- Trade Box -->
   <div class="trade-box buy" id="tradeBox">
 
     <div class="trade-tabs">
       <button id="buyTab" class="active">Buy</button>
       <button id="sellTab">Sell</button>
     </div>
-
     <div class="trade-form">
       <label>Amount (BX)</label>
       <input
@@ -263,7 +229,6 @@
         placeholder="0.00"
         inputmode="decimal"
       >
-
       <div class="percent-row">
         <button data-percent="10">10%</button>
         <button data-percent="25">25%</button>
@@ -271,47 +236,38 @@
         <button data-percent="100">MAX</button>
       </div>
 
-      <!-- Estimated -->
-      <div class="trade-estimate">
-        <div>Cost ≈ <span id="estCost">0</span> USDT</div>
-        <div>Fee (0.1%) <span id="estFee">0</span></div>
-      </div>
-
       <button
         class="action-btn buy"
         id="actionBtn"
         onclick="submitLimitOrder()"
       >
-        Buy BX
+        Buy BX (BX/USDT)
       </button>
     </div>
   </div>
-
-  <!-- ===== Order Book ===== -->
+  <!-- Order Book -->
   <div class="orderbook">
     <div class="orderbook-title">Order Book</div>
 
     <div class="orderbook-grid">
       <div class="ob-col">
         <div class="ob-head">Bids</div>
-        <div id="bids" class="ob-list"></div>
+        <div id="bids"></div>
       </div>
-
       <div class="ob-col">
         <div class="ob-head">Asks</div>
-        <div id="asks" class="ob-list"></div>
+        <div id="asks"></div>
       </div>
     </div>
   </div>
-
-  <!-- ===== Trades ===== -->
+  <!-- Trades Stream -->
   <div class="trades">
     <div class="trades-title">Recent Trades</div>
-    <div id="tradesList" class="trades-list"></div>
+    <div id="tradesList"></div>
   </div>
-
-</div>
-<!-- =============== END MARKET =============== -->
+</div> 
+</section>
+  
   <!-- ================= CASINO ================= -->
   <section id="casino" class="view">
   <h2 class="casino-title">Casino</h2>
