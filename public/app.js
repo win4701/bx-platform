@@ -238,7 +238,7 @@ const WALLET_DOM = {
   AVAX: "bal-avax",
   TON: "bal-ton",
   SOL: "bal-sol",
-  LTC: "bal-ltc"
+  LTC: "bal-ltc",
 };
 
 /* ================= RENDER ================= */
