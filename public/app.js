@@ -217,12 +217,13 @@ document.addEventListener("view:change", e => {
 const WALLET = {
   BX: 0,
   USDT: 0,
+  BTC: 0,
   BNB: 0,
   ETH: 0,
   AVAX: 0,
   TON: 0,
   SOL: 0,
-  BTC: 0,
+  LTC: 0,
   loaded: false
 };
 
@@ -231,12 +232,13 @@ const WALLET = {
 const WALLET_DOM = {
   BX: "bal-bx",
   USDT: "bal-usdt",
+  BTC: "bal-btc"
   BNB: "bal-bnb",
   ETH: "bal-eth",
   AVAX: "bal-avax",
   TON: "bal-ton",
   SOL: "bal-sol",
-  BTC: "bal-btc"
+  LTC: "bal-ltc"
 };
 
 /* ================= RENDER ================= */
@@ -263,12 +265,13 @@ function loadWallet() {
   if (!WALLET.loaded) {
     WALLET.BX = 0.00;
     WALLET.USDT = 0.00;
+    WALLET.BTC = 0.00;
     WALLET.BNB = 0.00;
     WALLET.ETH = 0.00;
     WALLET.AVAX = 0.00;
     WALLET.TON = 0.00;
     WALLET.SOL = 0.00;
-    WALLET.BTC = 0.00;
+    WALLET.LTC = 0.00;
     WALLET.loaded = true;
 
     log.info("Wallet loaded (UI fallback)");
@@ -367,10 +370,11 @@ const FEE_RATE = 0.001; // 0.1%
 
 const FALLBACK_PRICES = {
   USDT: 1,
+  BTC: 69000,
   ETH: 2070,
   AVAX: 9,
   BNB: 630,
-  BTC: 69000,
+  LTC: 55,
   SOL: 86,
   TON: 1.5
 };
@@ -404,7 +408,7 @@ const MARKET = {
 /* ================= PRICE ENGINE ================= */
 
 async function fetchRealPrices() {
-  const symbols = ["ETHUSDT", "AVAXUSDT", "BNBUSDT", "BTCUSDT", "SOLUSDT", "TONUSDT"];
+  const symbols = ["ETHUSDT", "AVAXUSDT", "BNBUSDT", "BTCUSDT", "SOLUSDT", "LTCUSDT", "TONUSDT"];
   for (const s of symbols) {
     try {
       const res = await fetch(
@@ -539,10 +543,11 @@ function connectDepthWS() {
   const quote = MARKET.pair.split("/")[1];
   const MAP = {
     USDT: "ethusdt",
+    BTC: "btcusdt",
     ETH: "ethusdt",
     AVAX: "avaxusdt",
     BNB: "bnbusdt",
-    BTC: "btcusdt",
+    LTC: "ltcusdt",
     SOL: "solusdt",
     TON: "tonusdt"
   };
