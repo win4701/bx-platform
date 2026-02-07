@@ -707,6 +707,13 @@ h3{
 .pnl.positive{ color:var(--green); }
 .pnl.negative{ color:var(--red); }
 
+.mid-line {
+  text-align: center;
+  font-size: 13px;
+  color: #f0b90b; /* Binance yellow */
+  margin: 6px 0;
+}
+
 /* ================= ICONS ================= */
 
 .market-view img{
