@@ -1,151 +1,113 @@
-<!-- ================= WALLET ================= -->
-  <section id="wallet" class=" view active">
+<!-- ================= MARKET ================= -->
+  <section   <div class="market-view view" id="market">
 
-  <!-- ================= TOP TOTAL ================= -->
-  <div class="wallet-top">
-    <span class="label">Est. Total Value</span>
-    <h1>
-      <span id="walletTotal">$0.00</span>
-      <small>USD</small>
-    </h1>
-  </div>
+  <!-- ===== Header ===== -->
+  <div class="market-header">
 
-  <!-- ================= MAIN ACTIONS ================= -->
-  <div class="wallet-actions">
-  <button class="btn primary">Deposit</button>
-  <button class="btn">Withdraw</button>
-  <button class="btn">Transfer</button>
-</div>
-
-  <!-- ================= BALANCES ================= -->
-  <div class="wallet-balances">
-
-    <h3>Balances</h3>
-    <!-- BX -->
-    <div class="wallet-row main">
-  <img src="assets/images/bx.png" alt="BX">
-      <div class="info">
-        <strong>BX</strong>
-        <span>Bloxio </span>
-      </div>
-      <div class="amount">
-        <strong id="bal-bx">0.00</strong>
-      </div>
+    <!-- Pair -->
+    <div class="pair-title">
+      <span class="base">BX</span>
+      <span class="arrow">→</span>
+      <span class="quote" id="quoteAsset">USDT</span>
     </div>
 
-    <!-- USDT -->
-    <div class="wallet-row">
- <img src="assets/images/usdt.png" alt="USDT">
-      <div class="info">
-        <strong>USDT</strong>
-        <span>Tether</span>
-      </div>
-      <div class="amount">
-        <strong id="bal-usdt">0.00</strong>
-      </div>
-    </div>
-    <!-- BTC -->
-    <div class="wallet-row">
-      <img src="assets/images/btc.png" alt="BTC">
-      <div class="info">
-        <strong>BTC</strong>
-        <span>Bitcoin</span>
-      </div>
-      <div class="amount">
-        <strong id="bal-btc">0.00</strong>
-      </div>
-    <!-- BNB -->
-    <div class="wallet-row">
-      <img src="assets/images/bnb.png" alt="BNB">
-      <div class="info">
-        <strong>BNB</strong>
-        <span>Binance </span>
-      </div>
-      <div class="amount">
-        <strong id="bal-bnb">0.00</strong>
-      </div>
-    </div>
- <!-- ETH -->
-    <div class="wallet-row">
-      <img src="assets/images/eth.png" alt="ETH">
-      <div class="info">
-        <strong>ETH</strong>
-        <span>Ethereum</span>
-      </div>
-      <div class="amount">
-        <strong id="bal-eth">0.00</strong>
-      </div>
-    </div>
-    <!-- AVAX -->
-    <div class="wallet-row">
-      <img src="assets/images/avax.png" alt="AVAX">
-      <div class="info">
-        <strong>AVAX</strong>
-        <span>Avalanche</span>
-      </div>
-      <div class="amount">
-        <strong id="bal-eth">0.00</strong>
-      </div>
-    </div>
-    <!-- TON -->
-    <div class="wallet-row">
-      <img src="assets/images/ton.png" alt="TON">
-      <div class="info">
-        <strong>TON</strong>
-        <span>Toncoin</span>
-      </div>
-      <div class="amount">
-        <strong id="bal-ton">0.00</strong>
-      </div>
-    </div>
-    <!-- SOL -->
-    <div class="wallet-row">
-      <img src="assets/images/sol.png" alt="SOL">
-      <div class="info">
-        <strong>SOL</strong>
-        <span>Solana</span>
-      </div>
-      <div class="amount">
-        <strong id="bal-sol">0.00</strong>
+    <!-- Price -->
+    <div class="price-box">
+      <div id="marketPrice" class="price-main">12.00 USDT</div>
+      <div id="marketApprox" class="approx">≈ 12.00 USDT</div>
     </div>
   </div>
 
-    <!-- LTC -->
-    <div class="wallet-row">
-      <img src="assets/images/ltc.png" alt="LTC">
-      <div class="info">
-        <strong>LTC</strong>
-        <span>Litecoin</span>
-      </div>
-      <div class="amount">
-        <strong id="bal-ltc">0.00</strong>
-      </div>
-    </div>
-
-  <!-- ================= TRANSFER PANEL ================= -->
-  <div class="wallet-transfer" id="transferPanel">
-
-    <h4>Transfer BX</h4>
-    <input
-      id="transferTelegram"
-      placeholder="Telegram ID ( @username )"
-    />
-
-    <input
-      id="transferAmount"
-      type="number"
-      placeholder="Amount BX"
-    />
-
-    <button class="btn confirm">
-      Confirm Transfer
-    </button>
-
+  <!-- ===== Wallet ===== -->
+  <div class="wallet-box compact">
+    <div>BX <strong id="walletBX">0</strong></div>
+    <div>USDT <strong id="walletUSDT">0</strong></div>
   </div>
 
-  <!-- ================= BOTTOM ACTIONS ================= -->
-  <div class="wallet-bottom-actions">
-  <button id="walletConnectBtn" class="wallet-btn"> Walletconect</button>
-<button id="binanceConnectBtn" class="wallet-btn">Binance Pay </button>
+  <!-- ===== Pairs Tabs ===== -->
+  <div class="market-pairs tabs" id="pairBtn">
+    <button class="pair-btn active" data-pair="BX/USDT">USDT</button>
+    <button class="pair-btn" data-pair="BX/BTC">BTC</button>
+    <button class="pair-btn" data-pair="BX/BNB">BNB</button>
+    <button class="pair-btn" data-pair="BX/ETH">ETH</button>
+    <button class="pair-btn" data-pair="BX/AVAX">AVAX</button>
+    <button class="pair-btn" data-pair="BX/TON">TON</button>
+    <button class="pair-btn" data-pair="BX/SOL">SOL</button>
+    <button class="pair-btn" data-pair="BX/LTC">LTC</button>
+  </div>
+
+  <!-- ===== Chart ===== -->
+  <div class="chart-box">
+    <div id="marketChart"></div>
+  </div>
+
+  <!-- ===== Indicators ===== -->
+  <div class="indicator-legend">
+    <span class="ema">EMA</span>
+    <span class="vwap">VWAP</span>
+  </div>
+
+  <!-- ===== Depth Chart ===== -->
+  <div class="depth-box">
+    <div class="depth-title">Market Depth</div>
+    <div id="depthChart"></div>
+  </div>
+
+  <!-- ===== Trade Box ===== -->
+  <div class="trade-box buy" id="tradeBox">
+
+    <div class="trade-tabs">
+      <button id="buyTab" class="active">Buy</button>
+      <button id="sellTab">Sell</button>
+    </div>
+
+    <div class="trade-form">
+      <label>Amount (BX)</label>
+      <input
+        id="orderAmount"
+        type="number"
+        placeholder="0.00"
+        inputmode="decimal"
+      >
+
+      <div class="percent-row">
+        <button data-percent="10">10%</button>
+        <button data-percent="25">25%</button>
+        <button data-percent="50">50%</button>
+        <button data-percent="100">MAX</button>
+      </div>
+
+      <button
+        class="action-btn buy"
+        id="actionBtn"
+        onclick="submitLimitOrder()"
+      >
+        Buy BX
+      </button>
+    </div>
+  </div>
+
+  <!-- ===== Order Book ===== -->
+  <div class="orderbook">
+    <div class="orderbook-title">Order Book</div>
+
+    <div class="orderbook-grid">
+      <div class="ob-col">
+        <div class="ob-head buy">Bids</div>
+        <div id="bids" class="ob-list"></div>
+      </div>
+
+      <div class="ob-col">
+        <div class="ob-head sell">Asks</div>
+        <div id="asks" class="ob-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Trades ===== -->
+  <div class="trades">
+    <div class="trades-title">Recent Trades</div>
+    <div id="tradesList" class="trades-list"></div>
+  </div>
 </div>
     </section>
