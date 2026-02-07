@@ -359,7 +359,7 @@ document.addEventListener("DOMContentLoaded", () => {
    MARKET — FULL ENGINE (BX EXCHANGE)
 ================================================= */
 
-const BX_USDT_PRICE = 7.5;
+const BX_USDT_PRICE = 12;
 const FEE_RATE = 0.001; // 0.1%
 
 const FALLBACK_PRICES = {
