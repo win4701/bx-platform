@@ -458,320 +458,256 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 /* =================================================
-   MARKET — FULL ENGINE (BX EXCHANGE)
+   MARKET.JS — FULL ENGINE (CANVAS FIRST)
 ================================================= */
 
-const BX_USDT_PRICE = 12;
-const FEE_RATE = 0.001; // 0.1%
-
-const FALLBACK_PRICES = {
-  USDT: 1,
-  BTC: 69000,
-  ETH: 2070,
-  AVAX: 9,
-  BNB: 630,
-  LTC: 55,
-  SOL: 86,
-  TON: 1.5
+const MARKET_CONFIG = {
+  BASE_PRICE: 12,
+  UPDATE_INTERVAL: 1000,
+  EMA_PERIOD: 14
 };
-
-const MARKET_PRICES = { ...FALLBACK_PRICES };
-
-let priceTimer = null;
-let depthWS = null;
 
 /* ================= STATE ================= */
 
-const MARKET = {
+const MarketState = {
   pair: "BX/USDT",
-  side: "buy",
-  price: BX_USDT_PRICE,
-  lockedPrice: null,
 
-  chart: null,
-  candleSeries: null,
-  emaSeries: null,
-  vwapSeries: null,
+  lastPrice: MARKET_CONFIG.BASE_PRICE,
+  prevPrice: MARKET_CONFIG.BASE_PRICE,
 
-  depthChart: null,
-  bidSeries: null,
-  askSeries: null,
+  bids: [],
+  asks: [],
+  trades: [],
 
-  candles: [],
-  initialized: false
+  ema: null,
+  vwap: null,
+
+  pv: 0,
+  vol: 0,
+
+  listeners: []
 };
 
-/* ================= PRICE ENGINE ================= */
+/* ================= EVENTS ================= */
 
-async function fetchRealPrices() {
-  const symbols = ["ETHUSDT", "AVAXUSDT", "BNBUSDT", "BTCUSDT", "SOLUSDT", "LTCUSDT", "TONUSDT"];
-  for (const s of symbols) {
-    try {
-      const res = await fetch(
-        `https://api.binance.com/api/v3/ticker/price?symbol=${s}`
-      );
-      const data = await res.json();
-      MARKET_PRICES[s.replace("USDT", "")] = parseFloat(data.price);
-    } catch {}
-  }
-}
+MarketState.onUpdate = fn => MarketState.listeners.push(fn);
+const emit = () => MarketState.listeners.forEach(fn => fn(MarketState));
 
-function startPriceFeed() {
-  fetchRealPrices();
-  if (priceTimer) clearInterval(priceTimer);
-  priceTimer = setInterval(fetchRealPrices, 30000);
-}
+/* ================= FAKE WEBSOCKET ================= */
 
-function stopPriceFeed() {
-  if (priceTimer) clearInterval(priceTimer);
-  priceTimer = null;
-}
+function startFakeWS() {
+  setInterval(() => {
+    MarketState.prevPrice = MarketState.lastPrice;
 
-function getPairPrice(pair) {
-  const [, quote] = pair.split("/");
-  if (quote === "USDT") return BX_USDT_PRICE;
-  return +(BX_USDT_PRICE / (MARKET_PRICES[quote] || 1)).toFixed(8);
-}
+    const delta = (Math.random() - 0.5) * 0.05;
+    MarketState.lastPrice = +(MarketState.lastPrice + delta).toFixed(4);
 
-/* ================= UI ================= */
+    MarketState.bids = Array.from({ length: 12 }, (_, i) => ({
+      price: +(MarketState.lastPrice - (i + 1) * 0.01).toFixed(4),
+      qty: +(Math.random() * 6 + 1).toFixed(3)
+    }));
 
-function updatePriceUI() {
-  const price = getPairPrice(MARKET.pair);
-  MARKET.price = price;
+    MarketState.asks = Array.from({ length: 12 }, (_, i) => ({
+      price: +(MarketState.lastPrice + (i + 1) * 0.01).toFixed(4),
+      qty: +(Math.random() * 6 + 1).toFixed(3)
+    }));
 
-  const quote = MARKET.pair.split("/")[1];
-  const priceEl = document.getElementById("marketPrice");
-  const approxEl = document.getElementById("marketApprox");
-
-  if (priceEl) priceEl.textContent = `${price} ${quote}`;
-  if (approxEl)
-    approxEl.textContent = `≈ ${(price * (MARKET_PRICES[quote] || 1)).toFixed(2)} USDT`;
-}
-
-function updatePairUI() {
-  document.querySelectorAll("[data-pair]").forEach(btn => {
-    btn.classList.toggle("active", btn.dataset.pair === MARKET.pair);
-  });
-
-  const pairEl = document.getElementById("marketPair");
-  if (pairEl) pairEl.textContent = MARKET.pair.replace("/", " / ");
-}
-
-function updateWalletUI() {
-  document.getElementById("walletBX").textContent = WALLET.BX.toFixed(4);
-  document.getElementById("walletUSDT").textContent = WALLET.USDT.toFixed(2);
-}
-
-/* ================= PAIRS ================= */
-
-function bindPairs() {
-  document.querySelectorAll("[data-pair]").forEach(btn => {
-    btn.onclick = () => {
-      MARKET.pair = btn.dataset.pair;
-      updatePairUI();
-      updatePriceUI();
-      loadStaticChart();
-      connectDepthWS();
-    };
-  });
-}
-
-/* ================= CHART ================= */
-
-function initChart() {
-  const el = document.getElementById("marketChart");
-  if (!el || MARKET.chart) return;
-
-  MARKET.chart = LightweightCharts.createChart(el, {
-    height: 300,
-    layout: { background: { color: "#020617" }, textColor: "#94a3b8" }
-  });
-
-  MARKET.candleSeries = MARKET.chart.addCandlestickSeries();
-  MARKET.emaSeries = MARKET.chart.addLineSeries({ color: "#facc15" });
-  MARKET.vwapSeries = MARKET.chart.addLineSeries({ color: "#38bdf8" });
-}
-
-function loadStaticChart() {
-  const now = Math.floor(Date.now() / 1000);
-  MARKET.candles = [];
-
-  for (let i = 30; i >= 0; i--) {
-    MARKET.candles.push({
-      time: now - i * 60,
-      open: MARKET.price,
-      high: MARKET.price * 1.01,
-      low: MARKET.price * 0.99,
-      close: MARKET.price,
-      volume: Math.random() * 50 + 10
+    MarketState.trades.unshift({
+      price: MarketState.lastPrice,
+      qty: +(Math.random() * 2).toFixed(3),
+      side: Math.random() > 0.5 ? "buy" : "sell",
+      time: new Date().toLocaleTimeString()
     });
+
+    MarketState.trades = MarketState.trades.slice(0, 30);
+
+    updateIndicators();
+    emit();
+  }, MARKET_CONFIG.UPDATE_INTERVAL);
+}
+
+/* ================= REAL WEBSOCKET (READY) ================= */
+// function startRealWS() {
+//   const ws = new WebSocket("wss://api.yourdomain/ws/market");
+//   ws.onmessage = e => {
+//     const d = JSON.parse(e.data);
+//     Object.assign(MarketState, d);
+//     updateIndicators();
+//     emit();
+//   };
+// }
+
+/* ================= INDICATORS ================= */
+
+function updateIndicators() {
+  const price = MarketState.lastPrice;
+  const volume = Math.random() * 5 + 1;
+
+  MarketState.pv += price * volume;
+  MarketState.vol += volume;
+  MarketState.vwap = MarketState.pv / MarketState.vol;
+
+  const k = 2 / (MARKET_CONFIG.EMA_PERIOD + 1);
+  MarketState.ema =
+    MarketState.ema === null
+      ? price
+      : price * k + MarketState.ema * (1 - k);
+}
+
+/* ================= CANVAS ================= */
+
+const canvas = document.getElementById("marketCanvas");
+const ctx = canvas?.getContext("2d");
+
+function renderCanvas(m) {
+  if (!ctx) return;
+
+  const w = canvas.width;
+  const h = canvas.height;
+  ctx.clearRect(0, 0, w, h);
+
+  const midY = h / 2;
+  const scale = 6;
+  const y = p => midY - (p - m.lastPrice) * scale;
+
+  /* GRID */
+  ctx.strokeStyle = "#020617";
+  for (let i = 0; i < h; i += 40) {
+    ctx.beginPath();
+    ctx.moveTo(0, i);
+    ctx.lineTo(w, i);
+    ctx.stroke();
   }
 
-  MARKET.candleSeries.setData(MARKET.candles);
-  MARKET.emaSeries.setData(calcEMA(MARKET.candles));
-  MARKET.vwapSeries.setData(calcVWAP(MARKET.candles));
-}
-
-function calcEMA(data, p = 20) {
-  let k = 2 / (p + 1);
-  let ema = data[0].close;
-  return data.map(c => {
-    ema = c.close * k + ema * (1 - k);
-    return { time: c.time, value: ema };
-  });
-}
-
-function calcVWAP(data) {
-  let pv = 0, vol = 0;
-  return data.map(c => {
-    const tp = (c.high + c.low + c.close) / 3;
-    pv += tp * c.volume;
-    vol += c.volume;
-    return { time: c.time, value: pv / vol };
-  });
-}
-
-/* ================= DEPTH WS ================= */
-
-function connectDepthWS() {
-  disconnectDepthWS();
-
-  const quote = MARKET.pair.split("/")[1];
-  const MAP = {
-    USDT: "ethusdt",
-    BTC: "btcusdt",
-    ETH: "ethusdt",
-    AVAX: "avaxusdt",
-    BNB: "bnbusdt",
-    LTC: "ltcusdt",
-    SOL: "solusdt",
-    TON: "tonusdt"
-  };
-
-  depthWS = new WebSocket(
-    `wss://stream.binance.com:9443/ws/${MAP[quote]}@depth20@100ms`
+  /* HEATMAP */
+  const maxQty = Math.max(
+    ...m.bids.map(b => b.qty),
+    ...m.asks.map(a => a.qty),
+    1
   );
 
-  depthWS.onmessage = e => {
-    const d = JSON.parse(e.data);
-    updateOrderBook(d);
-    updateDepthChart(d);
-  };
-}
+  m.bids.forEach(b => {
+    ctx.fillStyle = `rgba(34,197,94,${(b.qty / maxQty) * 0.4})`;
+    ctx.fillRect(0, y(b.price), w / 2, 6);
+  });
 
-function disconnectDepthWS() {
-  if (depthWS) depthWS.close();
-  depthWS = null;
+  m.asks.forEach(a => {
+    ctx.fillStyle = `rgba(239,68,68,${(a.qty / maxQty) * 0.4})`;
+    ctx.fillRect(w / 2, y(a.price), w / 2, 6);
+  });
+
+  /* PRICE */
+  drawLine(m.lastPrice, "#22c55e");
+
+  /* EMA */
+  drawLine(m.ema, "#facc15");
+
+  /* VWAP */
+  drawLine(m.vwap, "#a855f7");
+
+  function drawLine(val, color) {
+    ctx.strokeStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(0, y(val));
+    ctx.lineTo(w, y(val));
+    ctx.stroke();
+  }
 }
 
 /* ================= ORDER BOOK ================= */
 
-function updateOrderBook(d) {
+function renderOrderBook(m) {
   const bidsEl = document.getElementById("bids");
   const asksEl = document.getElementById("asks");
   if (!bidsEl || !asksEl) return;
 
-  bidsEl.innerHTML = "";
-  asksEl.innerHTML = "";
+  bidsEl.innerHTML = m.bids
+    .map(b => `<div class="row buy">${b.price} <span>${b.qty}</span></div>`)
+    .join("");
 
-  d.bids.slice(0, 10).forEach(([p, q]) => {
-    bidsEl.innerHTML += `<div class="row buy">${(MARKET.price / p).toFixed(6)} • ${q}</div>`;
+  asksEl.innerHTML = m.asks
+    .map(a => `<div class="row sell">${a.price} <span>${a.qty}</span></div>`)
+    .join("");
+}
+
+/* ================= PRICE LADDER ================= */
+
+function renderPriceLadder(m) {
+  const el = document.getElementById("priceLadder");
+  if (!el) return;
+
+  const rows = [];
+
+  m.asks.slice(0, 8).reverse().forEach(a => {
+    rows.push(`<div class="ladder-row sell">${a.price} • ${a.qty}</div>`);
   });
 
-  d.asks.slice(0, 10).forEach(([p, q]) => {
-    asksEl.innerHTML += `<div class="row sell">${(MARKET.price / p).toFixed(6)} • ${q}</div>`;
+  rows.push(`<div class="ladder-row mid">${m.lastPrice}</div>`);
+
+  m.bids.slice(0, 8).forEach(b => {
+    rows.push(`<div class="ladder-row buy">${b.price} • ${b.qty}</div>`);
   });
+
+  el.innerHTML = rows.join("");
 }
 
-/* ================= DEPTH CHART ================= */
+/* ================= TRADES ================= */
 
-function initDepthChart() {
-  const el = document.getElementById("depthChart");
-  if (!el || MARKET.depthChart) return;
+function renderTrades(m) {
+  const el = document.getElementById("tradesList");
+  if (!el) return;
 
-  MARKET.depthChart = LightweightCharts.createChart(el, { height: 180 });
-  MARKET.bidSeries = MARKET.depthChart.addAreaSeries({ lineColor: "#22c55e" });
-  MARKET.askSeries = MARKET.depthChart.addAreaSeries({ lineColor: "#ef4444" });
+  el.innerHTML = m.trades
+    .map(
+      t => `
+      <div class="trade ${t.side}">
+        <span>${t.price}</span>
+        <span>${t.qty}</span>
+        <span>${t.time}</span>
+      </div>`
+    )
+    .join("");
 }
 
-function updateDepthChart(d) {
-  let bc = 0, ac = 0;
-  MARKET.bidSeries.setData(
-    d.bids.slice(0, 10).map(([p, q]) => ({
-      time: (MARKET.price / p),
-      value: (bc += parseFloat(q))
-    }))
-  );
-  MARKET.askSeries.setData(
-    d.asks.slice(0, 10).map(([p, q]) => ({
-      time: (MARKET.price / p),
-      value: (ac += parseFloat(q))
-    }))
-  );
+/* ================= PRICE FLASH ================= */
+
+function renderPriceFlash(m) {
+  const el = document.getElementById("marketPrice");
+  if (!el) return;
+
+  el.textContent = m.lastPrice.toFixed(4);
+  el.classList.remove("up", "down");
+
+  if (m.lastPrice > m.prevPrice) el.classList.add("up");
+  if (m.lastPrice < m.prevPrice) el.classList.add("down");
 }
 
-/* ================= WALLET ================= */
+/* ================= SPREAD ================= */
 
-async function loadWallet() {
-  const res = await fetch("/api/wallet", {
-    headers: { Authorization: `Bearer ${USER.jwt}` }
-  });
-  WALLET = await res.json();
-  updateWalletUI();
+function getSpread(m) {
+  if (!m.bids.length || !m.asks.length) return 0;
+  return +(m.asks[0].price - m.bids[0].price).toFixed(4);
 }
 
-/* ================= ORDERS ================= */
+/* ================= SUBSCRIBE ================= */
 
-function submitLimitOrder() {
-  const amount = parseFloat(document.getElementById("orderAmount").value);
-  if (!amount || amount <= 0) return alert("Invalid amount");
-
-  const lockedPrice = MARKET.price;
-  const quote = MARKET.pair.split("/")[1];
-  const total = amount * lockedPrice;
-  const fee = total * FEE_RATE;
-
-  if (MARKET.side === "buy") {
-    if (WALLET.USDT < total + fee) return alert("Insufficient USDT");
-    WALLET.USDT -= total + fee;
-    WALLET.BX += amount;
-  } else {
-    if (WALLET.BX < amount) return alert("Insufficient BX");
-    WALLET.BX -= amount;
-    WALLET.USDT += total - fee;
-  }
-
-  updateWalletUI();
-  alert("Order executed ✔️");
-}
+MarketState.onUpdate(m => {
+  renderCanvas(m);
+  renderOrderBook(m);
+  renderPriceLadder(m);
+  renderTrades(m);
+  renderPriceFlash(m);
+});
 
 /* ================= INIT ================= */
 
 function initMarket() {
-  if (MARKET.initialized) return;
-  MARKET.initialized = true;
-
-  bindPairs();
-  initChart();
-  initDepthChart();
-  updatePairUI();
-  updatePriceUI();
-  loadStaticChart();
+  if (!canvas) return;
+  startFakeWS(); // 🔁 بدّلها لاحقًا إلى startRealWS()
 }
 
-/* ================= LIFECYCLE ================= */
+document.addEventListener("DOMContentLoaded", initMarket);
 
-document.addEventListener("view:change", e => {
-  if (e.detail === "market") {
-    initMarket();
-    startPriceFeed();
-    connectDepthWS();
-    loadWallet();
-  } else {
-    stopPriceFeed();
-    disconnectDepthWS();
-  }
-});
     
 /* =====================================================
    CASINO.JS — FULL UPDATE (Telegram + WebApp Safe)
