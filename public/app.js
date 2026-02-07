@@ -418,8 +418,6 @@ const MARKET = {
   initialized: false
 };
 
-let WALLET = { BX: 0, USDT: 0 };
-
 /* ================= PRICE ENGINE ================= */
 
 async function fetchRealPrices() {
