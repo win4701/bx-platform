@@ -23,7 +23,7 @@ if not DB_URL:
 BX_BASE_PRICE_USDT = 12.0           # ✅ موحّد مع المشروع
 MAX_DEMAND_PREMIUM = 0.20          # 20% كحد أقصى
 
-ALLOWED_ASSETS = {"usdt", "ton", "sol", "btc", "eth", "bnb"}
+ALLOWED_ASSETS = {"usdt", "ton", "sol", "btc", "eth", "avax", "bnb"}
 
 # ======================================================
 # SPREADS (ENV DRIVEN)
