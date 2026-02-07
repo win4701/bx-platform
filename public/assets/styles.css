@@ -416,17 +416,16 @@ h3{
 
 /* ================= CANVAS ================= */
 
-.chart-box{
-  background:var(--panel);
-  border:1px solid var(--border);
-  border-radius:10px;
-  padding:6px;
-  margin-bottom:8px;
+.chart-box {
+  background: #0b0f14;
+  border-radius: 14px;
+  padding: 8px;
+  margin: 12px 0;
 }
 
-#marketCanvas{
-  width:100%;
-  display:block;
+.chart-canvas {
+  width: 100%;
+  height: 260px;
 }
 
 /* ================= INDICATORS ================= */
