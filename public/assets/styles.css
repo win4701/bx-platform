@@ -316,58 +316,34 @@ h3{
   color:#022c22;
   border:none;
    }
-  
 
-/* =========================================================
-   BUTTONS
-========================================================= */
-.btn{
-  border:0;
-  border-radius:14px;
-  padding:14px;
-  font-weight:800;
-  cursor:pointer;
+/* =====================================================
+   MARKET CSS — BINANCE PRO / CANVAS-FIRST
+   FULL RESET + REBUILD (SAFE)
+===================================================== */
+
+:root{
+  --bg:#0b0e11;
+  --panel:#0e1318;
+  --border:#1e2329;
+  --muted:#848e9c;
+
+  --green:#0ecb81;
+  --green-soft:rgba(14,203,129,.15);
+
+  --red:#f6465d;
+  --red-soft:rgba(246,70,93,.15);
+
+  --yellow:#f0b90b;
+  --purple:#a855f7;
 }
 
-.btn.primary{
-  background:linear-gradient(180deg,#6ee7a8,#16a34a);
-  color:#042417;
-}
-
-.btn.secondary{
-  background:#0b1f27;
-  color:var(--text);
-  border:1px solid var(--border);
-}
-
-.buy-btn,
-.sell-btn{
-  width:100%;
-  height:38px;
-  border-radius:14px;
-  font-size:16px;
-  font-weight:800;
-  margin-top:10px;
-}
-
-.buy-btn{
-  background:#02c076;
-  color:#022c22;
-}
-
-.trade-tabs .active.buy,
-.trade-box.buy .action-btn{
-  background: linear-gradient(135deg,#02c076,#6ee7a8);
-  color:#022c22;
-}
-
-/* ======================================================
-   MARKET – GLOBAL EXCHANGE STYLE
-====================================================== */
+/* ================= BASE ================= */
 
 .market-view{
   padding:14px;
-  color:#e5e7eb;
+  background:var(--bg);
+  color:#eaecef;
   font-family:system-ui,-apple-system,BlinkMacSystemFont;
 }
 
@@ -377,44 +353,46 @@ h3{
   display:flex;
   justify-content:space-between;
   align-items:flex-start;
-  margin-bottom:10px;
+  margin-bottom:12px;
 }
 
 .pair-title{
   display:flex;
   align-items:center;
   gap:6px;
-  font-size:15px;
-  font-weight:800;
+  font-size:18px;
+  font-weight:900;
 }
 
-.pair-title .arrow{
-  color:#94a3b8;
-  font-weight:700;
-  transform:translateY(-1px);
-}
+.pair-title .base{ color:var(--yellow); }
+.pair-title .arrow{ color:var(--muted); }
+.pair-title .quote{ color:#94a3b8; }
 
 .price-box{
   text-align:right;
 }
 
 .price-main{
-  font-size:18px;
+  font-size:26px;
   font-weight:900;
 }
 
+.price-main.up{ color:var(--green); }
+.price-main.down{ color:var(--red); }
+
 .approx{
   font-size:12px;
-  color:#94a3b8;
+  color:var(--muted);
 }
 
-/* ================= PAIRS TABS ================= */
+/* ================= PAIRS ================= */
 
 .market-pairs.tabs{
   display:flex;
   gap:8px;
   overflow-x:auto;
   padding:6px 0;
+  margin-bottom:8px;
 }
 
 .market-pairs::-webkit-scrollbar{ display:none; }
@@ -423,30 +401,32 @@ h3{
   padding:6px 14px;
   border-radius:999px;
   background:#020617;
-  border:1px solid rgba(255,255,255,.08);
+  border:1px solid var(--border);
   font-size:12px;
   font-weight:700;
-  color:#94a3b8;
+  color:var(--muted);
   white-space:nowrap;
 }
 
 .pair-btn.active{
-  color:#22c55e;
-  border-color:#22c55e;
-  box-shadow:0 0 0 1px rgba(34,197,94,.35);
+  color:var(--yellow);
+  border-color:var(--yellow);
+  box-shadow:0 0 0 1px rgba(240,185,11,.35);
 }
 
-/* ================= CHART ================= */
+/* ================= CANVAS ================= */
 
 .chart-box{
-  margin-top:8px;
-  background:#020617;
-  border-radius:14px;
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:10px;
   padding:6px;
+  margin-bottom:8px;
 }
 
-#marketChart{
-  height:300px;
+#marketCanvas{
+  width:100%;
+  display:block;
 }
 
 /* ================= INDICATORS ================= */
@@ -454,20 +434,21 @@ h3{
 .indicator-legend{
   display:flex;
   gap:14px;
-  font-size:12px;
+  font-size:11px;
   margin:6px 4px;
 }
 
 .indicator-legend .ema{ color:#facc15; }
-.indicator-legend .vwap{ color:#38bdf8; }
+.indicator-legend .vwap{ color:var(--purple); }
 
 /* ================= DEPTH ================= */
 
 .depth-box{
-  margin-top:8px;
-  background:#020617;
-  border-radius:14px;
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:10px;
   padding:6px;
+  margin-bottom:10px;
 }
 
 .depth-title{
@@ -479,48 +460,56 @@ h3{
 /* ================= TRADE BOX ================= */
 
 .trade-box{
-  margin-top:10px;
-  background:rgba(255,255,255,.03);
-  border:1px solid rgba(255,255,255,.06);
-  border-radius:16px;
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:12px;
   padding:12px;
+  margin-bottom:12px;
 }
 
 .trade-tabs{
   display:flex;
   gap:8px;
-  margin-bottom:8px;
+  margin-bottom:10px;
 }
 
 .trade-tabs button{
   flex:1;
   padding:8px;
-  border-radius:12px;
+  border-radius:10px;
   font-weight:800;
   font-size:14px;
   background:#020617;
-  color:#94a3b8;
+  color:var(--muted);
 }
 
 .trade-tabs button.active{
-  background:linear-gradient(135deg,#22c55e,#16a34a);
-  color:#020617;
+  background:var(--green);
+  color:#022c22;
 }
 
 .trade-box.sell .trade-tabs button.active{
-  background:linear-gradient(135deg,#FE55A1,#d81484);
-  color:#020617;
+  background:var(--red);
+  color:white;
+}
+
+.trade-form label{
+  font-size:12px;
+  color:var(--muted);
 }
 
 .trade-form input{
   width:100%;
   padding:10px;
-  border-radius:12px;
+  border-radius:10px;
   background:#020617;
-  border:1px solid rgba(255,255,255,.08);
+  border:1px solid var(--border);
   color:#fff;
   font-size:14px;
+  margin-top:4px;
 }
+
+/* ===== Percent ===== */
 
 .percent-row{
   display:flex;
@@ -534,30 +523,47 @@ h3{
   font-size:12px;
   border-radius:8px;
   background:#020617;
-  color:#94a3b8;
+  color:var(--muted);
+  border:1px solid var(--border);
 }
 
-/* ================= ACTION BUTTON ================= */
+/* ===== Order Preview ===== */
+
+.order-preview{
+  font-size:12px;
+  color:var(--muted);
+  margin:6px 0;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:4px;
+}
+
+/* ===== Action ===== */
 
 .action-btn{
   width:100%;
   margin-top:6px;
   padding:12px;
-  border-radius:14px;
+  border-radius:12px;
   font-size:15px;
   font-weight:900;
-  background:linear-gradient(135deg,#22c55e,#16a34a);
-  color:#020617;
+  background:var(--green);
+  color:#022c22;
 }
 
 .trade-box.sell .action-btn{
-  background:linear-gradient(135deg,#FE55A1,#d81484);
+  background:var(--red);
+  color:white;
 }
 
 /* ================= ORDER BOOK ================= */
 
 .orderbook{
-  margin-top:12px;
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:8px;
+  margin-bottom:12px;
 }
 
 .orderbook-title{
@@ -568,18 +574,27 @@ h3{
 
 .orderbook-grid{
   display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:8px;
+  grid-template-columns:1fr auto 1fr;
+  gap:6px;
+}
+
+.ob-col{
+  display:flex;
+  flex-direction:column;
 }
 
 .ob-head{
-  font-size:12px;
+  font-size:11px;
   font-weight:800;
+  text-align:center;
   margin-bottom:4px;
+  color:var(--muted);
 }
 
-.ob-head.buy{ color:#22c55e; }
-.ob-head.sell{ color:#FE55A1; }
+.ob-head.buy{ color:var(--green); }
+.ob-head.sell{ color:var(--red); }
+
+/* ===== Rows ===== */
 
 .ob-list{
   display:flex;
@@ -587,46 +602,69 @@ h3{
   gap:2px;
 }
 
-/* ===== Depth rows ===== */
-
-.ob-row{
-  position:relative;
+.row{
   display:flex;
   justify-content:space-between;
-  padding:4px 6px;
+  padding:3px 6px;
   font-size:12px;
-  border-radius:6px;
+  font-family:ui-monospace,monospace;
+  position:relative;
   overflow:hidden;
 }
 
-.ob-row::before{
+.row.buy{ color:var(--green); }
+.row.sell{ color:var(--red); }
+
+.row::before{
   content:"";
   position:absolute;
   inset:0;
-  width:var(--depth,0%);
   opacity:.18;
 }
 
-.ob-row.bid{ color:#22c55e; }
-.ob-row.bid::before{
-  background:linear-gradient(90deg,#22c55e,#16a34a);
+.row.buy::before{
+  background:linear-gradient(90deg,var(--green),transparent);
 }
 
-.ob-row.ask{ color:#FE55A1; }
-.ob-row.ask::before{
-  background:linear-gradient(90deg,#FE55A1,#d81484);
+.row.sell::before{
+  background:linear-gradient(270deg,var(--red),transparent);
 }
 
-.ob-row span{
+.row span{
   position:relative;
   z-index:1;
-  font-weight:700;
+}
+
+/* ================= PRICE LADDER ================= */
+
+.price-ladder{
+  font-family:ui-monospace,monospace;
+  font-size:12px;
+}
+
+.ladder-row{
+  padding:2px 4px;
+  text-align:center;
+}
+
+.ladder-row.buy{ color:var(--green); }
+.ladder-row.sell{ color:var(--red); }
+
+.ladder-row.mid{
+  background:var(--yellow);
+  color:#000;
+  font-weight:900;
+  border-radius:4px;
 }
 
 /* ================= TRADES ================= */
 
 .trades{
-  margin-top:12px;
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:8px;
+  margin-bottom:12px;
 }
 
 .trades-title{
@@ -640,17 +678,37 @@ h3{
   flex-direction:column;
   gap:4px;
   font-size:12px;
+  font-family:ui-monospace,monospace;
 }
 
-/* ================= ICON REFINEMENT ================= */
+.trade{
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+}
 
-.market img,
-.market-pairs img,
-.bottom-nav img{
+.trade.buy span:first-child{ color:var(--green); }
+.trade.sell span:first-child{ color:var(--red); }
+
+/* ================= POSITIONS ================= */
+
+.positions{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:10px;
+  font-size:13px;
+}
+
+.pnl.positive{ color:var(--green); }
+.pnl.negative{ color:var(--red); }
+
+/* ================= ICONS ================= */
+
+.market-view img{
   width:18px;
   height:18px;
   object-fit:contain;
-  filter:drop-shadow(0 0 6px rgba(34,197,94,.25));
+  filter:drop-shadow(0 0 6px rgba(240,185,11,.25));
 }
 
 /* =========================================================
