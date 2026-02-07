@@ -232,7 +232,7 @@ const WALLET = {
 const WALLET_DOM = {
   BX: "bal-bx",
   USDT: "bal-usdt",
-  BTC: "bal-btc"
+  BTC: "bal-btc",
   BNB: "bal-bnb",
   ETH: "bal-eth",
   AVAX: "bal-avax",
