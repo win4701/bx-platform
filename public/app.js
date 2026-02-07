@@ -281,84 +281,180 @@ function loadWallet() {
   renderWalletConnections();
 }
 
-/* ================= CONNECTION STATE (SSOT) ================= */
+/* ======================================================
+   CONNECT WALLET – SSOT (TON + EVM)
+====================================================== */
 
-const CONNECTIONS = {
-  walletconnect: {
-    available: true,
-    connected: false,
-    label: "WalletConnect"
-  },
-  binance: {
-    available: false,
-    connected: false,
-    label: "Binance Pay"
-  }
+const WALLET_STATE = {
+  type: null,          // ton | evm
+  address: null,
+  connected: false
 };
 
-/* ================= CONNECTION RENDER ================= */
+/* ================= UI RENDER ================= */
 
-function renderWalletConnections() {
-  renderConnectionButton("walletConnectBtn", CONNECTIONS.walletconnect);
-  renderConnectionButton("binanceConnectBtn", CONNECTIONS.binance);
+function renderWalletButtons() {
+  const wcBtn = document.getElementById("walletConnectBtn");
+  const binanceBtn = document.getElementById("binanceConnectBtn");
+
+  if (wcBtn) {
+    wcBtn.classList.toggle("connected", WALLET_STATE.connected);
+    wcBtn.textContent = WALLET_STATE.connected
+      ? `Wallet Connected`
+      : `Connect Wallet`;
+  }
+
+  if (binanceBtn) {
+    binanceBtn.textContent = "Binance Pay (Coming Soon)";
+    binanceBtn.disabled = true;
+  }
 }
 
-function renderConnectionButton(id, state) {
-  const btn = document.getElementById(id);
-  if (!btn) return;
+/* ================= TON WALLETCONNECT ================= */
 
-  btn.classList.remove("connected", "disconnected");
-  btn.disabled = false;
+let tonConnectUI = null;
 
-  if (!state.available) {
-    btn.textContent = `${state.label} (Coming Soon)`;
-    btn.disabled = true;
-    btn.classList.add("disconnected");
+function initTonConnect() {
+  if (!window.TON_CONNECT_UI) return;
+
+  tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
+    manifestUrl: "https://your-domain.com/tonconnect-manifest.json",
+    buttonRootId: "walletConnectBtn"
+  });
+
+  tonConnectUI.onStatusChange(wallet => {
+    if (!wallet) return;
+
+    WALLET_STATE.type = "ton";
+    WALLET_STATE.address = wallet.account.address;
+    WALLET_STATE.connected = true;
+
+    saveWalletSession();
+    notifyBackend();
+    renderWalletButtons();
+
+    console.log("TON connected:", WALLET_STATE.address);
+  });
+}
+
+/* ================= EVM WALLETCONNECT ================= */
+
+async function connectEVM() {
+  if (!window.WalletConnectProvider || !window.Web3) return;
+
+  const provider = new WalletConnectProvider.default({
+    rpc: {
+      1: "https://rpc.ankr.com/eth",
+      56: "https://rpc.ankr.com/bsc"
+    }
+  });
+
+  await provider.enable();
+  const web3 = new Web3(provider);
+  const accounts = await web3.eth.getAccounts();
+
+  WALLET_STATE.type = "evm";
+  WALLET_STATE.address = accounts[0];
+  WALLET_STATE.connected = true;
+
+  saveWalletSession();
+  notifyBackend();
+  renderWalletButtons();
+
+  console.log("EVM connected:", WALLET_STATE.address);
+}
+
+/* ================= SESSION ================= */
+
+function saveWalletSession() {
+  localStorage.setItem("wallet_session", JSON.stringify(WALLET_STATE));
+}
+
+function restoreWalletSession() {
+  const saved = localStorage.getItem("wallet_session");
+  if (!saved) return;
+
+  try {
+    const data = JSON.parse(saved);
+    Object.assign(WALLET_STATE, data);
+  } catch {}
+}
+
+/* ================= BACKEND SYNC ================= */
+
+function notifyBackend() {
+  fetch("/api/wallet/connect", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${localStorage.token || ""}`
+    },
+    body: JSON.stringify({
+      type: WALLET_STATE.type,
+      address: WALLET_STATE.address
+    })
+  }).catch(() => {});
+}
+
+/* ================= WITHDRAW ================= */
+
+async function requestWithdraw(asset, amount, toAddress) {
+  if (!WALLET_STATE.connected) {
+    alert("Connect wallet first");
     return;
   }
 
-  if (state.connected) {
-    btn.textContent = `${state.label} Connected`;
-    btn.classList.add("connected");
-    return;
-  }
+  const res = await fetch("/api/withdraw", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${localStorage.token || ""}`
+    },
+    body: JSON.stringify({
+      asset,
+      amount,
+      address: toAddress
+    })
+  });
 
-  btn.textContent = `Connect ${state.label}`;
-  btn.classList.add("disconnected");
+  const data = await res.json();
+  alert(data.message || "Withdraw submitted");
 }
 
-/* ================= CONNECTION HANDLERS ================= */
+/* ================= DEPOSIT ================= */
 
-function bindWalletConnections() {
-  const wc = document.getElementById("walletConnectBtn");
-  const binance = document.getElementById("binanceConnectBtn");
+function getDepositAddress(asset) {
+  if (!WALLET_STATE.connected) return null;
 
-  if (wc) {
-    wc.addEventListener("click", onWalletConnect);
-  }
-
-  if (binance) {
-    binance.addEventListener("click", onBinancePay);
-  }
+  return fetch(`/api/deposit/address?asset=${asset}`, {
+    headers: {
+      Authorization: `Bearer ${localStorage.token || ""}`
+    }
+  }).then(r => r.json());
 }
 
-function onWalletConnect() {
-  // mock connect (جاهز للربط الحقيقي)
-  CONNECTIONS.walletconnect.connected = true;
-  renderWalletConnections();
+/* ================= EVENTS ================= */
 
-  console.log("WalletConnect connected (mock)");
-}
+function bindWalletUI() {
+  const wcBtn = document.getElementById("walletConnectBtn");
 
-function onBinancePay() {
-  alert("Binance Pay coming soon");
+  if (wcBtn) {
+    wcBtn.addEventListener("click", () => {
+      if (window.TON_CONNECT_UI) {
+        initTonConnect();
+      } else {
+        connectEVM();
+      }
+    });
+  }
 }
 
 /* ================= INIT ================= */
 
 document.addEventListener("DOMContentLoaded", () => {
-  bindWalletConnections();
-  renderWalletConnections();
+  restoreWalletSession();
+  bindWalletUI();
+  renderWalletButtons();
 });
 
 /* =================================================
@@ -921,8 +1017,6 @@ function initCasino() {
 /* =========================================================
    PART 5 — MINING (Per-Coin Plans)
 ========================================================= */
-
-/* ================= STATE ================= */
 
 const MINING = {
   coin: "BX",
