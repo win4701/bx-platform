@@ -131,19 +131,17 @@ async function safeFetch(path, options = {}) {
    PART 2 — NAVIGATION (General Update)
 ========================================================= */
 
-const VIEWS = ["wallet", "market", "casino", "mining", "airdrop"];
-
-/* ================= SIMPLE ROUTER (FIXED) ================= */
-
-const VIEWS = document.querySelectorAll(".view");
+const VIEW_NODES = document.querySelectorAll(".view");
 const NAV_BTNS = document.querySelectorAll(".bottom-nav button");
 
 function switchView(viewId) {
-  VIEWS.forEach(v => v.classList.remove("active"));
+  if (!viewId) return;
+
+  VIEW_NODES.forEach(v => v.classList.remove("active"));
   NAV_BTNS.forEach(b => b.classList.remove("active"));
 
   const view = document.getElementById(viewId);
-  const btn = document.querySelector(`[data-view="${viewId}"]`);
+  const btn = document.querySelector(`.bottom-nav button[data-view="${viewId}"]`);
 
   if (view) view.classList.add("active");
   if (btn) btn.classList.add("active");
@@ -153,84 +151,65 @@ function switchView(viewId) {
   );
 }
 
-NAV_BTNS.forEach(btn => {
-  btn.addEventListener("click", () => {
-    const view = btn.dataset.view;
-    if (view) switchView(view);
-  });
-});
+/* ================= BOOTSTRAP ================= */
 
-/* default */
 document.addEventListener("DOMContentLoaded", () => {
-  switchView("wallet");
+  NAV_BTNS.forEach(btn => {
+    btn.addEventListener("click", () => {
+      const view = btn.dataset.view;
+      if (view) switchView(view);
+    });
+  });
+
+  switchView("wallet"); // default view
 });
 
-/* ================= NAV BUTTONS ================= */
-
-function syncNavButtons(activeView) {
-  const buttons = $$(".bottom-nav button");
-
-  buttons.forEach(btn => {
-    const view = btn.dataset.view;
-    if (!view) return;
-
-    btn.classList.toggle("active", view === activeView);
-  });
-}
-
-/* =========================
-   VIEW BINDING (SSOT)
-========================= */
+/* ================= VIEW LIFECYCLE (SSOT) ================= */
 
 let CURRENT_VIEW = null;
 
-document.addEventListener("view:change", (e) => {
+document.addEventListener("view:change", e => {
   const view = e.detail;
   if (!view || view === CURRENT_VIEW) return;
 
-  log.info("VIEW CHANGE:", CURRENT_VIEW, "→", view);
-
-   /* ========= EXIT OLD VIEW ========= */
+  /* ===== EXIT OLD VIEW ===== */
   switch (CURRENT_VIEW) {
     case "market":
-      stopMarket();
-      if (MARKET.ws) {
-        MARKET.ws.close();
-        MARKET.ws = null;
-        log.info("Market WS closed");
+      if (typeof stopMarket === "function") stopMarket();
+      if (window.depthWS) {
+        window.depthWS.close();
+        window.depthWS = null;
       }
       break;
   }
 
-   /* ========= ENTER NEW VIEW ========= */
-   document.addEventListener("view:change", e => {
-  const view = e.detail;
+  CURRENT_VIEW = view;
 
+  /* ===== ENTER NEW VIEW ===== */
   switch (view) {
     case "wallet":
-      loadWallet();
+      if (typeof loadWallet === "function") loadWallet();
       break;
 
     case "market":
-      initMarket();
-      startPriceFeed();
-      connectDepthWS();
+      if (typeof initMarket === "function") initMarket();
+      if (typeof startPriceFeed === "function") startPriceFeed();
+      if (typeof connectDepthWS === "function") connectDepthWS();
       break;
 
     case "casino":
-      initCasino();
+      if (typeof initCasino === "function") initCasino();
       break;
 
     case "mining":
-      renderMining();
+      if (typeof renderMining === "function") renderMining();
       break;
 
     case "airdrop":
-      loadAirdrop();
+      if (typeof loadAirdrop === "function") loadAirdrop();
       break;
   }
 });
-
 /* =========================================================
    PART 3 — WALLET (General Update)
 ========================================================= */
