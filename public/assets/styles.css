@@ -416,6 +416,12 @@ h3{
 
 /* ================= CANVAS ================= */
 
+#marketChart {
+  width: 100%;
+  height: 260px;
+  background: #0b0f14;
+}
+
 .chart-box {
   background: #0b0f14;
   border-radius: 14px;
