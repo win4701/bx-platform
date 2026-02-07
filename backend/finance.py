@@ -157,7 +157,7 @@ def wallet_me(uid: int):
     with get_db() as conn:
         c = conn.cursor()
         row = c.execute(
-            "SELECT usdt, ton, bnb, eth, sol, btc, bx FROM wallets WHERE uid=?",
+            "SELECT usdt, ton, bnb, eth, avax, sol, btc, bx FROM wallets WHERE uid=?",
             (uid,)
         ).fetchone()
 
