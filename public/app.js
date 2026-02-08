@@ -752,8 +752,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   window.initMarket = initMarket;
   window.stopMarket = stopMarket;
-
-})();
       
 /* =====================================================
    CASINO.JS — FULL UPDATE (Telegram + WebApp Safe)
