@@ -492,7 +492,6 @@ const Market = {
 };
 
 /* ================= DOM ================= */
-const $ = id => document.getElementById(id);
 const DOM = {
   canvas: $("marketCanvas"),
   price: $("marketPrice"),
@@ -1195,43 +1194,3 @@ document.querySelector('[data-view="airdrop"]').addEventListener('click', functi
   navigate("airdrop");
   loadAirdrop();  
 });
-
-/* =========================================================
-   PART 6 — BOOTSTRAP (General Update)
-========================================================= */
-
-function bootstrap() {
-  if (typeof APP !== "undefined" && typeof APP.init === "function") {
-    APP.init();
-  }
-
-  if (typeof bindNavigation === "function") {
-    bindNavigation();
-  }
-
-  if (typeof loadWallet === "function") {
-    loadWallet();
-  }
-
-  if (APP.view === "market" && typeof initMarket === "function") {
-    initMarket();
-  }
-
-  if (APP.view === "casino" && typeof initCasino === "function") {
-    initCasino();
-  }
-
-  if (typeof renderMining === "function") {
-    renderMining();
-  }
-
-  if (typeof navigate === "function") {
-    navigate(APP.view);
-  }
-
-  log.info("Bootstrap completed");
-}
-
-/* ================= START ================= */
-
-document.addEventListener("DOMContentLoaded", bootstrap);
