@@ -5,7 +5,7 @@
 
 /* ================= CONFIG ================= */
 const MARKET_CFG = {
-  BASE_PRICE: 12,
+  BASE_PRICE: 24,
   TICK_MS: 1000,
   LEVELS: 12,
   EMA_PERIOD: 14,
