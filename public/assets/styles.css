@@ -387,17 +387,14 @@ h3{
 
 /* ================= PAIRS ================= */
 
-./* container */
 .pair-tabs {
   display: grid;
-  grid-template-columns: repeat(5, 1fr); /* 5 أزرار في كل سطر */
-  gap: 7px;
+  gap: 8px;
   margin: 12px 0;
 }
 
-/* button */
 .pair-btn {
-  padding: 7px 0;
+  padding: 8px 0;
   border-radius: 14px;
   background: #0f1420;
   color: #9aa4b2;
@@ -408,17 +405,17 @@ h3{
   transition: all 0.2s ease;
 }
 
-/* active */
+/* Active */
 .pair-btn.active {
   color: #f5c15b;
   border-color: #f5c15b;
   background: rgba(245,193,91,0.08);
 }
 
-/* tap feedback */
+/* Tap feedback */
 .pair-btn:active {
-  transform: scale(0.95);
-   }
+  transform: scale(0.96);
+}
 
 /* ================= CANVAS ================= */
 
