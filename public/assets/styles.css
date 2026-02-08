@@ -713,6 +713,14 @@ h3{
   color: #f0b90b; /* Binance yellow */
   margin: 6px 0;
 }
+.row.fake {
+  opacity: 0.45;
+}
+
+.trade.fake {
+  opacity: 0.6;
+  font-style: italic;
+}
 
 /* ================= ICONS ================= */
 
