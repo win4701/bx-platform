@@ -498,7 +498,6 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   /* ================= DOM ================= */
-  const $ = id => document.getElementById(id);
 
   const DOM = {
     price: $("marketPrice"),
@@ -751,10 +750,8 @@ document.addEventListener("DOMContentLoaded", () => {
     startMarket();
   }
 
-  document.addEventListener("view:change", e => {
-    if (e.detail === "market") initMarket();
-    else stopMarket();
-  });
+  window.initMarket = initMarket;
+  window.stopMarket = stopMarket;
 
 })();
       
