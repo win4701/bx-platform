@@ -390,18 +390,18 @@ h3{
 .pair-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: 8px;
-  margin-top: 8px;
+  gap: 7px;
+  margin-top: 7px;
 }
 
 .pair-btn {
-  height: 34px;
-  border-radius: 16px;
+  height: 38px;
+  border-radius: 14px;
   border: 1px solid rgba(255,255,255,.08);
   background: #020617;
   color: #9ca3af;
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 12px;
+  font-weight: 800;
   transition: all .2s ease;
 }
 
