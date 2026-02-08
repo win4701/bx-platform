@@ -719,12 +719,28 @@ h3{
   font-style: italic;
 }
 
-.trade-row{display:flex;justify-content:space-between;font-size:12px;padding:3px 6px}
-.trade-row.buy{color:#0ECB81}
-.trade-row.sell{color:#F6465D}
-.row{display:flex;justify-content:space-between;font-family:ui-monospace,monospace;font-size:12px}
+.recent-trades {
+  font-size: 12px;
+}
+
+.rt-header,
+.rt-row {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1fr;
+  padding: 6px 10px;
+}
+
+.rt-header {
+  opacity: 0.6;
+  border-bottom: 1px solid #1f2a33;
+}
+
+.rt-row.buy span:first-child { color: #1ecb81; }
+.rt-row.sell span:first-child { color: #f6465d; }
+
 .flash-up{box-shadow: inset 0 0 22px rgba(14,203,129,.22)}
 .flash-down{box-shadow: inset 0 0 22px rgba(246,70,93,.22)}
+
 /* ================= ICONS ================= */
 
 .market-view img{
