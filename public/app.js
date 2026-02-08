@@ -464,7 +464,8 @@ document.addEventListener("DOMContentLoaded", () => {
 const MARKET_CONFIG = {
   BASE_PRICE: 18,
   UPDATE_INTERVAL: 1000,
-  EMA_PERIOD: 14
+  EMA_PERIOD: 14,
+  FEE: 0.001
 };
 
 /* ================= STATE ================= */
@@ -481,61 +482,124 @@ const MarketState = {
 
   ema: null,
   vwap: null,
-
   pv: 0,
   vol: 0,
+
+  // Position (Spot)
+  position: {
+    qty: 0,
+    avg: 0
+  },
+
+  priceHistory: [],
 
   listeners: []
 };
 
-/* ================= EVENTS ================= */
-
 MarketState.onUpdate = fn => MarketState.listeners.push(fn);
 const emit = () => MarketState.listeners.forEach(fn => fn(MarketState));
 
-/* ================= FAKE WEBSOCKET ================= */
+/* ================= ADAPTIVE MM ================= */
+
+const MM = {
+  enabled: true,
+  baseSpread: 0.002,
+  maxSpread: 0.01,
+  baseQty: 6
+};
+
+function calcVolatility(prices) {
+  if (prices.length < 10) return 0.001;
+  const mean = prices.reduce((a, b) => a + b, 0) / prices.length;
+  const variance =
+    prices.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / prices.length;
+  return Math.sqrt(variance) / mean;
+}
+
+function generateMMOrders(mid) {
+  if (!MM.enabled) return { bids: [], asks: [] };
+
+  const vol = calcVolatility(MarketState.priceHistory);
+  const spread = Math.min(
+    Math.max(MM.baseSpread * (1 + vol * 20), MM.baseSpread),
+    MM.maxSpread
+  );
+
+  const qtyBase = Math.max(1, MM.baseQty / (1 + vol * 10));
+
+  const bids = [];
+  const asks = [];
+
+  for (let i = 1; i <= 10; i++) {
+    bids.push({
+      price: +(mid * (1 - spread * i)).toFixed(4),
+      qty: +(qtyBase * Math.random()).toFixed(3),
+      mm: true
+    });
+
+    asks.push({
+      price: +(mid * (1 + spread * i)).toFixed(4),
+      qty: +(qtyBase * Math.random()).toFixed(3),
+      mm: true
+    });
+  }
+
+  return { bids, asks };
+}
+
+/* ================= FAKE WS (ENGINE) ================= */
 
 function startFakeWS() {
   setInterval(() => {
     MarketState.prevPrice = MarketState.lastPrice;
 
     const delta = (Math.random() - 0.5) * 0.05;
-    MarketState.lastPrice = +(MarketState.lastPrice + delta).toFixed(4);
+    MarketState.lastPrice = +(
+      MarketState.lastPrice + delta
+    ).toFixed(4);
 
-    MarketState.bids = Array.from({ length: 12 }, (_, i) => ({
+    MarketState.priceHistory.push(MarketState.lastPrice);
+    if (MarketState.priceHistory.length > 50)
+      MarketState.priceHistory.shift();
+
+    const realBids = Array.from({ length: 4 }, (_, i) => ({
       price: +(MarketState.lastPrice - (i + 1) * 0.01).toFixed(4),
-      qty: +(Math.random() * 6 + 1).toFixed(3)
+      qty: +(Math.random() * 3 + 1).toFixed(3)
     }));
 
-    MarketState.asks = Array.from({ length: 12 }, (_, i) => ({
+    const realAsks = Array.from({ length: 4 }, (_, i) => ({
       price: +(MarketState.lastPrice + (i + 1) * 0.01).toFixed(4),
-      qty: +(Math.random() * 6 + 1).toFixed(3)
+      qty: +(Math.random() * 3 + 1).toFixed(3)
     }));
 
-    MarketState.trades.unshift({
-      price: MarketState.lastPrice,
-      qty: +(Math.random() * 2).toFixed(3),
-      side: Math.random() > 0.5 ? "buy" : "sell",
-      time: new Date().toLocaleTimeString()
-    });
+    const mm = generateMMOrders(MarketState.lastPrice);
 
-    MarketState.trades = MarketState.trades.slice(0, 30);
+    MarketState.bids = [...realBids, ...mm.bids]
+      .sort((a, b) => b.price - a.price)
+      .slice(0, 12);
 
+    MarketState.asks = [...realAsks, ...mm.asks]
+      .sort((a, b) => a.price - b.price)
+      .slice(0, 12);
+
+    pushTrade();
     updateIndicators();
     emit();
   }, MARKET_CONFIG.UPDATE_INTERVAL);
 }
 
-/* ================= REAL WEBSOCKET (READY) ================= */
-// function startRealWS() {
-//   const ws = new WebSocket("wss://api.yourdomain/ws/market");
-//   ws.onmessage = e => {
-//     const d = JSON.parse(e.data);
-//     Object.assign(MarketState, d);
-//     updateIndicators();
-//     emit();
-//   };
-// }
+/* ================= TRADES ================= */
+
+function pushTrade() {
+  MarketState.trades.unshift({
+    price: MarketState.lastPrice,
+    qty: +(Math.random() * 2).toFixed(3),
+    side: Math.random() > 0.5 ? "buy" : "sell",
+    time: new Date().toLocaleTimeString()
+  });
+
+  MarketState.trades = MarketState.trades.slice(0, 30);
+}
 
 /* ================= INDICATORS ================= */
 
@@ -570,7 +634,6 @@ function renderCanvas(m) {
   const scale = 6;
   const y = p => midY - (p - m.lastPrice) * scale;
 
-  /* GRID */
   ctx.strokeStyle = "#020617";
   for (let i = 0; i < h; i += 40) {
     ctx.beginPath();
@@ -579,7 +642,6 @@ function renderCanvas(m) {
     ctx.stroke();
   }
 
-  /* HEATMAP */
   const maxQty = Math.max(
     ...m.bids.map(b => b.qty),
     ...m.asks.map(a => a.qty),
@@ -596,16 +658,12 @@ function renderCanvas(m) {
     ctx.fillRect(w / 2, y(a.price), w / 2, 6);
   });
 
-  /* PRICE */
   drawLine(m.lastPrice, "#22c55e");
-
-  /* EMA */
   drawLine(m.ema, "#facc15");
-
-  /* VWAP */
   drawLine(m.vwap, "#a855f7");
 
   function drawLine(val, color) {
+    if (!val) return;
     ctx.strokeStyle = color;
     ctx.beginPath();
     ctx.moveTo(0, y(val));
@@ -622,11 +680,17 @@ function renderOrderBook(m) {
   if (!bidsEl || !asksEl) return;
 
   bidsEl.innerHTML = m.bids
-    .map(b => `<div class="row buy">${b.price} <span>${b.qty}</span></div>`)
+    .map(
+      b =>
+        `<div class="row buy ${b.mm ? "mm" : ""}">${b.price}<span>${b.qty}</span></div>`
+    )
     .join("");
 
   asksEl.innerHTML = m.asks
-    .map(a => `<div class="row sell">${a.price} <span>${a.qty}</span></div>`)
+    .map(
+      a =>
+        `<div class="row sell ${a.mm ? "mm" : ""}">${a.price}<span>${a.qty}</span></div>`
+    )
     .join("");
 }
 
@@ -636,22 +700,18 @@ function renderPriceLadder(m) {
   const el = document.getElementById("priceLadder");
   if (!el) return;
 
-  const rows = [];
-
-  m.asks.slice(0, 8).reverse().forEach(a => {
-    rows.push(`<div class="ladder-row sell">${a.price} • ${a.qty}</div>`);
-  });
-
-  rows.push(`<div class="ladder-row mid">${m.lastPrice}</div>`);
-
-  m.bids.slice(0, 8).forEach(b => {
-    rows.push(`<div class="ladder-row buy">${b.price} • ${b.qty}</div>`);
-  });
-
-  el.innerHTML = rows.join("");
+  el.innerHTML = [
+    ...m.asks.slice(0, 6).reverse().map(
+      a => `<div class="ladder-row sell">${a.price}</div>`
+    ),
+    `<div class="ladder-row mid">${m.lastPrice}</div>`,
+    ...m.bids.slice(0, 6).map(
+      b => `<div class="ladder-row buy">${b.price}</div>`
+    )
+  ].join("");
 }
 
-/* ================= TRADES ================= */
+/* ================= TRADES UI ================= */
 
 function renderTrades(m) {
   const el = document.getElementById("tradesList");
@@ -682,11 +742,18 @@ function renderPriceFlash(m) {
   if (m.lastPrice < m.prevPrice) el.classList.add("down");
 }
 
-/* ================= SPREAD ================= */
+/* ================= MID / SPREAD ================= */
 
-function getSpread(m) {
-  if (!m.bids.length || !m.asks.length) return 0;
-  return +(m.asks[0].price - m.bids[0].price).toFixed(4);
+function renderMidSpread(m) {
+  const midEl = document.getElementById("midPrice");
+  const spreadEl = document.getElementById("spread");
+  if (!midEl || !spreadEl || !m.bids[0] || !m.asks[0]) return;
+
+  const mid = (m.bids[0].price + m.asks[0].price) / 2;
+  const spread = m.asks[0].price - m.bids[0].price;
+
+  midEl.textContent = mid.toFixed(4);
+  spreadEl.textContent = `Spread ${spread.toFixed(4)}`;
 }
 
 /* ================= SUBSCRIBE ================= */
@@ -697,13 +764,14 @@ MarketState.onUpdate(m => {
   renderPriceLadder(m);
   renderTrades(m);
   renderPriceFlash(m);
+  renderMidSpread(m);
 });
 
 /* ================= INIT ================= */
 
 function initMarket() {
   if (!canvas) return;
-  startFakeWS(); // 🔁 بدّلها لاحقًا إلى startRealWS()
+  startFakeWS(); // 🔁 لاحقًا: startRealWS()
 }
 
 document.addEventListener("DOMContentLoaded", initMarket);
