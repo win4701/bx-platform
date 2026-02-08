@@ -141,8 +141,11 @@ function switchView(view) {
   document.querySelectorAll(".bottom-nav button").forEach(b => {
     b.classList.toggle("active", b.dataset.view === view);
   });
-}
 
+  document.dispatchEvent(
+    new CustomEvent("view:change", { detail: view })
+  );
+}
 document.addEventListener("click", e => {
   const btn = e.target.closest("[data-view]");
   if (btn) {
@@ -159,16 +162,7 @@ document.addEventListener("click", e => {
 
 /* ================= BOOTSTRAP ================= */
 
-document.addEventListener("DOMContentLoaded", () => {
-  NAV_BTNS.forEach(btn => {
-    btn.addEventListener("click", () => {
-      const view = btn.dataset.view;
-      if (view) switchView(view);
-    });
-  });
 
-  switchView("wallet"); // default view
-});
 
 /* ================= VIEW LIFECYCLE (SSOT) ================= */
 
@@ -495,7 +489,6 @@ const Market = {
 };
 
 /* ================= DOM ================= */
-const $ = id => document.getElementById(id);
 const DOM = {
   price: $("marketPrice"),
   approx: $("marketApprox"),
