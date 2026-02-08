@@ -245,18 +245,20 @@
   </div>
 
   <!-- ===== Chart ===== -->
-<div id="marketChart" style="
-  width:100%;
-  height:260px;
-"></div>
+ <div class="chart-box">
+    <canvas id="marketCanvas" height="260"></canvas>
+  </div>
 
-<div class="indicators">
-  <span class="ema">EMA</span>
-  <span class="vwap">VWAP</span>
-</div>
-  <!-- ===== Depth Chart ===== -->
-  <div id="marketChart"></div>
-<canvas id="depthCanvas"></canvas>
+  <!-- ===== INDICATORS LEGEND ===== -->
+  <div class="indicator-legend">
+    <span class="ema">EMA</span>
+    <span class="vwap">VWAP</span>
+  </div>
+
+  <!-- ===== DEPTH HEATMAP ===== -->
+  <div class="depth-box">
+    <div class="depth-title"></div>
+  </div>
   <!-- ===== Trade Box ===== -->
   <div class="trade-box buy" id="tradeBox">
 
