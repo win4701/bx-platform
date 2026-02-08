@@ -33,7 +33,7 @@ def airdrop_status(uid: int):
         ).fetchone()
 
     if not row:
-        return {"claimed": False, "referrals": 0, "reward": 2.5}
+        return {"claimed": False, "referrals": 0, "reward": 1}
 
     return {
         "claimed": bool(row[0]),
@@ -61,7 +61,7 @@ def airdrop_claim(uid: int):
             (uid, int(time()))
         )
 
-    return {"status": "ok", "reward": 2.5}
+    return {"status": "ok", "reward": 1}
 
 # ======================================================
 # MINING PLANS (PER COIN)
