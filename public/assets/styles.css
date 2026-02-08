@@ -391,18 +391,18 @@ h3{
 .pair-tabs {
   display: grid;
   grid-template-columns: repeat(5, 1fr); /* 5 أزرار في كل سطر */
-  gap: 8px;
+  gap: 7px;
   margin: 12px 0;
 }
 
 /* button */
 .pair-btn {
-  padding: 8px 0;
+  padding: 7px 0;
   border-radius: 14px;
   background: #0f1420;
   color: #9aa4b2;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 800;
   border: 1px solid rgba(255,255,255,0.06);
   text-align: center;
   transition: all 0.2s ease;
