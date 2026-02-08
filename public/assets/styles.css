@@ -387,51 +387,38 @@ h3{
 
 /* ================= PAIRS ================= */
 
-./* Pair Switcher Container */
-.pair-switcher {
-  display: flex;
-  gap: 8px;
-  padding: 6px 4px;
-  overflow-x: auto;
-  scrollbar-width: none;
+/* container */
+.pair-tabs {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr); /* 5 أزرار في كل سطر */
+  gap: 7px;
+  margin: 12px 0;
 }
 
-.pair-switcher::-webkit-scrollbar {
-  display: none;
-}
-
-/* Button */
+/* button */
 .pair-btn {
-  flex: 0 0 auto;
-  min-width: 58px;
-  height: 34px;
-  padding: 0 14px;
-  border-radius: 18px;
-  border: 1px solid rgba(255,255,255,0.08);
-  background: linear-gradient(180deg,#0f172a,#020617);
-  color: #9ca3af;
+  padding: 7px 0;
+  border-radius: 14px;
+  background: #0f1420;
+  color: #9aa4b2;
   font-size: 13px;
-  font-weight: 600;
-  letter-spacing: .2px;
-  cursor: pointer;
-  transition: all .2s ease;
-  white-space: nowrap;
+  font-weight: 800;
+  border: 1px solid rgba(255,255,255,0.06);
+  text-align: center;
+  transition: all 0.2s ease;
 }
 
-/* Hover */
-.pair-btn:hover {
-  color: #fff;
-  border-color: rgba(255,215,0,0.4);
-}
-
-/* Active */
+/* active */
 .pair-btn.active {
-  color: #facc15;
-  border-color: #facc15;
-  background: linear-gradient(180deg,#1c1917,#020617);
-  box-shadow: 0 0 0 1px rgba(250,204,21,0.25);
+  color: #f5c15b;
+  border-color: #f5c15b;
+  background: rgba(245,193,91,0.08);
 }
 
+/* tap feedback */
+.pair-btn:active {
+  transform: scale(0.97);
+}
 /* ================= CANVAS ================= */
 
 #marketChart {
