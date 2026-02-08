@@ -129,9 +129,7 @@ async function safeFetch(path, options = {}) {
 
 /* =========================================================
    PART 2 — NAVIGATION (General Update)
-========================================================= */
-
-const VIEW_NODES =
+================================================*/
 function switchView(view) {
   document.querySelectorAll(".view").forEach(v => {
     v.classList.remove("active");
