@@ -466,232 +466,298 @@ document.addEventListener("DOMContentLoaded", () => {
 /* =================================================
    MARKET.JS — FULL ENGINE (CANVAS FIRST)
 ================================================= */
+  const BX_BASE_USDT = 24;
+  const MAX_TRADES = 30;
+  const MAX_CHART_POINTS = 80;
 
-const BX_USDT = 24;
-/* ================= STATE ================= */
-const Market = {
-  quote: "USDT",
-  pair: "BX/USDT",
-  price: null,
-  prev: null,
-
-  ws: null,
-  binanceWS: null,
-
-  bids: [],
-  asks: [],
-  trades: [],
-
-  ema: null,
-  vwap: null,
-  pv: 0,
-  vol: 0
-};
-
-/* ================= DOM ================= */
-const DOM = {
-  price: $("marketPrice"),
-  approx: $("marketApprox"),
-  bids: $("bids"),
-  asks: $("asks"),
-  trades: $("tradesList"),
-  canvas: $("marketCanvas")
-};
-const ctx = DOM.canvas?.getContext("2d");
-
-/* ================= BINANCE ================= */
-function binanceSymbol() {
-  return `${Market.quote}USDT`.toLowerCase();
-}
-
-async function fetchBinancePrice() {
-  if (Market.quote === "USDT" || Market.quote === "USDC") {
-    return 1;
-  }
-
-  const r = await fetch(
-    `https://api.binance.com/api/v3/ticker/price?symbol=${Market.quote}USDT`
-  );
-  const d = await r.json();
-  return +d.price;
-}
-
-/* ================= PRICE LOGIC ================= */
-async function updateBXPrice() {
-  const quoteUSDT = await fetchBinancePrice();
-
-  Market.prev = Market.price;
-  Market.price = BX_USDT / quoteUSDT;
-
-  updateIndicators(Market.price);
-  pushTrade(Market.price);
-
-  renderAll();
-}
-
-/* ================= WEBSOCKET ================= */
-function connectBinanceWS() {
-  if (Market.binanceWS) Market.binanceWS.close();
-
-  if (Market.quote === "USDT" || Market.quote === "USDC") {
-    // Stable — use timer
-    Market.binanceWS = setInterval(updateBXPrice, 1500);
-    return;
-  }
-
-  Market.binanceWS = new WebSocket(
-    `wss://stream.binance.com:9443/ws/${binanceSymbol()}@trade`
-  );
-
-  Market.binanceWS.onmessage = async () => {
-    await updateBXPrice();
+  const BINANCE_MAP = {
+    USDT: "btcusdt",
+    USDC: "btcusdt",
+    BTC:  "btcusdt",
+    ETH:  "ethusdt",
+    BNB:  "bnbusdt",
+    SOL:  "solusdt",
+    AVAX: "avaxusdt",
+    TON:  "tonusdt",
+    LTC:  "ltcusdt",
+    ZEC:  "zecusdt"
   };
-}
 
-/* ================= INDICATORS ================= */
-function updateIndicators(price) {
-  const volume = Math.random() * 2 + 0.5;
+  /* ================= STATE ================= */
+  const Market = {
+    quote: "USDT",
 
-  Market.pv += price * volume;
-  Market.vol += volume;
-  Market.vwap = Market.pv / Market.vol;
+    priceWS: null,
+    depthWS: null,
+    tradeWS: null,
 
-  const k = 2 / (14 + 1);
-  Market.ema = Market.ema === null
-    ? price
-    : price * k + Market.ema * (1 - k);
-}
+    lastRef: null,
+    bxPrice: BX_BASE_USDT,
 
-/* ================= TRADES ================= */
-function pushTrade(price) {
-  Market.trades.unshift({
-    price,
-    qty: +(Math.random() * 2).toFixed(3),
-    side: Market.prev && price >= Market.prev ? "buy" : "sell",
-    time: new Date().toLocaleTimeString()
-  });
+    prices: []
+  };
 
-  Market.trades = Market.trades.slice(0, 30);
-}
+  /* ================= DOM ================= */
+  const $ = id => document.getElementById(id);
 
-/* ================= ORDER BOOK (SIMULATED DEPTH) ================= */
-function buildOrderBook() {
-  Market.bids = [];
-  Market.asks = [];
+  const DOM = {
+    price: $("marketPrice"),
+    approx: $("marketApprox"),
+    bids: $("bids"),
+    asks: $("asks"),
+    trades: $("tradesList"),
+    canvas: $("marketCanvas"),
+    pairTitle: $("pairTitle"),
+    quoteAsset: $("quoteAsset"),
+    orderPrice: $("orderPrice")
+  };
 
-  for (let i = 1; i <= 10; i++) {
-    Market.bids.push({
-      price: +(Market.price * (1 - i * 0.001)).toFixed(6),
-      qty: +(Math.random() * 5 + 1).toFixed(2)
+  /* ================= CANVAS CHART ================= */
+  const ctx = DOM.canvas?.getContext("2d");
+
+  function resizeCanvas() {
+    if (!DOM.canvas) return;
+    DOM.canvas.width = DOM.canvas.offsetWidth;
+    DOM.canvas.height = DOM.canvas.offsetHeight;
+  }
+  window.addEventListener("resize", resizeCanvas);
+  resizeCanvas();
+
+  let lastDraw = 0;
+  function drawChart() {
+    if (!ctx || Market.prices.length < 2) return;
+
+    const now = performance.now();
+    if (now - lastDraw < 120) return;
+    lastDraw = now;
+
+    const w = DOM.canvas.width;
+    const h = DOM.canvas.height;
+    ctx.clearRect(0, 0, w, h);
+
+    const max = Math.max(...Market.prices);
+    const min = Math.min(...Market.prices);
+    const pad = 10;
+
+    ctx.beginPath();
+    ctx.strokeStyle = "#22c55e";
+    ctx.lineWidth = 2;
+
+    Market.prices.forEach((p, i) => {
+      const x = (i / (Market.prices.length - 1)) * w;
+      const y =
+        h -
+        ((p - min) / (max - min || 1)) * (h - pad * 2) -
+        pad;
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
     });
 
-    Market.asks.push({
-      price: +(Market.price * (1 + i * 0.001)).toFixed(6),
-      qty: +(Math.random() * 5 + 1).toFixed(2)
+    ctx.stroke();
+  }
+
+  /* ================= PRICE UI ================= */
+  function updatePriceUI(price, prev) {
+    if (!DOM.price) return;
+
+    DOM.price.textContent = price.toFixed(6);
+    DOM.approx.textContent = `≈ ${BX_BASE_USDT} USDT`;
+
+    DOM.price.classList.remove("up", "down");
+    if (prev && price > prev) DOM.price.classList.add("up");
+    if (prev && price < prev) DOM.price.classList.add("down");
+  }
+
+  /* ================= RECENT TRADES (30 ONLY) ================= */
+  function pushTrade(price, side) {
+    const box = DOM.trades;
+    if (!box) return;
+
+    const row = document.createElement("div");
+    row.className = `trade-row ${side}`;
+    row.innerHTML = `
+      <span>${price.toFixed(6)}</span>
+      <span>${(Math.random() * 2).toFixed(3)}</span>
+      <span>${new Date().toLocaleTimeString()}</span>
+    `;
+
+    box.prepend(row);
+    while (box.children.length > MAX_TRADES) {
+      box.removeChild(box.lastChild);
+    }
+  }
+
+  /* ================= ORDER BOOK (BINANCE DEPTH) ================= */
+  function renderOrderBookFromDepth(depth) {
+    if (!DOM.bids || !DOM.asks) return;
+
+    DOM.bids.innerHTML = "";
+    DOM.asks.innerHTML = "";
+
+    const maxQty = Math.max(
+      ...depth.bids.map(b => +b[1]),
+      ...depth.asks.map(a => +a[1])
+    );
+
+    depth.bids.forEach(([p, q]) => {
+      const d = ((+q / maxQty) * 100).toFixed(0) + "%";
+      DOM.bids.innerHTML += `
+        <div class="ob-row buy" style="--d:${d}">
+          <span>${(+p).toFixed(6)}</span>
+          <span>${(+q).toFixed(3)}</span>
+        </div>`;
+    });
+
+    depth.asks.forEach(([p, q]) => {
+      const d = ((+q / maxQty) * 100).toFixed(0) + "%";
+      DOM.asks.innerHTML += `
+        <div class="ob-row sell" style="--d:${d}">
+          <span>${(+p).toFixed(6)}</span>
+          <span>${(+q).toFixed(3)}</span>
+        </div>`;
     });
   }
-}
 
-/* ================= RENDER ================= */
-function renderAll() {
-  renderPrice();
-  buildOrderBook();
-  renderBook();
-  renderTrades();
-  renderChart();
-}
+  /* ================= CLICK-TO-FILL PRICE ================= */
+  function bindOrderBookClick() {
+    document.addEventListener("click", e => {
+      const row = e.target.closest(".ob-row");
+      if (!row || !DOM.orderPrice) return;
 
-function renderPrice() {
-  DOM.price.textContent = Market.price.toFixed(6);
-  DOM.approx.textContent = `≈ ${BX_USDT} USDT`;
+      const price = row.querySelector("span")?.textContent;
+      if (!price) return;
 
-  DOM.price.classList.remove("up", "down");
-  if (Market.prev && Market.price > Market.prev) DOM.price.classList.add("up");
-  if (Market.prev && Market.price < Market.prev) DOM.price.classList.add("down");
-}
+      DOM.orderPrice.value = price;
+      DOM.orderPrice.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+  }
 
-function renderBook() {
-  DOM.bids.innerHTML = Market.bids
-    .map(b => `<div class="row buy">${b.price}<span>${b.qty}</span></div>`)
-    .join("");
+  /* ================= BINANCE WS ================= */
+  function connectPriceWS() {
+    if (Market.priceWS) Market.priceWS.close();
 
-  DOM.asks.innerHTML = Market.asks
-    .map(a => `<div class="row sell">${a.price}<span>${a.qty}</span></div>`)
-    .join("");
-}
+    const symbol = BINANCE_MAP[Market.quote];
+    if (!symbol) return;
 
-function renderTrades() {
-  DOM.trades.innerHTML = Market.trades
-    .map(t => `
-      <div class="trade ${t.side}">
-        <span>${t.price}</span>
-        <span>${t.qty}</span>
-        <span>${t.time}</span>
-      </div>
-    `).join("");
-}
+    Market.priceWS = new WebSocket(
+      `wss://stream.binance.com:9443/ws/${symbol}@trade`
+    );
 
-/* ================= CHART ================= */
-function renderChart() {
-  if (!ctx || !Market.price) return;
+    Market.priceWS.onmessage = e => {
+      const data = JSON.parse(e.data);
+      const ref = +data.p;
+      if (!ref) return;
 
-  const w = DOM.canvas.width;
-  const h = DOM.canvas.height;
-  ctx.clearRect(0, 0, w, h);
+      if (!Market.lastRef) Market.lastRef = ref;
 
-  const mid = h / 2;
-  const scale = 8;
-  const y = p => mid - (p - Market.price) * scale;
+      const prevBX = Market.bxPrice;
+      const delta = (ref - Market.lastRef) / Market.lastRef;
+      Market.bxPrice = BX_BASE_USDT * (1 + delta);
+      Market.lastRef = ref;
 
-  drawLine(Market.price, "#fff");
-  drawLine(Market.ema, "#facc15");
-  drawLine(Market.vwap, "#a855f7");
-}
+      Market.prices.push(Market.bxPrice);
+      if (Market.prices.length > MAX_CHART_POINTS) {
+        Market.prices.shift();
+      }
 
-function drawLine(val, color) {
-  if (!val) return;
-  const h = DOM.canvas.height;
-  const y = h / 2 - (val - Market.price) * 8;
-
-  ctx.strokeStyle = color;
-  ctx.beginPath();
-  ctx.moveTo(0, y);
-  ctx.lineTo(DOM.canvas.width, y);
-  ctx.stroke();
-}
-
-/* ================= PAIRS ================= */
-function bindPairs() {
-  document.querySelectorAll(".pair-btn").forEach(btn => {
-    btn.onclick = async () => {
-      document.querySelectorAll(".pair-btn")
-        .forEach(b => b.classList.remove("active"));
-      btn.classList.add("active");
-
-      Market.quote = btn.dataset.quote;
-      Market.pair = `BX/${Market.quote}`;
-
-      if (Market.binanceWS) Market.binanceWS.close();
-
-      await updateBXPrice();
-      connectBinanceWS();
+      updatePriceUI(Market.bxPrice, prevBX);
+      drawChart();
     };
+  }
+
+  function connectDepthWS() {
+    if (Market.depthWS) Market.depthWS.close();
+
+    const symbol = BINANCE_MAP[Market.quote];
+    if (!symbol) return;
+
+    Market.depthWS = new WebSocket(
+      `wss://stream.binance.com:9443/ws/${symbol}@depth10@100ms`
+    );
+
+    Market.depthWS.onmessage = e => {
+      renderOrderBookFromDepth(JSON.parse(e.data));
+    };
+  }
+
+  function connectTradeWS() {
+    if (Market.tradeWS) Market.tradeWS.close();
+
+    const symbol = BINANCE_MAP[Market.quote];
+    if (!symbol) return;
+
+    Market.tradeWS = new WebSocket(
+      `wss://stream.binance.com:9443/ws/${symbol}@aggTrade`
+    );
+
+    Market.tradeWS.onmessage = e => {
+      const t = JSON.parse(e.data);
+      pushTrade(Market.bxPrice, t.m ? "sell" : "buy");
+    };
+  }
+
+  /* ================= PAIRS UX ================= */
+  function animatePairChange() {
+    const el = document.querySelector(".market-header");
+    if (!el) return;
+    el.classList.remove("animate");
+    void el.offsetWidth;
+    el.classList.add("animate");
+  }
+
+  function autoScroll(btn) {
+    btn.scrollIntoView({ behavior: "smooth", inline: "center" });
+  }
+
+  function bindPairs() {
+    document.querySelectorAll(".pair-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".pair-btn")
+          .forEach(b => b.classList.remove("active"));
+
+        btn.classList.add("active");
+        autoScroll(btn);
+
+        Market.quote = btn.dataset.pair.split("/")[1];
+
+        if (DOM.quoteAsset) DOM.quoteAsset.textContent = Market.quote;
+        if (DOM.pairTitle) DOM.pairTitle.textContent = `BX / ${Market.quote}`;
+
+        animatePairChange();
+        startMarket();
+      });
+    });
+  }
+
+  /* ================= LIFECYCLE ================= */
+  function startMarket() {
+    stopMarket();
+    Market.lastRef = null;
+    connectPriceWS();
+    connectDepthWS();
+    connectTradeWS();
+  }
+
+  function stopMarket() {
+    if (Market.priceWS) Market.priceWS.close();
+    if (Market.depthWS) Market.depthWS.close();
+    if (Market.tradeWS) Market.tradeWS.close();
+
+    Market.priceWS = Market.depthWS = Market.tradeWS = null;
+  }
+
+  function initMarket() {
+    bindPairs();
+    bindOrderBookClick();
+    startMarket();
+  }
+
+  document.addEventListener("view:change", e => {
+    if (e.detail === "market") initMarket();
+    else stopMarket();
   });
-}
 
-/* ================= INIT / STOP ================= */
-function initMarket() {
-  bindPairs();
-  updateBXPrice();
-  connectBinanceWS();
-}
-
-function stopMarket() {
-  if (Market.binanceWS) Market.binanceWS.close();
-}
-
-window.initMarket = initMarket;
-window.stopMarket = stopMarket;
+})();
+      
 /* =====================================================
    CASINO.JS — FULL UPDATE (Telegram + WebApp Safe)
 ===================================================== */
