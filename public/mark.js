@@ -3,7 +3,7 @@
 ================================================= */
 
 const MARKET_CONFIG = {
-  BASE_PRICE: 12,
+  BASE_PRICE: 18,
   UPDATE_INTERVAL: 1000,
   EMA_PERIOD: 14
 };
