@@ -722,6 +722,12 @@ h3{
   font-style: italic;
 }
 
+.trade-row{display:flex;justify-content:space-between;font-size:12px;padding:3px 6px}
+.trade-row.buy{color:#0ECB81}
+.trade-row.sell{color:#F6465D}
+.row{display:flex;justify-content:space-between;font-family:ui-monospace,monospace;font-size:12px}
+.flash-up{box-shadow: inset 0 0 22px rgba(14,203,129,.22)}
+.flash-down{box-shadow: inset 0 0 22px rgba(246,70,93,.22)}
 /* ================= ICONS ================= */
 
 .market-view img{
