@@ -20,7 +20,7 @@ DB_URL = os.getenv("DATABASE_URL")
 if not DB_URL:
     raise RuntimeError("DATABASE_URL is not set")
 
-BX_BASE_PRICE_USDT = 12.0           # ✅ موحّد مع المشروع
+BX_BASE_PRICE_USDT = 18.0           # ✅ موحّد مع المشروع
 MAX_DEMAND_PREMIUM = 0.20          # 20% كحد أقصى
 
 ALLOWED_ASSETS = {"usdt", "ton", "sol", "btc", "eth", "avax", "ltc", "bnb"}
