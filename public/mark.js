@@ -1,237 +1,301 @@
-/* =========================================================
-   MARKET.JS — FULL ENGINE (SAFE / PRODUCTION READY)
-   Compatible with provided Market HTML
-========================================================= */
+/* =====================================================
+   MARKET.JS — FINAL / SAFE / VIEW-BASED
+   Compatible with app.js (view:change)
+===================================================== */
 
-/* ================== CONFIG ================== */
-const CFG = {
+/* ================= CONFIG ================= */
+const MARKET_CFG = {
   BASE_PRICE: 12,
-  TICK_MS: 900,
-  SPREAD: 0.015,
-  LEVELS: 15,
+  TICK_MS: 1000,
+  LEVELS: 12,
+  EMA_PERIOD: 14,
   FEE: 0.001,
-  USE_REAL_WS: false, // true لاحقًا
 };
 
-/* ================== STATE ================== */
-const S = {
+/* ================= STATE ================= */
+const Market = {
+  running: false,
+  timer: null,
+  ws: null,
+
   pair: "BX/USDT",
-  last: CFG.BASE_PRICE,
-  prev: CFG.BASE_PRICE,
-  t: Math.floor(Date.now() / 1000),
+  last: MARKET_CFG.BASE_PRICE,
+  prev: MARKET_CFG.BASE_PRICE,
+
   bids: [],
   asks: [],
   trades: [],
-  position: { qty: 0, entry: 0 },
+
+  ema: null,
+  vwap: null,
+  pv: 0,
+  vol: 0,
+
+  side: "buy",
 };
 
-/* ================== DOM ================== */
-const canvas = document.getElementById("marketCanvas");
-const ctx = canvas.getContext("2d");
+/* ================= DOM ================= */
+const $m = id => document.getElementById(id);
 
-const priceEl = document.getElementById("marketPrice");
-const approxEl = document.getElementById("marketApprox");
-const spreadEl = document.getElementById("spread");
-const execPriceEl = document.getElementById("execPrice");
-const slippageEl = document.getElementById("slippage");
+const DOM = {
+  canvas: $m("marketCanvas"),
+  price: $m("marketPrice"),
+  approx: $m("marketApprox"),
+  bids: $m("bids"),
+  asks: $m("asks"),
+  ladder: $m("priceLadder"),
+  trades: $m("tradesList"),
+  amount: $m("orderAmount"),
+  execPrice: $m("execPrice"),
+  slippage: $m("slippage"),
+};
 
-const bidsEl = document.getElementById("bids");
-const asksEl = document.getElementById("asks");
-const ladderEl = document.getElementById("priceLadder");
-const tradesEl = document.getElementById("tradesList");
+const ctx = DOM.canvas?.getContext("2d");
 
-const buyTab = document.getElementById("buyTab");
-const sellTab = document.getElementById("sellTab");
-const actionBtn = document.getElementById("actionBtn");
-const orderAmount = document.getElementById("orderAmount");
+/* ================= INIT / STOP ================= */
+function initMarket() {
+  if (Market.running) return;
+  if (!DOM.canvas || !ctx) return;
 
-/* ================== UI STATE ================== */
-let SIDE = "buy";
+  Market.running = true;
+  Market.last = MARKET_CFG.BASE_PRICE;
+  Market.prev = MARKET_CFG.BASE_PRICE;
+  Market.trades = [];
+  Market.ema = null;
+  Market.vwap = null;
+  Market.pv = 0;
+  Market.vol = 0;
 
-/* ================== CANVAS CHART ================== */
-function drawChart() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  bindPairs();
+  bindOrderPreview();
 
-  const h = canvas.height;
-  const w = canvas.width;
-  const midY = h / 2;
-  const scale = 8;
+  startFakeFeed();
+  connectTradesWS(); // Fake الآن – Real لاحقًا
 
-  const y = p => midY - (p - S.last) * scale;
-
-  // grid
-  ctx.strokeStyle = "rgba(255,255,255,0.05)";
-  for (let i = 0; i < h; i += 40) {
-    ctx.beginPath();
-    ctx.moveTo(0, i);
-    ctx.lineTo(w, i);
-    ctx.stroke();
-  }
-
-  // depth heat
-  const maxQty = Math.max(
-    ...S.bids.map(b => b.qty),
-    ...S.asks.map(a => a.qty),
-    1
-  );
-
-  S.bids.forEach(b => {
-    ctx.fillStyle = `rgba(14,203,129,${(b.qty / maxQty) * 0.4})`;
-    ctx.fillRect(0, y(b.price), w / 2, 5);
-  });
-
-  S.asks.forEach(a => {
-    ctx.fillStyle = `rgba(246,70,93,${(a.qty / maxQty) * 0.4})`;
-    ctx.fillRect(w / 2, y(a.price), w / 2, 5);
-  });
-
-  // mid price
-  ctx.strokeStyle = "#ffffff";
-  ctx.setLineDash([4, 4]);
-  ctx.beginPath();
-  ctx.moveTo(0, y(S.last));
-  ctx.lineTo(w, y(S.last));
-  ctx.stroke();
-  ctx.setLineDash([]);
+  console.info("[MARKET] init");
 }
 
-/* ================== FAKE ENGINE ================== */
-function genBook(mid) {
-  S.bids = [];
-  S.asks = [];
-  for (let i = 1; i <= CFG.LEVELS; i++) {
-    S.bids.push({
-      price: +(mid - i * 0.01).toFixed(4),
-      qty: +(Math.random() * 4 + 0.5).toFixed(3),
-    });
-    S.asks.push({
-      price: +(mid + i * 0.01).toFixed(4),
-      qty: +(Math.random() * 4 + 0.5).toFixed(3),
-    });
+function stopMarket() {
+  Market.running = false;
+
+  if (Market.timer) {
+    clearInterval(Market.timer);
+    Market.timer = null;
   }
+
+  if (Market.ws) {
+    Market.ws.close();
+    Market.ws = null;
+  }
+
+  console.info("[MARKET] stopped");
+}
+
+/* ================= PAIRS ================= */
+function bindPairs() {
+  document.querySelectorAll(".pair-btn").forEach(btn => {
+    btn.onclick = () => {
+      document.querySelectorAll(".pair-btn")
+        .forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+
+      Market.pair = btn.dataset.pair;
+      Market.last = MARKET_CFG.BASE_PRICE;
+      Market.prev = MARKET_CFG.BASE_PRICE;
+    };
+  });
+}
+
+/* ================= FAKE MARKET FEED ================= */
+function startFakeFeed() {
+  Market.timer = setInterval(fakeTick, MARKET_CFG.TICK_MS);
 }
 
 function fakeTick() {
-  S.prev = S.last;
-  const move = (Math.random() - 0.5) * 0.06;
-  S.last = +(Math.max(0.1, S.last + move)).toFixed(4);
+  if (!Market.running) return;
 
-  genBook(S.last);
+  Market.prev = Market.last;
+  Market.last = +(
+    Market.last + (Math.random() - 0.5) * 0.05
+  ).toFixed(4);
 
-  S.trades.unshift({
-    price: S.last,
-    qty: +(Math.random() * 1.5 + 0.1).toFixed(3),
-    side: S.last >= S.prev ? "buy" : "sell",
-    time: Date.now(),
-  });
-  S.trades = S.trades.slice(0, 30);
+  genOrderBook();
+  pushTrade();
+  updateIndicators();
 
   renderAll();
 }
 
-/* ================== RENDER ================== */
+/* ================= ORDER BOOK ================= */
+function genOrderBook() {
+  Market.bids = [];
+  Market.asks = [];
+
+  for (let i = 1; i <= MARKET_CFG.LEVELS; i++) {
+    Market.bids.push({
+      price: +(Market.last - i * 0.01).toFixed(4),
+      qty: +(Math.random() * 3 + 0.5).toFixed(3),
+    });
+    Market.asks.push({
+      price: +(Market.last + i * 0.01).toFixed(4),
+      qty: +(Math.random() * 3 + 0.5).toFixed(3),
+    });
+  }
+}
+
+/* ================= TRADES ================= */
+function pushTrade() {
+  Market.trades.unshift({
+    price: Market.last,
+    qty: +(Math.random() * 2).toFixed(3),
+    side: Market.last >= Market.prev ? "buy" : "sell",
+    time: new Date().toLocaleTimeString(),
+  });
+
+  Market.trades = Market.trades.slice(0, 30);
+}
+
+/* ================= INDICATORS ================= */
+function updateIndicators() {
+  const price = Market.last;
+  const volume = Math.random() * 3 + 1;
+
+  Market.pv += price * volume;
+  Market.vol += volume;
+  Market.vwap = Market.pv / Market.vol;
+
+  const k = 2 / (MARKET_CFG.EMA_PERIOD + 1);
+  Market.ema = Market.ema === null
+    ? price
+    : price * k + Market.ema * (1 - k);
+}
+
+/* ================= RENDER ================= */
 function renderAll() {
-  priceEl.textContent = S.last.toFixed(4);
-  approxEl.textContent = `≈ ${S.last.toFixed(2)} USDT`;
-
-  const spread = (S.asks[0].price - S.bids[0].price).toFixed(4);
-  spreadEl.textContent = spread;
-
+  renderPrice();
   renderBook();
   renderLadder();
   renderTrades();
-  drawChart();
+  renderCanvas();
   previewOrder();
 }
 
+function renderPrice() {
+  if (!DOM.price) return;
+
+  DOM.price.textContent = Market.last.toFixed(4);
+  DOM.approx.textContent = `≈ ${Market.last.toFixed(2)} USDT`;
+
+  DOM.price.classList.remove("up", "down");
+  if (Market.last > Market.prev) DOM.price.classList.add("up");
+  if (Market.last < Market.prev) DOM.price.classList.add("down");
+}
+
 function renderBook() {
-  bidsEl.innerHTML = S.bids.map(
-    b => `<div class="ob-row buy"><span>${b.price}</span><span>${b.qty}</span></div>`
-  ).join("");
-  asksEl.innerHTML = S.asks.map(
-    a => `<div class="ob-row sell"><span>${a.price}</span><span>${a.qty}</span></div>`
-  ).join("");
+  DOM.bids.innerHTML = Market.bids
+    .map(b => `<div class="row buy"><span>${b.price}</span><span>${b.qty}</span></div>`)
+    .join("");
+
+  DOM.asks.innerHTML = Market.asks
+    .map(a => `<div class="row sell"><span>${a.price}</span><span>${a.qty}</span></div>`)
+    .join("");
 }
 
 function renderLadder() {
-  ladderEl.innerHTML = `
-    ${S.asks.slice(0,6).reverse().map(a=>`<div class="ladder sell">${a.price}</div>`).join("")}
-    <div class="ladder mid">${S.last}</div>
-    ${S.bids.slice(0,6).map(b=>`<div class="ladder buy">${b.price}</div>`).join("")}
+  DOM.ladder.innerHTML = `
+    ${Market.asks.slice(0,6).reverse().map(a=>`<div class="ladder sell">${a.price}</div>`).join("")}
+    <div class="ladder mid">${Market.last}</div>
+    ${Market.bids.slice(0,6).map(b=>`<div class="ladder buy">${b.price}</div>`).join("")}
   `;
 }
 
 function renderTrades() {
-  tradesEl.innerHTML = S.trades.map(
-    t => `<div class="trade ${t.side}">
-      <span>${t.price}</span>
-      <span>${t.qty}</span>
-      <span>${new Date(t.time).toLocaleTimeString()}</span>
-    </div>`
-  ).join("");
+  DOM.trades.innerHTML = Market.trades
+    .map(t => `
+      <div class="trade ${t.side}">
+        <span>${t.price}</span>
+        <span>${t.qty}</span>
+        <span>${t.time}</span>
+      </div>`)
+    .join("");
 }
 
-/* ================== ORDER PREVIEW ================== */
-function previewOrder() {
-  const qty = +orderAmount.value || 0;
-  if (!qty) {
-    execPriceEl.textContent = "—";
-    slippageEl.textContent = "—";
-    return;
-  }
+/* ================= CANVAS ================= */
+function renderCanvas() {
+  const w = DOM.canvas.width;
+  const h = DOM.canvas.height;
+  ctx.clearRect(0, 0, w, h);
 
-  const best = SIDE === "buy" ? S.asks[0].price : S.bids[0].price;
-  const exec = best * (1 + (SIDE === "buy" ? CFG.SPREAD : -CFG.SPREAD));
+  const midY = h / 2;
+  const scale = 6;
+  const y = p => midY - (p - Market.last) * scale;
 
-  execPriceEl.textContent = exec.toFixed(4);
-  slippageEl.textContent = ((Math.abs(exec - best) / best) * 100).toFixed(2);
-}
-
-/* ================== BUY / SELL ================== */
-async function sendOrder() {
-  const qty = +orderAmount.value;
-  if (!qty || qty <= 0) return alert("Invalid amount");
-
-  await fetch("/api/order/market", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${localStorage.token}`,
-    },
-    body: JSON.stringify({ side: SIDE, qty }),
+  Market.bids.forEach(b => {
+    ctx.fillStyle = "rgba(34,197,94,0.25)";
+    ctx.fillRect(0, y(b.price), w / 2, 6);
   });
 
-  orderAmount.value = "";
+  Market.asks.forEach(a => {
+    ctx.fillStyle = "rgba(239,68,68,0.25)";
+    ctx.fillRect(w / 2, y(a.price), w / 2, 6);
+  });
+
+  drawLine(Market.last, "#ffffff");
+  drawLine(Market.ema, "#facc15");
+  drawLine(Market.vwap, "#a855f7");
+
+  function drawLine(val, color) {
+    if (!val) return;
+    ctx.strokeStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(0, y(val));
+    ctx.lineTo(w, y(val));
+    ctx.stroke();
+  }
 }
 
-actionBtn.onclick = sendOrder;
+/* ================= SLIPPAGE PREVIEW ================= */
+function estimateExecution(qty) {
+  let remain = qty;
+  let cost = 0;
 
-/* ================== TABS ================== */
-buyTab.onclick = () => {
-  SIDE = "buy";
-  buyTab.classList.add("active");
-  sellTab.classList.remove("active");
-  actionBtn.textContent = "Buy BX";
-  actionBtn.className = "action-btn buy";
-};
-sellTab.onclick = () => {
-  SIDE = "sell";
-  sellTab.classList.add("active");
-  buyTab.classList.remove("active");
-  actionBtn.textContent = "Sell BX";
-  actionBtn.className = "action-btn sell";
-};
+  for (const a of Market.asks) {
+    const take = Math.min(remain, a.qty);
+    cost += take * a.price;
+    remain -= take;
+    if (!remain) break;
+  }
 
-/* ================== PAIRS ================== */
-document.querySelectorAll(".pair-btn").forEach(btn => {
-  btn.onclick = () => {
-    document.querySelectorAll(".pair-btn").forEach(b=>b.classList.remove("active"));
-    btn.classList.add("active");
-    S.pair = btn.dataset.pair;
-    document.getElementById("quoteAsset").textContent = S.pair.split("/")[1];
-    S.last = CFG.BASE_PRICE;
-  };
-});
+  if (remain > 0) return null;
 
-/* ================== INIT ================== */
-setInterval(fakeTick, CFG.TICK_MS);
+  const exec = cost / qty;
+  const best = Market.asks[0].price;
+  const slip = Math.abs(exec - best) / best * 100;
+
+  return { exec, slip };
+}
+
+function previewOrder() {
+  const qty = +DOM.amount?.value;
+  if (!qty) return;
+
+  const r = estimateExecution(qty);
+  if (!r) return;
+
+  DOM.execPrice.textContent = r.exec.toFixed(4);
+  DOM.slippage.textContent = r.slip.toFixed(2) + "%";
+}
+
+function bindOrderPreview() {
+  if (DOM.amount) DOM.amount.oninput = previewOrder;
+}
+
+/* ================= TRADES WS (READY FOR REAL) ================= */
+function connectTradesWS() {
+  // Fake WS placeholder – replace URL later
+  // Market.ws = new WebSocket("wss://api/ws/market/" + Market.pair);
+}
+
+/* ================= EXPORT ================= */
+window.initMarket = initMarket;
+window.stopMarket = stopMarket;
