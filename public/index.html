@@ -443,24 +443,35 @@
   </section>
   <!-- ================= MINING ================= -->
    <section id="mining" class="view">
-  <h2 class="page-title">Mining</h2>
+  <header class="section-header">
+    <h2 class="page-title">Mining</h2>
+    <p class="page-subtitle">
+      Earn daily rewards by subscribing to mining plans
+    </p>
+  </header>
 
-  <div class="mining-tabs">
-    <button class="active" data-coin="BX">
+  <!-- Coin Selector (JS handles logic) -->
+  <div class="mining-tabs" id="miningTabs">
+    <button class="tab active" data-coin="BX">
       <img src="/assets/images/bx.png" alt="BX">
       <span>BX</span>
     </button>
-    <button data-coin="BNB">
+
+    <button class="tab" data-coin="BNB">
       <img src="/assets/images/bnb.png" alt="BNB">
       <span>BNB</span>
     </button>
-    <button data-coin="SOL">
+
+    <button class="tab" data-coin="SOL">
       <img src="/assets/images/sol.png" alt="SOL">
       <span>SOL</span>
     </button>
   </div>
-  <!-- Display Mining Plans -->
-  <div class="mining-plans" id="miningGrid"></div>
+
+  >
+  <div class="mining-plans" id="miningGrid">
+    <!-- JS renders cards here -->
+  </div>
    </section>
   <!-- ================= AIRDROP ================= -->
   <section id="airdrop" class="view">
