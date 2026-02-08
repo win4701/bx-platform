@@ -720,24 +720,26 @@ h3{
 }
 
 .recent-trades {
-  font-size: 12px;
+  height: 360px;              /* ثابت */
+  overflow: hidden;           /* أو auto لو تريد scroll */
+  padding: 8px 0;
 }
 
-.rt-header,
-.rt-row {
+.recent-trades-row {
   display: grid;
-  grid-template-columns: 1.2fr 1fr 1fr;
-  padding: 6px 10px;
+  grid-template-columns: 1fr 1fr 1fr;
+  font-size: 12px;
+  line-height: 1.6;
+  padding: 2px 12px;
 }
 
-.rt-header {
-  opacity: 0.6;
-  border-bottom: 1px solid #1f2a33;
+.recent-trades-row.buy {
+  color: #2ecc71;
 }
 
-.rt-row.buy span:first-child { color: #1ecb81; }
-.rt-row.sell span:first-child { color: #f6465d; }
-
+.recent-trades-row.sell {
+  color: #e74c3c;
+}
 .flash-up{box-shadow: inset 0 0 22px rgba(14,203,129,.22)}
 .flash-down{box-shadow: inset 0 0 22px rgba(246,70,93,.22)}
 
