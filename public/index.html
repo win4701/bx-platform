@@ -207,32 +207,29 @@
 </section>
   
      <!-- ================= MARKET ================= -->
-  <section id="market" class="view market-view">
+<section id="market" class="view market-view">
 
-  <!-- ===== Header ===== -->
+  <!-- ===== HEADER ===== -->
   <div class="market-header">
-
-    <!-- Pair -->
     <div class="pair-title">
       <span class="base">BX</span>
-      <span class="arrow">→</span>
+      <span class="arrow">/</span>
       <span class="quote" id="quoteAsset">USDT</span>
     </div>
 
-    <!-- Price -->
     <div class="price-box">
-      <div id="marketPrice" class="price-main">12.00 USDT</div>
+      <div id="marketPrice" class="price-main">12.0000</div>
       <div id="marketApprox" class="approx">≈ 12.00 USDT</div>
     </div>
   </div>
 
-  <!-- ===== Wallet ===== -->
+  <!-- ===== WALLET MINI ===== -->
   <div class="wallet-box compact">
-    <div>BX <strong id="walletBX">0</strong></div>
-    <div>USDT <strong id="walletUSDT">0</strong></div>
+    <div>BX <strong id="walletBX">0.00</strong></div>
+    <div>USDT <strong id="walletUSDT">0.00</strong></div>
   </div>
 
-  <!-- ===== Pairs Tabs ===== -->
+  <!-- ===== PAIRS ===== -->
   <div class="market-pairs tabs" id="pairBtn">
     <button class="pair-btn active" data-pair="BX/USDT">USDT</button>
     <button class="pair-btn" data-pair="BX/BTC">BTC</button>
@@ -244,25 +241,18 @@
     <button class="pair-btn" data-pair="BX/LTC">LTC</button>
   </div>
 
-  <!-- ===== Chart ===== -->
- <div id="marketChart" style="height:260px;"></div>
+  <!-- ===== CHART (CORE) ===== -->
+  <div class="chart-box">
+    <canvas id="marketCanvas" height="260"></canvas>
+  </div>
 
-<div class="trades-panel">
-  <div class="trades-head">Recent Trades</div>
-  <div id="tradesList"></div>
-</div>
-
-  <!-- ===== INDICATORS LEGEND ===== -->
+  <!-- ===== INDICATOR LEGEND ===== -->
   <div class="indicator-legend">
     <span class="ema">EMA</span>
     <span class="vwap">VWAP</span>
   </div>
 
-  <!-- ===== DEPTH HEATMAP ===== -->
-  <div class="depth-box">
-    <div class="depth-title"></div>
-  </div>
-  <!-- ===== Trade Box ===== -->
+  <!-- ===== TRADE BOX ===== -->
   <div class="trade-box buy" id="tradeBox">
 
     <div class="trade-tabs">
@@ -286,40 +276,61 @@
         <button data-percent="100">MAX</button>
       </div>
 
-      <button
-        class="action-btn buy"
-        id="actionBtn"
-        onclick="submitLimitOrder()"
-      >
+      <!-- ===== ORDER PREVIEW ===== -->
+      <div class="order-preview">
+        <div>Exec Price: <b id="execPrice">—</b></div>
+        <div>Slippage: <b id="slippage">—</b>%</div>
+        <div>Spread: <b id="spread">—</b></div>
+      </div>
+
+      <button class="action-btn buy" id="actionBtn">
         Buy BX
       </button>
     </div>
   </div>
 
-  <!-- ===== Order Book ===== -->
+  <!-- ===== ORDER BOOK ===== -->
   <div class="orderbook">
+
     <div class="orderbook-title">Order Book</div>
 
     <div class="orderbook-grid">
+
+      <!-- BIDS -->
       <div class="ob-col">
         <div class="ob-head buy">Bids</div>
         <div id="bids" class="ob-list"></div>
       </div>
 
+      <!-- PRICE LADDER -->
+      <div class="ob-col ladder">
+        <div class="ob-head">Price</div>
+        <div id="priceLadder" class="price-ladder"></div>
+      </div>
+
+      <!-- ASKS -->
       <div class="ob-col">
         <div class="ob-head sell">Asks</div>
         <div id="asks" class="ob-list"></div>
       </div>
+
     </div>
   </div>
 
-  <!-- ===== Trades ===== -->
+  <!-- ===== TRADES ===== -->
   <div class="trades">
     <div class="trades-title">Recent Trades</div>
     <div id="tradesList" class="trades-list"></div>
   </div>
-</div>
-          </section>
+
+  <!-- ===== POSITION / PNL ===== -->
+  <div class="positions">
+    <div>Position: <b id="posQty">0</b> BX</div>
+    <div>Entry: <b id="posEntry">—</b></div>
+    <div>PnL: <b id="posPnl" class="pnl">—</b></div>
+  </div>
+
+</section>
   
   <!-- ================= CASINO ================= -->
   <section id="casino" class="view">
