@@ -131,25 +131,33 @@ async function safeFetch(path, options = {}) {
    PART 2 — NAVIGATION (General Update)
 ========================================================= */
 
-const VIEW_NODES = document.querySelectorAll(".view");
-const NAV_BTNS = document.querySelectorAll(".bottom-nav button");
+const VIEW_NODES =
+function switchView(view) {
+  document.querySelectorAll(".view").forEach(v => {
+    v.classList.remove("active");
+  });
 
-function switchView(viewId) {
-  if (!viewId) return;
+  const target = document.getElementById(view);
+  if (target) target.classList.add("active");
 
-  VIEW_NODES.forEach(v => v.classList.remove("active"));
-  NAV_BTNS.forEach(b => b.classList.remove("active"));
-
-  const view = document.getElementById(viewId);
-  const btn = document.querySelector(`.bottom-nav button[data-view="${viewId}"]`);
-
-  if (view) view.classList.add("active");
-  if (btn) btn.classList.add("active");
-
-  document.dispatchEvent(
-    new CustomEvent("view:change", { detail: viewId })
-  );
+  document.querySelectorAll(".bottom-nav button").forEach(b => {
+    b.classList.toggle("active", b.dataset.view === view);
+  });
 }
+
+document.addEventListener("click", e => {
+  const btn = e.target.closest("[data-view]");
+  if (btn) {
+    switchView(btn.dataset.view);
+    return;
+  }
+
+  const action = e.target.closest("[data-action]");
+  if (!action) return;
+
+  if (action.dataset.action === "go-casino") switchView("casino");
+  if (action.dataset.action === "go-mining") switchView("mining");
+});
 
 /* ================= BOOTSTRAP ================= */
 
@@ -217,10 +225,12 @@ document.addEventListener("view:change", e => {
 const WALLET = {
   BX: 0,
   USDT: 0,
+  USDC: 0,
   BTC: 0,
   BNB: 0,
   ETH: 0,
   AVAX: 0,
+  ZEC: 0,
   TON: 0,
   SOL: 0,
   LTC: 0,
@@ -232,10 +242,12 @@ const WALLET = {
 const WALLET_DOM = {
   BX: "bal-bx",
   USDT: "bal-usdt",
+  USDC: "bal-usdc",
   BTC: "bal-btc",
   BNB: "bal-bnb",
   ETH: "bal-eth",
   AVAX: "bal-avax",
+  ZEC: "bal-zec",
   TON: "bal-ton",
   SOL: "bal-sol",
   LTC: "bal-ltc",
@@ -265,10 +277,12 @@ function loadWallet() {
   if (!WALLET.loaded) {
     WALLET.BX = 0.00;
     WALLET.USDT = 0.00;
+    WALLET.USDC = 0.00;
     WALLET.BTC = 0.00;
     WALLET.BNB = 0.00;
     WALLET.ETH = 0.00;
     WALLET.AVAX = 0.00;
+    WALLET.ZEC = 0.00;
     WALLET.TON = 0.00;
     WALLET.SOL = 0.00;
     WALLET.LTC = 0.00;
