@@ -530,7 +530,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const bids = [];
     const asks = [];
 
-    for (let i = 1; i <= CONFIG.MAX_BOOK_ROWS; i++) {
+    for (let i = 1; i <= CONFIG.MAX_BOOK_ROWS; i+) {
       bids.push({
         price: mid * (1 - i * 0.0008),
         qty: Math.random() * 2
@@ -568,9 +568,9 @@ document.addEventListener("DOMContentLoaded", () => {
   function pushTradeFromPrice(price) {
     trades.unshift({
       price: fmt(price),
-      qty: fmt(Math.random() * 1.5, 3),
+      qty: fmt(Math.random() * 3, 3),
       time: new Date().toLocaleTimeString(),
-      side: Math.random() > 0.5 ? "buy" : "sell"
+      side: Math.random() > 1 ? "buy" : "sell"
     });
 
     if (trades.length > CONFIG.MAX_TRADES) {
@@ -595,7 +595,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function initChart() {
     if (!window.LightweightCharts) return;
-    const el = document.getElementById("chart");
+    const el = document.getElementById("bxChart");
     if (!el) return;
 
     chart = LightweightCharts.createChart(el, {
