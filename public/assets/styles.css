@@ -322,8 +322,6 @@ h3{
    Binance-Pro Spirit / BX Market
 ===================================================== */
 
-/* ================= ROOT ================= */
-
 :root{
   --bg:#0b0e11;
   --panel:#0e1318;
@@ -335,13 +333,6 @@ h3{
 
   --red:#f6465d;
   --red-soft:rgba(246,70,93,.18);
-
-  --yellow:#f0b90b;
-  --purple:#a855f7;
-
-  --row-h:22px;
-  --rows:12;
-  --radius:14px;
 }
 
 /* ================= RESET ================= */
@@ -513,7 +504,6 @@ html,body{
   --border:#1e2329;
   --text:#eaecef;
   --muted:#848e9c;
-
   --green:#0ecb81;
   --green-bg:rgba(14,203,129,.15);
 
@@ -530,7 +520,7 @@ html,body{
   border-radius:14px;
   padding:10px;
   margin-bottom:14px;
-  height:320px; /* ثابت */
+  height:320px; 
   display:flex;
   flex-direction:column;
   overflow:hidden;
@@ -558,8 +548,6 @@ html,body{
   overflow:hidden;
 }
 
-/* HEADERS */
-
 .ob-head{
   font-size:12px;
   font-weight:700;
@@ -571,15 +559,11 @@ html,body{
 .ob-head.buy{ color:var(--green); }
 .ob-head.sell{ color:var(--red); }
 
-/* COLUMNS */
-
 .ob-col{
   display:flex;
   flex-direction:column;
   overflow:hidden;
 }
-
-/* LISTS */
 
 .ob-list,
 .price-ladder{
@@ -587,8 +571,6 @@ html,body{
   max-height:264px; /* 12 * 22 */
   overflow:hidden;
 }
-
-/* ROW */
 
 .ob-list .row,
 .ladder-row{
@@ -602,8 +584,6 @@ html,body{
   position:relative;
   padding:0 6px;
 }
-
-/* BUY / SELL */
 
 .row.buy{ color:var(--green); }
 .row.sell{ color:var(--red); }
@@ -628,8 +608,6 @@ html,body{
   z-index:1;
 }
 
-/* PRICE LADDER */
-
 .price-ladder{
   text-align:center;
 }
@@ -652,11 +630,10 @@ html,body{
 
 .trades-list{
   flex:1;
-  max-height:264px; /* 12 * 22 */
+  max-height:264px; 
   overflow:hidden;
 }
 
-/* HEADER ROW (optional if exists) */
 .trades-header{
   display:grid;
   grid-template-columns:1fr 1fr 1fr;
@@ -664,8 +641,6 @@ html,body{
   color:var(--muted);
   margin-bottom:4px;
 }
-
-/* TRADE ROW */
 
 .trade{
   height:22px;
