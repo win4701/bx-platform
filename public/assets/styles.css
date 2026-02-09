@@ -408,7 +408,9 @@ h3{
   color:var(--yellow);
 }
 
-/* ===== Chart Wrapper (visibility-safe) ===== */
+/* ===== Chart Wrapper  === */
+
+
 #bxChartWrap{
   height:220px;
   margin:10px 0;
@@ -477,7 +479,7 @@ h3{
 
 /* Lists */
 .ob-list{
-  height:240px;              /* 12 rows × 20px */
+  height:240px;              
   overflow:hidden;
 }
 
@@ -530,7 +532,7 @@ h3{
 }
 
 .trades-list{
-  height:240px;              /* same as orderbook */
+  height:240px;              
   overflow:hidden;
 }
 
@@ -556,8 +558,47 @@ h3{
 .price-ladder{
   visibility:visible;
   opacity:1;
-   }
+  }
+* ================= POSITIONS ================= */
 
+.positions{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:10px;
+  font-size:13px;
+  }
+  
+.pnl.positive{ color:var(--green); }
+.pnl.negative{ color:var(--red); }
+
+.mid-line {
+  text-align: center;
+  font-size: 13px;
+  color: #f0b90b; /* Binance yellow */
+  margin: 6px 0;
+}
+.row.fake {
+  opacity: 0.45;
+}
+
+.trade.fake {
+  opacity: 0.6;
+  font-style: italic;
+}
+
+}
+.flash-up{box-shadow: inset 0 0 22px rgba(14,203,129,.22)}
+.flash-down{box-shadow: inset 0 0 22px rgba(246,70,93,.22)}
+
+/* ================= ICONS ================= */
+
+.market-view img{
+  width:18px;
+  height:18px;
+  object-fit:contain;
+  filter:drop-shadow(0 0 6px rgba(240,185,11,.25));
+}
 /* =========================================================
    CASINO – POSTER SYSTEM (MATCHES PROVIDED IMAGE)
 ========================================================= */
