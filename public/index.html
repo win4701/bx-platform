@@ -313,28 +313,23 @@
     </div>
   </div>
 
-  <div class="order-trades-grid">
+  <div class="market-cards">
 
-  <!-- ===== ORDER BOOK ===== -->
-  <div class="orderbook card">
-
+  <!-- ===== ORDER BOOK CARD ===== -->
+  <div class="card orderbook-card">
     <div class="card-title">Order Book</div>
 
     <div class="orderbook-grid">
-
-      <!-- BIDS -->
       <div class="ob-col">
         <div class="ob-head buy">Bids</div>
         <div id="bids" class="ob-list"></div>
       </div>
 
-      <!-- PRICE LADDER -->
       <div class="ob-col ladder">
         <div class="ob-head">Price</div>
         <div id="priceLadder" class="price-ladder"></div>
       </div>
 
-      <!-- ASKS -->
       <div class="ob-col">
         <div class="ob-head sell">Asks</div>
         <div id="asks" class="ob-list"></div>
@@ -342,19 +337,19 @@
     </div>
   </div>
 
-  <!-- ===== RECENT TRADES ===== -->
-  <div class="trades card">
-
+  <!-- ===== RECENT TRADES CARD ===== -->
+  <div class="card trades-card">
     <div class="card-title">Recent Trades</div>
 
-    <div class="trades-grid">
-      <div class="trade-head buy">Price</div>
-      <div class="trade-head">Amount</div>
-      <div class="trade-head">Time</div>
-      <div id="tradesList" class="trades-list"></div>
+    <div class="trades-head">
+      <span>Price</span>
+      <span>Amount</span>
+      <span>Time</span>
     </div>
+
+    <div id="tradesList" class="trades-list"></div>
   </div>
-  </div>
+ </div>
 </section>
   
   <!-- ================= CASINO ================= -->
