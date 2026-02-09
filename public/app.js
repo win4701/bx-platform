@@ -473,8 +473,8 @@ document.addEventListener("DOMContentLoaded", () => {
 ========================================================= */
 
   const CONFIG = {
-    BASE_PRICE_USDT: 24,
-    MAX_BOOK_ROWS: 15,
+    BASE_PRICE_USDT: 38,
+    MAX_BOOK_ROWS: 12,
     MAX_TRADES: 30,
     CHART_POINTS: 120,
     FAKE_INTERVAL: 1200,
