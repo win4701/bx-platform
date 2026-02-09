@@ -313,10 +313,12 @@
     </div>
   </div>
 
-  <!-- ===== ORDER BOOK ===== -->
-  <div class="orderbook">
+  <div class="order-trades-grid">
 
-    <div class="orderbook-title">Order Book</div>
+  <!-- ===== ORDER BOOK ===== -->
+  <div class="orderbook card">
+
+    <div class="card-title">Order Book</div>
 
     <div class="orderbook-grid">
 
@@ -337,14 +339,21 @@
         <div class="ob-head sell">Asks</div>
         <div id="asks" class="ob-list"></div>
       </div>
-
     </div>
   </div>
 
-  <!-- ===== TRADES ===== -->
-  <div class="trades">
-    <div class="trades-title">Recent Trades</div>
-    <div id="tradesList" class="trades-list"></div>
+  <!-- ===== RECENT TRADES ===== -->
+  <div class="trades card">
+
+    <div class="card-title">Recent Trades</div>
+
+    <div class="trades-grid">
+      <div class="trade-head buy">Price</div>
+      <div class="trade-head">Amount</div>
+      <div class="trade-head">Time</div>
+      <div id="tradesList" class="trades-list"></div>
+    </div>
+  </div>
   </div>
 </section>
   
