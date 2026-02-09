@@ -415,7 +415,7 @@ h3{
 
 #bxChartWrap {
   position: relative;
-  height: 180px;
+  height: 220px;
   margin: 12px 0;
 }
 #bxChart {
@@ -558,26 +558,34 @@ h3{
   color:white;
 }
 
-/* ================= ORDER BOOK ================= */
-
-.orderbook{
-  background:var(--panel);
-  border:1px solid var(--border);
-  border-radius:12px;
-  padding:8px;
-  margin-bottom:12px;
+/* ===== ORDER + TRADES WRAPPER ===== */
+.order-trades-grid{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap:0;
+  border:1px solid var(--border,#1f2937);
+  border-radius:14px;
+  overflow:hidden;
+  background:#0b0f14;
 }
 
-.orderbook-title{
-  font-size:14px;
-  font-weight:900;
+/* ===== CARD ===== */
+.card{
+  padding:10px;
+}
+
+.card-title{
+  font-size:13px;
+  font-weight:600;
   margin-bottom:6px;
+  color:#e5e7eb;
 }
 
+/* ===== ORDER BOOK ===== */
 .orderbook-grid{
   display:grid;
-  grid-template-columns:1fr auto 1fr;
-  gap:6px;
+  grid-template-columns: 1fr 80px 1fr;
+  gap:0;
 }
 
 .ob-col{
@@ -587,22 +595,81 @@ h3{
 
 .ob-head{
   font-size:11px;
-  font-weight:800;
   text-align:center;
-  margin-bottom:4px;
-  color:var(--muted);
+  padding:4px 0;
+  color:#9ca3af;
 }
 
-.ob-head.buy{ color:var(--green); }
-.ob-head.sell{ color:var(--red); }
-
-/* ===== Rows ===== */
+.ob-head.buy{ color:#22c55e; }
+.ob-head.sell{ color:#ef4444; }
 
 .ob-list{
-  display:flex;
-  flex-direction:column;
-  gap:2px;
+  height:240px;           /* 12 rows */
+  overflow:hidden;
 }
+
+.ob-list .row{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  font-size:11px;
+  height:20px;
+  line-height:20px;
+  padding:0 4px;
+}
+
+.ob-list .bid{ color:#22c55e; }
+.ob-list .ask{ color:#ef4444; }
+
+/* ===== PRICE LADDER ===== */
+.ladder{
+  border-left:1px solid var(--border,#1f2937);
+  border-right:1px solid var(--border,#1f2937);
+}
+
+.price-ladder{
+  height:240px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:11px;
+  color:#9ca3af;
+}
+
+/* ===== TRADES ===== */
+.trades{
+  border-left:1px solid var(--border,#1f2937); /* vertical divider */
+}
+
+.trades-grid{
+  display:grid;
+  grid-template-columns: 1fr 1fr 1fr;
+}
+
+.trade-head{
+  font-size:11px;
+  padding:4px 0;
+  text-align:center;
+  color:#9ca3af;
+}
+
+.trades-list{
+  grid-column:1 / -1;
+  height:240px;           /* 12 rows */
+  overflow:hidden;
+}
+
+.trades-list .trade{
+  display:grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  font-size:11px;
+  height:20px;
+  line-height:20px;
+  padding:0 4px;
+}
+
+.trade.buy{ color:#22c55e; }
+.trade.sell{ color:#ef4444; }
+
 
 .row{
   display:flex;
@@ -659,38 +726,6 @@ h3{
   border-radius:4px;
 }
 
-/* ================= TRADES ================= */
-
-.trades{
-  background:var(--panel);
-  border:1px solid var(--border);
-  border-radius:12px;
-  padding:8px;
-  margin-bottom:12px;
-}
-
-.trades-title{
-  font-size:14px;
-  font-weight:900;
-  margin-bottom:6px;
-}
-
-.trades-list{
-  display:flex;
-  flex-direction:column;
-  gap:4px;
-  font-size:12px;
-  font-family:ui-monospace,monospace;
-}
-
-.trade{
-  display:grid;
-  grid-template-columns:1fr 1fr 1fr;
-}
-
-.trade.buy span:first-child{ color:var(--green); }
-.trade.sell span:first-child{ color:var(--red); }
-
 /* ================= POSITIONS ================= */
 
 .positions{
@@ -719,26 +754,6 @@ h3{
   font-style: italic;
 }
 
-.recent-trades {
-  height: 360px;              /* ثابت */
-  overflow: hidden;           /* أو auto لو تريد scroll */
-  padding: 8px 0;
-}
-
-.recent-trades-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  font-size: 12px;
-  line-height: 1.6;
-  padding: 2px 12px;
-}
-
-.recent-trades-row.buy {
-  color: #2ecc71;
-}
-
-.recent-trades-row.sell {
-  color: #e74c3c;
 }
 .flash-up{box-shadow: inset 0 0 22px rgba(14,203,129,.22)}
 .flash-down{box-shadow: inset 0 0 22px rgba(246,70,93,.22)}
