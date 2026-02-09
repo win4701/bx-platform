@@ -558,150 +558,125 @@ h3{
   color:white;
 }
 
-/* =====================================================
-   MARKET — ORDER BOOK + RECENT TRADES (FINAL)
-   Safe • Stable • No HTML / JS breaking
-===================================================== */
+/* ===============================
+   MARKET – ORDER BOOK & TRADES
+   FINAL STABLE LAYOUT
+   =============================== */
 
-.orderbook,
-.trades {
-  background: linear-gradient(180deg, #0e1b22, #0b141a);
-  border: 1px solid var(--border-soft);
+/* Shared card base */
+.orderbook-card,
+.trades-card {
+  background: linear-gradient(180deg, #0f2027, #0b1a21);
   border-radius: 18px;
-  padding: 14px 12px 12px;
-  margin: 14px 12px;
-  box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,0.02),
-    0 20px 40px rgba(0,0,0,0.45);
+  padding: 14px;
+  box-shadow: inset 0 0 0 1px rgba(0,255,200,0.08);
+  margin-bottom: 16px;
 }
 
-/* ================= TITLES ================= */
-
-.orderbook-title,
-.trades-title {
+/* Card titles */
+.orderbook-card .card-title,
+.trades-card .card-title {
   font-size: 15px;
   font-weight: 600;
-  color: var(--text-main);
-  margin-bottom: 8px;
+  color: #e6f1f5;
+  margin-bottom: 10px;
 }
 
-/* ================= HEADERS ================= */
-
-.ob-head,
-.trades-head {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  font-size: 12px;
-  font-weight: 600;
-  padding: 6px 0;
-  border-bottom: 1px solid var(--border-soft);
-}
-
-.ob-head.buy { color: var(--bid); text-align: left; }
-.ob-head.sell { color: var(--ask); text-align: right; }
-.ob-head.center,
-.trades-head span:nth-child(1) {
-  color: var(--text-dim);
-  text-align: center;
-}
-
-/* ================= ORDER BOOK GRID ================= */
+/* ===============================
+   ORDER BOOK
+   =============================== */
 
 .orderbook-grid {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
+  column-gap: 6px;
 }
 
-/* vertical separators */
-.orderbook-grid > div:not(:last-child) {
-  border-right: 1px solid var(--border-soft);
+/* Column */
+.ob-col {
+  display: flex;
+  flex-direction: column;
 }
 
-/* ================= LISTS ================= */
+/* Headers */
+.ob-head {
+  font-size: 12px;
+  text-align: center;
+  margin-bottom: 6px;
+  opacity: 0.85;
+}
 
+.ob-head.buy { color: #1fdf8b; }
+.ob-head.sell { color: #ff5c6c; }
+
+/* Lists */
 .ob-list,
-.trades-list {
-  max-height: calc(12 * 22px);
+.price-ladder {
+  display: grid;
+  grid-template-rows: repeat(12, 1fr);
+  row-gap: 2px;
+  height: 240px;
   overflow: hidden;
 }
 
-/* ================= ROWS ================= */
-
-.ob-list .row,
-.trades-list .trade {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  height: 22px;
-  align-items: center;
-  font-size: 12.5px;
-  padding: 0 6px;
-  background: transparent;
-}
-
-.ob-list .row:nth-child(even),
-.trades-list .trade:nth-child(even) {
-  background: var(--bg-row);
-}
-
-/* ================= ORDER BOOK COLORS ================= */
-
-.ob-list .bid span:first-child {
-  color: var(--bid);
-  text-align: left;
-}
-
-.ob-list .ask span:first-child {
-  color: var(--ask);
-  text-align: right;
-}
-
-.ob-list span:last-child {
-  color: var(--text-dim);
-}
-
-/* ================= PRICE LADDER (CENTER) ================= */
-
-.price-ladder .row {
-  height: 22px;
+/* Order row */
+.ob-list div,
+.price-ladder div {
+  font-size: 12px;
+  line-height: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12.5px;
-  color: var(--text-main);
+  font-variant-numeric: tabular-nums;
 }
 
-/* ================= RECENT TRADES ================= */
+/* Bid / Ask colors */
+#bids div { color: #1fdf8b; }
+#asks div { color: #ff5c6c; }
+.price-ladder div { color: #c9d6dc; }
+
+/* ===============================
+   RECENT TRADES
+   =============================== */
 
 .trades-head {
+  display: grid;
   grid-template-columns: 1fr 1fr 1fr;
+  font-size: 12px;
+  opacity: 0.7;
+  margin-bottom: 6px;
 }
 
-.trades-list .trade {
+.trades-list {
+  display: grid;
+  grid-template-rows: repeat(12, 1fr);
+  row-gap: 2px;
+  height: 240px;
+  overflow: hidden;
+}
+
+/* Trade row */
+.trades-list div {
+  display: grid;
   grid-template-columns: 1fr 1fr 1fr;
+  font-size: 12px;
+  align-items: center;
+  font-variant-numeric: tabular-nums;
 }
 
-.trades-list .trade span:nth-child(1) {
-  text-align: left;
-}
+/* Trade colors */
+.trade-buy { color: #1fdf8b; }
+.trade-sell { color: #ff5c6c; }
 
-.trades-list .trade span:nth-child(2) {
-  text-align: center;
-  color: var(--text-dim);
-}
+/* ===============================
+   MOBILE SAFETY
+   =============================== */
 
-.trades-list .trade span:nth-child(3) {
-  text-align: right;
-  color: var(--text-dim);
+@media (max-width: 480px) {
+  .orderbook-grid {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
 }
-
-.trades-list .trade.buy span:first-child {
-  color: var(--bid);
-}
-
-.trades-list .trade.sell span:first-child {
-  color: var(--ask);
-}
-
 /* ================= PRICE LADDER ================= */
 
 .price-ladder{
