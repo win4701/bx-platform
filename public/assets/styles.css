@@ -327,15 +327,23 @@ h3{
   --panel:#0e1318;
   --border:#1e2329;
   --muted:#848e9c;
-
   --green:#0ecb81;
   --green-soft:rgba(14,203,129,.15);
-
   --red:#f6465d;
   --red-soft:rgba(246,70,93,.15);
-
   --yellow:#f0b90b;
   --purple:#a855f7;
+  --book-bg: linear-gradient(180deg, #0e1f26, #0b151b);
+  --book-border: #13313d;
+  --book-header: #9fb4c0;
+  --bid: #1fd18b;
+  --ask: #ff5c5c;
+  --neutral: #cfd9df;
+  --row-h: 22px;        
+  --rows: 12;          
+  --header-h: 38px;  
+  --col-gap: 8px;
+  --radius: 16px;
 }
 
 /* ================= BASE ================= */
@@ -562,52 +570,7 @@ h3{
    ORDER BOOK CARD (12 ROWS)
 =============================== */
 
-.orderbook {
-  height: 320px;
-  display: flex;
-  flex-direction: column;
-}
-
-.orderbook-title {
-  flex-shrink: 0;
-}
-
-.orderbook-grid {
-  flex: 1;
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  overflow: hidden;
-}
-
-.ob-list,
-.price-ladder {
-  max-height: calc(12 * 22px); /* 12 صف */
-  overflow: hidden;
-}
-
-.ob-list .row {
-  height: 22px;
-  line-height: 22px;
-}
-
-/* ===============================
-   RECENT BOOK CARD (12 ROWS)
-=============================== */
-
-.trades {
-  height: 320px;
-  display: flex;
-  flex-direction: column;
-}
-
-.trades-title {
-  flex-shrink: 0;
-}
-
-.trades-list {
-  flex: 1;
-  max-height: calc(12 * 22px); /* 12 صف */
-  overflow: hidden;
+.
 }
 
 .trades-list .trade {
