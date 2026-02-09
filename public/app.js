@@ -530,7 +530,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const bids = [];
     const asks = [];
 
-    for (let i = 1; i <= CONFIG.MAX_BOOK_ROWS; i+) {
+    for (let i = 1; i <= CONFIG.MAX_BOOK_ROWS; i++) {
       bids.push({
         price: mid * (1 - i * 0.0008),
         qty: Math.random() * 2
