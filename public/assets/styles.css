@@ -317,308 +317,331 @@ h3{
   border:none;
 }
 
-/* =====================================================
-   MARKET — PART 1
-   BASE / STRUCTURE / VARIABLES
-===================================================== */
+/* ================================
+   MARKET – PART 1 (CORE / LAYOUT)
+   Ultra Dark – Binance Style
+   ================================ */
 
-/* ===== Market Root ===== */
+/* ---------- ROOT (مرة واحدة فقط) ---------- */
+:root{
+  --bg-main:#020617;
+  --bg-panel:#020617;
+  --bg-card:#020617;
+  --bg-glass:rgba(2,6,23,.75);
 
-.market-view button{
-  background:#020617;
-  color:#e5e7eb;
-  border:1px solid #1e293b;
-  border-radius:10px;
-  height:36px;
-  font-weight:700;
+  --border-soft:#1e293b;
+  --border-hard:#1e2329;
+
+  --text-main:#e5e7eb;
+  --text-dim:#9ca3af;
+  --text-soft:#6b7280;
+
+  --green:#16c784;
+  --red:#ea3943;
+  --yellow:#f0b90b;
+
+  --radius:14px;
+  --radius-sm:10px;
 }
 
+/* ---------- MARKET VIEW SCOPE ---------- */
 .market-view{
-  padding:14px;
-  background:var(--bg);
-  color:var(--text);
-  font-family:system-ui,-apple-system,BlinkMacSystemFont;
-  font-variant-numeric: tabular-nums;
+  display:block !important;
+  min-height:100vh;
+  background:var(--bg-main);
+  color:var(--text-main);
+  padding-bottom:90px;
 }
 
-/* ===== Market Header ===== */
-.market-header{
-  display:flex;
-  justify-content:space-between;
-  align-items:flex-start;
+/* ---------- GENERAL CARDS ---------- */
+.market-view .market-card{
+  background:var(--bg-card);
+  border:1px solid var(--border-soft);
+  border-radius:var(--radius);
+  padding:14px;
   margin-bottom:12px;
 }
 
-/* Pair Title */
-.pair-title{
+/* ---------- SECTION TITLES ---------- */
+.market-view .section-title{
+  font-size:14px;
+  font-weight:700;
+  margin-bottom:10px;
+  color:var(--text-main);
+}
+
+/* ---------- BUTTONS (GLOBAL) ---------- */
+.market-view button{
+  background:#020617;
+  color:var(--text-main);
+  border:1px solid var(--border-soft);
+  border-radius:var(--radius-sm);
+  height:38px;
+  padding:0 14px;
+  font-weight:700;
+  cursor:pointer;
+}
+
+.market-view button:hover{
+  border-color:var(--yellow);
+}
+
+/* Buy / Sell */
+.market-view .btn-buy{
+  background:var(--green);
+  color:#020617;
+  border:none;
+}
+
+.market-view .btn-sell{
+  background:#020617;
+  color:var(--text-dim);
+  border:1px solid var(--border-soft);
+}
+
+/* ---------- INPUTS ---------- */
+.market-view input{
+  width:100%;
+  height:40px;
+  background:#020617;
+  color:var(--text-main);
+  border:1px solid var(--border-soft);
+  border-radius:var(--radius-sm);
+  padding:0 12px;
+}
+
+/* ---------- PAIR HEADER ---------- */
+.market-view .pair-header{
   display:flex;
-  align-items:center;
-  gap:6px;
-  font-size:18px;
-  font-weight:900;
+  justify-content:space-between;
+  align-items:flex-end;
+  margin-bottom:12px;
 }
 
-/* Price Box */
-.price-box{
-  text-align:right;
+.market-view .pair-name{
+  font-size:20px;
+  font-weight:800;
 }
 
-.price-main{
+.market-view .pair-price{
   font-size:26px;
   font-weight:900;
 }
 
-.price-main.up{ color:var(--green); }
-.price-main.down{ color:var(--red); }
-
-.approx{
+.market-view .pair-live{
   font-size:12px;
-  color:var(--muted);
+  color:var(--green);
+  margin-top:4px;
 }
 
-/* ===== Pair Switch Grid ===== */
-
-.pair-grid{
+/* ---------- PAIR BUTTONS (AUTO GRID) ---------- */
+.market-view .pair-buttons{
   display:grid;
   grid-template-columns:repeat(5,1fr);
-  gap:4px;
-  margin:8px 0 12px;
+  gap:8px;
+  margin:12px 0;
 }
 
-.pair-btn{
-  height:32px;
-  border-radius:12px;
-  border:1px solid rgba(255,255,255,.08);
+.market-view .pair-btn{
+  height:36px;
+  border-radius:20px;
+  font-weight:700;
   background:#020617;
-  color:#9ca3af;
-  font-size:10px;
-  font-weight:800;
-  transition:all .2s ease;
+  border:1px solid var(--border-soft);
+  color:var(--text-dim);
 }
 
-.pair-btn.active{
+.market-view .pair-btn.active{
+  color:var(--yellow);
   border-color:var(--yellow);
+}
+
+/* ---------- TOGGLE (EMA / VWAP) ---------- */
+.market-view .indicator-toggle{
+  display:flex;
+  gap:14px;
+  font-size:13px;
+  margin:10px 0;
+}
+
+.market-view .indicator-toggle span{
+  cursor:pointer;
+  color:var(--text-soft);
+}
+
+.market-view .indicator-toggle .active{
   color:var(--yellow);
 }
 
-/* ===== Chart Wrapper  === */
-
-.market-view #bxChartWrap{
-  height:220px;
-  border-radius:14px;
-  background:#020617;
-  border:1px solid #1e2329;
-}
-
-#bxChartWrap{
-  height:220px;
-  margin:10px 0;
-  border-radius:12px;
-  overflow:hidden;
-}
-
-#bxChart{
-  width:100%;
-  height:100%;
-}
-
-/* ===== Market Cards Layout ===== */
-
-.market-view .order-trades-grid{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:12px;
-}
-
-.market-view .market-card{
-  height:280px;
+/* ---------- FORMS (AMOUNT / SLIPPAGE) ---------- */
+.market-view .trade-form{
   display:flex;
   flex-direction:column;
+  gap:10px;
 }
 
-.market-view .ob-list,
-.market-view .trades-list{
+.market-view .percent-row{
+  display:flex;
+  gap:8px;
+}
+
+.market-view .percent-row button{
   flex:1;
-  overflow:hidden;
+  height:34px;
+  font-size:13px;
 }
 
-.order-trades-grid{
+/* ---------- INFO ROW ---------- */
+.market-view .trade-info{
   display:grid;
   grid-template-columns:1fr 1fr;
-  gap:12px;
-  margin-top:12px;
+  gap:10px;
+  font-size:12px;
+  color:var(--text-soft);
 }
 
-/* ===== Market Card (shared) ===== */
-
-.market-card{
-  background:var(--panel);
-  border:1px solid var(--border);
-  border-radius:14px;
-  padding:10px;
-}
-
-/* ===== ORDER BOOK ===== */
-
-.orderbook-title,
-.trades-title{
-  font-size:13px;
-  font-weight:800;
-  margin-bottom:6px;
-  color:var(--text);
-}
-
+/* ---------- ORDER BOOK CARD ---------- */
 .orderbook{
-  display:block;
+  background:var(--bg-card);
+  border:1px solid var(--border-soft);
+  border-radius:var(--radius);
+  padding:12px;
+  margin-bottom:12px;
 }
 
+.orderbook-title{
+  font-size:14px;
+  font-weight:800;
+  margin-bottom:10px;
+}
+
+/* ---------- GRID ---------- */
 .orderbook-grid{
   display:grid;
-  grid-template-columns:1fr 80px 1fr;
+  grid-template-columns:1fr 1fr 1fr;
   gap:0;
 }
 
-/* Columns */
+/* ---------- COLUMNS ---------- */
 .ob-col{
   display:flex;
   flex-direction:column;
+  min-height:260px;
 }
 
-/* Headers */
+.ob-col.ladder{
+  border-left:1px solid var(--border-soft);
+  border-right:1px solid var(--border-soft);
+}
+
+/* ---------- HEADERS ---------- */
 .ob-head{
-  font-size:11px;
-  font-weight:700;
+  font-size:12px;
+  font-weight:800;
   text-align:center;
-  padding:4px 0;
-  color:var(--muted);
+  padding:6px 0;
+  color:var(--text-dim);
 }
 
 .ob-head.buy{ color:var(--green); }
 .ob-head.sell{ color:var(--red); }
 
-/* Lists */
-.ob-list{
-  height:240px;              
+/* ---------- LISTS ---------- */
+.ob-list,
+.price-ladder{
+  flex:1;
   overflow:hidden;
 }
 
-/* Rows */
-.ob-list .row{
+/* ---------- ROW ---------- */
+.ob-row{
   display:grid;
-  grid-template-columns:1fr 1fr;
-  height:20px;
-  line-height:20px;
-  font-size:11px;
-  padding:0 6px;
-  font-family:ui-monospace,monospace;
+  grid-template-columns:1fr;
+  font-size:12px;
+  line-height:18px;
+  padding:2px 6px;
+  white-space:nowrap;
 }
 
-.row.buy{ color:var(--green); }
-.row.sell{ color:var(--red); }
+.ob-row.buy{ color:var(--green); }
+.ob-row.sell{ color:var(--red); }
 
-/* ===== PRICE LADDER ===== */
-
-.ladder{
-  border-left:1px solid var(--border);
-  border-right:1px solid var(--border);
+/* ---------- PRICE LADDER ---------- */
+.price-row{
+  text-align:center;
+  font-size:12px;
+  color:var(--text-main);
+  padding:2px 0;
 }
 
-.price-ladder{
-  height:240px;
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-  align-items:center;
-  font-size:11px;
-  font-family:ui-monospace,monospace;
-  color:var(--muted);
+/* ---------- DEPTH BAR (OPTIONAL SAFE) ---------- */
+.depth-buy{
+  background:linear-gradient(
+    to left,
+    rgba(22,199,132,.25),
+    transparent
+  );
 }
 
-/* ===== RECENT TRADES ===== */
+.depth-sell{
+  background:linear-gradient(
+    to right,
+    rgba(234,57,67,.25),
+    transparent
+  );
+}
+
+/* ================================
+   RECENT TRADES
+   ================================ */
 
 .trades{
-  display:block;
+  background:var(--bg-card);
+  border:1px solid var(--border-soft);
+  border-radius:var(--radius);
+  padding:12px;
 }
 
-.trades-head{
+.trades-title{
+  font-size:14px;
+  font-weight:800;
+  margin-bottom:8px;
+}
+
+/* ---------- HEADER ---------- */
+.trades-header{
   display:grid;
   grid-template-columns:1fr 1fr 1fr;
-  font-size:11px;
+  font-size:12px;
   font-weight:700;
-  text-align:center;
-  color:var(--muted);
-  margin-bottom:4px;
+  color:var(--text-dim);
+  padding-bottom:6px;
+  border-bottom:1px solid var(--border-soft);
 }
 
+/* ---------- LIST ---------- */
 .trades-list{
-  height:240px;              
+  max-height:220px;
   overflow:hidden;
 }
 
-.trade{
+/* ---------- ROW ---------- */
+.trade-row{
   display:grid;
   grid-template-columns:1fr 1fr 1fr;
-  height:20px;
-  line-height:20px;
-  font-size:11px;
-  padding:0 6px;
-  font-family:ui-monospace,monospace;
+  font-size:12px;
+  padding:3px 0;
 }
 
-.trade.buy{ color:var(--green); }
-.trade.sell{ color:var(--red); }
+.trade-row.buy{ color:var(--green); }
+.trade-row.sell{ color:var(--red); }
 
-/* ===== SAFETY (no accidental hiding) ===== */
-
-.orderbook,
-.trades,
-.ob-list,
-.trades-list,
-.price-ladder{
-  visibility:visible;
-  opacity:1;
-  }
-
-* ================= POSITIONS ================= */
-
-.positions{
-  background:var(--panel);
-  border:1px solid var(--border);
-  border-radius:12px;
-  padding:10px;
-  font-size:13px;
-  }
-  
-.pnl.positive{ color:var(--green); }
-.pnl.negative{ color:var(--red); }
-
-.mid-line {
-  text-align: center;
-  font-size: 13px;
-  color: #f0b90b; /* Binance yellow */
-  margin: 6px 0;
-}
-.row.fake {
-  opacity: 0.45;
+/* ---------- ALIGN ---------- */
+.trade-row span,
+.trades-header span{
+  text-align:center;
 }
 
-.trade.fake {
-  opacity: 0.6;
-  font-style: italic;
-}
-
-}
-.flash-up{box-shadow: inset 0 0 22px rgba(14,203,129,.22)}
-.flash-down{box-shadow: inset 0 0 22px rgba(246,70,93,.22)}
-
-/* ================= ICONS ================= */
-
-.market-view img{
-  width:18px;
-  height:18px;
-  object-fit:contain;
-  filter:drop-shadow(0 0 6px rgba(240,185,11,.25));
-}
 /* =========================================================
    CASINO – POSTER SYSTEM (MATCHES PROVIDED IMAGE)
 ========================================================= */
