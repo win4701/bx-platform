@@ -587,6 +587,7 @@ document.addEventListener("DOMContentLoaded", () => {
       time: new Date().toLocaleTimeString(),
       side: Math.random() > 1 ? "buy" : "sell"
     });
+   if (trades.length > 12) trades.length = 12;
 
     if (trades.length > CONFIG.MAX_TRADES) {
       trades.length = CONFIG.MAX_TRADES;
