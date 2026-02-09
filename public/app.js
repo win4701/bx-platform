@@ -504,10 +504,10 @@ document.addEventListener("DOMContentLoaded", () => {
   let lastRef = null;
 
   /* ================= DOM ================= */
-  const priceEl  = document.querySelector(".price-main");
+  const priceEl  = document.querySelector("priceLadder");
   const pairEl   = document.querySelector(".pair-title");
-  const bidsEl   = document.querySelector(".orderbook-bids");
-  const asksEl   = document.querySelector(".orderbook-asks");
+  const bidsEl   = document.querySelector("bids");
+  const asksEl   = document.querySelector("asks");
   const tradesEl = document.querySelector(".trades-list");
 
   const fmt = (n, d = 6) => Number(n).toFixed(d);
@@ -545,23 +545,38 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function renderBook(bids, asks) {
-    if (bidsEl) {
-      bidsEl.innerHTML = bids.map(b => `
-        <div class="row bid">
-          <span>${fmt(b.price)}</span>
-          <span>${fmt(b.qty,3)}</span>
-        </div>
-      `).join("");
-    }
+  const rows = CONFIG.MAX_BOOK_ROWS;
 
-    if (asksEl) {
-      asksEl.innerHTML = asks.map(a => `
-        <div class="row ask">
-          <span>${fmt(a.price)}</span>
-          <span>${fmt(a.qty,3)}</span>
-        </div>
-      `).join("");
-    }
+  let bidHTML = "";
+  let askHTML = "";
+  let priceHTML = "";
+
+  for (let i = 0; i < rows; i++) {
+    const b = bids[i];
+    const a = asks[i];
+
+    bidHTML += `
+      <div class="ob-row buy">
+        <span>${fmt(b.price)}</span>
+        <span>${fmt(b.qty, 3)}</span>
+      </div>
+    `;
+
+    priceHTML += `
+      <div class="ladder-row">${fmt((b.price + a.price) / 2)}</div>
+    `;
+
+    askHTML += `
+      <div class="ob-row sell">
+        <span>${fmt(a.price)}</span>
+        <span>${fmt(a.qty, 3)}</span>
+      </div>
+    `;
+  }
+
+  bidsEl.innerHTML = bidHTML;
+  priceEl.innerHTML = priceHTML;
+  asksEl.innerHTML = askHTML;
   }
 
   /* ================= TRADES ================= */
