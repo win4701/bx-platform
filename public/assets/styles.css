@@ -322,19 +322,16 @@ h3{
    FULL RESET + REBUILD (SAFE)
 ===================================================== */
 
-:root{
+::root{
+  --green:#0ecb81;
+  --red:#f6465d;
+  --yellow:#f0b90b;
   --bg:#0b0e11;
   --panel:#0e1318;
   --border:#1e2329;
   --muted:#848e9c;
-
-  --green:#0ecb81;
   --green-soft:rgba(14,203,129,.15);
-
-  --red:#f6465d;
   --red-soft:rgba(246,70,93,.15);
-
-  --yellow:#f0b90b;
   --purple:#a855f7;
 }
 
@@ -413,11 +410,12 @@ h3{
 
 /* ================= CANVAS ================= */
 
-#bxChartWrap {
-  position: relative;
-  height: 220px;
-  margin: 12px 0;
+#bxChartWrap{
+  background:linear-gradient(180deg,#0e141b,#0b0f14);
+  border:1px solid rgba(255,255,255,.06);
+  border-radius:14px;
 }
+
 #bxChart {
   width: 100%;
   height: 100%;
@@ -562,26 +560,24 @@ h3{
 .order-trades-grid{
   display:grid;
   grid-template-columns: 1fr 1fr;
-  gap:0;
-  border:1px solid var(--border,#1f2937);
+}
+
+/* ===== MARKET CARDS (GLOBAL LOOK) ===== */
+.order-trades-grid{
+  background:#0b0f14;
   border-radius:14px;
   overflow:hidden;
-  background:#0b0f14;
 }
 
-/* ===== CARD ===== */
-.card{
-  padding:10px;
+.order-trades-grid .card{
+  background:linear-gradient(180deg,#0e141b,#0b0f14);
 }
 
-.card-title{
-  font-size:13px;
-  font-weight:600;
-  margin-bottom:6px;
-  color:#e5e7eb;
+.order-trades-grid .card + .card{
+  border-left:1px solid rgba(255,255,255,.06);
 }
-
 /* ===== ORDER BOOK ===== */
+
 .orderbook-grid{
   display:grid;
   grid-template-columns: 1fr 80px 1fr;
@@ -595,26 +591,22 @@ h3{
 
 .ob-head{
   font-size:11px;
-  text-align:center;
-  padding:4px 0;
-  color:#9ca3af;
+  font-weight:700;
+  letter-spacing:.3px;
+  text-transform:uppercase;
 }
 
 .ob-head.buy{ color:#22c55e; }
 .ob-head.sell{ color:#ef4444; }
 
-.ob-list{
-  height:240px;           /* 12 rows */
-  overflow:hidden;
+
+  .ob-list{
+  height:240px; /* 12 rows */
 }
 
 .ob-list .row{
-  display:grid;
-  grid-template-columns: 1fr 1fr;
+  font-family:ui-monospace,monospace;
   font-size:11px;
-  height:20px;
-  line-height:20px;
-  padding:0 4px;
 }
 
 .ob-list .bid{ color:#22c55e; }
@@ -647,24 +639,22 @@ h3{
 
 .trade-head{
   font-size:11px;
-  padding:4px 0;
-  text-align:center;
-  color:#9ca3af;
+  font-weight:700;
+  text-transform:uppercase;
 }
 
-.trades-list{
-  grid-column:1 / -1;
-  height:240px;           /* 12 rows */
+.trade span{
+  white-space:nowrap;
   overflow:hidden;
+  text-overflow:ellipsis;
+}
+.trades-list{
+  height:240px;
 }
 
 .trades-list .trade{
-  display:grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  font-family:ui-monospace,monospace;
   font-size:11px;
-  height:20px;
-  line-height:20px;
-  padding:0 4px;
 }
 
 .trade.buy{ color:#22c55e; }
