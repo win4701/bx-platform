@@ -411,9 +411,9 @@ h3{
 /* ================= CANVAS ================= */
 
 #bxChartWrap{
-  background:linear-gradient(180deg,#0e141b,#0b0f14);
-  border:1px solid rgba(255,255,255,.06);
-  border-radius:14px;
+  height:220px;
+  opacity:.35;
+  margin:10px 0;
 }
 
 #bxChart {
@@ -556,6 +556,17 @@ h3{
   color:white;
 }
 
+.market-card{
+  background:#0b0f14;
+  border:1px solid #1f2937;
+  border-radius:14px;
+  padding:10px;
+}
+
+.market-view{
+  font-variant-numeric: tabular-nums;
+}
+
 /* ===== ORDER + TRADES WRAPPER ===== */
 .order-trades-grid{
   display:grid;
@@ -580,54 +591,59 @@ h3{
 
 .orderbook-grid{
   display:grid;
-  grid-template-columns: 1fr 80px 1fr;
-  gap:0;
-}
-
-.ob-col{
-  display:flex;
-  flex-direction:column;
+  grid-template-columns: 1fr 72px 1fr;
 }
 
 .ob-head{
   font-size:11px;
-  font-weight:700;
-  letter-spacing:.3px;
-  text-transform:uppercase;
+  font-weight:600;
+  text-align:center;
+  padding:4px 0;
+  color:#9ca3af;
 }
 
-.ob-head.buy{ color:#22c55e; }
-.ob-head.sell{ color:#ef4444; }
+.ob-head.buy{color:#22c55e}
+.ob-head.sell{color:#ef4444}
 
-
-  .ob-list{
-  height:240px; /* 12 rows */
+.ob-list{
+  height:240px;           /* 12 rows × 20px */
+  overflow:hidden;
+  font-family:ui-monospace,monospace;
 }
 
 .ob-list .row{
-  font-family:ui-monospace,monospace;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  height:20px;
   font-size:11px;
+  align-items:center;
+  padding:0 6px;
 }
 
-.ob-list .bid{ color:#22c55e; }
-.ob-list .ask{ color:#ef4444; }
+.ob-list .bid{color:#22c55e}
+.ob-list .ask{color:#ef4444}
 
 /* ===== PRICE LADDER ===== */
-.ladder{
-  border-left:1px solid var(--border,#1f2937);
-  border-right:1px solid var(--border,#1f2937);
-}
 
 .price-ladder{
   height:240px;
   display:flex;
-  align-items:center;
+  flex-direction:column;
   justify-content:center;
+  font-family:ui-monospace,monospace;
   font-size:11px;
   color:#9ca3af;
 }
 
+.ladder-row.mid{
+  background:#f0b90b;
+  color:#000;
+  font-weight:800;
+  border-radius:4px;
+}
+
 /* ===== TRADES ===== */
+
 .trades{
   border-left:1px solid var(--border,#1f2937); /* vertical divider */
 }
@@ -648,18 +664,24 @@ h3{
   overflow:hidden;
   text-overflow:ellipsis;
 }
+
 .trades-list{
-  height:240px;
+  height:240px;          
+  overflow:hidden;
+  font-family:ui-monospace,monospace;
 }
 
 .trades-list .trade{
-  font-family:ui-monospace,monospace;
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  height:20px;
   font-size:11px;
+  align-items:center;
+  padding:0 6px;
 }
 
-.trade.buy{ color:#22c55e; }
-.trade.sell{ color:#ef4444; }
-
+.trade.buy{color:#22c55e}
+.trade.sell{color:#ef4444}
 
 .row{
   display:flex;
