@@ -578,6 +578,38 @@ html,body{
   font-size:12px;
 }
 
+/* ================= FIX ORDER BOOK VISIBILITY ================= */
+
+.orderbook-grid{
+  display:grid;
+  grid-template-columns:1fr auto 1fr;
+  grid-template-rows:auto 1fr;
+}
+.orderbook-grid .ob-head{
+  height:22px;
+  line-height:22px;
+}
+
+.orderbook-grid .ob-list,
+.orderbook-grid .price-ladder{
+  display:flex;
+  flex-direction:column;
+  justify-content:flex-start;
+}
+
+.orderbook-grid .ob-list::after,
+.orderbook-grid .price-ladder::after{
+  content:"";
+  flex:1;
+}
+
+.orderbook-grid .ob-list:empty::before,
+.orderbook-grid .price-ladder:empty::before{
+  content:"";
+  display:block;
+  height:calc(var(--rows) * var(--row-h));
+}
+
 /* =====================================================
    RECENT TRADES — FINAL
 ===================================================== */
