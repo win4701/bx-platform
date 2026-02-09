@@ -323,6 +323,16 @@ h3{
 ===================================================== */
 
 /* ===== Market Root ===== */
+
+.market-view button{
+  background:#020617;
+  color:#e5e7eb;
+  border:1px solid #1e293b;
+  border-radius:10px;
+  height:36px;
+  font-weight:700;
+}
+
 .market-view{
   padding:14px;
   background:var(--bg);
@@ -367,6 +377,7 @@ h3{
 }
 
 /* ===== Pair Switch Grid ===== */
+
 .pair-grid{
   display:grid;
   grid-template-columns:repeat(5,1fr);
@@ -392,6 +403,12 @@ h3{
 
 /* ===== Chart Wrapper  === */
 
+.market-view #bxChartWrap{
+  height:220px;
+  border-radius:14px;
+  background:#020617;
+  border:1px solid #1e2329;
+}
 
 #bxChartWrap{
   height:220px;
@@ -406,6 +423,25 @@ h3{
 }
 
 /* ===== Market Cards Layout ===== */
+
+.market-view .order-trades-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+
+.market-view .market-card{
+  height:280px;
+  display:flex;
+  flex-direction:column;
+}
+
+.market-view .ob-list,
+.market-view .trades-list{
+  flex:1;
+  overflow:hidden;
+}
+
 .order-trades-grid{
   display:grid;
   grid-template-columns:1fr 1fr;
@@ -414,6 +450,7 @@ h3{
 }
 
 /* ===== Market Card (shared) ===== */
+
 .market-card{
   background:var(--panel);
   border:1px solid var(--border);
