@@ -504,10 +504,10 @@ document.addEventListener("DOMContentLoaded", () => {
   let lastRef = null;
 
   /* ================= DOM ================= */
-  const priceEl  = document.querySelector("priceLadder");
+  const priceEl  = document.getElementById("priceLadder");
+  const bidsEl   = document.getElementById("bids");
+  const asksEl   = document.getElementById("asks");
   const pairEl   = document.querySelector(".pair-title");
-  const bidsEl   = document.querySelector("bids");
-  const asksEl   = document.querySelector("asks");
   const tradesEl = document.querySelector(".trades-list");
 
   const fmt = (n, d = 6) => Number(n).toFixed(d);
