@@ -354,6 +354,11 @@ h3{
   font-family:system-ui,-apple-system,BlinkMacSystemFont;
 }
 
+.view,
+.card {
+  overflow: visible;
+}
+
 /* ================= HEADER ================= */
 
 .market-header{
