@@ -315,24 +315,6 @@ h3{
   background:linear-gradient(135deg,#22c55e,#16a34a);
   color:#022c22;
   border:none;
-   }
-
-/* =====================================================
-   MARKET CSS — BINANCE PRO / CANVAS-FIRST
-   FULL RESET + REBUILD (SAFE)
-===================================================== */
-
-::root{
-  --green:#0ecb81;
-  --red:#f6465d;
-  --yellow:#f0b90b;
-  --bg:#0b0e11;
-  --panel:#0e1318;
-  --border:#1e2329;
-  --muted:#848e9c;
-  --green-soft:rgba(14,203,129,.15);
-  --red-soft:rgba(246,70,93,.15);
-  --purple:#a855f7;
 }
 
 /* =====================================================
@@ -559,6 +541,7 @@ h3{
   visibility:visible;
   opacity:1;
   }
+
 * ================= POSITIONS ================= */
 
 .positions{
