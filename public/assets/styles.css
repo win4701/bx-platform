@@ -558,62 +558,90 @@ h3{
   color:white;
 }
 
-/* ================= ORDER BOOK ================= */
+/* ===============================
+   ORDER BOOK CARD (12 ROWS)
+=============================== */
 
-.orderbook{
-  background:var(--panel);
-  border:1px solid var(--border);
-  border-radius:12px;
-  padding:8px;
-  margin-bottom:12px;
+.orderbook {
+  height: 320px;
+  display: flex;
+  flex-direction: column;
 }
 
-.orderbook-title{
-  font-size:14px;
-  font-weight:900;
-  margin-bottom:6px;
+.orderbook-title {
+  flex-shrink: 0;
 }
 
-.orderbook-grid{
+.orderbook-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  overflow: hidden;
+}
+
+.ob-list,
+.price-ladder {
+  max-height: calc(12 * 22px); /* 12 صف */
+  overflow: hidden;
+}
+
+.ob-list .row {
+  height: 22px;
+  line-height: 22px;
+}
+
+/* ===============================
+   RECENT BOOK CARD (12 ROWS)
+=============================== */
+
+.trades {
+  height: 320px;
+  display: flex;
+  flex-direction: column;
+}
+
+.trades-title {
+  flex-shrink: 0;
+}
+
+.trades-list {
+  flex: 1;
+  max-height: calc(12 * 22px); /* 12 صف */
+  overflow: hidden;
+}
+
+.trades-list .trade {
+  height: 22px;
+  line-height: 22px;
+}
+
+/* ===============================
+   VISUAL CONSISTENCY
+=============================== */
+
+.ob-list .row,
+.trades-list .trade {
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+}
+
+.orderbook *,
+.trades * {
+  flex-shrink: 0;
+}
+
+.ob-list::-webkit-scrollbar,
+.trades-list::-webkit-scrollbar {
+  display: none;
+}
+
+.trade{
   display:grid;
   grid-template-columns:1fr auto 1fr;
-  gap:6px;
 }
 
-.ob-col{
-  display:flex;
-  flex-direction:column;
-}
-
-.ob-head{
-  font-size:11px;
-  font-weight:800;
-  text-align:center;
-  margin-bottom:4px;
-  color:var(--muted);
-}
-
-.ob-head.buy{ color:var(--green); }
-.ob-head.sell{ color:var(--red); }
-
-/* ===== Rows ===== */
-
-.ob-list{
-  display:flex;
-  flex-direction:column;
-  gap:2px;
-}
-
-.row{
-  display:flex;
-  justify-content:space-between;
-  padding:3px 6px;
-  font-size:12px;
-  font-family:ui-monospace,monospace;
-  position:relative;
-  overflow:hidden;
-}
-
+.trade.buy span:first-child{ color:var(--green); }
+.trade.sell span:first-child{ color:var(--red); }
 .row.buy{ color:var(--green); }
 .row.sell{ color:var(--red); }
 
@@ -659,38 +687,6 @@ h3{
   border-radius:4px;
 }
 
-/* ================= TRADES ================= */
-
-.trades{
-  background:var(--panel);
-  border:1px solid var(--border);
-  border-radius:12px;
-  padding:8px;
-  margin-bottom:12px;
-}
-
-.trades-title{
-  font-size:14px;
-  font-weight:900;
-  margin-bottom:6px;
-}
-
-.trades-list{
-  display:flex;
-  flex-direction:column;
-  gap:4px;
-  font-size:12px;
-  font-family:ui-monospace,monospace;
-}
-
-.trade{
-  display:grid;
-  grid-template-columns:1fr 1fr 1fr;
-}
-
-.trade.buy span:first-child{ color:var(--green); }
-.trade.sell span:first-child{ color:var(--red); }
-
 /* ================= POSITIONS ================= */
 
 .positions{
@@ -717,20 +713,6 @@ h3{
 .trade.fake {
   opacity: 0.6;
   font-style: italic;
-}
-
-.recent-trades {
-  height: 360px;              /* ثابت */
-  overflow: hidden;           /* أو auto لو تريد scroll */
-  padding: 8px 0;
-}
-
-.recent-trades-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  font-size: 12px;
-  line-height: 1.6;
-  padding: 2px 12px;
 }
 
 .recent-trades-row.buy {
