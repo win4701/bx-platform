@@ -747,8 +747,7 @@ document.addEventListener("DOMContentLoaded", () => {
   window.MarketEngine = {
     setQuote,
     rebuild,
-  };
-})();
+  ﴿
 
 /* =====================================================
    CASINO.JS — FULL UPDATE (Telegram + WebApp Safe)
