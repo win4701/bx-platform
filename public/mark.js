@@ -5,9 +5,9 @@
 
   /* ================= CONFIG ================= */
   const CONFIG = {
-    BASE_PRICE_USDT: 24,
+    BASE_PRICE_USDT: 38,
     MAX_BOOK_ROWS: 15,
-    MAX_TRADES: 30,
+    MAX_TRADES: 15,
     CHART_POINTS: 120,
     FAKE_INTERVAL: 1200,
   };
@@ -38,8 +38,9 @@
   /* ================= DOM ================= */
   const priceEl  = document.querySelector(".price-main");
   const pairEl   = document.querySelector(".pair-title");
-  const bidsEl   = document.querySelector(".orderbook-bids");
-  const asksEl   = document.querySelector(".orderbook-asks");
+  const $bids    = document.getElementById('bids');
+  const $asks    = document.getElementById('asks');
+  const $ladder  = document.getElementById('priceLadder');
   const tradesEl = document.querySelector(".trades-list");
 
   const fmt = (n, d = 6) => Number(n).toFixed(d);
@@ -127,7 +128,7 @@
 
   function initChart() {
     if (!window.LightweightCharts) return;
-    const el = document.getElementById("chart");
+    const el = document.getElementById("bxChart");
     if (!el) return;
 
     chart = LightweightCharts.createChart(el, {
