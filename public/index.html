@@ -317,39 +317,28 @@
 
   <!-- ===== ORDER BOOK CARD ===== -->
   <div class="orderbook-card">
-    <div class="card-title">Order Book</div>
+  <div class="card-title">Order Book</div>
 
-    <div class="orderbook-grid">
-      <div class="ob-col">
-        <div class="ob-head buy">Bids</div>
-        <div id="bids" class="ob-list"></div>
-      </div>
-
-      <div class="ob-col ladder">
-        <div class="ob-head">Price</div>
-        <div id="priceLadder" class="price-ladder"></div>
-      </div>
-
-      <div class="ob-col">
-        <div class="ob-head sell">Asks</div>
-        <div id="asks" class="ob-list"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ===== RECENT TRADES CARD ===== -->
-  <div class="trades-card">
-    <div class="card-title">Recent Trades</div>
-
-    <div class="trades-head">
-      <span>Price</span>
-      <span>Amount</span>
-      <span>Time</span>
+  <div class="orderbook-grid">
+    <!-- BIDS -->
+    <div class="ob-col bids">
+      <div class="ob-head buy">Bids</div>
+      <div id="bids" class="ob-list" data-rows="15"></div>
     </div>
 
-    <div id="tradesList" class="trades-list"></div>
+    <!-- PRICE -->
+    <div class="ob-col price">
+      <div class="ob-head">Price</div>
+      <div id="priceLadder" class="price-ladder" data-rows="15"></div>
+    </div>
+
+    <!-- ASKS -->
+    <div class="ob-col asks">
+      <div class="ob-head sell">Asks</div>
+      <div id="asks" class="ob-list" data-rows="15"></div>
+    </div>
   </div>
- </div>
+  </div>
 </section>
   
   <!-- ================= CASINO ================= -->
