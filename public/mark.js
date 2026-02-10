@@ -1,9 +1,4 @@
-/* =========================================================
-   BX MARKET ENGINE – CLEAN & SAFE VERSION
-   No breaking wallet / router / other sections
-========================================================= */
-
-  /* ================= CONFIG ================= */
+/* ================= CONFIG ================= */
   const CONFIG = {
     BASE_PRICE_USDT: 38,
     MAX_BOOK_ROWS: 15,
@@ -35,13 +30,13 @@
   let priceWS = null;
   let lastRef = null;
 
-  /* ================= DOM ================= */
-  const priceEl  = document.querySelector(".price-main");
-  const pairEl   = document.querySelector(".pair-title");
-  const $bids    = document.getElementById('bids');
-  const $asks    = document.getElementById('asks');
-  const $ladder  = document.getElementById('priceLadder');
-  const tradesEl = document.querySelector(".trades-list");
+/* ================= DOM ================= */
+  const $price        = document.getElementById('marketPrice');
+  const $approx       = document.getElementById('marketApprox');
+  const $quoteAsset   = document.getElementById('quoteAsset');
+  const $bids         = document.getElementById('bids');
+  const $asks         = document.getElementById('asks');
+  const $ladder       = document.getElementById('priceLadder');
 
   const fmt = (n, d = 6) => Number(n).toFixed(d);
 
