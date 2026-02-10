@@ -68,18 +68,22 @@ img{
   min-height:100vh;
 }
 
-/* ===================== VIEW SYSTEM FIX ===================== */
+/* ===== VIEW SYSTEM (SAFE – NO DOM BREAK) ===== */
+
 .view {
-  display: none;
   opacity: 0;
-  transform: translateY(6px);
-  transition: opacity .25s ease, transform .25s ease;
+  visibility: hidden;
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  transition: opacity .25s ease;
 }
 
 .view.active {
-  display: block;
   opacity: 1;
-  transform: translateY(0);
+  visibility: visible;
+  pointer-events: auto;
+  position: relative;
 }
 
 /* =========================================================
