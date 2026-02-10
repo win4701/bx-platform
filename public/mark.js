@@ -3,8 +3,6 @@
    No breaking wallet / router / other sections
 ========================================================= */
 
-(() => {
-
   /* ================= CONFIG ================= */
   const CONFIG = {
     BASE_PRICE_USDT: 24,
@@ -224,5 +222,3 @@
     onMarketPrice(lastPrice);
     connectPriceWS();
   });
-
-})();
