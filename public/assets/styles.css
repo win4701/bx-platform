@@ -560,17 +560,15 @@ h3{
 
 /* ================= ORDER BOOK ================= */
 
-.orderbook{
-  background:var(--panel);
-  border:1px solid var(--border);
-  border-radius:12px;
-  padding:8px;
-  margin-bottom:12px;
+.orderbook {
+  min-height: 360px;
+  opacity: 1;
+  visibility: visible;
 }
 
 .orderbook-title{
   font-size:14px;
-  font-weight:900;
+  font-weight:800;
   margin-bottom:6px;
 }
 
