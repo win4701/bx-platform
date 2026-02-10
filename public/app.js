@@ -747,7 +747,7 @@ document.addEventListener("DOMContentLoaded", () => {
   window.MarketEngine = {
     setQuote,
     rebuild,
-  ﴿
+  };
 
 /* =====================================================
    CASINO.JS — FULL UPDATE (Telegram + WebApp Safe)
@@ -757,7 +757,7 @@ const CASINO = {
   currentGame: null,
   flags: {},
   ws: null
-};
+ };
 
 /* =====================================================
    GAME UI SCHEMA (12 GAMES)
