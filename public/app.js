@@ -467,200 +467,166 @@ document.addEventListener("DOMContentLoaded", () => {
    MARKET.JS — FULL ENGINE (CANVAS FIRST)
 ================================================= */
 
-(function MarketModule(){
-  if (window.__MARKET_SCOPED__) return;
-  window.__MARKET_SCOPED__ = true;
+/* =========================================================
+   Market Engine – Baseline v1.0
+   Scope: Market only (NO side effects)
+   ========================================================= */
 
-  /* =========================
+(() => {
+  if (window.MarketEngine) return; // Safe init
+
+  /* =======================
      CONFIG
-     ========================= */
-  const CFG = {
-    BX_BASE_USDT: 38,
-    BOOK_ROWS: 15,
-    BOOK_STEP: 0.001,
-    CHART_POINTS: 120,
+  ======================= */
+  const CONFIG = {
+    rows: 15,
+    defaultPair: { base: 'BX', quote: 'USDT' },
+    binanceBase: 'https://api.binance.com/api/v3'
   };
 
-  const REF = {
-    USDT:'btcusdt', BTC:'btcusdt', ETH:'ethusdt', BNB:'bnbusdt',
-    SOL:'solusdt', LTC:'ltcusdt', ZEC:'zecusdt', AVAX:'avaxusdt'
+  /* =======================
+     STATE (Single Source)
+  ======================= */
+  const state = {
+    pair: { ...CONFIG.defaultPair },
+    price: null,
+    bids: [],
+    asks: [],
+    chart: null
   };
 
-  /* =========================
-     STATE (SINGLE SOURCE)
-     ========================= */
-  const S = {
-    base:'BX', quote:'USDT',
-    refSymbol:'btcusdt', refPrice:null,
-    bxPrice:CFG.BX_BASE_USDT,
-    ws:null,
-    chart:null, series:null, chartData:[],
-    frozen:false,
-    adv:{ drift:0, vol:0.0006, pauseP:0.08, pauseUntil:0 }
+  /* =======================
+     DOM CACHE
+  ======================= */
+  const dom = {
+    pairLabel: document.querySelector('#pairLabel'),
+    priceLabel: document.querySelector('#lastPrice'),
+    bids: document.querySelector('#bids'),
+    asks: document.querySelector('#asks'),
+    chart: document.querySelector('#chart')
   };
 
-  /* =========================
-     DOM CACHE (MARKET ONLY)
-     ========================= */
-  const D = {
-    view:()=>document.querySelector('.market-view'),
-    price:()=>document.getElementById('marketPrice'),
-    approx:()=>document.getElementById('marketApprox'),
-    bids:()=>document.getElementById('bids'),
-    asks:()=>document.getElementById('asks'),
-    ladder:()=>document.getElementById('priceLadder'),
-    chartEl:()=>document.getElementById('bxChart'),
-    spread:()=>document.getElementById('spreadValue')
-  };
+  /* =======================
+     UTILS
+  ======================= */
+  const format = (n) => Number(n).toFixed(4);
 
-  /* =========================
-     SAFE START / STOP
-     ========================= */
-  let started=false;
-  function start(){
-    if (started || !D.view()) return;
-    started=true;
-    initChart(); initOrderBook(); bindPairs(); switchPair('USDT');
+  const symbol = () =>
+    `${state.pair.base}${state.pair.quote}`.toUpperCase();
+
+  /* =======================
+     FETCHERS
+  ======================= */
+  async function fetchPrice() {
+    const res = await fetch(
+      `${CONFIG.binanceBase}/ticker/price?symbol=${symbol()}`
+    );
+    const data = await res.json();
+    state.price = Number(data.price);
   }
-  function stop(){
-    try{ if(S.ws && S.ws.readyState<=1){ S.ws.close(); S.ws=null; } }catch(e){}
-    started=false;
+
+  async function fetchOrderBook() {
+    const res = await fetch(
+      `${CONFIG.binanceBase}/depth?symbol=${symbol()}&limit=50`
+    );
+    const data = await res.json();
+
+    state.bids = data.bids.slice(0, CONFIG.rows);
+    state.asks = data.asks.slice(0, CONFIG.rows);
   }
-  window.MarketBaseline={ start, stop };
 
-  document.addEventListener('DOMContentLoaded',()=>{ if(D.view()) start(); });
-  document.addEventListener('view:change',e=>{ e.detail==='market'?start():stop(); });
+  async function fetchChart() {
+    const res = await fetch(
+      `${CONFIG.binanceBase}/klines?symbol=${symbol()}&interval=1m&limit=60`
+    );
+    const data = await res.json();
+    state.chart = data.map(c => ({
+      time: c[0],
+      open: +c[1],
+      high: +c[2],
+      low: +c[3],
+      close: +c[4]
+    }));
+  }
 
-  /* =========================
-     PAIRS (3: Smooth switch)
-     ========================= */
-  function bindPairs(){
-    document.querySelectorAll('.market-view [data-quote]').forEach(b=>{
-      b.onclick=()=>{ 
-        document.querySelectorAll('.market-view [data-quote]').forEach(x=>x.classList.remove('active'));
-        b.classList.add('active'); smoothSwitch(); switchPair(b.dataset.quote);
-      };
+  /* =======================
+     RENDERERS
+  ======================= */
+  function renderHeader() {
+    if (dom.pairLabel)
+      dom.pairLabel.textContent =
+        `${state.pair.base} / ${state.pair.quote}`;
+
+    if (dom.priceLabel)
+      dom.priceLabel.textContent = format(state.price);
+  }
+
+  function renderBook() {
+    dom.bids.innerHTML = '';
+    dom.asks.innerHTML = '';
+
+    state.bids.forEach(([p]) => {
+      const row = document.createElement('div');
+      row.textContent = format(p);
+      row.onclick = () => fillPrice(p);
+      dom.bids.appendChild(row);
+    });
+
+    state.asks.forEach(([p]) => {
+      const row = document.createElement('div');
+      row.textContent = format(p);
+      row.onclick = () => fillPrice(p);
+      dom.asks.appendChild(row);
     });
   }
-  function smoothSwitch(){
-    const p=D.price(), c=D.chartEl();
-    if(p){ p.style.opacity=0; setTimeout(()=>p.style.opacity=1,220); }
-    if(c){ c.style.opacity=0; setTimeout(()=>c.style.opacity=1,220); }
-  }
-  function switchPair(q){
-    S.quote=q; S.refSymbol=REF[q]||'btcusdt';
-    S.refPrice=null; S.chartData=[]; if(S.series) S.series.setData([]);
-    connectRefWS();
-  }
 
-  /* =========================
-     PRICE FEED (1: realistic)
-     ========================= */
-  function computeBX(ref){
-    const now=Date.now();
-    if(now<S.adv.pauseUntil) return S.bxPrice;
-    if(Math.random()<S.adv.pauseP) S.adv.pauseUntil=now+800+Math.random()*1200;
+  function renderChart() {
+    if (!dom.chart || !window.LightweightCharts) return;
 
-    const d=(ref-S.refPrice)/S.refPrice;
-    S.adv.drift+=d*0.35; S.adv.drift*=0.98;
-    const noise=(Math.random()-0.5)*S.adv.vol;
-    return CFG.BX_BASE_USDT*(1+S.adv.drift+noise);
-  }
-  function connectRefWS(){
-    if(S.ws){ try{S.ws.close();}catch(e){} S.ws=null; }
-    S.ws=new WebSocket(`wss://stream.binance.com:9443/ws/${S.refSymbol}@trade`);
-    S.ws.onmessage=e=>{
-      const p=Number(JSON.parse(e.data).p); if(!p) return;
-      if(!S.refPrice){ S.refPrice=p; return; }
-      S.bxPrice=computeBX(p); S.refPrice=p;
-      updatePriceUI(); updateChart(S.bxPrice); renderBook(S.bxPrice);
-    };
-  }
-
-  /* =========================
-     UI PRICE
-     ========================= */
-  function updatePriceUI(){
-    const p=D.price(), a=D.approx();
-    if(p) p.textContent=S.bxPrice.toFixed(2);
-    if(a) a.textContent=`≈ ${S.bxPrice.toFixed(2)} ${S.quote}`;
-  }
-
-  /* =========================
-     ORDER BOOK (2,5,6)
-     ========================= */
-const br=[], ar=[], pr=[];
-  function initOrderBook(){
-    const B=D.bids(), A=D.asks(), L=D.ladder();
-    if(!B||br.length) return;
-    for(let i=0;i<CFG.BOOK_ROWS;i++){
-      const b=document.createElement('div'), p=document.createElement('div'), a=document.createElement('div');
-      b.className='ob-row bid'; p.className='price-row'; a.className='ob-row ask';
-      b.onclick=()=>fillPrice(b.textContent); a.onclick=()=>fillPrice(a.textContent);
-      B.appendChild(b); L.appendChild(p); A.appendChild(a);
-      br.push(b); pr.push(p); ar.push(a);
-    }
-    const ob=document.querySelector('.orderbook');
-    if(ob){ ob.onmouseenter=()=>S.frozen=true; ob.onmouseleave=()=>S.frozen=false; }
-  }
-  function renderBook(mid){
-    if(S.frozen) return;
-    const bias=Math.random()>0.5?1.2:0.8;
-    for(let i=0;i<CFG.BOOK_ROWS;i++){
-      const depth=Math.pow((i+1)/CFG.BOOK_ROWS,1.6);
-      const sp=depth*CFG.BOOK_STEP;
-      const bid=mid*(1-sp*bias), ask=mid*(1+sp/bias);
-      br[i].textContent=bid.toFixed(4);
-      ar[i].textContent=ask.toFixed(4);
-      pr[i].textContent=mid.toFixed(4);
-    }
-    updateSpread();
-  }
-  function updateSpread(){
-    if(!br[0]||!ar[0]) return;
-    const bb=+br[0].textContent, ba=+ar[0].textContent;
-    const el=D.spread(); if(el) el.textContent=`${(ba-bb).toFixed(4)} (${(((ba-bb)/ba)*100).toFixed(2)}%)`;
-  }
-   
-  /* =========================
-     CHART (4)
-     ========================= */
-  function initChart(){
-    if(S.chart||!D.chartEl()||!window.LightweightCharts) return;
-    S.chart=LightweightCharts.createChart(D.chartEl(),{
-      layout:{background:{color:'transparent'},textColor:'#9aa4ad'},
-      grid:{vertLines:{visible:false},horzLines:{visible:false}},
-      timeScale:{visible:false}
+    dom.chart.innerHTML = '';
+    const chart = LightweightCharts.createChart(dom.chart, {
+      layout: { background: { color: '#0b0f14' }, textColor: '#ccc' },
+      grid: { vertLines: { color: '#111' }, horzLines: { color: '#111' } }
     });
-    S.series=S.chart.addLineSeries({color:'#00c176',lineWidth:2});
-  }
-  function updateChart(v){
-    const pt={time:Math.floor(Date.now()/1000),value:v};
-    S.chartData.push(pt); if(S.chartData.length>CFG.CHART_POINTS) S.chartData.shift();
-    S.series.update(pt);
+
+    const series = chart.addCandlestickSeries();
+    series.setData(state.chart);
   }
 
-  /* =========================
-     EXECUTION (7,8)
-     ========================= */
-  const Wallet={ balance:10000, pos:0, avg:0 };
-  function fakeExec(side, qty){
-    const impact=qty*0.0008;
-    S.bxPrice+= side==='buy'?impact:-impact;
-    updatePriceUI(); updateChart(S.bxPrice); renderBook(S.bxPrice);
-    updateWallet(side, qty, S.bxPrice);
-  }
-  function updateWallet(side, q, p){
-    if(side==='buy'){
-      Wallet.avg=(Wallet.avg*Wallet.pos+q*p)/(Wallet.pos+q);
-      Wallet.pos+=q; Wallet.balance-=q*p;
-    }else{ Wallet.pos-=q; Wallet.balance+=q*p; }
-    const w=document.getElementById('walletBalance'); if(w) w.textContent=Wallet.balance.toFixed(2);
-  }
-  function fillPrice(v){
-    const i=document.getElementById('orderPrice'); if(i) i.value=Number(v).toFixed(4);
+  /* =======================
+     ACTIONS
+  ======================= */
+  function fillPrice(p) {
+    document.querySelector('#amount')?.setAttribute('data-price', p);
   }
 
+  async function reloadAll() {
+    await Promise.all([
+      fetchPrice(),
+      fetchOrderBook(),
+      fetchChart()
+    ]);
+
+    renderHeader();
+    renderBook();
+    renderChart();
+  }
+
+  /* =======================
+     PUBLIC API
+  ======================= */
+  window.MarketEngine = {
+    setPair(base, quote) {
+      state.pair = { base, quote };
+      reloadAll();
+    },
+    reload: reloadAll
+  };
+
+  /* =======================
+     INIT
+  ======================= */
+  reloadAll();
 })();
 
 /* =====================================================
