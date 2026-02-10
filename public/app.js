@@ -467,166 +467,287 @@ document.addEventListener("DOMContentLoaded", () => {
    MARKET.JS — FULL ENGINE (CANVAS FIRST)
 ================================================= */
 
-/* =========================================================
-   Market Engine – Baseline v1.0
-   Scope: Market only (NO side effects)
-   ========================================================= */
+  /* =========================
+     GUARD / ROOT
+     ========================= */
+  if (window.MarketEngine) return;
+  const root = document.querySelector('#market') || document.querySelector('.market-view');
+  if (!root) return;
 
-(() => {
-  if (window.MarketEngine) return; // Safe init
-
-  /* =======================
+  /* =========================
      CONFIG
-  ======================= */
-  const CONFIG = {
-    rows: 15,
-    defaultPair: { base: 'BX', quote: 'USDT' },
-    binanceBase: 'https://api.binance.com/api/v3'
+     ========================= */
+  const CFG = {
+    ROWS: 15,
+    BASE_ASSET: 'BX',
+    BX_USDT_BASE: 38,
+    SPREAD_STEP: 0.0008,
+    DEPTH_MAX: 10,
+    CHART_POINTS: 60,
   };
 
-  /* =======================
+  /* =========================
+     REFERENCE PRICES (can be API/WS later)
+     ========================= */
+  const REF = {
+    USDT: 1,
+    USDC: 1,
+    BTC: 68000,
+    ETH: 3600,
+    BNB: 420,
+    SOL: 140,
+    AVAX: 38,
+    ZEC: 28,
+    TON: 2.3,
+    LTC: 70,
+  };
+
+  /* =========================
      STATE (Single Source)
-  ======================= */
-  const state = {
-    pair: { ...CONFIG.defaultPair },
-    price: null,
+     ========================= */
+  const S = {
+    base: CFG.BASE_ASSET,
+    quote: 'USDT',
+
+    bxPriceUSDT: CFG.BX_USDT_BASE, // real anchor
+    bxPriceQuote: CFG.BX_USDT_BASE,
+
     bids: [],
     asks: [],
-    chart: null
+    maxVol: 1,
+    mid: CFG.BX_USDT_BASE,
+
+    chart: null,
+    series: null,
+    chartData: [],
   };
 
-  /* =======================
+  /* =========================
      DOM CACHE
-  ======================= */
-  const dom = {
-    pairLabel: document.querySelector('#pairLabel'),
-    priceLabel: document.querySelector('#lastPrice'),
-    bids: document.querySelector('#bids'),
-    asks: document.querySelector('#asks'),
-    chart: document.querySelector('#chart')
+     ========================= */
+  const $ = (id) => document.getElementById(id);
+  const $$ = (sel) => root.querySelectorAll(sel);
+
+  const D = {
+    price: $('marketPrice'),
+    approx: $('marketApprox'),
+    quote: $('quoteAsset'),
+    bids: $('bids'),
+    asks: $('asks'),
+    ladder: $('priceLadder'),
+    chart: $('bxChart'),
+    pairs: $$('.pair-btn'),
+    amount: $('amountInput'),
+    execPrice: $('execPrice'),
   };
 
-  /* =======================
-     UTILS
-  ======================= */
-  const format = (n) => Number(n).toFixed(4);
+  /* =========================
+     UTIL
+     ========================= */
+  const fmt = (n, d = 4) => Number(n).toFixed(d);
 
-  const symbol = () =>
-    `${state.pair.base}${state.pair.quote}`.toUpperCase();
+  /* =========================
+     INIT
+     ========================= */
+  init();
 
-  /* =======================
-     FETCHERS
-  ======================= */
-  async function fetchPrice() {
-    const res = await fetch(
-      `${CONFIG.binanceBase}/ticker/price?symbol=${symbol()}`
-    );
-    const data = await res.json();
-    state.price = Number(data.price);
+  function init() {
+    initPairs();
+    initBookRows();
+    initChart();
+    rebuild();
   }
 
-  async function fetchOrderBook() {
-    const res = await fetch(
-      `${CONFIG.binanceBase}/depth?symbol=${symbol()}&limit=50`
-    );
-    const data = await res.json();
-
-    state.bids = data.bids.slice(0, CONFIG.rows);
-    state.asks = data.asks.slice(0, CONFIG.rows);
+  /* =========================
+     PAIRS
+     ========================= */
+  function initPairs() {
+    D.pairs.forEach(btn => {
+      btn.addEventListener('click', () => {
+        D.pairs.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        setQuote(btn.dataset.quote);
+      });
+    });
   }
 
-  async function fetchChart() {
-    const res = await fetch(
-      `${CONFIG.binanceBase}/klines?symbol=${symbol()}&interval=1m&limit=60`
-    );
-    const data = await res.json();
-    state.chart = data.map(c => ({
-      time: c[0],
-      open: +c[1],
-      high: +c[2],
-      low: +c[3],
-      close: +c[4]
-    }));
+  function setQuote(q) {
+    if (!REF[q]) return;
+    S.quote = q;
+    rebuild();
   }
 
-  /* =======================
-     RENDERERS
-  ======================= */
-  function renderHeader() {
-    if (dom.pairLabel)
-      dom.pairLabel.textContent =
-        `${state.pair.base} / ${state.pair.quote}`;
+  /* =========================
+     PRICE LOGIC
+     ========================= */
+  function computeQuotePrice() {
+    if (S.quote === 'USDT' || S.quote === 'USDC') {
+      S.bxPriceQuote = S.bxPriceUSDT;
+    } else {
+      S.bxPriceQuote = S.bxPriceUSDT / REF[S.quote];
+    }
+  }
 
-    if (dom.priceLabel)
-      dom.priceLabel.textContent = format(state.price);
+  /* =========================
+     ORDER BOOK (BUILD)
+     ========================= */
+  function buildBook() {
+    S.bids = [];
+    S.asks = [];
+    S.maxVol = 0;
+
+    const mid = S.bxPriceQuote;
+    const half = Math.floor(CFG.ROWS / 2);
+
+    for (let i = 0; i < CFG.ROWS; i++) {
+      const level = i - half;
+      const price = mid * (1 + level * CFG.SPREAD_STEP);
+      const vol = Math.random() * CFG.DEPTH_MAX + 1;
+
+      if (vol > S.maxVol) S.maxVol = vol;
+
+      if (level < 0) {
+        S.bids.push({ price, vol });
+      } else if (level > 0) {
+        S.asks.push({ price, vol });
+      }
+    }
+
+    // best bid / ask
+    const bestBid = S.bids[S.bids.length - 1]?.price || mid;
+    const bestAsk = S.asks[0]?.price || mid;
+    S.mid = (bestBid + bestAsk) / 2;
+  }
+
+  /* =========================
+     ORDER BOOK (RENDER – DOM REUSE)
+     ========================= */
+  const rows = { bids: [], asks: [], ladder: [] };
+
+  function initBookRows() {
+    if (!D.bids || rows.bids.length) return;
+
+    for (let i = 0; i < CFG.ROWS; i++) {
+      const b = document.createElement('div');
+      const l = document.createElement('div');
+      const a = document.createElement('div');
+
+      b.className = 'ob-row bid';
+      l.className = 'price-row';
+      a.className = 'ob-row ask';
+
+      b.addEventListener('click', () => clickFill(b.textContent));
+      a.addEventListener('click', () => clickFill(a.textContent));
+
+      D.bids.appendChild(b);
+      D.ladder.appendChild(l);
+      D.asks.appendChild(a);
+
+      rows.bids.push(b);
+      rows.ladder.push(l);
+      rows.asks.push(a);
+    }
   }
 
   function renderBook() {
-    dom.bids.innerHTML = '';
-    dom.asks.innerHTML = '';
+    const half = Math.floor(CFG.ROWS / 2);
 
-    state.bids.forEach(([p]) => {
-      const row = document.createElement('div');
-      row.textContent = format(p);
-      row.onclick = () => fillPrice(p);
-      dom.bids.appendChild(row);
+    for (let i = 0; i < CFG.ROWS; i++) {
+      const level = i - half;
+
+      // ladder
+      rows.ladder[i].textContent =
+        level === 0 ? fmt(S.mid) : fmt(S.bxPriceQuote);
+      rows.ladder[i].classList.toggle('mid', level === 0);
+
+      // bids
+      if (level < 0) {
+        const b = S.bids.shift();
+        const pct = b.vol / S.maxVol;
+        rows.bids[i].textContent = fmt(b.price);
+        rows.bids[i].style.background =
+          `linear-gradient(to left, rgba(0,200,120,${pct}), transparent)`;
+      } else {
+        rows.bids[i].textContent = '';
+        rows.bids[i].style.background = 'none';
+      }
+
+      // asks
+      if (level > 0) {
+        const a = S.asks.shift();
+        const pct = a.vol / S.maxVol;
+        rows.asks[i].textContent = fmt(a.price);
+        rows.asks[i].style.background =
+          `linear-gradient(to right, rgba(255,80,80,${pct}), transparent)`;
+      } else {
+        rows.asks[i].textContent = '';
+        rows.asks[i].style.background = 'none';
+      }
+    }
+  }
+
+  /* =========================
+     HEADER
+     ========================= */
+  function renderHeader() {
+    if (D.price) D.price.textContent = fmt(S.bxPriceQuote, 6);
+    if (D.quote) D.quote.textContent = S.quote;
+    if (D.approx) D.approx.textContent = `≈ ${fmt(S.bxPriceUSDT, 2)} USDT`;
+  }
+
+  /* =========================
+     CHART
+     ========================= */
+  function initChart() {
+    if (!D.chart || !window.LightweightCharts) return;
+
+    S.chart = LightweightCharts.createChart(D.chart, {
+      layout: { background: { color: 'transparent' }, textColor: '#9aa4ad' },
+      grid: { vertLines: { visible: false }, horzLines: { visible: false } },
+      timeScale: { visible: false },
     });
 
-    state.asks.forEach(([p]) => {
-      const row = document.createElement('div');
-      row.textContent = format(p);
-      row.onclick = () => fillPrice(p);
-      dom.asks.appendChild(row);
+    S.series = S.chart.addLineSeries({
+      color: '#00e676',
+      lineWidth: 2,
     });
   }
 
-  function renderChart() {
-    if (!dom.chart || !window.LightweightCharts) return;
-
-    dom.chart.innerHTML = '';
-    const chart = LightweightCharts.createChart(dom.chart, {
-      layout: { background: { color: '#0b0f14' }, textColor: '#ccc' },
-      grid: { vertLines: { color: '#111' }, horzLines: { color: '#111' } }
-    });
-
-    const series = chart.addCandlestickSeries();
-    series.setData(state.chart);
+  function updateChart() {
+    const now = Math.floor(Date.now() / 1000);
+    S.chartData.push({ time: now, value: S.bxPriceQuote });
+    if (S.chartData.length > CFG.CHART_POINTS) S.chartData.shift();
+    S.series.setData(S.chartData);
   }
 
-  /* =======================
-     ACTIONS
-  ======================= */
-  function fillPrice(p) {
-    document.querySelector('#amount')?.setAttribute('data-price', p);
+  /* =========================
+     CLICK TO FILL
+     ========================= */
+  function clickFill(v) {
+    const price = parseFloat(v);
+    if (!price) return;
+    if (D.amount) D.amount.value = '1';
+    if (D.execPrice) D.execPrice.textContent = fmt(price);
   }
 
-  async function reloadAll() {
-    await Promise.all([
-      fetchPrice(),
-      fetchOrderBook(),
-      fetchChart()
-    ]);
-
+  /* =========================
+     REBUILD PIPELINE
+     ========================= */
+  function rebuild() {
+    computeQuotePrice();
+    buildBook();
     renderHeader();
     renderBook();
-    renderChart();
+    updateChart();
   }
 
-  /* =======================
-     PUBLIC API
-  ======================= */
+  /* =========================
+     EXPOSE (optional)
+     ========================= */
   window.MarketEngine = {
-    setPair(base, quote) {
-      state.pair = { base, quote };
-      reloadAll();
-    },
-    reload: reloadAll
+    setQuote,
+    rebuild,
   };
-
-  /* =======================
-     INIT
-  ======================= */
-  reloadAll();
 })();
 
 /* =====================================================
