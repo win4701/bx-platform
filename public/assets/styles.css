@@ -321,23 +321,6 @@ h3{
    MARKET CSS — BINANCE PRO / CANVAS-FIRST
    FULL RESET + REBUILD (SAFE)
 ===================================================== */
-
-:root{
-  --bg:#0b0e11;
-  --panel:#0e1318;
-  --border:#1e2329;
-  --muted:#848e9c;
-
-  --green:#0ecb81;
-  --green-soft:rgba(14,203,129,.15);
-
-  --red:#f6465d;
-  --red-soft:rgba(246,70,93,.15);
-
-  --yellow:#f0b90b;
-  --purple:#a855f7;
-}
-
 /* ================= BASE ================= */
 
 .market-view{
@@ -548,7 +531,7 @@ h3{
   padding:12px;
   border-radius:12px;
   font-size:15px;
-  font-weight:900;
+  font-weight:800;
   background:var(--green);
   color:#022c22;
 }
@@ -570,7 +553,7 @@ h3{
 
 .orderbook-title{
   font-size:14px;
-  font-weight:900;
+  font-weight:800;
   margin-bottom:6px;
 }
 
@@ -601,7 +584,7 @@ h3{
 .ob-list{
   display:flex;
   flex-direction:column;
-  gap:2px;
+  min-height: 240px;
 }
 
 .row{
@@ -610,7 +593,7 @@ h3{
   padding:3px 6px;
   font-size:12px;
   font-family:ui-monospace,monospace;
-  position:relative;
+  position:auto;
   overflow:hidden;
 }
 
@@ -619,7 +602,7 @@ h3{
 
 .row::before{
   content:"";
-  position:absolute;
+  position:none;
   inset:0;
   opacity:.18;
 }
@@ -641,7 +624,7 @@ h3{
 
 .price-ladder{
   font-family:ui-monospace,monospace;
-  font-size:12px;
+  min-width:72px;
 }
 
 .ladder-row{
