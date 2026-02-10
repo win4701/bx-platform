@@ -589,39 +589,47 @@ document.addEventListener("DOMContentLoaded", () => {
   /* =========================
      ORDER BOOK (2,5,6)
      ========================= */
-  const br=[], ar=[], pr=[];
-  function initOrderBook(){
-    const B=D.bids(), A=D.asks(), L=D.ladder();
-    if(!B||br.length) return;
-    for(let i=0;i<CFG.BOOK_ROWS;i++){
-      const b=document.createElement('div'), p=document.createElement('div'), a=document.createElement('div');
-      b.className='ob-row bid'; p.className='price-row'; a.className='ob-row ask';
-      b.onclick=()=>fillPrice(b.textContent); a.onclick=()=>fillPrice(a.textContent);
-      B.appendChild(b); L.appendChild(p); A.appendChild(a);
-      br.push(b); pr.push(p); ar.push(a);
-    }
-    const ob=document.querySelector('.orderbook');
-    if(ob){ ob.onmouseenter=()=>S.frozen=true; ob.onmouseleave=()=>S.frozen=false; }
-  }
-  function renderBook(mid){
-    if(S.frozen) return;
-    const bias=Math.random()>0.5?1.2:0.8;
-    for(let i=0;i<CFG.BOOK_ROWS;i++){
-      const depth=Math.pow((i+1)/CFG.BOOK_ROWS,1.6);
-      const sp=depth*CFG.BOOK_STEP;
-      const bid=mid*(1-sp*bias), ask=mid*(1+sp/bias);
-      br[i].textContent=bid.toFixed(4);
-      ar[i].textContent=ask.toFixed(4);
-      pr[i].textContent=mid.toFixed(4);
-    }
-    updateSpread();
-  }
-  function updateSpread(){
-    if(!br[0]||!ar[0]) return;
-    const bb=+br[0].textContent, ba=+ar[0].textContent;
-    const el=D.spread(); if(el) el.textContent=`${(ba-bb).toFixed(4)} (${(((ba-bb)/ba)*100).toFixed(2)}%)`;
-  }
 
+const bidRows = [], askRows = [], priceRows = [];
+
+function initOrderBook() {
+  const bids = document.getElementById('bids');
+  const asks = document.getElementById('asks');
+  const ladder = document.getElementById('priceLadder');
+  if (!bids || !asks || !ladder) return;
+
+  for (let i = 0; i < MARKET.ROWS; i++) {
+    const b = document.createElement('div');
+    const p = document.createElement('div');
+    const a = document.createElement('div');
+
+    b.className = 'row buy';
+    p.className = 'ladder-row';
+    a.className = 'row sell';
+
+    bids.appendChild(b);
+    ladder.appendChild(p);
+    asks.appendChild(a);
+
+    bidRows.push(b);
+    priceRows.push(p);
+    askRows.push(a);
+  }
+}
+
+function renderOrderBook(mid) {
+  if (STATE.frozen) return;
+  for (let i = 0; i < MARKET.ROWS; i++) {
+    const step = (i + 1) * 0.0008;
+    const bid = mid * (1 - step);
+    const ask = mid * (1 + step);
+
+    bidRows[i].textContent = bid.toFixed(4);
+    askRows[i].textContent = ask.toFixed(4);
+    priceRows[i].textContent = ((bid + ask) / 2).toFixed(4);
+  }
+}
+   
   /* =========================
      CHART (4)
      ========================= */
