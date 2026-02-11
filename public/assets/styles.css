@@ -596,13 +596,13 @@ h3{
 .ob-head.buy{ color:var(--green); }
 .ob-head.sell{ color:var(--red); }
 
-/* ===== Rows ===== */
-
 .ob-list{
   display:flex;
   flex-direction:column;
   gap:2px;
 }
+
+/* ================= ORDER BOOK FIX ================= */
 
 .row{
   display:flex;
@@ -610,18 +610,23 @@ h3{
   padding:3px 6px;
   font-size:12px;
   font-family:ui-monospace,monospace;
-  position:relative;
+  position:relative;       /* مهم */
   overflow:hidden;
+  z-index:0;
 }
 
-.row.buy{ color:var(--green); }
-.row.sell{ color:var(--red); }
+.row span{
+  position:relative;
+  z-index:2;               /* أعلى من overlay */
+}
 
 .row::before{
   content:"";
   position:absolute;
   inset:0;
-  opacity:.18;
+  z-index:1;               /* تحت النص */
+  opacity:.15;
+  pointer-events:none;     /* يمنع حجب الضغط */
 }
 
 .row.buy::before{
@@ -630,11 +635,6 @@ h3{
 
 .row.sell::before{
   background:linear-gradient(270deg,var(--red),transparent);
-}
-
-.row span{
-  position:relative;
-  z-index:1;
 }
 
 /* ================= PRICE LADDER ================= */
