@@ -168,67 +168,66 @@
   /* =========================
      ORDER BOOK (RENDER – DOM REUSE)
      ========================= */
-  const rows = { bids: [], asks: [], ladder: [] };
+  
+        const rows = { bids: [], asks: [], ladder: [] };
 
   function initBookRows() {
-    if (!D.bids || rows.bids.length) return;
-
+    if (rows.bids.length) return;
     for (let i = 0; i < CFG.ROWS; i++) {
       const b = document.createElement('div');
       const l = document.createElement('div');
       const a = document.createElement('div');
-
       b.className = 'ob-row bid';
       l.className = 'price-row';
       a.className = 'ob-row ask';
-
-      b.addEventListener('click', () => clickFill(b.textContent));
-      a.addEventListener('click', () => clickFill(a.textContent));
-
       D.bids.appendChild(b);
       D.ladder.appendChild(l);
       D.asks.appendChild(a);
-
-      rows.bids.push(b);
-      rows.ladder.push(l);
-      rows.asks.push(a);
+      rows.bids.push(b); rows.ladder.push(l); rows.asks.push(a);
     }
   }
 
-  function renderBook() {
+  function buildBook() {
+    S.bids = []; S.asks = []; S.maxVol = 1;
+    const mid = S.bxQuote;
     const half = Math.floor(CFG.ROWS / 2);
 
     for (let i = 0; i < CFG.ROWS; i++) {
       const level = i - half;
+      const price = mid * (1 + level * CFG.SPREAD_STEP);
+      const vol = Math.random() * CFG.DEPTH_MAX + 1;
+      S.maxVol = Math.max(S.maxVol, vol);
+      if (level < 0) S.bids.push({ price, vol });
+      if (level > 0) S.asks.push({ price, vol });
+    }
 
-      // ladder
-      rows.ladder[i].textContent =
-        level === 0 ? fmt(S.mid) : fmt(S.bxPriceQuote);
+    const bestBid = S.bids.at(-1)?.price || mid;
+    const bestAsk = S.asks[0]?.price || mid;
+    S.mid = (bestBid + bestAsk) / 2;
+  }
+
+  function renderBook() {
+    const half = Math.floor(CFG.ROWS / 2);
+    for (let i = 0; i < CFG.ROWS; i++) {
+      const level = i - half;
+      rows.ladder[i].textContent = level === 0 ? S.mid.toFixed(6) : S.bxQuote.toFixed(6);
       rows.ladder[i].classList.toggle('mid', level === 0);
 
-      // bids
       if (level < 0) {
-        const b = S.bids.shift();
+        const b = S.bids.pop();
         const pct = b.vol / S.maxVol;
-        rows.bids[i].textContent = fmt(b.price);
+        rows.bids[i].textContent = b.price.toFixed(6);
         rows.bids[i].style.background =
           `linear-gradient(to left, rgba(0,200,120,${pct}), transparent)`;
-      } else {
-        rows.bids[i].textContent = '';
-        rows.bids[i].style.background = 'none';
-      }
+      } else rows.bids[i].textContent = '';
 
-      // asks
       if (level > 0) {
         const a = S.asks.shift();
         const pct = a.vol / S.maxVol;
-        rows.asks[i].textContent = fmt(a.price);
+        rows.asks[i].textContent = a.price.toFixed(6);
         rows.asks[i].style.background =
           `linear-gradient(to right, rgba(255,80,80,${pct}), transparent)`;
-      } else {
-        rows.asks[i].textContent = '';
-        rows.asks[i].style.background = 'none';
-      }
+      } else rows.asks[i].textContent = '';
     }
   }
 
