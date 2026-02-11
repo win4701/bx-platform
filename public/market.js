@@ -1,28 +1,21 @@
-/* =========================================================
-   BLOXIO MARKET ENGINE — v2.0 FINAL STABLE
-   Scoped / Safe / Binance Integrated
-   ========================================================= */
-
-(() => {
+(function () {
   'use strict';
 
-  /*=========================
-     GUARD / ROOT
-   ========================= */
-  if (window.MarketEngine) return;
-  const root = document.querySelector('#market') || document.querySelector('.market-view');
+  if (window.BX_MARKET_V21) return;
+  window.BX_MARKET_V21 = true;
+
+  const root = document.querySelector('#market');
   if (!root) return;
-
-
 
   /* ================= CONFIG ================= */
 
   const CFG = {
     ROWS: 15,
     BX_USDT_ANCHOR: 38,
-    SPREAD_STEP: 0.0008,
-    DEPTH_MAX: 8,
+    SPREAD_STEP: 0.001,
+    DEPTH_MAX: 10,
     CHART_LIMIT: 120,
+    REF_PRICE: 68000
   };
 
   /* ================= STATE ================= */
@@ -40,14 +33,13 @@
     series: null,
     emaSeries: null,
     vwapSeries: null,
-    data: [],
-    trades: [],
+    data: []
   };
 
   /* ================= DOM ================= */
 
-  const $ = (id) => document.getElementById(id);
-  const $$ = (sel) => root.querySelectorAll(sel);
+  const $ = id => document.getElementById(id);
+  const $$ = sel => root.querySelectorAll(sel);
 
   const D = {
     price: $('marketPrice'),
@@ -64,21 +56,23 @@
     buyTab: $('buyTab'),
     sellTab: $('sellTab'),
     actionBtn: $('actionBtn'),
-    pairs: $$('.pair-btn'),
+    pairs: $$('.pair-btn')
   };
 
   /* ================= INIT ================= */
 
-  init();
+  document.addEventListener('DOMContentLoaded', init);
 
   function init() {
     initPairs();
     initBookRows();
     initChart();
     connectBinance();
+    rebuild(); // مهم جداً
+    setInterval(updateChart, 1000);
   }
 
-  /* ================= PAIR SWITCH ================= */
+  /* ================= PAIRS ================= */
 
   function initPairs() {
     D.pairs.forEach(btn => {
@@ -86,30 +80,35 @@
         D.pairs.forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         S.quote = btn.dataset.quote;
-        D.quote.textContent = S.quote;
-        rebuild();
+        if (D.quote) D.quote.textContent = S.quote;
+        connectBinance();
       });
     });
   }
 
-  /* ================= BINANCE STREAM ================= */
+  /* ================= BINANCE ================= */
 
   function connectBinance() {
     if (S.ws) S.ws.close();
 
+    const symbol = (S.quote === 'USDT' || S.quote === 'USDC')
+      ? 'btcusdt'
+      : 'btc' + S.quote.toLowerCase();
+
     S.ws = new WebSocket(
-      'wss://stream.binance.com:9443/ws/btcusdt@trade'
+      `wss://stream.binance.com:9443/ws/${symbol}@trade`
     );
 
-    S.ws.onmessage = (e) => {
+    S.ws.onmessage = e => {
       const msg = JSON.parse(e.data);
       const price = parseFloat(msg.p);
-
       if (!price) return;
 
-      S.bxUSDT = CFG.BX_USDT_ANCHOR * (price / 68000);
+      S.bxUSDT = CFG.BX_USDT_ANCHOR * (price / CFG.REF_PRICE);
       rebuild();
     };
+
+    S.ws.onerror = () => console.warn('WS Error');
   }
 
   /* ================= PRICE ================= */
@@ -124,15 +123,16 @@
     AVAX: 38,
     ZEC: 28,
     TON: 2.3,
-    LTC: 70,
+    LTC: 70
   };
 
   function computeQuote() {
     if (S.quote === 'USDT' || S.quote === 'USDC') {
       S.bxQuote = S.bxUSDT;
     } else {
-      S.bxQuote = S.bxUSDT / REF[S.quote];
+      S.bxQuote = S.bxUSDT / (REF[S.quote] || 1);
     }
+    S.mid = S.bxQuote;
   }
 
   /* ================= ORDER BOOK ================= */
@@ -169,7 +169,7 @@
     S.asks = [];
     S.maxVol = 1;
 
-    const mid = S.bxQuote;
+    const mid = S.mid;
     const half = Math.floor(CFG.ROWS / 2);
 
     for (let i = 1; i <= half; i++) {
@@ -184,23 +184,24 @@
 
       S.maxVol = Math.max(S.maxVol, bVol, aVol);
     }
-
-    S.mid = mid;
   }
 
   function renderBook() {
     const half = Math.floor(CFG.ROWS / 2);
 
     for (let i = 0; i < CFG.ROWS; i++) {
-      const level = i - half;
 
+      rows.bids[i].style.background = 'none';
+      rows.asks[i].style.background = 'none';
+      rows.bids[i].textContent = '';
+      rows.asks[i].textContent = '';
       rows.ladder[i].classList.remove('mid');
+
+      const level = i - half;
 
       if (level === 0) {
         rows.ladder[i].textContent = S.mid.toFixed(6);
         rows.ladder[i].classList.add('mid');
-        rows.bids[i].textContent = '';
-        rows.asks[i].textContent = '';
         continue;
       }
 
@@ -208,12 +209,14 @@
         const b = S.bids[Math.abs(level) - 1];
         const pct = b.vol / S.maxVol;
         rows.bids[i].textContent = b.price.toFixed(6);
+        rows.ladder[i].textContent = b.price.toFixed(6);
         rows.bids[i].style.background =
           `linear-gradient(to left, rgba(14,203,129,${pct}), transparent)`;
       } else {
         const a = S.asks[level - 1];
         const pct = a.vol / S.maxVol;
         rows.asks[i].textContent = a.price.toFixed(6);
+        rows.ladder[i].textContent = a.price.toFixed(6);
         rows.asks[i].style.background =
           `linear-gradient(to right, rgba(246,70,93,${pct}), transparent)`;
       }
@@ -234,7 +237,7 @@
     S.chart = LightweightCharts.createChart(D.chart, {
       layout: { background: { color: 'transparent' }, textColor: '#aaa' },
       grid: { vertLines: { visible: false }, horzLines: { visible: false } },
-      timeScale: { visible: false },
+      timeScale: { visible: false }
     });
 
     S.series = S.chart.addLineSeries({ color: '#0ecb81', lineWidth: 2 });
@@ -243,9 +246,11 @@
   }
 
   function updateChart() {
+    if (!S.series) return;
+
     const now = Math.floor(Date.now() / 1000);
 
-    S.data.push({ time: now, value: S.bxQuote });
+    S.data.push({ time: now, value: S.mid });
     if (S.data.length > CFG.CHART_LIMIT) S.data.shift();
 
     S.series.setData(S.data);
@@ -271,34 +276,40 @@
   }
 
   function calculateVWAP(data) {
-    let sumPV = 0;
-    let sumVol = 0;
-    return data.map(d => {
-      const vol = 1;
-      sumPV += d.value * vol;
-      sumVol += vol;
-      return { time: d.time, value: sumPV / sumVol };
+    let sum = 0;
+    return data.map((d, i) => {
+      sum += d.value;
+      return { time: d.time, value: sum / (i + 1) };
     });
   }
 
-  /* ================= BUY / SELL ================= */
+  /* ================= EXECUTION ================= */
 
   function clickFill(price) {
     if (!price) return;
-    D.execPrice.textContent = price;
+    if (D.execPrice) D.execPrice.textContent = price;
   }
 
   D.actionBtn?.addEventListener('click', () => {
-    const amount = parseFloat(D.amount.value || 0);
+    const amount = parseFloat(D.amount?.value || 0);
     if (!amount) return;
 
-    const price = S.mid;
-    const slippage = Math.random() * 0.2;
+    const bestBid = S.bids[0]?.price || 0;
+    const bestAsk = S.asks[0]?.price || 0;
 
-    D.execPrice.textContent = price.toFixed(6);
-    D.slippage.textContent = slippage.toFixed(2);
+    let slippage = 0;
 
-    alert('Execution Stub Complete');
+    if (D.buyTab?.classList.contains('active')) {
+      slippage = ((bestAsk - S.mid) / S.mid) * 100;
+    } else {
+      slippage = ((S.mid - bestBid) / S.mid) * 100;
+    }
+
+    if (D.slippage)
+      D.slippage.textContent = slippage.toFixed(3);
+
+    if (D.execPrice)
+      D.execPrice.textContent = S.mid.toFixed(6);
   });
 
   /* ================= REBUILD ================= */
@@ -308,17 +319,15 @@
     buildBook();
     renderHeader();
     renderBook();
-    updateChart();
   }
 
   function renderHeader() {
-    if (D.price) D.price.textContent = S.bxQuote.toFixed(6);
+    if (D.price)
+      D.price.textContent = S.mid.toFixed(6);
+
     if (D.approx)
-      D.approx.textContent = `≈ ${S.bxUSDT.toFixed(2)} USDT`;
+      D.approx.textContent =
+        `≈ ${S.bxUSDT.toFixed(2)} USDT`;
   }
 
-  window.MarketEngine = {
-    setQuote,
-    rebuild,
-  };
 })();
