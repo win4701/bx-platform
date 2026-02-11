@@ -443,24 +443,6 @@ h3{
 .indicator-legend .ema{ color:#facc15; }
 .indicator-legend .vwap{ color:var(--purple); }
 
-/* ================= DEPTH ================= */
-
-.depth-box{
-  background:var(--panel);
-  border:1px solid var(--border);
-  border-radius:10px;
-  padding:6px;
-  margin-bottom:10px;
-  position: relative;
-  overflow: hidden;
-}
-
-.depth-title{
-  font-size:13px;
-  font-weight:800;
-  margin-bottom:4px;
-}
-
 /* ================= TRADE BOX ================= */
 
 .trade-box{
@@ -561,17 +543,66 @@ h3{
 }
 
 /* ================= ORDER BOOK ================= */
-
 .orderbook{
-  background:var(--panel);
-  border:1px solid var(--border);
-  border-radius:12px;
-  padding:8px;
-  margin-bottom:12px;
-  position: relative;
-  overflow: hidden;
+  background:#0f1720;
+  border:1px solid #1e293b;
+  border-radius:14px;
+  padding:10px;
 }
 
+.ob-header{
+  display:flex;
+  justify-content:space-between;
+  font-size:12px;
+  opacity:.7;
+  margin-bottom:6px;
+}
+
+#ob-rows{
+  display:flex;
+  flex-direction:column;
+  gap:3px;
+}
+
+.ob-row{
+  position:relative;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  font-family:monospace;
+  font-size:12px;
+  height:20px;
+  overflow:hidden;
+  border-radius:4px;
+}
+
+.depth-bid,
+.depth-ask{
+  position:absolute;
+  top:0;
+  bottom:0;
+  pointer-events:none;
+}
+
+.depth-bid{
+  left:0;
+  background:rgba(0,255,140,.15);
+}
+
+.depth-ask{
+  right:0;
+  background:rgba(255,60,60,.15);
+}
+
+.ob-row span{
+  position:relative;
+  z-index:2;
+}
+
+.price-mid{
+  color:#ffd84d;
+  font-weight:600;
+}
 .orderbook-title{
   font-size:14px;
   font-weight:900;
@@ -582,19 +613,6 @@ h3{
   display:grid;
   grid-template-columns:1fr auto 1fr;
   gap:6px;
-}
-
-.ob-col{
-  display:flex;
-  flex-direction:column;
-}
-
-.ob-head{
-  font-size:11px;
-  font-weight:800;
-  text-align:center;
-  margin-bottom:4px;
-  color:var(--muted);
 }
 
 .ob-head.buy{ color:var(--green); }
@@ -639,28 +657,6 @@ h3{
 
 .row.sell::before{
   background:linear-gradient(270deg,var(--red),transparent);
-}
-
-/* ================= PRICE LADDER ================= */
-
-.price-ladder{
-  font-family:ui-monospace,monospace;
-  font-size:12px;
-}
-
-.ladder-row{
-  padding:2px 4px;
-  text-align:center;
-}
-
-.ladder-row.buy{ color:var(--green); }
-.ladder-row.sell{ color:var(--red); }
-
-.ladder-row.mid{
-  background:var(--yellow);
-  color:#000;
-  font-weight:800;
-  border-radius:4px;
 }
 
 /* ================= TRADES ================= */
