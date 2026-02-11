@@ -165,70 +165,53 @@
   }
 
   function buildBook() {
-    S.bids = [];
-    S.asks = [];
-    S.maxVol = 1;
+  S.bids = [];
+  S.asks = [];
+  S.maxVol = 1;
 
-    const mid = S.mid;
-    const half = Math.floor(CFG.ROWS / 2);
+  const mid = S.mid;
 
-    for (let i = 1; i <= half; i++) {
-      const bid = mid * (1 - i * CFG.SPREAD_STEP);
-      const ask = mid * (1 + i * CFG.SPREAD_STEP);
+  for (let i = 1; i <= CFG.ROWS; i++) {
+    const bid = mid * (1 - i * CFG.SPREAD_STEP);
+    const ask = mid * (1 + i * CFG.SPREAD_STEP);
 
-      const bVol = 1 + Math.random() * CFG.DEPTH_MAX;
-      const aVol = 1 + Math.random() * CFG.DEPTH_MAX;
+    const bVol = 1 + Math.random() * CFG.DEPTH_MAX;
+    const aVol = 1 + Math.random() * CFG.DEPTH_MAX;
 
-      S.bids.push({ price: bid, vol: bVol });
-      S.asks.push({ price: ask, vol: aVol });
+    S.bids.push({ price: bid, vol: bVol });
+    S.asks.push({ price: ask, vol: aVol });
 
-      S.maxVol = Math.max(S.maxVol, bVol, aVol);
-    }
+    S.maxVol = Math.max(S.maxVol, bVol, aVol);
   }
-
+  }
+  
   function renderBook() {
-    const half = Math.floor(CFG.ROWS / 2);
 
-    for (let i = 0; i < CFG.ROWS; i++) {
+  for (let i = 0; i < CFG.ROWS; i++) {
 
-      rows.bids[i].style.background = 'none';
-      rows.asks[i].style.background = 'none';
-      rows.bids[i].textContent = '';
-      rows.asks[i].textContent = '';
-      rows.ladder[i].classList.remove('mid');
+    const bid = S.bids[i];
+    const ask = S.asks[i];
 
-      const level = i - half;
+    rows.bids[i].textContent = bid.price.toFixed(6);
+    rows.asks[i].textContent = ask.price.toFixed(6);
 
-      if (level === 0) {
-        rows.ladder[i].textContent = S.mid.toFixed(6);
-        rows.ladder[i].classList.add('mid');
-        continue;
-      }
+    const bPct = bid.vol / S.maxVol;
+    const aPct = ask.vol / S.maxVol;
 
-      if (level < 0) {
-        const b = S.bids[Math.abs(level) - 1];
-        const pct = b.vol / S.maxVol;
-        rows.bids[i].textContent = b.price.toFixed(6);
-        rows.ladder[i].textContent = b.price.toFixed(6);
-        rows.bids[i].style.background =
-          `linear-gradient(to left, rgba(14,203,129,${pct}), transparent)`;
-      } else {
-        const a = S.asks[level - 1];
-        const pct = a.vol / S.maxVol;
-        rows.asks[i].textContent = a.price.toFixed(6);
-        rows.ladder[i].textContent = a.price.toFixed(6);
-        rows.asks[i].style.background =
-          `linear-gradient(to right, rgba(246,70,93,${pct}), transparent)`;
-      }
-    }
+    rows.bids[i].style.background =
+      `linear-gradient(to left, rgba(14,203,129,${bPct}), transparent)`;
 
-    const bestBid = S.bids[0]?.price || 0;
-    const bestAsk = S.asks[0]?.price || 0;
-    const spread = bestAsk - bestBid;
-
-    if (D.spread) D.spread.textContent = spread.toFixed(6);
+    rows.asks[i].style.background =
+      `linear-gradient(to right, rgba(246,70,93,${aPct}), transparent)`;
   }
 
+  const bestBid = S.bids[0].price;
+  const bestAsk = S.asks[0].price;
+
+  if (D.spread)
+    D.spread.textContent = (bestAsk - bestBid).toFixed(6);
+  }
+  
   /* ================= CHART ================= */
 
   function initChart() {
