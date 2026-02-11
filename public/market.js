@@ -19,7 +19,42 @@
     CHART_POINTS: 300
   };
 
-  /* ================= REAL PRICES (BINANCE) ================= */
+ /* =========================
+     REFERENCE PRICES (can be API/WS later)
+     ========================= */
+  const REF = {
+    USDT: 1,
+    USDC: 1,
+    BTC: 68000,
+    ETH: 3600,
+    BNB: 420,
+    SOL: 140,
+    AVAX: 38,
+    ZEC: 28,
+    TON: 2.3,
+    LTC: 70,
+  };
+
+  /* =========================
+     STATE (Single Source)
+     ========================= */
+  const S = {
+    base: CFG.BASE_ASSET,
+    quote: 'USDT',
+
+    bxPriceUSDT: CFG.BX_USDT_BASE, // real anchor
+    bxPriceQuote: CFG.BX_USDT_BASE,
+
+    bids: [],
+    asks: [],
+    maxVol: 1,
+    mid: CFG.BX_USDT_BASE,
+
+    chart: null,
+    series: null,
+    chartData: [],
+  };
+   /* ================= REAL PRICES (BINANCE) ================= */
   const REAL = { USDT: 1, USDC: 1 };
   const STREAMS = [
     'btcusdt@ticker', 'ethusdt@ticker', 'bnbusdt@ticker',
