@@ -6,10 +6,14 @@
 (() => {
   'use strict';
 
-  if (window.BX_MARKET) return;
-
-  const root = document.querySelector('#market');
+  /*=========================
+     GUARD / ROOT
+   ========================= */
+  if (window.MarketEngine) return;
+  const root = document.querySelector('#market') || document.querySelector('.market-view');
   if (!root) return;
+
+
 
   /* ================= CONFIG ================= */
 
