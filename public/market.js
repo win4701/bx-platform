@@ -35,9 +35,17 @@
     LTC: 70,
   };
 
-  /* =========================
-     STATE (Single Source)
-     ========================= */
+  
+   /* ================= REAL PRICES (BINANCE) ================= */
+  const REAL = { USDT: 1, USDC: 1 };
+  const STREAMS = [
+    'btcusdt@ticker', 'ethusdt@ticker', 'bnbusdt@ticker',
+    'solusdt@ticker', 'avaxusdt@ticker', 'ltcusdt@ticker',
+    'zecusdt@ticker', 'tonusdt@ticker'
+  ];
+  let priceWS = null;
+
+  /* ================= STATE ================= */
   const S = {
     base: CFG.BASE_ASSET,
     quote: 'USDT',
@@ -53,26 +61,6 @@
     chart: null,
     series: null,
     chartData: [],
-  };
-   /* ================= REAL PRICES (BINANCE) ================= */
-  const REAL = { USDT: 1, USDC: 1 };
-  const STREAMS = [
-    'btcusdt@ticker', 'ethusdt@ticker', 'bnbusdt@ticker',
-    'solusdt@ticker', 'avaxusdt@ticker', 'ltcusdt@ticker',
-    'zecusdt@ticker', 'tonusdt@ticker'
-  ];
-  let priceWS = null;
-
-  /* ================= STATE ================= */
-  const S = {
-    quote: 'USDT',
-    bxUSDT: CFG.BX_USDT,
-    bxQuote: CFG.BX_USDT,
-    bids: [], asks: [], maxVol: 1, mid: CFG.BX_USDT,
-    chart: null, series: null,
-    midSeries: null, emaSeries: null, vwapSeries: null,
-    depthBidSeries: null, depthAskSeries: null,
-    chartData: [], emaVal: null, vwapPV: 0, vwapVol: 0
   };
 
   /* ================= DOM ================= */
