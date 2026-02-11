@@ -137,99 +137,88 @@
   /* =========================
      ORDER BOOK (BUILD)
      ========================= */
-  function buildBook() {
-    S.bids = [];
-    S.asks = [];
-    S.maxVol = 0;
+  S.book = {
+  bids: [],
+  asks: [],
+  maxVol: 1
+};
+   function buildOrderBook(mid) {
+  const bids = [];
+  const asks = [];
+  let maxVol = 1;
 
-    const mid = S.bxPriceQuote;
-    const half = Math.floor(CFG.ROWS / 2);
+  const half = Math.floor(CFG.ROWS / 2);
 
-    for (let i = 0; i < CFG.ROWS; i++) {
-      const level = i - half;
-      const price = mid * (1 + level * CFG.SPREAD_STEP);
-      const vol = Math.random() * CFG.DEPTH_MAX + 1;
+  for (let i = 1; i <= half; i++) {
+    const bidPrice = mid * (1 - i * CFG.SPREAD_STEP);
+    const askPrice = mid * (1 + i * CFG.SPREAD_STEP);
 
-      if (vol > S.maxVol) S.maxVol = vol;
+    const bidVol = 1 + Math.random() * CFG.DEPTH_MAX;
+    const askVol = 1 + Math.random() * CFG.DEPTH_MAX;
 
-      if (level < 0) {
-        S.bids.push({ price, vol });
-      } else if (level > 0) {
-        S.asks.push({ price, vol });
-      }
-    }
+    bids.push({ price: bidPrice, vol: bidVol });
+    asks.push({ price: askPrice, vol: askVol });
 
-    // best bid / ask
-    const bestBid = S.bids[S.bids.length - 1]?.price || mid;
-    const bestAsk = S.asks[0]?.price || mid;
-    S.mid = (bestBid + bestAsk) / 2;
+    maxVol = Math.max(maxVol, bidVol, askVol);
   }
 
-  /* =========================
-     ORDER BOOK (RENDER – DOM REUSE)
-     ========================= */
-  
-        const rows = { bids: [], asks: [], ladder: [] };
+  S.book = { bids, asks, maxVol };
+       }
 
-  function initBookRows() {
-    if (rows.bids.length) return;
-    for (let i = 0; i < CFG.ROWS; i++) {
-      const b = document.createElement('div');
-      const l = document.createElement('div');
-      const a = document.createElement('div');
-      b.className = 'ob-row bid';
-      l.className = 'price-row';
-      a.className = 'ob-row ask';
-      D.bids.appendChild(b);
-      D.ladder.appendChild(l);
-      D.asks.appendChild(a);
-      rows.bids.push(b); rows.ladder.push(l); rows.asks.push(a);
-    }
-  }
+   function renderOrderBook() {
+  const half = Math.floor(CFG.ROWS / 2);
 
-  function buildBook() {
-    S.bids = []; S.asks = []; S.maxVol = 1;
-    const mid = S.bxQuote;
-    const half = Math.floor(CFG.ROWS / 2);
+  for (let i = 0; i < CFG.ROWS; i++) {
+    const level = i - half;
 
-    for (let i = 0; i < CFG.ROWS; i++) {
-      const level = i - half;
-      const price = mid * (1 + level * CFG.SPREAD_STEP);
-      const vol = Math.random() * CFG.DEPTH_MAX + 1;
-      S.maxVol = Math.max(S.maxVol, vol);
-      if (level < 0) S.bids.push({ price, vol });
-      if (level > 0) S.asks.push({ price, vol });
+    const bidRow = rows.bids[i];
+    const askRow = rows.asks[i];
+    const ladderRow = rows.ladder[i];
+
+    bidRow.textContent = '';
+    askRow.textContent = '';
+    bidRow.style.background = '';
+    askRow.style.background = '';
+    ladderRow.classList.remove('mid');
+
+    // MID
+    if (level === 0) {
+      ladderRow.textContent = S.mid.toFixed(6);
+      ladderRow.classList.add('mid');
+      continue;
     }
 
-    const bestBid = S.bids.at(-1)?.price || mid;
-    const bestAsk = S.asks[0]?.price || mid;
-    S.mid = (bestBid + bestAsk) / 2;
-  }
+    // BIDS (أسفل)
+    if (level < 0) {
+      const idx = Math.abs(level) - 1;
+      const b = S.book.bids[idx];
+      if (!b) continue;
 
-  function renderBook() {
-    const half = Math.floor(CFG.ROWS / 2);
-    for (let i = 0; i < CFG.ROWS; i++) {
-      const level = i - half;
-      rows.ladder[i].textContent = level === 0 ? S.mid.toFixed(6) : S.bxQuote.toFixed(6);
-      rows.ladder[i].classList.toggle('mid', level === 0);
+      const pct = b.vol / S.book.maxVol;
 
-      if (level < 0) {
-        const b = S.bids.pop();
-        const pct = b.vol / S.maxVol;
-        rows.bids[i].textContent = b.price.toFixed(6);
-        rows.bids[i].style.background =
-          `linear-gradient(to left, rgba(0,200,120,${pct}), transparent)`;
-      } else rows.bids[i].textContent = '';
+      bidRow.textContent = b.price.toFixed(6);
+      bidRow.style.background =
+        `linear-gradient(to left, rgba(0,200,120,${pct}), transparent)`;
 
-      if (level > 0) {
-        const a = S.asks.shift();
-        const pct = a.vol / S.maxVol;
-        rows.asks[i].textContent = a.price.toFixed(6);
-        rows.asks[i].style.background =
-          `linear-gradient(to right, rgba(255,80,80,${pct}), transparent)`;
-      } else rows.asks[i].textContent = '';
+      ladderRow.textContent = b.price.toFixed(6);
+    }
+
+    // ASKS (أعلى)
+    if (level > 0) {
+      const idx = level - 1;
+      const a = S.book.asks[idx];
+      if (!a) continue;
+
+      const pct = a.vol / S.book.maxVol;
+
+      askRow.textContent = a.price.toFixed(6);
+      askRow.style.background =
+        `linear-gradient(to right, rgba(255,80,80,${pct}), transparent)`;
+
+      ladderRow.textContent = a.price.toFixed(6);
     }
   }
+   }
 
   /* =========================
      HEADER
@@ -279,11 +268,12 @@
      REBUILD PIPELINE
      ========================= */
   function rebuild() {
-    computeQuotePrice();
-    buildBook();
-    renderHeader();
-    renderBook();
-    updateChart();
+  computeQuote();
+  S.mid = S.bxPriceQuote;
+  buildOrderBook(S.mid);
+  renderHeader();
+  renderOrderBook();
+  updateChart();
   }
 
   /* =========================
