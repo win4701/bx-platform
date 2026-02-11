@@ -361,7 +361,7 @@ h3{
   align-items:center;
   gap:6px;
   font-size:18px;
-  font-weight:900;
+  font-weight:800;
 }
 
 .pair-title .base{ color:var(--yellow); }
@@ -548,7 +548,7 @@ h3{
   padding:12px;
   border-radius:12px;
   font-size:15px;
-  font-weight:900;
+  font-weight:800;
   background:var(--green);
   color:#022c22;
 }
@@ -570,7 +570,7 @@ h3{
 
 .orderbook-title{
   font-size:14px;
-  font-weight:900;
+  font-weight:800;
   margin-bottom:6px;
 }
 
@@ -655,7 +655,7 @@ h3{
 .ladder-row.mid{
   background:var(--yellow);
   color:#000;
-  font-weight:900;
+  font-weight:800;
   border-radius:4px;
 }
 
@@ -671,7 +671,7 @@ h3{
 
 .trades-title{
   font-size:14px;
-  font-weight:900;
+  font-weight:800;
   margin-bottom:6px;
 }
 
@@ -719,27 +719,6 @@ h3{
   font-style: italic;
 }
 
-.recent-trades {
-  height: 360px;              /* ثابت */
-  overflow: hidden;           /* أو auto لو تريد scroll */
-  padding: 8px 0;
-}
-
-.recent-trades-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  font-size: 12px;
-  line-height: 1.6;
-  padding: 2px 12px;
-}
-
-.recent-trades-row.buy {
-  color: #2ecc71;
-}
-
-.recent-trades-row.sell {
-  color: #e74c3c;
-}
 .flash-up{box-shadow: inset 0 0 22px rgba(14,203,129,.22)}
 .flash-down{box-shadow: inset 0 0 22px rgba(246,70,93,.22)}
 
