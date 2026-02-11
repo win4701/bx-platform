@@ -89,26 +89,34 @@
   /* ================= BINANCE ================= */
 
   function connectBinance() {
-    if (S.ws) S.ws.close();
+  if (S.ws) S.ws.close();
 
-    const symbol = (S.quote === 'USDT' || S.quote === 'USDC')
-      ? 'btcusdt'
-      : 'btc' + S.quote.toLowerCase();
+  // نربط فقط العملة المرجعية
+  if (S.quote === 'USDT' || S.quote === 'USDC') {
+    S.bxUSDT = CFG.BX_USDT_ANCHOR;
+    rebuild();
+    return;
+  }
 
-    S.ws = new WebSocket(
-      `wss://stream.binance.com:9443/ws/${symbol}@trade`
-    );
+  const symbol = S.quote.toLowerCase() + "usdt";
 
-    S.ws.onmessage = e => {
-      const msg = JSON.parse(e.data);
-      const price = parseFloat(msg.p);
-      if (!price) return;
+  S.ws = new WebSocket(
+    `wss://stream.binance.com:9443/ws/${symbol}@trade`
+  );
 
-      S.bxUSDT = CFG.BX_USDT_ANCHOR * (price / CFG.REF_PRICE);
-      rebuild();
-    };
+  S.ws.onmessage = e => {
+    const msg = JSON.parse(e.data);
+    const refPrice = parseFloat(msg.p);
+    if (!refPrice) return;
 
-    S.ws.onerror = () => console.warn('WS Error');
+    // BX/QUOTE = BX_USDT / QUOTE_USDT
+    S.bxQuote = CFG.BX_USDT_ANCHOR / refPrice;
+    S.mid = S.bxQuote;
+
+    rebuild();
+  };
+
+  S.ws.onerror = () => console.warn("WS Error");
   }
 
   /* ================= PRICE ================= */
