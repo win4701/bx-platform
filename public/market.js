@@ -317,6 +317,8 @@
       D.approx.textContent = `≈ ${S.bxUSDT.toFixed(2)} USDT`;
   }
 
-  window.BX_MARKET = true;
-
+  window.MarketEngine = {
+    setQuote,
+    rebuild,
+  };
 })();
