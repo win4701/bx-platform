@@ -137,11 +137,6 @@
   /* =========================
      ORDER BOOK (BUILD)
      ========================= */
-  S.book = {
-  bids: [],
-  asks: [],
-  maxVol: 1
-};
    function buildOrderBook(mid) {
   const bids = [];
   const asks = [];
