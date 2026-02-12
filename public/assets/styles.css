@@ -487,6 +487,67 @@ h3{
   color: #ea3943;
 }
 
+/* ================= ORDER BOOK CARD ================= */
+
+.orderbook-card {
+  margin-top: 20px;
+  padding: 16px;
+  background: linear-gradient(180deg, #0f1c2f, #0b1624);
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.05);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+}
+
+.orderbook-header {
+  display: flex;
+  justify-content: space-between;
+  font-weight: bold;
+  margin-bottom: 12px;
+  font-size: 14px;
+}
+
+.ob-bids-title { color: #16c784; }
+.ob-asks-title { color: #ea3943; }
+
+.orderbook-body {
+  display: flex;
+  gap: 12px;
+}
+
+.ob-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.bid-row,
+.ask-row {
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: monospace;
+  transition: 0.2s ease;
+}
+
+.bid-row {
+  background: linear-gradient(90deg, rgba(22,199,132,0.25), transparent);
+  color: #16c784;
+}
+
+.ask-row {
+  background: linear-gradient(90deg, rgba(234,57,67,0.25), transparent);
+  color: #ea3943;
+}
+
+.bid-row:hover {
+  background: rgba(22,199,132,0.4);
+}
+
+.ask-row:hover {
+  background: rgba(234,57,67,0.4);
+}
+
 /* ================= MID PRICE ================= */
 
 .mid-price{
