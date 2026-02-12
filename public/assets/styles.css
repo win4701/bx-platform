@@ -382,7 +382,7 @@ h3{
 
 .price-main{
   font-size:26px;
-  font-weight:900;
+  font-weight:800;
   transition:.2s ease;
 }
 
@@ -417,7 +417,7 @@ h3{
   background:#0e1318;
   color:var(--muted);
   font-size:12px;
-  font-weight:600;
+  font-weight:800;
   cursor:pointer;
   transition:.18s ease;
 }
@@ -445,7 +445,7 @@ h3{
 #market .book-header {
   display: flex;
   justify-content: space-between;
-  font-weight: 600;
+  font-weight: 800;
   margin-bottom: 10px;
 }
 
@@ -524,7 +524,7 @@ h3{
   background: transparent;
   border: none;
   color: #aaa;
-  font-weight: 600;
+  font-weight: 800;
 }
 
 #market .trade-tab.active[data-side="buy"] {
@@ -647,6 +647,10 @@ h3{
 
 #chart {
   height: 200px;
+}
+
+#chart {
+  background: radial-gradient(circle at center, #0f1c2e, #0b1220);
 }
 
 .badge-live {
