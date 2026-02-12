@@ -230,10 +230,10 @@
 
   const Chart = (function () {
 
-    const canvas = document.getElementById("marketChart");
+    const canvas = document.getElementById("chart");
     if (!canvas) return { addTick: () => {} };
 
-    const ctx = canvas.getContext("2d");
+    const ctx = canvas.getContext("3d");
     let candles = [];
     let volumes = [];
     let current = null;
