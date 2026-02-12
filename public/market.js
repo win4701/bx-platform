@@ -1,285 +1,322 @@
 /* =========================================================
-   MARKET ENGINE v2.7 FINAL STABLE
-   BX Anchor = 38 USDT / USDC
-   Scoped – Clean – No CSS Break
+   BLOXIO MARKET ENGINE v3.1 PRO FINAL
+   Scoped • Clean • Stable • Binance Live
 ========================================================= */
 
 (function () {
-  "use strict";
 
-  /* ================= CONFIG ================= */
+  if (!document.getElementById("bids")) return;
 
-  const BX_REFERENCE = 38;
-  const ROWS = 15;
-  const SPREAD_PCT = 0.002;
-
-  /* ================= STATE ================= */
+  /* ================== STATE ================== */
 
   const STATE = {
+    base: "BX",
     quote: "USDT",
-    coinUsdt: 1,
-    price: BX_REFERENCE,
-    mid: BX_REFERENCE,
+    reference: 38, // BX = 38 USDT
+    price: 38,
+    bid: 0,
+    ask: 0,
     spread: 0,
-    depth: { bids: [], asks: [] },
-    wsTrade: null,
-    wsCandle: null,
-    rows: { bids: [], asks: [] }
+    side: "BUY",
+    socketTrade: null,
+    socketDepth: null
   };
 
-  /* ================= INIT ================= */
+  const PAIRS = {
+    USDT: null,
+    USDC: null,
+    BTC: "BTCUSDT",
+    ETH: "ETHUSDT",
+    BNB: "BNBUSDT",
+    SOL: "SOLUSDT",
+    AVAX: "AVAXUSDT",
+    LTC: "LTCUSDT",
+    ZEC: "ZECUSDT",
+    TON: "TONUSDT"
+  };
 
-  document.addEventListener("DOMContentLoaded", init);
+  /* ================== DOM ================== */
+
+  const DOM = {
+    price: document.getElementById("currentPrice"),
+    spread: document.getElementById("spreadValue"),
+    bids: document.getElementById("bids"),
+    asks: document.getElementById("asks"),
+    buyBtn: document.getElementById("buyBtn"),
+    sellBtn: document.getElementById("sellBtn"),
+    tradeBtn: document.getElementById("tradeActionBtn"),
+    amount: document.getElementById("amountInput"),
+    exec: document.getElementById("execPrice"),
+    slip: document.getElementById("slippageValue")
+  };
+
+  /* ================== INIT ================== */
 
   function init() {
     initPairs();
-    buildOrderBook();
-    initChart();
-    connectTradeStream();
+    initTrade();
+    connectStreams();
   }
 
-  /* ================= PAIRS ================= */
+  /* ================== PAIRS ================== */
 
   function initPairs() {
     document.querySelectorAll(".pair-btn").forEach(btn => {
-      btn.addEventListener("click", async () => {
-        document.querySelectorAll(".pair-btn")
-          .forEach(b => b.classList.remove("active"));
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".pair-btn").forEach(b => b.classList.remove("active"));
         btn.classList.add("active");
-
         STATE.quote = btn.dataset.pair;
-        await fetchCoinPrice();
-        calculatePrice();
-        renderPrice();
-        buildSyntheticBook();
-        reconnectStreams();
+        connectStreams();
       });
     });
   }
 
-  /* ================= PRICE ENGINE ================= */
+  /* ================== BINANCE STREAM ================== */
 
-  async function fetchCoinPrice() {
-    if (STATE.quote === "USDT" || STATE.quote === "USDC") {
-      STATE.coinUsdt = 1;
+  function connectStreams() {
+
+    if (STATE.socketTrade) STATE.socketTrade.close();
+    if (STATE.socketDepth) STATE.socketDepth.close();
+
+    const symbol = PAIRS[STATE.quote];
+
+    if (!symbol) {
+      STATE.price = STATE.reference;
+      renderPrice();
+      buildStaticBook();
       return;
     }
 
-    const res = await fetch(
-      `https://api.binance.com/api/v3/ticker/price?symbol=${STATE.quote}USDT`
+    /* ---- Trade Stream ---- */
+
+    STATE.socketTrade = new WebSocket(
+      `wss://stream.binance.com:9443/ws/${symbol.toLowerCase()}@trade`
     );
-    const data = await res.json();
-    STATE.coinUsdt = parseFloat(data.price);
+
+    STATE.socketTrade.onmessage = e => {
+      const data = JSON.parse(e.data);
+      const marketPrice = parseFloat(data.p);
+      STATE.price = STATE.reference / marketPrice;
+      renderPrice();
+      Chart.addTick(STATE.price);
+    };
+
+    /* ---- Depth Stream ---- */
+
+    STATE.socketDepth = new WebSocket(
+      `wss://stream.binance.com:9443/ws/${symbol.toLowerCase()}@depth15@100ms`
+    );
+
+    STATE.socketDepth.onmessage = e => {
+      const data = JSON.parse(e.data);
+      renderBook(data.bids, data.asks);
+    };
   }
 
-  function calculatePrice() {
-    if (STATE.quote === "USDT" || STATE.quote === "USDC") {
-      STATE.price = BX_REFERENCE;
-    } else {
-      STATE.price = BX_REFERENCE / STATE.coinUsdt;
-    }
-
-    STATE.mid = STATE.price;
-  }
+  /* ================== PRICE ================== */
 
   function renderPrice() {
-    const priceEl = document.querySelector(".live-price");
-    if (priceEl) priceEl.textContent = STATE.price.toFixed(6);
+    if (!DOM.price) return;
+    DOM.price.textContent = STATE.price.toFixed(6);
 
-    const pairLabel = document.querySelector(".pair-label");
-    if (pairLabel) pairLabel.textContent = `BX / ${STATE.quote}`;
+    if (STATE.bid && STATE.ask) {
+      STATE.spread = STATE.ask - STATE.bid;
+      if (DOM.spread)
+        DOM.spread.textContent = STATE.spread.toFixed(6);
+    }
   }
 
-  /* ================= TRADE STREAM ================= */
+  /* ================== ORDER BOOK ================== */
 
-  function connectTradeStream() {
-    if (STATE.wsTrade) STATE.wsTrade.close();
+  function renderBook(bids, asks) {
 
-    if (STATE.quote === "USDT" || STATE.quote === "USDC") return;
+    if (!DOM.bids || !DOM.asks) return;
 
-    STATE.wsTrade = new WebSocket(
-      `wss://stream.binance.com:9443/ws/${STATE.quote.toLowerCase()}usdt@trade`
-    );
+    DOM.bids.innerHTML = "";
+    DOM.asks.innerHTML = "";
 
-    STATE.wsTrade.onmessage = e => {
-      const data = JSON.parse(e.data);
-      STATE.coinUsdt = parseFloat(data.p);
-      calculatePrice();
-      renderPrice();
-      buildSyntheticBook();
-      updateMidLine();
-    };
+    const bestBid = parseFloat(bids[0][0]);
+    const bestAsk = parseFloat(asks[0][0]);
+
+    STATE.bid = STATE.reference / bestBid;
+    STATE.ask = STATE.reference / bestAsk;
+
+    renderPrice();
+
+    bids.slice(0, 15).forEach(b => {
+      const price = STATE.reference / parseFloat(b[0]);
+      const row = document.createElement("div");
+      row.className = "bid-row";
+      row.textContent = price.toFixed(6);
+      row.onclick = () => fill(price);
+      DOM.bids.appendChild(row);
+    });
+
+    asks.slice(0, 15).forEach(a => {
+      const price = STATE.reference / parseFloat(a[0]);
+      const row = document.createElement("div");
+      row.className = "ask-row";
+      row.textContent = price.toFixed(6);
+      row.onclick = () => fill(price);
+      DOM.asks.appendChild(row);
+    });
   }
 
-  function reconnectStreams() {
-    connectTradeStream();
-    loadInitialCandles();
-  }
+  function buildStaticBook() {
+    DOM.bids.innerHTML = "";
+    DOM.asks.innerHTML = "";
 
-  /* ================= ORDER BOOK ================= */
+    for (let i = 0; i < 15; i++) {
+      const bid = STATE.price - i * 0.02;
+      const ask = STATE.price + i * 0.02;
 
-  function buildOrderBook() {
-    const bids = document.querySelector(".bids");
-    const asks = document.querySelector(".asks");
-
-    bids.innerHTML = "";
-    asks.innerHTML = "";
-
-    for (let i = 0; i < ROWS; i++) {
       const b = document.createElement("div");
-      b.className = "book-row bid-row";
-      bids.appendChild(b);
-      STATE.rows.bids.push(b);
+      b.className = "bid-row";
+      b.textContent = bid.toFixed(6);
 
       const a = document.createElement("div");
-      a.className = "book-row ask-row";
-      asks.appendChild(a);
-      STATE.rows.asks.push(a);
+      a.className = "ask-row";
+      a.textContent = ask.toFixed(6);
+
+      DOM.bids.appendChild(b);
+      DOM.asks.appendChild(a);
     }
-
-    buildSyntheticBook();
   }
 
-  function buildSyntheticBook() {
-    for (let i = 0; i < ROWS; i++) {
-      const step = STATE.price * SPREAD_PCT * (i + 1);
+  /* ================== TRADE ================== */
 
-      const bid = STATE.price - step;
-      const ask = STATE.price + step;
+  function initTrade() {
 
-      STATE.rows.bids[i].textContent = bid.toFixed(6);
-      STATE.rows.asks[i].textContent = ask.toFixed(6);
-    }
+    if (!DOM.buyBtn || !DOM.sellBtn) return;
 
-    STATE.spread = (STATE.price * SPREAD_PCT * 2);
-    const spreadEl = document.querySelector(".spread-value");
-    if (spreadEl) spreadEl.textContent = STATE.spread.toFixed(6);
-  }
-
-  /* ================= CHART ================= */
-
-  let chart, candleSeries, emaSeries, vwapSeries, midLine;
-  let candleData = [];
-
-  function initChart() {
-    const container = document.getElementById("chart");
-    if (!container) return;
-
-    chart = LightweightCharts.createChart(container, {
-      layout: {
-        background: { color: "#0b0f14" },
-        textColor: "#ccc"
-      },
-      grid: {
-        vertLines: { color: "#111" },
-        horzLines: { color: "#111" }
-      }
-    });
-
-    candleSeries = chart.addCandlestickSeries();
-    emaSeries = chart.addLineSeries({ color: "#f1c40f" });
-    vwapSeries = chart.addLineSeries({ color: "#9b59b6" });
-    midLine = chart.addLineSeries({ color: "#00ffff" });
-
-    loadInitialCandles();
-  }
-
-  async function loadInitialCandles() {
-    const symbol = STATE.quote === "USDT"
-      ? "BTCUSDT"
-      : STATE.quote + "USDT";
-
-    const res = await fetch(
-      `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=1m&limit=200`
-    );
-    const data = await res.json();
-
-    candleData = data.map(c => ({
-      time: c[0] / 1000,
-      open: parseFloat(c[1]),
-      high: parseFloat(c[2]),
-      low: parseFloat(c[3]),
-      close: parseFloat(c[4]),
-      volume: parseFloat(c[5])
-    }));
-
-    candleSeries.setData(candleData);
-    updateIndicators();
-    initCandleStream(symbol);
-  }
-
-  function initCandleStream(symbol) {
-    if (STATE.wsCandle) STATE.wsCandle.close();
-
-    STATE.wsCandle = new WebSocket(
-      `wss://stream.binance.com:9443/ws/${symbol.toLowerCase()}@kline_1m`
-    );
-
-    STATE.wsCandle.onmessage = e => {
-      const msg = JSON.parse(e.data);
-      const k = msg.k;
-
-      const candle = {
-        time: k.t / 1000,
-        open: parseFloat(k.o),
-        high: parseFloat(k.h),
-        low: parseFloat(k.l),
-        close: parseFloat(k.c),
-        volume: parseFloat(k.v)
-      };
-
-      const last = candleData[candleData.length - 1];
-
-      if (candle.time === last.time) {
-        candleData[candleData.length - 1] = candle;
-      } else {
-        candleData.push(candle);
-      }
-
-      candleSeries.update(candle);
-      updateIndicators();
+    DOM.buyBtn.onclick = () => {
+      STATE.side = "BUY";
+      DOM.tradeBtn.textContent = "Buy BX";
     };
+
+    DOM.sellBtn.onclick = () => {
+      STATE.side = "SELL";
+      DOM.tradeBtn.textContent = "Sell BX";
+    };
+
+    DOM.tradeBtn.onclick = executeTrade;
   }
 
-  function updateIndicators() {
-    if (!candleData.length) return;
-
-    const ema = calculateEMA(candleData, 20);
-    emaSeries.setData(ema);
-
-    const vwap = calculateVWAP(candleData);
-    vwapSeries.setData(vwap);
-
-    updateMidLine();
+  function fill(price) {
+    if (DOM.exec)
+      DOM.exec.textContent = price.toFixed(6);
   }
 
-  function updateMidLine() {
-    if (!midLine || !candleData.length) return;
+  function executeTrade() {
 
-    midLine.setData(
-      candleData.map(c => ({
-        time: c.time,
-        value: STATE.price
-      }))
-    );
+    const amount = parseFloat(DOM.amount.value);
+    if (!amount) return;
+
+    const exec = STATE.side === "BUY" ? STATE.ask : STATE.bid;
+
+    const slippage =
+      Math.abs(exec - STATE.price) / STATE.price * 100;
+
+    if (DOM.slip)
+      DOM.slip.textContent = slippage.toFixed(2) + "%";
+
+    if (DOM.exec)
+      DOM.exec.textContent = exec.toFixed(6);
+
+    console.log("Trade:", STATE.side, amount);
   }
 
-  function calculateEMA(data, period) {
-    const k = 2 / (period + 1);
-    let ema = data[0].close;
-    return data.map(c => {
-      ema = c.close * k + ema * (1 - k);
-      return { time: c.time, value: ema };
-    });
-  }
+  /* ================== CHART v3.1 PRO ================== */
 
-  function calculateVWAP(data) {
-    let pv = 0, vol = 0;
-    return data.map(c => {
-      pv += c.close * c.volume;
-      vol += c.volume;
-      return { time: c.time, value: pv / vol };
-    });
-  }
+  const Chart = (function () {
+
+    const canvas = document.getElementById("marketChart");
+    if (!canvas) return { addTick: () => {} };
+
+    const ctx = canvas.getContext("2d");
+    let candles = [];
+    let volumes = [];
+    let current = null;
+    const tf = 5000;
+    const max = 80;
+
+    function resize() {
+      canvas.width = canvas.clientWidth;
+      canvas.height = canvas.clientHeight;
+    }
+
+    window.addEventListener("resize", resize);
+    resize();
+
+    function addTick(price) {
+
+      const now = Date.now();
+
+      if (!current) {
+        current = { t: now, o: price, h: price, l: price, c: price };
+      }
+
+      if (now - current.t >= tf) {
+        candles.push(current);
+        volumes.push(Math.random() * 20 + 5);
+        if (candles.length > max) {
+          candles.shift();
+          volumes.shift();
+        }
+        current = { t: now, o: price, h: price, l: price, c: price };
+      } else {
+        current.c = price;
+        current.h = Math.max(current.h, price);
+        current.l = Math.min(current.l, price);
+      }
+
+      draw();
+    }
+
+    function draw() {
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      if (!candles.length) return;
+
+      const prices = candles.flatMap(c => [c.h, c.l]);
+      const maxP = Math.max(...prices);
+      const minP = Math.min(...prices);
+      const range = maxP - minP || 1;
+
+      const w = canvas.width / max;
+
+      candles.forEach((c, i) => {
+
+        const x = i * w;
+        const openY = canvas.height - ((c.o - minP) / range) * canvas.height;
+        const closeY = canvas.height - ((c.c - minP) / range) * canvas.height;
+        const highY = canvas.height - ((c.h - minP) / range) * canvas.height;
+        const lowY = canvas.height - ((c.l - minP) / range) * canvas.height;
+
+        const color = c.c >= c.o ? "#16c784" : "#ea3943";
+
+        ctx.strokeStyle = color;
+        ctx.beginPath();
+        ctx.moveTo(x + w/2, highY);
+        ctx.lineTo(x + w/2, lowY);
+        ctx.stroke();
+
+        ctx.fillStyle = color;
+        ctx.fillRect(x + w*0.2, Math.min(openY, closeY),
+          w*0.6, Math.abs(openY - closeY) || 1);
+
+        ctx.fillStyle = color + "55";
+        ctx.fillRect(x + w*0.2, canvas.height - volumes[i],
+          w*0.6, volumes[i]);
+      });
+    }
+
+    return { addTick };
+
+  })();
+
+  /* ================== START ================== */
+
+  init();
 
 })();
