@@ -228,119 +228,87 @@
 
 </section>
   
-     <!-- ================= MARKET ================= -->
-<section id="market" class="view market-view">
+    
+<  ================= MARKET ============-->
+  
+<section id="market" class="market-view">
 
-  <!-- ===== HEADER ===== -->
+  <!-- ===== Header ===== -->
   <div class="market-header">
-    <div class="pair-title">
-      <span class="base">BX</span>
-      <span class="arrow">/</span>
-      <span class="quote" id="quoteAsset">USDT</span>
-    </div>
-
-    <div class="price-box">
-      <div id="marketPrice" class="price-main">38.00</div>
-      <div id="marketApprox" class="approx"></div>
+    <div class="pair-info">
+      <div class="pair-label">BX / USDT</div>
+      <div class="live-price">38.000000</div>
+      <div class="spread">
+        Spread: <span class="spread-value">0.000000</span>
+      </div>
     </div>
   </div>
-
-  <!-- ===== WALLET MINI ===== -->
+<!-- ===== WALLET MINI ===== -->
   <div class="wallet-box compact">
     <div>BX <strong id="walletBX">0.00</strong></div>
     <div>USDT <strong id="walletUSDT">0.00</strong></div>
   </div>
-
-  <!-- ===== PAIRS ===== -->
-  <div class="pair-grid">
-  <button class="pair-btn active" data-quote="USDT">USDT</button>
-  <button class="pair-btn" data-quote="USDC">USDC</button>
-  <button class="pair-btn" data-quote="BTC">BTC</button>
-  <button class="pair-btn" data-quote="BNB">BNB</button>
-  <button class="pair-btn" data-quote="ETH">ETH</button>
-  <button class="pair-btn" data-quote="AVAX">AVAX</button>
-  <button class="pair-btn" data-quote="ZEC">ZEC</button>
-  <button class="pair-btn" data-quote="TON">TON</button>
-  <button class="pair-btn" data-quote="SOL">SOL</button>
-  <button class="pair-btn" data-quote="LTC">LTC</button>
-  </div>
-  <!-- ===== CHART (CORE) ===== -->
-  <div id="bxChartWrap">
-  <canvas id="bxChart"></canvas>
-  <div id="chartBadge" class="badge-live">BX / USDT • LIVE</div>
+  <!-- ===== Pair Buttons ===== -->
+  <div class="pair-selector">
+    <button class="pair-btn active" data-pair="USDT">USDT</button>
+    <button class="pair-btn" data-pair="USDC">USDC</button>
+    <button class="pair-btn" data-pair="BTC">BTC</button>
+    <button class="pair-btn" data-pair="ETH">ETH</button>
+    <button class="pair-btn" data-pair="BNB">BNB</button>
+    <button class="pair-btn" data-pair="SOL">SOL</button>
+    <button class="pair-btn" data-pair="AVAX">AVAX</button>
+    <button class="pair-btn" data-pair="LTC">LTC</button>
+    <button class="pair-btn" data-pair="ZEC">ZEC</button>
+    <button class="pair-btn" data-pair="TON">TON</button>
   </div>
 
-  <!-- ===== INDICATOR LEGEND ===== -->
-  <div class="indicator-legend">
-    <span class="ema">EMA</span>
-    <span class="vwap">VWAP</span>
+  <!-- ===== Chart ===== -->
+  <div class="chart-container">
+    <div id="chart"></div>
   </div>
 
-  <!-- ===== TRADE BOX ===== -->
-  <div class="trade-box buy" id="tradeBox">
+  <!-- ===== Order Book ===== -->
+  <div class="orderbook">
 
-    <div class="trade-tabs">
-      <button id="buyTab" class="active">Buy</button>
-      <button id="sellTab">Sell</button>
+    <div class="ob-header">
+      <span class="col-bid">Bids</span>
+      <span class="col-price">Price</span>
+      <span class="col-ask">Asks</span>
     </div>
 
-    <div class="trade-form">
-      <label>Amount (BX)</label>
-      <input
-        id="orderAmount"
-        type="number"
-        placeholder="0.00"
-        inputmode="decimal"
-      >
+    <div class="ob-body">
+      <div class="bids"></div>
+      <div class="asks"></div>
+    </div>
+  </div>
 
-      <div class="percent-row">
+  <!-- ===== Trade Box ===== -->
+  <div class="trade-box">
+
+    <div class="trade-tabs">
+      <button class="buy-tab active">Buy</button>
+      <button class="sell-tab">Sell</button>
+    </div>
+
+    <div class="trade-inputs">
+      <input type="number"
+             class="amount-input"
+             placeholder="Amount BX"
+             step="0.0001" />
+    </div>
+<div class="percent-row">
         <button data-percent="10">10%</button>
         <button data-percent="25">25%</button>
         <button data-percent="50">50%</button>
         <button data-percent="100">MAX</button>
       </div>
 
-      <!-- ===== ORDER PREVIEW ===== -->
-      <div class="order-preview">
-        <div>Exec Price: <b id="execPrice">—</b></div>
-        <div>Slippage: <b id="slippage">—</b>%</div>
-        <div>Spread: <b id="spread">—</b></div>
-      </div>
-
-      <button class="action-btn buy" id="actionBtn">
-        Buy BX
-      </button>
+    <div class="trade-actions">
+      <button class="buy-btn">Buy BX</button>
+      <button class="sell-btn">Sell BX</button>
     </div>
-  </div>
-
-  <div class="market-cards">
-
-  <!-- ===== ORDER BOOK CARD ===== -->
-  <div class="orderbook-card">
-  <div class="card-title">Order Book</div>
-
-  <div class="orderbook-grid">
-    <!-- BIDS -->
-    <div class="ob-col bids">
-      <div class="ob-head buy">Bids</div>
-      <div id="bids" class="ob-list" data-rows="15"></div>
-    </div>
-
-    <!-- PRICE -->
-    <div class="ob-col price">
-      <div class="ob-head">Price</div>
-      <div id="priceLadder" class="price-ladder" data-rows="15"></div>
-    </div>
-
-    <!-- ASKS -->
-    <div class="ob-col asks">
-      <div class="ob-head sell">Asks</div>
-      <div id="asks" class="ob-list" data-rows="15"></div>
-    </div>
-  </div>
   </div>
 </section>
-  
   <!-- ================= CASINO ================= -->
   <section id="casino" class="view">
   <h2 class="casino-title">Casino</h2>
