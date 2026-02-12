@@ -232,7 +232,7 @@
 <!-- =========== MARKET =========== -->
   
 <section id="market" class="market-view">
-
+<div class="market-container">
   <!-- ===== Header ===== -->
   <div class="market-header">
     <div class="pair-info">
@@ -268,28 +268,25 @@
   </div>
 
   <!-- ===== Order Book ===== -->
-  <div class="orderbook">
+  <div class="orderbook-container">
 
-    <div class="ob-header">
-      <span class="col-bid">Bids</span>
-      <span class="col-price">Price</span>
-      <span class="col-ask">Asks</span>
+    <div class="book-head">
+      <span class="bid-title">Bids</span>
+      <span class="ask-title">Asks</span>
     </div>
 
-    <div class="ob-body">
+    <div class="book-columns">
       <div class="bids"></div>
       <div class="asks"></div>
     </div>
+
   </div>
-
   <!-- ===== Trade Box ===== -->
-  <div class="trade-box">
-
+  <div class="trade-panel">
     <div class="trade-tabs">
-      <button class="buy-tab active">Buy</button>
-      <button class="sell-tab">Sell</button>
+      <button class="trade-btn buy active">Buy</button>
+      <button class="trade-btn sell">Sell</button>
     </div>
-
     <div class="trade-inputs">
       <input type="number"
              class="amount-input"
@@ -303,7 +300,7 @@
         <button data-percent="100">MAX</button>
       </div>
 
-    <div class="trade-actions">
+    <div class="action-btn">
       <button class="buy-btn">Buy BX</button>
       <button class="sell-btn">Sell BX</button>
     </div>
