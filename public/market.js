@@ -233,7 +233,7 @@
     const canvas = document.getElementById("chart");
     if (!canvas) return { addTick: () => {} };
 
-    const ctx = canvas.getContext("3d");
+    const ctx = canvas.getContext("2d");
     let candles = [];
     let volumes = [];
     let current = null;
