@@ -230,7 +230,7 @@
 
   const Chart = (function () {
 
-    const canvas = document.getElementById("chart");
+    const canvas = document.getElementById("Chart");
     if (!canvas) return { addTick: () => {} };
 
     const ctx = canvas.getContext("2d");
