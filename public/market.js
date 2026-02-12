@@ -1,324 +1,285 @@
+/* =========================================================
+   MARKET ENGINE v2.7 FINAL STABLE
+   BX Anchor = 38 USDT / USDC
+   Scoped – Clean – No CSS Break
+========================================================= */
+
 (function () {
-  'use strict';
-
-  if (window.BX_MARKET_V21) return;
-  window.BX_MARKET_V21 = true;
-
-  const root = document.querySelector('#market');
-  if (!root) return;
+  "use strict";
 
   /* ================= CONFIG ================= */
 
-  const CFG = {
-    ROWS: 15,
-    BX_USDT_ANCHOR: 38,
-    SPREAD_STEP: 0.001,
-    DEPTH_MAX: 10,
-    CHART_LIMIT: 120,
-    REF_PRICE: 68000
-  };
+  const BX_REFERENCE = 38;
+  const ROWS = 15;
+  const SPREAD_PCT = 0.002;
 
   /* ================= STATE ================= */
 
-  const S = {
-    quote: 'USDT',
-    bxUSDT: CFG.BX_USDT_ANCHOR,
-    bxQuote: CFG.BX_USDT_ANCHOR,
-    mid: CFG.BX_USDT_ANCHOR,
-    bids: [],
-    asks: [],
-    maxVol: 1,
-    ws: null,
-    chart: null,
-    series: null,
-    emaSeries: null,
-    vwapSeries: null,
-    data: []
-  };
-
-  /* ================= DOM ================= */
-
-  const $ = id => document.getElementById(id);
-  const $$ = sel => root.querySelectorAll(sel);
-
-  const D = {
-    price: $('marketPrice'),
-    approx: $('marketApprox'),
-    quote: $('quoteAsset'),
-    bids: $('bids'),
-    asks: $('asks'),
-    ladder: $('priceLadder'),
-    chart: $('bxChart'),
-    execPrice: $('execPrice'),
-    slippage: $('slippage'),
-    spread: $('spread'),
-    amount: $('orderAmount'),
-    buyTab: $('buyTab'),
-    sellTab: $('sellTab'),
-    actionBtn: $('actionBtn'),
-    pairs: $$('.pair-btn')
+  const STATE = {
+    quote: "USDT",
+    coinUsdt: 1,
+    price: BX_REFERENCE,
+    mid: BX_REFERENCE,
+    spread: 0,
+    depth: { bids: [], asks: [] },
+    wsTrade: null,
+    wsCandle: null,
+    rows: { bids: [], asks: [] }
   };
 
   /* ================= INIT ================= */
 
-  document.addEventListener('DOMContentLoaded', init);
+  document.addEventListener("DOMContentLoaded", init);
 
   function init() {
     initPairs();
-    initBookRows();
+    buildOrderBook();
     initChart();
-    connectBinance();
-    rebuild(); // مهم جداً
-    setInterval(updateChart, 1000);
+    connectTradeStream();
   }
 
   /* ================= PAIRS ================= */
 
   function initPairs() {
-    D.pairs.forEach(btn => {
-      btn.addEventListener('click', () => {
-        D.pairs.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        S.quote = btn.dataset.quote;
-        if (D.quote) D.quote.textContent = S.quote;
-        connectBinance();
+    document.querySelectorAll(".pair-btn").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        document.querySelectorAll(".pair-btn")
+          .forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+
+        STATE.quote = btn.dataset.pair;
+        await fetchCoinPrice();
+        calculatePrice();
+        renderPrice();
+        buildSyntheticBook();
+        reconnectStreams();
       });
     });
   }
 
-  /* ================= BINANCE ================= */
+  /* ================= PRICE ENGINE ================= */
 
-  function connectBinance() {
-  if (S.ws) S.ws.close();
-
-  // نربط فقط العملة المرجعية
-  if (S.quote === 'USDT' || S.quote === 'USDC') {
-    S.bxUSDT = CFG.BX_USDT_ANCHOR;
-    rebuild();
-    return;
-  }
-
-  const symbol = S.quote.toLowerCase() + "usdt";
-
-  S.ws = new WebSocket(
-    `wss://stream.binance.com:9443/ws/${symbol}@trade`
-  );
-
-  S.ws.onmessage = e => {
-    const msg = JSON.parse(e.data);
-    const refPrice = parseFloat(msg.p);
-    if (!refPrice) return;
-
-    // BX/QUOTE = BX_USDT / QUOTE_USDT
-    S.bxQuote = CFG.BX_USDT_ANCHOR / refPrice;
-    S.mid = S.bxQuote;
-
-    rebuild();
-  };
-
-  S.ws.onerror = () => console.warn("WS Error");
-  }
-
-  /* ================= PRICE ================= */
-
-  const REF = {
-    USDT: 1,
-    USDC: 1,
-    BTC: 68000,
-    ETH: 3600,
-    BNB: 420,
-    SOL: 140,
-    AVAX: 38,
-    ZEC: 28,
-    TON: 2.3,
-    LTC: 70
-  };
-
-  function computeQuote() {
-    if (S.quote === 'USDT' || S.quote === 'USDC') {
-      S.bxQuote = S.bxUSDT;
-    } else {
-      S.bxQuote = S.bxUSDT / (REF[S.quote] || 1);
+  async function fetchCoinPrice() {
+    if (STATE.quote === "USDT" || STATE.quote === "USDC") {
+      STATE.coinUsdt = 1;
+      return;
     }
-    S.mid = S.bxQuote;
+
+    const res = await fetch(
+      `https://api.binance.com/api/v3/ticker/price?symbol=${STATE.quote}USDT`
+    );
+    const data = await res.json();
+    STATE.coinUsdt = parseFloat(data.price);
+  }
+
+  function calculatePrice() {
+    if (STATE.quote === "USDT" || STATE.quote === "USDC") {
+      STATE.price = BX_REFERENCE;
+    } else {
+      STATE.price = BX_REFERENCE / STATE.coinUsdt;
+    }
+
+    STATE.mid = STATE.price;
+  }
+
+  function renderPrice() {
+    const priceEl = document.querySelector(".live-price");
+    if (priceEl) priceEl.textContent = STATE.price.toFixed(6);
+
+    const pairLabel = document.querySelector(".pair-label");
+    if (pairLabel) pairLabel.textContent = `BX / ${STATE.quote}`;
+  }
+
+  /* ================= TRADE STREAM ================= */
+
+  function connectTradeStream() {
+    if (STATE.wsTrade) STATE.wsTrade.close();
+
+    if (STATE.quote === "USDT" || STATE.quote === "USDC") return;
+
+    STATE.wsTrade = new WebSocket(
+      `wss://stream.binance.com:9443/ws/${STATE.quote.toLowerCase()}usdt@trade`
+    );
+
+    STATE.wsTrade.onmessage = e => {
+      const data = JSON.parse(e.data);
+      STATE.coinUsdt = parseFloat(data.p);
+      calculatePrice();
+      renderPrice();
+      buildSyntheticBook();
+      updateMidLine();
+    };
+  }
+
+  function reconnectStreams() {
+    connectTradeStream();
+    loadInitialCandles();
   }
 
   /* ================= ORDER BOOK ================= */
 
-  const rows = { bids: [], asks: [], ladder: [] };
+  function buildOrderBook() {
+    const bids = document.querySelector(".bids");
+    const asks = document.querySelector(".asks");
 
-  function initBookRows() {
-    if (!D.bids) return;
+    bids.innerHTML = "";
+    asks.innerHTML = "";
 
-    for (let i = 0; i < CFG.ROWS; i++) {
-      const b = document.createElement('div');
-      const l = document.createElement('div');
-      const a = document.createElement('div');
+    for (let i = 0; i < ROWS; i++) {
+      const b = document.createElement("div");
+      b.className = "book-row bid-row";
+      bids.appendChild(b);
+      STATE.rows.bids.push(b);
 
-      b.className = 'row buy';
-      l.className = 'ladder-row';
-      a.className = 'row sell';
-
-      b.onclick = () => clickFill(b.textContent);
-      a.onclick = () => clickFill(a.textContent);
-
-      D.bids.appendChild(b);
-      D.ladder.appendChild(l);
-      D.asks.appendChild(a);
-
-      rows.bids.push(b);
-      rows.ladder.push(l);
-      rows.asks.push(a);
+      const a = document.createElement("div");
+      a.className = "book-row ask-row";
+      asks.appendChild(a);
+      STATE.rows.asks.push(a);
     }
+
+    buildSyntheticBook();
   }
 
-  function buildBook() {
-  S.bids = [];
-  S.asks = [];
-  S.maxVol = 1;
+  function buildSyntheticBook() {
+    for (let i = 0; i < ROWS; i++) {
+      const step = STATE.price * SPREAD_PCT * (i + 1);
 
-  const mid = S.mid;
+      const bid = STATE.price - step;
+      const ask = STATE.price + step;
 
-  for (let i = 1; i <= CFG.ROWS; i++) {
-    const bid = mid * (1 - i * CFG.SPREAD_STEP);
-    const ask = mid * (1 + i * CFG.SPREAD_STEP);
+      STATE.rows.bids[i].textContent = bid.toFixed(6);
+      STATE.rows.asks[i].textContent = ask.toFixed(6);
+    }
 
-    const bVol = 1 + Math.random() * CFG.DEPTH_MAX;
-    const aVol = 1 + Math.random() * CFG.DEPTH_MAX;
-
-    S.bids.push({ price: bid, vol: bVol });
-    S.asks.push({ price: ask, vol: aVol });
-
-    S.maxVol = Math.max(S.maxVol, bVol, aVol);
-  }
-  }
-  
-  function renderBook() {
-
-  for (let i = 0; i < CFG.ROWS; i++) {
-
-    const bid = S.bids[i];
-    const ask = S.asks[i];
-
-    rows.bids[i].textContent = bid.price.toFixed(6);
-    rows.asks[i].textContent = ask.price.toFixed(6);
-
-    const bPct = bid.vol / S.maxVol;
-    const aPct = ask.vol / S.maxVol;
-
-    rows.bids[i].style.background =
-      `linear-gradient(to left, rgba(14,203,129,${bPct}), transparent)`;
-
-    rows.asks[i].style.background =
-      `linear-gradient(to right, rgba(246,70,93,${aPct}), transparent)`;
+    STATE.spread = (STATE.price * SPREAD_PCT * 2);
+    const spreadEl = document.querySelector(".spread-value");
+    if (spreadEl) spreadEl.textContent = STATE.spread.toFixed(6);
   }
 
-  const bestBid = S.bids[0].price;
-  const bestAsk = S.asks[0].price;
-
-  if (D.spread)
-    D.spread.textContent = (bestAsk - bestBid).toFixed(6);
-  }
-  
   /* ================= CHART ================= */
 
-  function initChart() {
-    if (!window.LightweightCharts || !D.chart) return;
+  let chart, candleSeries, emaSeries, vwapSeries, midLine;
+  let candleData = [];
 
-    S.chart = LightweightCharts.createChart(D.chart, {
-      layout: { background: { color: 'transparent' }, textColor: '#aaa' },
-      grid: { vertLines: { visible: false }, horzLines: { visible: false } },
-      timeScale: { visible: false }
+  function initChart() {
+    const container = document.getElementById("chart");
+    if (!container) return;
+
+    chart = LightweightCharts.createChart(container, {
+      layout: {
+        background: { color: "#0b0f14" },
+        textColor: "#ccc"
+      },
+      grid: {
+        vertLines: { color: "#111" },
+        horzLines: { color: "#111" }
+      }
     });
 
-    S.series = S.chart.addLineSeries({ color: '#0ecb81', lineWidth: 2 });
-    S.emaSeries = S.chart.addLineSeries({ color: '#f0b90b', lineWidth: 1 });
-    S.vwapSeries = S.chart.addLineSeries({ color: '#a855f7', lineWidth: 1 });
+    candleSeries = chart.addCandlestickSeries();
+    emaSeries = chart.addLineSeries({ color: "#f1c40f" });
+    vwapSeries = chart.addLineSeries({ color: "#9b59b6" });
+    midLine = chart.addLineSeries({ color: "#00ffff" });
+
+    loadInitialCandles();
   }
 
-  function updateChart() {
-    if (!S.series) return;
+  async function loadInitialCandles() {
+    const symbol = STATE.quote === "USDT"
+      ? "BTCUSDT"
+      : STATE.quote + "USDT";
 
-    const now = Math.floor(Date.now() / 1000);
+    const res = await fetch(
+      `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=1m&limit=200`
+    );
+    const data = await res.json();
 
-    S.data.push({ time: now, value: S.mid });
-    if (S.data.length > CFG.CHART_LIMIT) S.data.shift();
+    candleData = data.map(c => ({
+      time: c[0] / 1000,
+      open: parseFloat(c[1]),
+      high: parseFloat(c[2]),
+      low: parseFloat(c[3]),
+      close: parseFloat(c[4]),
+      volume: parseFloat(c[5])
+    }));
 
-    S.series.setData(S.data);
+    candleSeries.setData(candleData);
+    updateIndicators();
+    initCandleStream(symbol);
+  }
 
-    const ema = calculateEMA(S.data, 14);
-    const vwap = calculateVWAP(S.data);
+  function initCandleStream(symbol) {
+    if (STATE.wsCandle) STATE.wsCandle.close();
 
-    S.emaSeries.setData(ema);
-    S.vwapSeries.setData(vwap);
+    STATE.wsCandle = new WebSocket(
+      `wss://stream.binance.com:9443/ws/${symbol.toLowerCase()}@kline_1m`
+    );
+
+    STATE.wsCandle.onmessage = e => {
+      const msg = JSON.parse(e.data);
+      const k = msg.k;
+
+      const candle = {
+        time: k.t / 1000,
+        open: parseFloat(k.o),
+        high: parseFloat(k.h),
+        low: parseFloat(k.l),
+        close: parseFloat(k.c),
+        volume: parseFloat(k.v)
+      };
+
+      const last = candleData[candleData.length - 1];
+
+      if (candle.time === last.time) {
+        candleData[candleData.length - 1] = candle;
+      } else {
+        candleData.push(candle);
+      }
+
+      candleSeries.update(candle);
+      updateIndicators();
+    };
+  }
+
+  function updateIndicators() {
+    if (!candleData.length) return;
+
+    const ema = calculateEMA(candleData, 20);
+    emaSeries.setData(ema);
+
+    const vwap = calculateVWAP(candleData);
+    vwapSeries.setData(vwap);
+
+    updateMidLine();
+  }
+
+  function updateMidLine() {
+    if (!midLine || !candleData.length) return;
+
+    midLine.setData(
+      candleData.map(c => ({
+        time: c.time,
+        value: STATE.price
+      }))
+    );
   }
 
   function calculateEMA(data, period) {
-    let k = 2 / (period + 1);
-    let ema = [];
-    let prev = data[0]?.value || 0;
-
-    data.forEach(d => {
-      prev = d.value * k + prev * (1 - k);
-      ema.push({ time: d.time, value: prev });
+    const k = 2 / (period + 1);
+    let ema = data[0].close;
+    return data.map(c => {
+      ema = c.close * k + ema * (1 - k);
+      return { time: c.time, value: ema };
     });
-
-    return ema;
   }
 
   function calculateVWAP(data) {
-    let sum = 0;
-    return data.map((d, i) => {
-      sum += d.value;
-      return { time: d.time, value: sum / (i + 1) };
+    let pv = 0, vol = 0;
+    return data.map(c => {
+      pv += c.close * c.volume;
+      vol += c.volume;
+      return { time: c.time, value: pv / vol };
     });
-  }
-
-  /* ================= EXECUTION ================= */
-
-  function clickFill(price) {
-    if (!price) return;
-    if (D.execPrice) D.execPrice.textContent = price;
-  }
-
-  D.actionBtn?.addEventListener('click', () => {
-    const amount = parseFloat(D.amount?.value || 0);
-    if (!amount) return;
-
-    const bestBid = S.bids[0]?.price || 0;
-    const bestAsk = S.asks[0]?.price || 0;
-
-    let slippage = 0;
-
-    if (D.buyTab?.classList.contains('active')) {
-      slippage = ((bestAsk - S.mid) / S.mid) * 100;
-    } else {
-      slippage = ((S.mid - bestBid) / S.mid) * 100;
-    }
-
-    if (D.slippage)
-      D.slippage.textContent = slippage.toFixed(3);
-
-    if (D.execPrice)
-      D.execPrice.textContent = S.mid.toFixed(6);
-  });
-
-  /* ================= REBUILD ================= */
-
-  function rebuild() {
-    computeQuote();
-    buildBook();
-    renderHeader();
-    renderBook();
-  }
-
-  function renderHeader() {
-    if (D.price)
-      D.price.textContent = S.mid.toFixed(6);
-
-    if (D.approx)
-      D.approx.textContent =
-        `≈ ${S.bxUSDT.toFixed(2)} USDT`;
   }
 
 })();
