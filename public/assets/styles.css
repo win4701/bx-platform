@@ -433,6 +433,18 @@ h3{
   border-color:var(--yellow);
 }
 
+.pair-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pair-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 7px;
+}
+
 /* ================= ORDER BOOK ================= */
 
 #market .orderbook {
