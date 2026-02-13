@@ -401,90 +401,100 @@ h3{
   color:var(--muted);
 }
 
-/* ================= PAIR SELECTOR ================= */
+/* ================= Paire Selcttor================= */
 
-.pair-grid{
-  display:grid;
-  grid-template-columns:repeat(5,1fr);
-  gap:6px;
-  margin:10px 0;
+.pair-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
 }
 
-.pair-btn{
-  height:32px;
-  border-radius:10px;
-  border:1px solid var(--soft-border);
-  background:#0e1318;
-  color:var(--muted);
-  font-size:12px;
-  font-weight:800;
-  cursor:pointer;
-  transition:.18s ease;
+.pair-row {
+  display: flex;
+  justify-content: space-between;
 }
 
-.pair-btn:hover{
-  background:#18212b;
-  color:#fff;
+.pair-btn {
+  flex: 1;
+  height: 32px;
+  border-radius: 10px;
+  border: 1px solid var(--soft-border);
+  background: #0e1318;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: 0.18s ease;
 }
 
-.pair-btn.active{
-  background:rgba(240,185,11,.12);
-  color:var(--yellow);
-  border-color:var(--yellow);
+.pair-btn:hover {
+  background: #18212b;
+  color: #fff;
+}
+
+.pair-btn.active {
+  background: rgba(240, 185, 11, 0.12);
+  color: var(--yellow);
+  border-color: var(--yellow);
 }
 
 /* ================= ORDER BOOK ================= */
 
-#market .orderbook {
-  background: #0f1624;
-  border-radius: 14px;
-  padding: 15px;
-  border: 1px solid rgba(255,255,255,0.05);
-}
-
-#market .book-header {
+.orderbook {
   display: flex;
   justify-content: space-between;
-  font-weight: 800;
+  margin-top: 20px;
+}
+
+.orderbook-card {
+  background: linear-gradient(180deg, #0b1a2b, #0f2236);
+  border-radius: 12px;
+  padding: 14px;
+  width: 48%;
+}
+
+.orderbook-header {
+  display: flex;
+  justify-content: space-between;
+  font-weight: bold;
   margin-bottom: 10px;
+  font-size: 14px;
 }
 
-#market .bids-title {
-  color: #16c784;
-}
-
-#market .asks-title {
-  color: #ea3943;
-}
-
-#market .book-body {
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
-}
-
-#market .bids,
-#market .asks {
-  width: 50%;
-}
-
-#market .book-row {
-  display: flex;
-  justify-content: space-between;
-  padding: 4px 6px;
+.ob-row {
+  padding: 6px 8px;
+  border-radius: 8px;
   font-size: 13px;
-  border-radius: 6px;
-  margin-bottom: 3px;
+  margin-bottom: 6px;
 }
 
-#market .bid-row {
-  background: linear-gradient(90deg, rgba(22,199,132,0.25), transparent);
+.bid-row {
+  background: linear-gradient(90deg, rgba(22, 199, 132, 0.25), transparent);
   color: #16c784;
 }
 
-#market .ask-row {
-  background: linear-gradient(90deg, transparent, rgba(234,57,67,0.25));
+.ask-row {
+  background: linear-gradient(90deg, rgba(234, 57, 67, 0.25), transparent);
   color: #ea3943;
+}
+
+.ob-column {
+  width: 100%;
+  overflow-y: auto;
+  max-height: 300px;
+}
+
+.ob-column::-webkit-scrollbar {
+  width: 6px;
+}
+
+.ob-column::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+.ob-column::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.5);
 }
 
 /* ================= ORDER BOOK CARD ================= */
