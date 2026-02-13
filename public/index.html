@@ -238,10 +238,10 @@
     <div class="market-top">
       <div class="pair-box">
         <div class="pair-label" id="pairLabel">BX / USDT</div>
-        <div class="price-box">
-          <span id="livePrice">38.000000</span>
-          <small id="spreadBox">Spread: 0.000000</small>
-        </div>
+       <div class="price-box">
+  <span id="headerPrice">38.000000</span>
+  <small id="headerSpread">Spread: 0.000000</small>
+       </div>
       </div>
     </div>
 
@@ -253,18 +253,21 @@
 
     <!-- Pair Selector -->
     <div class="pair-selector">
-      <button class="pair-btn active" data-pair="USDT">USDT</button>
-      <button class="pair-btn" data-pair="USDC">USDC</button>
-      <button class="pair-btn" data-pair="BTC">BTC</button>
-      <button class="pair-btn" data-pair="ETH">ETH</button>
-      <button class="pair-btn" data-pair="BNB">BNB</button>
-      <button class="pair-btn" data-pair="SOL">SOL</button>
-      <button class="pair-btn" data-pair="AVAX">AVAX</button>
-      <button class="pair-btn" data-pair="LTC">LTC</button>
-      <button class="pair-btn" data-pair="ZEC">ZEC</button>
-      <button class="pair-btn" data-pair="TON">TON</button>
+  <div class="pair-row">
+    <button class="pair-btn active" data-pair="USDT">USDT</button>
+    <button class="pair-btn" data-pair="USDC">USDC</button>
+    <button class="pair-btn" data-pair="BTC">BTC</button>
+    <button class="pair-btn" data-pair="ETH">ETH</button>
+    <button class="pair-btn" data-pair="BNB">BNB</button>
+  </div>
+  <div class="pair-row">
+    <button class="pair-btn" data-pair="SOL">SOL</button>
+    <button class="pair-btn" data-pair="AVAX">AVAX</button>
+    <button class="pair-btn" data-pair="LTC">LTC</button>
+    <button class="pair-btn" data-pair="ZEC">ZEC</button>
+    <button class="pair-btn" data-pair="TON">TON</button>
+  </div>
     </div>
-
     <!-- Chart -->
     <div class="chart-container">
       <div id="Chart" style="height:200px;"></div>
@@ -333,13 +336,12 @@
     <!-- MID PRICE COLUMN -->
     <div class="ob-col mid-col">
       <div class="mid-price-box">
-        <span id="livePrice">0.000000</span>
-        <span class="spread-box">
-          Spread:
-          <span id="spreadValue">0.000000</span>
-        </span>
+  <span id="obMidPrice">0.000000</span>
+  <div class="spread-box">
+    Spread:
+    <span id="spreadValue">0.000000</span>
+  </div>
       </div>
-    </div>
 
     <!-- ASKS -->
     <div id="asks" class="ob-col asks-col">
