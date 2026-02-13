@@ -1,88 +1,4 @@
-/* =========================================================
-   BLOXIO MARKET CSS — GLOBAL PRO VERSION 3.0
-   Optimized • Clean • Depth Engine Ready
-   No layout breaking
-========================================================= */
-
-:root{
-  --bg:#0b0e11;
-  --panel:#11161c;
-  --panel-2:#151b22;
-  --border:#1e2329;
-  --soft-border:rgba(255,255,255,.06);
-
-  --text:#eaecef;
-  --muted:#848e9c;
-
-  --green:#0ecb81;
-  --green-glow:rgba(14,203,129,.15);
-
-  --red:#f6465d;
-  --red-glow:rgba(246,70,93,.15);
-
-  --yellow:#f0b90b;
-  --blue:#3b82f6;
-}
-
-/* ================= BASE ================= */
-
-.market-view{
-  padding:14px;
-  background:var(--bg);
-  color:var(--text);
-  font-family:system-ui,-apple-system,BlinkMacSystemFont;
-  -webkit-font-smoothing:antialiased;
-  text-rendering:optimizeLegibility;
-}
-
-/* ================= HEADER ================= */
-
-.market-header{
-  display:flex;
-  justify-content:space-between;
-  align-items:flex-start;
-  margin-bottom:14px;
-}
-
-.pair-title{
-  display:flex;
-  align-items:center;
-  gap:6px;
-  font-size:18px;
-  font-weight:800;
-  letter-spacing:.3px;
-}
-
-.pair-title .base{ color:var(--yellow); }
-.pair-title .arrow{ color:var(--muted); }
-.pair-title .quote{ color:#94a3b8; }
-
-.price-box{
-  text-align:right;
-}
-
-.price-main{
-  font-size:26px;
-  font-weight:900;
-  transition:.2s ease;
-}
-
-.price-main.up{
-  color:var(--green);
-  text-shadow:0 0 8px var(--green-glow);
-}
-
-.price-main.down{
-  color:var(--red);
-  text-shadow:0 0 8px var(--red-glow);
-}
-
-.approx{
-  font-size:12px;
-  color:var(--muted);
-}
-
-/* ================= PAIR SELECTOR ================= */
+/*================= PAIR SELECTOR ================= */
 
 .pair-grid{
   display:grid;
@@ -98,7 +14,7 @@
   background:#0e1318;
   color:var(--muted);
   font-size:12px;
-  font-weight:600;
+  font-weight:800;
   cursor:pointer;
   transition:.18s ease;
 }
@@ -116,199 +32,121 @@
 
 /* ================= ORDER BOOK ================= */
 
-.orderbook{
-  margin-top:10px;
-  background:var(--panel);
-  border:1px solid var(--border);
-  border-radius:14px;
-  padding:10px;
+#market .orderbook {
+  background: #0f1624;
+  border-radius: 14px;
+  padding: 15px;
+  border: 1px solid rgba(255,255,255,0.05);
 }
 
-.book-header{
-  display:grid;
-  grid-template-columns:1fr 1fr 1fr;
-  font-size:11px;
-  color:var(--muted);
-  padding-bottom:6px;
-  border-bottom:1px solid var(--soft-border);
+#market .book-header {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 800;
+  margin-bottom: 10px;
 }
 
-.book-body{
-  max-height:260px;
-  overflow:hidden;
-  position:relative;
+#market .bids-title {
+  color: #16c784;
 }
 
-.book-row{
-  display:grid;
-  grid-template-columns:1fr 1fr 1fr;
-  font-size:12px;
-  padding:4px 0;
-  position:relative;
+#market .asks-title {
+  color: #ea3943;
 }
 
-.book-row span{
-  z-index:2;
+#market .book-body {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
 }
 
-.book-row.bid{
-  color:var(--green);
+#market .bids,
+#market .asks {
+  width: 50%;
 }
 
-.book-row.ask{
-  color:var(--red);
+#market .book-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 6px;
+  font-size: 13px;
+  border-radius: 6px;
+  margin-bottom: 3px;
 }
 
-/* Depth background */
-
-.book-row::before{
-  content:"";
-  position:absolute;
-  top:0;
-  bottom:0;
-  right:0;
-  width:var(--depth,0%);
-  z-index:1;
-  opacity:.12;
+#market .bid-row {
+  background: linear-gradient(90deg, rgba(22,199,132,0.25), transparent);
+  color: #16c784;
 }
 
-.book-row.bid::before{
-  background:var(--green);
+#market .ask-row {
+  background: linear-gradient(90deg,rgba(255,60,60,0.25),transparent);
+  color: #ff4c4c;
 }
 
-.book-row.ask::before{
-  background:var(--red);
+/* ================= ORDER BOOK CARD ================= */
+
+.orderbook-card {
+  background: linear-gradient(180deg,#0b1a2b,#0f2236);
+  border-radius: 18px;
+  padding: 14px;
 }
 
-/* ================= MID PRICE ================= */
-
-.mid-price{
-  text-align:center;
-  font-weight:800;
-  padding:6px 0;
-  font-size:14px;
-  color:#fff;
-  background:var(--panel-2);
-  border-top:1px solid var(--soft-border);
-  border-bottom:1px solid var(--soft-border);
+.ob-row {
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 4px;
 }
 
-/* ================= BUY / SELL PANEL ================= */
-
-.trade-box{
-  margin-top:12px;
-  background:var(--panel);
-  border:1px solid var(--border);
-  border-radius:16px;
-  padding:14px;
+.orderbook-header {
+  display: flex;
+  justify-content: space-between;
+  font-weight: bold;
+  margin-bottom: 12px;
+  font-size: 14px;
 }
 
-.trade-toggle{
-  display:flex;
-  gap:8px;
-  margin-bottom:12px;
+.ob-bids-title { color: #16c784; }
+.ob-asks-title { color: #ea3943; }
+
+.orderbook-body {
+  display: flex;
+  gap: 12px;
 }
 
-.trade-toggle button{
-  flex:1;
-  height:38px;
-  border-radius:12px;
-  font-weight:700;
-  font-size:14px;
-  border:1px solid var(--soft-border);
-  background:#0f141a;
-  color:var(--muted);
-  cursor:pointer;
-  transition:.2s ease;
+.ob-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
-.trade-toggle button.active-buy{
-  background:var(--green);
-  color:#000;
-  border:none;
+.bid-row,
+.ask-row {
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: monospace;
+  transition: 0.2s ease;
 }
 
-.trade-toggle button.active-sell{
-  background:var(--red);
-  color:#000;
-  border:none;
+.bid-row {
+  background: linear-gradient(90deg, rgba(22,199,132,0.25), transparent);
+  color: #16c784;
 }
 
-/* Input */
-
-.trade-input{
-  width:100%;
-  height:42px;
-  border-radius:12px;
-  border:1px solid var(--soft-border);
-  background:#0f141a;
-  color:#fff;
-  padding:0 12px;
-  font-size:14px;
-  margin-bottom:10px;
-  outline:none;
+.ask-row {
+  background: linear-gradient(90deg, rgba(234,57,67,0.25), transparent);
+  color: #ea3943;
 }
 
-.trade-input:focus{
-  border-color:var(--yellow);
+.bid-row:hover {
+  background: rgba(22,199,132,0.4);
 }
 
-/* Percent buttons */
-
-.percent-grid{
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:6px;
-  margin-bottom:12px;
-}
-
-.percent-btn{
-  height:32px;
-  border-radius:10px;
-  border:1px solid var(--soft-border);
-  background:#0f141a;
-  color:var(--muted);
-  font-size:12px;
-  cursor:pointer;
-  transition:.2s ease;
-}
-
-.percent-btn:hover{
-  background:#18212b;
-  color:#fff;
-}
-
-/* Submit buttons */
-
-.submit-btn{
-  width:100%;
-  height:42px;
-  border-radius:14px;
-  font-size:14px;
-  font-weight:800;
-  border:none;
-  cursor:pointer;
-  transition:.2s ease;
-}
-
-.submit-btn.buy{
-  background:var(--green);
-  color:#000;
-}
-
-.submit-btn.sell{
-  background:var(--red);
-  color:#000;
-}
-
-.submit-btn:hover{
-  transform:translateY(-1px);
-  opacity:.92;
-}
-
-/* ================= RESPONSIVE ================= */
-
-@media(max-width:400px){
-  .book-body{max-height:220px;}
-  .price-main{font-size:22px;}
-}
+.ask-row:hover {
+  background: rgba(234,57,67,0.4);
+                         }
+     
