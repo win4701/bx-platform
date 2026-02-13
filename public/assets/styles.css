@@ -403,34 +403,34 @@ h3{
 
 /* ================= PAIR SELECTOR ================= */
 
-.pair-grid{
-  display:grid;
-  grid-template-columns:repeat(5,1fr);
-  gap:6px;
-  margin:10px 0;
+.pair-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+  margin: 10px 0;
 }
 
-.pair-btn{
-  height:32px;
-  border-radius:10px;
-  border:1px solid var(--soft-border);
-  background:#0e1318;
-  color:var(--muted);
-  font-size:12px;
-  font-weight:800;
-  cursor:pointer;
-  transition:.18s ease;
+.pair-btn {
+  height: 32px;
+  border-radius: 10px;
+  border: 1px solid var(--soft-border);
+  background: #0e1318;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: 0.18s ease;
 }
 
-.pair-btn:hover{
-  background:#18212b;
-  color:#fff;
+.pair-btn:hover {
+  background: #18212b;
+  color: #fff;
 }
 
-.pair-btn.active{
-  background:rgba(240,185,11,.12);
-  color:var(--yellow);
-  border-color:var(--yellow);
+.pair-btn.active {
+  background: rgba(240, 185, 11, 0.12);
+  color: var(--yellow);
+  border-color: var(--yellow);
 }
 
 /* ================= ORDER BOOK ================= */
@@ -439,7 +439,7 @@ h3{
   background: #0f1624;
   border-radius: 14px;
   padding: 15px;
-  border: 1px solid rgba(255,255,255,0.05);
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 #market .book-header {
@@ -478,19 +478,19 @@ h3{
 }
 
 #market .bid-row {
-  background: linear-gradient(90deg, rgba(22,199,132,0.25), transparent);
+  background: linear-gradient(90deg, rgba(22, 199, 132, 0.25), transparent);
   color: #16c784;
 }
 
 #market .ask-row {
-  background: linear-gradient(90deg,rgba(255,60,60,0.25),transparent);
+  background: linear-gradient(90deg, rgba(255, 60, 60, 0.25), transparent);
   color: #ff4c4c;
 }
 
 /* ================= ORDER BOOK CARD ================= */
 
 .orderbook-card {
-  background: linear-gradient(180deg,#0b1a2b,#0f2236);
+  background: linear-gradient(180deg, #0b1a2b, #0f2236);
   border-radius: 18px;
   padding: 14px;
 }
@@ -511,8 +511,13 @@ h3{
   font-size: 14px;
 }
 
-.ob-bids-title { color: #16c784; }
-.ob-asks-title { color: #ea3943; }
+.ob-bids-title {
+  color: #16c784;
+}
+
+.ob-asks-title {
+  color: #ea3943;
+}
 
 .orderbook-body {
   display: flex;
@@ -536,21 +541,21 @@ h3{
 }
 
 .bid-row {
-  background: linear-gradient(90deg, rgba(22,199,132,0.25), transparent);
+  background: linear-gradient(90deg, rgba(22, 199, 132, 0.25), transparent);
   color: #16c784;
 }
 
 .ask-row {
-  background: linear-gradient(90deg, rgba(234,57,67,0.25), transparent);
+  background: linear-gradient(90deg, rgba(234, 57, 67, 0.25), transparent);
   color: #ea3943;
 }
 
 .bid-row:hover {
-  background: rgba(22,199,132,0.4);
+  background: rgba(22, 199, 132, 0.4);
 }
 
 .ask-row:hover {
-  background: rgba(234,57,67,0.4);
+  background: rgba(234, 57, 67, 0.4);
 }
 
 /* ================= MID PRICE ================= */
