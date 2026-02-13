@@ -495,19 +495,24 @@ h3{
 }
 
 #market .ask-row {
-  background: linear-gradient(90deg, transparent, rgba(234,57,67,0.25));
-  color: #ea3943;
+  background: linear-gradient(90deg,rgba(255,60,60,0.25),transparent);
+  color: #ff4c4c;
 }
 
 /* ================= ORDER BOOK CARD ================= */
 
 .orderbook-card {
-  margin-top: 20px;
-  padding: 16px;
-  background: linear-gradient(180deg, #0f1c2f, #0b1624);
-  border-radius: 16px;
-  border: 1px solid rgba(255,255,255,0.05);
-  box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+  background: linear-gradient(180deg,#0b1a2b,#0f2236);
+  border-radius: 18px;
+  padding: 14px;
+}
+
+.ob-row {
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 4px;
 }
 
 .orderbook-header {
