@@ -411,12 +411,12 @@ h3{
 }
 
 .pair-btn {
-  height: 38px;
-  border-radius: 10px;
+  height: 28px;
+  border-radius: 6px;
   border: 1px solid var(--soft-border);
   background: #0e1318;
   color: var(--muted);
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 800;
   cursor: pointer;
   transition: 0.18s ease;
