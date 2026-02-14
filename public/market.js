@@ -249,4 +249,4 @@ function updateChart(price){
   });
 
   chartCtx.stroke();
-  }
+}
