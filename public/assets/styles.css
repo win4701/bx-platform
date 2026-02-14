@@ -493,55 +493,72 @@ h3{
 
 /* ================= ORDER BOOK CARD ================= */
 
-
-.orderbook {
-  background: linear-gradient(180deg, #0f1c2e, #0b1624);
+.orderbook-card {
+  background: linear-gradient(145deg,#0c1624,#0f1c2d);
   border-radius: 18px;
   padding: 18px;
-  margin-top: 20px;
-  box-shadow: 0 0 25px rgba(0,0,0,0.4);
-}
+  box-shadow: 0 10px 30px rgba(0,0,0,0.4);
 
-.orderbook-columns {
+/* Grid */
+.orderbook-grid {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
-  gap: 8px;
-  text-align: center;
+  gap: 10px;
 }
 
-.orderbook-columns div {
-  font-size: 14px;
-  padding: 6px 4px;
+/* Headers */
+.ob-head {
+  font-size: 13px;
+  font-weight: 800;
+  opacity: .7;
+  margin-bottom: 8px;
+}
+
+.ob-head.buy { color: #35d49a; }
+.ob-head.sell { color: #ff6b6b; }
+
+/* Lists */
+.ob-list,
+.price-ladder {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Rows */
+.ob-row {
+  padding: 6px ;
   border-radius: 8px;
-  transition: 0.2s;
+  font-size: 13px;
+  font-weight: 500;
+  transition: .2s;
 }
 
-/* BIDS - أخضر خفيف */
-#bids div {
+/* Bids */
+.bids .ob-row {
   background: rgba(0, 255, 140, 0.05);
   color: #2edc8f;
 }
 
-#bids div:hover {
+.bids .ob-row:hover {
   background: rgba(0, 255, 140, 0.12);
-}
 
-/* ASKS - أحمر خفيف */
-#asks div {
+/* Asks */
+.asks .ob-row {
   background: rgba(255, 80, 80, 0.05);
   color: #ff6b6b;
 }
 
-#asks div:hover {
+.asks .ob-row:hover {
   background: rgba(255, 80, 80, 0.12);
 }
 
-/* Mid Price */
-#priceLadder div {
+/* Mid Price column */
+.price-ladder .ob-row {
+  background: rgba(255,255,255,.04);
   color: #8aa0c8;
-  font-weight: 600;
+  text-align: center;
 }
-
      
 /* ================= BUY / SELL PANEL ================= */
 
