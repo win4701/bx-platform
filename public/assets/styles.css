@@ -439,58 +439,65 @@ h3{
   border-color: var(--yellow);
 }
 
-/* ================= ORDER BOOK ================= */
+/* ================= ORDER BOOK – ================= */
 
-#market .orderbook {
-  background: #0f1624;
-  border-radius: 14px;
-  padding: 15px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
+.orderbook {
+  background: linear-gradient(180deg,#0f1c2e,#0b1220);
+  border-radius: 18px;
+  padding: 16px;
+  border: 1px solid rgba(255,255,255,.06);
+  margin-top: 16px;
 }
 
-#market .book-header {
-  display: flex;
-  justify-content: space-between;
-  font-weight: 800;
-  margin-bottom: 10px;
+.orderbook-header {
+  display:flex;
+  justify-content:space-between;
+  font-weight:800;
+  font-size:14px;
+  margin-bottom:10px;
 }
 
-#market .bids-title {
-  color: #16c784;
+.orderbook-header .bids-title { color:#16c784; }
+.orderbook-header .asks-title { color:#ea3943; }
+
+.orderbook-body{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
 }
 
-#market .asks-title {
-  color: #ea3943;
+.ob-column{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
 }
 
-#market .book-body {
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
+.ob-row{
+  padding:8px 10px;
+  border-radius:10px;
+  font-size:13px;
+  font-family:monospace;
+  font-weight:700;
 }
 
-#market .bids,
-#market .asks {
-  width: 50%;
+.bid-row{
+  background:linear-gradient(90deg, rgba(22,199,132,.25), transparent);
+  color:#16c784;
 }
 
-#market .book-row {
-  display: flex;
-  justify-content: space-between;
-  padding: 4px 6px;
-  font-size: 13px;
-  border-radius: 6px;
-  margin-bottom: 3px;
+.ask-row{
+  background:linear-gradient(90deg, rgba(234,57,67,.25), transparent);
+  color:#ea3943;
 }
 
-#market .bid-row {
-  background: linear-gradient(90deg, rgba(22, 199, 132, 0.25), transparent);
-  color: #16c784;
-}
-
-#market .ask-row {
-  background: linear-gradient(90deg, rgba(255, 60, 60, 0.25), transparent);
-  color: #ff4c4c;
+.mid-price{
+  text-align:center;
+  font-weight:800;
+  padding:10px 0;
+  margin:10px 0;
+  font-size:15px;
+  border-top:1px solid rgba(255,255,255,.06);
+  border-bottom:1px solid rgba(255,255,255,.06);
 }
 
 /* ================= ORDER BOOK CARD ================= */
@@ -521,28 +528,6 @@ h3{
 .ask-row{
   background:linear-gradient(90deg,rgba(246,70,93,.25),transparent);
   color:var(--red);
-}
-
-.mid-price{
-  text-align:center;
-  padding:8px;
-  margin:6px 0;
-  font-weight:800;
-  background:#121b2a;
-  border-radius:10px;
-}
-
-/* ================= MID PRICE ================= */
-
-.mid-price{
-  text-align:center;
-  font-weight:800;
-  padding:6px 0;
-  font-size:14px;
-  color:#fff;
-  background:var(--panel-2);
-  border-top:1px solid var(--soft-border);
-  border-bottom:1px solid var(--soft-border);
 }
 
 /* ================= BUY / SELL PANEL ================= */
