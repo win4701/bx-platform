@@ -719,8 +719,8 @@ const MINING = {
 
 const MINING_PLANS_BY_COIN = {
   BX: [
-    { id:"p10", name:"Starter",  days:10, roi:2.5, min:10,   max:100  },
-    { id:"p21", name:"Basic",    days:21, roi:5,   min:50,   max:300  },
+    { id:"p10", name:"Starter",  days:10, roi:2.5, min:5,   max:60  },
+    { id:"p21", name:"Basic",    days:21, roi:5,   min:50,   max:250  },
     { id:"p30", name:"Golden",   days:30, roi:8,   min:200,  max:800  },
     { id:"p45", name:"Pro", days:45, roi:12,  min:400,  max:2500 },
     { id:"p60", name:"Platine",  days:60, roi:17,  min:750,  max:9000 },
@@ -792,13 +792,13 @@ function renderMiningPlans() {
     card.className = "card mining-plan";
 
     card.innerHTML = `
-      <h4>
+      <h3>
         ${plan.name}
         ${plan.sub ? '<span class="sub-tag">SUB</span>' : ''}
-      </h4>
+      </h3>
       <div class="mining-profit">${plan.roi}%</div>
       <ul>
-        <li>Duration: ${plan.days} days</li>
+        <li>Time: ${plan.days} days</li>
         <li>Min: ${plan.min} ${MINING.coin}</li>
         <li>Max: ${plan.max} ${MINING.coin}</li>
       </ul>
