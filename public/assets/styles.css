@@ -495,68 +495,80 @@ h3{
 /* ================= ORDER BOOK CARD ================= */
 
 .orderbook-card {
-  background: linear-gradient(180deg,#0b1a2b,#0f2236);
+  background: linear-gradient(180deg,#0f1b2d,#0b1625);
   border-radius: 18px;
-  padding: 14px;
+  padding: 16px;
+  margin-top: 20px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.4);
 }
 
-.ob-row {
-  padding: 5px 10px;
-  border-radius: 8px;
+.card-title {
+  font-weight: 700;
+  font-size: 16px;
+  margin-bottom: 14px;
+  color: #e6edf3;
+}
+
+/* GRID */
+.orderbook-grid {
+  display: grid;
+  grid-template-columns: 1fr 90px 1fr;
+  gap: 10px;
+  align-items: start;
+}
+
+/* HEADERS */
+.ob-head {
   font-size: 13px;
-  font-weight: 400;
-  margin-bottom: 4px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  opacity: .8;
 }
 
-.orderbook-header {
-  display: flex;
-  justify-content: space-between;
-  font-weight: bold;
-  margin-bottom: 12px;
-  font-size: 14px;
-}
+.ob-head.buy { color: #1dd1a1; }
+.ob-head.sell { color: #ff4d4f; }
 
-.ob-bids-title { color: #16c784; }
-.ob-asks-title { color: #ea3943; }
-
-.orderbook-body {
-  display: flex;
-  gap: 12px;
-}
-
-.ob-column {
-  flex: 1;
+/* LIST */
+.ob-list,
+.price-ladder {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
 
-.bid-row,
-.ask-row {
-  padding: 5px 8px;
-  border-radius: 6px;
+/* ROW */
+.ob-row {
+  padding: 6px 8px;
+  border-radius: 8px;
   font-size: 13px;
   font-family: monospace;
-  transition: 0.2s ease;
+  position: relative;
+  overflow: hidden;
 }
 
-.bid-row {
-  background: linear-gradient(90deg, rgba(22,199,132,0.25), transparent);
-  color: #16c784;
+/* BIDS STYLE */
+.bids .ob-row {
+  background: linear-gradient(90deg,
+    rgba(29,209,161,.15),
+    rgba(29,209,161,.05));
+  color: #1dd1a1;
 }
 
-.ask-row {
-  background: linear-gradient(90deg, rgba(234,57,67,0.25), transparent);
-  color: #ea3943;
+/* ASKS STYLE */
+.asks .ob-row {
+  background: linear-gradient(90deg,
+    rgba(255,77,79,.15),
+    rgba(255,77,79,.05));
+  color: #ff4d4f;
 }
 
-.bid-row:hover {
-  background: rgba(22,199,132,0.4);
+/* PRICE COLUMN */
+.price-ladder .ob-row {
+  text-align: center;
+  color: #9aa4b2;
+  background: rgba(255,255,255,.03);
 }
 
-.ask-row:hover {
-  background: rgba(234,57,67,0.4);
- }
      
 /* ================= BUY / SELL PANEL ================= */
 
@@ -576,68 +588,63 @@ h3{
   margin-bottom: 12px;
 }
 
-.trade-tab {
-  flex: 1;
-  padding: 10px;
-  background: transparent;
-  border: none;
-  color: #aaa;
-  font-weight: 800;
-}
-
-.trade-tab.active[data-side="buy"] {
-  background: #16c784;
-  color: #000;
-}
-
-.trade-tab.active[data-side="sell"] {
-  background: #ea3943;
-  color: #fff;
-}
-
-.amount-input {
-  width: 100%;
-  padding: 10px;
-  background: #0c1320;
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 8px;
-  color: #fff;
-  margin-bottom: 10px;
-}
-
-.percent-row {
+/* ===== TRADE TABS ===== */
+.trade-tabs {
   display: flex;
-  gap: 6px;
-  margin-bottom: 10px;
+  background: #0f1b2d;
+  border-radius: 14px;
+  padding: 4px;
+  margin-bottom: 14px;
 }
 
-.percent-row button {
+.trade-tabs button {
   flex: 1;
-  padding: 6px;
-  background: #0c1320;
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 6px;
-  color: #ccc;
-}
-
-.trade-main-btn {
-  width: 100%;
-  padding: 12px;
-  border-radius: 10px;
-  font-weight: bold;
+  padding: 10px 0;
   border: none;
-  margin-top: 8px;
-  transition: 0.2s;
+  border-radius: 10px;
+  background: transparent;
+  color: #9aa4b2;
+  font-weight: 600;
+  font-size: 14px;
+  transition: 0.25s;
 }
 
-.trade-main-btn.buy-mode {
-  background: #16c784;
-  color: #000;
+.trade-tabs button.active {
+  background: linear-gradient(90deg,#1dd1a1,#10ac84);
+  color: #081018;
 }
 
-.trade-main-btn.sell-mode {
-  background: #ea3943;
+.trade-box.sell .trade-tabs button.active {
+  background: linear-gradient(90deg,#ff4d4f,#d63031);
   color: #fff;
+}
+
+/* ===== ACTION BUTTON ===== */
+
+.action-btn {
+  width: 100%;
+  padding: 14px;
+  border-radius: 14px;
+  border: none;
+  font-weight: 700;
+  font-size: 15px;
+  margin-top: 10px;
+  transition: 0.25s;
+}
+
+.action-btn.buy {
+  background: linear-gradient(90deg,#1dd1a1,#10ac84);
+  color: #081018;
+}
+
+.action-btn.buy:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 18px rgba(29,209,161,.4);
+}
+
+.trade-box.sell .action-btn {
+  background: linear-gradient(90deg,#ff4d4f,#d63031);
+  color: white;
 }
 
 /* Percent buttons */
