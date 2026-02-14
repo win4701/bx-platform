@@ -185,48 +185,44 @@ function updateWalletUI() {
 function setTradeSide(side) {
   tradeSide = side;
 
+  buyTab.classList.remove("active","buy","sell");
+  sellTab.classList.remove("active","buy","sell");
+
   if (side === "buy") {
-    tradeBox.classList.add("buy");
-    tradeBox.classList.remove("sell");
-    buyTab.classList.add("active");
-    sellTab.classList.remove("active");
+    buyTab.classList.add("active","buy");
     actionBtn.textContent = "Buy BX";
-    actionBtn.classList.add("buy");
-    actionBtn.classList.remove("sell");
+    actionBtn.className = "buy";
   } else {
-    tradeBox.classList.add("sell");
-    tradeBox.classList.remove("buy");
-    sellTab.classList.add("active");
-    buyTab.classList.remove("active");
+    sellTab.classList.add("active","sell");
     actionBtn.textContent = "Sell BX";
-    actionBtn.classList.add("sell");
-    actionBtn.classList.remove("buy");
+    actionBtn.className = "sell";
   }
 }
 
 /* ===============================
    EVENTS
 ================================= */
-function bindEvents() {
-  pairButtons.forEach(btn =>
-    btn.addEventListener("click", () =>
-      switchPair(btn.dataset.quote)
-    )
-  );
+document.querySelectorAll(".percent-row button").forEach(btn => {
+  btn.addEventListener("click", () => {
 
-  buyTab.addEventListener("click", () => setTradeSide("buy"));
-  sellTab.addEventListener("click", () => setTradeSide("sell"));
+    document.querySelectorAll(".percent-row button")
+      .forEach(b => b.classList.remove("active"));
 
-  actionBtn.addEventListener("click", executeTrade);
+    btn.classList.add("active");
 
-  document.querySelectorAll(".percent-row button").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const percent = parseInt(btn.dataset.percent);
-      const amount = (wallet.USDT / marketPrice) * (percent / 100);
-      orderAmount.value = amount.toFixed(4);
-    });
+    const percent = parseInt(btn.dataset.percent);
+
+    let amount;
+
+    if (tradeSide === "buy") {
+      amount = (wallet.USDT / marketPrice) * (percent / 100);
+    } else {
+      amount = wallet.BX * (percent / 100);
+    }
+
+    orderAmount.value = amount.toFixed(4);
   });
-}
+});
 
 /* ===============================
    TICKER SIMULATION
