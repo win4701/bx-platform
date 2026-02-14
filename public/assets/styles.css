@@ -413,7 +413,13 @@ h3{
 .pair-grid{
   display:grid;
   grid-template-columns: repeat(5, 1fr);
-  grid-auto-rows: 38px;
+  gap:8px;
+}
+
+@media(max-width:400px){
+  .pair-grid{
+    grid-template-columns: repeat(5, 1fr);
+  }
 }
 
 .pair-btn {
