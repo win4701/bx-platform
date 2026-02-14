@@ -500,66 +500,44 @@ h3{
   box-shadow: 0 10px 30px rgba(0,0,0,.35);
 }
 
-/* Grid */
-.orderbook-grid {
+.orderbook-columns {
   display: grid;
-  grid-template-columns: 1fr 0.8fr 1fr;
-  gap: 10px;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  text-align: center;
 }
 
-/* Headers */
-.ob-head {
-  font-size: 13px;
-  font-weight: 800;
-  opacity: .7;
-  margin-bottom: 8px;
-}
-
-.ob-head.buy { color: #35d49a; }
-.ob-head.sell { color: #ff6b6b; }
-
-/* Lists */
-.ob-list,
-.price-ladder {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-/* Rows */
-.ob-row {
-  padding: 6px 8px;
+.orderbook-columns div {
+  font-size: 14px;
+  padding: 6px 4px;
   border-radius: 8px;
-  font-size: 13px;
-  font-weight: 400;
-  transition: .2s;
+  transition: 0.2s;
 }
 
-/* Bids */
-.bids .ob-row {
-  background: rgba(53,212,154,.08);
-  color: #35d49a;
+/* BIDS - أخضر خفيف */
+#bids div {
+  background: rgba(0, 255, 140, 0.05);
+  color: #2edc8f;
 }
 
-.bids .ob-row:hover {
-  background: rgba(53,212,154,.15);
+#bids div:hover {
+  background: rgba(0, 255, 140, 0.12);
 }
 
-/* Asks */
-.asks .ob-row {
-  background: rgba(255,107,107,.08);
+/* ASKS - أحمر خفيف */
+#asks div {
+  background: rgba(255, 80, 80, 0.05);
   color: #ff6b6b;
 }
 
-.asks .ob-row:hover {
-  background: rgba(255,107,107,.15);
+#asks div:hover {
+  background: rgba(255, 80, 80, 0.12);
 }
 
-/* Mid Price column */
-.price-ladder .ob-row {
-  background: rgba(255,255,255,.04);
-  color: #cfd6e4;
-  text-align: center;
+/* Mid Price */
+#priceLadder div {
+  color: #8aa0c8;
+  font-weight: 600;
 }
 
      
