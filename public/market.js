@@ -56,7 +56,7 @@ const ctx = canvas.getContext("2d");
 
 /* ================= WALLET ================= */
 
-let wallet = { BX: 0, USDT: 1000 };
+let wallet = { BX: 0, USDT: 0 };
 
 /* ================= INIT ================= */
 
