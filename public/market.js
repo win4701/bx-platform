@@ -1,252 +1,266 @@
-/* ===========================
-   MARKET v3.1 PRO CLEAN
-   =========================== */
+/* =========================================================
+   BX MARKET ENGINE — FINAL HTML MATCH VERSION
+   Works ONLY with provided market.html structure
+   No fake DOM
+   No extra elements
+========================================================= */
 
-const BASE = "BX";
-const REF_PRICE = 38; // السعر المرجعي
+const ROWS = 15;
+const BASE_ASSET = "BX";
 
-let state = {
-  pair: "USDT",
-  mid: REF_PRICE,
-  spread: 0.02,
-  bids: [],
-  asks: [],
-  wallet: {
-    BX: 1000,
-    USDT: 1000
-  },
-  side: "BUY",
-  position: null
+let currentQuote = "USDT";
+let marketPrice = 38.00;
+let bids = [];
+let asks = [];
+let tradeSide = "buy";
+
+/* ===============================
+   DOM
+================================= */
+const quoteAssetEl = document.getElementById("quoteAsset");
+const marketPriceEl = document.getElementById("marketPrice");
+const marketApproxEl = document.getElementById("marketApprox");
+
+const walletBXEl = document.getElementById("walletBX");
+const walletUSDTEl = document.getElementById("walletUSDT");
+
+const buyTab = document.getElementById("buyTab");
+const sellTab = document.getElementById("sellTab");
+const tradeBox = document.getElementById("tradeBox");
+const actionBtn = document.getElementById("actionBtn");
+
+const orderAmount = document.getElementById("orderAmount");
+
+const execPriceEl = document.getElementById("execPrice");
+const slippageEl = document.getElementById("slippage");
+const spreadEl = document.getElementById("spread");
+
+const bidsEl = document.getElementById("bids");
+const asksEl = document.getElementById("asks");
+const priceLadderEl = document.getElementById("priceLadder");
+
+const pairButtons = document.querySelectorAll(".pair-btn");
+
+const canvas = document.getElementById("bxChart");
+const ctx = canvas.getContext("2d");
+
+/* ===============================
+   Wallet Simulation
+================================= */
+let wallet = {
+  BX: 0,
+  USDT: 1000
 };
 
-/* ===========================
+/* ===============================
    INIT
-   =========================== */
+================================= */
+function init() {
+  updateWalletUI();
+  generateOrderBook();
+  renderOrderBook();
+  updatePriceUI();
+  bindEvents();
+  startTicker();
+  resizeCanvas();
+  drawChart();
+}
 
-document.addEventListener("DOMContentLoaded", () => {
-  initPairs();
-  initToggle();
-  generateBook();
-  renderAll();
-  startSimulation();
-  initChart();
-});
+document.addEventListener("DOMContentLoaded", init);
 
-/* ===========================
-   PAIRS (5 فوق / 5 تحت)
-   =========================== */
+/* ===============================
+   PAIR SWITCH
+================================= */
+function switchPair(quote) {
+  currentQuote = quote;
+  quoteAssetEl.textContent = quote;
 
-const PAIRS = [
-  "USDT","USDC","BTC","ETH","BNB",
-  "SOL","AVAX","LTC","ZEC","TON"
-];
+  pairButtons.forEach(btn => btn.classList.remove("active"));
+  document.querySelector(`[data-quote="${quote}"]`).classList.add("active");
 
-function initPairs(){
-  const buttons = document.querySelectorAll(".pair-btn");
-  buttons.forEach(btn=>{
-    btn.addEventListener("click", ()=>{
-      document.querySelectorAll(".pair-btn").forEach(b=>b.classList.remove("active"));
-      btn.classList.add("active");
-      state.pair = btn.dataset.pair;
-      state.mid = REF_PRICE;
-      generateBook();
-      renderAll();
+  generateOrderBook();
+  renderOrderBook();
+}
+
+/* ===============================
+   ORDERBOOK GENERATION
+================================= */
+function generateOrderBook() {
+  bids = [];
+  asks = [];
+
+  for (let i = 0; i < ROWS; i++) {
+    bids.push((marketPrice - i * 0.02).toFixed(6));
+    asks.push((marketPrice + i * 0.02).toFixed(6));
+  }
+}
+
+function renderOrderBook() {
+  bidsEl.innerHTML = "";
+  asksEl.innerHTML = "";
+  priceLadderEl.innerHTML = "";
+
+  for (let i = 0; i < ROWS; i++) {
+    const bidRow = document.createElement("div");
+    bidRow.textContent = bids[i];
+    bidsEl.appendChild(bidRow);
+
+    const askRow = document.createElement("div");
+    askRow.textContent = asks[i];
+    asksEl.appendChild(askRow);
+
+    const priceRow = document.createElement("div");
+    priceRow.textContent = i === 0 ? marketPrice.toFixed(6) : "";
+    priceLadderEl.appendChild(priceRow);
+  }
+
+  updateSpread();
+}
+
+/* ===============================
+   PRICE + SPREAD
+================================= */
+function updateSpread() {
+  const bestBid = parseFloat(bids[0]);
+  const bestAsk = parseFloat(asks[0]);
+  const spread = bestAsk - bestBid;
+  spreadEl.textContent = spread.toFixed(6);
+}
+
+function updatePriceUI() {
+  marketPriceEl.textContent = marketPrice.toFixed(6);
+  marketApproxEl.textContent = `≈ ${marketPrice.toFixed(2)} ${currentQuote}`;
+}
+
+/* ===============================
+   TRADE LOGIC
+================================= */
+function executeTrade() {
+  const amount = parseFloat(orderAmount.value);
+  if (!amount || amount <= 0) return;
+
+  const bestAsk = parseFloat(asks[0]);
+  const bestBid = parseFloat(bids[0]);
+
+  let execPrice;
+
+  if (tradeSide === "buy") {
+    execPrice = bestAsk;
+    const cost = amount * execPrice;
+    if (wallet.USDT >= cost) {
+      wallet.USDT -= cost;
+      wallet.BX += amount;
+    }
+  } else {
+    execPrice = bestBid;
+    if (wallet.BX >= amount) {
+      wallet.BX -= amount;
+      wallet.USDT += amount * execPrice;
+    }
+  }
+
+  execPriceEl.textContent = execPrice.toFixed(6);
+
+  const slippage =
+    tradeSide === "buy"
+      ? ((execPrice - marketPrice) / marketPrice) * 100
+      : ((marketPrice - execPrice) / marketPrice) * 100;
+
+  slippageEl.textContent = slippage.toFixed(3);
+
+  updateWalletUI();
+}
+
+/* ===============================
+   WALLET UI
+================================= */
+function updateWalletUI() {
+  walletBXEl.textContent = wallet.BX.toFixed(4);
+  walletUSDTEl.textContent = wallet.USDT.toFixed(2);
+}
+
+/* ===============================
+   TABS
+================================= */
+function setTradeSide(side) {
+  tradeSide = side;
+
+  if (side === "buy") {
+    tradeBox.classList.add("buy");
+    tradeBox.classList.remove("sell");
+    buyTab.classList.add("active");
+    sellTab.classList.remove("active");
+    actionBtn.textContent = "Buy BX";
+    actionBtn.classList.add("buy");
+    actionBtn.classList.remove("sell");
+  } else {
+    tradeBox.classList.add("sell");
+    tradeBox.classList.remove("buy");
+    sellTab.classList.add("active");
+    buyTab.classList.remove("active");
+    actionBtn.textContent = "Sell BX";
+    actionBtn.classList.add("sell");
+    actionBtn.classList.remove("buy");
+  }
+}
+
+/* ===============================
+   EVENTS
+================================= */
+function bindEvents() {
+  pairButtons.forEach(btn =>
+    btn.addEventListener("click", () =>
+      switchPair(btn.dataset.quote)
+    )
+  );
+
+  buyTab.addEventListener("click", () => setTradeSide("buy"));
+  sellTab.addEventListener("click", () => setTradeSide("sell"));
+
+  actionBtn.addEventListener("click", executeTrade);
+
+  document.querySelectorAll(".percent-row button").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const percent = parseInt(btn.dataset.percent);
+      const amount = (wallet.USDT / marketPrice) * (percent / 100);
+      orderAmount.value = amount.toFixed(4);
     });
   });
 }
 
-/* ===========================
-   BUY / SELL TOGGLE
-   =========================== */
-
-function initToggle(){
-  const buyBtn = document.getElementById("buyBtn");
-  const sellBtn = document.getElementById("sellBtn");
-
-  buyBtn.onclick = ()=>{
-    state.side = "BUY";
-    buyBtn.classList.add("active");
-    sellBtn.classList.remove("active");
-    updateMainButton();
-  };
-
-  sellBtn.onclick = ()=>{
-    state.side = "SELL";
-    sellBtn.classList.add("active");
-    buyBtn.classList.remove("active");
-    updateMainButton();
-  };
-
-  document.getElementById("tradeActionBtn").onclick = executeTrade;
+/* ===============================
+   TICKER SIMULATION
+================================= */
+function startTicker() {
+  setInterval(() => {
+    marketPrice += (Math.random() - 0.5) * 0.05;
+    generateOrderBook();
+    renderOrderBook();
+    updatePriceUI();
+    drawChart();
+  }, 1500);
 }
 
-function updateMainButton(){
-  const btn = document.getElementById("tradeActionBtn");
-  btn.textContent = state.side === "BUY" ? "Buy BX" : "Sell BX";
-}
-
-/* ===========================
-   ORDER BOOK GENERATION
-   =========================== */
-
-function generateBook(){
-  state.bids = [];
-  state.asks = [];
-
-  for(let i=1;i<=7;i++){
-    state.bids.push(state.mid - (i * 0.02));
-    state.asks.push(state.mid + (i * 0.02));
-  }
-}
-
-/* ===========================
-   RENDER
-   =========================== */
-
-function renderAll(){
-  renderPrice();
-  renderBook();
-  renderWallet();
-}
-
-function renderPrice(){
-  document.getElementById("priceMain").textContent =
-    state.mid.toFixed(6);
-
-  document.getElementById("spreadValue").textContent =
-    "Spread: " + (state.asks[0] - state.bids[0]).toFixed(6);
-}
-
-function renderBook(){
-  const body = document.getElementById("orderBookBody");
-  body.innerHTML = "";
-
-  // Asks
-  state.asks.slice().reverse().forEach(price=>{
-    body.appendChild(createRow("", price, price, "ask"));
-  });
-
-  // Mid
-  const mid = document.createElement("div");
-  mid.className = "mid-price";
-  mid.textContent = state.mid.toFixed(6);
-  body.appendChild(mid);
-
-  // Bids
-  state.bids.forEach(price=>{
-    body.appendChild(createRow(price, price, "", "bid"));
-  });
-}
-
-function createRow(bid, price, ask, type){
-  const row = document.createElement("div");
-  row.className = "ob-row " + type;
-
-  row.innerHTML = `
-    <span>${bid || ""}</span>
-    <span>${price.toFixed ? price.toFixed(6) : price}</span>
-    <span>${ask || ""}</span>
-  `;
-
-  return row;
-}
-
-function renderWallet(){
-  document.querySelector("#bxBalance").textContent =
-    state.wallet.BX.toFixed(2);
-
-  document.querySelector("#usdtBalance").textContent =
-    state.wallet.USDT.toFixed(2);
-}
-
-/* ===========================
-   TRADE EXECUTION
-   =========================== */
-
-function executeTrade(){
-
-  const amount = parseFloat(
-    document.getElementById("amountInput").value
-  );
-
-  if(!amount || amount <= 0) return;
-
-  const bestPrice =
-    state.side === "BUY" ? state.asks[0] : state.bids[0];
-
-  const slippage =
-    Math.abs(bestPrice - state.mid);
-
-  document.getElementById("execPrice").textContent =
-    bestPrice.toFixed(6);
-
-  document.getElementById("slippageValue").textContent =
-    slippage.toFixed(6);
-
-  if(state.side === "BUY"){
-    const cost = amount * bestPrice;
-    if(state.wallet.USDT >= cost){
-      state.wallet.USDT -= cost;
-      state.wallet.BX += amount;
-    }
-  } else {
-    if(state.wallet.BX >= amount){
-      state.wallet.BX -= amount;
-      state.wallet.USDT += amount * bestPrice;
-    }
-  }
-
-  renderWallet();
-}
-
-/* ===========================
-   SIMULATION
-   =========================== */
-
-function startSimulation(){
-  setInterval(()=>{
-    const move = (Math.random()-0.5) * 0.04;
-    state.mid += move;
-    generateBook();
-    renderAll();
-    updateChart(state.mid);
-  },1500);
-}
-
-/* ===========================
-   CHART (Canvas Clean)
-   =========================== */
-
-let chartCtx;
-let chartData = [];
-
-function initChart(){
-  const canvas = document.getElementById("chartCanvas");
-  if(!canvas) return;
-  chartCtx = canvas.getContext("2d");
-  canvas.width = canvas.offsetWidth;
+/* ===============================
+   CHART
+================================= */
+function resizeCanvas() {
+  canvas.width = canvas.parentElement.clientWidth;
   canvas.height = 200;
 }
 
-function updateChart(price){
-  if(!chartCtx) return;
+function drawChart() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  chartData.push(price);
-  if(chartData.length > 50)
-    chartData.shift();
+  ctx.strokeStyle = "#21c87a";
+  ctx.beginPath();
 
-  chartCtx.clearRect(0,0,500,200);
+  for (let i = 0; i < canvas.width; i++) {
+    const y =
+      canvas.height / 2 +
+      Math.sin(i * 0.02 + marketPrice) * 20;
+    ctx.lineTo(i, y);
+  }
 
-  chartCtx.beginPath();
-  chartCtx.strokeStyle = "#00c896";
-  chartCtx.lineWidth = 2;
-
-  chartData.forEach((p,i)=>{
-    const x = i * 10;
-    const y = 200 - (p - REF_PRICE) * 20 - 100;
-    if(i===0) chartCtx.moveTo(x,y);
-    else chartCtx.lineTo(x,y);
-  });
-
-  chartCtx.stroke();
+  ctx.stroke();
 }
