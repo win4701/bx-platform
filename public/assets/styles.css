@@ -493,11 +493,13 @@ h3{
 
 /* ================= ORDER BOOK CARD ================= */
 
-.orderbook-card {
-  background: linear-gradient(145deg,#0c1624,#0f1c2d);
+
+.orderbook {
+  background: linear-gradient(180deg, #0f1c2e, #0b1624);
   border-radius: 18px;
   padding: 18px;
-  box-shadow: 0 10px 30px rgba(0,0,0,.35);
+  margin-top: 20px;
+  box-shadow: 0 0 25px rgba(0,0,0,0.4);
 }
 
 .orderbook-columns {
