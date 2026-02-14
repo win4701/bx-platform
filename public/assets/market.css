@@ -1,27 +1,16 @@
-/*=========================================================
-   BLOXIO MARKET CSS — GLOBAL PRO VERSION 3.0
-   Optimized • Clean • Depth Engine Ready
-   No layout breaking
-========================================================= */
+/*========================================================= */
 
 :root{
-  --bg:#0b0e11;
-  --panel:#11161c;
-  --panel-2:#151b22;
-  --border:#1e2329;
-  --soft-border:rgba(255,255,255,.06);
-
-  --text:#eaecef;
-  --muted:#848e9c;
-
   --green:#0ecb81;
-  --green-glow:rgba(14,203,129,.15);
-
   --red:#f6465d;
-  --red-glow:rgba(246,70,93,.15);
-
   --yellow:#f0b90b;
-  --blue:#3b82f6;
+  --bg:#0b0e11;
+  --panel:#0e1318;
+  --border:#1e2329;
+  --muted:#848e9c;
+  --purple:#a855f7;
+  --green-soft:rgba(14,203,129,.15);
+  --red-soft:rgba(246,70,93,.15);
 }
 
 /* ================= BASE ================= */
@@ -64,7 +53,12 @@
 .price-main{
   font-size:26px;
   font-weight:800;
-  transition:.2s ease;
+}
+
+.price-sub{
+  font-size:12px;
+  color:var(--muted);
+  margin-top:4px;
 }
 
 .price-main.up{
@@ -82,105 +76,111 @@
   color:var(--muted);
 }
 
-/* ================= PAIR SELECTOR ================= */
+/*================= PAIR SELECTOR ================= */
 
-.pair-grid {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 5px;
-  margin: 10px 0;
+.pair-grid{
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  gap:5px;
 }
 
-.pair-btn {
-  height: 32px;
-  border-radius: 10px;
-  border: 1px solid var(--soft-border);
-  background: #0e1318;
-  color: var(--muted);
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: 0.2s ease;
+.pair-btn{
+  height:32px;
+  border-radius:10px;
+  border:1px solid var(--soft-border);
+  background:#0e1318;
+  color:var(--muted);
+  font-size:12px;
+  font-weight:800;
+  cursor:pointer;
+  transition:.18s ease;
 }
 
-.pair-btn:hover {
-  background: #18212b;
-  color: #fff;
+.pair-btn:hover{
+  background:#18212b;
+  color:#fff;
 }
 
-.pair-btn.active {
-  background: rgba(240, 185, 11, 0.12);
-  color: var(--yellow);
-  border-color: var(--yellow);
+.pair-btn.active{
+  background:rgba(240,185,11,.12);
+  color:var(--yellow);
+  border-color:var(--yellow);
 }
 
-/* ================= ORDER BOOK ================= */
+/* ================ ORDER BOOK ================= */
 
-#market .orderbook {
-  background: #0f1624;
-  border-radius: 14px;
-  padding: 15px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
+.orderbook {
+  background: linear-gradient(180deg,#0f1c2e,#0b1220);
+  border-radius: 18px;
+  padding: 16px;
+  border: 1px solid rgba(255,255,255,.06);
+  margin-top: 16px;
 }
 
-#market .book-header {
-  display: flex;
-  justify-content: space-between;
-  font-weight: 800;
-  margin-bottom: 10px;
+.orderbook-header {
+  display:flex;
+  justify-content:space-between;
+  font-weight:800;
+  font-size:14px;
+  margin-bottom:10px;
 }
 
-#market .bids-title {
-  color: #16c784;
+.orderbook-header .bids-title { color:#16c784; }
+.orderbook-header .asks-title { color:#ea3943; }
+
+.orderbook-body{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
 }
 
-#market .asks-title {
-  color: #ea3943;
+.ob-column{
+  display:flex;
+  flex-direction:column;
+  gap:5px;
 }
 
-#market .book-body {
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
+.ob-row{
+  padding:8px 10px;
+  border-radius:10px;
+  font-size:13px;
+  font-family:monospace;
+  font-weight:800;
 }
 
-#market .bids,
-#market .asks {
-  width: 50%;
+.bid-row{
+  background:linear-gradient(90deg, rgba(22,199,132,.25), transparent);
+  color:#16c784;
 }
 
-#market .book-row {
-  display: flex;
-  justify-content: space-between;
-  padding: 4px 6px;
-  font-size: 13px;
-  border-radius: 6px;
-  margin-bottom: 3px;
+.ask-row{
+  background:linear-gradient(90deg, rgba(234,57,67,.25), transparent);
+  color:#ea3943;
 }
 
-#market .bid-row {
-  background: linear-gradient(90deg, rgba(22, 199, 132, 0.25), transparent);
-  color: #16c784;
-}
-
-#market .ask-row {
-  background: linear-gradient(90deg, rgba(255, 60, 60, 0.25), transparent);
-  color: #ff4c4c;
+.mid-price{
+  text-align:center;
+  font-weight:800;
+  padding:10px 0;
+  margin:10px 0;
+  font-size:15px;
+  border-top:1px solid rgba(255,255,255,.06);
+  border-bottom:1px solid rgba(255,255,255,.06);
 }
 
 /* ================= ORDER BOOK CARD ================= */
 
 .orderbook-card {
-  background: linear-gradient(180deg, #0b1a2b, #0f2236);
+  background: linear-gradient(180deg,#0b1a2b,#0f2236);
   border-radius: 18px;
   padding: 14px;
 }
 
 .ob-row {
-  padding: 6px 10px;
+  padding: 5px 10px;
   border-radius: 8px;
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 400;
   margin-bottom: 4px;
 }
 
@@ -192,13 +192,8 @@
   font-size: 14px;
 }
 
-.ob-bids-title {
-  color: #16c784;
-}
-
-.ob-asks-title {
-  color: #ea3943;
-}
+.ob-bids-title { color: #16c784; }
+.ob-asks-title { color: #ea3943; }
 
 .orderbook-body {
   display: flex;
@@ -214,7 +209,7 @@
 
 .bid-row,
 .ask-row {
-  padding: 6px 8px;
+  padding: 5px 8px;
   border-radius: 6px;
   font-size: 13px;
   font-family: monospace;
@@ -222,39 +217,26 @@
 }
 
 .bid-row {
-  background: linear-gradient(90deg, rgba(22, 199, 132, 0.25), transparent);
+  background: linear-gradient(90deg, rgba(22,199,132,0.25), transparent);
   color: #16c784;
 }
 
 .ask-row {
-  background: linear-gradient(90deg, rgba(234, 57, 67, 0.25), transparent);
+  background: linear-gradient(90deg, rgba(234,57,67,0.25), transparent);
   color: #ea3943;
 }
 
 .bid-row:hover {
-  background: rgba(22, 199, 132, 0.4);
+  background: rgba(22,199,132,0.4);
 }
 
 .ask-row:hover {
-  background: rgba(234, 57, 67, 0.4);
+  background: rgba(234,57,67,0.4);
  }
-
-/* ================= MID PRICE ================= */
-
-.mid-price{
-  text-align:center;
-  font-weight:800;
-  padding:6px 0;
-  font-size:14px;
-  color:#fff;
-  background:var(--panel-2);
-  border-top:1px solid var(--soft-border);
-  border-bottom:1px solid var(--soft-border);
-}
-
+     
 /* ================= BUY / SELL PANEL ================= */
 
-#market .trade-panel {
+.trade-panel {
   background: #0f1624;
   border-radius: 14px;
   padding: 15px;
@@ -262,7 +244,7 @@
   border: 1px solid rgba(255,255,255,0.05);
 }
 
-#market .trade-switch {
+.trade-switch {
   display: flex;
   background: #0c1320;
   border-radius: 10px;
@@ -270,7 +252,7 @@
   margin-bottom: 12px;
 }
 
-#market .trade-tab {
+.trade-tab {
   flex: 1;
   padding: 10px;
   background: transparent;
@@ -279,17 +261,17 @@
   font-weight: 800;
 }
 
-#market .trade-tab.active[data-side="buy"] {
+.trade-tab.active[data-side="buy"] {
   background: #16c784;
   color: #000;
 }
 
-#market .trade-tab.active[data-side="sell"] {
+.trade-tab.active[data-side="sell"] {
   background: #ea3943;
   color: #fff;
 }
 
-#market .amount-input {
+.amount-input {
   width: 100%;
   padding: 10px;
   background: #0c1320;
@@ -299,13 +281,13 @@
   margin-bottom: 10px;
 }
 
-#market .percent-row {
+.percent-row {
   display: flex;
   gap: 6px;
   margin-bottom: 10px;
 }
 
-#market .percent-row button {
+.percent-row button {
   flex: 1;
   padding: 6px;
   background: #0c1320;
@@ -314,7 +296,7 @@
   color: #ccc;
 }
 
-#market .trade-main-btn {
+.trade-main-btn {
   width: 100%;
   padding: 12px;
   border-radius: 10px;
@@ -324,12 +306,12 @@
   transition: 0.2s;
 }
 
-#market .trade-main-btn.buy-mode {
+.trade-main-btn.buy-mode {
   background: #16c784;
   color: #000;
 }
 
-#market .trade-main-btn.sell-mode {
+.trade-main-btn.sell-mode {
   background: #ea3943;
   color: #fff;
 }
@@ -387,24 +369,17 @@
   opacity:.92;
 }
 
-/* ================= Chart ================= */
+/* ================= CHART ================= */
 
-#market .chart-container {
+#bxChartWrap {
+  position: relative;
+  height: 220px;
+  margin: 12px 0;
+}
+#bxChart {
   width: 100%;
-  height: 200px;
-  background: radial-gradient(circle at center, #0c1624, #060b14);
-  border-radius: 16px;
-  margin-top: 15px;
+  height: 100%;
 }
-
-#chart {
-  height: 200px;
-}
-
-#chart {
-  background: radial-gradient(circle at center, #0f1c2e, #0b1220);
-}
-
 .badge-live {
   position: absolute;
   top: 6px;
@@ -414,9 +389,21 @@
   opacity: .85;
 }
 
+/* ================= INDICATORS ================= */
+
+.indicator-legend{
+  display:flex;
+  gap:14px;
+  font-size:11px;
+  margin:6px 4px;
+}
+
+.indicator-legend .ema{ color:#facc15; }
+.indicator-legend .vwap{ color:var(--purple); }
+
 /* ================= RESPONSIVE ================= */
 
 @media(max-width:400px){
   .book-body{max-height:220px;}
   .price-main{font-size:22px;}
-}
+   }
