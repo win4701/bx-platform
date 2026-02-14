@@ -417,7 +417,7 @@ h3{
   background: #0e1318;
   color: var(--muted);
   font-size: 14px;
-  font-weight: 800;
+  font-weight: 600;
   cursor: pointer;
   transition: 0.2s ease;
 }
