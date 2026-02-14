@@ -406,136 +406,157 @@ h3{
   color:var(--muted);
 }
 
-
-
-/* ================= PAIR SELECTOR ================= */
+/*================= PAIR SELECTOR ================= */
 
 .pair-grid{
   display:grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap:8px;
-}
-
-@media(max-width:400px){
-  .pair-grid{
-    grid-template-columns: repeat(5, 1fr);
-  }
-}
-
-.pair-btn {
-  height: 32px;
-  border-radius: 10px;
-  border: 1px solid var(--soft-border);
-  background: #0e1318;
-  color: var(--muted);
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: 0.2s ease;
-}
-
-.pair-btn:hover {
-  background: #18212b;
-  color: #fff;
-}
-
-.pair-btn.active {
-  background: rgba(240, 185, 11, 0.12);
-  color: var(--yellow);
-  border-color: var(--yellow);
-}
-
-/* ================= ORDER BOOK – ================= */
-
-.orderbook {
-  background: linear-gradient(180deg,#0f1c2e,#0b1220);
-  border-radius: 18px;
-  padding: 16px;
-  border: 1px solid rgba(255,255,255,.06);
-  margin-top: 16px;
-}
-
-.orderbook-header {
-  display:flex;
-  justify-content:space-between;
-  font-weight:800;
-  font-size:14px;
-  margin-bottom:10px;
-}
-
-.orderbook-header .bids-title { color:#16c784; }
-.orderbook-header .asks-title { color:#ea3943; }
-
-.orderbook-body{
-  display:grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px;
-}
-
-.ob-column{
-  display:flex;
-  flex-direction:column;
+  grid-template-columns:repeat(5,1fr);
   gap:6px;
 }
 
-.ob-row{
-  padding:8px 10px;
+.pair-btn{
+  height:32px;
   border-radius:10px;
-  font-size:13px;
-  font-family:monospace;
-  font-weight:700;
-}
-
-.bid-row{
-  background:linear-gradient(90deg, rgba(22,199,132,.25), transparent);
-  color:#16c784;
-}
-
-.ask-row{
-  background:linear-gradient(90deg, rgba(234,57,67,.25), transparent);
-  color:#ea3943;
-}
-
-.mid-price{
-  text-align:center;
+  border:1px solid var(--soft-border);
+  background:#0e1318;
+  color:var(--muted);
+  font-size:12px;
   font-weight:800;
-  padding:10px 0;
-  margin:10px 0;
-  font-size:15px;
-  border-top:1px solid rgba(255,255,255,.06);
-  border-bottom:1px solid rgba(255,255,255,.06);
+  cursor:pointer;
+  transition:.18s ease;
+}
+
+.pair-btn:hover{
+  background:#18212b;
+  color:#fff;
+}
+
+.pair-btn.active{
+  background:rgba(240,185,11,.12);
+  color:var(--yellow);
+  border-color:var(--yellow);
+}
+
+/* ================= ORDER BOOK ================= */
+
+#market .orderbook {
+  background: #0f1624;
+  border-radius: 14px;
+  padding: 15px;
+  border: 1px solid rgba(255,255,255,0.05);
+}
+
+#market .book-header {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 800;
+  margin-bottom: 10px;
+}
+
+#market .bids-title {
+  color: #16c784;
+}
+
+#market .asks-title {
+  color: #ea3943;
+}
+
+#market .book-body {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+#market .bids,
+#market .asks {
+  width: 50%;
+}
+
+#market .book-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 6px;
+  font-size: 13px;
+  border-radius: 6px;
+  margin-bottom: 3px;
+}
+
+#market .bid-row {
+  background: linear-gradient(90deg, rgba(22,199,132,0.25), transparent);
+  color: #16c784;
+}
+
+#market .ask-row {
+  background: linear-gradient(90deg,rgba(255,60,60,0.25),transparent);
+  color: #ff4c4c;
 }
 
 /* ================= ORDER BOOK CARD ================= */
 
-.orderbook-card{
-  background:linear-gradient(180deg,#0b1a2b,#0f2236);
-  border-radius:18px;
-  padding:14px;
+.orderbook-card {
+  background: linear-gradient(180deg,#0b1a2b,#0f2236);
+  border-radius: 18px;
+  padding: 14px;
 }
 
-.ob-row{
-  display:grid;
-  grid-template-columns:1fr 1fr 1fr;
-  align-items:center;
-  padding:8px 12px;
-  margin-bottom:6px;
-  border-radius:10px;
-  font-family:monospace;
-  font-size:13px;
-  font-weight:700;
+.ob-row {
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 4px;
 }
 
-.bid-row{
-  background:linear-gradient(90deg,rgba(14,203,129,.25),transparent);
-  color:var(--green);
+.orderbook-header {
+  display: flex;
+  justify-content: space-between;
+  font-weight: bold;
+  margin-bottom: 12px;
+  font-size: 14px;
 }
 
-.ask-row{
-  background:linear-gradient(90deg,rgba(246,70,93,.25),transparent);
-  color:var(--red);
+.ob-bids-title { color: #16c784; }
+.ob-asks-title { color: #ea3943; }
+
+.orderbook-body {
+  display: flex;
+  gap: 12px;
 }
 
+.ob-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.bid-row,
+.ask-row {
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: monospace;
+  transition: 0.2s ease;
+}
+
+.bid-row {
+  background: linear-gradient(90deg, rgba(22,199,132,0.25), transparent);
+  color: #16c784;
+}
+
+.ask-row {
+  background: linear-gradient(90deg, rgba(234,57,67,0.25), transparent);
+  color: #ea3943;
+}
+
+.bid-row:hover {
+  background: rgba(22,199,132,0.4);
+}
+
+.ask-row:hover {
+  background: rgba(234,57,67,0.4);
+ }
+     
 /* ================= BUY / SELL PANEL ================= */
 
 #market .trade-panel {
