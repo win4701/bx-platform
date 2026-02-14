@@ -404,7 +404,7 @@ h3{
 .pair-grid{
   display:grid;
   grid-template-columns:repeat(5,1fr);
-  gap:5px;
+  gap:4px;
 }
 
 .pair-btn{
@@ -416,7 +416,7 @@ h3{
   font-size:12px;
   font-weight:800;
   cursor:pointer;
-  transition:.18s ease;
+  transition:.2s ease;
 }
 
 .pair-btn:hover{
@@ -583,32 +583,30 @@ h3{
 /* ===== TRADE TABS ===== */
 
 .trade-tabs {
-  display: flex;
-  background: #101a2b;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  background: #0f1c2d;
   border-radius: 14px;
   padding: 4px;
-  margin-bottom: 14px;
 }
 
 .trade-tabs button {
-  flex: 1;
-  padding: 12px;
   border: none;
-  border-radius: 12px;
   background: transparent;
-  color: #9caecf;
-  font-weight: 600;
-  transition: 0.25s;
+  padding: 10px 0;
+  border-radius: 10px;
+  font-weight: 750;
+  color: #7f8ea3;
+  transition: .2s;
 }
 
-.trade-tabs button.active.buy {
-  background: linear-gradient(90deg,#1fd48d,#1aa06e);
-  color: #fff;
+.trade-tabs button.active {
+  background: linear-gradient(90deg,#35d49a,#28b783);
+  color: #0b121b;
 }
 
-.trade-tabs button.active.sell {
-  background: linear-gradient(90deg,#ff5858,#d63b3b);
-  color: #fff;
+.trade-box.sell .trade-tabs button.active {
+  background: linear-gradient(90deg,#ff6b6b,#e04f4f);
 }
 
 /* ===== ACTION BUTTON ===== */
@@ -642,31 +640,32 @@ h3{
 /* ===== PERCENT BUTTONS IMPROVED ===== */
 
 .percent-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
   gap: 8px;
-  margin-top: 8px;
+  margin-top: 10px;
 }
 
 .percent-row button {
-  flex: 1;
-  padding: 8px;
+  padding: 8px ;
   border-radius: 10px;
-  border: 1px solid rgba(255,255,255,0.06);
-  background: #0f1a2b;
-  color: #a8b6d9;
+  border: 1px solid rgba(255,255,255,.08);
+  background: rgba(255,255,255,.04);
+  color: #cfd6e4;
   font-size: 13px;
-  transition: 0.2s;
+  transition: .2s;
 }
 
 .percent-row button:hover {
-  border-color: #21c87a;
-  color: #21c87a;
+  background: rgba(53,212,154,.15);
+  border-color: rgba(53,212,154,.4);
+  color: #35d49a;
 }
 
 .percent-row button.active {
-  background: rgba(33, 200, 122, 0.15);
-  border-color: #21c87a;
-  color: #21c87a;
+  background: linear-gradient(90deg,#35d49a,#28b783);
+  color: #0b121b;
+  border: none;
 }
 
 /* Submit buttons */
