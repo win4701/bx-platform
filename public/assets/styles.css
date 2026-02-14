@@ -324,23 +324,16 @@ h3{
 ========================================================= */
 
 :root{
-  --bg:#0b0e11;
-  --panel:#11161c;
-  --panel-2:#151b22;
-  --border:#1e2329;
-  --soft-border:rgba(255,255,255,.06);
-
-  --text:#eaecef;
-  --muted:#848e9c;
-
   --green:#0ecb81;
-  --green-glow:rgba(14,203,129,.15);
-
   --red:#f6465d;
-  --red-glow:rgba(246,70,93,.15);
-
   --yellow:#f0b90b;
-  --blue:#3b82f6;
+  --bg:#0b0e11;
+  --panel:#0e1318;
+  --border:#1e2329;
+  --muted:#848e9c;
+  --purple:#a855f7;
+  --green-soft:rgba(14,203,129,.15);
+  --red-soft:rgba(246,70,93,.15);
 }
 
 /* ================= BASE ================= */
@@ -411,7 +404,7 @@ h3{
 .pair-grid{
   display:grid;
   grid-template-columns:repeat(5,1fr);
-  gap:6px;
+  gap:5px;
 }
 
 .pair-btn{
@@ -462,13 +455,13 @@ h3{
 .orderbook-body{
   display:grid;
   grid-template-columns: 1fr 1fr;
-  gap: 14px;
+  gap: 15px;
 }
 
 .ob-column{
   display:flex;
   flex-direction:column;
-  gap:6px;
+  gap:5px;
 }
 
 .ob-row{
@@ -476,7 +469,7 @@ h3{
   border-radius:10px;
   font-size:13px;
   font-family:monospace;
-  font-weight:700;
+  font-weight:800;
 }
 
 .bid-row{
@@ -491,7 +484,7 @@ h3{
 
 .mid-price{
   text-align:center;
-  font-weight:900;
+  font-weight:800;
   padding:10px 0;
   margin:10px 0;
   font-size:15px;
@@ -508,10 +501,10 @@ h3{
 }
 
 .ob-row {
-  padding: 6px 10px;
+  padding: 5px 10px;
   border-radius: 8px;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 400;
   margin-bottom: 4px;
 }
 
@@ -540,7 +533,7 @@ h3{
 
 .bid-row,
 .ask-row {
-  padding: 6px 8px;
+  padding: 5px 8px;
   border-radius: 6px;
   font-size: 13px;
   font-family: monospace;
