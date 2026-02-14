@@ -1,322 +1,252 @@
-/* =========================================================
-   BLOXIO MARKET ENGINE v3.1 PRO FINAL
-   Scoped • Clean • Stable • Binance Live
-========================================================= */
+/* ===========================
+   MARKET v3.1 PRO CLEAN
+   =========================== */
 
-(function () {
+const BASE = "BX";
+const REF_PRICE = 38; // السعر المرجعي
 
-  if (!document.getElementById("bids")) return;
+let state = {
+  pair: "USDT",
+  mid: REF_PRICE,
+  spread: 0.02,
+  bids: [],
+  asks: [],
+  wallet: {
+    BX: 1000,
+    USDT: 1000
+  },
+  side: "BUY",
+  position: null
+};
 
-  /* ================== STATE ================== */
+/* ===========================
+   INIT
+   =========================== */
 
-  const STATE = {
-    base: "BX",
-    quote: "USDT",
-    reference: 38, // BX = 38 USDT
-    price: 38,
-    bid: 0,
-    ask: 0,
-    spread: 0,
-    side: "BUY",
-    socketTrade: null,
-    socketDepth: null
+document.addEventListener("DOMContentLoaded", () => {
+  initPairs();
+  initToggle();
+  generateBook();
+  renderAll();
+  startSimulation();
+  initChart();
+});
+
+/* ===========================
+   PAIRS (5 فوق / 5 تحت)
+   =========================== */
+
+const PAIRS = [
+  "USDT","USDC","BTC","ETH","BNB",
+  "SOL","AVAX","LTC","ZEC","TON"
+];
+
+function initPairs(){
+  const buttons = document.querySelectorAll(".pair-btn");
+  buttons.forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      document.querySelectorAll(".pair-btn").forEach(b=>b.classList.remove("active"));
+      btn.classList.add("active");
+      state.pair = btn.dataset.pair;
+      state.mid = REF_PRICE;
+      generateBook();
+      renderAll();
+    });
+  });
+}
+
+/* ===========================
+   BUY / SELL TOGGLE
+   =========================== */
+
+function initToggle(){
+  const buyBtn = document.getElementById("buyBtn");
+  const sellBtn = document.getElementById("sellBtn");
+
+  buyBtn.onclick = ()=>{
+    state.side = "BUY";
+    buyBtn.classList.add("active");
+    sellBtn.classList.remove("active");
+    updateMainButton();
   };
 
-  const PAIRS = {
-    USDT: null,
-    USDC: null,
-    BTC: "BTCUSDT",
-    ETH: "ETHUSDT",
-    BNB: "BNBUSDT",
-    SOL: "SOLUSDT",
-    AVAX: "AVAXUSDT",
-    LTC: "LTCUSDT",
-    ZEC: "ZECUSDT",
-    TON: "TONUSDT"
+  sellBtn.onclick = ()=>{
+    state.side = "SELL";
+    sellBtn.classList.add("active");
+    buyBtn.classList.remove("active");
+    updateMainButton();
   };
 
-  /* ================== DOM ================== */
+  document.getElementById("tradeActionBtn").onclick = executeTrade;
+}
 
-  const DOM = {
-    price: document.getElementById("currentPrice"),
-    spread: document.getElementById("spreadValue"),
-    bids: document.getElementById("bids"),
-    asks: document.getElementById("asks"),
-    buyBtn: document.getElementById("buyBtn"),
-    sellBtn: document.getElementById("sellBtn"),
-    tradeBtn: document.getElementById("tradeActionBtn"),
-    amount: document.getElementById("amountInput"),
-    exec: document.getElementById("execPrice"),
-    slip: document.getElementById("slippageValue")
-  };
+function updateMainButton(){
+  const btn = document.getElementById("tradeActionBtn");
+  btn.textContent = state.side === "BUY" ? "Buy BX" : "Sell BX";
+}
 
-  /* ================== INIT ================== */
+/* ===========================
+   ORDER BOOK GENERATION
+   =========================== */
 
-  function init() {
-    initPairs();
-    initTrade();
-    connectStreams();
+function generateBook(){
+  state.bids = [];
+  state.asks = [];
+
+  for(let i=1;i<=7;i++){
+    state.bids.push(state.mid - (i * 0.02));
+    state.asks.push(state.mid + (i * 0.02));
   }
+}
 
-  /* ================== PAIRS ================== */
+/* ===========================
+   RENDER
+   =========================== */
 
-  function initPairs() {
-    document.querySelectorAll(".pair-btn").forEach(btn => {
-      btn.addEventListener("click", () => {
-        document.querySelectorAll(".pair-btn").forEach(b => b.classList.remove("active"));
-        btn.classList.add("active");
-        STATE.quote = btn.dataset.pair;
-        connectStreams();
-      });
-    });
-  }
+function renderAll(){
+  renderPrice();
+  renderBook();
+  renderWallet();
+}
 
-  /* ================== BINANCE STREAM ================== */
+function renderPrice(){
+  document.getElementById("priceMain").textContent =
+    state.mid.toFixed(6);
 
-  function connectStreams() {
+  document.getElementById("spreadValue").textContent =
+    "Spread: " + (state.asks[0] - state.bids[0]).toFixed(6);
+}
 
-    if (STATE.socketTrade) STATE.socketTrade.close();
-    if (STATE.socketDepth) STATE.socketDepth.close();
+function renderBook(){
+  const body = document.getElementById("orderBookBody");
+  body.innerHTML = "";
 
-    const symbol = PAIRS[STATE.quote];
+  // Asks
+  state.asks.slice().reverse().forEach(price=>{
+    body.appendChild(createRow("", price, price, "ask"));
+  });
 
-    if (!symbol) {
-      STATE.price = STATE.reference;
-      renderPrice();
-      buildStaticBook();
-      return;
+  // Mid
+  const mid = document.createElement("div");
+  mid.className = "mid-price";
+  mid.textContent = state.mid.toFixed(6);
+  body.appendChild(mid);
+
+  // Bids
+  state.bids.forEach(price=>{
+    body.appendChild(createRow(price, price, "", "bid"));
+  });
+}
+
+function createRow(bid, price, ask, type){
+  const row = document.createElement("div");
+  row.className = "ob-row " + type;
+
+  row.innerHTML = `
+    <span>${bid || ""}</span>
+    <span>${price.toFixed ? price.toFixed(6) : price}</span>
+    <span>${ask || ""}</span>
+  `;
+
+  return row;
+}
+
+function renderWallet(){
+  document.querySelector("#bxBalance").textContent =
+    state.wallet.BX.toFixed(2);
+
+  document.querySelector("#usdtBalance").textContent =
+    state.wallet.USDT.toFixed(2);
+}
+
+/* ===========================
+   TRADE EXECUTION
+   =========================== */
+
+function executeTrade(){
+
+  const amount = parseFloat(
+    document.getElementById("amountInput").value
+  );
+
+  if(!amount || amount <= 0) return;
+
+  const bestPrice =
+    state.side === "BUY" ? state.asks[0] : state.bids[0];
+
+  const slippage =
+    Math.abs(bestPrice - state.mid);
+
+  document.getElementById("execPrice").textContent =
+    bestPrice.toFixed(6);
+
+  document.getElementById("slippageValue").textContent =
+    slippage.toFixed(6);
+
+  if(state.side === "BUY"){
+    const cost = amount * bestPrice;
+    if(state.wallet.USDT >= cost){
+      state.wallet.USDT -= cost;
+      state.wallet.BX += amount;
     }
-
-    /* ---- Trade Stream ---- */
-
-    STATE.socketTrade = new WebSocket(
-      `wss://stream.binance.com:9443/ws/${symbol.toLowerCase()}@trade`
-    );
-
-    STATE.socketTrade.onmessage = e => {
-      const data = JSON.parse(e.data);
-      const marketPrice = parseFloat(data.p);
-      STATE.price = STATE.reference / marketPrice;
-      renderPrice();
-      Chart.addTick(STATE.price);
-    };
-
-    /* ---- Depth Stream ---- */
-
-    STATE.socketDepth = new WebSocket(
-      `wss://stream.binance.com:9443/ws/${symbol.toLowerCase()}@depth15@100ms`
-    );
-
-    STATE.socketDepth.onmessage = e => {
-      const data = JSON.parse(e.data);
-      renderBook(data.bids, data.asks);
-    };
-  }
-
-  /* ================== PRICE ================== */
-
-  function renderPrice() {
-    if (!DOM.price) return;
-    DOM.price.textContent = STATE.price.toFixed(6);
-
-    if (STATE.bid && STATE.ask) {
-      STATE.spread = STATE.ask - STATE.bid;
-      if (DOM.spread)
-        DOM.spread.textContent = STATE.spread.toFixed(6);
-    }
-  }
-
-  /* ================== ORDER BOOK ================== */
-
-  function renderBook(bids, asks) {
-
-    if (!DOM.bids || !DOM.asks) return;
-
-    DOM.bids.innerHTML = "";
-    DOM.asks.innerHTML = "";
-
-    const bestBid = parseFloat(bids[0][0]);
-    const bestAsk = parseFloat(asks[0][0]);
-
-    STATE.bid = STATE.reference / bestBid;
-    STATE.ask = STATE.reference / bestAsk;
-
-    renderPrice();
-
-    bids.slice(0, 15).forEach(b => {
-      const price = STATE.reference / parseFloat(b[0]);
-      const row = document.createElement("div");
-      row.className = "bid-row";
-      row.textContent = price.toFixed(6);
-      row.onclick = () => fill(price);
-      DOM.bids.appendChild(row);
-    });
-
-    asks.slice(0, 15).forEach(a => {
-      const price = STATE.reference / parseFloat(a[0]);
-      const row = document.createElement("div");
-      row.className = "ask-row";
-      row.textContent = price.toFixed(6);
-      row.onclick = () => fill(price);
-      DOM.asks.appendChild(row);
-    });
-  }
-
-  function buildStaticBook() {
-    DOM.bids.innerHTML = "";
-    DOM.asks.innerHTML = "";
-
-    for (let i = 0; i < 15; i++) {
-      const bid = STATE.price - i * 0.02;
-      const ask = STATE.price + i * 0.02;
-
-      const b = document.createElement("div");
-      b.className = "bid-row";
-      b.textContent = bid.toFixed(6);
-
-      const a = document.createElement("div");
-      a.className = "ask-row";
-      a.textContent = ask.toFixed(6);
-
-      DOM.bids.appendChild(b);
-      DOM.asks.appendChild(a);
+  } else {
+    if(state.wallet.BX >= amount){
+      state.wallet.BX -= amount;
+      state.wallet.USDT += amount * bestPrice;
     }
   }
 
-  /* ================== TRADE ================== */
+  renderWallet();
+}
 
-  function initTrade() {
+/* ===========================
+   SIMULATION
+   =========================== */
 
-    if (!DOM.buyBtn || !DOM.sellBtn) return;
+function startSimulation(){
+  setInterval(()=>{
+    const move = (Math.random()-0.5) * 0.04;
+    state.mid += move;
+    generateBook();
+    renderAll();
+    updateChart(state.mid);
+  },1500);
+}
 
-    DOM.buyBtn.onclick = () => {
-      STATE.side = "BUY";
-      DOM.tradeBtn.textContent = "Buy BX";
-    };
+/* ===========================
+   CHART (Canvas Clean)
+   =========================== */
 
-    DOM.sellBtn.onclick = () => {
-      STATE.side = "SELL";
-      DOM.tradeBtn.textContent = "Sell BX";
-    };
+let chartCtx;
+let chartData = [];
 
-    DOM.tradeBtn.onclick = executeTrade;
+function initChart(){
+  const canvas = document.getElementById("chartCanvas");
+  if(!canvas) return;
+  chartCtx = canvas.getContext("2d");
+  canvas.width = canvas.offsetWidth;
+  canvas.height = 200;
+}
+
+function updateChart(price){
+  if(!chartCtx) return;
+
+  chartData.push(price);
+  if(chartData.length > 50)
+    chartData.shift();
+
+  chartCtx.clearRect(0,0,500,200);
+
+  chartCtx.beginPath();
+  chartCtx.strokeStyle = "#00c896";
+  chartCtx.lineWidth = 2;
+
+  chartData.forEach((p,i)=>{
+    const x = i * 10;
+    const y = 200 - (p - REF_PRICE) * 20 - 100;
+    if(i===0) chartCtx.moveTo(x,y);
+    else chartCtx.lineTo(x,y);
+  });
+
+  chartCtx.stroke();
   }
-
-  function fill(price) {
-    if (DOM.exec)
-      DOM.exec.textContent = price.toFixed(6);
-  }
-
-  function executeTrade() {
-
-    const amount = parseFloat(DOM.amount.value);
-    if (!amount) return;
-
-    const exec = STATE.side === "BUY" ? STATE.ask : STATE.bid;
-
-    const slippage =
-      Math.abs(exec - STATE.price) / STATE.price * 100;
-
-    if (DOM.slip)
-      DOM.slip.textContent = slippage.toFixed(2) + "%";
-
-    if (DOM.exec)
-      DOM.exec.textContent = exec.toFixed(6);
-
-    console.log("Trade:", STATE.side, amount);
-  }
-
-  /* ================== CHART v3.1 PRO ================== */
-
-  const Chart = (function () {
-
-    const canvas = document.getElementById("marketChart");
-    if (!canvas) return { addTick: () => {} };
-
-    const ctx = canvas.getContext("2d");
-    let candles = [];
-    let volumes = [];
-    let current = null;
-    const tf = 5000;
-    const max = 80;
-
-    function resize() {
-      canvas.width = canvas.clientWidth;
-      canvas.height = canvas.clientHeight;
-    }
-
-    window.addEventListener("resize", resize);
-    resize();
-
-    function addTick(price) {
-
-      const now = Date.now();
-
-      if (!current) {
-        current = { t: now, o: price, h: price, l: price, c: price };
-      }
-
-      if (now - current.t >= tf) {
-        candles.push(current);
-        volumes.push(Math.random() * 20 + 5);
-        if (candles.length > max) {
-          candles.shift();
-          volumes.shift();
-        }
-        current = { t: now, o: price, h: price, l: price, c: price };
-      } else {
-        current.c = price;
-        current.h = Math.max(current.h, price);
-        current.l = Math.min(current.l, price);
-      }
-
-      draw();
-    }
-
-    function draw() {
-
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      if (!candles.length) return;
-
-      const prices = candles.flatMap(c => [c.h, c.l]);
-      const maxP = Math.max(...prices);
-      const minP = Math.min(...prices);
-      const range = maxP - minP || 1;
-
-      const w = canvas.width / max;
-
-      candles.forEach((c, i) => {
-
-        const x = i * w;
-        const openY = canvas.height - ((c.o - minP) / range) * canvas.height;
-        const closeY = canvas.height - ((c.c - minP) / range) * canvas.height;
-        const highY = canvas.height - ((c.h - minP) / range) * canvas.height;
-        const lowY = canvas.height - ((c.l - minP) / range) * canvas.height;
-
-        const color = c.c >= c.o ? "#16c784" : "#ea3943";
-
-        ctx.strokeStyle = color;
-        ctx.beginPath();
-        ctx.moveTo(x + w/2, highY);
-        ctx.lineTo(x + w/2, lowY);
-        ctx.stroke();
-
-        ctx.fillStyle = color;
-        ctx.fillRect(x + w*0.2, Math.min(openY, closeY),
-          w*0.6, Math.abs(openY - closeY) || 1);
-
-        ctx.fillStyle = color + "55";
-        ctx.fillRect(x + w*0.2, canvas.height - volumes[i],
-          w*0.6, volumes[i]);
-      });
-    }
-
-    return { addTick };
-
-  })();
-
-  /* ================== START ================== */
-
-  init();
-
-})();
