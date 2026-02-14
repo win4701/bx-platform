@@ -66,6 +66,7 @@ function init() {
   updateWalletUI();
   bindEvents();
   connectTicker();
+  resizeCanvas();
 }
 
 /* ================= BINANCE TICKER ================= */
@@ -99,7 +100,7 @@ function computeBXPrice() {
   generateOrderBook();
   renderOrderBook();
   updatePriceUI();
-  updateChart();
+  drawChart();
 }
 
 /* ================= ORDERBOOK ================= */
@@ -244,34 +245,34 @@ function bindEvents() {
     });
 }
 
-/* ===============================
-   CHART (CANVAS CLEAN)
-================================= */
+/* ================= CHART ================= */
 
-const canvas = document.getElementById("bxChart");
-const ctx = canvas.getContext("2d");
-let priceHistory = [];
+let history = [];
 
-function updateChart(price) {
-  priceHistory.push(price);
-  if (priceHistory.length > 100) priceHistory.shift();
+function resizeCanvas() {
+  canvas.width = canvas.parentElement.clientWidth;
+  canvas.height = 200;
+}
+
+function drawChart() {
+  history.push(marketPrice);
+  if (history.length > 120) history.shift();
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  ctx.strokeStyle = "#00ff88";
+  ctx.strokeStyle = "#21c87a";
   ctx.beginPath();
 
-  priceHistory.forEach((p, i) => {
-    const x = (i / 100) * canvas.width;
+  history.forEach((p, i) => {
+    const x = (i / history.length) * canvas.width;
+    const min = Math.min(...history);
+    const max = Math.max(...history);
     const y =
       canvas.height -
-      ((p - Math.min(...priceHistory)) /
-        (Math.max(...priceHistory) -
-          Math.min(...priceHistory) || 1)) *
+      ((p - min) / (max - min || 1)) *
         canvas.height;
 
     i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
   });
 
   ctx.stroke();
-}
+   }
