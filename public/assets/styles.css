@@ -491,25 +491,26 @@ h3{
   border-bottom:1px solid rgba(255,255,255,.06);
 }
 
-/* ================= ORDER BOOK CARD ================= */
+/* ===== ORDER BOOK STYLE CLEAN ===== */
 
 .orderbook-card {
   background: linear-gradient(145deg,#0c1624,#0f1c2d);
   border-radius: 18px;
   padding: 18px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+  box-shadow: 0 10px 30px rgba(0,0,0,.35);
+}
 
 /* Grid */
 .orderbook-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: 1fr 0.8fr 1fr;
   gap: 10px;
 }
 
 /* Headers */
 .ob-head {
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 600;
   opacity: .7;
   margin-bottom: 8px;
 }
@@ -527,7 +528,7 @@ h3{
 
 /* Rows */
 .ob-row {
-  padding: 6px ;
+  padding: 6px 8px;
   border-radius: 8px;
   font-size: 13px;
   font-weight: 500;
@@ -536,27 +537,28 @@ h3{
 
 /* Bids */
 .bids .ob-row {
-  background: rgba(0, 255, 140, 0.05);
-  color: #2edc8f;
+  background: rgba(53,212,154,.08);
+  color: #35d49a;
 }
 
 .bids .ob-row:hover {
-  background: rgba(0, 255, 140, 0.12);
+  background: rgba(53,212,154,.15);
+}
 
 /* Asks */
 .asks .ob-row {
-  background: rgba(255, 80, 80, 0.05);
+  background: rgba(255,107,107,.08);
   color: #ff6b6b;
 }
 
 .asks .ob-row:hover {
-  background: rgba(255, 80, 80, 0.12);
+  background: rgba(255,107,107,.15);
 }
 
 /* Mid Price column */
 .price-ladder .ob-row {
   background: rgba(255,255,255,.04);
-  color: #8aa0c8;
+  color: #cfd6e4;
   text-align: center;
 }
      
@@ -581,30 +583,32 @@ h3{
 /* ===== TRADE TABS ===== */
 
 .trade-tabs {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  background: #0f1c2d;
+  display: flex;
+  background: #101a2b;
   border-radius: 14px;
   padding: 4px;
+  margin-bottom: 14px;
 }
 
 .trade-tabs button {
+  flex: 1;
+  padding: 12px;
   border: none;
+  border-radius: 12px;
   background: transparent;
-  padding: 10px 0;
-  border-radius: 10px;
-  font-weight: 800;
-  color: #7f8ea3;
-  transition: .2s;
+  color: #9caecf;
+  font-weight: 600;
+  transition: 0.25s;
 }
 
-.trade-tabs button.active {
-  background: linear-gradient(90deg,#35d49a,#28b783);
-  color: #0b121b;
+.trade-tabs button.active.buy {
+  background: linear-gradient(90deg,#1fd48d,#1aa06e);
+  color: #fff;
 }
 
-.trade-box.sell .trade-tabs button.active {
-  background: linear-gradient(90deg,#ff6b6b,#e04f4f);
+.trade-tabs button.active.sell {
+  background: linear-gradient(90deg,#ff5858,#d63b3b);
+  color: #fff;
 }
 
 /* ===== ACTION BUTTON ===== */
@@ -638,32 +642,31 @@ h3{
 /* ===== PERCENT BUTTONS IMPROVED ===== */
 
 .percent-row {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  display: flex;
   gap: 8px;
-  margin-top: 10px;
+  margin-top: 8px;
 }
 
 .percent-row button {
-  padding: 8px 0;
+  flex: 1;
+  padding: 8px;
   border-radius: 10px;
-  border: 1px solid rgba(255,255,255,.08);
-  background: rgba(255,255,255,.04);
-  color: #cfd6e4;
+  border: 1px solid rgba(255,255,255,0.06);
+  background: #0f1a2b;
+  color: #a8b6d9;
   font-size: 13px;
-  transition: .2s;
+  transition: 0.2s;
 }
 
 .percent-row button:hover {
-  background: rgba(53,212,154,.15);
-  border-color: rgba(53,212,154,.4);
-  color: #35d49a;
+  border-color: #21c87a;
+  color: #21c87a;
 }
 
 .percent-row button.active {
-  background: linear-gradient(90deg,#35d49a,#28b783);
-  color: #0b121b;
-  border: none;
+  background: rgba(33, 200, 122, 0.15);
+  border-color: #21c87a;
+  color: #21c87a;
 }
 
 /* Submit buttons */
