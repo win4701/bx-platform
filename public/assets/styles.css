@@ -320,7 +320,6 @@ h3{
 /* =========================================================
    BLOXIO MARKET CSS — GLOBAL PRO VERSION 3.0
    Optimized • Clean • Depth Engine Ready
-   No layout breaking
 ========================================================= */
 
 :root{
@@ -500,14 +499,12 @@ h3{
   box-shadow: 0 10px 30px rgba(0,0,0,.35);
 }
 
-/* Grid */
 .orderbook-grid {
   display: grid;
   grid-template-columns: 1fr 0.8fr 1fr;
   gap: 10px;
 }
 
-/* Headers */
 .ob-head {
   font-size: 13px;
   font-weight: 600;
@@ -518,7 +515,6 @@ h3{
 .ob-head.buy { color: #35d49a; }
 .ob-head.sell { color: #ff6b6b; }
 
-/* Lists */
 .ob-list,
 .price-ladder {
   display: flex;
@@ -526,7 +522,6 @@ h3{
   gap: 4px;
 }
 
-/* Rows */
 .ob-row {
   padding: 6px 8px;
   border-radius: 8px;
@@ -535,7 +530,6 @@ h3{
   transition: .2s;
 }
 
-/* Bids */
 .bids .ob-row {
   background: rgba(53,212,154,.08);
   color: #35d49a;
@@ -545,7 +539,6 @@ h3{
   background: rgba(53,212,154,.15);
 }
 
-/* Asks */
 .asks .ob-row {
   background: rgba(255,107,107,.08);
   color: #ff6b6b;
@@ -555,7 +548,6 @@ h3{
   background: rgba(255,107,107,.15);
 }
 
-/* Mid Price column */
 .price-ladder .ob-row {
   background: rgba(255,255,255,.04);
   color: #cfd6e4;
@@ -564,33 +556,42 @@ h3{
      
 /* ================= BUY / SELL PANEL ================= */
 
-/* ===== FIX BX AMOUNT FIELD ===== */
-
+.trade-box input[type="number"],
 #amountInput,
-#amount-bx,
-input[name="amount"],
-.trade-box input[type="number"] {
+#amount-bx {
 
   width: 100%;
-  background: #0f1a2b !important;
-  border: 1px solid rgba(255,255,255,0.08) !important;
-  border-radius: 12px;
-  padding: 12px 14px;
-  font-size: 15px;
-  color: #e6edf7 !important;
+  height: 48px;
+
+  background: #0f1a2b;
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 14px;
+
+  padding: 0 16px;
+
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+
+  color: #e6edf7;
+
   outline: none;
-  transition: 0.25s ease;
+  transition: all 0.25s ease;
 }
 
-#amountInput::placeholder,
-.trade-box input::placeholder {
+.trade-box input[type="number"]::placeholder {
   color: #6f809f;
+  font-weight: 400;
 }
 
-#amountInput:focus,
-.trade-box input:focus {
-  border-color: #21c87a !important;
-  box-shadow: 0 0 0 2px rgba(33,200,122,0.15);
+.trade-box input[type="number"]:focus {
+  border-color: #21c87a;
+  box-shadow: 0 0 0 3px rgba(33,200,122,0.12);
+  background: #122036;
+}
+
+.trade-box input[type="number"]:hover {
+  border-color: rgba(255,255,255,0.15);
 }
 
 /* ===== TRADE TABS ===== */
@@ -1289,6 +1290,7 @@ button:active,
   border-radius: 14px;
   font-weight: 800;
    }
+
 /* ===============================
    BLOXIO TOPUP PRO CARD
 ================================ */
