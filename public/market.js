@@ -63,17 +63,21 @@ function init() {
   updateWalletUI();
   bindEvents();
   connectBinance();
-  resizeCanvas();
+  resizeChart();
   drawChart();
 }
 
 /* ================= BINANCE TICKER ================= */
 
-let currentPrice = BX_USDT_REFERENCE;
+let ws = null;
 
 function connectBinance(symbol = "btcusdt") {
 
-  const ws = new WebSocket(
+  if (ws) {
+    ws.close();
+  }
+
+  ws = new WebSocket(
     `wss://stream.binance.com:9443/ws/${symbol}@kline_1m`
   );
 
@@ -81,10 +85,11 @@ function connectBinance(symbol = "btcusdt") {
     const msg = JSON.parse(event.data);
     const k = msg.k;
 
-    currentPrice = parseFloat(k.c);
-    quotePriceUSDT = currentPrice;
+    const livePrice = parseFloat(k.c);
 
+    quotePriceUSDT = livePrice;
     computeBXPrice();
+
     updateCandle(marketPrice);
   };
 
@@ -92,7 +97,6 @@ function connectBinance(symbol = "btcusdt") {
     console.log("Binance WS error");
   };
 }
-
 function computeBXPrice() {
   if (currentQuote === "USDT" || currentQuote === "USDC") {
     marketPrice = BX_USDT_REFERENCE;
@@ -288,10 +292,7 @@ function updateCandle(price) {
       close: price,
       volume: 1
     };
-    return;
-  }
-
-  if (now - currentCandle.time < intervalMs) {
+  } else if (now - currentCandle.time < intervalMs) {
     currentCandle.high = Math.max(currentCandle.high, price);
     currentCandle.low = Math.min(currentCandle.low, price);
     currentCandle.close = price;
@@ -299,7 +300,15 @@ function updateCandle(price) {
   } else {
     candles.push(currentCandle);
     if (candles.length > maxCandles) candles.shift();
-    currentCandle = null;
+
+    currentCandle = {
+      time: now,
+      open: price,
+      high: price,
+      low: price,
+      close: price,
+      volume: 1
+    };
   }
 
   calculateIndicators();
@@ -350,20 +359,27 @@ function calculateIndicators() {
 =================================*/
 
 function drawChart() {
+
   const w = canvas.width;
   const h = canvas.height;
+
   ctx.clearRect(0, 0, w, h);
 
-  if (candles.length === 0) return;
+  const allCandles = currentCandle
+    ? [...candles, currentCandle]
+    : candles;
 
-  const prices = candles.flatMap(c => [c.high, c.low]);
+  if (allCandles.length === 0) return;
+
+  const prices = allCandles.flatMap(c => [c.high, c.low]);
   const max = Math.max(...prices);
   const min = Math.min(...prices);
   const range = max - min || 1;
 
   const candleWidth = w / maxCandles;
 
-  candles.forEach((c, i) => {
+  allCandles.forEach((c, i) => {
+
     const x = i * candleWidth + candleWidth / 2;
 
     const openY = h - ((c.open - min) / range) * h;
