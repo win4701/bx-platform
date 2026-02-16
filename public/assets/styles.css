@@ -564,31 +564,33 @@ h3{
      
 /* ================= BUY / SELL PANEL ================= */
 
-.trade-panel input[type="text"],
-.trade-panel input[type="number"] {
+/* ===== FIX BX AMOUNT FIELD ===== */
+
+#amountInput,
+#amount-bx,
+input[name="amount"],
+.trade-box input[type="number"] {
+
   width: 100%;
-  background: #0f1a2b;
-  border: 1px solid rgba(255,255,255,0.08);
+  background: #0f1a2b !important;
+  border: 1px solid rgba(255,255,255,0.08) !important;
   border-radius: 12px;
   padding: 12px 14px;
   font-size: 15px;
-  color: #e6edf7;
+  color: #e6edf7 !important;
   outline: none;
-  transition: 0.25s;
+  transition: 0.25s ease;
 }
 
-.trade-panel input::placeholder {
+#amountInput::placeholder,
+.trade-box input::placeholder {
   color: #6f809f;
 }
 
-.trade-panel input:focus {
-  border-color: #21c87a;
+#amountInput:focus,
+.trade-box input:focus {
+  border-color: #21c87a !important;
   box-shadow: 0 0 0 2px rgba(33,200,122,0.15);
-}
-
-.trade-panel input:-webkit-autofill {
-  -webkit-box-shadow: 0 0 0 1000px #0f1a2b inset !important;
-  -webkit-text-fill-color: #e6edf7 !important;
 }
 
 /* ===== TRADE TABS ===== */
