@@ -123,23 +123,6 @@ function computeBXPrice() {
   PRO_CHART.update(marketPrice); 
 }
 
-/*============ Crosshair ================= */
-
- canvas.addEventListener("mousemove", (e) => {
-
-  const rect = canvas.getBoundingClientRect();
-  const x = e.clientX - rect.left;
-
-  drawChart();
-
-  ctx.strokeStyle = "rgba(255,255,255,0.2)";
-  ctx.beginPath();
-  ctx.moveTo(x, 0);
-  ctx.lineTo(x, canvas.height);
-  ctx.stroke();
-
-});
-
 /* ================= ORDERBOOK ================= */
 
 function generateOrderBook() {
