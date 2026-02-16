@@ -243,81 +243,181 @@ function bindEvents() {
 }
 
 /* ======================================================
-   BX INSTITUTIONAL CHART ENGINE – SAFE MODE
-   v3.1 PRO Compatible – No Breaking
+   BX INSTITUTIONAL CHART ENGINE v4
+   Candlestick + EMA + VWAP + Gradient
+   Safe for v3.1 Pro
 ====================================================== */
 
-const chartCanvas = document.getElementById("bxChart");
-const ctx = chartCanvas.getContext("2d");
+const canvas = document.getElementById("bxChart");
+const ctx = canvas.getContext("2d");
 
-let chartData = [];
-let maxPoints = 120;
+let candles = [];
+let maxCandles = 80;
+let currentCandle = null;
+let intervalMs = 5000; // 5s candle
+
+let emaPeriod = 14;
+let emaData = [];
+let vwapData = [];
 
 function resizeChart() {
-  chartCanvas.width = chartCanvas.offsetWidth;
-  chartCanvas.height = chartCanvas.offsetHeight;
+  canvas.width = canvas.offsetWidth;
+  canvas.height = canvas.offsetHeight;
 }
-
 window.addEventListener("resize", resizeChart);
 resizeChart();
 
-/* ===== PUSH NEW PRICE ===== */
+/* ===============================
+   CANDLE BUILDER
+=================================*/
 
-function pushPrice(price) {
-  if (!price) return;
+function updateCandle(price) {
+  const now = Date.now();
 
-  chartData.push(price);
-
-  if (chartData.length > maxPoints) {
-    chartData.shift();
+  if (!currentCandle) {
+    currentCandle = {
+      time: now,
+      open: price,
+      high: price,
+      low: price,
+      close: price,
+      volume: 1
+    };
+    return;
   }
 
+  if (now - currentCandle.time < intervalMs) {
+    currentCandle.high = Math.max(currentCandle.high, price);
+    currentCandle.low = Math.min(currentCandle.low, price);
+    currentCandle.close = price;
+    currentCandle.volume += 1;
+  } else {
+    candles.push(currentCandle);
+    if (candles.length > maxCandles) candles.shift();
+    currentCandle = null;
+  }
+
+  calculateIndicators();
   drawChart();
 }
 
-/* ===== DRAW FUNCTION ===== */
+/* ===============================
+   EMA
+=================================*/
+
+function calculateEMA(data, period) {
+  let k = 2 / (period + 1);
+  let ema = [];
+  data.forEach((val, i) => {
+    if (i === 0) ema.push(val.close);
+    else ema.push(val.close * k + ema[i - 1] * (1 - k));
+  });
+  return ema;
+}
+
+/* ===============================
+   VWAP
+=================================*/
+
+function calculateVWAP(data) {
+  let cumulativePV = 0;
+  let cumulativeVol = 0;
+  let result = [];
+
+  data.forEach(c => {
+    let typical = (c.high + c.low + c.close) / 3;
+    cumulativePV += typical * c.volume;
+    cumulativeVol += c.volume;
+    result.push(cumulativePV / cumulativeVol);
+  });
+
+  return result;
+}
+
+function calculateIndicators() {
+  if (candles.length < 2) return;
+  emaData = calculateEMA(candles, emaPeriod);
+  vwapData = calculateVWAP(candles);
+}
+
+/* ===============================
+   DRAW ENGINE
+=================================*/
 
 function drawChart() {
-  const w = chartCanvas.width;
-  const h = chartCanvas.height;
-
+  const w = canvas.width;
+  const h = canvas.height;
   ctx.clearRect(0, 0, w, h);
 
-  if (chartData.length < 2) return;
+  if (candles.length === 0) return;
 
-  const max = Math.max(...chartData);
-  const min = Math.min(...chartData);
+  const prices = candles.flatMap(c => [c.high, c.low]);
+  const max = Math.max(...prices);
+  const min = Math.min(...prices);
   const range = max - min || 1;
 
+  const candleWidth = w / maxCandles;
+
+  candles.forEach((c, i) => {
+    const x = i * candleWidth + candleWidth / 2;
+
+    const openY = h - ((c.open - min) / range) * h;
+    const closeY = h - ((c.close - min) / range) * h;
+    const highY = h - ((c.high - min) / range) * h;
+    const lowY = h - ((c.low - min) / range) * h;
+
+    const isBull = c.close >= c.open;
+
+    /* Wick */
+    ctx.strokeStyle = isBull ? "#2dd36f" : "#ff4d4f";
+    ctx.beginPath();
+    ctx.moveTo(x, highY);
+    ctx.lineTo(x, lowY);
+    ctx.stroke();
+
+    /* Body */
+    ctx.fillStyle = isBull ? "#2dd36f" : "#ff4d4f";
+    ctx.fillRect(
+      x - candleWidth / 4,
+      Math.min(openY, closeY),
+      candleWidth / 2,
+      Math.abs(closeY - openY) || 1
+    );
+  });
+
+  /* EMA */
   ctx.beginPath();
   ctx.lineWidth = 2;
-  ctx.strokeStyle = "#35d49a";
+  ctx.strokeStyle = "#ffb703";
 
-  chartData.forEach((price, i) => {
-    const x = (i / (maxPoints - 1)) * w;
-    const y = h - ((price - min) / range) * h;
-
+  emaData.forEach((val, i) => {
+    const x = i * candleWidth + candleWidth / 2;
+    const y = h - ((val - min) / range) * h;
     if (i === 0) ctx.moveTo(x, y);
     else ctx.lineTo(x, y);
   });
-
   ctx.stroke();
 
-  /* ===== FILL AREA ===== */
-  ctx.lineTo(w, h);
-  ctx.lineTo(0, h);
-  ctx.closePath();
-  ctx.fillStyle = "rgba(53,212,154,0.08)";
-  ctx.fill();
+  /* VWAP */
+  ctx.beginPath();
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = "#3a86ff";
+
+  vwapData.forEach((val, i) => {
+    const x = i * candleWidth + candleWidth / 2;
+    const y = h - ((val - min) / range) * h;
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  });
+  ctx.stroke();
 }
 
-/* ======================================================
-   AUTO CONNECT WITH YOUR EXISTING PRICE ENGINE
-====================================================== */
+/* ===============================
+   CONNECT TO PRICE ENGINE
+=================================*/
 
-/* إذا عندك currentPrice يتم تحديثه من Binance */
 setInterval(() => {
   if (typeof currentPrice !== "undefined") {
-    pushPrice(currentPrice);
+    updateCandle(currentPrice);
   }
 }, 1000);
