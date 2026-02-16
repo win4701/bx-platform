@@ -319,7 +319,6 @@ h3{
 
 /* =========================================================
    BLOXIO MARKET CSS — GLOBAL PRO VERSION 3.0
-   Optimized • Clean • Depth Engine Ready
 ========================================================= */
 
 :root{
@@ -345,57 +344,139 @@ h3{
   text-rendering:optimizeLegibility;
 }
 
-/* ================= HEADER ================= */
+/* ===== HEADER REFINEMENT ===== */
 
 .market-header{
-  display:flex;
-  justify-content:space-between;
-  align-items:flex-start;
-  margin-bottom:14px;
+  margin-bottom:18px;
 }
 
 .pair-title{
-  display:flex;
-  align-items:center;
-  gap:6px;
-  font-size:18px;
-  font-weight:800;
-  letter-spacing:.3px;
-}
-
-.pair-title .base{ color:var(--yellow); }
-.pair-title .arrow{ color:var(--muted); }
-.pair-title .quote{ color:#94a3b8; }
-
-.price-box{
-  text-align:right;
+  font-size:20px;
+  font-weight:900;
+  letter-spacing:.5px;
 }
 
 .price-main{
-  font-size:26px;
-  font-weight:800;
-}
-
-.price-sub{
-  font-size:12px;
-  color:var(--muted);
-  margin-top:4px;
+  font-size:28px;
+  font-weight:900;
+  letter-spacing:.4px;
 }
 
 .price-main.up{
-  color:var(--green);
-  text-shadow:0 0 8px var(--green-glow);
+  color:#22e6a8;
+  text-shadow:0 0 12px rgba(34,230,168,.35);
 }
 
 .price-main.down{
-  color:var(--red);
-  text-shadow:0 0 8px var(--red-glow);
+  color:#ff5c5c;
+  text-shadow:0 0 12px rgba(255,92,92,.35);
 }
 
-.approx{
-  font-size:12px;
-  color:var(--muted);
+/* ===== TRADE BOX DEPTH ===== */
+
+.trade-box{
+  background:linear-gradient(145deg,#0c1726,#0a1420);
+  border:1px solid rgba(255,255,255,.04);
+  border-radius:18px;
+  padding:16px;
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.02),
+    0 10px 30px rgba(0,0,0,.45);
 }
+
+/* ===== INPUT ELITE ===== */
+
+.trade-box input[type="number"]{
+  height:52px;
+  font-size:17px;
+  font-weight:600;
+  background:#0c1a2b;
+  border:1px solid rgba(255,255,255,.05);
+  border-radius:16px;
+}
+
+.trade-box input[type="number"]:focus{
+  border-color:#35d49a;
+  box-shadow:0 0 0 3px rgba(53,212,154,.15);
+}
+
+/* ===== TABS IMPROVED ===== */
+
+.trade-tabs{
+  background:#0b1624;
+  border-radius:16px;
+  padding:5px;
+}
+
+.trade-tabs button{
+  font-size:15px;
+  font-weight:800;
+  letter-spacing:.4px;
+}
+
+.trade-tabs button.active{
+  box-shadow:0 4px 20px rgba(53,212,154,.25);
+}
+
+/* SELL ACTIVE */
+.trade-box.sell .trade-tabs button.active{
+  box-shadow:0 4px 20px rgba(255,80,80,.25);
+}
+
+/* ===== PERCENT BUTTONS REFINED ===== */
+
+.percent-row{
+  gap:10px;
+}
+
+.percent-row button{
+  padding:10px 0;
+  font-weight:700;
+  border-radius:12px;
+  backdrop-filter:blur(6px);
+}
+
+.percent-row button.active{
+  box-shadow:0 4px 16px rgba(53,212,154,.3);
+}
+
+/* ===== EXECUTION TEXT STYLE ===== */
+
+.trade-box .exec-line{
+  font-size:14px;
+  color:#9fb0c6;
+  letter-spacing:.3px;
+  margin-top:8px;
+}
+
+.trade-box .exec-line span{
+  font-weight:700;
+  color:#e6edf7;
+}
+
+/* ===== ACTION BUTTON PREMIUM ===== */
+
+.action-btn{
+  height:54px;
+  font-size:16px;
+  border-radius:18px;
+  letter-spacing:.5px;
+  font-weight:800;
+}
+
+.action-btn.buy{
+  background:linear-gradient(90deg,#1dd1a1,#10ac84);
+  box-shadow:0 6px 25px rgba(29,209,161,.35);
+}
+
+.trade-box.sell .action-btn{
+  background:linear-gradient(90deg,#ff4d4f,#d63031);
+  box-shadow:0 6px 25px rgba(255,77,79,.35);
+}
+
+.action-btn:hover{
+  transform:translateY(-2px);
+ }
 
 /*================= PAIR SELECTOR ================= */
 
@@ -427,6 +508,39 @@ h3{
   color:var(--yellow);
   border-color:var(--yellow);
 }
+
+/* ================= CHART ================= */
+
+#bxChartWrap {
+  position: relative;
+  height: 220px;
+  margin: 12px 0;
+}
+#bxChart {
+  width: 100%;
+  height: 100%;
+}
+.badge-live {
+  position: absolute;
+  top: 6px;
+  right: 10px;
+  font-size: 11px;
+  color: #7CFFB2;
+  opacity: .85;
+}
+
+/* ================= INDICATORS ================= */
+
+.indicator-legend{
+  display:flex;
+  gap:14px;
+  font-size:11px;
+  margin:6px 4px;
+}
+
+.indicator-legend .ema{ color:#facc15; }
+.indicator-legend .vwap{ color:var(--purple); }
+
 
 /* ================= ORDER BOOK ================= */
 
@@ -553,145 +667,6 @@ h3{
   text-align: center;
 }
      
-/* ================= MARKET v3.1 PRO CLEAN ================= */
-
-.trade-box input[type="number"],
-#amountInput,
-#amount-bx {
-
-  width: 100%;
-  height: 50px;
-
-  background: linear-gradient(145deg,#0e1a2b,#0b1624);
-  border: 1px solid rgba(255,255,255,0.06);
-  border-radius: 16px;
-
-  padding: 0 18px;
-
-  font-size: 17px;
-  font-weight: 800;
-  letter-spacing: .4px;
-
-  color: #f2f6ff;
-
-  outline: none;
-  transition: all .25s ease;
-}
-
-.trade-box input::placeholder{
-  color: #70819f;
-  font-weight: 400;
-}
-
-.trade-box input:focus{
-  border-color: #35d49a;
-  box-shadow: 0 0 0 3px rgba(53,212,154,.15);
-  background: #122036;
-}
-
-.trade-box input:hover{
-  border-color: rgba(255,255,255,.12);
-}
-
-
-/* ===== BUY / SELL TOGGLE ===== */
-
-.trade-tabs{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  background:#0e1c2d;
-  border-radius:16px;
-  padding:5px;
-  margin-bottom:12px;
-}
-
-.trade-tabs button{
-  border:none;
-  background:transparent;
-  padding:11px 0;
-  border-radius:12px;
-  font-weight:800;
-  font-size:14px;
-  color:#7e8ea6;
-  cursor:pointer;
-  transition:.25s;
-}
-
-.trade-tabs button.active{
-  background:linear-gradient(90deg,#35d49a,#28b783);
-  color:#0b121b;
-}
-
-.trade-box.sell .trade-tabs button.active{
-  background:linear-gradient(90deg,#ff6b6b,#e04f4f);
-  color:white;
-}
-
-
-/* ===== PERCENT BUTTONS ===== */
-
-.percent-row{
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:10px;
-  margin-top:12px;
-}
-
-.percent-row button{
-  padding:9px 0;
-  border-radius:12px;
-  border:1px solid rgba(255,255,255,.07);
-  background:rgba(255,255,255,.04);
-  color:#cfd6e4;
-  font-size:13px;
-  font-weight:500;
-  cursor:pointer;
-  transition:.25s;
-}
-
-.percent-row button:hover{
-  background:rgba(53,212,154,.15);
-  border-color:rgba(53,212,154,.35);
-  color:#35d49a;
-}
-
-.percent-row button.active{
-  background:linear-gradient(90deg,#35d49a,#28b783);
-  color:#0b121b;
-  border:none;
-}
-
-
-/* ===== ACTION BUTTON ===== */
-
-.action-btn{
-  width:100%;
-  padding:15px;
-  border-radius:16px;
-  border:none;
-  font-weight:800;
-  font-size:15px;
-  margin-top:14px;
-  cursor:pointer;
-  transition:.25s;
-}
-
-.action-btn.buy{
-  background:linear-gradient(90deg,#1dd1a1,#10ac84);
-  color:#081018;
-}
-
-.trade-box.sell .action-btn{
-  background:linear-gradient(90deg,#ff4d4f,#d63031);
-  color:white;
-}
-
-.action-btn:hover{
-  transform:translateY(-2px);
-  box-shadow:0 6px 20px rgba(0,0,0,.35);
-}
-
-
 /* ===== INFO ROW (Price / Slippage / Spread) ===== */
 
 .trade-info{
@@ -704,45 +679,6 @@ h3{
 .trade-info strong{
   color:#ffffff;
   font-weight:800;
-}
-
-/* ================= CHART ================= */
-
-#bxChartWrap {
-  position: relative;
-  height: 220px;
-  margin: 12px 0;
-}
-#bxChart {
-  width: 100%;
-  height: 100%;
-}
-.badge-live {
-  position: absolute;
-  top: 6px;
-  right: 10px;
-  font-size: 11px;
-  color: #7CFFB2;
-  opacity: .85;
-}
-
-/* ================= INDICATORS ================= */
-
-.indicator-legend{
-  display:flex;
-  gap:14px;
-  font-size:11px;
-  margin:6px 4px;
-}
-
-.indicator-legend .ema{ color:#facc15; }
-.indicator-legend .vwap{ color:var(--purple); }
-
-/* ================= RESPONSIVE ================= */
-
-@media(max-width:400px){
-  .book-body{max-height:220px;}
-  .price-main{font-size:22px;}
 }
 
 /* =========================================================
