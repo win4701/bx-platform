@@ -514,33 +514,59 @@
 
   <div class="topup-header">
     <div class="topup-title">Mobile Top-Up</div>
-    <div class="topup-sub">Pay with USDT • Global Coverage</div>
+    <div class="topup-sub">
+      Global Coverage • Min 5 USDT • BX = 38 USDT
+    </div>
   </div>
 
   <div class="topup-body">
 
+    <!-- Country -->
     <div class="input-group">
       <input id="topup-country" type="text" placeholder="Country (e.g. Brazil)">
     </div>
 
+    <!-- Provider -->
     <div class="input-group">
-      <input id="topup-phone" type="text" placeholder="Phone Number">
+      <input id="topup-provider" type="text" placeholder="Provider (e.g. Vivo)">
     </div>
 
+    <!-- Phone -->
+    <div class="input-group">
+      <input id="topup-phone" type="text" placeholder="+55 11 99999 9999">
+    </div>
+
+    <!-- Amount + Calculate -->
     <div class="input-row">
       <input id="topup-amount" type="number" placeholder="Amount (EUR / USD)">
       <button id="topup-calc" class="btn-calc">Calculate</button>
     </div>
 
+    <!-- Live Price Info -->
+    <div class="topup-live-info">
+      <div>Rate: <span id="live-rate">--</span></div>
+      <div>USDT: <span id="live-usdt">--</span></div>
+      <div>BX Required: <span id="live-bx">--</span></div>
+      <div>Lock: <span id="live-lock">--</span></div>
+    </div>
+
+    <!-- Confirm -->
     <button id="topup-confirm" class="btn-confirm">
-      Confirm Payment (USDT)
+      Confirm Payment
     </button>
 
+    <!-- Result -->
     <div id="topup-result" class="topup-result"></div>
 
+    <!-- History -->
+    <div class="topup-history">
+      <div class="history-title">Recent Top-Ups</div>
+      <div id="topup-history-list"></div>
+    </div>
   </div>
   </div>
 </section>
+  
 <!-- ================= SETTINGS ================= -->
 <section id="settings" class="view">
 
