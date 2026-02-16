@@ -27,46 +27,55 @@ const apiPost = (url, body = {}) =>
   });
 
 /* =========================================================
-   MOBILE TOPUP — AIRDROP EXTENSION
+   MOBILE TOPUP — AIRDROP EXTENSION (SAFE VERSION)
 ========================================================= */
 
 const TOPUP = {
-  rate: 1,        // USDT rate (dynamic later)
+  rate: 1,
   usdtAmount: 0,
   fiatAmount: 0
 };
 
 function initTopup() {
-  const calcBtn = $("topup-calc");
-  const confirmBtn = $("topup-confirm");
+  const calcBtn = document.getElementById("topup-calc");
+  const confirmBtn = document.getElementById("topup-confirm");
+  const amountInput = document.getElementById("topup-amount");
 
-  if (!calcBtn) return;
+  if (!calcBtn || !confirmBtn || !amountInput) return;
 
   calcBtn.onclick = async () => {
-    const amount = Number($("topup-amount").value);
+    const amount = parseFloat(amountInput.value);
+
     if (!amount || amount <= 0) {
       alert("Invalid amount");
       return;
     }
 
-    // لاحقًا سنجلب سعر P2P من backend
-    TOPUP.rate = await fetchUsdtRate();
+    try {
+      TOPUP.rate = await fetchUsdtRate();
+    } catch {
+      TOPUP.rate = 1;
+    }
+
     TOPUP.fiatAmount = amount;
     TOPUP.usdtAmount = (amount / TOPUP.rate).toFixed(2);
 
-    $("topup-result").innerHTML =
-      `You pay: <b>${TOPUP.usdtAmount} USDT</b>`;
+    const resultBox = document.getElementById("topup-result");
+    if (resultBox) {
+      resultBox.innerHTML =
+        `You Pay: <b>${TOPUP.usdtAmount} USDT</b>`;
+    }
 
     confirmBtn.classList.remove("hidden");
   };
 
-  confirmBtn.onclick = () => {
+  confirmBtn.onclick = async () => {
     if (!isAuthenticated()) {
       alert("Login required");
       return;
     }
 
-    processTopupPayment();
+    await processTopupPayment();
   };
 }
 
@@ -74,7 +83,7 @@ function initTopup() {
 async function fetchUsdtRate() {
   try {
     const data = await safeFetch("/pricing/usdt-rate");
-    return data?.rate || 1;
+    return parseFloat(data?.rate) || 1;
   } catch {
     return 1;
   }
@@ -82,8 +91,13 @@ async function fetchUsdtRate() {
 
 /* ===== Process payment ===== */
 async function processTopupPayment() {
-  const phone = $("topup-phone").value;
-  const country = $("topup-country").value;
+  const phone = document.getElementById("topup-phone")?.value;
+  const country = document.getElementById("topup-country")?.value;
+
+  if (!phone || !country) {
+    alert("Missing phone or country");
+    return;
+  }
 
   const res = await safeFetch("/topup/request", {
     method: "POST",
@@ -95,17 +109,20 @@ async function processTopupPayment() {
     })
   });
 
-  if (!res) {
+  if (!res || res.status !== "ok") {
     alert("Topup failed");
     return;
   }
 
-  alert("Topup request submitted");
+  alert("Topup request submitted successfully");
 }
 
 /* ================= Airdrop Loader ================= */
 
-document.querySelector('[data-view="airdrop"]').addEventListener('click', function() {
-  navigate("airdrop");
-  loadAirdrop();  
-});
+document
+  .querySelector('[data-view="airdrop"]')
+  ?.addEventListener("click", function () {
+    navigate("airdrop");
+    loadAirdrop();
+    setTimeout(initTopup, 200);
+  });
