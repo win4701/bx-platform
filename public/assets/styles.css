@@ -707,36 +707,45 @@ h3{
 
 /* ================= CHART ================= */
 
-#bxChartWrap {
-  height: 240px;
-  background: linear-gradient(180deg,#0f1a2b,#0c1625);
-  border-radius: 18px;
-  padding: 12px;
-  box-shadow: 0 0 30px rgba(0,0,0,0.4);
-}
-
-canvas#bxChart {
-  width: 100% !important;
-  height: 100% !important;
-}
-
-#chartCanvas {
-  background: radial-gradient(
-    circle at top,
-    #0f1f3a 0%,
-    #081421 60%,
-    #050d18 100%
-  );
+.chart-wrapper {
+  position: relative;
+  height: 260px;
   border-radius: 16px;
+  overflow: hidden;
+  background: linear-gradient(145deg,#08121f,#0e1c2f);
 }
 
-.badge-live {
+.chart-tooltip {
   position: absolute;
-  top: 6px;
-  right: 10px;
+  background: rgba(10,15,25,0.95);
+  padding: 8px 10px;
+  border-radius: 8px;
   font-size: 11px;
-  color: #7CFFB2;
-  opacity: .85;
+  color: #fff;
+  pointer-events: none;
+  display: none;
+  border: 1px solid rgba(255,255,255,0.05);
+}
+
+.chart-timeframes {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.tf {
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: #111c2b;
+  border: 1px solid rgba(255,255,255,0.05);
+  color: #aaa;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.tf.active {
+  background: #21c87a;
+  color: #000;
 }
 
 /* ================= INDICATORS ================= */
