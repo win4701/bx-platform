@@ -1290,58 +1290,77 @@ button:active,
 /* ===============================
    BLOXIO TOPUP PRO CARD
 ================================ */
+
 .topup-card {
-  background: linear-gradient(145deg, #0f1621, #121b28);
-  border: 1px solid #1c2736;
+  background: #0f141c;
+  border: 1px solid #1c2430;
   border-radius: 14px;
   padding: 22px;
   max-width: 420px;
-  margin: auto;
+  margin: 20px auto;
 }
 
 .topup-header h3 {
   margin: 0;
   font-size: 18px;
+  font-weight: 600;
   color: #00c389;
 }
 
 .topup-header span {
   font-size: 12px;
-  color: #7f8da6;
+  color: #7a8799;
+  display: block;
+  margin-top: 4px;
 }
 
 .topup-body {
   margin-top: 18px;
 }
 
-.topup-body input {
-  width: 100%;
-  background: #0c121a;
-  border: 1px solid #202c3c;
-  border-radius: 10px;
-  padding: 12px;
-  margin-bottom: 12px;
-  color: #ffffff;
-  font-size: 14px;
+.input-group {
+  margin-bottom: 14px;
 }
 
-.topup-body input:focus {
+.input-group input {
+  width: 100%;
+  background: #0b1118;
+  border: 1px solid #1f2a38;
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 14px;
+  color: #ffffff;
+  transition: border 0.2s ease;
+}
+
+.input-group input::placeholder {
+  color: #5f6b7c;
+}
+
+.input-group input:focus {
   border-color: #00c389;
   outline: none;
 }
 
-.topup-btn {
+.btn-confirm {
   width: 100%;
-  padding: 13px;
-  border-radius: 10px;
-  border: none;
   background: #00c389;
-  color: #000;
+  border: none;
+  border-radius: 10px;
+  padding: 13px;
+  font-size: 14px;
   font-weight: 600;
+  color: #000;
   cursor: pointer;
-  transition: 0.2s ease;
+  transition: opacity 0.2s ease;
 }
 
-.topup-btn:hover {
-  opacity: 0.9;
+.btn-confirm:hover {
+  opacity: 0.85;
+}
+
+.topup-message {
+  margin-top: 12px;
+  font-size: 13px;
+  color: #8fa2b8;
 }
