@@ -109,6 +109,23 @@ function computeBXPrice() {
   updatePriceUI();
 }
 
+/*============ Crosshair ================= */
+
+ canvas.addEventListener("mousemove", (e) => {
+
+  const rect = canvas.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+
+  drawChart();
+
+  ctx.strokeStyle = "rgba(255,255,255,0.2)";
+  ctx.beginPath();
+  ctx.moveTo(x, 0);
+  ctx.lineTo(x, canvas.height);
+  ctx.stroke();
+
+});
+
 /* ================= ORDERBOOK ================= */
 
 function generateOrderBook() {
@@ -357,11 +374,12 @@ function calculateIndicators() {
 /* ===============================
    DRAW ENGINE
 =================================*/
-
 function drawChart() {
 
   const w = canvas.width;
   const h = canvas.height;
+  const chartHeight = h * 0.75;
+  const volumeHeight = h * 0.25;
 
   ctx.clearRect(0, 0, w, h);
 
@@ -369,7 +387,7 @@ function drawChart() {
     ? [...candles, currentCandle]
     : candles;
 
-  if (allCandles.length === 0) return;
+  if (allCandles.length < 2) return;
 
   const prices = allCandles.flatMap(c => [c.high, c.low]);
   const max = Math.max(...prices);
@@ -378,59 +396,111 @@ function drawChart() {
 
   const candleWidth = w / maxCandles;
 
+  // ===== Grid =====
+  ctx.strokeStyle = "rgba(255,255,255,0.05)";
+  ctx.lineWidth = 1;
+
+  for (let i = 0; i < 6; i++) {
+    const y = (chartHeight / 5) * i;
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(w, y);
+    ctx.stroke();
+  }
+
+  // ===== Candles =====
   allCandles.forEach((c, i) => {
 
-    const x = i * candleWidth + candleWidth / 2;
+    const x = i * candleWidth;
 
-    const openY = h - ((c.open - min) / range) * h;
-    const closeY = h - ((c.close - min) / range) * h;
-    const highY = h - ((c.high - min) / range) * h;
-    const lowY = h - ((c.low - min) / range) * h;
+    const openY  = chartHeight - ((c.open  - min) / range) * chartHeight;
+    const closeY = chartHeight - ((c.close - min) / range) * chartHeight;
+    const highY  = chartHeight - ((c.high  - min) / range) * chartHeight;
+    const lowY   = chartHeight - ((c.low   - min) / range) * chartHeight;
 
-    const isBull = c.close >= c.open;
+    const bullish = c.close >= c.open;
 
-    /* Wick */
-    ctx.strokeStyle = isBull ? "#2dd36f" : "#ff4d4f";
+    const bodyColor = bullish ? "#21c87a" : "#ff4d4f";
+    const wickColor = bullish ? "#2ce28a" : "#ff6b6b";
+
+    // Wick
+    ctx.strokeStyle = wickColor;
     ctx.beginPath();
-    ctx.moveTo(x, highY);
-    ctx.lineTo(x, lowY);
+    ctx.moveTo(x + candleWidth/2, highY);
+    ctx.lineTo(x + candleWidth/2, lowY);
     ctx.stroke();
 
-    /* Body */
-    ctx.fillStyle = isBull ? "#2dd36f" : "#ff4d4f";
+    // Body
+    ctx.fillStyle = bodyColor;
+    const bodyHeight = Math.max(2, Math.abs(closeY - openY));
     ctx.fillRect(
-      x - candleWidth / 4,
+      x + candleWidth*0.2,
       Math.min(openY, closeY),
-      candleWidth / 2,
-      Math.abs(closeY - openY) || 1
+      candleWidth*0.6,
+      bodyHeight
     );
+
+    // Volume
+    const volY = chartHeight + (volumeHeight - (c.volume * 0.5));
+    ctx.fillStyle = bullish
+      ? "rgba(33,200,122,0.3)"
+      : "rgba(255,77,79,0.3)";
+
+    ctx.fillRect(
+      x + candleWidth*0.2,
+      volY,
+      candleWidth*0.6,
+      volumeHeight
+    );
+
   });
 
-  /* EMA */
+  // ===== EMA =====
+  if (ema.length > 5) {
+    ctx.strokeStyle = "#f7b500";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+
+    ema.forEach((val, i) => {
+      const x = i * candleWidth + candleWidth/2;
+      const y = chartHeight - ((val - min) / range) * chartHeight;
+
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    });
+
+    ctx.stroke();
+  }
+
+  // ===== VWAP =====
+  if (vwap.length > 5) {
+    ctx.strokeStyle = "#9b5de5";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+
+    vwap.forEach((val, i) => {
+      const x = i * candleWidth + candleWidth/2;
+      const y = chartHeight - ((val - min) / range) * chartHeight;
+
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    });
+
+    ctx.stroke();
+  }
+
+  // ===== Last Price Line =====
+  const lastPrice = allCandles[allCandles.length - 1].close;
+  const lastY = chartHeight - ((lastPrice - min) / range) * chartHeight;
+
+  ctx.strokeStyle = "rgba(255,255,255,0.2)";
+  ctx.setLineDash([4,4]);
   ctx.beginPath();
-  ctx.lineWidth = 2;
-  ctx.strokeStyle = "#ffb703";
-
-  emaData.forEach((val, i) => {
-    const x = i * candleWidth + candleWidth / 2;
-    const y = h - ((val - min) / range) * h;
-    if (i === 0) ctx.moveTo(x, y);
-    else ctx.lineTo(x, y);
-  });
+  ctx.moveTo(0, lastY);
+  ctx.lineTo(w, lastY);
   ctx.stroke();
+  ctx.setLineDash([]);
 
-  /* VWAP */
-  ctx.beginPath();
-  ctx.lineWidth = 2;
-  ctx.strokeStyle = "#3a86ff";
-
-  vwapData.forEach((val, i) => {
-    const x = i * candleWidth + candleWidth / 2;
-    const y = h - ((val - min) / range) * h;
-    if (i === 0) ctx.moveTo(x, y);
-    else ctx.lineTo(x, y);
-  });
-  ctx.stroke();
 }
 
 /* ===============================
