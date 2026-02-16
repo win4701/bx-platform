@@ -554,160 +554,157 @@ h3{
   text-align: center;
 }
      
-/* ================= BUY / SELL PANEL ================= */
+/* ================= MARKET v3.1 PRO CLEAN ================= */
 
 .trade-box input[type="number"],
 #amountInput,
 #amount-bx {
 
   width: 100%;
-  height: 48px;
+  height: 50px;
 
-  background: #0f1a2b;
+  background: linear-gradient(145deg,#0e1a2b,#0b1624);
   border: 1px solid rgba(255,255,255,0.06);
-  border-radius: 14px;
+  border-radius: 16px;
 
-  padding: 0 16px;
+  padding: 0 18px;
 
-  font-size: 16px;
-  font-weight: 500;
-  letter-spacing: 0.3px;
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: .4px;
 
-  color: #e6edf7;
+  color: #f2f6ff;
 
   outline: none;
-  transition: all 0.25s ease;
+  transition: all .25s ease;
 }
 
-.trade-box input[type="number"]::placeholder {
-  color: #6f809f;
+.trade-box input::placeholder{
+  color: #70819f;
   font-weight: 400;
 }
 
-.trade-box input[type="number"]:focus {
-  border-color: #21c87a;
-  box-shadow: 0 0 0 3px rgba(33,200,122,0.12);
+.trade-box input:focus{
+  border-color: #35d49a;
+  box-shadow: 0 0 0 3px rgba(53,212,154,.15);
   background: #122036;
 }
 
-.trade-box input[type="number"]:hover {
-  border-color: rgba(255,255,255,0.15);
+.trade-box input:hover{
+  border-color: rgba(255,255,255,.12);
 }
 
-/* ===== TRADE TABS ===== */
 
-.trade-tabs {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  background: #0f1c2d;
-  border-radius: 14px;
-  padding: 4px;
+/* ===== BUY / SELL TOGGLE ===== */
+
+.trade-tabs{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  background:#0e1c2d;
+  border-radius:16px;
+  padding:5px;
+  margin-bottom:12px;
 }
 
-.trade-tabs button {
-  border: none;
-  background: transparent;
-  padding: 10px 0;
-  border-radius: 10px;
-  font-weight: 750;
-  color: #7f8ea3;
-  transition: .2s;
+.trade-tabs button{
+  border:none;
+  background:transparent;
+  padding:11px 0;
+  border-radius:12px;
+  font-weight:800;
+  font-size:14px;
+  color:#7e8ea6;
+  cursor:pointer;
+  transition:.25s;
 }
 
-.trade-tabs button.active {
-  background: linear-gradient(90deg,#35d49a,#28b783);
-  color: #0b121b;
+.trade-tabs button.active{
+  background:linear-gradient(90deg,#35d49a,#28b783);
+  color:#0b121b;
 }
 
-.trade-box.sell .trade-tabs button.active {
-  background: linear-gradient(90deg,#ff6b6b,#e04f4f);
+.trade-box.sell .trade-tabs button.active{
+  background:linear-gradient(90deg,#ff6b6b,#e04f4f);
+  color:white;
 }
+
+
+/* ===== PERCENT BUTTONS ===== */
+
+.percent-row{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:10px;
+  margin-top:12px;
+}
+
+.percent-row button{
+  padding:9px 0;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,.07);
+  background:rgba(255,255,255,.04);
+  color:#cfd6e4;
+  font-size:13px;
+  font-weight:600;
+  cursor:pointer;
+  transition:.25s;
+}
+
+.percent-row button:hover{
+  background:rgba(53,212,154,.15);
+  border-color:rgba(53,212,154,.35);
+  color:#35d49a;
+}
+
+.percent-row button.active{
+  background:linear-gradient(90deg,#35d49a,#28b783);
+  color:#0b121b;
+  border:none;
+}
+
 
 /* ===== ACTION BUTTON ===== */
 
-.action-btn {
-  width: 100%;
-  padding: 14px;
-  border-radius: 14px;
-  border: none;
-  font-weight: 800;
-  font-size: 15px;
-  margin-top: 10px;
-  transition: 0.25s;
-}
-
-.action-btn.buy {
-  background: linear-gradient(90deg,#1dd1a1,#10ac84);
-  color: #081018;
-}
-
-.action-btn.buy:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 18px rgba(29,209,161,.4);
-}
-
-.trade-box.sell .action-btn {
-  background: linear-gradient(90deg,#ff4d4f,#d63031);
-  color: white;
-}
-
-/* ===== PERCENT BUTTONS IMPROVED ===== */
-
-.percent-row {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
-  margin-top: 10px;
-}
-
-.percent-row button {
-  padding: 8px ;
-  border-radius: 10px;
-  border: 1px solid rgba(255,255,255,.08);
-  background: rgba(255,255,255,.04);
-  color: #cfd6e4;
-  font-size: 13px;
-  transition: .2s;
-}
-
-.percent-row button:hover {
-  background: rgba(53,212,154,.15);
-  border-color: rgba(53,212,154,.4);
-  color: #35d49a;
-}
-
-.percent-row button.active {
-  background: linear-gradient(90deg,#35d49a,#28b783);
-  color: #0b121b;
-  border: none;
-}
-
-/* Submit buttons */
-
-.submit-btn{
+.action-btn{
   width:100%;
-  height:42px;
-  border-radius:14px;
-  font-size:14px;
-  font-weight:800;
+  padding:15px;
+  border-radius:16px;
   border:none;
+  font-weight:800;
+  font-size:15px;
+  margin-top:14px;
   cursor:pointer;
-  transition:.2s ease;
+  transition:.25s;
 }
 
-.submit-btn.buy{
-  background:var(--green);
-  color:#000;
+.action-btn.buy{
+  background:linear-gradient(90deg,#1dd1a1,#10ac84);
+  color:#081018;
 }
 
-.submit-btn.sell{
-  background:var(--red);
-  color:#000;
+.trade-box.sell .action-btn{
+  background:linear-gradient(90deg,#ff4d4f,#d63031);
+  color:white;
 }
 
-.submit-btn:hover{
-  transform:translateY(-1px);
-  opacity:.92;
+.action-btn:hover{
+  transform:translateY(-2px);
+  box-shadow:0 6px 20px rgba(0,0,0,.35);
+}
+
+
+/* ===== INFO ROW (Price / Slippage / Spread) ===== */
+
+.trade-info{
+  margin-top:12px;
+  font-size:14px;
+  color:#9fb0c9;
+  line-height:1.7;
+}
+
+.trade-info strong{
+  color:#ffffff;
+  font-weight:800;
 }
 
 /* ================= CHART ================= */
