@@ -69,25 +69,27 @@ function init() {
 
 /* ================= BINANCE TICKER ================= */
 
+let currentPrice = BX_USDT_REFERENCE;
+
 function connectBinance(symbol = "btcusdt") {
 
   const ws = new WebSocket(
     `wss://stream.binance.com:9443/ws/${symbol}@kline_1m`
   );
 
-
   ws.onmessage = (event) => {
-
     const msg = JSON.parse(event.data);
     const k = msg.k;
 
-    const candle = {
-      x: new Date(k.t),
-      o: parseFloat(k.o),
-      h: parseFloat(k.h),
-      l: parseFloat(k.l),
-      c: parseFloat(k.c)
-      computeBXPrice();
+    currentPrice = parseFloat(k.c);
+    quotePriceUSDT = currentPrice;
+
+    computeBXPrice();
+    updateCandle(marketPrice);
+  };
+
+  ws.onerror = () => {
+    console.log("Binance WS error");
   };
 }
 
@@ -226,7 +228,7 @@ function bindEvents() {
       currentQuote = btn.dataset.quote;
       quoteAssetEl.textContent = currentQuote;
 
-      connectTicker();
+      connectBinance(quoteMap[currentQuote]);
     });
   });
 
@@ -419,8 +421,3 @@ function drawChart() {
    CONNECT TO PRICE ENGINE
 =================================*/
 
-setInterval(() => {
-  if (typeof currentPrice !== "undefined") {
-    updateCandle(currentPrice);
-  }
-}, 1000);
