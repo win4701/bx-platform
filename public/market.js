@@ -505,8 +505,3 @@ if (vwapData.length > 5) {
   ctx.setLineDash([]);
 
 }
-
-/* ===============================
-   CONNECT TO PRICE ENGINE
-=================================*/
-
