@@ -510,19 +510,35 @@
   Start Mining
   </button>
   </div>
-  <div class="airdrop-topup-box">
-  <h3>Mobile Top-Up (USDT)</h3>
+  <div class="topup-card">
 
-  <input id="topup-country" placeholder="Country (e.g. Brazil)" />
-  <input id="topup-phone" placeholder="Phone Number" />
-  <input id="topup-amount" type="number" placeholder="Amount (EUR / USD)" />
+  <div class="topup-header">
+    <div class="topup-title">Mobile Top-Up</div>
+    <div class="topup-sub">Pay with USDT • Global Coverage</div>
+  </div>
 
-  <button id="topup-calc">Calculate</button>
-  <div id="topup-result"></div>
+  <div class="topup-body">
 
-  <button id="topup-confirm" class="hidden">
-    Confirm Payment (USDT)
-  </button>
+    <div class="input-group">
+      <input id="topup-country" type="text" placeholder="Country (e.g. Brazil)">
+    </div>
+
+    <div class="input-group">
+      <input id="topup-phone" type="text" placeholder="Phone Number">
+    </div>
+
+    <div class="input-row">
+      <input id="topup-amount" type="number" placeholder="Amount (EUR / USD)">
+      <button id="topup-calc" class="btn-calc">Calculate</button>
+    </div>
+
+    <button id="topup-confirm" class="btn-confirm">
+      Confirm Payment (USDT)
+    </button>
+
+    <div id="topup-result" class="topup-result"></div>
+
+  </div>
   </div>
 </section>
 <!-- ================= SETTINGS ================= -->
