@@ -106,7 +106,7 @@ function computeBXPrice() {
 
   generateOrderBook();
   renderOrderBook();
-  updatePriceUI();
+  computeBXPrice();
 }
 
 /*============ Crosshair ================= */
@@ -456,39 +456,38 @@ function drawChart() {
   });
 
   // ===== EMA =====
-  if (ema.length > 5) {
-    ctx.strokeStyle = "#f7b500";
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
+if (emaData.length > 5) {
+  ctx.strokeStyle = "#f7b500";
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
 
-    ema.forEach((val, i) => {
-      const x = i * candleWidth + candleWidth/2;
-      const y = chartHeight - ((val - min) / range) * chartHeight;
+  emaData.forEach((val, i) => {
+    const x = i * candleWidth + candleWidth/2;
+    const y = chartHeight - ((val - min) / range) * chartHeight;
 
-      if (i === 0) ctx.moveTo(x, y);
-      else ctx.lineTo(x, y);
-    });
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  });
 
-    ctx.stroke();
-  }
+  ctx.stroke();
+}
+    //===== VWAP =====
+if (vwapData.length > 5) {
+  ctx.strokeStyle = "#9b5de5";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
 
-  // ===== VWAP =====
-  if (vwap.length > 5) {
-    ctx.strokeStyle = "#9b5de5";
-    ctx.lineWidth = 1;
-    ctx.beginPath();
+  vwapData.forEach((val, i) => {
+    const x = i * candleWidth + candleWidth/2;
+    const y = chartHeight - ((val - min) / range) * chartHeight;
 
-    vwap.forEach((val, i) => {
-      const x = i * candleWidth + candleWidth/2;
-      const y = chartHeight - ((val - min) / range) * chartHeight;
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  });
 
-      if (i === 0) ctx.moveTo(x, y);
-      else ctx.lineTo(x, y);
-    });
-
-    ctx.stroke();
-  }
-
+  ctx.stroke();
+}
+   
   // ===== Last Price Line =====
   const lastPrice = allCandles[allCandles.length - 1].close;
   const lastY = chartHeight - ((lastPrice - min) / range) * chartHeight;
