@@ -97,16 +97,20 @@ function connectBinance(symbol = "btcusdt") {
     console.log("Binance WS error");
   };
 }
+
 function computeBXPrice() {
+
+  if (!quotePriceUSDT || quotePriceUSDT <= 0) return;
+
   if (currentQuote === "USDT" || currentQuote === "USDC") {
     marketPrice = BX_USDT_REFERENCE;
   } else {
     marketPrice = BX_USDT_REFERENCE / quotePriceUSDT;
   }
 
+  updatePriceUI();
   generateOrderBook();
   renderOrderBook();
-  computeBXPrice();
 }
 
 /*============ Crosshair ================= */
