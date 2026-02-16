@@ -7,7 +7,6 @@
   --border:#12323f;
   --text:#e6f1ff;
   --muted:#9fb3c8;
-
   --green: #02C076; 
   --red: #F84960;
   --yellow: #FFCD18;
@@ -709,7 +708,7 @@ h3{
 /* ================= CHART ================= */
 
 #bxChartWrap {
-  height: 220px;
+  height: 240px;
   background: linear-gradient(180deg,#0f1a2b,#0c1625);
   border-radius: 18px;
   padding: 12px;
@@ -719,6 +718,16 @@ h3{
 canvas#bxChart {
   width: 100% !important;
   height: 100% !important;
+}
+
+#chartCanvas {
+  background: radial-gradient(
+    circle at top,
+    #0f1f3a 0%,
+    #081421 60%,
+    #050d18 100%
+  );
+  border-radius: 16px;
 }
 
 .badge-live {
