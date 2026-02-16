@@ -65,10 +65,12 @@ function init() {
   connectBinance();
   resizeChart();
 
-  // Force first candle
   marketPrice = BX_USDT_REFERENCE;
   updateCandle(marketPrice);
+
+  PRO_CHART.init();
 }
+
 /* ================= BINANCE TICKER ================= */
 
 let ws = null;
@@ -117,6 +119,8 @@ function computeBXPrice() {
   updatePriceUI();
   generateOrderBook();
   renderOrderBook();
+
+  PRO_CHART.update(marketPrice); 
 }
 
 /*============ Crosshair ================= */
