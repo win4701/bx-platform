@@ -1290,133 +1290,64 @@ button:active,
 /* ===============================
    BLOXIO TOPUP PRO CARD
 ================================ */
-
-.topup-card.institutional {
-  background: linear-gradient(145deg, #0e141d, #111a25);
-  border: 1px solid #1f2a3a;
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
-  max-width: 520px;
+.topup-card {
+  background: #0f1621;
+  border: 1px solid #1c2736;
+  border-radius: 12px;
+  padding: 20px;
+  max-width: 420px;
   margin: auto;
 }
 
-.topup-header {
-  margin-bottom: 20px;
-}
-
-.topup-title {
-  font-size: 20px;
-  font-weight: 600;
+.topup-header h3 {
+  margin: 0;
   color: #00c389;
+  font-size: 18px;
 }
 
-.topup-sub {
-  font-size: 13px;
-  color: #8a98b1;
-  margin-top: 4px;
-}
-
-.topup-grid-2 {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-
-.input-group {
-  margin-bottom: 14px;
-}
-
-.input-group label {
-  display: block;
+.topup-header span {
   font-size: 12px;
   color: #7f8da6;
-  margin-bottom: 6px;
 }
 
-.input-group input {
+.topup-body input {
   width: 100%;
   background: #0c121a;
   border: 1px solid #202c3c;
   border-radius: 8px;
-  padding: 10px 12px;
+  padding: 10px;
+  margin-bottom: 10px;
   color: #fff;
-  font-size: 14px;
 }
 
-.input-group input:focus {
-  border-color: #00c389;
-  outline: none;
-}
-
-.input-row {
+.topup-row {
   display: flex;
-  gap: 10px;
-  margin-bottom: 16px;
+  gap: 8px;
 }
 
-.btn-calc {
+.topup-row button {
+  padding: 10px 14px;
   background: #1b2533;
-  border: 1px solid #2c3a50;
-  color: #fff;
-  padding: 10px 16px;
+  border: none;
   border-radius: 8px;
+  color: #fff;
   cursor: pointer;
-  transition: 0.2s ease;
 }
 
-.btn-calc:hover {
-  background: #233248;
-}
-
-/* Live Box */
-
-.topup-live-box {
-  background: #0c121a;
-  border: 1px solid #1c2736;
-  border-radius: 12px;
-  padding: 14px;
-  margin-bottom: 18px;
-}
-
-.live-row {
+.topup-info {
   display: flex;
   justify-content: space-between;
   font-size: 13px;
   color: #8ea1b9;
-  margin-bottom: 6px;
+  margin-bottom: 12px;
 }
 
-.live-row.highlight {
-  font-weight: 600;
-  color: #00c389;
-}
-
-.institutional-btn {
+.topup-confirm {
   width: 100%;
-  background: linear-gradient(90deg, #00c389, #0f7b6c);
+  background: #00c389;
   border: none;
   padding: 12px;
+  border-radius: 8px;
   font-weight: 600;
-  border-radius: 10px;
-  color: #000;
   cursor: pointer;
-  transition: 0.25s ease;
-}
-
-.institutional-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 18px rgba(0, 195, 137, 0.4);
-}
-
-.topup-history {
-  margin-top: 20px;
-  font-size: 12px;
-  color: #7f8da6;
-}
-
-.history-title {
-  margin-bottom: 8px;
-  color: #00c389;
-  font-weight: 500;
 }
