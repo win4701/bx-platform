@@ -87,7 +87,6 @@ function connectBinance(symbol = "btcusdt") {
       h: parseFloat(k.h),
       l: parseFloat(k.l),
       c: parseFloat(k.c)
-      parseFloat(data.c);
       computeBXPrice();
   };
 }
