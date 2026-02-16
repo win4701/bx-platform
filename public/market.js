@@ -51,9 +51,6 @@ const priceLadderEl = document.getElementById("priceLadder");
 
 const pairButtons = document.querySelectorAll(".pair-btn");
 
-const canvas = document.getElementById("bxChart");
-const ctx = canvas.getContext("2d");
-
 /* ================= WALLET ================= */
 
 let wallet = { BX: 0, USDT: 0 };
@@ -245,34 +242,82 @@ function bindEvents() {
     });
 }
 
-/* ================= CHART ================= */
+/* ======================================================
+   BX INSTITUTIONAL CHART ENGINE – SAFE MODE
+   v3.1 PRO Compatible – No Breaking
+====================================================== */
 
-let history = [];
+const chartCanvas = document.getElementById("bxChart");
+const ctx = chartCanvas.getContext("2d");
 
-function resizeCanvas() {
-  canvas.width = canvas.parentElement.clientWidth;
-  canvas.height = 200;
+let chartData = [];
+let maxPoints = 120;
+
+function resizeChart() {
+  chartCanvas.width = chartCanvas.offsetWidth;
+  chartCanvas.height = chartCanvas.offsetHeight;
 }
 
+window.addEventListener("resize", resizeChart);
+resizeChart();
+
+/* ===== PUSH NEW PRICE ===== */
+
+function pushPrice(price) {
+  if (!price) return;
+
+  chartData.push(price);
+
+  if (chartData.length > maxPoints) {
+    chartData.shift();
+  }
+
+  drawChart();
+}
+
+/* ===== DRAW FUNCTION ===== */
+
 function drawChart() {
-  history.push(marketPrice);
-  if (history.length > 120) history.shift();
+  const w = chartCanvas.width;
+  const h = chartCanvas.height;
 
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.strokeStyle = "#21c87a";
+  ctx.clearRect(0, 0, w, h);
+
+  if (chartData.length < 2) return;
+
+  const max = Math.max(...chartData);
+  const min = Math.min(...chartData);
+  const range = max - min || 1;
+
   ctx.beginPath();
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = "#35d49a";
 
-  history.forEach((p, i) => {
-    const x = (i / history.length) * canvas.width;
-    const min = Math.min(...history);
-    const max = Math.max(...history);
-    const y =
-      canvas.height -
-      ((p - min) / (max - min || 1)) *
-        canvas.height;
+  chartData.forEach((price, i) => {
+    const x = (i / (maxPoints - 1)) * w;
+    const y = h - ((price - min) / range) * h;
 
-    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
   });
 
   ctx.stroke();
-   }
+
+  /* ===== FILL AREA ===== */
+  ctx.lineTo(w, h);
+  ctx.lineTo(0, h);
+  ctx.closePath();
+  ctx.fillStyle = "rgba(53,212,154,0.08)";
+  ctx.fill();
+}
+
+/* ======================================================
+   AUTO CONNECT WITH YOUR EXISTING PRICE ENGINE
+====================================================== */
+
+/* إذا عندك currentPrice يتم تحديثه من Binance */
+setInterval(() => {
+  if (typeof currentPrice !== "undefined") {
+    pushPrice(currentPrice);
+  }
+}, 1000);
