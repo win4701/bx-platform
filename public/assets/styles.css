@@ -506,7 +506,7 @@ h3{
 
 .ob-head {
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 500;
   opacity: .7;
   margin-bottom: 8px;
 }
@@ -569,7 +569,7 @@ h3{
   padding: 0 18px;
 
   font-size: 17px;
-  font-weight: 600;
+  font-weight: 800;
   letter-spacing: .4px;
 
   color: #f2f6ff;
@@ -644,7 +644,7 @@ h3{
   background:rgba(255,255,255,.04);
   color:#cfd6e4;
   font-size:13px;
-  font-weight:600;
+  font-weight:500;
   cursor:pointer;
   transition:.25s;
 }
