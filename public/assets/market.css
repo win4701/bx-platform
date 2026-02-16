@@ -1,3 +1,55 @@
+================= HEADER ================= */
+
+.market-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  margin-bottom:14px;
+}
+
+.pair-title{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  font-size:18px;
+  font-weight:800;
+  letter-spacing:.3px;
+}
+
+.pair-title .base{ color:var(--yellow); }
+.pair-title .arrow{ color:var(--muted); }
+.pair-title .quote{ color:#94a3b8; }
+
+.price-box{
+  text-align:right;
+}
+
+.price-main{
+  font-size:26px;
+  font-weight:800;
+}
+
+.price-sub{
+  font-size:12px;
+  color:var(--muted);
+  margin-top:4px;
+}
+
+.price-main.up{
+  color:var(--green);
+  text-shadow:0 0 8px var(--green-glow);
+}
+
+.price-main.down{
+  color:var(--red);
+  text-shadow:0 0 8px var(--red-glow);
+}
+
+.approx{
+  font-size:12px;
+  color:var(--muted);
+}
+
 /*================= BUY / SELL PANEL ================= */
 
 .trade-box input[type="number"],
