@@ -463,11 +463,7 @@ document.addEventListener("DOMContentLoaded", () => {
   renderWalletButtons();
 });
 
-/* =================================================
-   MARKET.JS — FULL ENGINE (CANVAS FIRST)
-================================================= */
-
-  /* =================================== */
+/* =================================== */
 
 const CASINO = {
   currentGame: null,
@@ -882,25 +878,28 @@ const apiPost = (url, body = {}) =>
     body: JSON.stringify(body)
   });
 
-/* =========================================================
-   AIRDROP / TOPUP v6 — SOVEREIGN ENGINE
-   Fully Isolated / No Break
-========================================================= */
+/*=========================================================
+   AIRDROP / TOPUP v6 — INSTITUTIONAL CLEAN
+   Stable • Deterministic • No Break
+=========================================================*/
 
-const SOVEREIGN = {
+const BX_REFERENCE = 38; // BX = 38 USDT (internal anchor)
+const MIN_USDT = 5;
+
+const STATE = {
   fiat: 0,
   usdt: 0,
-  effectiveRate: 0,
+  bx: 0,
+  rate: 0,
   lockedUntil: 0,
   country: "",
-  exposure: 0,
-  liquidity: 0,
+  provider: "",
+  phone: "",
   hedgeCost: 0
 };
 
-let GLOBAL_EXPOSURE = 0;
-let CAPITAL_RESERVE = 100000; // internal simulated reserve
-let HEDGE_MODE = false;
+let RESERVE = 100000;
+let EXPOSURE = 0;
 
 
 /* ================= INIT ================= */
@@ -908,25 +907,24 @@ let HEDGE_MODE = false;
 function initTopupV6() {
   const calc = document.getElementById("topup-calc");
   const confirm = document.getElementById("topup-confirm");
-  if (!calc || !confirm) return;
 
-  calc.onclick = calculateTopupV6;
-  confirm.onclick = confirmTopupV6;
+  if (calc) calc.onclick = calculate;
+  if (confirm) confirm.onclick = confirmTopup;
 }
 
 
-/* ================= REAL P2P ANCHOR ================= */
+/* ================= SAFE FETCH BINANCE ================= */
 
-async function fetchBinanceP2P(country) {
+async function fetchP2P(fiat) {
   try {
     const res = await fetch(
-      `https://p2p.binance.com/bapi/c2c/v2/friendly/c2c/adv/search`,
+      "https://p2p.binance.com/bapi/c2c/v2/friendly/c2c/adv/search",
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           asset: "USDT",
-          fiat: country,
+          fiat,
           tradeType: "SELL",
           page: 1,
           rows: 5
@@ -935,185 +933,149 @@ async function fetchBinanceP2P(country) {
     );
 
     const data = await res.json();
-    const prices = data.data.map(d => parseFloat(d.adv.price));
-    const avg = prices.reduce((a, b) => a + b, 0) / prices.length;
+    const prices = data.data.map(x => parseFloat(x.adv.price));
+    return prices.reduce((a,b)=>a+b,0) / prices.length;
 
-    return avg;
   } catch {
-    return 1;
+    return 1; // fallback
   }
 }
 
 
-/* ================= FX GAP ================= */
+/* ================= CALCULATE ================= */
 
-async function fetchBankFX(country) {
-  try {
-    const res = await safeFetch(`/pricing/bank-fx?country=${country}`);
-    return parseFloat(res.rate || 1);
-  } catch {
-    return 1;
-  }
-}
-
-
-/* ================= VOLATILITY BUFFER ================= */
-
-function volatilityBuffer() {
-  return 0.005 + Math.random() * 0.01;
-}
-
-
-/* ================= COUNTRY RISK ================= */
-
-const COUNTRY_RISK = {
-  DZ: 0.08,
-  MA: 0.05,
-  TN: 0.04,
-  FR: 0.02
-};
-
-
-/* ================= LIQUIDITY STRESS ================= */
-
-function liquidityStress(usdtAmount) {
-  if (usdtAmount > 5000) return 0.02;
-  if (usdtAmount > 2000) return 0.01;
-  return 0.003;
-}
-
-
-/* ================= HEDGE ENGINE ================= */
-
-function hedgeEngine(usdtAmount) {
-  if (usdtAmount > 10000) {
-    HEDGE_MODE = true;
-    return usdtAmount * 0.002; // hedge cost 0.2%
-  }
-  return 0;
-}
-
-
-/* ================= CALCULATE V6 ================= */
-
-async function calculateTopupV6() {
+async function calculate() {
 
   const amount = parseFloat(document.getElementById("topup-amount")?.value);
   const country = document.getElementById("topup-country")?.value;
+  const provider = document.getElementById("topup-provider")?.value;
+  const phone = document.getElementById("topup-phone")?.value;
 
   if (!amount || amount <= 0) return;
 
-  const p2p = await fetchBinanceP2P(country);
-  const bankFx = await fetchBankFX(country);
+  const p2p = await fetchP2P(country);
 
-  const fxGap = p2p - bankFx;
-  const risk = COUNTRY_RISK[country] || 0.05;
+  const volatility = 0.01;
+  const risk = 0.03;
 
-  const baseRate =
-    p2p +
-    fxGap * 0.5 +
-    volatilityBuffer() +
-    risk;
+  const baseRate = p2p * (1 + volatility + risk);
 
-  const usdtAmount = amount / baseRate;
+  const usdt = amount / baseRate;
 
-  const stress = liquidityStress(usdtAmount);
-  const hedgeCost = hedgeEngine(usdtAmount);
+  if (usdt < MIN_USDT) {
+    renderError("Minimum 5 USDT");
+    return;
+  }
 
-  const finalRate = baseRate * (1 + stress) + hedgeCost;
+  const bx = usdt / BX_REFERENCE;
 
-  SOVEREIGN.fiat = amount;
-  SOVEREIGN.usdt = amount / finalRate;
-  SOVEREIGN.effectiveRate = finalRate;
-  SOVEREIGN.lockedUntil = Date.now() + 20000;
-  SOVEREIGN.country = country;
-  SOVEREIGN.hedgeCost = hedgeCost;
+  STATE.fiat = amount;
+  STATE.usdt = usdt;
+  STATE.bx = bx;
+  STATE.rate = baseRate;
+  STATE.country = country;
+  STATE.provider = provider;
+  STATE.phone = phone;
+  STATE.lockedUntil = Date.now() + 20000;
 
-  renderSovereignSummary();
+  render();
 }
 
 
 /* ================= RENDER ================= */
 
-function renderSovereignSummary() {
+function render() {
 
   const box = document.getElementById("topup-result");
   if (!box) return;
 
   box.innerHTML = `
-    <div class="topup-summary">
-      <div>Rate: ${SOVEREIGN.effectiveRate.toFixed(4)}</div>
-      <div>You Pay: <b>${SOVEREIGN.usdt.toFixed(2)} USDT</b></div>
-      <div>Hedge: ${SOVEREIGN.hedgeCost.toFixed(2)}</div>
-      <div>Reserve: ${CAPITAL_RESERVE.toFixed(0)}</div>
+    <div class="topup-card">
+      <div>Rate: ${STATE.rate.toFixed(4)}</div>
+      <div>USDT: <b>${STATE.usdt.toFixed(2)}</b></div>
+      <div>BX: <b>${STATE.bx.toFixed(4)}</b></div>
       <div class="lock"></div>
     </div>
   `;
 
-  lockCountdown();
+  countdown();
 }
 
 
-/* ================= LOCK TIMER ================= */
+/* ================= LOCK ================= */
 
-function lockCountdown() {
+function countdown() {
   const el = document.querySelector(".lock");
   if (!el) return;
 
-  const interval = setInterval(() => {
-    const remain =
-      Math.floor((SOVEREIGN.lockedUntil - Date.now()) / 1000);
-
-    if (remain <= 0) {
-      el.innerText = "Rate expired";
-      clearInterval(interval);
+  const int = setInterval(() => {
+    const left = Math.floor((STATE.lockedUntil - Date.now()) / 1000);
+    if (left <= 0) {
+      el.innerText = "Expired";
+      clearInterval(int);
       return;
     }
-
-    el.innerText = `Lock: ${remain}s`;
+    el.innerText = `Lock ${left}s`;
   }, 1000);
 }
 
 
 /* ================= CONFIRM ================= */
 
-async function confirmTopupV6() {
+async function confirmTopup() {
 
-  if (Date.now() > SOVEREIGN.lockedUntil) {
-    showToast("Rate expired", "warning");
+  if (Date.now() > STATE.lockedUntil) {
+    toast("Rate expired");
     return;
   }
 
-  if (SOVEREIGN.usdt > CAPITAL_RESERVE) {
-    showToast("Reserve insufficient", "error");
+  if (STATE.usdt > RESERVE) {
+    toast("Reserve insufficient");
     return;
   }
 
-  CAPITAL_RESERVE -= SOVEREIGN.usdt;
-  GLOBAL_EXPOSURE += SOVEREIGN.usdt;
+  RESERVE -= STATE.usdt;
+  EXPOSURE += STATE.usdt;
 
-  await safeFetch("/topup/sovereign", {
+  await fetch("/topup/execute", {
     method: "POST",
-    body: JSON.stringify(SOVEREIGN)
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(STATE)
   });
 
-  showToast("Executed (Institutional)", "success");
+  saveHistory();
+  toast("Topup Executed");
 }
 
 
-/* ================= ROUTER ================= */
+/* ================= HISTORY ================= */
 
-document
-  .querySelector('[data-view="airdrop"]')
-  ?.addEventListener("click", () => {
-    navigate("airdrop");
-    loadAirdrop();
-    setTimeout(initTopupV6, 200);
-  });
+function saveHistory() {
+  const list = JSON.parse(localStorage.getItem("topupHistory") || "[]");
+  list.unshift({ ...STATE, time: Date.now() });
+  localStorage.setItem("topupHistory", JSON.stringify(list.slice(0,50)));
+}
+
+
+/* ================= ERROR ================= */
+
+function renderError(msg) {
+  const box = document.getElementById("topup-result");
+  if (box) box.innerHTML = `<div class="error">${msg}</div>`;
+}
 
 
 /* ================= TOAST ================= */
 
-function showToast(msg, type = "info") {
-  console.log(`[${type}] ${msg}`);
- }
+function toast(msg) {
+  console.log(msg);
+}
+
+
+/* ================= AUTO INIT ================= */
+
+document
+  .querySelector('[data-view="airdrop"]')
+  ?.addEventListener("click", () => {
+    setTimeout(initTopupV6, 200);
+  });
