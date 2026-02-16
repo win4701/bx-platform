@@ -110,6 +110,10 @@ function computeBXPrice() {
     marketPrice = BX_USDT_REFERENCE / quotePriceUSDT;
   }
 
+  if (marketPrice <= 0 || !isFinite(marketPrice)) {
+    marketPrice = BX_USDT_REFERENCE;
+  }
+
   updatePriceUI();
   generateOrderBook();
   renderOrderBook();
