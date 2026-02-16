@@ -62,29 +62,33 @@ document.addEventListener("DOMContentLoaded", init);
 function init() {
   updateWalletUI();
   bindEvents();
-  connectTicker();
+  connectBinance();
   resizeCanvas();
   drawChart();
 }
 
 /* ================= BINANCE TICKER ================= */
 
-let socket;
+function connectBinance(symbol = "btcusdt") {
 
-function connectTicker() {
-  if (socket) socket.close();
-
-  const symbol = quoteMap[currentQuote];
-  if (!symbol) return;
-
-  socket = new WebSocket(
-    `wss://stream.binance.com:9443/ws/${symbol}@ticker`
+  const ws = new WebSocket(
+    `wss://stream.binance.com:9443/ws/${symbol}@kline_1m`
   );
 
-  socket.onmessage = e => {
-    const data = JSON.parse(e.data);
-    quotePriceUSDT = parseFloat(data.c);
-    computeBXPrice();
+
+  ws.onmessage = (event) => {
+
+    const msg = JSON.parse(event.data);
+    const k = msg.k;
+
+    const candle = {
+      x: new Date(k.t),
+      o: parseFloat(k.o),
+      h: parseFloat(k.h),
+      l: parseFloat(k.l),
+      c: parseFloat(k.c)
+      parseFloat(data.c);
+      computeBXPrice();
   };
 }
 
@@ -98,7 +102,6 @@ function computeBXPrice() {
   generateOrderBook();
   renderOrderBook();
   updatePriceUI();
-  drawChart();
 }
 
 /* ================= ORDERBOOK ================= */
