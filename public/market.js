@@ -64,6 +64,7 @@ function init() {
   bindEvents();
   connectTicker();
   resizeCanvas();
+  drawChart();
 }
 
 /* ================= BINANCE TICKER ================= */
