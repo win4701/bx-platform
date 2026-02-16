@@ -329,6 +329,7 @@ h3{
   --border:#1e2329;
   --muted:#848e9c;
   --purple:#a855f7;
+  --radius:18px;
   --green-soft:rgba(14,203,129,.15);
   --red-soft:rgba(246,70,93,.15);
 }
@@ -396,6 +397,9 @@ h3{
   color:var(--muted);
 }
 
+--green-glow: rgba(14,203,129,.6);
+--red-glow: rgba(246,70,93,.6);
+
 /*================= PAIR SELECTOR ================= */
 
 .pair-grid{
@@ -428,14 +432,6 @@ h3{
 }
 
 /* ================= ORDER BOOK ================= */
-
-.orderbook {
-  background: linear-gradient(180deg,#0f1c2e,#0b1220);
-  border-radius: 18px;
-  padding: 16px;
-  border: 1px solid rgba(255,255,255,.06);
-  margin-top: 16px;
-}
 
 .orderbook-header {
   display:flex;
@@ -505,7 +501,7 @@ h3{
 
 .ob-head {
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 800;
   opacity: .7;
   margin-bottom: 8px;
 }
@@ -709,7 +705,7 @@ h3{
 
 .chart-wrapper {
   position: relative;
-  height: 260px;
+  min-height: 260px;
   border-radius: 16px;
   overflow: hidden;
   background: linear-gradient(145deg,#08121f,#0e1c2f);
