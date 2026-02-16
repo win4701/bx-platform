@@ -64,9 +64,11 @@ function init() {
   bindEvents();
   connectBinance();
   resizeChart();
-  drawChart();
-}
 
+  // Force first candle
+  marketPrice = BX_USDT_REFERENCE;
+  updateCandle(marketPrice);
+}
 /* ================= BINANCE TICKER ================= */
 
 let ws = null;
