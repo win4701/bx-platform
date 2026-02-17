@@ -63,7 +63,6 @@ function init() {
   updateWalletUI();
   bindEvents();
   connectBinance();
-  resizeChart();
 
   marketPrice = BX_USDT_REFERENCE;
   updateCandle(marketPrice);
@@ -81,8 +80,7 @@ function connectBinance(symbol = "btcusdt") {
     ws.close();
   }
 
-  ws = new WebSocket(
-    `wss://stream.binance.com:9443/ws/${symbol}@kline_1m`
+  ws = new We`wss://stream.binance.com:9443/ws/${symbol}@kline_1m`
   );
 
   ws.onmessage = (event) => {
@@ -398,6 +396,10 @@ const PRO_CHART = {
 
     const scaleY = p => h - ((p-min)/(max-min))*h;
     const cw = w / this.candles.length;
+    if (max === min) {
+    requestAnimationFrame(()=>this.render());
+     return;
+     }
 
     // Volume Bars
     this.candles.forEach((c,i)=>{
