@@ -57,6 +57,9 @@ img{
 .logo img{
   width:36px;
   height:36px;
+  background:#0b0f14; 
+  padding:4px;
+  border-radius:10px;
 }
 
 /* =========================================================
