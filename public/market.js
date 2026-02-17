@@ -101,14 +101,19 @@ function computeBXPrice() {
 
   if (currentQuote === "USDT" || currentQuote === "USDC") {
     marketPrice = BX_USDT_REFERENCE;
-  } else {
+  }
+
+  else if (currentQuote === "BTC") {
+    marketPrice = BX_USDT_REFERENCE / quotePriceUSDT;
+  }
+
+  else {
     marketPrice = BX_USDT_REFERENCE / quotePriceUSDT;
   }
 
   updatePriceUI();
   generateOrderBook();
   renderOrderBook();
-  PRO_CHART.update(marketPrice);
 }
 
 /* ================= ORDERBOOK ================= */
