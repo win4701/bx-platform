@@ -66,8 +66,6 @@ function init() {
   resizeChart();
 
   marketPrice = BX_USDT_REFERENCE;
-  updateCandle(marketPrice);
-
   PRO_CHART.init();
 }
 
