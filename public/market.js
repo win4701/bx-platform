@@ -235,8 +235,13 @@ function bindEvents() {
       quoteAssetEl.textContent = currentQuote;
 
       connectBinance(quoteMap[currentQuote]);
-    });
-  });
+
+       PRO_CHART.candles = [];
+       PRO_CHART.ema = [];
+       PRO_CHART.vwap = [];
+       PRO_CHART.bootstrap(marketPrice);
+ });
+});
 
   buyTab.onclick = () => setTradeSide("buy");
   sellTab.onclick = () => setTradeSide("sell");
