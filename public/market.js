@@ -75,21 +75,16 @@ let ws = null;
 
 function connectBinance(symbol = "btcusdt") {
 
-  if (ws) {
-    ws.close();
-  }
+  if (ws) ws.close();
 
   ws = new WebSocket(
-    `wss://stream.binance.com:9443/ws/${symbol}@kline_1m`
+    `wss://stream.binance.com:9443/ws/${symbol}@miniTicker`
   );
 
   ws.onmessage = (event) => {
     const msg = JSON.parse(event.data);
-    const k = msg.k;
+    quotePriceUSDT = parseFloat(msg.c);
 
-    const livePrice = parseFloat(k.c);
-
-    quotePriceUSDT = livePrice;
     computeBXPrice();
 
     PRO_CHART.update(marketPrice);
@@ -110,15 +105,10 @@ function computeBXPrice() {
     marketPrice = BX_USDT_REFERENCE / quotePriceUSDT;
   }
 
-  if (marketPrice <= 0 || !isFinite(marketPrice)) {
-    marketPrice = BX_USDT_REFERENCE;
-  }
-
   updatePriceUI();
   generateOrderBook();
   renderOrderBook();
-
-  PRO_CHART.update(marketPrice); 
+  PRO_CHART.update(marketPrice);
 }
 
 /* ================= ORDERBOOK ================= */
