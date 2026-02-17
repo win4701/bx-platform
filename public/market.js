@@ -270,8 +270,9 @@ function bindEvents() {
    Candlestick + EMA + VWAP + Gradient
 ====================================================== */
 
-const PRO_CHART = {
+document.addEventListener("DOMContentLoaded", () => {
 
+const PRO_CHART = {
   canvas: null,
   ctx: null,
   tooltip: null,
