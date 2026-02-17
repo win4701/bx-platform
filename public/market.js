@@ -396,10 +396,6 @@ const PRO_CHART = {
 
     const scaleY = p => h - ((p-min)/(max-min))*h;
     const cw = w / this.candles.length;
-    if (max === min) {
-    requestAnimationFrame(()=>this.render());
-     return;
-     }
 
     // Volume Bars
     this.candles.forEach((c,i)=>{
