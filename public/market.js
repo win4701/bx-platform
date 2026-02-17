@@ -92,7 +92,7 @@ function connectBinance(symbol = "btcusdt") {
     quotePriceUSDT = livePrice;
     computeBXPrice();
 
-    updateCandle(marketPrice);
+    PRO_CHART.update(marketPrice);
   };
 
   ws.onerror = () => {
