@@ -93,8 +93,6 @@ function connectBinance(symbol = "btcusdt") {
     quotePriceUSDT = parseFloat(msg.c);
 
     computeBXPrice();
-
-    BX_CHART.updateTick(marketPrice, 1);
   };
 
   ws.onerror = () => {
@@ -245,7 +243,9 @@ function bindEvents() {
       connectBinance(quoteMap[currentQuote]);
 
        BX_CHART.history = [];
-       BX_CHART.rebuild();
+       BX_CHART.candles = [];
+       BX_CHART.viewMin = null;
+       BX_CHART.viewMax = null;
  });
 });
 
