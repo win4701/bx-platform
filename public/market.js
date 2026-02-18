@@ -63,7 +63,6 @@ function init() {
   updateWalletUI();
   bindEvents();
   connectBinance();
-  resizeChart();
 
   marketPrice = BX_USDT_REFERENCE;
   PRO_CHART.init();
@@ -101,15 +100,15 @@ function computeBXPrice() {
 
   if (currentQuote === "USDT" || currentQuote === "USDC") {
     marketPrice = BX_USDT_REFERENCE;
-  }
-
-  else if (currentQuote === "BTC") {
+  } else {
     marketPrice = BX_USDT_REFERENCE / quotePriceUSDT;
   }
 
   updatePriceUI();
   generateOrderBook();
   renderOrderBook();
+
+  PRO_CHART.update(marketPrice);
 }
 
 /* ================= ORDERBOOK ================= */
@@ -240,7 +239,7 @@ function bindEvents() {
        PRO_CHART.candles = [];
        PRO_CHART.ema = [];
        PRO_CHART.vwap = [];
-       PRO_CHART.bootstrap(marketPrice);
+       PRO_CHART.reset(marketPrice);
  });
 });
 
