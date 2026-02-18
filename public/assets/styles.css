@@ -10,6 +10,8 @@
   --green: #02C076; 
   --red: #F84960;
   --yellow: #FFCD18;
+  --green-glow: rgba(14,203,129,.6);
+  --red-glow: rgba(246,70,93,.6);
 }
 
 /* =========================================================
@@ -334,8 +336,6 @@ h3{
   --purple:#a855f7;
   --green-soft:rgba(14,203,129,.15);
   --red-soft:rgba(246,70,93,.15);
-  --green-glow: rgba(14,203,129,.6);
-  --red-glow: rgba(246,70,93,.6);
 }
 
 /* ================= BASE ================= */
@@ -735,6 +735,12 @@ h3{
 .chart-main {
   flex: 1;
   position: relative;
+}
+
+#bxChart {
+  width: 100%;
+  height: 100%;
+  display: block;
 }
 
 .chart-price-scale {
