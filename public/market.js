@@ -411,32 +411,48 @@ const PRO_CHART = {
 
   render() {
 
-    const ctx = this.ctx;
-    const w = this.canvas.width;
-    const h = this.canvas.height;
+  const ctx = this.ctx;
+  const w = this.canvas.width;
+  const h = this.canvas.height;
 
-    ctx.clearRect(0, 0, w, h);
+  ctx.clearRect(0, 0, w, h);
 
-    if (this.candles.length < 2) {
-      requestAnimationFrame(() => this.render());
-      return;
-    }
+  const maxVisible = 60;
+  const visible = this.candles.slice(-maxVisible);
 
-    const prices = this.candles.flatMap(c => [c.high, c.low]);
+  if (visible.length < 2) {
+    requestAnimationFrame(() => this.render());
+    return;
+  }
 
-    const max = Math.max(...prices);
-    const min = Math.min(...prices);
+  const highs = visible.map(c => c.high);
+  const lows  = visible.map(c => c.low);
 
-    if (max === min) {
-      requestAnimationFrame(() => this.render());
-      return;
-    }
+  let max = Math.max(...highs);
+  let min = Math.min(...lows);
 
-    const scaleY = p =>
-      h - ((p - min) / (max - min)) * (h - 40);
+  if (Math.abs(max - min) < 0.0000001) {
+    max += 0.0001;
+    min -= 0.0001;
+  }
 
-    const candleWidth = w / this.candles.length;
+  const padding = (max - min) * 0.1;
+  max += padding;
+  min -= padding;
 
+  if (!this.viewMax) {
+    this.viewMax = max;
+    this.viewMin = min;
+  }
+
+  this.viewMax += (max - this.viewMax) * 0.1;
+  this.viewMin += (min - this.viewMin) * 0.1;
+
+  const scaleY = p =>
+    h - ((p - this.viewMin) / (this.viewMax - this.viewMin)) * (h - 40);
+
+  const candleWidth = w / maxVisible;
+     
     /* ===== Candles ===== */
 
     this.candles.forEach((c, i) => {
