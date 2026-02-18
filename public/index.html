@@ -264,14 +264,36 @@
   </div>
   <!-- ===== CHART (CORE) ===== -->
   <div class="chart-wrapper">
-  <canvas id="bxChart"></canvas>
-  <div id="chartTooltip" class="chart-tooltip"></div>
+  <!-- MAIN CHART -->
+  <div class="chart-main">
+    <canvas id="bxChart"></canvas>
+    <div id="chartTooltip" class="chart-tooltip"></div>
+  </div>
+  <!-- PRICE SCALE -->
+  <div class="chart-price-scale" id="priceScale"></div>
 </div>
 
-<div class="chart-timeframes">
-  <button data-tf="5000" class="tf active">5s</button>
-  <button data-tf="15000" class="tf">15s</button>
-  <button data-tf="60000" class="tf">1m</button>
+<!-- VOLUME PANEL -->
+<div class="chart-volume">
+  <canvas id="volumeChart"></canvas>
+</div>
+<!-- ===== GLOBAL CHART TOOLBAR ===== -->
+<div class="chart-toolbar">
+
+  <div class="tf-group">
+    <button class="tf-btn active" data-days="1">1D</button>
+    <button class="tf-btn" data-days="2">2D</button>
+    <button class="tf-btn" data-days="3">3D</button>
+    <button class="tf-btn" data-days="7">7D</button>
+    <button class="tf-btn" data-days="14">14D</button>
+    <button class="tf-btn" data-days="30">30D</button>
+  </div>
+
+  <div class="chart-actions">
+    <button id="zoomIn">+</button>
+    <button id="zoomOut">−</button>
+    <button id="resetView">Reset</button>
+  </div>
 </div>
 
   <!-- ===== INDICATOR LEGEND ===== -->
