@@ -334,6 +334,8 @@ h3{
   --purple:#a855f7;
   --green-soft:rgba(14,203,129,.15);
   --red-soft:rgba(246,70,93,.15);
+  --green-glow: rgba(14,203,129,.6);
+  --red-glow: rgba(246,70,93,.6);
 }
 
 /* ================= BASE ================= */
@@ -393,9 +395,6 @@ h3{
   color:var(--red);
   text-shadow:0 0 8px var(--red-glow);
 }
-
---green-glow: rgba(14,203,129,.6);
---red-glow: rgba(246,70,93,.6);
    
 .approx{
   font-size:12px;
