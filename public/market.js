@@ -86,7 +86,7 @@ function connectBinance(symbol = "btcusdt") {
 
     computeBXPrice();
 
-    PRO_CHART.update(marketPrice);
+    BX_CHART.updateTick(marketPrice, 1);
   };
 
   ws.onerror = () => {
@@ -108,7 +108,7 @@ function computeBXPrice() {
   generateOrderBook();
   renderOrderBook();
 
-  PRO_CHART.update(marketPrice);
+  BX_CHART.updateTick(marketPrice, 1);
 }
 
 /* ================= ORDERBOOK ================= */
@@ -263,211 +263,243 @@ function bindEvents() {
    Candlestick + EMA + VWAP + Gradient
 ====================================================== */
 
-const PRO_CHART = {
+const BX_CHART = {
 
   canvas: null,
   ctx: null,
-  tooltip: null,
 
-  candles: [],
-  ema: [],
-  vwap: [],
+  width: 0,
+  height: 0,
 
-  timeframe: 5000,
-  maxCandles: 150,
-  current: null,
+  history: [],        // raw minute data
+  candles: [],        // visible aggregated
+  indicators: {},
+
+  timeframeDays: 1,
+  maxVisible: 80,
+
+  viewMin: null,
+  viewMax: null,
+
+  zoom: 1,
+  offset: 0,
 
   init() {
 
     this.canvas = document.getElementById("bxChart");
-    if (!this.canvas) return;
-
     this.ctx = this.canvas.getContext("2d");
-    this.tooltip = document.getElementById("chartTooltip");
 
     this.resize();
     window.addEventListener("resize", () => this.resize());
 
-    this.bindTimeframes();
-    this.bindMouse();
-
-    this.reset(38);
-
+    this.bindInteraction();
     requestAnimationFrame(() => this.render());
-  },
-
-  /* ================= RESET SAFE ================= */
-
-  reset(price) {
-    this.candles = [];
-    this.ema = [];
-    this.vwap = [];
-    this.current = null;
-    this.bootstrap(price);
   },
 
   resize() {
     const p = this.canvas.parentElement;
-    this.canvas.width = p.clientWidth;
-    this.canvas.height = p.clientHeight;
+    this.width = this.canvas.width = p.clientWidth;
+    this.height = this.canvas.height = p.clientHeight;
   },
 
-  bootstrap(price) {
-    this.current = {
+  /* ================= DATA ENGINE ================= */
+
+  updateTick(price, volume = 1, time = Date.now()) {
+
+    this.history.push({
       open: price,
       high: price,
       low: price,
       close: price,
-      volume: 1,
-      time: Date.now()
-    };
-    this.candles.push(this.current);
+      volume,
+      time
+    });
+
+    if (this.history.length > 5000)
+      this.history.shift();
+
+    this.rebuild();
   },
 
-  update(price) {
+  /* ================= TIMEFRAME ENGINE ================= */
 
-    if (!price || price <= 0) return;
-
-    if (!this.current) {
-      this.bootstrap(price);
-      return;
-    }
-
-    const now = Date.now();
-
-    if (now - this.current.time > this.timeframe) {
-
-      this.current = {
-        open: this.current.close,
-        high: price,
-        low: price,
-        close: price,
-        volume: 1,
-        time: now
-      };
-
-      this.candles.push(this.current);
-
-      if (this.candles.length > this.maxCandles)
-        this.candles.shift();
-
-    } else {
-      this.current.high = Math.max(this.current.high, price);
-      this.current.low = Math.min(this.current.low, price);
-      this.current.close = price;
-      this.current.volume++;
-    }
-
-    this.calcEMA(14);
-    this.calcVWAP();
+  setTimeframe(days) {
+    this.timeframeDays = days;
+    this.rebuild();
   },
 
-  /* ================= EMA IMPROVED ================= */
+  rebuild() {
+
+    const minutesPerDay = 1440;
+    const group = this.timeframeDays * minutesPerDay;
+
+    const result = [];
+
+    for (let i = 0; i < this.history.length; i += group) {
+
+      const slice = this.history.slice(i, i + group);
+      if (!slice.length) continue;
+
+      result.push({
+        open: slice[0].open,
+        close: slice[slice.length - 1].close,
+        high: Math.max(...slice.map(c => c.high)),
+        low: Math.min(...slice.map(c => c.low)),
+        volume: slice.reduce((a, b) => a + b.volume, 0),
+        time: slice[0].time
+      });
+    }
+
+    this.candles = result.slice(-this.maxVisible);
+    this.calculateIndicators();
+  },
+
+  /* ================= INDICATORS ================= */
+
+  calculateIndicators() {
+    this.indicators.ema = this.calcEMA(14);
+    this.indicators.vwap = this.calcVWAP();
+  },
 
   calcEMA(period) {
 
-    if (this.candles.length < period) return;
-
     const k = 2 / (period + 1);
-    this.ema = [];
+    const ema = [];
 
-    let emaPrev = this.candles[0].close;
+    let prev = this.candles[0]?.close || 0;
 
     for (let i = 0; i < this.candles.length; i++) {
 
-      if (i === 0) {
-        this.ema.push(emaPrev);
-      } else {
-        const val =
-          this.candles[i].close * k +
-          emaPrev * (1 - k);
+      const val =
+        i === 0
+          ? prev
+          : this.candles[i].close * k +
+            prev * (1 - k);
 
-        this.ema.push(val);
-        emaPrev = val;
-      }
+      ema.push(val);
+      prev = val;
     }
-  },
 
-  /* ================= VWAP SAFE ================= */
+    return ema;
+  },
 
   calcVWAP() {
 
     let pv = 0;
     let vol = 0;
-    this.vwap = [];
+    const vwap = [];
 
     for (let c of this.candles) {
 
-      const typical = (c.high + c.low + c.close) / 3;
+      const typical =
+        (c.high + c.low + c.close) / 3;
 
       pv += typical * c.volume;
       vol += c.volume;
 
-      this.vwap.push(vol ? pv / vol : typical);
+      vwap.push(vol ? pv / vol : typical);
     }
+
+    return vwap;
+  },
+
+  /* ================= SCALE ENGINE ================= */
+
+  computeScale() {
+
+    const highs = this.candles.map(c => c.high);
+    const lows  = this.candles.map(c => c.low);
+
+    let max = Math.max(...highs);
+    let min = Math.min(...lows);
+
+    const padding = (max - min) * 0.1;
+
+    max += padding;
+    min -= padding;
+
+    if (!this.viewMax) {
+      this.viewMax = max;
+      this.viewMin = min;
+    }
+
+    this.viewMax += (max - this.viewMax) * 0.1;
+    this.viewMin += (min - this.viewMin) * 0.1;
   },
 
   /* ================= RENDER ENGINE ================= */
 
   render() {
 
-  const ctx = this.ctx;
-  const w = this.canvas.width;
-  const h = this.canvas.height;
+    const ctx = this.ctx;
+    ctx.clearRect(0, 0, this.width, this.height);
 
-  ctx.clearRect(0, 0, w, h);
+    if (!this.candles.length) {
+      requestAnimationFrame(() => this.render());
+      return;
+    }
 
-  const maxVisible = 60;
-  const visible = this.candles.slice(-maxVisible);
+    this.computeScale();
 
-  if (visible.length < 2) {
+    this.drawGrid();
+    this.drawCandles();
+    this.drawIndicators();
+    this.drawPriceScale();
+    this.drawTimeScale();
+
     requestAnimationFrame(() => this.render());
-    return;
-  }
+  },
 
-  const highs = visible.map(c => c.high);
-  const lows  = visible.map(c => c.low);
+  scaleY(p) {
+    return this.height -
+      ((p - this.viewMin) /
+      (this.viewMax - this.viewMin)) *
+      (this.height - 40);
+  },
 
-  let max = Math.max(...highs);
-  let min = Math.min(...lows);
+  drawGrid() {
 
-  if (Math.abs(max - min) < 0.0000001) {
-    max += 0.0001;
-    min -= 0.0001;
-  }
+    const ctx = this.ctx;
+    ctx.strokeStyle = "rgba(255,255,255,0.05)";
 
-  const padding = (max - min) * 0.1;
-  max += padding;
-  min -= padding;
+    const rows = 6;
+    const cols = 6;
 
-  if (!this.viewMax) {
-    this.viewMax = max;
-    this.viewMin = min;
-  }
+    for (let i = 0; i <= rows; i++) {
+      const y = (this.height / rows) * i;
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(this.width, y);
+      ctx.stroke();
+    }
 
-  this.viewMax += (max - this.viewMax) * 0.1;
-  this.viewMin += (min - this.viewMin) * 0.1;
+    for (let i = 0; i <= cols; i++) {
+      const x = (this.width / cols) * i;
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, this.height);
+      ctx.stroke();
+    }
+  },
 
-  const scaleY = p =>
-    h - ((p - this.viewMin) / (this.viewMax - this.viewMin)) * (h - 40);
+  drawCandles() {
 
-  const candleWidth = w / maxVisible;
-     
-    /* ===== Candles ===== */
+    const ctx = this.ctx;
+    const cw = this.width / this.candles.length;
 
     this.candles.forEach((c, i) => {
 
-      const x = i * candleWidth + candleWidth / 2;
+      const x = i * cw + cw / 2;
 
-      const openY = scaleY(c.open);
-      const closeY = scaleY(c.close);
-      const highY = scaleY(c.high);
-      const lowY = scaleY(c.low);
+      const openY  = this.scaleY(c.open);
+      const closeY = this.scaleY(c.close);
+      const highY  = this.scaleY(c.high);
+      const lowY   = this.scaleY(c.low);
 
       const up = c.close >= c.open;
 
-      ctx.strokeStyle = up ? "#21c87a" : "#ff4d4f";
-      ctx.fillStyle = up ? "#21c87a" : "#ff4d4f";
+      ctx.strokeStyle = up ? "#00c896" : "#ff4d4f";
+      ctx.fillStyle   = up ? "#00c896" : "#ff4d4f";
 
       ctx.beginPath();
       ctx.moveTo(x, highY);
@@ -475,94 +507,93 @@ const PRO_CHART = {
       ctx.stroke();
 
       ctx.fillRect(
-        x - candleWidth * 0.3,
+        x - cw * 0.3,
         Math.min(openY, closeY),
-        candleWidth * 0.6,
+        cw * 0.6,
         Math.max(1, Math.abs(openY - closeY))
       );
     });
-
-    /* ===== EMA ===== */
-
-    if (this.ema.length) {
-      ctx.beginPath();
-      ctx.strokeStyle = "#f4c430";
-
-      this.ema.forEach((v, i) => {
-        const x = i * candleWidth + candleWidth / 2;
-        const y = scaleY(v);
-        i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
-      });
-
-      ctx.stroke();
-    }
-
-    /* ===== VWAP ===== */
-
-    if (this.vwap.length) {
-      ctx.beginPath();
-      ctx.strokeStyle = "#a855f7";
-
-      this.vwap.forEach((v, i) => {
-        const x = i * candleWidth + candleWidth / 2;
-        const y = scaleY(v);
-        i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
-      });
-
-      ctx.stroke();
-    }
-
-    requestAnimationFrame(() => this.render());
   },
 
-  /* ================= TIMEFRAME ================= */
+  drawIndicators() {
 
-  bindTimeframes() {
+    const ctx = this.ctx;
+    const cw = this.width / this.candles.length;
 
-    document.querySelectorAll(".tf").forEach(btn => {
+    ctx.strokeStyle = "#f4c430";
+    ctx.beginPath();
 
-      btn.onclick = () => {
-
-        document.querySelectorAll(".tf")
-          .forEach(b => b.classList.remove("active"));
-
-        btn.classList.add("active");
-
-        this.timeframe = parseInt(btn.dataset.tf);
-      };
+    this.indicators.ema.forEach((v, i) => {
+      const x = i * cw + cw / 2;
+      const y = this.scaleY(v);
+      i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
     });
+
+    ctx.stroke();
   },
 
-  /* ================= TOOLTIP ================= */
+  drawPriceScale() {
 
-  bindMouse() {
+    const ctx = this.ctx;
+    ctx.fillStyle = "#888";
+    ctx.font = "11px Arial";
 
-    this.canvas.addEventListener("mousemove", (e) => {
+    const steps = 6;
 
-      const rect = this.canvas.getBoundingClientRect();
-      const x = e.clientX - rect.left;
+    for (let i = 0; i <= steps; i++) {
 
-      const idx = Math.floor(
-        (x / this.canvas.width) *
-        this.candles.length
+      const price =
+        this.viewMin +
+        ((this.viewMax - this.viewMin) / steps) * i;
+
+      const y =
+        this.height -
+        (this.height / steps) * i;
+
+      ctx.fillText(
+        price.toFixed(4),
+        this.width - 60,
+        y
       );
+    }
+  },
 
-      const c = this.candles[idx];
-      if (!c) return;
+  drawTimeScale() {
 
-      this.tooltip.style.display = "block";
-      this.tooltip.style.left = e.clientX + "px";
-      this.tooltip.style.top = e.clientY + "px";
+    const ctx = this.ctx;
+    ctx.fillStyle = "#666";
+    ctx.font = "10px Arial";
 
-      this.tooltip.innerHTML =
-        `O: ${c.open.toFixed(4)}<br>
-         H: ${c.high.toFixed(4)}<br>
-         L: ${c.low.toFixed(4)}<br>
-         C: ${c.close.toFixed(4)}`;
-    });
+    const step =
+      Math.floor(this.candles.length / 6);
 
-    this.canvas.addEventListener("mouseleave", () => {
-      this.tooltip.style.display = "none";
+    for (let i = 0; i < this.candles.length; i += step) {
+
+      const x =
+        (i / this.candles.length) *
+        this.width;
+
+      const date =
+        new Date(this.candles[i].time);
+
+      ctx.fillText(
+        date.toLocaleDateString(),
+        x,
+        this.height - 5
+      );
+    }
+  },
+
+  /* ================= INTERACTION ================= */
+
+  bindInteraction() {
+
+    this.canvas.addEventListener("wheel", e => {
+
+      e.preventDefault();
+
+      this.zoom += e.deltaY > 0 ? 0.1 : -0.1;
+      this.zoom = Math.max(0.5, Math.min(3, this.zoom));
     });
   }
 };
