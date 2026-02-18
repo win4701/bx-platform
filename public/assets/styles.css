@@ -705,45 +705,47 @@ h3{
 
 /* ================= CHART ================= */
 
+.chart-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 10px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.tf-group button {
+  background: transparent;
+  border: none;
+  color: #aaa;
+  padding: 4px 8px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.tf-group button.active {
+  color: #fff;
+  border-bottom: 2px solid #00c896;
+}
+
 .chart-wrapper {
+  display: flex;
   position: relative;
   height: 260px;
-  border-radius: 16px;
-  overflow: hidden;
-  background: linear-gradient(145deg,#08121f,#0e1c2f);
 }
 
-.chart-tooltip {
-  position: absolute;
-  background: rgba(10,15,25,0.95);
-  padding: 8px 10px;
-  border-radius: 8px;
-  font-size: 11px;
-  color: #fff;
-  pointer-events: none;
-  display: none;
-  border: 1px solid rgba(255,255,255,0.05);
+.chart-main {
+  flex: 1;
+  position: relative;
 }
 
-.chart-timeframes {
-  display: flex;
-  gap: 8px;
-  margin-top: 8px;
+.chart-price-scale {
+  width: 60px;
+  background: #0f0f12;
 }
 
-.tf {
-  padding: 6px 10px;
-  border-radius: 8px;
-  background: #111c2b;
-  border: 1px solid rgba(255,255,255,0.05);
-  color: #aaa;
-  font-size: 12px;
-  cursor: pointer;
-}
-
-.tf.active {
-  background: #21c87a;
-  color: #000;
+.chart-volume {
+  height: 100px;
+  border-top: 1px solid rgba(255,255,255,0.05);
 }
 
 /* ================= INDICATORS ================= */
