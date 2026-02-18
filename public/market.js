@@ -330,7 +330,9 @@ const BX_CHART = {
 
   if (this.history.length > 2000)
     this.history.shift();
-  }
+
+},
+   
   /* ================= TIMEFRAME ENGINE ================= */
 
   setTimeframe(days) {
