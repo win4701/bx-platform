@@ -57,31 +57,38 @@ let wallet = { BX: 0, USDT: 0 };
 
 /* ================= INIT ================= */
 
-function init() {
+function initMarket() {
+
   updateWalletUI();
   bindEvents();
-  connectBinance();
-
-  marketPrice = BX_USDT_REFERENCE;
-  BX_CHART.init();
-
+   
+  if (!BX_CHART.canvas) {
+    BX_CHART.init();
+  }
+   
   if (BX_CHART.history.length === 0) {
-  const now = Date.now();
 
-  for (let i = 0; i < 120; i++) {
-    BX_CHART.history.push({
-      open: marketPrice,
-      high: marketPrice,
-      low: marketPrice,
-      close: marketPrice,
-      volume: 1,
-      time: now - (120 - i) * 60000
-    });
+    const now = Date.now();
+
+    for (let i = 0; i < 120; i++) {
+      BX_CHART.history.push({
+        open: marketPrice,
+        high: marketPrice,
+        low: marketPrice,
+        close: marketPrice,
+        volume: 1,
+        time: now - (120 - i) * 60000
+      });
+    }
+
+    BX_CHART.rebuild();
   }
 
-  BX_CHART.rebuild();
- }
-   
+  
+  generateOrderBook();
+  renderOrderBook();
+}
+
 /* ================= BINANCE TICKER ================= */
 
 let ws = null;
