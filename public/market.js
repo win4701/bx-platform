@@ -78,7 +78,7 @@ function init() {
     volume: 1,
     time: now - (120 - i) * 60000
   });
-}
+ }
 
 BX_CHART.rebuild();
 }
