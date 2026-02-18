@@ -81,6 +81,7 @@ function init() {
 }
 
 BX_CHART.rebuild();
+}
 
 /* ================= BINANCE TICKER ================= */
 
