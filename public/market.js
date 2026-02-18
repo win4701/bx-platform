@@ -631,12 +631,6 @@ const BX_CHART = {
 };
 /* ================= MARKET LIFECYCLE ================= */
 
-function initMarket() {
-  if (!BX_CHART.canvas) {
-    BX_CHART.init();
-  }
-}
-
 function startPriceFeed() {
   connectBinance(quoteMap[currentQuote]);
 }
