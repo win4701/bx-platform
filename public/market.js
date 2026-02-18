@@ -67,14 +67,20 @@ function init() {
   marketPrice = BX_USDT_REFERENCE;
   BX_CHART.init();
 
+  const now = Date.now();
+
   for (let i = 0; i < 120; i++) {
-    BX_CHART.updateTick(
-      marketPrice + (Math.random() - 0.5) * 0.3,
-      1,
-      Date.now() - (120 - i) * 60000
-    );
-  }
+  BX_CHART.history.push({
+    open: marketPrice,
+    high: marketPrice,
+    low: marketPrice,
+    close: marketPrice,
+    volume: 1,
+    time: now - (120 - i) * 60000
+  });
 }
+
+BX_CHART.rebuild();
 
 /* ================= BINANCE TICKER ================= */
 
@@ -312,21 +318,18 @@ const BX_CHART = {
 
   updateTick(price, volume = 1, time = Date.now()) {
 
-    this.history.push({
-      open: price,
-      high: price,
-      low: price,
-      close: price,
-      volume,
-      time
-    });
+  this.history.push({
+    open: price,
+    high: price,
+    low: price,
+    close: price,
+    volume,
+    time
+  });
 
-    if (this.history.length > 5000)
-      this.history.shift();
-
-    this.rebuild();
-  },
-
+  if (this.history.length > 2000)
+    this.history.shift();
+  }
   /* ================= TIMEFRAME ENGINE ================= */
 
   setTimeframe(days) {
@@ -439,6 +442,10 @@ const BX_CHART = {
 
     const ctx = this.ctx;
     ctx.clearRect(0, 0, this.width, this.height);
+     
+    if (this.candles.length !== this.history.length) {
+      this.rebuild();
+    }
 
     if (!this.candles.length) {
       requestAnimationFrame(() => this.render());
