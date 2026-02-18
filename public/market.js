@@ -239,9 +239,15 @@ function setTradeSide(side) {
 /* ================= EVENTS ================= */
 
 function bindEvents() {
+
   pairButtons.forEach(btn => {
+
     btn.addEventListener("click", () => {
-      pairButtons.forEach(b => b.classList.remove("active"));
+
+      pairButtons.forEach(b =>
+        b.classList.remove("active")
+      );
+
       btn.classList.add("active");
 
       currentQuote = btn.dataset.quote;
@@ -249,12 +255,14 @@ function bindEvents() {
 
       connectBinance(quoteMap[currentQuote]);
 
-       BX_CHART.history = [];
-       BX_CHART.candles = [];
-       BX_CHART.viewMin = null;
-       BX_CHART.viewMax = null;
- });
-});
+      BX_CHART.history = [];
+      BX_CHART.candles = [];
+      BX_CHART.viewMin = null;
+      BX_CHART.viewMax = null;
+
+    });
+
+  });
 
   buyTab.onclick = () => setTradeSide("buy");
   sellTab.onclick = () => setTradeSide("sell");
@@ -269,7 +277,7 @@ function bindEvents() {
           ((max * percent) / 100).toFixed(4);
       };
     });
-}
+   }
 
 /* ======================================================
    BX INSTITUTIONAL CHART ENGINE v4
