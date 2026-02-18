@@ -70,18 +70,18 @@ function init() {
   const now = Date.now();
 
   for (let i = 0; i < 120; i++) {
-  BX_CHART.history.push({
-    open: marketPrice,
-    high: marketPrice,
-    low: marketPrice,
-    close: marketPrice,
-    volume: 1,
-    time: now - (120 - i) * 60000
-  });
- }
+    BX_CHART.history.push({
+      open: marketPrice,
+      high: marketPrice,
+      low: marketPrice,
+      close: marketPrice,
+      volume: 1,
+      time: now - (120 - i) * 60000
+    });
+  }
 
-BX_CHART.rebuild();
-}
+  BX_CHART.rebuild();
+   }
 
 /* ================= BINANCE TICKER ================= */
 
