@@ -57,8 +57,6 @@ let wallet = { BX: 0, USDT: 0 };
 
 /* ================= INIT ================= */
 
-document.addEventListener("DOMContentLoaded", init);
-
 function init() {
   updateWalletUI();
   bindEvents();
@@ -67,6 +65,7 @@ function init() {
   marketPrice = BX_USDT_REFERENCE;
   BX_CHART.init();
 
+  if (BX_CHART.history.length === 0) {
   const now = Date.now();
 
   for (let i = 0; i < 120; i++) {
@@ -81,8 +80,8 @@ function init() {
   }
 
   BX_CHART.rebuild();
-   }
-
+ }
+   
 /* ================= BINANCE TICKER ================= */
 
 let ws = null;
@@ -623,3 +622,21 @@ const BX_CHART = {
     });
   }
 };
+/* ================= MARKET LIFECYCLE ================= */
+
+function initMarket() {
+  if (!BX_CHART.canvas) {
+    BX_CHART.init();
+  }
+}
+
+function startPriceFeed() {
+  connectBinance(quoteMap[currentQuote]);
+}
+
+function stopMarket() {
+  if (ws) {
+    ws.close();
+    ws = null;
+  }
+}
