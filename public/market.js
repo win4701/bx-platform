@@ -65,7 +65,15 @@ function init() {
   connectBinance();
 
   marketPrice = BX_USDT_REFERENCE;
-  PRO_CHART.init();
+  BX_CHART.init();
+
+  for (let i = 0; i < 120; i++) {
+    BX_CHART.updateTick(
+      marketPrice + (Math.random() - 0.5) * 0.3,
+      1,
+      Date.now() - (120 - i) * 60000
+    );
+  }
 }
 
 /* ================= BINANCE TICKER ================= */
@@ -236,10 +244,8 @@ function bindEvents() {
 
       connectBinance(quoteMap[currentQuote]);
 
-       PRO_CHART.candles = [];
-       PRO_CHART.ema = [];
-       PRO_CHART.vwap = [];
-       PRO_CHART.reset(marketPrice);
+       BX_CHART.history = [];
+       BX_CHART.rebuild();
  });
 });
 
