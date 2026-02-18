@@ -307,15 +307,17 @@ const BX_CHART = {
 
   init() {
 
-    this.canvas = document.getElementById("bxChart");
-    this.ctx = this.canvas.getContext("2d");
+  this.canvas = document.getElementById("bxChart");
+  if (!this.canvas) return; 
 
-    this.resize();
-    window.addEventListener("resize", () => this.resize());
+  this.ctx = this.canvas.getContext("2d");
 
-    this.bindInteraction();
-    requestAnimationFrame(() => this.render());
-  },
+  this.resize();
+  window.addEventListener("resize", () => this.resize());
+
+  this.bindInteraction();
+  requestAnimationFrame(() => this.render());
+},
 
   resize() {
     const p = this.canvas.parentElement;
