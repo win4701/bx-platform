@@ -1,0 +1,1381 @@
+/* =========================================================
+   ROOT / THEME
+========================================================= */
+:root{
+  --bg:#0b0f14;
+  --card:#0f1a1f;
+  --border:#12323f;
+  --text:#e6f1ff;
+  --muted:#9fb3c8;
+  --green: #02C076; 
+  --red: #F84960;
+  --yellow: #FFCD18;
+  --green-glow: rgba(14,203,129,.6);
+  --red-glow: rgba(246,70,93,.6);
+}
+
+/* =========================================================
+   RESET / BASE
+========================================================= */
+*{
+  box-sizing:border-box;
+  -webkit-tap-highlight-color:transparent;
+}
+
+html,body{
+  margin:0;
+  padding:0;
+  min-height:100%;
+  background:var(--bg);
+  color:var(--text);
+  font-family:system-ui,-apple-system,Segoe UI,Roboto;
+}
+
+img{
+  display:block;
+  max-width:100%;
+}
+
+/* =========================================================
+   HEADER
+========================================================= */
+.app-header{
+  position:sticky;
+  top:0;
+  z-index:50;
+  background:rgba(11,15,20,.95);
+  backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--border);
+  padding:12px 16px;
+}
+
+.logo{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  font-weight:700;
+}
+
+.logo img{
+  width:36px;
+  height:36px;
+  background:transparent;
+  padding:4px;
+  border-radius:10px;
+}
+
+/* =========================================================
+   MAIN CONTAINER
+========================================================= */
+.app-container{
+  padding:14px 14px 120px;
+  min-height:100vh;
+}
+
+/* ===================== VIEW SYSTEM FIX ===================== */
+.view {
+  display: none;
+}
+
+.view.active {
+  display: block;
+}
+
+/* =========================================================
+   CARD
+========================================================= */
+.card{
+  background:linear-gradient(180deg,#10252c,#0f1a1f);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:14px;
+  box-shadow:0 16px 36px rgba(0,0,0,.35);
+}
+
+h2{
+  margin:4px 0 12px;
+  font-size:18px;
+}
+
+h3{
+  margin:12px 0 8px;
+  font-size:14px;
+  color:var(--muted);
+}
+
+/* =====================================================
+   WALLET – FULL HORIZONTAL / EXCHANGE STYLE
+===================================================== */
+
+#wallet.view{
+  padding:16px;
+  background:linear-gradient(180deg,#0b1220 0%,#020617 100%);
+  color:#e5e7eb;
+}
+
+/* ================= TOP SUMMARY ================= */
+
+.wallet-top{
+  background:#0b1220;
+  border:1px solid #1e293b;
+  border-radius:18px;
+  padding:18px;
+  margin-bottom:16px;
+}
+
+.wallet-top .label{
+  font-size:13px;
+  color:#94a3b8;
+}
+
+.wallet-top h3{
+  margin-top:6px;
+  font-size:34px;
+  font-weight:800;
+}
+
+.wallet-top h1 small{
+  font-size:13px;
+  color:#94a3b8;
+  margin-left:6px;
+}
+
+/* ================= ACTION BUTTONS ================= */
+
+.wallet-actions{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:12px;
+  margin-bottom:16px;
+}
+
+.wallet-actions .btn{
+  height:40px;
+  border-radius:16px;
+  font-size:14px;
+  font-weight:800;
+  border:none;
+}
+
+.wallet-actions .primary{
+  background:#22c55e;
+  color:#022c22;
+}
+
+.wallet-actions .btn:not(.primary){
+  background:#020617;
+  border:1px solid #1e293b;
+  color:#e5e7eb;
+}
+
+/* ================= BALANCES CARD ================= */
+
+.wallet-balances{
+  background:#0b1220;
+  border:1px solid #1e293b;
+  border-radius:18px;
+  padding:6px;
+}
+
+/* ================= BALANCE ROW ================= */
+
+.wallet-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:12px 10px;
+  border-bottom:1px solid #020617;
+}
+
+.wallet-row:last-child{
+  border-bottom:none;
+}
+
+/* LEFT SIDE (ICON + TEXT) */
+.wallet-row .left{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  flex:1;
+  min-width:0;
+}
+
+/* ICON */
+.wallet-row img{
+  width:20px;
+  height:20px;
+  flex-shrink:0;
+}
+
+/* TEXT – FULL HORIZONTAL */
+.wallet-row .info{
+  display:flex;
+  flex-direction:row;        /* ❗ أفقي */
+  align-items:center;        /* ❗ نفس الخط */
+  gap:6px;
+  white-space:nowrap;
+  line-height:1;
+}
+
+/* SYMBOL */
+.wallet-row .info strong{
+  font-size:15px;
+  font-weight:800;
+  line-height:1;
+}
+
+/* NAME */
+.wallet-row .info span{
+  font-size:12px;
+  color:#94a3b8;
+  line-height:1;
+}
+
+/* AMOUNT */
+.wallet-row .amount{
+  font-size:15px;
+  font-weight:800;
+  white-space:nowrap;
+}
+
+/* ================= TRANSFER ================= */
+
+.wallet-transfer{
+  background:#0f172a;
+  border:1px solid #1e293b;
+  border-radius:18px;
+  padding:16px;
+  margin-top:16px;
+}
+
+.wallet-transfer h4{
+  font-size:14px;
+  margin-bottom:12px;
+}
+
+.wallet-transfer input{
+  width:100%;
+  padding:12px;
+  border-radius:12px;
+  background:#020617;
+  border:1px solid #1e293b;
+  color:#fff;
+  margin-bottom:10px;
+}
+
+.wallet-transfer .confirm{
+  width:100%;
+  height:40px;
+  border-radius:14px;
+  background:#3b82f6;
+  color:white;
+  font-weight:800;
+  border:none;
+}
+
+/* ================= CONNECT / PAY ================= */
+
+.wallet-bottom-actions{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+  margin-top:16px;
+}
+
+.wallet-btn{
+  height:46px;
+  border-radius:16px;
+  font-size:14px;
+  font-weight:800;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border:1px dashed #1e293b;
+  background:#020617;
+  color:#94a3b8;
+}
+
+/* Binance Pay */
+.wallet-btn.binance-pay{
+  background:#facc15;
+  color:#000;
+  border:none;
+}
+
+/* WalletConnect */
+.wallet-btn.walletconnect{
+  background:#ffffff;
+  color:#000;
+  border:none;
+}
+
+/* Connected State */
+.wallet-btn.connected{
+  background:linear-gradient(135deg,#22c55e,#16a34a);
+  color:#022c22;
+  border:none;
+   }
+
+/* =========================================================
+   BLOXIO MARKET CSS — GLOBAL PRO VERSION 3.0
+   Optimized • Clean • Depth Engine Ready
+========================================================= */
+
+:root{
+  --green:#0ecb81;
+  --red:#f6465d;
+  --yellow:#f0b90b;
+  --panel:#0e1318;
+  --border:#1e2329;
+  --muted:#848e9c;
+  --purple:#a855f7;
+  --green-soft:rgba(14,203,129,.15);
+  --red-soft:rgba(246,70,93,.15);
+}
+
+/* ================= BASE ================= */
+
+.market-view{
+  padding:14px;
+  background:var(--bg);
+  color:var(--text);
+  font-family:system-ui,-apple-system,BlinkMacSystemFont;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+}
+
+/* ================= HEADER ================= */
+
+.market-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  margin-bottom:14px;
+}
+
+.pair-title{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  font-size:18px;
+  font-weight:800;
+  letter-spacing:.3px;
+}
+
+.pair-title .base{ color:var(--yellow); }
+.pair-title .arrow{ color:var(--muted); }
+.pair-title .quote{ color:#94a3b8; }
+
+.price-box{
+  text-align:right;
+}
+
+.price-main{
+  font-size:26px;
+  font-weight:800;
+}
+
+.price-sub{
+  font-size:12px;
+  color:var(--muted);
+  margin-top:4px;
+}
+
+.price-main.up{
+  color:var(--green);
+  text-shadow:0 0 8px var(--green-glow);
+}
+
+.price-main.down{
+  color:var(--red);
+  text-shadow:0 0 8px var(--red-glow);
+}
+   
+.approx{
+  font-size:12px;
+  color:var(--muted);
+}
+
+/*================= PAIR SELECTOR ================= */
+
+.pair-grid{
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  gap:5px;
+}
+
+.pair-btn{
+  height:32px;
+  border-radius:10px;
+  border:1px solid var(--soft-border);
+  background:#0e1318;
+  color:var(--muted);
+  font-size:12px;
+  font-weight:800;
+  cursor:pointer;
+  transition:.2s ease;
+}
+
+.pair-btn:hover{
+  background:#18212b;
+  color:#fff;
+}
+
+.pair-btn.active{
+  background:rgba(240,185,11,.12);
+  color:var(--yellow);
+  border-color:var(--yellow);
+}
+
+/* ================= ORDER BOOK ================= */
+
+.orderbook-header {
+  display:flex;
+  justify-content:space-between;
+  font-weight:800;
+  font-size:14px;
+  margin-bottom:10px;
+}
+
+.orderbook-header .bids-title { color:#16c784; }
+.orderbook-header .asks-title { color:#ea3943; }
+
+.orderbook-body{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+.ob-column{
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+}
+
+.ob-row{
+  padding:8px 10px;
+  border-radius:10px;
+  font-size:13px;
+  font-family:monospace;
+  font-weight:800;
+}
+
+.bid-row{
+  background:linear-gradient(90deg, rgba(22,199,132,.25), transparent);
+  color:#16c784;
+}
+
+.ask-row{
+  background:linear-gradient(90deg, rgba(234,57,67,.25), transparent);
+  color:#ea3943;
+}
+
+.mid-price{
+  text-align:center;
+  font-weight:800;
+  padding:10px 0;
+  margin:10px 0;
+  font-size:15px;
+  border-top:1px solid rgba(255,255,255,.06);
+  border-bottom:1px solid rgba(255,255,255,.06);
+}
+
+/* ===== ORDER BOOK STYLE CLEAN ===== */
+
+.orderbook-card {
+  background: linear-gradient(145deg,#0c1624,#0f1c2d);
+  border-radius: 18px;
+  padding: 18px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.35);
+}
+
+.orderbook-grid {
+  display: grid;
+  grid-template-columns: 1fr 0.8fr 1fr;
+  gap: 10px;
+}
+
+.ob-head {
+  font-size: 13px;
+  font-weight: 800;
+  opacity: .7;
+  margin-bottom: 8px;
+}
+
+.ob-head.buy { color: #35d49a; }
+.ob-head.sell { color: #ff6b6b; }
+
+.ob-list,
+.price-ladder {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ob-row {
+  padding: 6px 8px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  transition: .2s;
+}
+
+.bids .ob-row {
+  background: rgba(53,212,154,.08);
+  color: #35d49a;
+}
+
+.bids .ob-row:hover {
+  background: rgba(53,212,154,.15);
+}
+
+.asks .ob-row {
+  background: rgba(255,107,107,.08);
+  color: #ff6b6b;
+}
+
+.asks .ob-row:hover {
+  background: rgba(255,107,107,.15);
+}
+
+.price-ladder .ob-row {
+  background: rgba(255,255,255,.04);
+  color: #cfd6e4;
+  text-align: center;
+}
+     
+/* ================= MARKET v3.1 PRO CLEAN ================= */
+
+.trade-box input[type="number"],
+#amountInput,
+#amount-bx {
+
+  width: 100%;
+  height: 42px;
+
+  background: linear-gradient(145deg,#0e1a2b,#0b1624);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 16px;
+
+  padding: 0 18px;
+
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: .4px;
+
+  color: #f2f6ff;
+
+  outline: none;
+  transition: all .25s ease;
+}
+
+.trade-box input::placeholder{
+  color: #70819f;
+  font-weight: 800;
+}
+
+.trade-box input:focus{
+  border-color: #35d49a;
+  box-shadow: 0 0 0 3px rgba(53,212,154,.15);
+  background: #122036;
+}
+
+.trade-box input:hover{
+  border-color: rgba(255,255,255,.12);
+}
+
+
+/* ===== BUY / SELL TOGGLE ===== */
+
+.trade-tabs{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  background:#0e1c2d;
+  border-radius:16px;
+  padding:5px;
+  margin-bottom:12px;
+}
+
+.trade-tabs button{
+  border:none;
+  background:transparent;
+  padding:11px 0;
+  border-radius:12px;
+  font-weight:800;
+  font-size:14px;
+  color:#7e8ea6;
+  cursor:pointer;
+  transition:.25s;
+}
+
+.trade-tabs button.active{
+  background:linear-gradient(90deg,#35d49a,#28b783);
+  color:#0b121b;
+}
+
+.trade-box.sell .trade-tabs button.active{
+  background:linear-gradient(90deg,#ff6b6b,#e04f4f);
+  color:white;
+}
+
+
+/* ===== PERCENT BUTTONS ===== */
+
+.percent-row{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:10px;
+  margin-top:12px;
+}
+
+.percent-row button{
+  padding:9px 0;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,.07);
+  background:rgba(255,255,255,.04);
+  color:#cfd6e4;
+  font-size:13px;
+  font-weight:600;
+  cursor:pointer;
+  transition:.25s;
+}
+
+.percent-row button:hover{
+  background:rgba(53,212,154,.15);
+  border-color:rgba(53,212,154,.35);
+  color:#35d49a;
+}
+
+.percent-row button.active{
+  background:linear-gradient(90deg,#35d49a,#28b783);
+  color:#0b121b;
+  border:none;
+}
+
+
+/* ===== ACTION BUTTON ===== */
+
+.action-btn{
+  width:100%;
+  padding:15px;
+  border-radius:16px;
+  border:none;
+  font-weight:800;
+  font-size:15px;
+  margin-top:14px;
+  cursor:pointer;
+  transition:.25s;
+}
+
+.action-btn.buy{
+  background:linear-gradient(90deg,#1dd1a1,#10ac84);
+  color:#081018;
+}
+
+.trade-box.sell .action-btn{
+  background:linear-gradient(90deg,#ff4d4f,#d63031);
+  color:white;
+}
+
+.action-btn:hover{
+  transform:translateY(-2px);
+  box-shadow:0 6px 20px rgba(0,0,0,.35);
+}
+
+
+/* ===== INFO ROW (Price / Slippage / Spread) ===== */
+
+.trade-info{
+  margin-top:12px;
+  font-size:14px;
+  color:#9fb0c9;
+  line-height:1.7;
+}
+
+.trade-info strong{
+  color:#ffffff;
+  font-weight:800;
+}
+
+/* ================= CHART ================= */
+
+.chart-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 10px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.tf-group button {
+  background: transparent;
+  border: none;
+  color: #aaa;
+  padding: 4px 8px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.tf-group button.active {
+  color: #fff;
+  border-bottom: 2px solid #00c896;
+}
+
+.chart-wrapper {
+  display: flex;
+  position: relative;
+  height: 260px;
+}
+
+.chart-main {
+  flex: 1;
+  position: relative;
+}
+
+#bxChart {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.chart-price-scale {
+  width: 60px;
+  background: #0f0f12;
+}
+
+.chart-volume {
+  height: 100px;
+  border-top: 1px solid rgba(255,255,255,0.05);
+}
+
+/* ================= INDICATORS ================= */
+
+.indicator-legend{
+  display:flex;
+  gap:14px;
+  font-size:11px;
+  margin:6px 4px;
+}
+
+.indicator-legend .ema{ color:#facc15; }
+.indicator-legend .vwap{ color:var(--purple); }
+
+/* =========================================================
+   CASINO – POSTER SYSTEM (MATCHES PROVIDED IMAGE)
+========================================================= */
+
+#casino .casino-grid{
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+
+#casino .game{
+  background:#0b0b0b;
+  border-radius:22px;
+  overflow:hidden;
+}
+
+#casino .game img{
+  width:100%;
+  height:auto;          
+  display:block;
+  object-fit:contain;   
+}
+
+#casino .game h4{
+  opacity: 0;
+  transform: translateY(10px);
+  transition: .25s ease;
+}
+
+#casino .game h4{
+  display: none;
+}
+
+.casino-card.disabled {
+  opacity: 0.4;
+  pointer-events: auto;
+  cursor: not-allowed;
+}
+
+/* =================================================================
+   RECENT BIG WINS – FINAL (VERTICAL OVERRIDE)
+=============================================================== */
+
+.big-wins {
+  margin: 18px 16px;
+  padding: 14px;
+  border-radius: 16px;
+  background: linear-gradient(180deg,#0b1220,#060b14);
+}
+
+.big-wins-title {
+  margin-bottom: 10px;
+  font-size: 14px;
+  font-weight: 800;
+  color: #fff;
+}
+
+.big-wins-track {
+  display: block !important;
+  max-height: 260px;
+  overflow-y: auto;
+  overflow-x: hidden !important;
+}
+
+.big-win-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.06);
+  box-sizing: border-box;
+}
+
+.big-win-row:last-child {
+  margin-bottom: 0;
+}
+
+.big-win-row .user {
+  color: #9ca3af;
+  font-size: 13px;
+}
+
+.big-win-row .game {
+  color: #7dd3fc;
+  font-size: 13px;
+}
+
+.big-win-row .amount {
+  color: #22c55e;
+  font-weight: 800;
+  font-size: 13px;
+}
+
+.big-win-row .amount.win {
+  color: #22c55e;
+  font-weight: 800;
+}
+
+.big-win-row .amount.loss {
+  color: #ef4444;
+  font-weight: 800;
+   
+}
+
+.big-win-row span {
+  white-space: normal !important;
+}
+
+/* ===== WIN / LOSE ANIMATIONS ===== */
+
+.game.win {
+  animation: winPulse 0.8s ease;
+  box-shadow: 0 0 25px rgba(0, 255, 150, 0.9);
+}
+
+.game.lose {
+  animation: loseShake 0.4s ease;
+  box-shadow: 0 0 20px rgba(255, 60, 60, 0.9);
+}
+
+@keyframes winPulse {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.06); }
+  100% { transform: scale(1); }
+}
+
+@keyframes loseShake {
+  0%   { transform: translateX(0); }
+  25%  { transform: translateX(-4px); }
+  50%  { transform: translateX(4px); }
+  75%  { transform: translateX(-4px); }
+  100% { transform: translateX(0); }
+                               }
+
+/* ================= GLOBAL VIEW FIX ================= */
+
+.view{
+  min-height: 100vh;
+  padding-bottom: 120px; 
+  overflow-y: auto;
+}
+
+.view.card{
+  overflow: visible;
+}
+
+/* ================= MINING ================= */
+
+#mining{
+  padding: 16px;
+}
+
+.mining-tabs{
+  display:flex;
+  gap:12px;
+  margin-bottom: 20px;
+}
+
+.mining-tabs button{
+  flex:1;
+  height:38px;
+  border-radius:18px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  background:#020617;
+  border:1px solid #1e293b;
+  color:#94a3b8;
+  font-weight:800;
+}
+
+.mining-tabs button img{
+  width:22px;
+  height:22px;
+}
+
+.mining-tabs button.active{
+  background:linear-gradient(135deg,#22c55e,#6ee7a8);
+  color:#022c22;
+  border:none;
+}
+
+/* ================= MINING PLANS ================= */
+
+.mining-plans{
+  display:grid;
+  grid-template-columns: repeat(2,1fr);
+  gap:16px;
+}
+
+.mining-plan{
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+}
+
+.mining-plan ul{
+  padding-left:18px;
+  margin:10px 0;
+}
+
+.mining-plan li{
+  line-height:0.95;
+}
+
+.mining-plan h4{
+  font-size:14px;
+  font-weight:800;
+  margin-bottom:6px;
+}
+
+.mining-profit{
+  font-size:22px;
+  font-weight:800;
+  color:#22c55e;
+  margin-bottom:12px;
+}
+
+.mining-plan button{
+  width:100%;
+  height:38px;
+  border-radius:14px;
+  background:#22c55e;
+  color:#022c22;
+  font-weight:800;
+  border:none;
+}
+
+/* ================= BOTTOM NAV ================= */
+
+.bottom-nav{
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 48px;
+  z-index: 999;
+}
+
+/* =========================================================
+   BOTTOM NAV
+========================================================= */
+.bottom-nav{
+  position:fixed;
+  bottom:0;
+  left:0;
+  right:0;
+  background:#0b0f14;
+  border-top:1px solid var(--border);
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  padding:6px 0 env(safe-area-inset-bottom);
+  z-index:100;
+}
+
+.bottom-nav button{
+  background:none;
+  border:0;
+  color:var(--muted);
+  font-size:11px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:4px;
+}
+
+.bottom-nav button.active{
+  color:var(--green);
+}
+
+.bottom-nav img{
+  width:22px;
+  height:22px;
+}
+/* =========================================================
+   UX – TAP FEEDBACK
+========================================================= */
+button,
+.deposit-method,
+.game,
+.trade,
+.mining-plan{
+  transition:transform .12s ease, box-shadow .12s ease;
+}
+
+button:active,
+.deposit-method:active,
+.game:active,
+.mining-plan:active{
+  transform:scale(0.9);
+}
+/* =========================================================
+   UX – MARKET EMPHASIS
+========================================================= */
+.btn.buy{
+  outline:2px solid rgba(74,222,187,.25);
+}
+
+.btn.sell{
+  outline:2px solid rgba(216,20,132,.25);
+}
+
+/* =========================================================
+   UX – WALLET READABILITY
+========================================================= */
+.balances li{
+  justify-content:space-between;
+}
+
+.balances li span{
+  font-size:15px;
+  letter-spacing:.3px;
+}
+/* =========================================================
+   UX – MICRO HOVER
+========================================================= */
+.trade:hover,
+.deposit-method:hover,
+.mining-plan:hover{
+  border-color:var(--green);
+}
+/* =========================================================
+   UX – ERROR STATES
+========================================================= */
+.status.error{
+  background:rgba(255,143,163,.08);
+  border:1px solid rgba(255,143,163,.4);
+  padding:8px;
+  border-radius:10px;
+}
+
+.status.success{
+  background:rgba(110,231,168,.08);
+  border:1px solid rgba(110,231,168,.4);
+  padding:8px;
+  border-radius:10px;
+}
+
+/* =========================================================
+   IMAGE SYSTEM – SCOPED & SAFE (REPLACEMENT)
+========================================================= */
+
+/* ===== ICON SYSTEM (Small icons) ===== */
+.balances img,
+.wallet img,
+.bottom-nav img{
+  width:22px;
+  height:22px;
+  object-fit:contain;
+}
+
+/* Mining tabs icons (BX / TON / SOL) */
+.mining-tabs img{
+  width:22px;
+  height:22px;
+  object-fit:contain;
+}
+
+/* Deposit / Payment logos */
+.deposit-method img{
+  width:48px;
+  height:56px;
+  object-fit:contain;
+  margin-bottom:6px;
+}
+
+#casino .game img[src*="icon"],
+#casino .game img[src*="logo"]{
+  object-fit:contain;
+  padding:18px;
+}
+
+/* ================= AIRDROP – CLEAN FIX ================= */
+
+#airdrop {
+  padding: 16px;
+}
+
+#airdrop .airdrop-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ---------- MAIN BOX ---------- */
+
+#airdrop .airdrop-box {
+  background: linear-gradient(180deg,#0b1220,#020617);
+  border: 1px solid #1e293b;
+  border-radius: 18px;
+  padding: 20px;
+  text-align: center;
+}
+
+#airdrop .airdrop-box img {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 10px;
+}
+
+#airdrop .airdrop-reward {
+  font-size: 24px;
+  font-weight: 800;
+  color: #22c55e;
+  margin-bottom: 12px;
+}
+
+#airdrop .airdrop-action {
+  width: 100%;
+  height: 42px;
+  border-radius: 14px;
+  border: none;
+  font-weight: 800;
+  background: linear-gradient(135deg,#22c55e,#16a34a);
+  color: #022c22;
+}
+
+#airdrop .airdrop-status {
+  margin-top: 10px;
+  font-size: 13px;
+  color: #94a3b8;
+}
+
+/* ---------- REFERRAL ---------- */
+
+#airdrop .airdrop-referral {
+  background:#0b1220;
+  border:1px solid #1e293b;
+  border-radius:16px;
+  padding:16px;
+}
+
+#airdrop .referral-box {
+  display:flex;
+  gap:10px;
+  margin-top:10px;
+}
+
+#airdrop .referral-box span {
+  flex:1;
+  background:#020617;
+  padding:10px;
+  border-radius:12px;
+  font-size:13px;
+  color:#94a3b8;
+}
+
+#airdrop .referral-box button {
+  padding:0 14px;
+  border-radius:12px;
+  font-weight:800;
+}
+
+/* ---------- PARTNERS ---------- */
+
+#airdrop .airdrop-partners h3 {
+  margin-bottom:10px;
+  color:#22c55e;
+}
+
+#airdrop .partners-grid {
+  display:grid;
+  grid-template-columns: repeat(4,1fr);
+  gap:14px;
+}
+
+#airdrop .partners-grid img {
+  height:34px;
+  margin:auto;
+  object-fit:contain;
+}
+
+#airdrop .airdrop-partners {
+  margin-top: 28px;     
+}
+
+/* ---------- WHITEPAPER ---------- */
+
+#airdrop .whitepaper-btn {
+  display:block;
+  width:100%;
+  text-align:center;
+  padding:14px;
+  border-radius:14px;
+  font-weight:800;
+  background:#020617;
+  border:1px solid #22c55e;
+  color:#22c55e;
+}
+
+/* ================= CASINO CARD – VERTICAL FIX ================= */
+
+.min-card{
+  display: flex;
+  flex-direction: column;     
+  width: 100%;
+  max-width: 100%;
+  background: linear-gradient(180deg,#0b1220,#020617);
+  border: 1px solid #1e293b;
+  border-radius: 18px;
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+
+#airdrop .min-card {
+  margin-top: 24px;     
+}
+
+.min-card img{
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: cover;          
+}
+
+.min-card h3{
+  margin: 14px 16px 6px;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.min-card p{
+  margin: 0 16px 14px;
+  font-size: 14px;
+  color: #9ca3af;
+  line-height: 1.4;
+}
+
+.min-card button{
+  margin: 0 16px 16px;
+  height: 40px;
+  border-radius: 14px;
+  font-weight: 800;
+   }
+
+/* ===============================
+   BLOXIO TOPUP PRO CARD
+================================ */
+
+.topup-card {
+  background: #0f141c;
+  border: 1px solid #1c2430;
+  border-radius: 14px;
+  padding: 22px;
+  max-width: 420px;
+  margin: 20px auto;
+}
+
+.topup-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #00c389;
+}
+
+.topup-header span {
+  font-size: 12px;
+  color: #7a8799;
+  display: block;
+  margin-top: 4px;
+}
+
+.topup-body {
+  margin-top: 18px;
+}
+
+.input-group {
+  margin-bottom: 14px;
+}
+
+.input-group input {
+  width: 100%;
+  background: #0b1118;
+  border: 1px solid #1f2a38;
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 14px;
+  color: #ffffff;
+  transition: border 0.2s ease;
+}
+
+.input-group input::placeholder {
+  color: #5f6b7c;
+}
+
+.input-group input:focus {
+  border-color: #00c389;
+  outline: none;
+}
+
+.btn-confirm {
+  width: 100%;
+  background: #00c389;
+  border: none;
+  border-radius: 10px;
+  padding: 13px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #000;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.btn-confirm:hover {
+  opacity: 0.85;
+}
+
+.topup-message {
+  margin-top: 12px;
+  font-size: 13px;
+  color: #8fa2b8;
+}
