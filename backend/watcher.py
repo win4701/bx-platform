@@ -1,6 +1,9 @@
 import os
 import time
 import sqlite3
+import json
+import websockets
+import asyncio
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import StreamingResponse
 
@@ -20,7 +23,7 @@ MIN_WITHDRAW_USDT = 10.0
 MAX_WITHDRAW_RATIO = 0.5        # 50%
 MAX_WITHDRAW_MONTH = 15
 
-ALLOWED_ASSETS = {"usdt", "ton", "sol", "btc", "eth", "avax", "bnb", "ltc",  "bx"}
+ALLOWED_ASSETS = {"usdt", "usdc", "ton", "sol", "btc", "zec", "eth", "avax", "bnb", "ltc",  "bx"}
 
 # ======================================================
 # DB HELPERS (FLY SAFE)
@@ -130,7 +133,7 @@ def wallet_me(uid: int):
     c, conn = get_cursor()
     try:
         r = c.execute(
-            "SELECT usdt, ton, sol, bnb, eth, avax, btc, ltc, bx FROM wallets WHERE uid=?",
+            "SELECT usdt, usdc, ton, sol, bnb, eth, avax, zec, btc, ltc, bx FROM wallets WHERE uid=?",
             (uid,)
         ).fetchone()
 
