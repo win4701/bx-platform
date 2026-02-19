@@ -184,75 +184,7 @@ def start_mining(uid: int, asset: str, plan_id: str, investment: float):
         "days": plan["days"]
     }
 
-# ======================================================
-# CREDIT DEPOSIT (IDEMPOTENT)
-# ======================================================
-def credit_deposit(uid: int, asset: str, amount: float, txid: str):
-    if amount <= 0:
-        return
-
-    asset = asset.lower()
-    if asset not in ["bx", "usdt", "sol", "eth", "btc", "bnb"]:  # Add other assets if needed
-        raise HTTPException(400, "INVALID_ASSET")
-
-    c, conn = get_db()
-    try:
-        # idempotency check: ensures a transaction is not processed twice
-        if c.execute(
-            "SELECT 1 FROM used_txs WHERE txid=?",
-            (txid,)
-        ).fetchone():
-            return
-
-        c.execute(
-            f"UPDATE wallets SET {asset} = {asset} + ? WHERE uid=?",
-            (amount, uid)
-        )
-
-        c.execute(
-            """INSERT INTO history
-               (uid, action, asset, amount, ref, ts)
-               VALUES (?,?,?,?,?,?)""",
-            (uid, "deposit", asset, amount, txid, int(time.time()))
-        )
-
-        ledger(f"deposit:{asset}", f"treasury_{asset}", f"user_{asset}", amount)
-
-        c.execute(
-            "INSERT INTO used_txs(txid, asset, ts) VALUES (?,?,?)",
-            (txid, asset, int(time.time()))
-        )
-    except Exception as e:
-        raise HTTPException(500, str(e))
-    finally:
-        close(conn)
-
-# ======================================================
-# WALLET MANAGEMENT
-# ======================================================
-
-@router.get("/me")
-def wallet_me(uid: int):
-    c, conn = get_db()
-    try:
-        r = c.execute(
-            "SELECT usdt, ton, sol, bnb, eth, avax, btc, ltc, bx FROM wallets WHERE uid=?",
-            (uid,)
-        ).fetchone()
-
-        if not r:
-            raise HTTPException(404, "WALLET_NOT_FOUND")
-
-        return {
-            "wallet": dict(r),
-            "deposit_status": "confirmed"
-        }
-    finally:
-        close(conn)
-
-# ======================================================
-# DATABASE HELPERS
-# ======================================================
+# ==========================================================
 
 def db():
     return sqlite3.connect(DB_PATH, check_same_thread=False)
