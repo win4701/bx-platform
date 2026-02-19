@@ -877,7 +877,7 @@ const apiPost = (url, body = {}) =>
    Stable • Deterministic • No Break
 =========================================================*/
 
-const BX_REFERENCE = 38; // BX = 38 USDT (internal anchor)
+const BX_REFERENCE = 45; // BX = 38 USDT (internal anchor)
 const MIN_USDT = 5;
 
 const STATE = {
