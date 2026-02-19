@@ -74,7 +74,11 @@ let ws = null;
 
 function connectBinance(symbol = "btcusdt") {
 
-  if (ws) ws.close();
+  if (ws) {
+    ws.onmessage = null;
+    ws.close();
+    ws = null;
+  }
 
   ws = new WebSocket(
     `wss://stream.binance.com:9443/ws/${symbol}@miniTicker`
@@ -82,17 +86,17 @@ function connectBinance(symbol = "btcusdt") {
 
   ws.onmessage = (event) => {
     const msg = JSON.parse(event.data);
-    quotePriceUSDT = parseFloat(msg.c);
+    const price = parseFloat(msg.c);
+    if (!price) return;
 
+    quotePriceUSDT = price;
     computeBXPrice();
-
-    PRO_CHART.update(marketPrice);
   };
 
   ws.onerror = () => {
     console.log("Binance WS error");
   };
-}
+   }
 
 function computeBXPrice() {
 
@@ -109,7 +113,7 @@ function computeBXPrice() {
   renderOrderBook();
 
   PRO_CHART.update(marketPrice);
-}
+ }
 
 /* ================= ORDERBOOK ================= */
 
@@ -226,9 +230,15 @@ function setTradeSide(side) {
 /* ================= EVENTS ================= */
 
 function bindEvents() {
+
   pairButtons.forEach(btn => {
+
     btn.addEventListener("click", () => {
-      pairButtons.forEach(b => b.classList.remove("active"));
+
+      pairButtons.forEach(b =>
+        b.classList.remove("active")
+      );
+
       btn.classList.add("active");
 
       currentQuote = btn.dataset.quote;
@@ -236,12 +246,10 @@ function bindEvents() {
 
       connectBinance(quoteMap[currentQuote]);
 
-       PRO_CHART.candles = [];
-       PRO_CHART.ema = [];
-       PRO_CHART.vwap = [];
-       PRO_CHART.reset(marketPrice);
- });
-});
+      PRO_CHART.reset(marketPrice);
+    });
+
+  });
 
   buyTab.onclick = () => setTradeSide("buy");
   sellTab.onclick = () => setTradeSide("sell");
@@ -256,7 +264,7 @@ function bindEvents() {
           ((max * percent) / 100).toFixed(4);
       };
     });
-}
+   }
 
 /* ======================================================
    BX INSTITUTIONAL CHART ENGINE v4
@@ -268,6 +276,8 @@ const PRO_CHART = {
   canvas: null,
   ctx: null,
   tooltip: null,
+  viewMax: null,
+  viewMin: null,
 
   candles: [],
   ema: [],
@@ -299,12 +309,14 @@ const PRO_CHART = {
   /* ================= RESET SAFE ================= */
 
   reset(price) {
-    this.candles = [];
-    this.ema = [];
-    this.vwap = [];
-    this.current = null;
-    this.bootstrap(price);
-  },
+  this.candles = [];
+  this.ema = [];
+  this.vwap = [];
+  this.current = null;
+  this.viewMax = null;
+  this.viewMin = null;
+  this.bootstrap(price);
+ }
 
   resize() {
     const p = this.canvas.parentElement;
