@@ -1,193 +1,129 @@
 import time
-import os
-from contextlib import contextmanager
+import threading
+import websockets
+import asyncio
+from collections import defaultdict
 from fastapi import APIRouter, HTTPException, Depends
-from pydantic import BaseModel, Field
-from key import api_guard
-from pricing import get_price
-import psycopg2
-from psycopg2 import pool
+from typing import Dict, List
+import json
 
-# ======================================================
-# ROUTER
-# ======================================================
-router = APIRouter(dependencies=[Depends(api_guard)])
+# Global variables for price and order book
+ORDER_BOOKS: Dict[str, Dict[str, List[dict]]] = defaultdict(lambda: {"buy": [], "sell": []})
+TRADES: Dict[str, deque] = defaultdict(lambda: deque(maxlen=500))
+MARKET_PRICE = 45.0  # Start with a reference price for BX/USDT
+ROWS = 15  # Number of price levels to show
 
-# ======================================================
-# CONFIG
-# ======================================================
-DB_URL = os.getenv("DATABASE_URL")
-if not DB_URL:
-    raise RuntimeError("DATABASE_URL is not set")
-
-BX_BASE_PRICE_USDT = 18.0           # ✅ موحّد مع المشروع
-MAX_DEMAND_PREMIUM = 0.20          # 20% كحد أقصى
-
-ALLOWED_ASSETS = {"usdt", "ton", "sol", "btc", "eth", "avax", "ltc", "bnb"}
-
-# ======================================================
-# SPREADS (ENV DRIVEN)
-# ======================================================
-SPREADS = {
-    asset: {
-        "buy": float(os.getenv(f"BX_BUY_SPREAD_{asset.upper()}", 0.0)),
-        "sell": float(os.getenv(f"BX_SELL_SPREAD_{asset.upper()}", 0.0)),
-    }
-    for asset in ALLOWED_ASSETS
+# Map of available quotes to their respective Binance symbols
+quote_map = {
+    "USDT": "btcusdt",
+    "USDC": "btcusdt",
+    "BTC": "btcusdt",
+    "ETH": "ethusdt",
+    "BNB": "bnbusdt",
+    "SOL": "solusdt",
+    "AVAX": "avaxusdt",
+    "LTC": "ltcusdt",
+    "ZEC": "zecusdt",
+    "TON": "tonusdt"
 }
 
-# ======================================================
-# DB POOL
-# ======================================================
-db_pool = pool.SimpleConnectionPool(1, 20, dsn=DB_URL)
+# WebSocket placeholder for Binance
+async def connect_binance(symbol="btcusdt"):
+    uri = f"wss://stream.binance.com:9443/ws/{symbol}@miniTicker"
+    async with websockets.connect(uri) as ws:
+        while True:
+            message = await ws.recv()
+            data = json.loads(message)
+            price = float(data['c'])  # Closing price from Binance
+            if price:
+                compute_bx_price(price)
 
-@contextmanager
-def get_db():
-    conn = db_pool.getconn()
-    try:
-        yield conn
-        conn.commit()
-    except Exception:
-        conn.rollback()
-        raise
-    finally:
-        db_pool.putconn(conn)
+# Function to compute BX price based on live price
+def compute_bx_price(quote_price_usdt):
+    global MARKET_PRICE
+    if quote_price_usdt <= 0:
+        raise HTTPException(400, "Invalid market price")
+    # Logic to compute BX price
+    MARKET_PRICE = 45 / quote_price_usdt
+    update_price_ui()
+    generate_order_book()
+    render_order_book()
 
-# ======================================================
-# DEMAND PREMIUM (LAST 1H)
-# ======================================================
-def demand_premium() -> float:
-    with get_db() as conn, conn.cursor() as c:
-        c.execute(
-            """
-            SELECT
-              COALESCE(SUM(CASE WHEN action='market_buy' THEN amount END),0),
-              COALESCE(SUM(CASE WHEN action='market_sell' THEN amount END),0)
-            FROM history
-            WHERE ts > extract(epoch from now()) - 3600
-            """
-        )
-        buy, sell = c.fetchone()
+def update_price_ui():
+    # Update the UI with the latest market price
+    print(f"Market Price: {MARKET_PRICE:.6f}")
 
-    net = max(buy - sell, 0)
-    return min(net / 20000, MAX_DEMAND_PREMIUM)
+def generate_order_book():
+    bids = []
+    asks = []
 
-def bx_price_usdt() -> float:
-    return BX_BASE_PRICE_USDT * (1 + demand_premium())
+    for i in range(ROWS):
+        bids.append(f"{(MARKET_PRICE - i * MARKET_PRICE * 0.0005):.6f}")
+        asks.append(f"{(MARKET_PRICE + i * MARKET_PRICE * 0.0005):.6f}")
+    
+    ORDER_BOOKS["bx"]["buy"] = bids
+    ORDER_BOOKS["bx"]["sell"] = asks
 
-# ======================================================
-# QUOTE (READ ONLY)
-# ======================================================
-class QuoteRequest(BaseModel):
-    asset: str
-    side: str
-    amount: float = Field(gt=0)
+def render_order_book():
+    bids = ORDER_BOOKS["bx"]["buy"]
+    asks = ORDER_BOOKS["bx"]["sell"]
+    print("Bids:")
+    for bid in bids:
+        print(f"Bid: {bid}")
+    print("Asks:")
+    for ask in asks:
+        print(f"Ask: {ask}")
 
-@router.post("/quote")
-def quote(req: QuoteRequest):
-    asset = req.asset.lower()
-    side = req.side
+# Place an order (buy/sell)
+def place_order(uid: int, side: str, amount: float, price: float):
+    if amount <= 0 or price <= 0:
+        raise HTTPException(400, "Invalid amount or price")
+    
+    order = {"uid": uid, "side": side, "amount": amount, "price": price, "remaining": amount}
+    ORDER_BOOKS["bx"][side].append(order)
+    generate_order_book()
 
-    if asset not in ALLOWED_ASSETS:
-        raise HTTPException(400, "INVALID_ASSET")
-    if side not in ("buy", "sell"):
-        raise HTTPException(400, "INVALID_SIDE")
+# Match orders (simplified)
+def match_orders():
+    buys = ORDER_BOOKS["bx"]["buy"]
+    sells = ORDER_BOOKS["bx"]["sell"]
+    
+    while buys and sells:
+        buy = buys[0]
+        sell = sells[0]
+        
+        if float(buy) < float(sell):
+            break  # No more matching
+        
+        trade_price = float(sell)  # Trade happens at the sell price
+        trade_amount = min(float(buy), float(sell))
+        
+        trade = {
+            "price": trade_price,
+            "amount": trade_amount,
+            "ts": int(time.time())
+        }
+        TRADES["bx"].append(trade)
+        
+        buys.pop(0)
+        sells.pop(0)
 
-    asset_usdt = 1.0 if asset == "usdt" else get_price(asset)
-    if not asset_usdt or asset_usdt <= 0:
-        raise HTTPException(400, "PRICE_UNAVAILABLE")
+# Execute a trade (buy/sell logic)
+def execute_trade(uid: int, side: str, amount: float):
+    if side == "buy":
+        price = ORDER_BOOKS["bx"]["sell"][0]  # Best ask price
+    else:
+        price = ORDER_BOOKS["bx"]["buy"][0]  # Best bid price
+    
+    place_order(uid, side, amount, price)  # Place the order
+    match_orders()  # Try to match orders
 
-    bx_usdt = bx_price_usdt()
-    raw_price = bx_usdt / asset_usdt
+# Example execution
+async def main():
+    # Start WebSocket connection and execute a trade
+    await connect_binance("btcusdt")
+    execute_trade(uid=1, side="buy", amount=10)  # Simulate a buy order of 10 units
 
-    spread = SPREADS[asset][side]
-    price = raw_price * (1 + spread if side == "buy" else 1 - spread)
-
-    return {
-        "pair": f"BX/{asset.upper()}",
-        "side": side,
-        "price": round(price, 8),
-        "amount": req.amount,
-        "total": round(price * req.amount, 8),
-        "bx_usdt": round(bx_usdt, 4),
-        "spread": spread,
-        "ts": int(time.time())
-    }
-
-# ======================================================
-# EXECUTE (ATOMIC & SAFE)
-# ======================================================
-class ExecuteRequest(BaseModel):
-    uid: int
-    asset: str
-    side: str
-    amount: float = Field(gt=0)
-
-@router.post("/execute")
-def execute(req: ExecuteRequest):
-    asset = req.asset.lower()
-    side = req.side
-
-    if asset not in ALLOWED_ASSETS or side not in ("buy", "sell"):
-        raise HTTPException(400, "INVALID_PARAMETERS")
-
-    q = quote(QuoteRequest(asset=asset, side=side, amount=req.amount))
-    ts = int(time.time())
-
-    with get_db() as conn, conn.cursor() as c:
-        if side == "buy":
-            c.execute(
-                """
-                UPDATE wallets
-                SET usdt = usdt - %s,
-                    bx   = bx   + %s
-                WHERE uid=%s AND usdt >= %s
-                """,
-                (q["total"], req.amount, req.uid, q["total"])
-            )
-            action = "market_buy"
-        else:
-            c.execute(
-                """
-                UPDATE wallets
-                SET bx   = bx   - %s,
-                    usdt = usdt + %s
-                WHERE uid=%s AND bx >= %s
-                """,
-                (req.amount, q["total"], req.uid, req.amount)
-            )
-            action = "market_sell"
-
-        if c.rowcount == 0:
-            raise HTTPException(400, "INSUFFICIENT_BALANCE")
-
-        c.execute(
-            """
-            INSERT INTO history(uid, action, asset, amount, price, ts)
-            VALUES (%s,%s,%s,%s,%s,%s)
-            """,
-            (req.uid, action, asset, req.amount, q["price"], ts)
-        )
-
-    return {"status": "filled", **q}
-
-# ======================================================
-# CHART (BX / BNB)
-# ======================================================
-@router.get("/chart/bx_bnb")
-def chart_bx_bnb(limit: int = 100):
-    with get_db() as conn, conn.cursor() as c:
-        c.execute(
-            """
-            SELECT price, ts
-            FROM history
-            WHERE asset='bnb'
-              AND action IN ('market_buy','market_sell')
-            ORDER BY ts DESC
-            LIMIT %s
-            """,
-            (limit,)
-        )
-        rows = c.fetchall()
-
-    return [{"price": float(p), "ts": int(ts)} for p, ts in reversed(rows)]
+# Run the event loop for WebSocket and order execution
+if __name__ == "__main__":
+    asyncio.run(main())
