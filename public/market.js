@@ -4,7 +4,7 @@
 ========================================================= */
 
 const ROWS = 15;
-const BX_USDT_REFERENCE = 38;
+const BX_USDT_REFERENCE = 45;
 
 let currentQuote = "USDT";
 let marketPrice = BX_USDT_REFERENCE;
