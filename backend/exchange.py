@@ -4,6 +4,9 @@ from collections import defaultdict, deque
 from typing import Dict, List
 
 from finance import debit_wallet
+import requests
+from flask import jsonify
+from db import get_db  # افترض وجود دالة get_db لربط القاعدة
 
 # ======================================================
 # DATA STRUCTURES (IN-MEMORY — FAST)
@@ -178,3 +181,56 @@ def reset_pair(pair: str):
         ORDER_BOOKS[pair]["buy"].clear()
         ORDER_BOOKS[pair]["sell"].clear()
         TRADES[pair].clear()
+# ======================================================
+# TOP-UP ( ENTRY PHONE)
+# ==============================================
+
+# رابط API لمزود الخدمة (افتراضًا)
+TOPUP_API_URL = "https://topup-provider.com/api/topup"
+API_KEY = "your_api_key_here"
+
+# وظيفة تعبئة الرصيد
+def topup_phone(country, phone_number, amount):
+    """
+    وظيفة لتعبئة رصيد الهاتف باستخدام مزود خارجي
+    """
+    # تحقق من أن المدخلات صحيحة
+    if not country or not phone_number or not amount:
+        return jsonify({'error': 'Missing required parameters'}), 400
+    
+    # بناء البيانات لإرسالها إلى مزود الخدمة
+    payload = {
+        'country': country,
+        'phone_number': phone_number,
+        'amount': amount,
+        'api_key': API_KEY
+    }
+
+    try:
+        response = requests.post(TOPUP_API_URL, data=payload)
+
+        if response.status_code == 200:
+            # إذا كان الطلب ناجحًا
+            topup_response = response.json()
+            # تخزين العملية في قاعدة البيانات (افترض أن لدينا دالة تخزين)
+            store_topup_in_db(country, phone_number, amount, "Success")
+            return jsonify({'success': 'Top-up successful', 'data': topup_response}), 200
+        else:
+            return jsonify({'error': 'Top-up failed', 'message': response.text}), 500
+    except requests.exceptions.RequestException as e:
+        return jsonify({'error': 'Request failed', 'message': str(e)}), 500
+
+# وظيفة لتخزين العملية في قاعدة البيانات
+def store_topup_in_db(country, phone_number, amount, status):
+    """
+    تخزين عملية تعبئة الرصيد في قاعدة البيانات
+    """
+    db = get_db()
+    cursor = db.cursor()
+
+    cursor.execute("""
+        INSERT INTO topups (country, phone_number, amount, status)
+        VALUES (?, ?, ?, ?)
+    """, (country, phone_number, amount, status))
+
+    db.commit()
