@@ -273,7 +273,6 @@ function bindEvents() {
 ====================================================== */
 
 const PRO_CHART = {
-
   canvas: null,
   ctx: null,
   tooltip: null,
@@ -284,15 +283,14 @@ const PRO_CHART = {
   ema: [],
   vwap: [],
 
-  timeframe: 5000,
-  maxCandles: 150,
+  timeframe: 5000, // Default timeframe (in ms)
+  maxCandles: 150, // Max candles that can be shown
   current: null,
-  visibleCount: 60,
-  minVisible: 20,
-  maxVisible: 150,
+  visibleCount: 60, // Number of candles visible on the chart
+  minVisible: 20,   // Minimum candles visible
+  maxVisible: 150,  // Maximum candles visible
 
   init() {
-
     this.canvas = document.getElementById("bxChart");
     if (!this.canvas) return;
 
@@ -304,23 +302,22 @@ const PRO_CHART = {
 
     this.bindTimeframes();
     this.bindMouse();
-
-    this.reset(38);
+    this.bindControls(); // Bind zoom and reset controls
+    this.reset(38); // Set default price on initialization
 
     requestAnimationFrame(() => this.render());
   },
 
-  /* ================= RESET SAFE ================= */
-
+  // Reset the chart and prepare for new data
   reset(price) {
-  this.candles = [];
-  this.ema = [];
-  this.vwap = [];
-  this.current = null;
-  this.viewMax = null;
-  this.viewMin = null;
-  this.bootstrap(price);
- },
+    this.candles = [];
+    this.ema = [];
+    this.vwap = [];
+    this.current = null;
+    this.viewMax = null;
+    this.viewMin = null;
+    this.bootstrap(price);
+  },
 
   resize() {
     const p = this.canvas.parentElement;
@@ -328,6 +325,7 @@ const PRO_CHART = {
     this.canvas.height = p.clientHeight;
   },
 
+  // Initialize first candle
   bootstrap(price) {
     this.current = {
       open: price,
@@ -340,8 +338,8 @@ const PRO_CHART = {
     this.candles.push(this.current);
   },
 
+  // Update the chart with new price data
   update(price) {
-
     if (!price || price <= 0) return;
 
     if (!this.current) {
@@ -352,7 +350,6 @@ const PRO_CHART = {
     const now = Date.now();
 
     if (now - this.current.time > this.timeframe) {
-
       this.current = {
         open: this.current.close,
         high: price,
@@ -366,7 +363,6 @@ const PRO_CHART = {
 
       if (this.candles.length > this.maxCandles)
         this.candles.shift();
-
     } else {
       this.current.high = Math.max(this.current.high, price);
       this.current.low = Math.min(this.current.low, price);
@@ -378,107 +374,89 @@ const PRO_CHART = {
     this.calcVWAP();
   },
 
-  /* ================= EMA IMPROVED ================= */
-
+  // Calculate the Exponential Moving Average (EMA)
   calcEMA(period) {
-
     if (this.candles.length < period) return;
 
     const k = 2 / (period + 1);
     this.ema = [];
-
     let emaPrev = this.candles[0].close;
 
     for (let i = 0; i < this.candles.length; i++) {
-
       if (i === 0) {
         this.ema.push(emaPrev);
       } else {
-        const val =
-          this.candles[i].close * k +
-          emaPrev * (1 - k);
-
+        const val = this.candles[i].close * k + emaPrev * (1 - k);
         this.ema.push(val);
         emaPrev = val;
       }
     }
   },
 
-  /* ================= VWAP SAFE ================= */
-
+  // Calculate the Volume-Weighted Average Price (VWAP)
   calcVWAP() {
-
     let pv = 0;
     let vol = 0;
     this.vwap = [];
 
     for (let c of this.candles) {
-
       const typical = (c.high + c.low + c.close) / 3;
-
       pv += typical * c.volume;
       vol += c.volume;
-
       this.vwap.push(vol ? pv / vol : typical);
     }
   },
 
-  /* ================= RENDER ENGINE ================= */
-
+  // Render the chart with current data
   render() {
+    const ctx = this.ctx;
+    const w = this.canvas.width;
+    const h = this.canvas.height;
 
-  const ctx = this.ctx;
-  const w = this.canvas.width;
-  const h = this.canvas.height;
+    ctx.clearRect(0, 0, w, h);
 
-  ctx.clearRect(0, 0, w, h);
+    const visible = this.candles.slice(-this.visibleCount);
 
-  const visible = this.candles.slice(-this.visibleCount);
+    if (visible.length < 2) {
+      requestAnimationFrame(() => this.render());
+      return;
+    }
 
-  if (visible.length < 2) {
-    requestAnimationFrame(() => this.render());
-    return;
-  }
+    const highs = visible.map(c => c.high);
+    const lows = visible.map(c => c.low);
 
-  const highs = visible.map(c => c.high);
-  const lows  = visible.map(c => c.low);
+    let max = Math.max(...highs);
+    let min = Math.min(...lows);
 
-  let max = Math.max(...highs);
-  let min = Math.min(...lows);
+    if (Math.abs(max - min) < 0.0000001) {
+      max += 0.0001;
+      min -= 0.0001;
+    }
 
-  if (Math.abs(max - min) < 0.0000001) {
-    max += 0.0001;
-    min -= 0.0001;
-  }
+    const padding = (max - min) * 0.1;
+    max += padding;
+    min -= padding;
 
-  const padding = (max - min) * 0.1;
-  max += padding;
-  min -= padding;
+    if (!this.viewMax) {
+      this.viewMax = max;
+      this.viewMin = min;
+    }
 
-  if (!this.viewMax) {
-    this.viewMax = max;
-    this.viewMin = min;
-  }
+    this.viewMax += (max - this.viewMax) * 0.1;
+    this.viewMin += (min - this.viewMin) * 0.1;
 
-  this.viewMax += (max - this.viewMax) * 0.1;
-  this.viewMin += (min - this.viewMin) * 0.1;
+    const scaleY = p =>
+      h - ((p - this.viewMin) / (this.viewMax - this.viewMin)) * (h - 40);
 
-  const scaleY = p =>
-    h - ((p - this.viewMin) / (this.viewMax - this.viewMin)) * (h - 40);
+    const candleWidth = w / this.maxVisible;
 
-  const candleWidth = w / maxVisible;
-     
-    /* ===== Candles ===== */
-
+    // Drawing candles
     this.candles.forEach((c, i) => {
-
       const x = i * candleWidth + candleWidth / 2;
-
       const openY = scaleY(c.open);
       const closeY = scaleY(c.close);
       const highY = scaleY(c.high);
       const lowY = scaleY(c.low);
-
       const up = c.close >= c.open;
 
       ctx.strokeStyle = up ? "#21c87a" : "#ff4d4f";
@@ -497,103 +475,69 @@ const PRO_CHART = {
       );
     });
 
-    /* ===== EMA ===== */
-
+    // EMA and VWAP lines
     if (this.ema.length) {
       ctx.beginPath();
       ctx.strokeStyle = "#f4c430";
-
       this.ema.forEach((v, i) => {
         const x = i * candleWidth + candleWidth / 2;
         const y = scaleY(v);
         i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
       });
-
       ctx.stroke();
     }
-
-    /* ===== VWAP ===== */
 
     if (this.vwap.length) {
       ctx.beginPath();
       ctx.strokeStyle = "#a855f7";
-
       this.vwap.forEach((v, i) => {
         const x = i * candleWidth + candleWidth / 2;
         const y = scaleY(v);
         i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
       });
-
       ctx.stroke();
     }
 
     requestAnimationFrame(() => this.render());
   },
 
-  /* ================= TIMEFRAME ================= */
-
+  // Timeframe and Zoom controls
   bindTimeframes() {
+    document.querySelectorAll(".tf-btn").forEach(btn => {
+      btn.onclick = () => {
+        document.querySelectorAll(".tf-btn")
+          .forEach(b => b.classList.remove("active"));
 
-  document.querySelectorAll(".tf-btn").forEach(btn => {
+        btn.classList.add("active");
+        const days = parseInt(btn.dataset.days);
+        this.visibleCount = Math.min(this.maxVisible, days * 24);
+      };
+    });
+  },
 
-    btn.onclick = () => {
+  bindControls() {
+    const zoomIn = document.getElementById("zoomIn");
+    const zoomOut = document.getElementById("zoomOut");
+    const reset = document.getElementById("resetView");
 
-      document.querySelectorAll(".tf-btn")
-        .forEach(b => b.classList.remove("active"));
-
-      btn.classList.add("active");
-
-      const days = parseInt(btn.dataset.days);
-
-      this.visibleCount = Math.min(
-        this.maxVisible,
-        days * 24
-      );
+    zoomIn.onclick = () => {
+      this.visibleCount = Math.max(this.minVisible, this.visibleCount - 10);
     };
-  });
-  }
 
-/* ================= ZOOM option ================= */
-   
-   bindControls() {
+    zoomOut.onclick = () => {
+      this.visibleCount = Math.min(this.maxVisible, this.visibleCount + 10);
+    };
 
-  const zoomIn = document.getElementById("zoomIn");
-  const zoomOut = document.getElementById("zoomOut");
-  const reset = document.getElementById("resetView");
-
-  zoomIn.onclick = () => {
-    this.visibleCount = Math.max(
-      this.minVisible,
-      this.visibleCount - 10
-    );
-  };
-
-  zoomOut.onclick = () => {
-    this.visibleCount = Math.min(
-      this.maxVisible,
-      this.visibleCount + 10
-    );
-  };
-
-  reset.onclick = () => {
-    this.visibleCount = 60;
-  };
-   }
-
-  /* ================= TOOLTIP ================= */
+    reset.onclick = () => {
+      this.visibleCount = 60;
+    };
+  },
 
   bindMouse() {
-
     this.canvas.addEventListener("mousemove", (e) => {
-
       const rect = this.canvas.getBoundingClientRect();
       const x = e.clientX - rect.left;
-
-      const idx = Math.floor(
-        (x / this.canvas.width) *
-        this.candles.length
-      );
-
+      const idx = Math.floor((x / this.canvas.width) * this.candles.length);
       const c = this.candles[idx];
       if (!c) return;
 
