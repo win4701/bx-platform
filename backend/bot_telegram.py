@@ -11,15 +11,15 @@ from telegram.ext import Updater, CommandHandler, CallbackContext
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000")
 
-# 👑 Admin Telegram IDs
+#  Admin Telegram IDs
 ADMINS = {123456789}  # عدّلها
 
-# 🔁 Feature Flags (Source of Truth)
+#  Feature Flags (Source of Truth)
 FEATURES = {
     "market": True,
     "casino": True,
     "mining": True,
-    "ston_fi": False,   # 👈 مخفي افتراضيًا
+    "ston_fi": False,   #  مخفي افتراضيًا
 }
 
 # ======================================================
@@ -55,7 +55,7 @@ def feature_required(feature):
     def decorator(fn):
         def wrapper(update: Update, context: CallbackContext):
             if not FEATURES.get(feature, False):
-                update.message.reply_text("❌ This feature is temporarily disabled.")
+                update.message.reply_text(" This feature is temporarily disabled.")
                 return
             return fn(update, context)
         return wrapper
@@ -65,7 +65,7 @@ def admin_only(fn):
     def wrapper(update: Update, context: CallbackContext):
         uid = update.message.from_user.id
         if uid not in ADMINS:
-            update.message.reply_text("🚫 Admins only.")
+            update.message.reply_text(" Admins only.")
             return
         return fn(update, context)
     return wrapper
@@ -75,7 +75,7 @@ def admin_only(fn):
 # ======================================================
 
 def start(update: Update, context: CallbackContext):
-    msg = "👋 Welcome to BX Bot\n\n"
+    msg = " Welcome to BX Bot\n\n"
 
     if FEATURES["mining"]:
         msg += "/mining\n"
@@ -101,10 +101,10 @@ def airdrop(update: Update, context: CallbackContext):
     r = api_get("/bxing/airdrop/status", {"uid": uid})
 
     if r.get("claimed"):
-        update.message.reply_text("🎉 You already claimed your airdrop.")
+        update.message.reply_text(" You already claimed your airdrop.")
     else:
         update.message.reply_text(
-            f"💰 Airdrop reward: {r['reward']} BX\nUse /claim to receive it."
+            f" Airdrop reward: {r['reward']} BX\nUse /claim to receive it."
         )
 
 def claim(update: Update, context: CallbackContext):
@@ -112,9 +112,9 @@ def claim(update: Update, context: CallbackContext):
     r = api_post("/bxing/airdrop/claim", {"uid": uid})
 
     if r.get("status") == "ok":
-        update.message.reply_text(f"✅ Airdrop claimed: {r['reward']} BX")
+        update.message.reply_text(f" Airdrop claimed: {r['reward']} BX")
     else:
-        update.message.reply_text("❌ Airdrop already claimed.")
+        update.message.reply_text(" Airdrop already claimed.")
 
 # ======================================================
 # REFERRAL
@@ -127,7 +127,7 @@ def referral(update: Update, context: CallbackContext):
 
 def leaderboard(update: Update, context: CallbackContext):
     rows = api_get("/bxing/referral/leaderboard")
-    msg = "🏆 Top Referrals:\n\n"
+    msg = " Top Referrals:\n\n"
     for i, u in enumerate(rows, 1):
         msg += f"{i}. UID {u['id']} — {u['referrals']} referrals\n"
     update.message.reply_text(msg)
@@ -142,10 +142,10 @@ def mining(update: Update, context: CallbackContext):
     rows = api_get("/bxing/mining/active", {"uid": uid})
 
     if not rows:
-        update.message.reply_text("⛏️ No active mining orders.")
+        update.message.reply_text(" No active mining orders.")
         return
 
-    msg = "⛏️ Active Mining:\n\n"
+    msg = " Active Mining:\n\n"
     for o in rows:
         msg += f"{o['asset']} | Plan {o['plan']} | ROI {o['roi']} BX\n"
     update.message.reply_text(msg)
@@ -168,10 +168,10 @@ def start_mining(update: Update, context: CallbackContext):
 
     if r.get("status") == "started":
         update.message.reply_text(
-            f"✅ Mining started\nExpected ROI: {r['estimated_return']} BX"
+            f" Mining started\nExpected ROI: {r['estimated_return']} BX"
         )
     else:
-        update.message.reply_text("❌ Failed to start mining.")
+        update.message.reply_text(" Failed to start mining.")
 
 # ======================================================
 # BINANCE PAY (DEPOSIT ONLY — SAFE)
@@ -189,7 +189,7 @@ def deposit_binance(update: Update, context: CallbackContext):
         if amount <= 0:
             raise ValueError
     except ValueError:
-        update.message.reply_text("❌ Invalid amount.")
+        update.message.reply_text(" Invalid amount.")
         return
 
     r = api_post("/api/binancepay/create", {
@@ -198,10 +198,10 @@ def deposit_binance(update: Update, context: CallbackContext):
     })
 
     update.message.reply_text(
-        f"💳 Binance Pay Deposit\n\n"
+        f" Binance Pay Deposit\n\n"
         f"Amount: {amount} USDT\n\n"
-        f"👉 Pay here:\n{r['checkout_url']}\n\n"
-        f"⏳ Balance updates after confirmation."
+        f" Pay here:\n{r['checkout_url']}\n\n"
+        f" Balance updates after confirmation."
     )
 
 # ======================================================
@@ -213,8 +213,8 @@ def deposit_ton(update: Update, context: CallbackContext):
     r = api_get("/api/ton/address", {"uid": uid})
 
     update.message.reply_text(
-        f"💎 TON Deposit Address:\n\n{r['address']}\n\n"
-        f"⚠️ Send only TON.\nBalance updates after confirmation."
+        f" TON Deposit Address:\n\n{r['address']}\n\n"
+        f" Send only TON.\nBalance updates after confirmation."
     )
 
 def ton_history(update: Update, context: CallbackContext):
@@ -222,10 +222,10 @@ def ton_history(update: Update, context: CallbackContext):
     rows = api_get("/api/ton/deposits", {"uid": uid})
 
     if not rows:
-        update.message.reply_text("📭 No TON deposits yet.")
+        update.message.reply_text(" No TON deposits yet.")
         return
 
-    msg = "🧾 TON Deposit History:\n\n"
+    msg = " TON Deposit History:\n\n"
     for r in rows[:10]:
         msg += f"{r['amount']} TON — {r['tx_hash'][:10]}...\n"
     update.message.reply_text(msg)
@@ -238,7 +238,7 @@ def balance(update: Update, context: CallbackContext):
     uid = update.message.from_user.id
     r = api_get("/api/wallet", {"uid": uid})
 
-    msg = "💼 Balance:\n\n"
+    msg = " Balance:\n\n"
     for k, v in r.items():
         msg += f"{k.upper()}: {v}\n"
     update.message.reply_text(msg)
@@ -246,7 +246,7 @@ def balance(update: Update, context: CallbackContext):
 @feature_required("market")
 def recent_market(update: Update, context: CallbackContext):
     rows = api_get("/market/recent")
-    msg = "📊 Recent Market Trades:\n\n"
+    msg = " Recent Market Trades:\n\n"
     for t in rows:
         msg += f"{t['pair']} | {t['side']} {t['amount']} @ {t['price']}\n"
     update.message.reply_text(msg)
@@ -254,7 +254,7 @@ def recent_market(update: Update, context: CallbackContext):
 @feature_required("casino")
 def recent_casino(update: Update, context: CallbackContext):
     rows = api_get("/casino/recent")
-    msg = "🎰 Recent Casino Games:\n\n"
+    msg = " Recent Casino Games:\n\n"
     for g in rows:
         msg += f"{g['game']} | Bet {g['bet']} | Reward {g['reward']}\n"
     update.message.reply_text(msg)
@@ -268,7 +268,7 @@ def recent_casino(update: Update, context: CallbackContext):
 def ston_price(update: Update, context: CallbackContext):
     r = api_get("/api/ston/price")
     update.message.reply_text(
-        f"🟣 STON.FI BX/TON\nPrice: {r['price']} TON\nLiquidity: {r['liquidity']} TON"
+        f" STON.FI BX/TON\nPrice: {r['price']} TON\nLiquidity: {r['liquidity']} TON"
     )
 
 # ======================================================
