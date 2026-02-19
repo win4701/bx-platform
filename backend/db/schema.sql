@@ -41,6 +41,10 @@ CREATE TABLE IF NOT EXISTS wallet_vaults (
   last_reconcile INTEGER
 );
 
+-- Seed vaults (safe)
+INSERT OR IGNORE INTO wallet_vaults(asset) VALUES
+ ('usdt'), ('usdc'), ('ltc'), ('ton'), ('sol'), ('btc'), ('eth'), ('avax'), ('bnb'), ('zec'), ('bx');
+
 -- =====================================================
 -- LEDGER (DOUBLE ENTRY)
 -- =====================================================
