@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS wallets (
   avax  REAL DEFAULT 0,
   ltc  REAL DEFAULT 0,
   sol  REAL DEFAULT 0,
+  zec  REAL DEFAULT 0,
   btc  REAL DEFAULT 0,
   bnb  REAL DEFAULT 0,
   eth  REAL DEFAULT 0,
@@ -219,7 +220,7 @@ CREATE TABLE IF NOT EXISTS airdrops (
   uid INTEGER PRIMARY KEY,
   claimed INTEGER DEFAULT 0,
   referrals INTEGER DEFAULT 0,
-  reward REAL DEFAULT 2.5,
+  reward REAL DEFAULT 0.33,
   ts INTEGER
 );
 
