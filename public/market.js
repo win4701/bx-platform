@@ -66,9 +66,15 @@ function initMarket() {
   const canvas = document.getElementById("bxChart");
   if (!canvas) return;
 
-  BX_CHART.init();
+  bindEvents();
+  updateWalletUI();
 
+  BX_CHART.init();
   bootstrapChart();
+
+  generateOrderBook();
+  renderOrderBook();
+
   startPriceFeed();
 }
 
