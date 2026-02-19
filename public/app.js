@@ -193,8 +193,6 @@ document.addEventListener("view:change", e => {
 
     case "market":
       if (typeof initMarket === "function") initMarket();
-      if (typeof startPriceFeed === "function") startPriceFeed();
-      if (typeof connectDepthWS === "function") connectDepthWS();
       break;
 
     case "casino":
