@@ -84,8 +84,8 @@ def health():
 @app.get("/finance/wallet")
 def wallet():
     return {
-        "BX": 0, "USDT": 0, "BNB": 0,
-        "ETH": 0, "TON": 0, "SOL": 0, "BTC": 0
+        "BX": 0, "USDT": 0, "USDC": 0,"AVAX": 0, "BNB": 0,
+        "ETH": 0, "TON": 0,"ZEC": 0, "LTC": 0, "SOL": 0, "BTC": 0
     }
 
 # ======================================================
