@@ -22,7 +22,7 @@ MIN_WITHDRAW_USDT = 10.0
 MAX_WITHDRAW_RATIO = 0.5
 MAX_WITHDRAW_MONTH = 15
 
-ALLOWED_ASSETS = {"usdt", "ton", "bnb", "eth", "avax", "sol", "btc", "ltc", "bx"}
+ALLOWED_ASSETS = {"usdt", "usdc", "ton", "bnb", "eth", "avax", "sol", "btc", "zec", "ltc", "bx"}
 
 # ======================================================
 # DB HELPERS (ATOMIC & FLY SAFE)
@@ -157,7 +157,7 @@ def wallet_me(uid: int):
     with get_db() as conn:
         c = conn.cursor()
         row = c.execute(
-            "SELECT usdt, ton, bnb, eth, avax, sol, btc, bx FROM wallets WHERE uid=?",
+            "SELECT usdt, usdc, ton, bnb, eth, avax, sol, zec, btc, bx FROM wallets WHERE uid=?",
             (uid,)
         ).fetchone()
 
