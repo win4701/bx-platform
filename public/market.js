@@ -316,7 +316,7 @@ const PRO_CHART = {
   this.viewMax = null;
   this.viewMin = null;
   this.bootstrap(price);
- }
+ },
 
   resize() {
     const p = this.canvas.parentElement;
