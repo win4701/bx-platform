@@ -255,3 +255,15 @@ CREATE TABLE IF NOT EXISTS game_stats (
   payouts REAL DEFAULT 0,
   rounds INTEGER DEFAULT 0
 );
+
+-- =====================================================
+-- TOP-UP TRANSACTIONS (NEW TABLE)
+-- =====================================================
+CREATE TABLE IF NOT EXISTS topups (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  country TEXT,
+  phone_number TEXT,
+  amount REAL,
+  status TEXT,      -- success, failure, pending
+  ts INTEGER        -- Timestamp of the transaction
+);
