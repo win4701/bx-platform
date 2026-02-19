@@ -12,6 +12,8 @@ let bids = [];
 let asks = [];
 let tradeSide = "buy";
 let quotePriceUSDT = 1;
+let isMarketInitialized = false;
+let ws = null;
 
 const quoteMap = {
   USDT: "btcusdt",
@@ -56,63 +58,71 @@ const pairButtons = document.querySelectorAll(".pair-btn");
 let wallet = { BX: 0, USDT: 0 };
 
 /* ================= INIT ================= */
-
 function initMarket() {
 
-  updateWalletUI();
-  bindEvents();
-   
-  if (!BX_CHART.canvas) {
-    BX_CHART.init();
-  }
-   
-  if (BX_CHART.history.length === 0) {
+  if (isMarketInitialized) return;
+  isMarketInitialized = true;
 
-    const now = Date.now();
+  const canvas = document.getElementById("bxChart");
+  if (!canvas) return;
 
-    for (let i = 0; i < 120; i++) {
-      BX_CHART.history.push({
-        open: marketPrice,
-        high: marketPrice,
-        low: marketPrice,
-        close: marketPrice,
-        volume: 1,
-        time: now - (120 - i) * 60000
-      });
-    }
+  BX_CHART.init();
 
-    BX_CHART.rebuild();
-  }
-
-  
-  generateOrderBook();
-  renderOrderBook();
+  bootstrapChart();
+  startPriceFeed();
 }
+
+function bootstrapChart() {
+
+  const now = Date.now();
+  const base = BX_USDT_REFERENCE;
+
+  for (let i = 0; i < 60; i++) {
+    BX_CHART.history.push({
+      open: base,
+      high: base,
+      low: base,
+      close: base,
+      volume: 1,
+      time: now - (60 - i) * 60000
+    });
+  }
+
+  BX_CHART.rebuild();
+}
+  
+  
 
 /* ================= BINANCE TICKER ================= */
 
-let ws = null;
+function connectBinance(symbol = "BTCUSDT") {
 
-function connectBinance(symbol = "btcusdt") {
-
-  if (ws) ws.close();
+  if (ws) {
+    ws.close();
+    ws = null;
+  }
 
   ws = new WebSocket(
-    `wss://stream.binance.com:9443/ws/${symbol}@miniTicker`
+    `wss://stream.binance.com:9443/ws/${symbol.toLowerCase()}@trade`
   );
 
-  ws.onmessage = (event) => {
-    const msg = JSON.parse(event.data);
-    quotePriceUSDT = parseFloat(msg.c);
+  ws.onmessage = event => {
 
-    computeBXPrice();
+    const data = JSON.parse(event.data);
+    const price = parseFloat(data.p);
+
+    if (!price) return;
+
+    marketPrice = price;
+
+    updatePriceUI();
+    BX_CHART.updateTick(price, 1);
   };
 
   ws.onerror = () => {
-    console.log("Binance WS error");
+    console.log("WS error");
   };
 }
-
 function computeBXPrice() {
 
   if (!quotePriceUSDT || quotePriceUSDT <= 0) return;
@@ -322,7 +332,7 @@ const BX_CHART = {
   window.addEventListener("resize", () => this.resize());
 
   this.bindInteraction();
-  requestAnimationFrame(() => this.render());
+  setTimeout(() => this.render(), 33);
 },
 
   resize() {
