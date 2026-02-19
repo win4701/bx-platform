@@ -66,6 +66,7 @@ function init() {
 
   marketPrice = BX_USDT_REFERENCE;
   PRO_CHART.init();
+  this.bindControls();
 }
 
 /* ================= BINANCE TICKER ================= */
@@ -286,6 +287,9 @@ const PRO_CHART = {
   timeframe: 5000,
   maxCandles: 150,
   current: null,
+  visibleCount: 60,
+  minVisible: 20,
+  maxVisible: 150,
 
   init() {
 
@@ -429,8 +433,7 @@ const PRO_CHART = {
 
   ctx.clearRect(0, 0, w, h);
 
-  const maxVisible = 60;
-  const visible = this.candles.slice(-maxVisible);
+  const visible = this.candles.slice(-this.visibleCount);
 
   if (visible.length < 2) {
     requestAnimationFrame(() => this.render());
@@ -531,19 +534,51 @@ const PRO_CHART = {
 
   bindTimeframes() {
 
-    document.querySelectorAll(".tf").forEach(btn => {
+  document.querySelectorAll(".tf-btn").forEach(btn => {
 
-      btn.onclick = () => {
+    btn.onclick = () => {
 
-        document.querySelectorAll(".tf")
-          .forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".tf-btn")
+        .forEach(b => b.classList.remove("active"));
 
-        btn.classList.add("active");
+      btn.classList.add("active");
 
-        this.timeframe = parseInt(btn.dataset.tf);
-      };
-    });
-  },
+      const days = parseInt(btn.dataset.days);
+
+      this.visibleCount = Math.min(
+        this.maxVisible,
+        days * 24
+      );
+    };
+  });
+  }
+
+/* ================= ZOOM option ================= */
+   
+   bindControls() {
+
+  const zoomIn = document.getElementById("zoomIn");
+  const zoomOut = document.getElementById("zoomOut");
+  const reset = document.getElementById("resetView");
+
+  zoomIn.onclick = () => {
+    this.visibleCount = Math.max(
+      this.minVisible,
+      this.visibleCount - 10
+    );
+  };
+
+  zoomOut.onclick = () => {
+    this.visibleCount = Math.min(
+      this.maxVisible,
+      this.visibleCount + 10
+    );
+  };
+
+  reset.onclick = () => {
+    this.visibleCount = 60;
+  };
+   }
 
   /* ================= TOOLTIP ================= */
 
