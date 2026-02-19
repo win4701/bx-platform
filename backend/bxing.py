@@ -68,8 +68,8 @@ def airdrop_claim(uid: int):
 # ======================================================
 MINING_PLANS = {
     "BX": [
-        {"id":"p10","name":"Starter","roi":Decimal("0.025"),"min":10,"max":100,"days":10},
-        {"id":"p21","name":"Basic","roi":Decimal("0.05"),"min":50,"max":300,"days":21},
+        {"id":"p10","name":"Starter","roi":Decimal("0.025"),"min":5,"max":60,"days":10},
+        {"id":"p21","name":"Basic","roi":Decimal("0.05"),"min":50,"max":250,"days":21},
         {"id":"p30","name":"Golden","roi":Decimal("0.08"),"min":200,"max":800,"days":30},
         {"id":"p45","name":"Advanced","roi":Decimal("0.12"),"min":400,"max":2500,"days":45},
         {"id":"p60","name":"Platine","roi":Decimal("0.17"),"min":750,"max":9000,"days":60},
