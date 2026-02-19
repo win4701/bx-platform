@@ -60,23 +60,25 @@ let wallet = { BX: 0, USDT: 0 };
 /* ================= INIT ================= */
 function initMarket() {
 
-  if (isMarketInitialized) return;
-  isMarketInitialized = true;
-
   const canvas = document.getElementById("bxChart");
   if (!canvas) return;
 
-  bindEvents();
-  updateWalletUI();
+  if (!isMarketInitialized) {
 
-  BX_CHART.init();
-  bootstrapChart();
+    bindEvents();
+    updateWalletUI();
 
-  generateOrderBook();
-  renderOrderBook();
+    BX_CHART.init();
+    bootstrapChart();
+
+    generateOrderBook();
+    renderOrderBook();
+
+    isMarketInitialized = true;
+  }
 
   startPriceFeed();
-}
+   }
 
 function bootstrapChart() {
 
