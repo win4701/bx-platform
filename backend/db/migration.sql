@@ -29,8 +29,12 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE TABLE IF NOT EXISTS wallets (
   uid INTEGER PRIMARY KEY,
   usdt REAL DEFAULT 0,
+  usdc  REAL DEFAULT 0,
   ton  REAL DEFAULT 0,
   sol  REAL DEFAULT 0,
+  zec  REAL DEFAULT 0,
+  ltc  REAL DEFAULT 0,
+  avax  REAL DEFAULT 0,
   btc  REAL DEFAULT 0,
   bnb  REAL DEFAULT 0,
   eth  REAL DEFAULT 0,
@@ -51,7 +55,7 @@ CREATE TABLE IF NOT EXISTS wallet_vaults (
 
 -- Seed vaults (safe)
 INSERT OR IGNORE INTO wallet_vaults(asset) VALUES
- ('usdt'), ('ton'), ('sol'), ('btc'), ('bnb'), ('eth'), ('bx');
+ ('usdt'), ('usdc'), ('ltc'), ('ton'), ('sol'), ('btc'), ('eth'), ('avax'), ('bnb'), ('zec'), ('bx');
 
 -- =====================================================
 -- LEDGER (DOUBLE ENTRY)
@@ -211,7 +215,7 @@ CREATE TABLE IF NOT EXISTS airdrops (
   uid INTEGER PRIMARY KEY,
   claimed INTEGER DEFAULT 0,
   referrals INTEGER DEFAULT 0,
-  reward REAL DEFAULT 2.5,
+  reward REAL DEFAULT 0.33,
   ts INTEGER,
   FOREIGN KEY(uid) REFERENCES users(uid)
 );
@@ -231,4 +235,16 @@ CREATE TABLE IF NOT EXISTS mining_orders (
   ends_at INTEGER,
   status TEXT,
   FOREIGN KEY(uid) REFERENCES users(uid)
+);
+
+-- =====================================================
+-- TOP-UP TRANSACTIONS (NEW TABLE)
+-- =====================================================
+CREATE TABLE IF NOT EXISTS topups (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  country TEXT,
+  phone_number TEXT,
+  amount REAL,
+  status TEXT,      -- success, failure, pending
+  ts INTEGER        -- Timestamp of the transaction
 );
