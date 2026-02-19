@@ -192,9 +192,7 @@ document.addEventListener("view:change", e => {
       break;
 
     case "market":
-      if (view === "market") {
-  initMarket();
-      }
+      if (typeof initMarket === "function") initMarket();
       if (typeof startPriceFeed === "function") startPriceFeed();
       if (typeof connectDepthWS === "function") connectDepthWS();
       break;
