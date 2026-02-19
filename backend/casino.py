@@ -53,16 +53,16 @@ GAME_INDEX = {
 # ======================================================
 
 RTP = {
-    "coinflip": 0.35,
-    "crash": 0.33,
-    "limbo": 0.34,
-    "dice": 0.36,
-    "slot": 0.34,
+    "coinflip": 0.29,
+    "crash": 0.31,
+    "limbo": 0.29,
+    "dice": 0.31,
+    "slot": 0.31,
     "plinko": 0.31,
     "hilo": 0.31,
     "airboss": 0.31,
-    "fruit_party": 0.32,
-    "banana_farm": 0.32,
+    "fruit_party": 0.29,
+    "banana_farm": 0.30,
     "blackjack_fast": 0.30,
     "birds_party": 0.31,
 }
