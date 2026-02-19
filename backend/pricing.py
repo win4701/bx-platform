@@ -11,8 +11,8 @@ DB_PATH = "db/prices.db"
 MAX_PRICE_AGE_SEC = 60 * 60  # 1 hour in seconds
 
 # Conversion rates (can be dynamic or retrieved from an API)
-BX_PER_USDT = Decimal(18)  # Example: 1 BX = 18 USDT
-USDT_PER_BX = Decimal(0.05555)  # Example: 1 USDT = 0.05555 BX
+BX_PER_USDT = Decimal(45)  # Example: 1 BX = 45 USDT
+USDT_PER_BX = Decimal(0.02222)  # Example: 1 USDT = 0.02222 BX
 
 # ======================================================
 # DATABASE CONNECTION
