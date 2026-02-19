@@ -1,9 +1,15 @@
+import os
+import time
 import sqlite3
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from decimal import Decimal
 from time import time
 from contextlib import contextmanager
+from fastapi.responses import StreamingResponse
 
+# ======================================================
+# ROUTER
+# ======================================================
 router = APIRouter(prefix="/bxing", tags=["bxing"])
 
 DB_PATH = "db/bxing.db"
@@ -21,7 +27,7 @@ def get_db():
         conn.close()
 
 # ======================================================
-# AIRDROP
+# AIRDROP AND REFERRALS
 # ======================================================
 @router.get("/airdrop/status")
 def airdrop_status(uid: int):
@@ -41,9 +47,11 @@ def airdrop_status(uid: int):
         "reward": row[2]
     }
 
-
 @router.post("/airdrop/claim")
 def airdrop_claim(uid: int):
+    # Direct claim reward for users in the casino section
+    reward = 0.33  # Claim reward for the user
+
     with get_db() as conn:
         c = conn.cursor()
         row = c.execute(
@@ -56,12 +64,43 @@ def airdrop_claim(uid: int):
 
         c.execute(
             """INSERT INTO airdrops (uid, claimed, referrals, reward, ts)
-               VALUES (?,1,0,2.5,?)
-               ON CONFLICT(uid) DO UPDATE SET claimed=1""",
-            (uid, int(time()))
+               VALUES (?,1,0,?,?)
+               ON CONFLICT(uid) DO UPDATE SET claimed=1, reward=?""",
+            (uid, reward, int(time()), reward)
         )
+        
+        # Credit the reward directly to the user’s wallet
+        credit_deposit(uid, "BX", reward, f"casino_claim_{uid}")
+        
+    return {"status": "ok", "reward": reward}
 
-    return {"status": "ok", "reward": 1}
+@router.post("/airdrop/refer")
+def refer_bonus(uid: int, referrer_uid: int):
+    # Referral reward: 0.25 BX for each successful referral
+    reward = 0.25  # Referral bonus
+
+    with get_db() as conn:
+        c = conn.cursor()
+        
+        # Check if the referral has been tracked
+        c.execute(
+            "SELECT 1 FROM airdrops WHERE uid=?",
+            (referrer_uid,)
+        )
+        
+        if not c.fetchone():
+            raise HTTPException(400, "REFERRER_NOT_FOUND")
+        
+        # Credit the referral bonus to the user’s wallet
+        credit_deposit(referrer_uid, "BX", reward, f"casino_referral_{uid}")
+        
+        # Update the referral count for the referrer
+        c.execute(
+            "UPDATE airdrops SET referrals = referrals + 1 WHERE uid=?",
+            (referrer_uid,)
+        )
+        
+    return {"status": "ok", "referral_reward": reward}
 
 # ======================================================
 # MINING PLANS (PER COIN)
@@ -75,22 +114,7 @@ MINING_PLANS = {
         {"id":"p60","name":"Platine","roi":Decimal("0.17"),"min":750,"max":9000,"days":60},
         {"id":"p90","name":"Infinity","roi":Decimal("0.25"),"min":1000,"max":20000,"days":90,"sub":True},
     ],
-    "SOL": [
-        {"id":"p10","name":"Starter","roi":Decimal("0.01"),"min":1,"max":5,"days":10},
-        {"id":"p21","name":"Basic","roi":Decimal("0.028"),"min":10,"max":50,"days":21},
-        {"id":"p30","name":"Golden","roi":Decimal("0.04"),"min":40,"max":160,"days":30},
-        {"id":"p45","name":"Advanced","roi":Decimal("0.07"),"min":120,"max":500,"days":45},
-        {"id":"p60","name":"Platine","roi":Decimal("0.09"),"min":200,"max":1000,"days":60},
-        {"id":"p90","name":"Infinity","roi":Decimal("0.14"),"min":500,"max":2500,"days":90,"sub":True},
-    ],
-    "BNB": [
-        {"id":"p10","name":"Starter","roi":Decimal("0.008"),"min":Decimal("0.05"),"max":1,"days":10},
-        {"id":"p21","name":"Basic","roi":Decimal("0.018"),"min":1,"max":4,"days":21},
-        {"id":"p30","name":"Golden","roi":Decimal("0.03"),"min":5,"max":50,"days":30},
-        {"id":"p45","name":"Advanced","roi":Decimal("0.05"),"min":10,"max":100,"days":45},
-        {"id":"p60","name":"Platine","roi":Decimal("0.07"),"min":15,"max":150,"days":60},
-        {"id":"p90","name":"Infinity","roi":Decimal("0.11"),"min":25,"max":200,"days":90,"sub":True},
-    ],
+    # Additional coins (SOL, BNB) here as needed
 }
 
 def get_mining_plans_by_coin(asset: str):
@@ -160,27 +184,16 @@ def start_mining(uid: int, asset: str, plan_id: str, investment: float):
         "days": plan["days"]
     }
 
-# ======================================================
-# ACTIVE MINING
-# ======================================================
-@router.get("/mining/active")
-def active_mining(uid: int):
-    with get_db() as conn:
-        rows = conn.execute(
-            """SELECT asset, plan, investment, roi, days, ends_at
-               FROM mining_orders
-               WHERE uid=? AND status='active'""",
-            (uid,)
-        ).fetchall()
+# ==========================================================
 
-    return [
-        {
-            "asset": r[0],
-            "plan": r[1],
-            "investment": r[2],
-            "roi": r[3],
-            "days": r[4],
-            "ends_at": r[5]
-        }
-        for r in rows
-]
+def db():
+    return sqlite3.connect(DB_PATH, check_same_thread=False)
+
+def get_cursor():
+    conn = db()
+    conn.row_factory = sqlite3.Row
+    return conn.cursor(), conn
+
+def close(conn):
+    conn.commit()
+    conn.close()
