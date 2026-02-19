@@ -7,9 +7,12 @@ from pydantic import BaseModel
 # FEATURE FLAGS (GLOBAL SAFETY)
 # ======================================================
 FEATURES = {
-    "walletconnect": False,        # ❌ disabled
-    "binancepay_direct": False,    # ❌ disabled
+    "walletconnect": True,         # ✔ enabled
+    "binancepay_direct": True,     # ✔ enabled
     "stonfi_trade": False,         # ❌ disabled
+    "casino": True,                # ✔ enabled for Casino
+    "market": True,                # ✔ enabled for Market
+    "mining": True,                # ✔ enabled for Mining
 }
 
 # ======================================================
@@ -84,8 +87,8 @@ def health():
 @app.get("/finance/wallet")
 def wallet():
     return {
-        "BX": 0, "USDT": 0, "USDC": 0,"AVAX": 0, "BNB": 0,
-        "ETH": 0, "TON": 0,"ZEC": 0, "LTC": 0, "SOL": 0, "BTC": 0
+        "BX": 0, "USDT": 0, "USDC": 0,"LTC": 0, "BNB": 0,
+        "ETH": 0, "TON": 0, "AVAX": 0, "ZEC": 0, "SOL": 0, "BTC": 0
     }
 
 # ======================================================
@@ -155,7 +158,7 @@ def get_active_mining(uid: int):
     ]
 
 # ======================================================
-# WALLETCONNECT (DISABLED SAFELY)
+# WALLETCONNECT (ENABLED)
 # ======================================================
 @app.post("/walletconnect/connect")
 def connect_wallet(*args, **kwargs):
@@ -163,7 +166,7 @@ def connect_wallet(*args, **kwargs):
         raise HTTPException(410, "WalletConnect disabled")
 
 # ======================================================
-# BINANCE PAY (DISABLED SAFELY)
+# BINANCE PAY (ENABLED)
 # ======================================================
 @app.post("/binancepay/pay")
 def binance_pay(*args, **kwargs):
