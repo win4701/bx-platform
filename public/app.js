@@ -160,10 +160,6 @@ document.addEventListener("click", e => {
   if (action.dataset.action === "go-mining") switchView("mining");
 });
 
-/* ================= BOOTSTRAP ================= */
-
-
-
 /* ================= VIEW LIFECYCLE (SSOT) ================= */
 
 let CURRENT_VIEW = null;
