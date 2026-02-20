@@ -3,6 +3,8 @@ import logging
 import requests
 from telegram import Update
 from telegram.ext import Updater, CommandHandler, CallbackContext
+from fastapi import HTTPException
+from finance import debit_wallet, credit_wallet, casino_history
 
 # ======================================================
 # CONFIG
@@ -177,33 +179,49 @@ def start_mining(update: Update, context: CallbackContext):
 # BINANCE PAY (DEPOSIT ONLY — SAFE)
 # ======================================================
 
-def deposit_binance(update: Update, context: CallbackContext):
-    uid = update.message.from_user.id
+# API_KEY و URL متغيرات البيئة
+BINANCE_PAY_URL = os.getenv("BINANCE_PAY_URL")
+BINANCE_API_KEY = os.getenv("BINANCE_API_KEY")
 
-    if not context.args:
-        update.message.reply_text("Usage: /deposit_binance <amount>")
-        return
+def process_binancepay_deposit(uid: int, amount: float, asset: str, txid: str):
+    """
+    معاملة إيداع عبر BinancePay مع التحقق من النجاح.
+    """
+    if not BINANCE_API_KEY or not BINANCE_PAY_URL:
+        raise HTTPException(500, "BINANCE_PAY_NOT_CONFIGURED")
+
+    # تحقق من الرصيد
+    if amount <= 0:
+        raise HTTPException(400, "AMOUNT_INVALID")
 
     try:
-        amount = float(context.args[0])
-        if amount <= 0:
-            raise ValueError
-    except ValueError:
-        update.message.reply_text(" Invalid amount.")
-        return
+        # إرسال طلب إلى API الخاص بـ BinancePay
+        response = requests.post(
+            BINANCE_PAY_URL,
+            json={
+                "api_key": BINANCE_API_KEY,
+                "uid": uid,
+                "asset": asset,
+                "amount": amount,
+                "txid": txid,
+            }
+        )
 
-    r = api_post("/api/binancepay/create", {
-        "uid": uid,
-        "amount": amount
-    })
+        # تحقق من استجابة BinancePay
+        if response.status_code != 200:
+            raise HTTPException(500, f"BINANCE_PAY_ERROR: {response.text}")
 
-    update.message.reply_text(
-        f" Binance Pay Deposit\n\n"
-        f"Amount: {amount} USDT\n\n"
-        f" Pay here:\n{r['checkout_url']}\n\n"
-        f" Balance updates after confirmation."
-    )
+        # إذا تمت المعاملة بنجاح
+        if response.json().get("status") == "success":
+            # تحديث المحفظة
+            credit_wallet(uid, asset, amount, f"binancepay_deposit_{txid}")
+            return {"status": "success", "amount": amount}
 
+        else:
+            raise HTTPException(500, "BINANCE_PAY_TRANSACTION_FAILED")
+
+    except requests.exceptions.RequestException as e:
+        raise HTTPException(500, f"BINANCE_PAY_CONNECTION_ERROR: {str(e)}")
 # ======================================================
 # TON
 # ======================================================
