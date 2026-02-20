@@ -1,20 +1,16 @@
 import os
 import time
 import sqlite3
-import secrets
 from contextlib import contextmanager
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import HTTPException
 from fastapi.responses import StreamingResponse
+from decimal import Decimal
+import secrets
 
 from key import api_guard, admin_guard
 
 # ======================================================
-# ROUTER
-# ======================================================
-router = APIRouter(dependencies=[Depends(api_guard)])
-
-# ======================================================
-# CONFIG
+# CONFIGURATION
 # ======================================================
 DB_PATH = os.getenv("DB_PATH", "db/db.sqlite")
 
@@ -25,7 +21,7 @@ MAX_WITHDRAW_MONTH = 15
 ALLOWED_ASSETS = {"usdt", "usdc", "ton", "bnb", "eth", "avax", "sol", "btc", "zec", "ltc", "bx"}
 
 # ======================================================
-# DB HELPERS (ATOMIC & FLY SAFE)
+# DATABASE HELPER (ATOMIC & SAFE)
 # ======================================================
 @contextmanager
 def get_db():
@@ -41,11 +37,11 @@ def get_db():
         conn.close()
 
 # ======================================================
-# LEDGER (DOUBLE ENTRY — ATOMIC)
+# LEDGER (DOUBLE ENTRY SYSTEM)
 # ======================================================
 def ledger(ref: str, debit_account: str, credit_account: str, amount: float):
     if amount <= 0:
-        return
+        raise HTTPException(400, "INVALID_AMOUNT")
 
     ts = int(time.time())
     with get_db() as conn:
@@ -64,7 +60,7 @@ def ledger(ref: str, debit_account: str, credit_account: str, amount: float):
 # ======================================================
 def credit_deposit(uid: int, asset: str, amount: float, txid: str):
     if amount <= 0:
-        return
+        raise HTTPException(400, "INVALID_AMOUNT")
 
     asset = asset.lower()
     if asset not in ALLOWED_ASSETS:
@@ -73,14 +69,14 @@ def credit_deposit(uid: int, asset: str, amount: float, txid: str):
     with get_db() as conn:
         c = conn.cursor()
 
-        # idempotency
+        # Ensuring the deposit is idempotent
         if c.execute(
             "SELECT 1 FROM used_txs WHERE txid=?",
             (txid,)
         ).fetchone():
             return
 
-        # update wallet
+        # Update wallet balance
         c.execute(
             f"UPDATE wallets SET {asset} = {asset} + ? WHERE uid=?",
             (amount, uid)
@@ -89,15 +85,14 @@ def credit_deposit(uid: int, asset: str, amount: float, txid: str):
         if c.rowcount == 0:
             raise HTTPException(404, "WALLET_NOT_FOUND")
 
-        # history
+        # Transaction history
         c.execute(
-            """INSERT INTO history
-               (uid, action, asset, amount, ref, ts)
+            """INSERT INTO history (uid, action, asset, amount, ref, ts)
                VALUES (?,?,?,?,?,?)""",
             (uid, "deposit", asset, amount, txid, int(time.time()))
         )
 
-        # ledger
+        # Ledger update
         ledger(
             ref=f"deposit:{asset}",
             debit_account=f"treasury_{asset}",
@@ -105,18 +100,18 @@ def credit_deposit(uid: int, asset: str, amount: float, txid: str):
             amount=amount
         )
 
-        # mark tx used
+        # Mark transaction as used
         c.execute(
             "INSERT INTO used_txs(txid, asset, ts) VALUES (?,?,?)",
             (txid, asset, int(time.time()))
         )
 
 # ======================================================
-# DEBIT WALLET (USED BY WITHDRAW / EXCHANGE)
+# DEBIT WALLET (USED FOR WITHDRAW & EXCHANGE)
 # ======================================================
 def debit_wallet(uid: int, asset: str, amount: float, ref: str):
     if amount <= 0:
-        return
+        raise HTTPException(400, "INVALID_AMOUNT")
 
     asset = asset.lower()
     if asset not in ALLOWED_ASSETS:
@@ -125,23 +120,29 @@ def debit_wallet(uid: int, asset: str, amount: float, ref: str):
     with get_db() as conn:
         c = conn.cursor()
 
+        # Checking wallet balance before debit
         c.execute(
-            f"""UPDATE wallets
-                SET {asset} = {asset} - ?
-                WHERE uid=? AND {asset} >= ?""",
+            f"SELECT {asset} FROM wallets WHERE uid=?",
+            (uid,)
+        )
+        row = c.fetchone()
+        if not row or row[asset] < amount:
+            raise HTTPException(400, "INSUFFICIENT_BALANCE")
+
+        # Update wallet balance
+        c.execute(
+            f"UPDATE wallets SET {asset} = {asset} - ? WHERE uid=? AND {asset} >= ?",
             (amount, uid, amount)
         )
 
-        if c.rowcount == 0:
-            raise HTTPException(400, "INSUFFICIENT_BALANCE")
-
+        # Transaction history
         c.execute(
-            """INSERT INTO history
-               (uid, action, asset, amount, ref, ts)
+            """INSERT INTO history (uid, action, asset, amount, ref, ts)
                VALUES (?,?,?,?,?,?)""",
             (uid, "debit", asset, amount, ref, int(time.time()))
         )
 
+        # Ledger update
         ledger(
             ref=ref,
             debit_account=f"user_{asset}",
@@ -150,7 +151,7 @@ def debit_wallet(uid: int, asset: str, amount: float, ref: str):
         )
 
 # ======================================================
-# USER WALLET (READ)
+# WALLET (READ USER BALANCE)
 # ======================================================
 @router.get("/me")
 def wallet_me(uid: int):
@@ -170,7 +171,7 @@ def wallet_me(uid: int):
         }
 
 # ======================================================
-# WITHDRAW VALIDATION
+# WITHDRAWAL VALIDATION
 # ======================================================
 def validate_withdraw(uid: int, amount: float):
     if amount < MIN_WITHDRAW_USDT:
@@ -241,32 +242,3 @@ def export_ledger():
                 "Content-Disposition": "attachment; filename=ledger.csv"
             }
         )
-
-# ======================================================
-# TELEGRAM LINKING (STAGE 1 — SAFE)
-# ======================================================
-def generate_telegram_code(uid: int) -> str:
-    code = secrets.token_hex(3).upper()
-    with get_db() as conn:
-        conn.execute(
-            "UPDATE users SET telegram_code=? WHERE id=?",
-            (code, uid)
-        )
-    return code
-
-def link_telegram_account(telegram_id: int, code: str) -> bool:
-    with get_db() as conn:
-        c = conn.cursor()
-        row = c.execute(
-            "SELECT id FROM users WHERE telegram_code=?",
-            (code,)
-        ).fetchone()
-
-        if not row:
-            return False
-
-        c.execute(
-            "UPDATE users SET telegram_id=?, telegram_code=NULL WHERE id=?",
-            (telegram_id, row["id"])
-        )
-    return True
