@@ -3,9 +3,6 @@ import logging
 import requests
 from telegram import Update
 from telegram.ext import Updater, CommandHandler, CallbackContext
-from fastapi import HTTPException
-from finance import debit_wallet, credit_wallet, casino_history
-
 # ======================================================
 # CONFIG
 # ======================================================
