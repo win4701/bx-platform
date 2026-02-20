@@ -1,22 +1,23 @@
 # ======================================================
-# casino.py
-# Casino Engine — 12 Games (Telegram Compatible)
+# casino.py — PRODUCTION FINAL
 # ======================================================
 
-import time
 import os
+import time
 import hmac
 import hashlib
 import secrets
+import logging
+from threading import Lock
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Depends
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from key import api_guard, admin_guard
 from finance import casino_debit, casino_credit, casino_history, rtp_stats
 
-router = APIRouter(dependencies=[Depends(api_guard)])
+router = APIRouter(prefix="/casino", dependencies=[Depends(api_guard)])
 
 # ======================================================
 # CONFIG
@@ -28,9 +29,14 @@ if not SERVER_SEED:
 
 GAME_FREEZE = bool(int(os.getenv("GAME_FREEZE", "0")))
 AUDIT_MODE  = bool(int(os.getenv("AUDIT_MODE", "0")))
+MAX_BET     = float(os.getenv("CASINO_MAX_BET", 1000))
+MAX_MULTI   = float(os.getenv("CASINO_MAX_MULTIPLIER", 100))
+
+LOCK = Lock()
+logger = logging.getLogger("casino")
 
 # ======================================================
-# GAME INDEX (12 GAMES — FINAL)
+# GAME INDEX
 # ======================================================
 
 GAME_INDEX = {
@@ -49,7 +55,7 @@ GAME_INDEX = {
 }
 
 # ======================================================
-# RTP (THEORETICAL)
+# RTP
 # ======================================================
 
 RTP = {
@@ -68,6 +74,8 @@ RTP = {
 }
 
 def probability(multiplier: float, game: str) -> float:
+    if multiplier <= 0 or multiplier > MAX_MULTI:
+        raise HTTPException(400, "INVALID_MULTIPLIER")
     return (1 / multiplier) * RTP[game]
 
 # ======================================================
@@ -87,6 +95,8 @@ def provably_random(seed: str, nonce: int) -> float:
 # ======================================================
 
 def parse_client_seed(seed: str) -> int:
+    if not seed:
+        raise HTTPException(400, "CLIENT_SEED_REQUIRED")
     return sum(int(x) for x in seed.split(".") if x.isdigit())
 
 def special_rule(client_seed: str, game: str, nonce: int):
@@ -102,13 +112,13 @@ def special_rule(client_seed: str, game: str, nonce: int):
 class PlayRequest(BaseModel):
     uid: int
     game: str
-    bet: float
+    bet: float = Field(gt=0)
     multiplier: Optional[float] = None
     choice: Optional[str] = None
     client_seed: str
 
 # ======================================================
-# GAME LOGIC (12)
+# GAME LOGIC
 # ======================================================
 
 def simple_rng(bet, m, rand, game):
@@ -148,7 +158,7 @@ GAMES = {
 }
 
 # ======================================================
-# PLAY ENDPOINT
+# PLAY ENDPOINT (SAFE)
 # ======================================================
 
 @router.post("/play")
@@ -157,38 +167,45 @@ def play(req: PlayRequest):
     if GAME_FREEZE:
         raise HTTPException(503, "GAMES_DISABLED")
 
-    if req.bet <= 0:
-        raise HTTPException(400, "INVALID_BET")
-
     if req.game not in GAMES:
         raise HTTPException(400, "GAME_NOT_SUPPORTED")
 
+    if req.bet > MAX_BET:
+        raise HTTPException(400, "BET_TOO_LARGE")
+
+    payout = 0
+    win = False
+
     nonce = int(time.time() * 1000) + secrets.randbelow(1000)
-    numeric, seed = special_rule(req.client_seed, req.game, nonce)
+    _, seed = special_rule(req.client_seed, req.game, nonce)
     rand = provably_random(seed, nonce)
 
-    casino_debit(req.uid, req.bet, req.game)
+    with LOCK:
+        casino_debit(req.uid, req.bet, req.game)
 
-    try:
-        win, payout = GAMES[req.game](req, rand)
-        if win:
-            casino_credit(req.uid, payout, req.game)
-    finally:
-        casino_history(
-            req.uid,
-            req.game,
-            req.bet,
-            payout if win else 0,
-            win
-        )
+        try:
+            win, payout = GAMES[req.game](req, rand)
+            if win and payout > 0:
+                casino_credit(req.uid, payout, req.game)
+        finally:
+            casino_history(
+                req.uid,
+                req.game,
+                req.bet,
+                payout,
+                win
+            )
+
+    logger.info(f"Game: {req.game} | UID: {req.uid} | Win: {win} | Payout: {payout}")
 
     return {
         "game": req.game,
         "win": win,
-        "payout": payout if win else 0,
-        "seed": seed,
+        "payout": payout,
         "nonce": nonce,
-        "server_seed_hash": server_seed_hash()
+        "seed": seed,
+        "server_seed_hash": server_seed_hash(),
+        "audit_mode": AUDIT_MODE
     }
 
 # ======================================================
@@ -201,4 +218,4 @@ def admin_rtp():
         "enabled_games": list(GAMES.keys()),
         "theoretical": RTP,
         "real": rtp_stats()
-    }
+}
