@@ -1,109 +1,117 @@
 import os
 import time
 import sqlite3
-from fastapi import APIRouter, HTTPException, Depends
 from decimal import Decimal
-from time import time
 from contextlib import contextmanager
-from fastapi.responses import StreamingResponse
+from fastapi import APIRouter, HTTPException
+from finance import credit_deposit  # 🔥 إصلاح الاستيراد
 
 # ======================================================
 # ROUTER
 # ======================================================
 router = APIRouter(prefix="/bxing", tags=["bxing"])
 
-DB_PATH = "db/bxing.db"
+DB_PATH = os.getenv("DB_PATH", "db/db.sqlite")
 
 # ======================================================
-# DB (SAFE)
+# DB (ATOMIC SAFE)
 # ======================================================
 @contextmanager
 def get_db():
     conn = sqlite3.connect(DB_PATH, check_same_thread=False)
+    conn.row_factory = sqlite3.Row
     try:
         yield conn
         conn.commit()
+    except:
+        conn.rollback()
+        raise
     finally:
         conn.close()
 
 # ======================================================
-# AIRDROP AND REFERRALS
+# AIRDROP
 # ======================================================
 @router.get("/airdrop/status")
 def airdrop_status(uid: int):
     with get_db() as conn:
-        c = conn.cursor()
-        row = c.execute(
+        row = conn.execute(
             "SELECT claimed, referrals, reward FROM airdrops WHERE uid=?",
             (uid,)
         ).fetchone()
 
     if not row:
-        return {"claimed": False, "referrals": 0, "reward": 1}
+        return {"claimed": False, "referrals": 0, "reward": 0.33}
 
     return {
-        "claimed": bool(row[0]),
-        "referrals": row[1],
-        "reward": row[2]
+        "claimed": bool(row["claimed"]),
+        "referrals": row["referrals"],
+        "reward": row["reward"]
     }
 
 @router.post("/airdrop/claim")
 def airdrop_claim(uid: int):
-    # Direct claim reward for users in the casino section
-    reward = 0.33  # Claim reward for the user
+    reward = 0.33
 
     with get_db() as conn:
-        c = conn.cursor()
-        row = c.execute(
+        row = conn.execute(
             "SELECT claimed FROM airdrops WHERE uid=?",
             (uid,)
         ).fetchone()
 
-        if row and row[0]:
+        if row and row["claimed"]:
             raise HTTPException(400, "AIRDROP_ALREADY_CLAIMED")
 
-        c.execute(
+        conn.execute(
             """INSERT INTO airdrops (uid, claimed, referrals, reward, ts)
                VALUES (?,1,0,?,?)
-               ON CONFLICT(uid) DO UPDATE SET claimed=1, reward=?""",
-            (uid, reward, int(time()), reward)
+               ON CONFLICT(uid)
+               DO UPDATE SET claimed=1, reward=?""",
+            (uid, reward, int(time.time()), reward)
         )
-        
-        # Credit the reward directly to the user’s wallet
-        credit_deposit(uid, "BX", reward, f"casino_claim_{uid}")
-        
+
+    # credit خارج transaction wallet الخاص به
+    credit_deposit(uid, "bx", reward, f"airdrop_claim_{uid}")
+
     return {"status": "ok", "reward": reward}
 
+# ======================================================
+# REFERRAL
+# ======================================================
 @router.post("/airdrop/refer")
 def refer_bonus(uid: int, referrer_uid: int):
-    # Referral reward: 0.25 BX for each successful referral
-    reward = 0.25  # Referral bonus
+    if uid == referrer_uid:
+        raise HTTPException(400, "INVALID_REFERRAL")
+
+    reward = 0.25
 
     with get_db() as conn:
-        c = conn.cursor()
-        
-        # Check if the referral has been tracked
-        c.execute(
-            "SELECT 1 FROM airdrops WHERE uid=?",
-            (referrer_uid,)
+
+        # منع تكرار نفس الإحالة
+        exists = conn.execute(
+            "SELECT 1 FROM referral_logs WHERE uid=?",
+            (uid,)
+        ).fetchone()
+
+        if exists:
+            raise HTTPException(400, "ALREADY_REFERRED")
+
+        conn.execute(
+            "INSERT INTO referral_logs(uid, referrer_uid, ts) VALUES (?,?,?)",
+            (uid, referrer_uid, int(time.time()))
         )
-        
-        if not c.fetchone():
-            raise HTTPException(400, "REFERRER_NOT_FOUND")
-        
-        # Credit the referral bonus to the user’s wallet
-        credit_deposit(referrer_uid, "BX", reward, f"casino_referral_{uid}")
-        
-        # Update the referral count for the referrer
-        c.execute(
+
+        conn.execute(
             "UPDATE airdrops SET referrals = referrals + 1 WHERE uid=?",
             (referrer_uid,)
         )
-        
-    return {"status": "ok", "referral_reward": reward}
+
+    credit_deposit(referrer_uid, "bx", reward, f"referral_{uid}")
+
+    return {"status": "ok", "reward": reward}
 
 # ======================================================
-# MINING PLANS (PER COIN)
+# MINING PLANS
 # ======================================================
 MINING_PLANS = {
     "BX": [
@@ -112,16 +120,12 @@ MINING_PLANS = {
         {"id":"p30","name":"Golden","roi":Decimal("0.08"),"min":200,"max":800,"days":30},
         {"id":"p45","name":"Advanced","roi":Decimal("0.12"),"min":400,"max":2500,"days":45},
         {"id":"p60","name":"Platine","roi":Decimal("0.17"),"min":750,"max":9000,"days":60},
-        {"id":"p90","name":"Infinity","roi":Decimal("0.25"),"min":1000,"max":20000,"days":90,"sub":True},
-    ],
-    # Additional coins (SOL, BNB) here as needed
+        {"id":"p90","name":"Infinity","roi":Decimal("0.25"),"min":1000,"max":20000,"days":90},
+    ]
 }
 
-def get_mining_plans_by_coin(asset: str):
-    return MINING_PLANS.get(asset.upper())
-
 def find_plan(asset: str, plan_id: str):
-    plans = get_mining_plans_by_coin(asset)
+    plans = MINING_PLANS.get(asset.upper())
     if not plans:
         raise HTTPException(400, "MINING_NOT_AVAILABLE")
 
@@ -132,22 +136,22 @@ def find_plan(asset: str, plan_id: str):
     raise HTTPException(400, "PLAN_NOT_FOUND")
 
 # ======================================================
-# START MINING
+# START MINING (مربوط بالـ wallet)
 # ======================================================
 @router.post("/mining/start")
 def start_mining(uid: int, asset: str, plan_id: str, investment: float):
+
     asset = asset.upper()
     investment = Decimal(str(investment))
-
     plan = find_plan(asset, plan_id)
 
     if not (plan["min"] <= investment <= plan["max"]):
         raise HTTPException(400, "INVALID_INVESTMENT_RANGE")
 
     with get_db() as conn:
-        c = conn.cursor()
 
-        active = c.execute(
+        # منع وجود تعدين نشط
+        active = conn.execute(
             "SELECT 1 FROM mining_orders WHERE uid=? AND status='active'",
             (uid,)
         ).fetchone()
@@ -155,12 +159,24 @@ def start_mining(uid: int, asset: str, plan_id: str, investment: float):
         if active:
             raise HTTPException(400, "MINING_ALREADY_ACTIVE")
 
-        roi_total = investment * plan["roi"] * plan["days"]
-        now = int(time())
+        # خصم من wallet
+        updated = conn.execute(
+            f"""UPDATE wallets
+                SET {asset.lower()} = {asset.lower()} - ?
+                WHERE uid=? AND {asset.lower()} >= ?""",
+            (float(investment), uid, float(investment))
+        )
 
-        c.execute(
+        if updated.rowcount == 0:
+            raise HTTPException(400, "INSUFFICIENT_BALANCE")
+
+        roi_total = investment * plan["roi"] * plan["days"]
+        now = int(time.time())
+
+        conn.execute(
             """INSERT INTO mining_orders
-               (uid, asset, plan, investment, roi, days, started_at, ends_at, status)
+               (uid, asset, plan, investment, roi, days,
+                started_at, ends_at, status)
                VALUES (?,?,?,?,?,?,?,?,?)""",
             (
                 uid,
@@ -183,17 +199,3 @@ def start_mining(uid: int, asset: str, plan_id: str, investment: float):
         "estimated_return": float(roi_total),
         "days": plan["days"]
     }
-
-# ==========================================================
-
-def db():
-    return sqlite3.connect(DB_PATH, check_same_thread=False)
-
-def get_cursor():
-    conn = db()
-    conn.row_factory = sqlite3.Row
-    return conn.cursor(), conn
-
-def close(conn):
-    conn.commit()
-    conn.close()
