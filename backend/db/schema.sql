@@ -272,3 +272,15 @@ CREATE TABLE IF NOT EXISTS topups (
   status TEXT,      -- success, failure, pending
   ts INTEGER        -- Timestamp of the transaction
 );
+
+-- =====================================================
+CREATE TABLE IF NOT EXISTS deposits (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    tx_hash VARCHAR(255) NOT NULL,
+    amount NUMERIC NOT NULL,
+    asset VARCHAR(20) NOT NULL,
+    confirmations INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT NOW(),
+    UNIQUE(tx_hash)
+);
