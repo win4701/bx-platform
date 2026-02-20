@@ -1,250 +1,103 @@
-PRAGMA foreign_keys = OFF;
+PRAGMA foreign_keys = ON;
 BEGIN TRANSACTION;
 
 -- =====================================================
--- MIGRATION META (VERSIONING)
+-- MIGRATION META (SAFE VERSIONING)
 -- =====================================================
 CREATE TABLE IF NOT EXISTS migrations (
   version INTEGER PRIMARY KEY,
   applied_at INTEGER
 );
 
-INSERT OR IGNORE INTO migrations(version, applied_at)
-VALUES (2, strftime('%s','now'));
-
 -- =====================================================
--- USERS (EXTEND SAFELY)
+-- APPLY VERSION 3 ONLY IF NOT EXISTS
 -- =====================================================
-CREATE TABLE IF NOT EXISTS users (
-  uid INTEGER PRIMARY KEY,
-  telegram_id BIGINT UNIQUE,
-  username TEXT,
-  created_at INTEGER,
-  telegram_code VARCHAR(10)
+INSERT INTO migrations(version, applied_at)
+SELECT 3, strftime('%s','now')
+WHERE NOT EXISTS (
+  SELECT 1 FROM migrations WHERE version = 3
 );
 
 -- =====================================================
--- WALLETS (FULL – SAFE)
+-- SAFETY UPGRADES
 -- =====================================================
-CREATE TABLE IF NOT EXISTS wallets (
-  uid INTEGER PRIMARY KEY,
-  usdt REAL DEFAULT 0,
-  usdc  REAL DEFAULT 0,
-  ton  REAL DEFAULT 0,
-  sol  REAL DEFAULT 0,
-  zec  REAL DEFAULT 0,
-  ltc  REAL DEFAULT 0,
-  avax  REAL DEFAULT 0,
-  btc  REAL DEFAULT 0,
-  bnb  REAL DEFAULT 0,
-  eth  REAL DEFAULT 0,
-  bx   REAL DEFAULT 0,
-  created_at INTEGER,
-  FOREIGN KEY(uid) REFERENCES users(uid)
-);
+
+-- 1️⃣ withdraw_queue txid UNIQUE
+CREATE UNIQUE INDEX IF NOT EXISTS idx_withdraw_txid
+  ON withdraw_queue(txid);
+
+-- 2️⃣ mining index
+CREATE INDEX IF NOT EXISTS idx_mining_uid
+  ON mining_orders(uid);
+
+-- 3️⃣ ledger performance
+CREATE INDEX IF NOT EXISTS idx_ledger_account_ts
+  ON ledger(account, ts);
+
+-- 4️⃣ market_prices upgrade (ensure index)
+CREATE INDEX IF NOT EXISTS idx_market_pair_ts
+  ON market_prices(pair, ts);
+
+-- 5️⃣ webhook_hits performance
+CREATE INDEX IF NOT EXISTS idx_webhook_ip_ts
+  ON webhook_hits(ip, ts);
 
 -- =====================================================
--- HOT / COLD VAULTS
+-- DATA INTEGRITY FIXES
 -- =====================================================
-CREATE TABLE IF NOT EXISTS wallet_vaults (
-  asset TEXT PRIMARY KEY,
-  hot_balance REAL DEFAULT 0,
-  cold_balance REAL DEFAULT 0,
-  last_reconcile INTEGER
-);
 
--- Seed vaults (safe)
-INSERT OR IGNORE INTO wallet_vaults(asset) VALUES
- ('usdt'), ('usdc'), ('ltc'), ('ton'), ('sol'), ('btc'), ('eth'), ('avax'), ('bnb'), ('zec'), ('bx');
+-- Prevent NULL ref in ledger
+UPDATE ledger SET ref = 'unknown' WHERE ref IS NULL;
 
--- =====================================================
--- LEDGER (DOUBLE ENTRY)
--- =====================================================
-CREATE TABLE IF NOT EXISTS ledger (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  ref TEXT,
-  account TEXT,
-  debit REAL DEFAULT 0,
-  credit REAL DEFAULT 0,
-  ts INTEGER
-);
+-- Ensure withdraw status safe values
+UPDATE withdraw_queue
+SET status = 'pending'
+WHERE status NOT IN ('pending','approved','sent','confirmed','rejected');
 
--- =====================================================
--- HISTORY (UI)
--- =====================================================
-CREATE TABLE IF NOT EXISTS history (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  uid INTEGER,
-  action TEXT,
-  asset TEXT,
-  amount REAL,
-  ref TEXT,
-  meta TEXT,
-  ts INTEGER,
-  FOREIGN KEY(uid) REFERENCES users(uid)
-);
+-- Ensure negative amounts are corrected (failsafe)
+UPDATE wallets SET usdt = 0 WHERE usdt < 0;
+UPDATE wallets SET usdc = 0 WHERE usdc < 0;
+UPDATE wallets SET ton = 0 WHERE ton < 0;
+UPDATE wallets SET sol = 0 WHERE sol < 0;
+UPDATE wallets SET zec = 0 WHERE zec < 0;
+UPDATE wallets SET ltc = 0 WHERE ltc < 0;
+UPDATE wallets SET avax = 0 WHERE avax < 0;
+UPDATE wallets SET btc = 0 WHERE btc < 0;
+UPDATE wallets SET bnb = 0 WHERE bnb < 0;
+UPDATE wallets SET eth = 0 WHERE eth < 0;
+UPDATE wallets SET bx = 0 WHERE bx < 0;
 
 -- =====================================================
--- INTERNAL TRANSFERS (BX)
+-- FUTURE-SAFE COLUMNS (IF NOT EXISTS STYLE)
 -- =====================================================
-CREATE TABLE IF NOT EXISTS transfers (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  from_uid INTEGER,
-  to_uid INTEGER,
-  amount REAL,
-  ts INTEGER,
-  FOREIGN KEY(from_uid) REFERENCES users(uid),
-  FOREIGN KEY(to_uid) REFERENCES users(uid)
-);
 
--- =====================================================
--- USED TXs (REPLAY PROTECTION)
--- =====================================================
-CREATE TABLE IF NOT EXISTS used_txs (
-  txid TEXT PRIMARY KEY,
-  asset TEXT,
-  ts INTEGER
-);
+-- Add confirmations to withdraw_queue if missing (safe SQLite pattern)
+CREATE TABLE IF NOT EXISTS withdraw_queue_new AS
+SELECT * FROM withdraw_queue;
 
--- =====================================================
--- PENDING DEPOSITS
--- =====================================================
-CREATE TABLE IF NOT EXISTS pending_deposits (
-  txid TEXT PRIMARY KEY,
-  uid INTEGER,
-  asset TEXT,
-  amount REAL,
-  reason TEXT,
-  ts INTEGER,
-  FOREIGN KEY(uid) REFERENCES users(uid)
-);
+DROP TABLE withdraw_queue;
 
--- =====================================================
--- WITHDRAW QUEUE (NEW FLOW)
--- =====================================================
-CREATE TABLE IF NOT EXISTS withdraw_queue (
+CREATE TABLE withdraw_queue (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   uid INTEGER,
   asset TEXT,
   amount REAL,
   address TEXT,
-  status TEXT,    -- pending / approved / sent / confirmed / rejected
-  txid TEXT,
+  status TEXT,
+  txid TEXT UNIQUE,
+  confirmations INTEGER DEFAULT 0,
   ts INTEGER,
   FOREIGN KEY(uid) REFERENCES users(uid)
 );
 
--- =====================================================
--- KYC
--- =====================================================
-CREATE TABLE IF NOT EXISTS kyc (
-  uid INTEGER PRIMARY KEY,
-  level INTEGER,
-  status TEXT,
-  updated_at INTEGER,
-  FOREIGN KEY(uid) REFERENCES users(uid)
-);
+INSERT INTO withdraw_queue
+SELECT id, uid, asset, amount, address, status, txid, 0, ts
+FROM withdraw_queue_new;
 
-CREATE TABLE IF NOT EXISTS kyc_requests (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  uid INTEGER,
-  full_name TEXT,
-  country TEXT,
-  document_type TEXT,
-  document_number TEXT,
-  document_path TEXT,
-  status TEXT,
-  ts INTEGER,
-  FOREIGN KEY(uid) REFERENCES users(uid)
-);
+DROP TABLE withdraw_queue_new;
 
 -- =====================================================
--- PRICES (pricing.py)
+-- CLEANUP
 -- =====================================================
-CREATE TABLE IF NOT EXISTS prices (
-  asset TEXT PRIMARY KEY,
-  price_usdt REAL,
-  updated_at INTEGER
-);
-
--- =====================================================
--- MARKET PRICES (CHART)
--- =====================================================
-CREATE TABLE IF NOT EXISTS market_prices (
-  pair TEXT,
-  price REAL,
-  ts INTEGER
-);
-
--- =====================================================
--- WEBHOOK RATE-LIMIT
--- =====================================================
-CREATE TABLE IF NOT EXISTS webhook_hits (
-  ip TEXT,
-  ts INTEGER
-);
-
--- =====================================================
--- INDEXES (SAFE)
--- =====================================================
-CREATE INDEX IF NOT EXISTS idx_history_uid_ts
-  ON history(uid, ts);
-
-CREATE INDEX IF NOT EXISTS idx_ledger_ref
-  ON ledger(ref);
-
-CREATE INDEX IF NOT EXISTS idx_withdraw_uid
-  ON withdraw_queue(uid);
-
-CREATE INDEX IF NOT EXISTS idx_withdraw_status
-  ON withdraw_queue(status);
-
-CREATE INDEX IF NOT EXISTS idx_market_pair_ts
-  ON market_prices(pair, ts);
-
-CREATE INDEX IF NOT EXISTS idx_webhook_ip_ts
-  ON webhook_hits(ip, ts);
 
 COMMIT;
-PRAGMA foreign_keys = ON;
-
--- ===============================
--- AIRDROP
--- ===============================
-CREATE TABLE IF NOT EXISTS airdrops (
-  uid INTEGER PRIMARY KEY,
-  claimed INTEGER DEFAULT 0,
-  referrals INTEGER DEFAULT 0,
-  reward REAL DEFAULT 0.33,
-  ts INTEGER,
-  FOREIGN KEY(uid) REFERENCES users(uid)
-);
-
--- ===============================
--- MINING
--- ===============================
-CREATE TABLE IF NOT EXISTS mining_orders (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  uid INTEGER,
-  asset TEXT,
-  plan TEXT,
-  investment REAL,
-  roi REAL,
-  days INTEGER,
-  started_at INTEGER,
-  ends_at INTEGER,
-  status TEXT,
-  FOREIGN KEY(uid) REFERENCES users(uid)
-);
-
--- =====================================================
--- TOP-UP TRANSACTIONS (NEW TABLE)
--- =====================================================
-CREATE TABLE IF NOT EXISTS topups (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  country TEXT,
-  phone_number TEXT,
-  amount REAL,
-  status TEXT,      -- success, failure, pending
-  ts INTEGER        -- Timestamp of the transaction
-);
