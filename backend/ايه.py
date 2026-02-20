@@ -160,7 +160,52 @@ def match_orders(conn, pair: str):
 
         if sell["remaining"] <= 0:
             sells.pop(0)
+#======================================================
+# PHONE TOP-UP (EXTERNAL API INTEGRATION)
+# ======================================================
 
+TOPUP_API_URL = "https://topup-provider.com/api/topup"
+API_KEY = "your_api_key_here"  # Replace with the actual API key for the top-up provider
+
+def topup_phone(uid: int, country: str, phone_number: str, amount: float):
+    """
+    Handles a phone top-up by deducting funds from the user's wallet
+    """
+    if amount <= 0:
+        raise HTTPException(400, "Amount must be greater than 0")
+
+    with get_cursor() as conn:
+        c = conn.cursor()
+
+        # Check if user has enough USDT
+        balance = c.execute("SELECT usdt FROM wallets WHERE uid=?", (uid,)).fetchone()
+        if balance["usdt"] < amount:
+            raise HTTPException(400, "Insufficient balance")
+
+        # Deduct the amount from user's wallet
+        debit_wallet(uid, "usdt", amount, f"topup_phone_{phone_number}")
+
+        # Make the API call to the top-up provider
+        payload = {'country': country, 'phone_number': phone_number, 'amount': amount, 'api_key': API_KEY}
+        response = requests.post(TOPUP_API_URL, data=payload)
+
+        if response.status_code == 200:
+            # Store the successful top-up in the database
+            c.execute(
+                "INSERT INTO topups (uid, country, phone_number, amount, status, ts) VALUES (?, ?, ?, ?, ?, ?)",
+                (uid, country, phone_number, amount, "success", int(time.time()))
+            )
+            conn.commit()
+            return {"status": "success", "message": "Top-up successful"}
+        else:
+            # Log the failed top-up attempt
+            c.execute(
+                "INSERT INTO topups (uid, country, phone_number, amount, status, ts) VALUES (?, ?, ?, ?, ?, ?)",
+                (uid, country, phone_number, amount, "failure", int(time.time()))
+            )
+            conn.commit()
+            raise HTTPException(500, "Top-up failed")
+        
 # ======================================================
 # ENDPOINTS (نفس القديمة بدون كسر)
 # ======================================================
