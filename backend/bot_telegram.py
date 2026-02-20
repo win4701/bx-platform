@@ -1,8 +1,11 @@
 import os
 import logging
 import requests
+import time
+from collections import defaultdict, deque
 from telegram import Update
 from telegram.ext import Updater, CommandHandler, CallbackContext
+
 # ======================================================
 # CONFIG
 # ======================================================
@@ -10,51 +13,78 @@ from telegram.ext import Updater, CommandHandler, CallbackContext
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000")
 
-#  Admin Telegram IDs
-ADMINS = {123456789}  # عدّلها
+if not TELEGRAM_TOKEN:
+    raise RuntimeError("TELEGRAM_TOKEN not set")
 
-#  Feature Flags (Source of Truth)
+ADMINS = {123456789}
+
 FEATURES = {
     "market": True,
     "casino": True,
     "mining": True,
-    "ston_fi": False,   #  مخفي افتراضيًا
+    "ston_fi": True,   # مفعّل الآن
 }
+
+RATE_LIMIT_SECONDS = 2
+
+# ======================================================
+# LOGGING
+# ======================================================
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("bx_bot")
+
+# ======================================================
+# RATE LIMIT
+# ======================================================
+
+_user_last_call = defaultdict(float)
+
+def rate_limited(uid):
+    now = time.time()
+    if now - _user_last_call[uid] < RATE_LIMIT_SECONDS:
+        return True
+    _user_last_call[uid] = now
+    return False
+
+# ======================================================
+# SAFE API WRAPPERS
+# ======================================================
+
+def safe_get(endpoint, params=None):
+    try:
+        r = requests.get(f"{API_BASE_URL}{endpoint}", params=params, timeout=10)
+        r.raise_for_status()
+        return r.json()
+    except Exception as e:
+        logger.error(f"GET {endpoint} failed: {e}")
+        return None
+
+def safe_post(endpoint, data=None):
+    try:
+        r = requests.post(f"{API_BASE_URL}{endpoint}", json=data, timeout=10)
+        r.raise_for_status()
+        return r.json()
+    except Exception as e:
+        logger.error(f"POST {endpoint} failed: {e}")
+        return None
 
 # ======================================================
 # SETUP
 # ======================================================
 
-logging.basicConfig(
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    level=logging.INFO
-)
-logger = logging.getLogger(__name__)
-
 updater = Updater(token=TELEGRAM_TOKEN, use_context=True)
 dispatcher = updater.dispatcher
 
 # ======================================================
-# HELPERS
+# GUARDS
 # ======================================================
-
-def api_get(endpoint: str, params=None):
-    r = requests.get(f"{API_BASE_URL}{endpoint}", params=params, timeout=15)
-    r.raise_for_status()
-    return r.json()
-
-def api_post(endpoint: str, data=None):
-    r = requests.post(f"{API_BASE_URL}{endpoint}", json=data, timeout=15)
-    r.raise_for_status()
-    return r.json()
-
-# ------------------ Guards ------------------
 
 def feature_required(feature):
     def decorator(fn):
         def wrapper(update: Update, context: CallbackContext):
-            if not FEATURES.get(feature, False):
-                update.message.reply_text(" This feature is temporarily disabled.")
+            if not FEATURES.get(feature):
+                update.message.reply_text("Feature temporarily disabled.")
                 return
             return fn(update, context)
         return wrapper
@@ -62,254 +92,196 @@ def feature_required(feature):
 
 def admin_only(fn):
     def wrapper(update: Update, context: CallbackContext):
-        uid = update.message.from_user.id
-        if uid not in ADMINS:
-            update.message.reply_text(" Admins only.")
+        if update.message.from_user.id not in ADMINS:
+            update.message.reply_text("Admins only.")
             return
         return fn(update, context)
+    return wrapper
+
+def safe_handler(fn):
+    def wrapper(update: Update, context: CallbackContext):
+        try:
+            uid = update.message.from_user.id
+            if rate_limited(uid):
+                update.message.reply_text("Too many requests. Slow down.")
+                return
+            return fn(update, context)
+        except Exception as e:
+            logger.error(f"Handler error: {e}")
+            update.message.reply_text("Internal error. Try again later.")
     return wrapper
 
 # ======================================================
 # BASIC
 # ======================================================
 
+@safe_handler
 def start(update: Update, context: CallbackContext):
-    msg = " Welcome to BX Bot\n\n"
-
-    if FEATURES["mining"]:
-        msg += "/mining\n"
-
-    if FEATURES["market"]:
-        msg += "/recent_market\n"
-
-    msg += (
-        "/deposit_binance <amount>\n"
-        "/deposit_ton\n"
-        "/balance\n"
-        "/ton_history\n"
-    )
-
+    msg = "BX Bot Commands:\n\n"
+    msg += "/balance\n"
+    msg += "/deposit_binance <amount>\n"
+    msg += "/deposit_ton\n"
+    msg += "/ton_history\n"
+    msg += "/recent_market BX/USDT\n"
+    msg += "/ston_price\n"
+    msg += "/ston_quote <amount>\n"
     update.message.reply_text(msg)
 
 # ======================================================
-# AIRDROP
+# WALLET
 # ======================================================
 
-def airdrop(update: Update, context: CallbackContext):
+@safe_handler
+def balance(update: Update, context: CallbackContext):
     uid = update.message.from_user.id
-    r = api_get("/bxing/airdrop/status", {"uid": uid})
+    r = safe_get("/me", {"uid": uid})
 
-    if r.get("claimed"):
-        update.message.reply_text(" You already claimed your airdrop.")
-    else:
-        update.message.reply_text(
-            f" Airdrop reward: {r['reward']} BX\nUse /claim to receive it."
-        )
-
-def claim(update: Update, context: CallbackContext):
-    uid = update.message.from_user.id
-    r = api_post("/bxing/airdrop/claim", {"uid": uid})
-
-    if r.get("status") == "ok":
-        update.message.reply_text(f" Airdrop claimed: {r['reward']} BX")
-    else:
-        update.message.reply_text(" Airdrop already claimed.")
-
-# ======================================================
-# REFERRAL
-# ======================================================
-
-def referral(update: Update, context: CallbackContext):
-    uid = update.message.from_user.id
-    r = api_get("/bxing/referral/link", {"uid": uid})
-    update.message.reply_text(f"🔗 Your referral link:\n{r['link']}")
-
-def leaderboard(update: Update, context: CallbackContext):
-    rows = api_get("/bxing/referral/leaderboard")
-    msg = " Top Referrals:\n\n"
-    for i, u in enumerate(rows, 1):
-        msg += f"{i}. UID {u['id']} — {u['referrals']} referrals\n"
-    update.message.reply_text(msg)
-
-# ======================================================
-# MINING
-# ======================================================
-
-@feature_required("mining")
-def mining(update: Update, context: CallbackContext):
-    uid = update.message.from_user.id
-    rows = api_get("/bxing/mining/active", {"uid": uid})
-
-    if not rows:
-        update.message.reply_text(" No active mining orders.")
+    if not r:
+        update.message.reply_text("Failed to fetch wallet.")
         return
 
-    msg = " Active Mining:\n\n"
-    for o in rows:
-        msg += f"{o['asset']} | Plan {o['plan']} | ROI {o['roi']} BX\n"
+    wallet = r.get("wallet", {})
+    msg = "Balance:\n\n"
+    for k, v in wallet.items():
+        msg += f"{k.upper()}: {v}\n"
     update.message.reply_text(msg)
 
-def start_mining(update: Update, context: CallbackContext):
+# ======================================================
+# BINANCE PAY
+# ======================================================
+
+@safe_handler
+def deposit_binance(update: Update, context: CallbackContext):
+    if not context.args:
+        update.message.reply_text("Usage: /deposit_binance <amount>")
+        return
+
     uid = update.message.from_user.id
+
     try:
-        asset, plan, amount = context.args
-        amount = float(amount)
-    except Exception:
-        update.message.reply_text("Usage: /start_mining <asset> <plan> <amount>")
+        amount = float(context.args[0])
+    except:
+        update.message.reply_text("Invalid amount.")
         return
 
-    r = api_post("/bxing/mining/start", {
+    r = safe_post("/wallet/binancepay", {
         "uid": uid,
-        "asset": asset,
-        "plan_id": plan,
-        "investment": amount
+        "amount": amount
     })
 
-    if r.get("status") == "started":
-        update.message.reply_text(
-            f" Mining started\nExpected ROI: {r['estimated_return']} BX"
-        )
-    else:
-        update.message.reply_text(" Failed to start mining.")
+    if not r:
+        update.message.reply_text("Deposit failed.")
+        return
 
-# ======================================================
-# BINANCE PAY (DEPOSIT ONLY — SAFE)
-# ======================================================
+    update.message.reply_text("Deposit request created.")
 
-# API_KEY و URL متغيرات البيئة
-BINANCE_PAY_URL = os.getenv("BINANCE_PAY_URL")
-BINANCE_API_KEY = os.getenv("BINANCE_API_KEY")
-
-def process_binancepay_deposit(uid: int, amount: float, asset: str, txid: str):
-    """
-    معاملة إيداع عبر BinancePay مع التحقق من النجاح.
-    """
-    if not BINANCE_API_KEY or not BINANCE_PAY_URL:
-        raise HTTPException(500, "BINANCE_PAY_NOT_CONFIGURED")
-
-    # تحقق من الرصيد
-    if amount <= 0:
-        raise HTTPException(400, "AMOUNT_INVALID")
-
-    try:
-        # إرسال طلب إلى API الخاص بـ BinancePay
-        response = requests.post(
-            BINANCE_PAY_URL,
-            json={
-                "api_key": BINANCE_API_KEY,
-                "uid": uid,
-                "asset": asset,
-                "amount": amount,
-                "txid": txid,
-            }
-        )
-
-        # تحقق من استجابة BinancePay
-        if response.status_code != 200:
-            raise HTTPException(500, f"BINANCE_PAY_ERROR: {response.text}")
-
-        # إذا تمت المعاملة بنجاح
-        if response.json().get("status") == "success":
-            # تحديث المحفظة
-            credit_wallet(uid, asset, amount, f"binancepay_deposit_{txid}")
-            return {"status": "success", "amount": amount}
-
-        else:
-            raise HTTPException(500, "BINANCE_PAY_TRANSACTION_FAILED")
-
-    except requests.exceptions.RequestException as e:
-        raise HTTPException(500, f"BINANCE_PAY_CONNECTION_ERROR: {str(e)}")
 # ======================================================
 # TON
 # ======================================================
 
+@safe_handler
 def deposit_ton(update: Update, context: CallbackContext):
     uid = update.message.from_user.id
-    r = api_get("/api/ton/address", {"uid": uid})
+    r = safe_get("/api/ton/address", {"uid": uid})
 
-    update.message.reply_text(
-        f" TON Deposit Address:\n\n{r['address']}\n\n"
-        f" Send only TON.\nBalance updates after confirmation."
-    )
-
-def ton_history(update: Update, context: CallbackContext):
-    uid = update.message.from_user.id
-    rows = api_get("/api/ton/deposits", {"uid": uid})
-
-    if not rows:
-        update.message.reply_text(" No TON deposits yet.")
+    if not r:
+        update.message.reply_text("Failed to get address.")
         return
 
-    msg = " TON Deposit History:\n\n"
-    for r in rows[:10]:
-        msg += f"{r['amount']} TON — {r['tx_hash'][:10]}...\n"
-    update.message.reply_text(msg)
+    update.message.reply_text(f"TON Address:\n\n{r['address']}")
 
-# ======================================================
-# WALLET / MARKET / CASINO
-# ======================================================
-
-def balance(update: Update, context: CallbackContext):
+@safe_handler
+def ton_history(update: Update, context: CallbackContext):
     uid = update.message.from_user.id
-    r = api_get("/api/wallet", {"uid": uid})
+    rows = safe_get("/api/ton/deposits", {"uid": uid})
 
-    msg = " Balance:\n\n"
-    for k, v in r.items():
-        msg += f"{k.upper()}: {v}\n"
+    if not rows:
+        update.message.reply_text("No TON deposits.")
+        return
+
+    msg = "TON Deposits:\n\n"
+    for r in rows[:10]:
+        msg += f"{r['amount']} TON\n"
     update.message.reply_text(msg)
 
+# ======================================================
+# MARKET
+# ======================================================
+
+@safe_handler
 @feature_required("market")
 def recent_market(update: Update, context: CallbackContext):
-    rows = api_get("/market/recent")
-    msg = " Recent Market Trades:\n\n"
-    for t in rows:
-        msg += f"{t['pair']} | {t['side']} {t['amount']} @ {t['price']}\n"
-    update.message.reply_text(msg)
+    if not context.args:
+        update.message.reply_text("Usage: /recent_market <pair>")
+        return
 
-@feature_required("casino")
-def recent_casino(update: Update, context: CallbackContext):
-    rows = api_get("/casino/recent")
-    msg = " Recent Casino Games:\n\n"
-    for g in rows:
-        msg += f"{g['game']} | Bet {g['bet']} | Reward {g['reward']}\n"
+    pair = context.args[0]
+    rows = safe_get(f"/market/recent/{pair}")
+
+    if not rows:
+        update.message.reply_text("No trades.")
+        return
+
+    msg = f"{pair} Trades:\n\n"
+    for t in rows[:10]:
+        msg += f"{t['amount']} @ {t['price']}\n"
     update.message.reply_text(msg)
 
 # ======================================================
-# STON.FI — ADMIN ONLY (HIDDEN)
+# STON.FI (FULL INTEGRATION)
 # ======================================================
 
-@admin_only
+@safe_handler
 @feature_required("ston_fi")
 def ston_price(update: Update, context: CallbackContext):
-    r = api_get("/api/ston/price")
+    r = safe_get("/ston/price")
+    if not r:
+        update.message.reply_text("STON unavailable.")
+        return
+
     update.message.reply_text(
-        f" STON.FI BX/TON\nPrice: {r['price']} TON\nLiquidity: {r['liquidity']} TON"
+        f"STON BX/TON\nPrice: {r['price']} TON\nLiquidity: {r['liquidity']} TON"
+    )
+
+@safe_handler
+@feature_required("ston_fi")
+def ston_quote(update: Update, context: CallbackContext):
+    if not context.args:
+        update.message.reply_text("Usage: /ston_quote <bx_amount>")
+        return
+
+    try:
+        amount = float(context.args[0])
+    except:
+        update.message.reply_text("Invalid amount.")
+        return
+
+    r = safe_get("/ston/quote", {"amount": amount})
+    if not r:
+        update.message.reply_text("Quote failed.")
+        return
+
+    update.message.reply_text(
+        f"Swap Simulation:\nBX In: {r['bx_in']}\nTON Out: {r['ton_out']}\nFee: {r['fee']}"
     )
 
 # ======================================================
-# HANDLERS
+# REGISTER HANDLERS
 # ======================================================
 
 dispatcher.add_handler(CommandHandler("start", start))
-dispatcher.add_handler(CommandHandler("airdrop", airdrop))
-dispatcher.add_handler(CommandHandler("claim", claim))
-dispatcher.add_handler(CommandHandler("referral", referral))
-dispatcher.add_handler(CommandHandler("leaderboard", leaderboard))
-dispatcher.add_handler(CommandHandler("mining", mining))
-dispatcher.add_handler(CommandHandler("start_mining", start_mining))
+dispatcher.add_handler(CommandHandler("balance", balance))
 dispatcher.add_handler(CommandHandler("deposit_binance", deposit_binance))
 dispatcher.add_handler(CommandHandler("deposit_ton", deposit_ton))
 dispatcher.add_handler(CommandHandler("ton_history", ton_history))
-dispatcher.add_handler(CommandHandler("balance", balance))
 dispatcher.add_handler(CommandHandler("recent_market", recent_market))
-dispatcher.add_handler(CommandHandler("recent_casino", recent_casino))
-
-# 👑 Admin-only (مخفي)
 dispatcher.add_handler(CommandHandler("ston_price", ston_price))
+dispatcher.add_handler(CommandHandler("ston_quote", ston_quote))
 
 # ======================================================
 # RUN
 # ======================================================
 
+logger.info("BX Telegram Bot started")
 updater.start_polling()
 updater.idle()
