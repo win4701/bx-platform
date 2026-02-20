@@ -1,23 +1,40 @@
 import os
-from fastapi import FastAPI, HTTPException, WebSocket
+import logging
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 # ======================================================
-# FEATURE FLAGS (GLOBAL SAFETY)
+# ENV
 # ======================================================
+
+ENV = os.getenv("ENV", "production")
+PORT = int(os.getenv("PORT", 8080))
+
+# ======================================================
+# FEATURE FLAGS
+# ======================================================
+
 FEATURES = {
-    "walletconnect": True,         # ✔ enabled
-    "binancepay_direct": True,     # ✔ enabled
-    "stonfi_trade": False,         # ❌ disabled
-    "casino": True,                # ✔ enabled for Casino
-    "market": True,                # ✔ enabled for Market
-    "mining": True,                # ✔ enabled for Mining
+    "walletconnect": True,
+    "binancepay_direct": True,
+    "stonfi_trade": False,
+    "casino": True,
+    "market": True,
+    "mining": True,
 }
 
 # ======================================================
-# Routers
+# LOGGING
 # ======================================================
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("bloxio")
+
+# ======================================================
+# IMPORT ROUTERS
+# ======================================================
+
 from finance import router as finance_router, rtp_stats
 from market import router as market_router
 from exchange import ORDER_BOOKS, TRADES, place_order
@@ -25,39 +42,46 @@ from casino import router as casino_router
 from pricing import pricing_snapshot
 from bxing import router as bxing_router
 
-# kyc (optional)
 try:
     from kyc import router as kyc_router
 except Exception:
     kyc_router = None
 
 # ======================================================
-# APP CONFIG
+# APP
 # ======================================================
+
 app = FastAPI(
     title="Bloxio API",
-    version="1.0.0",
+    version="2.0.0",
     docs_url="/docs",
     redoc_url="/redoc"
 )
 
 # ======================================================
-# CORS (FLY SAFE)
+# CORS (SMART FOR FLY)
 # ======================================================
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
+
+if ENV == "dev":
+    allow_origins = ["*"]
+else:
+    allow_origins = [
         "https://www.bloxio.online",
         "https://bloxio.online"
-    ],
+    ]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=allow_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 # ======================================================
-# ROUTERS (CORE API)
+# ROUTERS
 # ======================================================
+
 app.include_router(finance_router, prefix="/finance", tags=["finance"])
 app.include_router(market_router, prefix="/market", tags=["market"])
 app.include_router(casino_router, prefix="/casino", tags=["casino"])
@@ -67,14 +91,15 @@ if kyc_router:
     app.include_router(kyc_router, prefix="/kyc", tags=["kyc"])
 
 # ======================================================
-# HEALTH CHECKS (REQUIRED BY FLY)
+# HEALTH (FLY REQUIRED)
 # ======================================================
+
 @app.get("/")
 def root():
     return {
         "status": "running",
         "service": "bloxio-api",
-        "env": os.getenv("ENV", "production")
+        "env": ENV
     }
 
 @app.get("/health")
@@ -82,42 +107,9 @@ def health():
     return {"status": "ok"}
 
 # ======================================================
-# WALLET (READ-ONLY PLACEHOLDER)
+# BXING DEMO SAFE
 # ======================================================
-@app.get("/finance/wallet")
-def wallet():
-    return {
-        "BX": 0, "USDT": 0, "USDC": 0,"LTC": 0, "BNB": 0,
-        "ETH": 0, "TON": 0, "AVAX": 0, "ZEC": 0, "SOL": 0, "BTC": 0
-    }
 
-# ======================================================
-# DUMMY DATA (SAFE / DEMO)
-# ======================================================
-recent_casino_data = [
-    {"game": "Roulette", "bet": 50, "reward": 100},
-    {"game": "Blackjack", "bet": 30, "reward": 0},
-]
-
-recent_market_data = [
-    {"pair": "BX/USDT", "side": "buy", "amount": 10, "price": 100},
-    {"pair": "BX/USDT", "side": "sell", "amount": 5, "price": 105},
-]
-
-# ======================================================
-# MARKET / CASINO (READ-ONLY DEMO)
-# ======================================================
-@app.get("/casino/recent")
-def get_recent_casino():
-    return {"recent_casino": recent_casino_data}
-
-@app.get("/market/recent")
-def get_recent_market():
-    return {"recent_market": recent_market_data}
-
-# ======================================================
-# BXING (MINING / AIRDROP — DEMO SAFE)
-# ======================================================
 class MiningOrder(BaseModel):
     asset: str
     plan: str
@@ -158,76 +150,92 @@ def get_active_mining(uid: int):
     ]
 
 # ======================================================
-# WALLETCONNECT (ENABLED)
+# WALLETCONNECT
 # ======================================================
+
 @app.post("/walletconnect/connect")
-def connect_wallet(*args, **kwargs):
+def connect_wallet():
     if not FEATURES["walletconnect"]:
         raise HTTPException(410, "WalletConnect disabled")
+    return {"status": "connected"}
 
 # ======================================================
-# BINANCE PAY (ENABLED)
+# BINANCE PAY
 # ======================================================
-@app.post("/binancepay/pay")
-def binance_pay(*args, **kwargs):
+
+@app.post("/wallet/binancepay")
+def binance_pay():
     if not FEATURES["binancepay_direct"]:
         raise HTTPException(410, "Direct Binance Pay disabled")
+    return {"status": "processing"}
 
 # ======================================================
-# EXCHANGE (LIVE WEBSOCKET)
+# STON (MATCH TELEGRAM)
 # ======================================================
+
+@app.get("/ston/price")
+def ston_price():
+    return {"price": 8, "liquidity": 100000}
+
+@app.get("/ston/quote")
+def ston_quote(amount: float):
+    price = 8
+    ton_out = amount * price
+    fee = ton_out * 0.003
+    return {
+        "bx_in": amount,
+        "ton_out": ton_out - fee,
+        "fee": fee
+    }
+
+# ======================================================
+# EXCHANGE WEBSOCKET (SAFE)
+# ======================================================
+
 @app.websocket("/ws/exchange")
 async def exchange_ws(ws: WebSocket):
     await ws.accept()
+    try:
+        while True:
+            data = await ws.receive_json()
 
-    while True:
-        data = await ws.receive_json()
+            if data.get("type") == "order":
+                place_order(
+                    uid=data["uid"],
+                    pair=data["pair"],
+                    side=data["side"],
+                    price=data["price"],
+                    amount=data["amount"]
+                )
 
-        if data.get("type") == "order":
-            place_order(
-                uid=data["uid"],
-                pair=data["pair"],
-                side=data["side"],
-                price=data["price"],
-                amount=data["amount"]
-            )
+                await ws.send_json({
+                    "type": "update",
+                    "pair": data["pair"],
+                    "book": ORDER_BOOKS.get(data["pair"], {}),
+                    "trades": list(TRADES.get(data["pair"], []))[-50:]
+                })
 
-            await ws.send_json({
-                "type": "update",
-                "pair": data["pair"],
-                "book": ORDER_BOOKS[data["pair"]],
-                "trades": TRADES[data["pair"]][-50:]
-            })
-
-# ======================================================
-# STON.FI (READ ONLY — ADMIN / INTERNAL)
-# ======================================================
-class BuyBXOrder(BaseModel):
-    ton_amount: float
-
-@app.get("/stonfi/bx_price")
-def get_bx_price():
-    return {"price": 8}
-
-@app.post("/stonfi/buy")
-def buy_bx(order: BuyBXOrder):
-    if not FEATURES["stonfi_trade"]:
-        raise HTTPException(410, "STON.FI trading disabled")
+    except WebSocketDisconnect:
+        logger.info("WebSocket disconnected")
 
 # ======================================================
-# PUBLIC (SAFE / READ ONLY)
+# PUBLIC
 # ======================================================
-@app.get("/public/prices", tags=["public"])
+
+@app.get("/public/prices")
 def public_prices():
     return pricing_snapshot()
 
-@app.get("/public/rtp", tags=["public"])
+@app.get("/public/rtp")
 def public_rtp():
     return rtp_stats()
 
 # ======================================================
-# INTERNAL (WATCHER → API)
+# INTERNAL
 # ======================================================
+
 @app.post("/internal/event")
 def internal_event(event: dict):
+    if ENV != "dev" and "secret" not in event:
+        raise HTTPException(403, "Unauthorized")
     return {"status": "received"}
