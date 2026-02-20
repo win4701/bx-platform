@@ -1,129 +1,220 @@
+import os
 import time
-import threading
-import websockets
-import asyncio
-from collections import defaultdict
-from fastapi import APIRouter, HTTPException, Depends
-from typing import Dict, List
 import json
+import asyncio
+import logging
+import sqlite3
+import websockets
+from collections import defaultdict, deque
+from contextlib import contextmanager
+from threading import Lock
+from fastapi import APIRouter, HTTPException
 
-# Global variables for price and order book
-ORDER_BOOKS: Dict[str, Dict[str, List[dict]]] = defaultdict(lambda: {"buy": [], "sell": []})
-TRADES: Dict[str, deque] = defaultdict(lambda: deque(maxlen=500))
-MARKET_PRICE = 45.0  # Start with a reference price for BX/USDT
-ROWS = 15  # Number of price levels to show
+# ======================================================
+# CONFIG
+# ======================================================
 
-# Map of available quotes to their respective Binance symbols
-quote_map = {
+DB_PATH = os.getenv("DB_PATH", "db/db.sqlite")
+BX_REFERENCE_PRICE = 45.0   # 1 BX = 45 USDT reference
+
+SUPPORTED_QUOTES = [
+    "USDT","USDC","TON","BNB","ETH",
+    "AVAX","SOL","BTC","ZEC","LTC"
+]
+
+BINANCE_SYMBOLS = {
     "USDT": "btcusdt",
     "USDC": "btcusdt",
-    "BTC": "btcusdt",
-    "ETH": "ethusdt",
-    "BNB": "bnbusdt",
-    "SOL": "solusdt",
+    "BTC":  "btcusdt",
+    "ETH":  "ethusdt",
+    "BNB":  "bnbusdt",
+    "SOL":  "solusdt",
     "AVAX": "avaxusdt",
-    "LTC": "ltcusdt",
-    "ZEC": "zecusdt",
-    "TON": "tonusdt"
+    "LTC":  "ltcusdt",
+    "ZEC":  "zecusdt",
+    "TON":  "tonusdt"
 }
 
-# WebSocket placeholder for Binance
-async def connect_binance(symbol="btcusdt"):
-    uri = f"wss://stream.binance.com:9443/ws/{symbol}@miniTicker"
-    async with websockets.connect(uri) as ws:
-        while True:
-            message = await ws.recv()
-            data = json.loads(message)
-            price = float(data['c'])  # Closing price from Binance
-            if price:
-                compute_bx_price(price)
+ROWS = 15
 
-# Function to compute BX price based on live price
-def compute_bx_price(quote_price_usdt):
-    global MARKET_PRICE
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("market")
+
+router = APIRouter(prefix="/market", tags=["market"])
+
+# ======================================================
+# DB SAFE
+# ======================================================
+
+@contextmanager
+def get_db():
+    conn = sqlite3.connect(DB_PATH, check_same_thread=False)
+    conn.row_factory = sqlite3.Row
+    try:
+        yield conn
+        conn.commit()
+    except:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+# ======================================================
+# GLOBAL STATE
+# ======================================================
+
+ORDER_BOOKS = defaultdict(lambda: {"buy": [], "sell": []})
+TRADES = defaultdict(lambda: deque(maxlen=500))
+MARKET_PRICES = {}
+LOCK = Lock()
+
+# ======================================================
+# PRICE ENGINE
+# ======================================================
+
+def compute_bx_price(quote: str, quote_price_usdt: float):
     if quote_price_usdt <= 0:
-        raise HTTPException(400, "Invalid market price")
-    # Logic to compute BX price
-    MARKET_PRICE = 45 / quote_price_usdt
-    update_price_ui()
-    generate_order_book()
-    render_order_book()
+        return
 
-def update_price_ui():
-    # Update the UI with the latest market price
-    print(f"Market Price: {MARKET_PRICE:.6f}")
+    with LOCK:
+        bx_price = BX_REFERENCE_PRICE / quote_price_usdt
+        pair = f"BX/{quote}"
+        MARKET_PRICES[pair] = bx_price
+        generate_order_book(pair, bx_price)
+        store_price(pair, bx_price)
 
-def generate_order_book():
+    logger.info(f"{pair} Updated: {bx_price:.6f}")
+
+def generate_order_book(pair: str, price: float):
     bids = []
     asks = []
 
     for i in range(ROWS):
-        bids.append(f"{(MARKET_PRICE - i * MARKET_PRICE * 0.0005):.6f}")
-        asks.append(f"{(MARKET_PRICE + i * MARKET_PRICE * 0.0005):.6f}")
-    
-    ORDER_BOOKS["bx"]["buy"] = bids
-    ORDER_BOOKS["bx"]["sell"] = asks
+        bids.append(round(price - i * price * 0.0005, 6))
+        asks.append(round(price + i * price * 0.0005, 6))
 
-def render_order_book():
-    bids = ORDER_BOOKS["bx"]["buy"]
-    asks = ORDER_BOOKS["bx"]["sell"]
-    print("Bids:")
-    for bid in bids:
-        print(f"Bid: {bid}")
-    print("Asks:")
-    for ask in asks:
-        print(f"Ask: {ask}")
+    ORDER_BOOKS[pair]["buy"] = bids
+    ORDER_BOOKS[pair]["sell"] = asks
 
-# Place an order (buy/sell)
-def place_order(uid: int, side: str, amount: float, price: float):
+def store_price(pair: str, price: float):
+    with get_db() as conn:
+        conn.execute(
+            "INSERT INTO market_prices(pair, price, ts) VALUES (?,?,?)",
+            (pair, price, int(time.time()))
+        )
+
+# ======================================================
+# BINANCE STREAM (MULTI SYMBOL)
+# ======================================================
+
+async def stream_symbol(quote: str):
+
+    symbol = BINANCE_SYMBOLS.get(quote)
+    if not symbol:
+        return
+
+    uri = f"wss://stream.binance.com:9443/ws/{symbol}@miniTicker"
+
+    while True:
+        try:
+            async with websockets.connect(uri) as ws:
+                logger.info(f"Connected: {symbol}")
+                while True:
+                    msg = await ws.recv()
+                    data = json.loads(msg)
+                    price = float(data["c"])
+                    compute_bx_price(quote, price)
+        except Exception as e:
+            logger.error(f"{symbol} error: {e}")
+            await asyncio.sleep(5)
+
+# ======================================================
+# MATCH ENGINE (PAIR SAFE)
+# ======================================================
+
+def place_order(uid: int, pair: str, side: str, amount: float, price: float):
+
+    if pair not in MARKET_PRICES:
+        raise HTTPException(400, "PAIR_NOT_SUPPORTED")
+
+    if side not in ("buy", "sell"):
+        raise HTTPException(400, "INVALID_SIDE")
+
     if amount <= 0 or price <= 0:
-        raise HTTPException(400, "Invalid amount or price")
-    
-    order = {"uid": uid, "side": side, "amount": amount, "price": price, "remaining": amount}
-    ORDER_BOOKS["bx"][side].append(order)
-    generate_order_book()
+        raise HTTPException(400, "INVALID_ORDER")
 
-# Match orders (simplified)
-def match_orders():
-    buys = ORDER_BOOKS["bx"]["buy"]
-    sells = ORDER_BOOKS["bx"]["sell"]
-    
-    while buys and sells:
-        buy = buys[0]
-        sell = sells[0]
-        
-        if float(buy) < float(sell):
-            break  # No more matching
-        
-        trade_price = float(sell)  # Trade happens at the sell price
-        trade_amount = min(float(buy), float(sell))
-        
-        trade = {
-            "price": trade_price,
-            "amount": trade_amount,
-            "ts": int(time.time())
-        }
-        TRADES["bx"].append(trade)
-        
-        buys.pop(0)
-        sells.pop(0)
+    order = {
+        "uid": uid,
+        "side": side,
+        "amount": amount,
+        "price": price,
+        "remaining": amount,
+        "ts": int(time.time())
+    }
 
-# Execute a trade (buy/sell logic)
-def execute_trade(uid: int, side: str, amount: float):
-    if side == "buy":
-        price = ORDER_BOOKS["bx"]["sell"][0]  # Best ask price
-    else:
-        price = ORDER_BOOKS["bx"]["buy"][0]  # Best bid price
-    
-    place_order(uid, side, amount, price)  # Place the order
-    match_orders()  # Try to match orders
+    with LOCK:
+        ORDER_BOOKS[pair][side].append(order)
 
-# Example execution
-async def main():
-    # Start WebSocket connection and execute a trade
-    await connect_binance("btcusdt")
-    execute_trade(uid=1, side="buy", amount=10)  # Simulate a buy order of 10 units
+    match_orders(pair)
 
-# Run the event loop for WebSocket and order execution
-if __name__ == "__main__":
-    asyncio.run(main())
+def match_orders(pair: str):
+    with LOCK:
+        buys = ORDER_BOOKS[pair]["buy"]
+        sells = ORDER_BOOKS[pair]["sell"]
+
+        buys.sort(key=lambda o: o["price"], reverse=True)
+        sells.sort(key=lambda o: o["price"])
+
+        while buys and sells:
+            buy = buys[0]
+            sell = sells[0]
+
+            if buy["price"] < sell["price"]:
+                break
+
+            trade_price = sell["price"]
+            trade_amount = min(buy["remaining"], sell["remaining"])
+
+            TRADES[pair].append({
+                "price": trade_price,
+                "amount": trade_amount,
+                "ts": int(time.time())
+            })
+
+            buy["remaining"] -= trade_amount
+            sell["remaining"] -= trade_amount
+
+            if buy["remaining"] <= 0:
+                buys.pop(0)
+
+            if sell["remaining"] <= 0:
+                sells.pop(0)
+
+# ======================================================
+# API ENDPOINTS
+# ======================================================
+
+@router.get("/pairs")
+def get_pairs():
+    return list(MARKET_PRICES.keys())
+
+@router.get("/price/{pair}")
+def get_price(pair: str):
+    return {"pair": pair, "price": MARKET_PRICES.get(pair)}
+
+@router.get("/orderbook/{pair}")
+def get_orderbook(pair: str):
+    return ORDER_BOOKS[pair]
+
+@router.get("/recent/{pair}")
+def get_recent(pair: str):
+    return list(TRADES[pair])
+
+# ======================================================
+# START STREAMS
+# ======================================================
+
+def start_market_stream():
+    loop = asyncio.get_event_loop()
+    for quote in SUPPORTED_QUOTES:
+        loop.create_task(stream_symbol(quote))
