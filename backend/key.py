@@ -4,7 +4,7 @@ import hmac
 import hashlib
 import logging
 from collections import deque
-from typing import Dict
+from typing import Dict, Set
 from fastapi import HTTPException, Header, Request
 
 # ======================================================
@@ -20,6 +20,12 @@ HMAC_SECRET = os.getenv("HMAC_SECRET")
 
 WEBHOOK_WINDOW = int(os.getenv("WEBHOOK_WINDOW", 60))
 RATE_LIMIT_WINDOW = int(os.getenv("RATE_LIMIT_WINDOW", 60))
+
+STRICT_MODE = os.getenv("STRICT_MODE", "true").lower() == "true"
+
+IP_ALLOWLIST = set(
+    ip.strip() for ip in os.getenv("IP_ALLOWLIST", "").split(",") if ip.strip()
+)
 
 RATE_LIMIT_MAX = {
     "api": int(os.getenv("API_RATE_LIMIT", 100)),
@@ -39,15 +45,19 @@ logger = logging.getLogger("security")
 # ======================================================
 
 if ENV != "dev":
+    missing = []
     if not API_KEY:
-        raise RuntimeError("API_KEY not set")
+        missing.append("API_KEY")
     if not ADMIN_TOKEN:
-        raise RuntimeError("ADMIN_TOKEN not set")
+        missing.append("ADMIN_TOKEN")
     if not HMAC_SECRET:
-        raise RuntimeError("HMAC_SECRET not set")
+        missing.append("HMAC_SECRET")
+
+    if missing:
+        raise RuntimeError(f"Missing critical secrets: {', '.join(missing)}")
 
 # ======================================================
-# RATE LIMITING (ISOLATED PER KEY)
+# RATE LIMITING (ISOLATED PER KEY/IP)
 # ======================================================
 
 _RATE_LIMIT: Dict[str, Dict[str, deque]] = {
@@ -63,7 +73,7 @@ def _rate_limit(identity: str, scope: str):
     scope_bucket = _RATE_LIMIT.setdefault(scope, {})
     bucket = scope_bucket.setdefault(identity, deque())
 
-    # remove expired timestamps
+    # cleanup expired
     while bucket and bucket[0] < now - RATE_LIMIT_WINDOW:
         bucket.popleft()
 
@@ -75,22 +85,39 @@ def _rate_limit(identity: str, scope: str):
 
     bucket.append(now)
 
-    # optional cleanup to avoid memory growth
-    if not bucket:
-        scope_bucket.pop(identity, None)
+    # Prevent memory growth
+    if len(scope_bucket) > 10000:
+        scope_bucket.clear()
 
 # ======================================================
-# CONSTANT TIME TOKEN COMPARE
+# CONSTANT TIME COMPARE
 # ======================================================
 
 def _secure_compare(a: str, b: str):
     return hmac.compare_digest(a or "", b or "")
 
 # ======================================================
+# WEBHOOK REPLAY CACHE (IN-MEMORY)
+# ======================================================
+
+_WEBHOOK_REPLAY_CACHE: Set[str] = set()
+
+def _check_replay(signature: str):
+    if signature in _WEBHOOK_REPLAY_CACHE:
+        raise HTTPException(403, "REPLAY_ATTACK")
+
+    _WEBHOOK_REPLAY_CACHE.add(signature)
+
+    # Prevent unbounded growth
+    if len(_WEBHOOK_REPLAY_CACHE) > 10000:
+        _WEBHOOK_REPLAY_CACHE.clear()
+
+# ======================================================
 # HMAC VALIDATION WITH REPLAY PROTECTION
 # ======================================================
 
 def verify_hmac(payload: bytes, signature: str, timestamp: str):
+
     if not HMAC_SECRET:
         raise HTTPException(500, "HMAC_SECRET_NOT_SET")
 
@@ -120,7 +147,24 @@ def verify_hmac(payload: bytes, signature: str, timestamp: str):
         logger.warning("Invalid HMAC signature")
         raise HTTPException(403, "INVALID_SIGNATURE")
 
+    if STRICT_MODE:
+        _check_replay(signature)
+
     return True
+
+# ======================================================
+# OPTIONAL IP RESTRICTION
+# ======================================================
+
+def _ip_check(request: Request):
+    if not IP_ALLOWLIST:
+        return
+
+    client_ip = request.client.host
+
+    if client_ip not in IP_ALLOWLIST:
+        logger.warning(f"Blocked IP: {client_ip}")
+        raise HTTPException(403, "IP_NOT_ALLOWED")
 
 # ======================================================
 # API GUARD
@@ -131,6 +175,8 @@ def api_guard(
     x_api_key: str = Header(None)
 ):
     client_ip = request.client.host
+
+    _ip_check(request)
 
     if not _secure_compare(x_api_key, API_KEY):
         logger.warning(f"Invalid API key from {client_ip}")
@@ -149,6 +195,8 @@ def admin_guard(
 ):
     client_ip = request.client.host
 
+    _ip_check(request)
+
     if not _secure_compare(x_admin_token, ADMIN_TOKEN):
         logger.warning(f"Invalid admin token from {client_ip}")
         raise HTTPException(401, "INVALID_ADMIN_TOKEN")
@@ -166,6 +214,8 @@ def audit_guard(
 ):
     client_ip = request.client.host
 
+    _ip_check(request)
+
     if not _secure_compare(x_audit_token, AUDIT_TOKEN):
         logger.warning(f"Invalid audit token from {client_ip}")
         raise HTTPException(401, "INVALID_AUDIT_TOKEN")
@@ -174,7 +224,7 @@ def audit_guard(
     return True
 
 # ======================================================
-# WEBHOOK GUARD (HMAC + TIMESTAMP)
+# WEBHOOK GUARD
 # ======================================================
 
 async def webhook_guard(
