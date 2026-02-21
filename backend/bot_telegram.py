@@ -32,7 +32,7 @@ RATE_LIMIT_SECONDS = 2
 # ======================================================
 
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("bx_bot")
+logger = logging.getLogger("Bloxio_bot")
 
 # ======================================================
 # RATE LIMIT
