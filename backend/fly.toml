@@ -1,0 +1,21 @@
+app = "bloxio-api"
+primary_region = "fra"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  ENV = "production"
+  PORT = "8080"
+  DB_PATH = "/data/db.sqlite"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_start_machines = true
+  auto_stop_machines = false
+  min_machines_running = 1
+
+[[mounts]]
+  source = "exchange_data"
+  destination = "/data"
