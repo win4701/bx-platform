@@ -1,29 +1,22 @@
 import os
 import time
 import sqlite3
-import secrets
 import requests
+import logging
 from contextlib import contextmanager
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.responses import StreamingResponse
 
 from key import api_guard, admin_guard
-
-# ======================================================
-# ROUTER
-# ======================================================
-router = APIRouter(prefix="/watcher", dependencies=[Depends(api_guard)])
+from risk_engine import evaluate_withdraw
 
 # ======================================================
 # CONFIG
 # ======================================================
+
 DB_PATH = os.getenv("DB_PATH", "db/db.sqlite")
-
-MIN_WITHDRAW_USDT = 10.0
-MAX_WITHDRAW_RATIO = 0.5
-MAX_WITHDRAW_MONTH = 15
-
-TOPUP_API_URL = os.getenv("TOPUP_API_URL")  # مزود تعبئة الرصيد
+MIN_WITHDRAW_USDT = float(os.getenv("MIN_WITHDRAW_USDT", 10))
+TOPUP_API_URL = os.getenv("TOPUP_API_URL")
 TOPUP_API_KEY = os.getenv("TOPUP_API_KEY")
 
 ALLOWED_ASSETS = {
@@ -31,9 +24,15 @@ ALLOWED_ASSETS = {
     "avax","sol","btc","zec","ltc","bx"
 }
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("watcher")
+
+router = APIRouter(prefix="/watcher", dependencies=[Depends(api_guard)])
+
 # ======================================================
 # DB (ATOMIC – FLY SAFE)
 # ======================================================
+
 @contextmanager
 def get_db():
     conn = sqlite3.connect(DB_PATH, check_same_thread=False)
@@ -50,18 +49,17 @@ def get_db():
 # ======================================================
 # LEDGER (DOUBLE ENTRY SAFE)
 # ======================================================
+
 def ledger(ref: str, debit: str, credit: str, amount: float):
     if amount <= 0:
         return
-
     ts = int(time.time())
     with get_db() as conn:
-        c = conn.cursor()
-        c.execute(
+        conn.execute(
             "INSERT INTO ledger(ref,account,debit,credit,ts) VALUES (?,?,?,?,?)",
             (ref, debit, amount, 0, ts)
         )
-        c.execute(
+        conn.execute(
             "INSERT INTO ledger(ref,account,debit,credit,ts) VALUES (?,?,?,?,?)",
             (ref, credit, 0, amount, ts)
         )
@@ -69,7 +67,9 @@ def ledger(ref: str, debit: str, credit: str, amount: float):
 # ======================================================
 # CREDIT DEPOSIT (IDEMPOTENT)
 # ======================================================
+
 def credit_deposit(uid: int, asset: str, amount: float, txid: str):
+
     if amount <= 0:
         return
 
@@ -78,24 +78,25 @@ def credit_deposit(uid: int, asset: str, amount: float, txid: str):
         raise HTTPException(400, "INVALID_ASSET")
 
     with get_db() as conn:
-        c = conn.cursor()
 
-        # منع التكرار
-        if c.execute(
+        # idempotency check
+        if conn.execute(
             "SELECT 1 FROM used_txs WHERE txid=?",
             (txid,)
         ).fetchone():
             return
 
-        c.execute(
+        # update wallet
+        updated = conn.execute(
             f"UPDATE wallets SET {asset} = {asset} + ? WHERE uid=?",
             (amount, uid)
         )
 
-        if c.rowcount == 0:
+        if updated.rowcount == 0:
             raise HTTPException(404, "WALLET_NOT_FOUND")
 
-        c.execute(
+        # history
+        conn.execute(
             """INSERT INTO history
                (uid,action,asset,amount,ref,ts)
                VALUES (?,?,?,?,?,?)""",
@@ -109,34 +110,38 @@ def credit_deposit(uid: int, asset: str, amount: float, txid: str):
             amount=amount
         )
 
-        c.execute(
+        # mark tx used
+        conn.execute(
             "INSERT INTO used_txs(txid,asset,ts) VALUES (?,?,?)",
             (txid, asset, int(time.time()))
         )
 
+    logger.info(f"Deposit credited | UID={uid} | {asset} | {amount}")
+
 # ======================================================
 # DEBIT WALLET (SAFE)
 # ======================================================
+
 def debit_wallet(uid: int, asset: str, amount: float, ref: str):
+
     if amount <= 0:
         raise HTTPException(400, "INVALID_AMOUNT")
 
     asset = asset.lower()
 
     with get_db() as conn:
-        c = conn.cursor()
 
-        c.execute(
+        updated = conn.execute(
             f"""UPDATE wallets
                 SET {asset} = {asset} - ?
                 WHERE uid=? AND {asset} >= ?""",
             (amount, uid, amount)
         )
 
-        if c.rowcount == 0:
+        if updated.rowcount == 0:
             raise HTTPException(400, "INSUFFICIENT_BALANCE")
 
-        c.execute(
+        conn.execute(
             """INSERT INTO history
                (uid,action,asset,amount,ref,ts)
                VALUES (?,?,?,?,?,?)""",
@@ -153,8 +158,10 @@ def debit_wallet(uid: int, asset: str, amount: float, ref: str):
 # ======================================================
 # USER WALLET
 # ======================================================
+
 @router.get("/me")
 def wallet_me(uid: int):
+
     with get_db() as conn:
         row = conn.execute(
             """SELECT usdt,usdc,ton,bnb,eth,avax,
@@ -171,13 +178,13 @@ def wallet_me(uid: int):
 # ======================================================
 # PHONE TOPUP (خصم مباشر من Wallet)
 # ======================================================
+
 @router.post("/topup")
 def phone_topup(uid: int, phone: str, country: str, amount: float):
 
     if amount <= 0:
         raise HTTPException(400, "INVALID_AMOUNT")
 
-    # خصم مباشر من رصيد USDT
     debit_wallet(uid, "usdt", amount, f"phone_topup:{phone}")
 
     if not TOPUP_API_URL:
@@ -204,29 +211,39 @@ def phone_topup(uid: int, phone: str, country: str, amount: float):
     return {"status": "success", "charged": amount}
 
 # ======================================================
-# WITHDRAW (USDT)
+# WITHDRAW (RISK ENGINE + QUEUE SYSTEM)
 # ======================================================
+
 @router.post("/withdraw")
 def request_withdraw(uid: int, amount: float, address: str):
 
     if amount < MIN_WITHDRAW_USDT:
-        raise HTTPException(400, "MIN_WITHDRAW_10")
+        raise HTTPException(400, "MIN_WITHDRAW")
 
+    risk = evaluate_withdraw(uid, amount, address)
+
+    # خصم فوري لمنع double-spend
     debit_wallet(uid, "usdt", amount, "withdraw_request")
+
+    status = "approved" if risk["approved"] else "manual_review"
 
     with get_db() as conn:
         conn.execute(
-            """INSERT INTO withdrawals
+            """INSERT INTO withdraw_queue
                (uid,asset,amount,address,status,ts)
                VALUES (?,?,?,?,?,?)""",
-            (uid, "usdt", amount, address, "requested", int(time.time()))
+            (uid, "usdt", amount, address, status, int(time.time()))
         )
 
-    return {"status": "requested"}
+    return {
+        "status": status,
+        "risk_score": risk["risk_score"]
+    }
 
 # ======================================================
 # ADMIN LEDGER EXPORT
 # ======================================================
+
 @router.get("/admin/ledger/export", dependencies=[Depends(admin_guard)])
 def export_ledger():
 
@@ -246,4 +263,4 @@ def export_ledger():
             headers={
                 "Content-Disposition": "attachment; filename=ledger.csv"
             }
-    )
+        )
