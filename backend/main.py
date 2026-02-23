@@ -139,8 +139,6 @@ if kyc_router:
 # HEALTH
 # ======================================================
 
-app = FastAPI()
-
 @app.get("/")
 def root():
     return {"status": "ok"}
