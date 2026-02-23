@@ -1,15 +1,18 @@
 import os
 import logging
-from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from starlette.middleware.base import BaseHTTPMiddleware
 from pydantic import BaseModel
 
 # ======================================================
 # ENV
 # ======================================================
 
-ENV = os.getenv("ENV", "production")
+ENV = os.getenv("ENV", "production").lower()
 PORT = int(os.getenv("PORT", 8080))
+INTERNAL_SECRET = os.getenv("INTERNAL_SECRET", "")
 
 # ======================================================
 # FEATURE FLAGS
@@ -28,7 +31,10 @@ FEATURES = {
 # LOGGING
 # ======================================================
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO if ENV != "dev" else logging.DEBUG,
+    format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
+)
 logger = logging.getLogger("bloxio")
 
 # ======================================================
@@ -53,13 +59,37 @@ except Exception:
 
 app = FastAPI(
     title="Bloxio API",
-    version="2.0.0",
+    version="2.1.0",
     docs_url="/docs",
     redoc_url="/redoc"
 )
 
 # ======================================================
-# CORS (SMART FOR FLY)
+# LIFECYCLE EVENTS
+# ======================================================
+
+@app.on_event("startup")
+async def startup_event():
+    logger.info(f"🚀 Bloxio API started | ENV={ENV} | PORT={PORT}")
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    logger.info("🛑 Bloxio API shutting down")
+
+# ======================================================
+# GLOBAL ERROR HANDLER
+# ======================================================
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    logger.error(f"Unhandled error: {exc}")
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal server error"},
+    )
+
+# ======================================================
+# CORS
 # ======================================================
 
 if ENV == "dev":
@@ -79,6 +109,21 @@ app.add_middleware(
 )
 
 # ======================================================
+# SECURITY HEADERS
+# ======================================================
+
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request, call_next):
+        response = await call_next(request)
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+        response.headers["Server"] = "Bloxio"
+        return response
+
+app.add_middleware(SecurityHeadersMiddleware)
+
+# ======================================================
 # ROUTERS
 # ======================================================
 
@@ -91,7 +136,7 @@ if kyc_router:
     app.include_router(kyc_router, prefix="/kyc", tags=["kyc"])
 
 # ======================================================
-# HEALTH (FLY REQUIRED)
+# HEALTH
 # ======================================================
 
 @app.get("/")
@@ -170,7 +215,7 @@ def binance_pay():
     return {"status": "processing"}
 
 # ======================================================
-# STON (MATCH TELEGRAM)
+# STON
 # ======================================================
 
 @app.get("/ston/price")
@@ -189,7 +234,7 @@ def ston_quote(amount: float):
     }
 
 # ======================================================
-# EXCHANGE WEBSOCKET (SAFE)
+# EXCHANGE WEBSOCKET
 # ======================================================
 
 @app.websocket("/ws/exchange")
@@ -199,7 +244,9 @@ async def exchange_ws(ws: WebSocket):
         while True:
             data = await ws.receive_json()
 
-            if data.get("type") == "order":
+            if data.get("type") == "order" and all(
+                k in data for k in ["uid", "pair", "side", "price", "amount"]
+            ):
                 place_order(
                     uid=data["uid"],
                     pair=data["pair"],
@@ -236,6 +283,14 @@ def public_rtp():
 
 @app.post("/internal/event")
 def internal_event(event: dict):
-    if ENV != "dev" and "secret" not in event:
+    if ENV != "dev" and event.get("secret") != INTERNAL_SECRET:
         raise HTTPException(403, "Unauthorized")
     return {"status": "received"}
+
+# ======================================================
+# RUN (Fly Compatible)
+# ======================================================
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("main:app", host="0.0.0.0", port=PORT)
