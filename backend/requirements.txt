@@ -1,6 +1,5 @@
-fastapi
+flask
+gunicorn
 uvicorn
-pydantic
+fastapi
 psycopg2-binary
-requests
-python-telegram-bot
