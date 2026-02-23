@@ -141,16 +141,12 @@ if kyc_router:
 
 @app.get("/")
 def root():
-    return {
-        "status": "running",
-        "service": "bloxio-api",
-        "env": ENV
-    }
+    return {"status": "ok"}
 
 @app.get("/health")
 def health():
-    return {"status": "ok"}
-
+    return {"status": "healthy"}
+    
 # ======================================================
 # BXING DEMO SAFE
 # ======================================================
