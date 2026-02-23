@@ -1,5 +1,5 @@
 flask
 gunicorn
-uvicorn[standard]
 fastapi
+uvicorn[standard]
 psycopg2-binary
