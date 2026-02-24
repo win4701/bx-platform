@@ -1,5 +1,7 @@
 import os
 import logging
+import threading
+from bot_telegram import start_bot
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -72,6 +74,12 @@ app = FastAPI(
 async def startup_event():
     logger.info(f"🚀 Bloxio API started | ENV={ENV} | PORT={PORT}")
 
+    bot_thread = threading.Thread(
+        target=start_bot,
+        daemon=True
+    )
+    bot_thread.start()
+    
 @app.on_event("shutdown")
 async def shutdown_event():
     logger.info("🛑 Bloxio API shutting down")
