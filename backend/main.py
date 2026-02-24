@@ -74,11 +74,12 @@ app = FastAPI(
 async def startup_event():
     logger.info(f"🚀 Bloxio API started | ENV={ENV} | PORT={PORT}")
 
-    bot_thread = threading.Thread(
-        target=start_bot,
-        daemon=True
-    )
-    bot_thread.start()
+    if os.getenv("RUN_BOT", "true") == "true":
+        bot_thread = threading.Thread(
+            target=start_bot,
+            daemon=True
+        )
+        bot_thread.start()
     
 @app.on_event("shutdown")
 async def shutdown_event():
