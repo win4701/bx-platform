@@ -284,4 +284,9 @@ dispatcher.add_handler(CommandHandler("ston_quote", ston_quote))
 
 def start_bot():
     logger.info("🤖 Telegram Bot starting...")
-    updater.start_polling()
+
+    try:
+        updater.start_polling()
+        updater.idle()
+    except Exception as e:
+        logger.error(f"Telegram Bot crashed: {e}")
