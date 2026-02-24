@@ -8,7 +8,8 @@ primary_region = "ams"
   PORT = "8080"
   ENV = "production"
 
-[http_service]
+[processes]
+  app = "python main.py"
   internal_port = 8080
   force_https = true
   auto_stop_machines = false
