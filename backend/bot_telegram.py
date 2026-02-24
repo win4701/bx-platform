@@ -282,6 +282,6 @@ dispatcher.add_handler(CommandHandler("ston_quote", ston_quote))
 # RUN
 # ======================================================
 
-logger.info("BX Telegram Bot started")
-updater.start_polling()
-updater.idle()
+def start_bot():
+    logger.info("🤖 Telegram Bot starting...")
+    updater.start_polling()
