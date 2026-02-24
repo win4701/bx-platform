@@ -1,31 +1,19 @@
-app = "bx-platform"  # ØºÙŠÙ‘Ø±Ù‡Ø§ Ù„Ø§Ø³Ù… ØªØ·Ø¨ÙŠÙ‚Ùƒ ÙÙŠ Fly
-
+app = "bx-platform"
 primary_region = "ams"
+
+kill_signal = "SIGINT"
+kill_timeout = 5
 
 [build]
 
 [env]
-  PORT = "8080"
   ENV = "production"
+  PYTHONUNBUFFERED = "1"
 
 [processes]
   app = "python main.py"
-  internal_port = 8080
-  force_https = true
-  auto_stop_machines = false
-  auto_start_machines = true
-  min_machines_running = 1
-  processes = ["app"]
 
-[[http_service.checks]]
-  grace_period = "10s"
-  interval = "15s"
-  method = "GET"
-  path = "/health"
-  protocol = "http"
-  timeout = "5s"
-
-[vm]
+[[vm]]
   cpu_kind = "shared"
   cpus = 1
-  memory_mb = 512
+  memory_mb = 256
