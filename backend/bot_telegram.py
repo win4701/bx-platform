@@ -10,7 +10,7 @@ from telegram.ext import Updater, CommandHandler, CallbackContext
 # CONFIG
 # ======================================================
 
-TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_TOKEN")
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000")
 
 if not TELEGRAM_BOT_TOKEN:
