@@ -1,13 +1,11 @@
 app = "bx-platform"
 primary_region = "ams"
-
 kill_signal = "SIGINT"
 kill_timeout = 5
 
 [build]
 
 [env]
-  ENV = "production"
   PYTHONUNBUFFERED = "1"
 
 [processes]
@@ -16,4 +14,7 @@ kill_timeout = 5
 [[vm]]
   cpu_kind = "shared"
   cpus = 1
-  memory_mb = 256
+  memory = "512mb"
+
+[deploy]
+  strategy = "immediate"
