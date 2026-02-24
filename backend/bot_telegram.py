@@ -10,11 +10,11 @@ from telegram.ext import Updater, CommandHandler, CallbackContext
 # CONFIG
 # ======================================================
 
-TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_TOKEN")
 API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000")
 
-if not TELEGRAM_TOKEN:
-    raise RuntimeError("TELEGRAM_TOKEN not set")
+if not TELEGRAM_BOT_TOKEN:
+    raise TELEGRAM_BOT_TOKEN not set")
 
 ADMINS = {123456789}
 
