@@ -288,6 +288,10 @@ dispatcher.add_handler(CommandHandler("ston_quote", ston_quote))
 # ======================================================
 
 def start_bot():
+    if not TELEGRAM_TOKEN:
+        logger.warning("Bot not started — no TELEGRAM_TOKEN")
+        return
+
     logger.info("🤖 Telegram Bot starting...")
 
     try:
