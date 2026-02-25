@@ -30,6 +30,6 @@ kill_timeout = 10
     protocol = "http"
 
 [[vm]]
-  memory = "512mb"
+  memory = "1gb"
   cpu_kind = "shared"
   cpus = 1
