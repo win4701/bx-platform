@@ -1,7 +1,5 @@
 import os
 import logging
-import threading
-from bot_telegram import start_bot
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
