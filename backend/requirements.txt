@@ -1,5 +1,5 @@
-flask
-gunicorn
 fastapi
 uvicorn[standard]
 psycopg2-binary
+requests
+python-telegram-bot==13.15
