@@ -14,7 +14,8 @@ TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000")
 
 if not TELEGRAM_TOKEN:
-    raise RuntimeError("TELEGRAM_TOKEN not set")
+    logger.warning("TELEGRAM_TOKEN not set — bot disabled")
+    TELEGRAM_TOKEN = None
 
 ADMINS = {123456789}
 
@@ -73,8 +74,12 @@ def safe_post(endpoint, data=None):
 # SETUP
 # ======================================================
 
-updater = Updater(token=TELEGRAM_TOKEN, use_context=True)
-dispatcher = updater.dispatcher
+updater = None
+dispatcher = None
+
+if TELEGRAM_TOKEN:
+    updater = Updater(token=TELEGRAM_TOKEN, use_context=True)
+    dispatcher = updater.dispatcher
 
 # ======================================================
 # GUARDS
