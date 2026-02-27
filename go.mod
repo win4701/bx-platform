@@ -1,0 +1,9 @@
+module bx-platform
+
+go 1.22
+
+require (
+	github.com/gofiber/fiber/v2 v2.52.0
+	github.com/mattn/go-sqlite3 v1.14.17
+	github.com/google/uuid v1.6.0
+)
