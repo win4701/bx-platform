@@ -2,7 +2,6 @@ package ws
 
 import (
 	"sync"
-
 	"github.com/gofiber/websocket/v2"
 )
 
