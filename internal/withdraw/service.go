@@ -1,30 +1,22 @@
-package withdraw
+func (s *Service) RequestWithdraw(uid int, asset string, amount float64, address string) error {
 
-import (
-	"database/sql"
-	"time"
-)
+	tx, _ := s.db.Begin()
 
-type Service struct {
-	db *sql.DB
-}
+	err := s.wallet.Debit(tx, uid, asset, amount)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
 
-func New(db *sql.DB) *Service {
-	return &Service{db: db}
-}
+	_, err = tx.Exec(`
+	INSERT INTO withdraw_requests(uid,asset,amount,address,status,created_at)
+	VALUES (?,?,?,?, 'pending', ?)
+	`, uid, asset, amount, address, time.Now().Unix())
 
-func (s *Service) Request(uid int, amount float64, address string) error {
-	_, err := s.db.Exec(`
-	INSERT INTO withdraw_queue(uid,asset,amount,address,ts)
-	VALUES (?,?,?,?,?)
-	`, uid, "usdt", amount, address, time.Now().Unix())
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
 
-	return err
-}
-
-func (s *Service) Approve(id int) error {
-	_, err := s.db.Exec(`
-	UPDATE withdraw_queue SET status='approved' WHERE id=?
-	`, id)
-	return err
+	return tx.Commit()
 }
