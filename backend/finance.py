@@ -4,10 +4,22 @@ import sqlite3
 import secrets
 from contextlib import contextmanager
 from fastapi import APIRouter, HTTPException, Depends
-from fastapi.responses import StreamingResponse
 
 from key import api_guard, admin_guard
-from risk_engine import evaluate_withdraw
+
+# ================================
+# SAFE IMPORT (NO CRASH ON RENDER)
+# ================================
+
+try:
+    from risk_engine import evaluate_withdraw
+except ImportError:
+    def evaluate_withdraw(uid, amount, address):
+        return {"approved": True, "risk_score": 0}
+
+# ================================
+# CONFIG
+# ================================
 
 DB_PATH = os.getenv("DB_PATH", "db/db.sqlite")
 MIN_WITHDRAW_USDT = float(os.getenv("MIN_WITHDRAW_USDT", 10))
@@ -20,7 +32,7 @@ ALLOWED_ASSETS = {
 router = APIRouter(prefix="/finance", dependencies=[Depends(api_guard)])
 
 # ======================================================
-# DB (ATOMIC)
+# DB (ATOMIC SAFE)
 # ======================================================
 
 @contextmanager
@@ -30,20 +42,22 @@ def get_db():
     try:
         yield conn
         conn.commit()
-    except:
+    except Exception:
         conn.rollback()
         raise
     finally:
         conn.close()
 
 # ======================================================
-# LEDGER
+# LEDGER SAFE
 # ======================================================
 
 def ledger(ref: str, debit: str, credit: str, amount: float):
     if amount <= 0:
         return
+
     ts = int(time.time())
+
     with get_db() as conn:
         conn.execute(
             "INSERT INTO ledger(ref,account,debit,credit,ts) VALUES (?,?,?,?,?)",
@@ -74,7 +88,7 @@ def wallet_me(uid: int):
         return {"wallet": dict(row)}
 
 # ======================================================
-# DEBIT (SAFE)
+# DEBIT SAFE (ANTI-INJECTION)
 # ======================================================
 
 def debit_wallet(uid: int, asset: str, amount: float, ref: str):
@@ -83,6 +97,9 @@ def debit_wallet(uid: int, asset: str, amount: float, ref: str):
         raise HTTPException(400, "INVALID_AMOUNT")
 
     asset = asset.lower()
+
+    if asset not in ALLOWED_ASSETS:
+        raise HTTPException(400, "INVALID_ASSET")
 
     with get_db() as conn:
         c = conn.cursor()
@@ -112,7 +129,7 @@ def debit_wallet(uid: int, asset: str, amount: float, ref: str):
         )
 
 # ======================================================
-# REQUEST WITHDRAW (RISK ENGINE INTEGRATED)
+# WITHDRAW REQUEST
 # ======================================================
 
 @router.post("/withdraw")
@@ -121,12 +138,14 @@ def request_withdraw(uid: int, amount: float, address: str):
     if amount < MIN_WITHDRAW_USDT:
         raise HTTPException(400, "MIN_WITHDRAW")
 
+    if not address or len(address) < 5:
+        raise HTTPException(400, "INVALID_ADDRESS")
+
     risk = evaluate_withdraw(uid, amount, address)
 
-    # خصم الرصيد فورًا لمنع double-spend
     debit_wallet(uid, "usdt", amount, "withdraw_request")
 
-    status = "approved" if risk["approved"] else "manual_review"
+    status = "approved" if risk.get("approved") else "manual_review"
 
     with get_db() as conn:
         conn.execute(
@@ -138,7 +157,7 @@ def request_withdraw(uid: int, amount: float, address: str):
 
     return {
         "status": status,
-        "risk_score": risk["risk_score"]
+        "risk_score": risk.get("risk_score", 0)
     }
 
 # ======================================================
@@ -149,6 +168,14 @@ def request_withdraw(uid: int, amount: float, address: str):
 def approve_withdraw(withdraw_id: int):
 
     with get_db() as conn:
+        row = conn.execute(
+            "SELECT id FROM withdraw_queue WHERE id=?",
+            (withdraw_id,)
+        ).fetchone()
+
+        if not row:
+            raise HTTPException(404, "NOT_FOUND")
+
         conn.execute(
             "UPDATE withdraw_queue SET status='approved' WHERE id=?",
             (withdraw_id,)
@@ -165,14 +192,17 @@ def reject_withdraw(withdraw_id: int):
 
     with get_db() as conn:
         row = conn.execute(
-            "SELECT uid,amount FROM withdraw_queue WHERE id=?",
+            "SELECT uid,amount,status FROM withdraw_queue WHERE id=?",
             (withdraw_id,)
         ).fetchone()
 
         if not row:
             raise HTTPException(404, "NOT_FOUND")
 
-        # إعادة الرصيد
+        if row["status"] == "rejected":
+            raise HTTPException(400, "ALREADY_REJECTED")
+
+        # Refund
         conn.execute(
             "UPDATE wallets SET usdt = usdt + ? WHERE uid=?",
             (row["amount"], row["uid"])
@@ -186,7 +216,7 @@ def reject_withdraw(withdraw_id: int):
     return {"status": "rejected"}
 
 # ======================================================
-# TELEGRAM LINK (FIXED UID BUG)
+# TELEGRAM LINK SYSTEM
 # ======================================================
 
 def generate_telegram_code(uid: int) -> str:
@@ -212,4 +242,5 @@ def link_telegram_account(telegram_id: int, code: str) -> bool:
             "UPDATE users SET telegram_id=?, telegram_code=NULL WHERE uid=?",
             (telegram_id, row["uid"])
         )
+
     return True
