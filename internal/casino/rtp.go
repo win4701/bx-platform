@@ -8,7 +8,7 @@ type RTPController struct {
 
 func NewRTP() *RTPController {
 	return &RTPController{
-		BaseEdge: 0.02,
+		BaseEdge: 0.22,
 	}
 }
 
