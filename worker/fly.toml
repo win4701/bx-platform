@@ -1,0 +1,11 @@
+app = "bx-worker"
+primary_region = "ams"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[processes]
+  worker = "python bot_runner.py"
+
+[env]
+  ENV = "production"
