@@ -1,40 +1,6 @@
-package casino
-
-import (
-	"database/sql"
-	"time"
-)
-
-type Wallet interface {
-	Debit(tx *sql.Tx, uid int, amount float64) error
-	Credit(tx *sql.Tx, uid int, amount float64) error
-}
-
-type Service struct {
-	db         *sql.DB
-	wallet     Wallet
-	serverSeed string
-	nonceMap   map[int]int
-	risk       *RiskEngine
-	hub        Broadcaster
-}
-
-func NewService(db *sql.DB, wallet Wallet, hub Broadcaster) *Service {
-	return &Service{
-		db:         db,
-		wallet:     wallet,
-		serverSeed: generateSeed(),
-		nonceMap:   make(map[int]int),
-		risk:       NewRisk(),
-		hub:        hub,
-	}
-}
-
 func (s *Service) Play(req PlayRequest) (*Result, error) {
 
-	if err := s.risk.Validate(req.Bet); err != nil {
-		return nil, err
-	}
+	s.seedManager.MaybeRotate()
 
 	tx, err := s.db.Begin()
 	if err != nil {
@@ -47,14 +13,17 @@ func (s *Service) Play(req PlayRequest) (*Result, error) {
 	}
 
 	nonce := s.nonceMap[req.UID]
-	roll, hash := GenerateRoll(s.serverSeed, req.ClientSeed, nonce)
+	roll, hash := GenerateRoll(s.seedManager.ServerSeed, req.ClientSeed, nonce)
 	s.nonceMap[req.UID]++
 
-	win := roll < 49.0 // 49% win chance
-	payout := 0.0
+	game := GetGame(req.Game)
 
-	if win {
-		payout = req.Bet * (2 - s.risk.HouseEdge)
+	win, payout := game.Play(req.Bet, roll, req.Multiplier)
+
+	edge := s.rtp.CurrentEdge()
+	payout = payout * (1 - edge)
+
+	if win && payout > 0 {
 		if err := s.wallet.Credit(tx, req.UID, payout); err != nil {
 			tx.Rollback()
 			return nil, err
@@ -63,17 +32,15 @@ func (s *Service) Play(req PlayRequest) (*Result, error) {
 
 	tx.Commit()
 
-	result := &Result{
-		Game:     req.Game,
-		Win:      win,
-		Payout:   payout,
-		Hash:     hash,
-		Nonce:    nonce,
-		ServerSeedHash: hashSeed(s.serverSeed),
-	}
+	s.rtp.Record(req.Bet, payout)
 
-	if payout > 100 {
-		s.hub.Broadcast(mustJSON(result))
+	result := &Result{
+		Game: req.Game,
+		Win:  win,
+		Payout: payout,
+		Hash: hash,
+		Nonce: nonce,
+		ServerSeedHash: s.seedManager.Hash,
 	}
 
 	return result, nil
