@@ -1,45 +1,68 @@
-package transfer
+func (s *Service) SendBX(
+    fromTelegramID int64,
+    toTelegramUsername string,
+    amount float64,
+) error {
 
-type Wallet interface {
-	Debit(tx *sql.Tx, uid int, asset string, amount float64) error
-	Credit(tx *sql.Tx, uid int, asset string, amount float64) error
-}
+    // 1️⃣ جلب المرسل
+    fromUser, err := s.repo.GetUserByTelegramID(fromTelegramID)
+    if err != nil {
+        return errors.New("sender not registered")
+    }
 
-type Service struct {
-	db     *sql.DB
-	wallet Wallet
-}
+    if fromUser.IsBanned {
+        return errors.New("account banned")
+    }
 
-func (s *Service) SendBX(from, to int, amount float64) error {
+    // 2️⃣ جلب المستقبل
+    toUser, err := s.repo.GetUserByUsername(toTelegramUsername)
+    if err != nil {
+        return errors.New("recipient not found")
+    }
 
-	if from == to {
-		return errors.New("cannot send to self")
-	}
+    if !toUser.IsVerified {
+        return errors.New("recipient not verified")
+    }
 
-	tx, err := s.db.Begin()
-	if err != nil {
-		return err
-	}
+    if fromUser.ID == toUser.ID {
+        return errors.New("cannot send to self")
+    }
 
-	if err := s.wallet.Debit(tx, from, "BX", amount); err != nil {
-		tx.Rollback()
-		return err
-	}
+    // 3️⃣ Atomic Transaction
+    tx, err := s.db.Begin()
+    if err != nil {
+        return err
+    }
 
-	if err := s.wallet.Credit(tx, to, "BX", amount); err != nil {
-		tx.Rollback()
-		return err
-	}
+    // تحقق الرصيد
+    balance, err := s.wallet.GetBalance(tx, fromUser.ID, "BX")
+    if err != nil || balance < amount {
+        tx.Rollback()
+        return errors.New("insufficient BX balance")
+    }
 
-	_, err = tx.Exec(`
-	INSERT INTO bx_transfers(from_uid,to_uid,amount,created_at)
-	VALUES (?,?,?,?)
-	`, from, to, amount, time.Now().Unix())
+    // خصم
+    if err := s.wallet.Debit(tx, fromUser.ID, "BX", amount); err != nil {
+        tx.Rollback()
+        return err
+    }
 
-	if err != nil {
-		tx.Rollback()
-		return err
-	}
+    // إضافة
+    if err := s.wallet.Credit(tx, toUser.ID, "BX", amount); err != nil {
+        tx.Rollback()
+        return err
+    }
 
-	return tx.Commit()
+    // تسجيل التحويل
+    _, err = tx.Exec(`
+        INSERT INTO bx_transfers(from_uid,to_uid,amount,status,created_at)
+        VALUES (?,?,?,?,?)
+    `, fromUser.ID, toUser.ID, amount, "completed", time.Now().Unix())
+
+    if err != nil {
+        tx.Rollback()
+        return err
+    }
+
+    return tx.Commit()
 }
