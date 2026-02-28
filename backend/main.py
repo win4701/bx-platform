@@ -41,7 +41,7 @@ logger = logging.getLogger("bloxio")
 # IMPORT ROUTERS
 # ======================================================
 
-from finance import router as finance_router, rtp_stats
+from backend.finance import router as finance_router
 from market import router as market_router
 from exchange import ORDER_BOOKS, TRADES, place_order
 from casino import router as casino_router
