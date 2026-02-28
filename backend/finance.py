@@ -12,11 +12,10 @@ from key import api_guard, admin_guard
 # ================================
 
 try:
-    from risk_engine import evaluate_withdraw
-except ImportError:
+    from backend.risk_engine import evaluate_withdraw
+except Exception:
     def evaluate_withdraw(uid, amount, address):
         return {"approved": True, "risk_score": 0}
-
 # ================================
 # CONFIG
 # ================================
