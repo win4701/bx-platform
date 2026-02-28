@@ -9,7 +9,7 @@ const $$ = (selector) => document.querySelectorAll(selector);
 
 /* ================= CONFIG ================= */
 
-const API_BASE = "https://bx-vw7a.onrender.com";
+const API_BASE = "https://bx-platform.fly.dev";
 
 /* ================= DEBUG MODE ================= */
 
