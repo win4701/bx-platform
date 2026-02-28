@@ -28,7 +28,7 @@ ALLOWED_ASSETS = {
     "avax","sol","btc","zec","ltc","bx"
 }
 
-router = APIRouter(prefix="/finance", dependencies=[Depends(api_guard)])
+router = APIRouter(dependencies=[Depends(api_guard)])
 
 # ======================================================
 # DB (ATOMIC SAFE)
