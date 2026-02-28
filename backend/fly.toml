@@ -1,0 +1,20 @@
+app = "bx-platform"
+primary_region = "ams"
+
+[build]
+
+[env]
+  PYTHONUNBUFFERED = "1"
+
+[processes]
+  app = "python backend/main.py"
+
+[[vm]]
+  cpu_kind = "shared"
+  cpus = 1
+  memory_mb = 256
+
+[deploy]
+  strategy = "immediate"
+
+[checks]
