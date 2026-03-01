@@ -305,9 +305,9 @@ def internal_event(event: dict):
 # ======================================================
 
 if __name__ == "__main__":
+    import uvicorn
     uvicorn.run(
         "backend.main:app",
         host="0.0.0.0",
-        port=PORT,
-        reload=False
-    )
+        port=8080
+                )
