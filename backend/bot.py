@@ -31,7 +31,6 @@ RATE_LIMIT_SECONDS = 2
 # ======================================================
 # LOGGING
 # ======================================================
-
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("Bloxio_bot")
 
@@ -74,13 +73,12 @@ def safe_post(endpoint, data=None):
 # SETUP
 # ======================================================
 
-updater = None
-dispatcher = None
+TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
+API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000")
 
-if TELEGRAM_TOKEN:
-    updater = Updater(token=TELEGRAM_TOKEN, use_context=True)
-    dispatcher = updater.dispatcher
-
+if not TELEGRAM_TOKEN:
+    logger.warning("TELEGRAM_TOKEN not set — bot disabled")
+    
 # ======================================================
 # GUARDS
 # ======================================================
@@ -274,15 +272,16 @@ def ston_quote(update: Update, context: CallbackContext):
 # REGISTER HANDLERS
 # ======================================================
 
-dispatcher.add_handler(CommandHandler("start", start))
-dispatcher.add_handler(CommandHandler("balance", balance))
-dispatcher.add_handler(CommandHandler("deposit_binance", deposit_binance))
-dispatcher.add_handler(CommandHandler("deposit_ton", deposit_ton))
-dispatcher.add_handler(CommandHandler("ton_history", ton_history))
-dispatcher.add_handler(CommandHandler("recent_market", recent_market))
-dispatcher.add_handler(CommandHandler("ston_price", ston_price))
-dispatcher.add_handler(CommandHandler("ston_quote", ston_quote))
-
+if dispatcher:
+    dispatcher.add_handler(CommandHandler("start", start))
+    dispatcher.add_handler(CommandHandler("balance", balance))
+    dispatcher.add_handler(CommandHandler("deposit_binance", deposit_binance))
+    dispatcher.add_handler(CommandHandler("deposit_ton", deposit_ton))
+    dispatcher.add_handler(CommandHandler("ton_history", ton_history))
+    dispatcher.add_handler(CommandHandler("recent_market", recent_market))
+    dispatcher.add_handler(CommandHandler("ston_price", ston_price))
+    dispatcher.add_handler(CommandHandler("ston_quote", ston_quote))
+    
 # ======================================================
 # RUN
 # ======================================================
