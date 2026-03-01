@@ -1,11 +1,22 @@
-import os
-import logging
-import threading
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 from pydantic import BaseModel
+
+import os
+import logging
+import threading
+
+# ======================================================
+# LOGGING (ضعها أولاً قبل أي شيء)
+# ======================================================
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
+)
+logger = logging.getLogger("bloxio")
 
 # ======================================================
 # Tel Bot
@@ -16,7 +27,6 @@ try:
 except Exception as e:
     logger.warning(f"Bot not loaded: {e}")
     start_bot = None
-    
 # ======================================================
 # ENV
 # ======================================================
@@ -37,16 +47,6 @@ FEATURES = {
     "market": True,
     "mining": True,
 }
-
-# ======================================================
-# LOGGING
-# ======================================================
-
-logging.basicConfig(
-    level=logging.INFO if ENV != "dev" else logging.DEBUG,
-    format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
-)
-logger = logging.getLogger("bloxio")
 
 # ======================================================
 # IMPORT ROUTERS
