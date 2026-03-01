@@ -7,8 +7,7 @@ primary_region = "fra"
 PORT = "8080"
 
 [processes]
-app = "uvicorn backend.main:app --host 0.0.0.0 --port 8080"
-
+app = "uvicorn main:app --host 0.0.0.0 --port 8080"
 [http_service]
 internal_port = 8080
 force_https = true
