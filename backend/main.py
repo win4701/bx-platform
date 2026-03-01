@@ -1,11 +1,22 @@
 import os
 import logging
+import threading
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 from pydantic import BaseModel
 
+# ======================================================
+# Tel Bot
+# ======================================================
+
+try:
+    from bot import start_bot
+except Exception as e:
+    logger.warning(f"Bot not loaded: {e}")
+    start_bot = None
+    
 # ======================================================
 # ENV
 # ======================================================
@@ -67,13 +78,17 @@ app = FastAPI(
 # ======================================================
 # LIFECYCLE EVENTS
 # ======================================================
-
 @app.on_event("startup")
 async def startup_event():
-    logger.info(f"🚀 Bloxio API started | ENV={ENV} | PORT={PORT}")
+    logger.info(f" Bloxio API started | ENV={ENV} | PORT={PORT}")
+
+    if start_bot:
+        threading.Thread(target=start_bot, daemon=True).start()
+        logger.info("🤖 Telegram bot started in background thread")
+
 @app.on_event("shutdown")
 async def shutdown_event():
-    logger.info("🛑 Bloxio API shutting down")
+    logger.info(" Bloxio API shutting down")
 
 # ======================================================
 # GLOBAL ERROR HANDLER
@@ -289,7 +304,10 @@ def internal_event(event: dict):
 # RUN (Fly Compatible)
 # ======================================================
 
-import uvicorn
-
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=PORT)
+    uvicorn.run(
+        "backend.main:app",
+        host="0.0.0.0",
+        port=PORT,
+        reload=False
+    )
