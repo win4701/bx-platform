@@ -1,18 +1,26 @@
 app = "bx-platform"
 primary_region = "ams"
 
-[build]
-
 [env]
   PYTHONUNBUFFERED = "1"
 
 [processes]
-  app = "python backend/main.py"
+  app = "uvicorn backend.main:app --host 0.0.0.0 --port 8080"
 
-[[vm]]
-  cpu_kind = "shared"
-  cpus = 1
-  memory_mb = 512
+[[services]]
+  internal_port = 8080
+  protocol = "tcp"
 
-[deploy]
-  strategy = "immediate"
+  [[services.ports]]
+    port = 80
+    handlers = ["http"]
+
+  [[services.ports]]
+    port = 443
+    handlers = ["tls", "http"]
+
+  [[services.http_checks]]
+    interval = "10s"
+    timeout = "2s"
+    method = "get"
+    path = "/"
