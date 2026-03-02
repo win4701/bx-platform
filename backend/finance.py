@@ -280,3 +280,36 @@ def rtp_stats():
         "roulette": 97.2,
         "blackjack": 99.1
             }
+# ======================================================
+# DEPOSIT CREDIT (BXING SUPPORT)
+# ======================================================
+
+def credit_deposit(uid: int, asset: str, amount: float, ref: str = "deposit"):
+
+    if amount <= 0:
+        raise HTTPException(400, "INVALID_AMOUNT")
+
+    asset = asset.lower()
+
+    if asset not in ALLOWED_ASSETS:
+        raise HTTPException(400, "INVALID_ASSET")
+
+    with get_db() as conn:
+        conn.execute(
+            f"UPDATE wallets SET {asset} = {asset} + ? WHERE uid=?",
+            (amount, uid)
+        )
+
+        conn.execute(
+            """INSERT INTO history
+               (uid,action,asset,amount,ref,ts)
+               VALUES (?,?,?,?,?,?)""",
+            (uid, "deposit", asset, amount, ref, int(time.time()))
+        )
+
+        ledger(
+            ref=ref,
+            debit=f"treasury_{asset}",
+            credit=f"user_{asset}",
+            amount=amount
+        )
