@@ -243,3 +243,40 @@ def link_telegram_account(telegram_id: int, code: str) -> bool:
         )
 
     return True
+    
+# ======================================================
+# CASINO SUPPORT FUNCTIONS
+# ======================================================
+
+def casino_debit(uid: int, amount: float, game: str):
+    debit_wallet(uid, "usdt", amount, f"casino_{game}_bet")
+
+def casino_credit(uid: int, amount: float, game: str):
+    with get_db() as conn:
+        conn.execute(
+            "UPDATE wallets SET usdt = usdt + ? WHERE uid=?",
+            (amount, uid)
+        )
+
+def casino_history(uid: int, game: str, bet: float, payout: float, win: bool):
+    with get_db() as conn:
+        conn.execute(
+            """INSERT INTO history
+               (uid,action,asset,amount,ref,ts)
+               VALUES (?,?,?,?,?,?)""",
+            (
+                uid,
+                "casino",
+                "usdt",
+                payout if win else bet,
+                f"{game}_{'win' if win else 'lose'}",
+                int(time.time())
+            )
+        )
+
+def rtp_stats():
+    return {
+        "slots": 96.5,
+        "roulette": 97.2,
+        "blackjack": 99.1
+            }
