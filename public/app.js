@@ -255,26 +255,21 @@ function renderWallet() {
   }
 }
 
-function loadWallet() {
-  if (!WALLET.loaded) {
-    WALLET.BX = 0.00;
-    WALLET.USDT = 0.00;
-    WALLET.USDC = 0.00;
-    WALLET.BTC = 0.00;
-    WALLET.BNB = 0.00;
-    WALLET.ETH = 0.00;
-    WALLET.AVAX = 0.00;
-    WALLET.ZEC = 0.00;
-    WALLET.TON = 0.00;
-    WALLET.SOL = 0.00;
-    WALLET.LTC = 0.00;
-    WALLET.loaded = true;
 
-    log.info("Wallet loaded (UI fallback)");
-  }
+    async function loadWallet() {
+  if (!isAuthenticated()) return;
+
+  const data = await safeFetch("/finance/wallet");
+
+  if (!data) return;
+
+  Object.keys(WALLET).forEach(k => {
+    if (data[k] !== undefined) {
+      WALLET[k] = Number(data[k]);
+    }
+  });
 
   renderWallet();
-  renderWalletConnections();
 }
 
 /* ======================================================
