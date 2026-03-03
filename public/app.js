@@ -435,34 +435,7 @@ function bindWalletUI() {
     });
   }
 }
-/* ================= INIT TÉLÉGRAMME ===============*/
 
-function initTelegramLogin() {
-
-  if (!window.Telegram?.WebApp?.initDataUnsafe?.user) {
-    console.warn("Telegram user not detected");
-    return;
-  }
-
-  const tgUser = window.Telegram.WebApp.initDataUnsafe.user;
-
-  apiPost("/api/auth/telegram", {
-    telegram_id: tgUser.id,
-    username: tgUser.username || null
-  }).then(res => {
-
-    if (!res?.access_token) return;
-
-    USER.clear();               
-    USER.set(res.access_token); 
-
-    console.log("JWT received from backend");
-
-    if (typeof loadWallet === "function") {
-      loadWallet();
-    }
-  });
-}
 /* ================= Bin WALLET ===============*/
 function bindWalletActions() {
 
@@ -496,6 +469,34 @@ function bindWalletActions() {
       alert("Withdraw submitted");
     };
   }
+   }
+/* ================= INIT TÉLÉGRAMME ===============*/
+
+function initTelegramLogin() {
+
+  if (!window.Telegram?.WebApp?.initDataUnsafe?.user) {
+    console.warn("Telegram user not detected");
+    return;
+  }
+
+  const tgUser = window.Telegram.WebApp.initDataUnsafe.user;
+
+  apiPost("/api/auth/telegram", {
+    telegram_id: tgUser.id,
+    username: tgUser.username || null
+  }).then(res => {
+
+    if (!res?.access_token) return;
+
+    USER.clear();               
+    USER.set(res.access_token); 
+
+    console.log("JWT received from backend");
+
+    if (typeof loadWallet === "function") {
+      loadWallet();
+    }
+  });
 }
    
 /* ================= INIT ================= */
@@ -504,9 +505,9 @@ document.addEventListener("DOMContentLoaded", () => {
   APP.init();               
   restoreWalletSession();
   bindWalletUI();
+  bindWalletActions(); 
   renderWalletButtons();
   initTelegramLogin(); 
-  bindWalletActions();
 });
 
 /* =================================== */
