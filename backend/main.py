@@ -1,24 +1,23 @@
 # ======================================================
-# Bloxio — MAIN (Production Stable v3)
-# Secure • Clean • No Circular • Verified Telegram JWT
+# Bloxio — MAIN (Clean Production Stable v4)
+# No Circular • JWT Modular • Telegram Verified
 # ======================================================
 
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from starlette.middleware.base import BaseHTTPMiddleware
 from pydantic import BaseModel
 
 import os
-import time
 import json
 import hmac
 import hashlib
 import logging
-import threading
 from urllib.parse import parse_qs
-from jose import jwt, JWTError
+
+# JWT يأتي فقط من auth.py
+from auth import create_access_token, get_current_user
 
 # ======================================================
 # LOGGING
@@ -38,17 +37,10 @@ ENV = os.getenv("ENV", "production").lower()
 PORT = int(os.getenv("PORT", 8080))
 INTERNAL_SECRET = os.getenv("INTERNAL_SECRET", "")
 
-JWT_SECRET = os.getenv("JWT_SECRET")
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
-
-if not JWT_SECRET:
-    raise RuntimeError("JWT_SECRET not configured")
 
 if not TELEGRAM_TOKEN:
     raise RuntimeError("TELEGRAM_TOKEN not configured")
-
-ALGORITHM = "HS256"
-security = HTTPBearer()
 
 # ======================================================
 # APP
@@ -56,13 +48,13 @@ security = HTTPBearer()
 
 app = FastAPI(
     title="Bloxio API",
-    version="3.0.0",
+    version="4.0.0",
     docs_url="/docs" if ENV == "dev" else None,
     redoc_url=None
 )
 
 # ======================================================
-# TELEGRAM JWT (Verified)
+# TELEGRAM VERIFICATION
 # ======================================================
 
 def verify_telegram_init_data(init_data: str):
@@ -96,30 +88,6 @@ def verify_telegram_init_data(init_data: str):
     return user
 
 
-def create_token(user_id: int):
-    now = int(time.time())
-    payload = {
-        "user_id": user_id,
-        "iat": now,
-        "exp": now + 60 * 60 * 24
-    }
-    return jwt.encode(payload, JWT_SECRET, algorithm=ALGORITHM)
-
-
-def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(security)
-):
-    try:
-        payload = jwt.decode(
-            credentials.credentials,
-            JWT_SECRET,
-            algorithms=[ALGORITHM]
-        )
-        return payload
-    except JWTError:
-        raise HTTPException(401, "Invalid or expired token")
-
-
 class TelegramInit(BaseModel):
     initData: str
 
@@ -127,7 +95,7 @@ class TelegramInit(BaseModel):
 @app.post("/api/auth/telegram")
 def telegram_auth(data: TelegramInit):
     user = verify_telegram_init_data(data.initData)
-    token = create_token(user["id"])
+    token = create_access_token(user["id"])
     return {"access_token": token, "token_type": "bearer"}
 
 
@@ -180,7 +148,7 @@ async def global_exception_handler(request: Request, exc: Exception):
     )
 
 # ======================================================
-# IMPORT ROUTERS (بعد تعريف get_current_user)
+# IMPORT ROUTERS (بعد تعريف app فقط)
 # ======================================================
 
 from finance import router as finance_router
@@ -216,7 +184,7 @@ def health():
     return {"status": "healthy"}
 
 # ======================================================
-# WEBSOCKET (Exchange)
+# WEBSOCKET
 # ======================================================
 
 @app.websocket("/ws/exchange")
