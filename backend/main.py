@@ -80,7 +80,7 @@ def verify_telegram_init_data(init_data: str):
     )
 
     secret_key = hashlib.sha256(
-        TELEGRAM_BOT_TOKEN.encode()
+        TELEGRAM_TOKEN.encode()
     ).digest()
 
     calculated_hash = hmac.new(
