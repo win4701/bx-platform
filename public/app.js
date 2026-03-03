@@ -468,7 +468,41 @@ function initTelegramLogin() {
     }
   });
 }
+/* ================= Bin WALLET ===============*/
+function bindWalletActions() {
 
+  const depositBtn = document.querySelector(".wallet-actions .primary");
+  const withdrawBtn = document.querySelectorAll(".wallet-actions .btn")[1];
+
+  if (depositBtn) {
+    depositBtn.onclick = async () => {
+      const res = await safeFetch("/finance/deposit/address?asset=USDT");
+      if (!res) return alert("Failed to load deposit address");
+      alert("Deposit Address:\n" + res.address);
+    };
+  }
+
+  if (withdrawBtn) {
+    withdrawBtn.onclick = async () => {
+      const amount = prompt("Amount?");
+      const address = prompt("Destination address?");
+      if (!amount || !address) return;
+
+      const res = await safeFetch("/finance/withdraw", {
+        method: "POST",
+        body: JSON.stringify({
+          asset: "USDT",
+          amount: parseFloat(amount),
+          address
+        })
+      });
+
+      if (!res) return alert("Withdraw failed");
+      alert("Withdraw submitted");
+    };
+  }
+}
+   
 /* ================= INIT ================= */
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -476,7 +510,8 @@ document.addEventListener("DOMContentLoaded", () => {
   restoreWalletSession();
   bindWalletUI();
   renderWalletButtons();
-  initTelegramLogin();      
+  initTelegramLogin(); 
+  bindWalletActions();
 });
 
 /* =================================== */
