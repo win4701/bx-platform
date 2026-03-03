@@ -3,22 +3,13 @@ import time
 import sqlite3
 import secrets
 from contextlib import contextmanager
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Query
 
 from key import api_guard, admin_guard
 
-# ================================
-# SAFE IMPORT (NO CRASH ON RENDER)
-# ================================
-
-try:
-    from backend.risk_engine import evaluate_withdraw
-except Exception:
-    def evaluate_withdraw(uid, amount, address):
-        return {"approved": True, "risk_score": 0}
-# ================================
+# ======================================================
 # CONFIG
-# ================================
+# ======================================================
 
 DB_PATH = os.getenv("DB_PATH", "db/db.sqlite")
 MIN_WITHDRAW_USDT = float(os.getenv("MIN_WITHDRAW_USDT", 10))
@@ -31,7 +22,7 @@ ALLOWED_ASSETS = {
 router = APIRouter(dependencies=[Depends(api_guard)])
 
 # ======================================================
-# DB (ATOMIC SAFE)
+# DATABASE (ATOMIC SAFE)
 # ======================================================
 
 @contextmanager
@@ -48,46 +39,39 @@ def get_db():
         conn.close()
 
 # ======================================================
-# LEDGER SAFE
+# SAFE COLUMN CHECK
 # ======================================================
 
-def ledger(ref: str, debit: str, credit: str, amount: float):
-    if amount <= 0:
-        return
-
-    ts = int(time.time())
-
-    with get_db() as conn:
-        conn.execute(
-            "INSERT INTO ledger(ref,account,debit,credit,ts) VALUES (?,?,?,?,?)",
-            (ref, debit, amount, 0, ts)
-        )
-        conn.execute(
-            "INSERT INTO ledger(ref,account,debit,credit,ts) VALUES (?,?,?,?,?)",
-            (ref, credit, 0, amount, ts)
-        )
+def validate_asset(asset: str):
+    asset = asset.lower()
+    if asset not in ALLOWED_ASSETS:
+        raise HTTPException(400, "INVALID_ASSET")
+    return asset
 
 # ======================================================
-# WALLET READ
+# WALLET ENDPOINT (FOR FRONTEND)
 # ======================================================
 
-@router.get("/me")
-def wallet_me(uid: int):
+@router.get("/wallet")
+def wallet_summary(uid: int):
+
     with get_db() as conn:
         row = conn.execute(
-            """SELECT usdt,usdc,ton,bnb,eth,avax,
-                      sol,zec,ltc,btc,bx
-               FROM wallets WHERE uid=?""",
+            """
+            SELECT usdt,usdc,ton,bnb,eth,
+                   avax,sol,zec,ltc,btc,bx
+            FROM wallets WHERE uid=?
+            """,
             (uid,)
         ).fetchone()
 
         if not row:
             raise HTTPException(404, "WALLET_NOT_FOUND")
 
-        return {"wallet": dict(row)}
+        return dict(row)
 
 # ======================================================
-# DEBIT SAFE (ANTI-INJECTION)
+# SAFE DEBIT
 # ======================================================
 
 def debit_wallet(uid: int, asset: str, amount: float, ref: str):
@@ -95,204 +79,39 @@ def debit_wallet(uid: int, asset: str, amount: float, ref: str):
     if amount <= 0:
         raise HTTPException(400, "INVALID_AMOUNT")
 
-    asset = asset.lower()
-
-    if asset not in ALLOWED_ASSETS:
-        raise HTTPException(400, "INVALID_ASSET")
+    asset = validate_asset(asset)
 
     with get_db() as conn:
-        c = conn.cursor()
-
-        c.execute(
-            f"""UPDATE wallets
-                SET {asset} = {asset} - ?
-                WHERE uid=? AND {asset} >= ?""",
+        cursor = conn.execute(
+            f"""
+            UPDATE wallets
+            SET {asset} = {asset} - ?
+            WHERE uid=? AND {asset} >= ?
+            """,
             (amount, uid, amount)
         )
 
-        if c.rowcount == 0:
+        if cursor.rowcount == 0:
             raise HTTPException(400, "INSUFFICIENT_BALANCE")
 
         conn.execute(
-            """INSERT INTO history
-               (uid,action,asset,amount,ref,ts)
-               VALUES (?,?,?,?,?,?)""",
+            """
+            INSERT INTO history(uid,action,asset,amount,ref,ts)
+            VALUES (?,?,?,?,?,?)
+            """,
             (uid, "debit", asset, amount, ref, int(time.time()))
         )
 
-        ledger(
-            ref=ref,
-            debit=f"user_{asset}",
-            credit=f"treasury_{asset}",
-            amount=amount
-        )
-
 # ======================================================
-# WITHDRAW REQUEST
+# SAFE CREDIT
 # ======================================================
 
-@router.post("/withdraw")
-def request_withdraw(uid: int, amount: float, address: str):
-
-    if amount < MIN_WITHDRAW_USDT:
-        raise HTTPException(400, "MIN_WITHDRAW")
-
-    if not address or len(address) < 5:
-        raise HTTPException(400, "INVALID_ADDRESS")
-
-    risk = evaluate_withdraw(uid, amount, address)
-
-    debit_wallet(uid, "usdt", amount, "withdraw_request")
-
-    status = "approved" if risk.get("approved") else "manual_review"
-
-    with get_db() as conn:
-        conn.execute(
-            """INSERT INTO withdraw_queue
-               (uid,asset,amount,address,status,ts)
-               VALUES (?,?,?,?,?,?)""",
-            (uid, "usdt", amount, address, status, int(time.time()))
-        )
-
-    return {
-        "status": status,
-        "risk_score": risk.get("risk_score", 0)
-    }
-
-# ======================================================
-# ADMIN APPROVE
-# ======================================================
-
-@router.post("/admin/withdraw/approve", dependencies=[Depends(admin_guard)])
-def approve_withdraw(withdraw_id: int):
-
-    with get_db() as conn:
-        row = conn.execute(
-            "SELECT id FROM withdraw_queue WHERE id=?",
-            (withdraw_id,)
-        ).fetchone()
-
-        if not row:
-            raise HTTPException(404, "NOT_FOUND")
-
-        conn.execute(
-            "UPDATE withdraw_queue SET status='approved' WHERE id=?",
-            (withdraw_id,)
-        )
-
-    return {"status": "approved"}
-
-# ======================================================
-# ADMIN REJECT
-# ======================================================
-
-@router.post("/admin/withdraw/reject", dependencies=[Depends(admin_guard)])
-def reject_withdraw(withdraw_id: int):
-
-    with get_db() as conn:
-        row = conn.execute(
-            "SELECT uid,amount,status FROM withdraw_queue WHERE id=?",
-            (withdraw_id,)
-        ).fetchone()
-
-        if not row:
-            raise HTTPException(404, "NOT_FOUND")
-
-        if row["status"] == "rejected":
-            raise HTTPException(400, "ALREADY_REJECTED")
-
-        # Refund
-        conn.execute(
-            "UPDATE wallets SET usdt = usdt + ? WHERE uid=?",
-            (row["amount"], row["uid"])
-        )
-
-        conn.execute(
-            "UPDATE withdraw_queue SET status='rejected' WHERE id=?",
-            (withdraw_id,)
-        )
-
-    return {"status": "rejected"}
-
-# ======================================================
-# TELEGRAM LINK SYSTEM
-# ======================================================
-
-def generate_telegram_code(uid: int) -> str:
-    code = secrets.token_hex(3).upper()
-    with get_db() as conn:
-        conn.execute(
-            "UPDATE users SET telegram_code=? WHERE uid=?",
-            (code, uid)
-        )
-    return code
-
-def link_telegram_account(telegram_id: int, code: str) -> bool:
-    with get_db() as conn:
-        row = conn.execute(
-            "SELECT uid FROM users WHERE telegram_code=?",
-            (code,)
-        ).fetchone()
-
-        if not row:
-            return False
-
-        conn.execute(
-            "UPDATE users SET telegram_id=?, telegram_code=NULL WHERE uid=?",
-            (telegram_id, row["uid"])
-        )
-
-    return True
-    
-# ======================================================
-# CASINO SUPPORT FUNCTIONS
-# ======================================================
-
-def casino_debit(uid: int, amount: float, game: str):
-    debit_wallet(uid, "usdt", amount, f"casino_{game}_bet")
-
-def casino_credit(uid: int, amount: float, game: str):
-    with get_db() as conn:
-        conn.execute(
-            "UPDATE wallets SET usdt = usdt + ? WHERE uid=?",
-            (amount, uid)
-        )
-
-def casino_history(uid: int, game: str, bet: float, payout: float, win: bool):
-    with get_db() as conn:
-        conn.execute(
-            """INSERT INTO history
-               (uid,action,asset,amount,ref,ts)
-               VALUES (?,?,?,?,?,?)""",
-            (
-                uid,
-                "casino",
-                "usdt",
-                payout if win else bet,
-                f"{game}_{'win' if win else 'lose'}",
-                int(time.time())
-            )
-        )
-
-def rtp_stats():
-    return {
-        "slots": 96.5,
-        "roulette": 97.2,
-        "blackjack": 99.1
-            }
-# ======================================================
-# DEPOSIT CREDIT (BXING SUPPORT)
-# ======================================================
-
-def credit_deposit(uid: int, asset: str, amount: float, ref: str = "deposit"):
+def credit_wallet(uid: int, asset: str, amount: float, ref: str):
 
     if amount <= 0:
         raise HTTPException(400, "INVALID_AMOUNT")
 
-    asset = asset.lower()
-
-    if asset not in ALLOWED_ASSETS:
-        raise HTTPException(400, "INVALID_ASSET")
+    asset = validate_asset(asset)
 
     with get_db() as conn:
         conn.execute(
@@ -301,15 +120,87 @@ def credit_deposit(uid: int, asset: str, amount: float, ref: str = "deposit"):
         )
 
         conn.execute(
-            """INSERT INTO history
-               (uid,action,asset,amount,ref,ts)
-               VALUES (?,?,?,?,?,?)""",
-            (uid, "deposit", asset, amount, ref, int(time.time()))
+            """
+            INSERT INTO history(uid,action,asset,amount,ref,ts)
+            VALUES (?,?,?,?,?,?)
+            """,
+            (uid, "credit", asset, amount, ref, int(time.time()))
         )
 
-        ledger(
-            ref=ref,
-            debit=f"treasury_{asset}",
-            credit=f"user_{asset}",
-            amount=amount
+# ======================================================
+# DEPOSIT ADDRESS (REAL ENDPOINT FOR FRONTEND)
+# ======================================================
+
+@router.get("/deposit/address")
+def get_deposit_address(uid: int, asset: str = Query(...)):
+
+    asset = validate_asset(asset)
+
+    address = f"{asset.upper()}_{uid}_{secrets.token_hex(4)}"
+
+    with get_db() as conn:
+        conn.execute(
+            """
+            INSERT INTO deposit_addresses(uid,asset,address,ts)
+            VALUES (?,?,?,?)
+            """,
+            (uid, asset, address, int(time.time()))
         )
+
+    return {"asset": asset, "address": address}
+
+# ======================================================
+# WITHDRAW REQUEST
+# ======================================================
+
+@router.post("/withdraw")
+def request_withdraw(uid: int, asset: str, amount: float, address: str):
+
+    asset = validate_asset(asset)
+
+    if amount < MIN_WITHDRAW_USDT:
+        raise HTTPException(400, "MIN_WITHDRAW")
+
+    if not address or len(address) < 5:
+        raise HTTPException(400, "INVALID_ADDRESS")
+
+    debit_wallet(uid, asset, amount, "withdraw_request")
+
+    with get_db() as conn:
+        conn.execute(
+            """
+            INSERT INTO withdraw_queue(uid,asset,amount,address,status,ts)
+            VALUES (?,?,?,?,?,?)
+            """,
+            (uid, asset, amount, address, "pending", int(time.time()))
+        )
+
+    return {"status": "pending"}
+
+# ======================================================
+# CASINO INTEGRATION
+# ======================================================
+
+def casino_debit(uid: int, amount: float, game: str):
+    debit_wallet(uid, "usdt", amount, f"casino_{game}_bet")
+
+def casino_credit(uid: int, amount: float, game: str):
+    credit_wallet(uid, "usdt", amount, f"casino_{game}_win")
+
+def casino_history(uid: int, game: str, bet: float, payout: float, win: bool):
+
+    with get_db() as conn:
+        conn.execute(
+            """
+            INSERT INTO history(uid,action,asset,amount,ref,ts)
+            VALUES (?,?,?,?,?,?)
+            """,
+            (
+                uid,
+                "casino",
+                "usdt",
+                payout if win else bet,
+                f"{game}_{'win' if win else 'lose'}",
+                int(time.time())
+            )
+                          )
