@@ -379,17 +379,13 @@ function restoreWalletSession() {
 /* ================= BACKEND SYNC ================= */
 
 function notifyBackend() {
-  fetch("/api/wallet/connect", {
+  safeFetch("/api/wallet/connect", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${USER.jwt || ""}`
-    },
     body: JSON.stringify({
       type: WALLET_STATE.type,
       address: WALLET_STATE.address
     })
-  }).catch(() => {});
+  });
 }
 
 /* ================= WITHDRAW ================= */
@@ -402,10 +398,6 @@ async function requestWithdraw(asset, amount, toAddress) {
 
   const res = await safeFetch("/api/withdraw", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${USER.jwt || ""}`
-    },
     body: JSON.stringify({
       asset,
       amount,
@@ -413,8 +405,12 @@ async function requestWithdraw(asset, amount, toAddress) {
     })
   });
 
-  const data = await res.json();
-  alert(data.message || "Withdraw submitted");
+  if (!res) {
+    alert("Withdraw failed");
+    return;
+  }
+
+  alert(res.message || "Withdraw submitted");
 }
 
 /* ================= DEPOSIT ================= */
