@@ -123,6 +123,49 @@ app.add_middleware(
 )
 
 # ======================================================
+# JWT AUTH (Telegram)
+# ======================================================
+
+from jose import jwt
+from fastapi.security import HTTPBearer
+from fastapi import Depends
+import time
+
+SECRET_KEY = os.getenv("JWT_SECRET", "CHANGE_ME_NOW")
+ALGORITHM = "HS256"
+
+security = HTTPBearer()
+
+class TelegramAuth(BaseModel):
+    telegram_id: int
+    username: str | None = None
+
+
+@app.post("/api/auth/telegram")
+def telegram_auth(data: TelegramAuth):
+    payload = {
+        "user_id": data.telegram_id,
+        "telegram_id": data.telegram_id,
+        "exp": int(time.time()) + 60 * 60 * 24
+    }
+
+    token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
+    return {"access_token": token}
+
+
+def get_current_user(token=Depends(security)):
+    try:
+        payload = jwt.decode(token.credentials, SECRET_KEY, algorithms=[ALGORITHM])
+        return payload
+    except:
+        raise HTTPException(401, "Invalid token")
+
+
+@app.get("/api/auth/me")
+def auth_me(user=Depends(get_current_user)):
+    return user
+    
+# ======================================================
 # SECURITY HEADERS
 # ======================================================
 
