@@ -400,7 +400,7 @@ async function requestWithdraw(asset, amount, toAddress) {
     return;
   }
 
-  const res = await fetch("/api/withdraw", {
+  const res = await safeFetch("/api/withdraw", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -597,7 +597,6 @@ async function startCasinoGame() {
   }
 
   const payload = {
-    uid: USER.uid,
     game,
     bet,
     multiplier: Number($("multiplier")?.value || null),
@@ -1025,10 +1024,9 @@ async function confirmTopup() {
   EXPOSURE += STATE.usdt;
 
   await safeFetch("/topup/execute", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(STATE)
-  });
+  method: "POST",
+  body: JSON.stringify(STATE)
+});
 
   saveHistory();
   toast("Topup Executed");
