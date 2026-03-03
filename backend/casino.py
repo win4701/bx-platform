@@ -16,7 +16,7 @@ from pydantic import BaseModel, Field
 
 from key import api_guard, admin_guard
 from finance import casino_debit, casino_credit, casino_history
-from main import get_current_user
+from auth import get_current_user
 
 # ======================================================
 # ROUTER
