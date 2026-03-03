@@ -99,7 +99,7 @@ async function safeFetch(path, options = {}) {
   try {
     log.info("FETCH →", path);
 
-    const res = await safeFetch(API_BASE + path, {
+    const res = await fetch(API_BASE + path, {
       headers: {
         "Content-Type": "application/json",
         ...authHeaders(),
@@ -424,9 +424,9 @@ function getDepositAddress(asset) {
 
   return safeFetch(`/api/deposit/address?asset=${asset}`, {
     headers: {
-      Authorization: `Bearer ${localStorage.token || ""}`
+      Authorization: `Bearer ${USER.jwt || ""}`
     }
-  }).then(r => r.json());
+  });
 }
 
 /* ================= EVENTS ================= */
@@ -671,13 +671,11 @@ function pushBigWin(w) {
 ===================================================== */
 
 async function refreshGameFlags() {
-  try {
-    const res = await safeFetch("/casino/flags");
-    if (!res.ok) return;
+  const res = await safeFetch("/casino/flags");
+  if (!res) return;
 
-    CASINO.flags = await res.json();
-    bindCasinoGames();
-  } catch (_) {}
+  CASINO.flags = res;
+  bindCasinoGames();
 }
 
 /* =====================================================
@@ -907,7 +905,7 @@ function initTopupV6() {
 
 async function fetchP2P(fiat) {
   try {
-    const res = await safeFetch(
+    const res = await fetch(
       "https://p2p.binance.com/bapi/c2c/v2/friendly/c2c/adv/search",
       {
         method: "POST",
@@ -927,10 +925,9 @@ async function fetchP2P(fiat) {
     return prices.reduce((a,b)=>a+b,0) / prices.length;
 
   } catch {
-    return 1; // fallback
+    return 1;
   }
 }
-
 
 /* ================= CALCULATE ================= */
 
