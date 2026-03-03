@@ -162,7 +162,9 @@ GAMES = {
 # ======================================================
 
 @router.post("/play")
-def play(req: PlayRequest):
+def play(req: PlayRequest, user=Depends(get_current_user)):
+
+    req.uid = user["user_id"]
 
     if GAME_FREEZE:
         raise HTTPException(503, "GAMES_DISABLED")
