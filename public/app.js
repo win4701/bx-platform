@@ -99,7 +99,7 @@ async function safeFetch(path, options = {}) {
   try {
     log.info("FETCH →", path);
 
-    const res = await fetch(API_BASE + path, {
+    const res = await safeFetch(API_BASE + path, {
       headers: {
         "Content-Type": "application/json",
         ...authHeaders(),
