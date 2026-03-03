@@ -7,10 +7,6 @@
 const $ = (id) => document.getElementById(id);
 const $$ = (selector) => document.querySelectorAll(selector);
 
-/* ================= CONFIG ================= */
-
-const API_BASE = "https://bx-vw7a.onrender.com";
-
 /* ================= DEBUG MODE ================= */
 
 const DEBUG = (() => {
@@ -426,7 +422,7 @@ async function requestWithdraw(asset, amount, toAddress) {
 function getDepositAddress(asset) {
   if (!WALLET_STATE.connected) return null;
 
-  return fetch(`/api/deposit/address?asset=${asset}`, {
+  return safeFetch(`/api/deposit/address?asset=${asset}`, {
     headers: {
       Authorization: `Bearer ${localStorage.token || ""}`
     }
@@ -676,7 +672,7 @@ function pushBigWin(w) {
 
 async function refreshGameFlags() {
   try {
-    const res = await fetch("/casino/flags");
+    const res = await safeFetch("/casino/flags");
     if (!res.ok) return;
 
     CASINO.flags = await res.json();
@@ -911,7 +907,7 @@ function initTopupV6() {
 
 async function fetchP2P(fiat) {
   try {
-    const res = await fetch(
+    const res = await safeFetch(
       "https://p2p.binance.com/bapi/c2c/v2/friendly/c2c/adv/search",
       {
         method: "POST",
@@ -1031,7 +1027,7 @@ async function confirmTopup() {
   RESERVE -= STATE.usdt;
   EXPOSURE += STATE.usdt;
 
-  await fetch("/topup/execute", {
+  await safeFetch("/topup/execute", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(STATE)
