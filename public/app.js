@@ -99,7 +99,7 @@ async function safeFetch(path, options = {}) {
   try {
     log.info("FETCH →", path);
 
-    const res = await fetch(API_BASE + path, {
+    const res = await fetch(path, {   // ✅ بدون API_BASE
       headers: {
         "Content-Type": "application/json",
         ...authHeaders(),
@@ -121,7 +121,7 @@ async function safeFetch(path, options = {}) {
     log.error("NETWORK ERROR", path, err);
     return null;
   }
-  }
+}
 
 /* =========================================================
    PART 2 — NAVIGATION (General Update)
@@ -383,7 +383,7 @@ function notifyBackend() {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${localStorage.token || ""}`
+      Authorization: `Bearer ${USER.jwt || ""}`
     },
     body: JSON.stringify({
       type: WALLET_STATE.type,
@@ -404,7 +404,7 @@ async function requestWithdraw(asset, amount, toAddress) {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${localStorage.token || ""}`
+      Authorization: `Bearer ${USER.jwt || ""}`
     },
     body: JSON.stringify({
       asset,
