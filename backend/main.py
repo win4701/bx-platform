@@ -39,13 +39,13 @@ PORT = int(os.getenv("PORT", 8080))
 INTERNAL_SECRET = os.getenv("INTERNAL_SECRET", "")
 
 JWT_SECRET = os.getenv("JWT_SECRET")
-TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 
 if not JWT_SECRET:
     raise RuntimeError("JWT_SECRET not configured")
 
-if not TELEGRAM_BOT_TOKEN:
-    raise RuntimeError("TELEGRAM_BOT_TOKEN not configured")
+if not TELEGRAM_TOKEN:
+    raise RuntimeError("TELEGRAM_TOKEN not configured")
 
 ALGORITHM = "HS256"
 security = HTTPBearer()
