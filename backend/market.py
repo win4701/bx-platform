@@ -175,23 +175,17 @@ async def stream_symbol(quote):
 
     uri = f"wss://data-stream.binance.vision/ws/{symbol}@miniTicker"
 
+async with websockets.connect(uri) as ws:
+
     while True:
 
-        try:
+        msg = await ws.recv()
 
-            async with websockets.connect(uri) as ws:
+        data = json.loads(msg)
 
-                logger.info(f"Connected {symbol}")
+        price = float(data["c"])
 
-                while True:
-
-                    msg = await ws.recv()
-
-                    data = json.loads(msg)
-
-                    price = float(data["c"])
-
-                    compute_bx_price(quote, price)
+        compute_bx_price(quote, price)
 
         except Exception as e:
 
