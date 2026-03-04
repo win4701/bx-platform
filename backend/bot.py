@@ -1,111 +1,194 @@
 import os
 import logging
 import requests
-import time
-from collections import defaultdict
-from telegram import Update
+from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
 from telegram.ext import Updater, CommandHandler, CallbackContext
 
-# ======================================================
-# LOGGING
-# ======================================================
+======================================================
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("Bloxio_bot")
+CONFIG
 
-# ======================================================
-# CONFIG
-# ======================================================
+======================================================
 
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
-API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000")
+WEBAPP_URL = os.getenv("WEBAPP_URL", "https://bx-vw7a.onrender.com")
+API_BASE = os.getenv("API_BASE_URL", "https://bx-vw7a.onrender.com")
 
-ADMINS = {123456789}
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("bloxio_bot")
 
-FEATURES = {
-    "market": True,
-    "casino": True,
-    "mining": True,
-    "ston_fi": True,
-}
+======================================================
 
-RATE_LIMIT_SECONDS = 2
+SAFE API
 
-# ======================================================
-# RATE LIMIT
-# ======================================================
+======================================================
 
-_user_last_call = defaultdict(float)
+def api_get(endpoint, params=None):
+try:
+r = requests.get(f"{API_BASE}{endpoint}", params=params, timeout=10)
+r.raise_for_status()
+return r.json()
+except Exception as e:
+logger.error(e)
+return None
 
-def rate_limited(uid):
-    now = time.time()
-    if now - _user_last_call[uid] < RATE_LIMIT_SECONDS:
-        return True
-    _user_last_call[uid] = now
-    return False
+======================================================
 
-# ======================================================
-# SAFE API WRAPPERS
-# ======================================================
+MAIN MENU
 
-def safe_get(endpoint, params=None):
-    try:
-        r = requests.get(f"{API_BASE_URL}{endpoint}", params=params, timeout=10)
-        r.raise_for_status()
-        return r.json()
-    except Exception as e:
-        logger.error(f"GET {endpoint} failed: {e}")
-        return None
+======================================================
 
-def safe_post(endpoint, data=None):
-    try:
-        r = requests.post(f"{API_BASE_URL}{endpoint}", json=data, timeout=10)
-        r.raise_for_status()
-        return r.json()
-    except Exception as e:
-        logger.error(f"POST {endpoint} failed: {e}")
-        return None
+def main_menu():
 
-# ======================================================
-# HANDLERS
-# ======================================================
+keyboard = [
 
-def safe_handler(fn):
-    def wrapper(update: Update, context: CallbackContext):
-        try:
-            uid = update.message.from_user.id
-            if rate_limited(uid):
-                update.message.reply_text("Too many requests.")
-                return
-            return fn(update, context)
-        except Exception as e:
-            logger.error(f"Handler error: {e}")
-            update.message.reply_text("Internal error.")
-    return wrapper
+    [
+        InlineKeyboardButton(
+            "🎰 Casino",
+            web_app=WebAppInfo(url=WEBAPP_URL)
+        )
+    ],
 
+    [
+        InlineKeyboardButton(
+            "💰 Wallet",
+            web_app=WebAppInfo(url=WEBAPP_URL)
+        )
+    ],
 
-@safe_handler
+    [
+        InlineKeyboardButton(
+            "📈 Market",
+            web_app=WebAppInfo(url=WEBAPP_URL)
+        )
+    ],
+
+    [
+        InlineKeyboardButton(
+            "⛏ Mining",
+            web_app=WebAppInfo(url=WEBAPP_URL)
+        )
+    ]
+
+]
+
+return InlineKeyboardMarkup(keyboard)
+
+======================================================
+
+START
+
+======================================================
+
 def start(update: Update, context: CallbackContext):
-    update.message.reply_text("Bot is running.")
 
-# ======================================================
-# START BOT (SAFE)
-# ======================================================
+user = update.message.from_user
+
+update.message.reply_text(
+
+    f"Welcome {user.first_name} 🚀\n\n"
+    "Bloxio platform is ready.\n"
+    "Choose a section below:",
+
+    reply_markup=main_menu()
+)
+
+======================================================
+
+WALLET COMMAND
+
+======================================================
+
+def wallet(update: Update, context: CallbackContext):
+
+uid = update.message.from_user.id
+
+data = api_get("/api/wallet", {"uid": uid})
+
+if not data:
+    update.message.reply_text("Wallet unavailable.")
+    return
+
+text = "💰 Wallet\n\n"
+
+for k, v in data.items():
+    text += f"{k.upper()} : {v}\n"
+
+update.message.reply_text(text)
+
+======================================================
+
+CASINO BIG WIN NOTIFY
+
+======================================================
+
+def notify_big_win(context: CallbackContext):
+
+data = api_get("/public/rtp")
+
+if not data:
+    return
+
+message = (
+    "🔥 Big Casino Win!\n\n"
+    "Someone just won big on Bloxio 🎰"
+)
+
+for uid in context.bot_data.get("users", []):
+    try:
+        context.bot.send_message(uid, message)
+    except:
+        pass
+
+======================================================
+
+DEPOSIT NOTIFY
+
+======================================================
+
+def notify_deposit(context: CallbackContext):
+
+deposits = api_get("/finance/history")
+
+if not deposits:
+    return
+
+for d in deposits:
+
+    uid = d.get("uid")
+
+    try:
+        context.bot.send_message(
+            uid,
+            f"💰 Deposit received\n\n{d['amount']} {d['asset']}"
+        )
+    except:
+        pass
+
+======================================================
+
+START BOT
+
+======================================================
 
 def start_bot():
-    if not TELEGRAM_TOKEN:
-        logger.warning("Bot not started — TELEGRAM_TOKEN missing")
-        return
 
-    try:
-        updater = Updater(token=TELEGRAM_TOKEN, use_context=True)
-        dispatcher = updater.dispatcher
+if not TELEGRAM_TOKEN:
+    logger.warning("No TELEGRAM_TOKEN")
+    return
 
-        dispatcher.add_handler(CommandHandler("start", start))
+updater = Updater(TELEGRAM_TOKEN, use_context=True)
 
-        logger.info("🤖 Telegram Bot started")
-        updater.start_polling()
-        updater.idle()
+dp = updater.dispatcher
 
-    except Exception as e:
-        logger.error(f"Bot crashed: {e}")
+dp.add_handler(CommandHandler("start", start))
+dp.add_handler(CommandHandler("wallet", wallet))
+
+# notifications loop
+updater.job_queue.run_repeating(notify_big_win, 60)
+updater.job_queue.run_repeating(notify_deposit, 120)
+
+logger.info("Telegram bot started")
+
+updater.start_polling()
+updater.idle()
