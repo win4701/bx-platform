@@ -1,194 +1,254 @@
+# ==========================================================
+# BLOXIO TELEGRAM BOT
+# Casino • Wallet • Market • Mining • Airdrop
+# ==========================================================
+
 import os
-import logging
 import requests
-from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
-from telegram.ext import Updater, CommandHandler, CallbackContext
 
-======================================================
+from telegram import (
+    Update,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+    WebAppInfo
+)
 
-CONFIG
+from telegram.ext import (
+    ApplicationBuilder,
+    CommandHandler,
+    CallbackQueryHandler,
+    ContextTypes
+)
 
-======================================================
+API_URL = os.getenv("API_URL", "https://bx-vw7a.onrender.com")
+BOT_TOKEN = os.getenv("TELEGRAM_TOKEN")
 
-TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
-WEBAPP_URL = os.getenv("WEBAPP_URL", "https://bx-vw7a.onrender.com")
-API_BASE = os.getenv("API_BASE_URL", "https://bx-vw7a.onrender.com")
-
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("bloxio_bot")
-
-======================================================
-
-SAFE API
-
-======================================================
-
-def api_get(endpoint, params=None):
-try:
-r = requests.get(f"{API_BASE}{endpoint}", params=params, timeout=10)
-r.raise_for_status()
-return r.json()
-except Exception as e:
-logger.error(e)
-return None
-
-======================================================
-
-MAIN MENU
-
-======================================================
+# ==========================================================
+# MENU
+# ==========================================================
 
 def main_menu():
 
-keyboard = [
+    keyboard = [
 
-    [
-        InlineKeyboardButton(
-            "🎰 Casino",
-            web_app=WebAppInfo(url=WEBAPP_URL)
-        )
-    ],
+        [
+            InlineKeyboardButton(
+                "💰 Wallet",
+                web_app=WebAppInfo(url=f"{API_URL}")
+            )
+        ],
 
-    [
-        InlineKeyboardButton(
-            "💰 Wallet",
-            web_app=WebAppInfo(url=WEBAPP_URL)
-        )
-    ],
+        [
+            InlineKeyboardButton("🎰 Casino", callback_data="casino"),
+            InlineKeyboardButton("📈 Market", callback_data="market")
+        ],
 
-    [
-        InlineKeyboardButton(
-            "📈 Market",
-            web_app=WebAppInfo(url=WEBAPP_URL)
-        )
-    ],
-
-    [
-        InlineKeyboardButton(
-            "⛏ Mining",
-            web_app=WebAppInfo(url=WEBAPP_URL)
-        )
+        [
+            InlineKeyboardButton("⛏ Mining", callback_data="mining"),
+            InlineKeyboardButton("🎁 Airdrop", callback_data="airdrop")
+        ]
     ]
 
-]
+    return InlineKeyboardMarkup(keyboard)
 
-return InlineKeyboardMarkup(keyboard)
 
-======================================================
+# ==========================================================
+# START
+# ==========================================================
 
-START
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
-======================================================
+    user = update.effective_user
 
-def start(update: Update, context: CallbackContext):
+    text = f"""
+🚀 Welcome to BLOXIO
 
-user = update.message.from_user
+User: {user.first_name}
 
-update.message.reply_text(
+Features:
+💰 Wallet
+🎰 Casino
+📈 Market
+⛏ Mining
+🎁 Airdrop
+"""
 
-    f"Welcome {user.first_name} 🚀\n\n"
-    "Bloxio platform is ready.\n"
-    "Choose a section below:",
+    await update.message.reply_text(
+        text,
+        reply_markup=main_menu()
+    )
 
-    reply_markup=main_menu()
-)
 
-======================================================
+# ==========================================================
+# CASINO
+# ==========================================================
 
-WALLET COMMAND
+async def casino_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
-======================================================
+    q = update.callback_query
+    await q.answer()
 
-def wallet(update: Update, context: CallbackContext):
+    text = """
+🎰 Casino
 
-uid = update.message.from_user.id
+Play games directly in WebApp.
+"""
 
-data = api_get("/api/wallet", {"uid": uid})
-
-if not data:
-    update.message.reply_text("Wallet unavailable.")
-    return
-
-text = "💰 Wallet\n\n"
-
-for k, v in data.items():
-    text += f"{k.upper()} : {v}\n"
-
-update.message.reply_text(text)
-
-======================================================
-
-CASINO BIG WIN NOTIFY
-
-======================================================
-
-def notify_big_win(context: CallbackContext):
-
-data = api_get("/public/rtp")
-
-if not data:
-    return
-
-message = (
-    "🔥 Big Casino Win!\n\n"
-    "Someone just won big on Bloxio 🎰"
-)
-
-for uid in context.bot_data.get("users", []):
-    try:
-        context.bot.send_message(uid, message)
-    except:
-        pass
-
-======================================================
-
-DEPOSIT NOTIFY
-
-======================================================
-
-def notify_deposit(context: CallbackContext):
-
-deposits = api_get("/finance/history")
-
-if not deposits:
-    return
-
-for d in deposits:
-
-    uid = d.get("uid")
-
-    try:
-        context.bot.send_message(
-            uid,
-            f"💰 Deposit received\n\n{d['amount']} {d['asset']}"
+    await q.edit_message_text(
+        text,
+        reply_markup=InlineKeyboardMarkup(
+            [[InlineKeyboardButton("🎰 Open Casino", web_app=WebAppInfo(url=API_URL))]]
         )
+    )
+
+
+# ==========================================================
+# MARKET
+# ==========================================================
+
+async def market_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    q = update.callback_query
+    await q.answer()
+
+    text = """
+📈 Market
+
+Trade crypto assets.
+"""
+
+    await q.edit_message_text(
+        text,
+        reply_markup=InlineKeyboardMarkup(
+            [[InlineKeyboardButton("📈 Open Market", web_app=WebAppInfo(url=API_URL))]]
+        )
+    )
+
+
+# ==========================================================
+# MINING
+# ==========================================================
+
+async def mining_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    q = update.callback_query
+    await q.answer()
+
+    text = """
+⛏ Mining
+
+Subscribe to mining plans.
+"""
+
+    await q.edit_message_text(
+        text,
+        reply_markup=InlineKeyboardMarkup(
+            [[InlineKeyboardButton("⛏ Start Mining", web_app=WebAppInfo(url=API_URL))]]
+        )
+    )
+
+
+# ==========================================================
+# AIRDROP
+# ==========================================================
+
+async def airdrop_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    q = update.callback_query
+    await q.answer()
+
+    text = """
+🎁 Airdrop
+
+Claim your reward.
+"""
+
+    await q.edit_message_text(
+        text,
+        reply_markup=InlineKeyboardMarkup(
+            [[InlineKeyboardButton("🎁 Claim Airdrop", web_app=WebAppInfo(url=API_URL))]]
+        )
+    )
+
+
+# ==========================================================
+# BIG WIN NOTIFICATION
+# ==========================================================
+
+def notify_big_win(username, amount, game):
+
+    try:
+
+        requests.post(
+            f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
+            json={
+                "chat_id": "@bloxio_wins",
+                "text": f"🎉 BIG WIN\n\nUser: {username}\nGame: {game}\nAmount: {amount} BX"
+            }
+        )
+
     except:
         pass
 
-======================================================
 
-START BOT
+# ==========================================================
+# DEPOSIT NOTIFICATION
+# ==========================================================
 
-======================================================
+def notify_deposit(username, amount, asset):
 
-def start_bot():
+    try:
 
-if not TELEGRAM_TOKEN:
-    logger.warning("No TELEGRAM_TOKEN")
-    return
+        requests.post(
+            f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
+            json={
+                "chat_id": "@bloxio_deposits",
+                "text": f"💰 Deposit\n\nUser: {username}\nAmount: {amount} {asset}"
+            }
+        )
 
-updater = Updater(TELEGRAM_TOKEN, use_context=True)
+    except:
+        pass
 
-dp = updater.dispatcher
 
-dp.add_handler(CommandHandler("start", start))
-dp.add_handler(CommandHandler("wallet", wallet))
+# ==========================================================
+# CALLBACK ROUTER
+# ==========================================================
 
-# notifications loop
-updater.job_queue.run_repeating(notify_big_win, 60)
-updater.job_queue.run_repeating(notify_deposit, 120)
+async def router(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
-logger.info("Telegram bot started")
+    q = update.callback_query
 
-updater.start_polling()
-updater.idle()
+    if q.data == "casino":
+        await casino_menu(update, context)
+
+    elif q.data == "market":
+        await market_menu(update, context)
+
+    elif q.data == "mining":
+        await mining_menu(update, context)
+
+    elif q.data == "airdrop":
+        await airdrop_menu(update, context)
+
+
+# ==========================================================
+# START BOT
+# ==========================================================
+
+async def start_bot():
+
+    if not BOT_TOKEN:
+        print("Telegram token missing")
+        return
+
+    app = ApplicationBuilder().token(BOT_TOKEN).build()
+
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(CallbackQueryHandler(router))
+
+    print("Telegram bot started")
+
+    await app.initialize()
+    await app.start()
+    await app.updater.start_polling()
