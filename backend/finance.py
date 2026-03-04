@@ -5,7 +5,8 @@ import secrets
 from contextlib import contextmanager
 from fastapi import APIRouter, HTTPException, Depends, Query
 
-from key import api_guard, admin_guard
+from auth import get_current_user
+from key import api_guard
 
 # ======================================================
 # CONFIG
@@ -19,10 +20,14 @@ ALLOWED_ASSETS = {
     "avax","sol","btc","zec","ltc","bx"
 }
 
-router = APIRouter(dependencies=[Depends(api_guard)])
+router = APIRouter(
+    prefix="/api",
+    tags=["finance"],
+    dependencies=[Depends(api_guard)]
+)
 
 # ======================================================
-# DATABASE (ATOMIC SAFE)
+# DATABASE
 # ======================================================
 
 @contextmanager
@@ -32,30 +37,63 @@ def get_db():
     try:
         yield conn
         conn.commit()
-    except Exception:
+    except:
         conn.rollback()
         raise
     finally:
         conn.close()
 
 # ======================================================
-# SAFE COLUMN CHECK
+# ASSET VALIDATION
 # ======================================================
 
 def validate_asset(asset: str):
     asset = asset.lower()
+
     if asset not in ALLOWED_ASSETS:
         raise HTTPException(400, "INVALID_ASSET")
+
     return asset
 
 # ======================================================
-# WALLET ENDPOINT (FOR FRONTEND)
+# WALLET CREATION
+# ======================================================
+
+def ensure_wallet(uid: int):
+
+    with get_db() as conn:
+
+        exists = conn.execute(
+            "SELECT 1 FROM wallets WHERE uid=?",
+            (uid,)
+        ).fetchone()
+
+        if not exists:
+
+            conn.execute(
+                """
+                INSERT INTO wallets(
+                    uid,usdt,usdc,ton,bnb,eth,
+                    avax,sol,zec,ltc,btc,bx
+                )
+                VALUES(?,?,?,?,?,?,?,?,?,?,?,?)
+                """,
+                (uid,0,0,0,0,0,0,0,0,0,0,0)
+            )
+
+# ======================================================
+# WALLET SUMMARY
 # ======================================================
 
 @router.get("/wallet")
-def wallet_summary(uid: int):
+def wallet_summary(user=Depends(get_current_user)):
+
+    uid = user["user_id"]
+
+    ensure_wallet(uid)
 
     with get_db() as conn:
+
         row = conn.execute(
             """
             SELECT usdt,usdc,ton,bnb,eth,
@@ -65,13 +103,38 @@ def wallet_summary(uid: int):
             (uid,)
         ).fetchone()
 
-        if not row:
-            raise HTTPException(404, "WALLET_NOT_FOUND")
-
         return dict(row)
 
 # ======================================================
-# SAFE DEBIT
+# CREDIT
+# ======================================================
+
+def credit_wallet(uid: int, asset: str, amount: float, ref: str):
+
+    if amount <= 0:
+        raise HTTPException(400, "INVALID_AMOUNT")
+
+    asset = validate_asset(asset)
+
+    ensure_wallet(uid)
+
+    with get_db() as conn:
+
+        conn.execute(
+            f"UPDATE wallets SET {asset} = {asset} + ? WHERE uid=?",
+            (amount, uid)
+        )
+
+        conn.execute(
+            """
+            INSERT INTO history(uid,action,asset,amount,ref,ts)
+            VALUES (?,?,?,?,?,?)
+            """,
+            (uid,"credit",asset,amount,ref,int(time.time()))
+        )
+
+# ======================================================
+# DEBIT
 # ======================================================
 
 def debit_wallet(uid: int, asset: str, amount: float, ref: str):
@@ -81,7 +144,10 @@ def debit_wallet(uid: int, asset: str, amount: float, ref: str):
 
     asset = validate_asset(asset)
 
+    ensure_wallet(uid)
+
     with get_db() as conn:
+
         cursor = conn.execute(
             f"""
             UPDATE wallets
@@ -99,97 +165,105 @@ def debit_wallet(uid: int, asset: str, amount: float, ref: str):
             INSERT INTO history(uid,action,asset,amount,ref,ts)
             VALUES (?,?,?,?,?,?)
             """,
-            (uid, "debit", asset, amount, ref, int(time.time()))
+            (uid,"debit",asset,amount,ref,int(time.time()))
         )
 
 # ======================================================
-# SAFE CREDIT
+# TRANSFER BETWEEN USERS
 # ======================================================
 
-def credit_wallet(uid: int, asset: str, amount: float, ref: str):
+@router.post("/transfer")
+def transfer(asset: str, amount: float, to_uid: int, user=Depends(get_current_user)):
 
-    if amount <= 0:
-        raise HTTPException(400, "INVALID_AMOUNT")
+    uid = user["user_id"]
+
+    if uid == to_uid:
+        raise HTTPException(400, "SELF_TRANSFER")
 
     asset = validate_asset(asset)
 
-    with get_db() as conn:
-        conn.execute(
-            f"UPDATE wallets SET {asset} = {asset} + ? WHERE uid=?",
-            (amount, uid)
-        )
+    debit_wallet(uid, asset, amount, f"transfer_to_{to_uid}")
+    credit_wallet(to_uid, asset, amount, f"transfer_from_{uid}")
 
-        conn.execute(
-            """
-            INSERT INTO history(uid,action,asset,amount,ref,ts)
-            VALUES (?,?,?,?,?,?)
-            """,
-            (uid, "credit", asset, amount, ref, int(time.time()))
-        )
+    return {"status": "success"}
 
 # ======================================================
-# DEPOSIT ADDRESS (REAL ENDPOINT FOR FRONTEND)
+# DEPOSIT ADDRESS
 # ======================================================
 
 @router.get("/deposit/address")
-def get_deposit_address(uid: int, asset: str = Query(...)):
+def deposit_address(asset: str, user=Depends(get_current_user)):
+
+    uid = user["user_id"]
 
     asset = validate_asset(asset)
 
-    address = f"{asset.upper()}_{uid}_{secrets.token_hex(4)}"
+    address = f"{asset}_{uid}_{secrets.token_hex(5)}"
 
     with get_db() as conn:
+
         conn.execute(
             """
             INSERT INTO deposit_addresses(uid,asset,address,ts)
             VALUES (?,?,?,?)
             """,
-            (uid, asset, address, int(time.time()))
+            (uid,asset,address,int(time.time()))
         )
 
-    return {"asset": asset, "address": address}
+    return {
+        "asset": asset,
+        "address": address
+    }
 
 # ======================================================
-# WITHDRAW REQUEST
+# WITHDRAW
 # ======================================================
 
 @router.post("/withdraw")
-def request_withdraw(uid: int, asset: str, amount: float, address: str):
+def withdraw(asset: str, amount: float, address: str, user=Depends(get_current_user)):
+
+    uid = user["user_id"]
 
     asset = validate_asset(asset)
 
     if amount < MIN_WITHDRAW_USDT:
-        raise HTTPException(400, "MIN_WITHDRAW")
+        raise HTTPException(400,"MIN_WITHDRAW")
 
-    if not address or len(address) < 5:
-        raise HTTPException(400, "INVALID_ADDRESS")
+    if len(address) < 6:
+        raise HTTPException(400,"INVALID_ADDRESS")
 
-    debit_wallet(uid, asset, amount, "withdraw_request")
+    debit_wallet(uid,asset,amount,"withdraw_request")
 
     with get_db() as conn:
+
         conn.execute(
             """
             INSERT INTO withdraw_queue(uid,asset,amount,address,status,ts)
             VALUES (?,?,?,?,?,?)
             """,
-            (uid, asset, amount, address, "pending", int(time.time()))
+            (uid,asset,amount,address,"pending",int(time.time()))
         )
 
-    return {"status": "pending"}
+    return {"status":"pending"}
 
 # ======================================================
 # CASINO INTEGRATION
 # ======================================================
 
 def casino_debit(uid: int, amount: float, game: str):
-    debit_wallet(uid, "usdt", amount, f"casino_{game}_bet")
+
+    debit_wallet(uid,"bx",amount,f"casino_{game}_bet")
+
 
 def casino_credit(uid: int, amount: float, game: str):
-    credit_wallet(uid, "usdt", amount, f"casino_{game}_win")
+
+    credit_wallet(uid,"bx",amount,f"casino_{game}_win")
+
 
 def casino_history(uid: int, game: str, bet: float, payout: float, win: bool):
 
     with get_db() as conn:
+
         conn.execute(
             """
             INSERT INTO history(uid,action,asset,amount,ref,ts)
@@ -198,9 +272,9 @@ def casino_history(uid: int, game: str, bet: float, payout: float, win: bool):
             (
                 uid,
                 "casino",
-                "usdt",
+                "bx",
                 payout if win else bet,
                 f"{game}_{'win' if win else 'lose'}",
                 int(time.time())
             )
-                          )
+        )
