@@ -1,22 +1,24 @@
 # ======================================================
-# Bloxio — MAIN (Clean Production Stable v4)
-# No Circular • JWT Modular • Telegram Verified
+# Bloxio — MAIN (Render Safe Production v5)
+# No Circular • Modular • JWT • Telegram
 # ======================================================
-
-from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect, Request, Depends
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
-from starlette.middleware.base import BaseHTTPMiddleware
-from pydantic import BaseModel
 
 import os
 import json
 import hmac
 import hashlib
 import logging
+
 from urllib.parse import parse_qs
 
-# JWT يأتي فقط من auth.py
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect, Request, Depends
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from starlette.middleware.base import BaseHTTPMiddleware
+from contextlib import asynccontextmanager
+
+from pydantic import BaseModel
+
 from auth import create_access_token, get_current_user
 
 # ======================================================
@@ -25,8 +27,9 @@ from auth import create_access_token, get_current_user
 
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
+    format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
 )
+
 logger = logging.getLogger("bloxio")
 
 # ======================================================
@@ -36,11 +39,20 @@ logger = logging.getLogger("bloxio")
 ENV = os.getenv("ENV", "production").lower()
 PORT = int(os.getenv("PORT", 8080))
 INTERNAL_SECRET = os.getenv("INTERNAL_SECRET", "")
-
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 
 if not TELEGRAM_TOKEN:
     raise RuntimeError("TELEGRAM_TOKEN not configured")
+
+# ======================================================
+# LIFESPAN (Render Safe)
+# ======================================================
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    logger.info("Bloxio API starting...")
+    yield
+    logger.info("Bloxio API shutting down...")
 
 # ======================================================
 # APP
@@ -48,13 +60,64 @@ if not TELEGRAM_TOKEN:
 
 app = FastAPI(
     title="Bloxio API",
-    version="4.0.0",
+    version="5.0.0",
+    lifespan=lifespan,
     docs_url="/docs" if ENV == "dev" else None,
     redoc_url=None
 )
 
 # ======================================================
-# TELEGRAM VERIFICATION
+# SECURITY HEADERS
+# ======================================================
+
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+
+    async def dispatch(self, request, call_next):
+
+        response = await call_next(request)
+
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["Referrer-Policy"] = "no-referrer"
+        response.headers["Server"] = "Bloxio"
+
+        return response
+
+app.add_middleware(SecurityHeadersMiddleware)
+
+# ======================================================
+# CORS
+# ======================================================
+
+allow_origins = ["*"] if ENV == "dev" else [
+    "https://bloxio.online",
+    "https://www.bloxio.online"
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=allow_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# ======================================================
+# GLOBAL ERROR HANDLER
+# ======================================================
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+
+    logger.error(f"Unhandled error: {exc}")
+
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal server error"},
+    )
+
+# ======================================================
+# TELEGRAM AUTH
 # ======================================================
 
 def verify_telegram_init_data(init_data: str):
@@ -85,6 +148,7 @@ def verify_telegram_init_data(init_data: str):
         raise HTTPException(401, "Telegram verification failed")
 
     user = json.loads(parsed["user"][0])
+
     return user
 
 
@@ -94,107 +158,126 @@ class TelegramInit(BaseModel):
 
 @app.post("/api/auth/telegram")
 def telegram_auth(data: TelegramInit):
+
     user = verify_telegram_init_data(data.initData)
+
     token = create_access_token(user["id"])
-    return {"access_token": token, "token_type": "bearer"}
+
+    return {
+        "access_token": token,
+        "token_type": "bearer"
+    }
 
 
 @app.get("/api/auth/me")
 def auth_me(user=Depends(get_current_user)):
+
     return {"user_id": user["user_id"]}
 
 # ======================================================
-# SECURITY HEADERS
-# ======================================================
-
-class SecurityHeadersMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request, call_next):
-        response = await call_next(request)
-        response.headers["X-Content-Type-Options"] = "nosniff"
-        response.headers["X-Frame-Options"] = "DENY"
-        response.headers["Referrer-Policy"] = "no-referrer"
-        response.headers["Server"] = "Bloxio"
-        return response
-
-app.add_middleware(SecurityHeadersMiddleware)
-
-# ======================================================
-# CORS
-# ======================================================
-
-allow_origins = ["*"] if ENV == "dev" else [
-    "https://bloxio.online",
-    "https://www.bloxio.online"
-]
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=allow_origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# ======================================================
-# GLOBAL ERROR HANDLER
-# ======================================================
-
-@app.exception_handler(Exception)
-async def global_exception_handler(request: Request, exc: Exception):
-    logger.error(f"Unhandled error: {exc}")
-    return JSONResponse(
-        status_code=500,
-        content={"detail": "Internal server error"},
-    )
-
-# ======================================================
-# IMPORT ROUTERS (بعد تعريف app فقط)
+# ROUTERS (IMPORT AFTER APP INIT)
 # ======================================================
 
 from finance import router as finance_router
-from market import router as market_router
 from casino import router as casino_router
-from bxing import router as bxing_router
-from pricing import pricing_snapshot
-from exchange import ORDER_BOOKS, TRADES, place_order
+
+try:
+    from market import router as market_router
+except Exception:
+    market_router = None
+
+try:
+    from bxing import router as bxing_router
+except Exception:
+    bxing_router = None
 
 try:
     from kyc import router as kyc_router
 except Exception:
     kyc_router = None
 
-app.include_router(finance_router, prefix="/finance")
-app.include_router(market_router, prefix="/market")
-app.include_router(casino_router, prefix="/casino")
-app.include_router(bxing_router)
+app.include_router(finance_router)
+app.include_router(casino_router)
+
+if market_router:
+    app.include_router(market_router)
+
+if bxing_router:
+    app.include_router(bxing_router)
 
 if kyc_router:
-    app.include_router(kyc_router, prefix="/kyc")
+    app.include_router(kyc_router)
 
 # ======================================================
-# HEALTH
+# HEALTH (RENDER)
 # ======================================================
 
 @app.get("/")
 def root():
     return {"status": "ok"}
 
+
 @app.get("/health")
 def health():
     return {"status": "healthy"}
 
 # ======================================================
-# WEBSOCKET
+# PUBLIC
 # ======================================================
+
+try:
+    from pricing import pricing_snapshot
+except Exception:
+    pricing_snapshot = None
+
+
+@app.get("/public/prices")
+def public_prices():
+
+    if not pricing_snapshot:
+        return {}
+
+    return pricing_snapshot()
+
+
+@app.get("/public/rtp")
+def rtp_stats():
+
+    return {
+        "slots": 96.5,
+        "roulette": 97.2,
+        "blackjack": 99.1
+    }
+
+# ======================================================
+# WEBSOCKET EXCHANGE
+# ======================================================
+
+try:
+    from exchange import ORDER_BOOKS, TRADES, place_order
+except Exception:
+    ORDER_BOOKS = {}
+    TRADES = {}
+    place_order = None
+
 
 @app.websocket("/ws/exchange")
 async def exchange_ws(ws: WebSocket):
+
     await ws.accept()
+
+    if not place_order:
+        await ws.close()
+        return
+
     try:
+
         while True:
+
             data = await ws.receive_json()
 
             if data.get("type") == "order":
+
                 place_order(
                     uid=data["uid"],
                     pair=data["pair"],
@@ -211,42 +294,31 @@ async def exchange_ws(ws: WebSocket):
                 })
 
     except WebSocketDisconnect:
+
         logger.info("WebSocket disconnected")
 
 # ======================================================
-# PUBLIC
-# ======================================================
-
-@app.get("/public/prices")
-def public_prices():
-    return pricing_snapshot()
-
-@app.get("/public/rtp")
-def rtp_stats():
-    return {
-        "slots": 96.5,
-        "roulette": 97.2,
-        "blackjack": 99.1
-    }
-
-# ======================================================
-# INTERNAL
+# INTERNAL EVENTS
 # ======================================================
 
 @app.post("/internal/event")
 def internal_event(event: dict):
+
     if ENV != "dev" and event.get("secret") != INTERNAL_SECRET:
         raise HTTPException(403, "Unauthorized")
+
     return {"status": "received"}
 
 # ======================================================
-# RUN
+# RUN (LOCAL ONLY)
 # ======================================================
 
 if __name__ == "__main__":
+
     import uvicorn
+
     uvicorn.run(
-        "backend.main:app",
+        "main:app",
         host="0.0.0.0",
         port=PORT,
     )
