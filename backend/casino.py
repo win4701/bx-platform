@@ -1,239 +1,180 @@
-# ======================================================
-# casino.py — STABLE PRODUCTION v3
-# ======================================================
+# ==========================================================
+# BLOXIO CASINO ENGINE
+# Games • Wallet Integration • Fair Results
+# ==========================================================
 
-import os
+import random
 import time
-import hmac
-import hashlib
-import secrets
-import logging
-from threading import Lock
-from typing import Optional
 
-from fastapi import APIRouter, HTTPException, Depends
-from pydantic import BaseModel, Field
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
 
-from key import api_guard, admin_guard
-from finance import casino_debit, casino_credit, casino_history, get_db
-from auth import get_current_user
+from security import get_current_user
+from finance import credit_user, debit_user
 
-# ======================================================
-# ROUTER
-# ======================================================
+router = APIRouter(prefix="/casino", tags=["casino"])
 
-router = APIRouter(
-    prefix="/api/casino",
-    tags=["casino"],
-    dependencies=[Depends(api_guard)]
-)
+# ==========================================================
+# GAME FLAGS (ADMIN TOGGLE)
+# ==========================================================
 
-logger = logging.getLogger("casino")
-LOCK = Lock()
+GAME_FLAGS = {
+    "coinflip": True,
+    "crash": True,
+    "limbo": True,
+    "dice": True,
+    "slot": True,
+    "plinko": True,
+    "hilo": True,
+    "airboss": True,
+    "fruit_party": True,
+    "banana_farm": True,
+    "blackjack_fast": True,
+    "birds_party": True
+}
 
-# ======================================================
-# CONFIG
-# ======================================================
+# ==========================================================
+# GAME MODEL
+# ==========================================================
 
-SERVER_SEED = os.getenv("SERVER_SEED", secrets.token_hex(32))
-MAX_BET = float(os.getenv("CASINO_MAX_BET", 1000))
-MIN_BET = float(os.getenv("CASINO_MIN_BET", 0.1))
-MAX_MULTI = float(os.getenv("CASINO_MAX_MULTIPLIER", 100))
-GAME_FREEZE = bool(int(os.getenv("GAME_FREEZE", "0")))
-
-# ======================================================
-# SUPPORTED GAMES
-# ======================================================
-
-SUPPORTED_GAMES = [
-    "coinflip","crash","limbo","dice","slot",
-    "plinko","hilo","airboss","fruit_party",
-    "banana_farm","blackjack_fast","birds_party"
-]
-
-# ======================================================
-# PROVABLY FAIR
-# ======================================================
-
-def server_seed_hash():
-    return hashlib.sha256(SERVER_SEED.encode()).hexdigest()
-
-
-def provably_random(seed: str, nonce: int) -> float:
-    msg = f"{seed}:{nonce}".encode()
-    h = hmac.new(SERVER_SEED.encode(), msg, hashlib.sha256).hexdigest()
-    return int(h[:8], 16) / 0xFFFFFFFF
-
-
-# ======================================================
-# REQUEST MODEL
-# ======================================================
-
-class PlayRequest(BaseModel):
+class CasinoPlay(BaseModel):
 
     game: str
-    bet: float = Field(gt=0)
-
-    multiplier: Optional[float] = None
-    choice: Optional[str] = None
-    client_seed: str
-
-
-# ======================================================
-# GAME ENGINE
-# ======================================================
-
-def simple_game(bet, multiplier, rand):
-
-    win = rand <= (1 / multiplier)
-
-    return win, bet * multiplier if win else 0
+    bet: float
+    multiplier: float | None = None
+    choice: str | None = None
+    client_seed: str | None = None
 
 
-def slot_game(bet, rand):
-
-    if rand < 0.7:
-        return False, 0
-
-    if rand < 0.9:
-        return True, bet * 2
-
-    if rand < 0.97:
-        return True, bet * 5
-
-    return True, bet * 10
-
-
-# ======================================================
-# PLAY
-# ======================================================
-
-@router.post("/play")
-def play(req: PlayRequest, user=Depends(get_current_user)):
-
-    if GAME_FREEZE:
-        raise HTTPException(503, "CASINO_DISABLED")
-
-    if req.game not in SUPPORTED_GAMES:
-        raise HTTPException(400, "GAME_NOT_SUPPORTED")
-
-    if req.bet < MIN_BET:
-        raise HTTPException(400, "BET_TOO_SMALL")
-
-    if req.bet > MAX_BET:
-        raise HTTPException(400, "BET_TOO_LARGE")
-
-    uid = user["user_id"]
-
-    nonce = int(time.time() * 1000) + secrets.randbelow(999)
-
-    rand = provably_random(req.client_seed, nonce)
-
-    win = False
-    payout = 0
-
-    with LOCK:
-
-        casino_debit(uid, req.bet, req.game)
-
-        try:
-
-            if req.game in ["coinflip","dice","hilo"]:
-                win, payout = simple_game(req.bet, 2, rand)
-
-            elif req.game in ["crash","limbo","plinko","airboss"]:
-
-                multi = req.multiplier or 2
-
-                if multi > MAX_MULTI:
-                    raise HTTPException(400, "MULTIPLIER_TOO_HIGH")
-
-                win, payout = simple_game(req.bet, multi, rand)
-
-            elif req.game in ["slot","fruit_party","banana_farm","birds_party"]:
-
-                win, payout = slot_game(req.bet, rand)
-
-            elif req.game == "blackjack_fast":
-
-                win = rand < 0.48
-
-                payout = req.bet * 2 if win else 0
-
-            if win and payout > 0:
-                casino_credit(uid, payout, req.game)
-
-        finally:
-
-            casino_history(uid, req.game, req.bet, payout, win)
-
-    logger.info(
-        f"CASINO | {req.game} | UID={uid} | WIN={win} | PAY={payout}"
-    )
-
-    return {
-        "game": req.game,
-        "win": win,
-        "payout": payout,
-        "nonce": nonce,
-        "server_seed_hash": server_seed_hash()
-    }
-
-
-# ======================================================
-# GAME FLAGS (FRONTEND)
-# ======================================================
+# ==========================================================
+# FLAGS API
+# ==========================================================
 
 @router.get("/flags")
 def get_flags():
 
-    return {g: True for g in SUPPORTED_GAMES}
+    return GAME_FLAGS
 
 
-# ======================================================
-# HISTORY
-# ======================================================
+# ==========================================================
+# GAME LOGIC
+# ==========================================================
 
-@router.get("/history")
-def casino_history_endpoint(user=Depends(get_current_user)):
+def coinflip(bet):
 
-    uid = user["user_id"]
+    win = random.random() > 0.5
+    payout = bet * 2 if win else 0
 
-    with get_db() as conn:
-
-        rows = conn.execute(
-            """
-            SELECT action,amount,ref,ts
-            FROM history
-            WHERE uid=? AND action='casino'
-            ORDER BY ts DESC
-            LIMIT 50
-            """,
-            (uid,)
-        ).fetchall()
-
-    return [dict(r) for r in rows]
+    return win, payout
 
 
-# ======================================================
-# PING (RENDER HEALTHCHECK)
-# ======================================================
+def dice(bet, multiplier):
 
-@router.get("/ping")
-def ping():
+    chance = 1 / multiplier
 
-    return {"status": "casino_alive"}
+    win = random.random() < chance
+    payout = bet * multiplier if win else 0
+
+    return win, payout
 
 
-# ======================================================
-# ADMIN INFO
-# ======================================================
+def limbo(bet, multiplier):
 
-@router.get("/admin/rtp", dependencies=[Depends(admin_guard)])
-def admin_rtp():
+    win = random.random() < (1 / multiplier)
+    payout = bet * multiplier if win else 0
+
+    return win, payout
+
+
+def crash(bet):
+
+    multiplier = random.uniform(1, 10)
+
+    win = multiplier > 2
+    payout = bet * multiplier if win else 0
+
+    return win, payout
+
+
+def slot(bet):
+
+    win = random.random() > 0.7
+    payout = bet * 5 if win else 0
+
+    return win, payout
+
+
+# ==========================================================
+# PLAY
+# ==========================================================
+
+@router.post("/play")
+def play(req: CasinoPlay, user=Depends(get_current_user)):
+
+    user_id = user["user_id"]
+
+    game = req.game
+    bet = float(req.bet)
+
+    if game not in GAME_FLAGS:
+
+        raise HTTPException(400, "Unknown game")
+
+    if GAME_FLAGS[game] is False:
+
+        raise HTTPException(403, "Game disabled")
+
+    if bet <= 0:
+
+        raise HTTPException(400, "Invalid bet")
+
+    # ======================================
+    # DEBIT BET
+    # ======================================
+
+    debit_user(user_id, "BX", bet)
+
+    # ======================================
+    # GAME ENGINE
+    # ======================================
+
+    if game == "coinflip":
+
+        win, payout = coinflip(bet)
+
+    elif game == "dice":
+
+        win, payout = dice(bet, req.multiplier or 2)
+
+    elif game == "limbo":
+
+        win, payout = limbo(bet, req.multiplier or 2)
+
+    elif game == "crash":
+
+        win, payout = crash(bet)
+
+    elif game == "slot":
+
+        win, payout = slot(bet)
+
+    else:
+
+        win = random.random() > 0.5
+        payout = bet * 2 if win else 0
+
+    # ======================================
+    # CREDIT WIN
+    # ======================================
+
+    if payout > 0:
+
+        credit_user(user_id, "BX", payout)
 
     return {
-        "games": SUPPORTED_GAMES,
-        "max_bet": MAX_BET,
-        "min_bet": MIN_BET
+        "game": game,
+        "bet": bet,
+        "win": win,
+        "payout": round(payout, 6),
+        "timestamp": int(time.time())
     }
