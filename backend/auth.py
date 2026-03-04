@@ -1,64 +1,149 @@
-# ======================================================
-# auth.py — PRODUCTION JWT AUTH SYSTEM
-# Secure • Modular • No Circular Import
-# ======================================================
+# ==========================================================
+# BLOXIO AUTH SYSTEM
+# Telegram Login • JWT • User Identity
+# ==========================================================
 
-import os
 import time
-from jose import jwt, JWTError
-from fastapi import HTTPException, Depends
+import sqlite3
+import os
+
+from fastapi import APIRouter, HTTPException, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from pydantic import BaseModel
 
-# ======================================================
-# CONFIG
-# ======================================================
+from security import create_jwt, verify_jwt
 
-SECRET_KEY = os.getenv("JWT_SECRET")
-if not SECRET_KEY:
-    raise RuntimeError("JWT_SECRET not configured")
-
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_SECONDS = 60 * 60 * 24  # 24h
+router = APIRouter(prefix="/auth", tags=["auth"])
 
 security = HTTPBearer()
 
-# ======================================================
-# TOKEN CREATION
-# ======================================================
+DB_PATH = os.getenv("DB_PATH", "bloxio.db")
 
-def create_access_token(user_id: int):
+# ==========================================================
+# DATABASE
+# ==========================================================
 
-    now = int(time.time())
+def db():
 
-    payload = {
-        "sub": str(user_id),
-        "user_id": user_id,
-        "iat": now,
-        "exp": now + ACCESS_TOKEN_EXPIRE_SECONDS,
-        "type": "access"
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+
+# ==========================================================
+# MODELS
+# ==========================================================
+
+class TelegramAuth(BaseModel):
+
+    telegram_id: int
+    username: str | None = None
+    first_name: str | None = None
+
+
+# ==========================================================
+# TELEGRAM LOGIN
+# ==========================================================
+
+@router.post("/telegram")
+def telegram_login(data: TelegramAuth):
+
+    user_id = data.telegram_id
+
+    conn = db()
+    cur = conn.cursor()
+
+    cur.execute(
+        "SELECT id FROM users WHERE telegram_id=?",
+        (user_id,)
+    )
+
+    row = cur.fetchone()
+
+    # =========================================
+    # USER NOT EXIST → CREATE
+    # =========================================
+
+    if not row:
+
+        cur.execute(
+            """
+            INSERT INTO users
+            (telegram_id, username, first_name, created_at)
+            VALUES(?,?,?,?)
+            """,
+            (
+                data.telegram_id,
+                data.username,
+                data.first_name,
+                int(time.time())
+            )
+        )
+
+        conn.commit()
+
+        user_db_id = cur.lastrowid
+
+    else:
+
+        user_db_id = row["id"]
+
+    conn.close()
+
+    # =========================================
+    # CREATE JWT
+    # =========================================
+
+    token = create_jwt(user_db_id)
+
+    return {
+        "access_token": token,
+        "token_type": "bearer"
     }
 
-    return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
 
-# ======================================================
-# TOKEN VALIDATION
-# ======================================================
+# ==========================================================
+# CURRENT USER
+# ==========================================================
 
 def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security)
 ):
 
-    try:
-        payload = jwt.decode(
-            credentials.credentials,
-            SECRET_KEY,
-            algorithms=[ALGORITHM]
-        )
+    token = credentials.credentials
 
-        if payload.get("type") != "access":
-            raise HTTPException(401, "Invalid token type")
+    payload = verify_jwt(token)
 
-        return payload
+    return payload
 
-    except JWTError:
-        raise HTTPException(401, "Invalid or expired token")
+
+# ==========================================================
+# USER PROFILE
+# ==========================================================
+
+@router.get("/me")
+def auth_me(user=Depends(get_current_user)):
+
+    user_id = user["user_id"]
+
+    conn = db()
+    cur = conn.cursor()
+
+    cur.execute(
+        """
+        SELECT id, telegram_id, username, first_name
+        FROM users
+        WHERE id=?
+        """,
+        (user_id,)
+    )
+
+    row = cur.fetchone()
+
+    conn.close()
+
+    if not row:
+
+        raise HTTPException(404, "User not found")
+
+    return dict(row)
