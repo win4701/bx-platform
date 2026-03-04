@@ -474,29 +474,41 @@ function bindWalletActions() {
 
 async function initTelegramLogin() {
 
-  if (!window.Telegram?.WebApp?.initData) {
-    console.warn("Telegram initData missing");
+  if (!window.Telegram || !window.Telegram.WebApp) {
+    console.warn("Telegram WebApp not detected");
+    return;
+  }
+
+  const tg = window.Telegram.WebApp;
+
+  tg.ready();
+
+  const initData = tg.initData;
+
+  if (!initData) {
+    console.warn("No Telegram initData");
     return;
   }
 
   const res = await safeFetch("/api/auth/telegram", {
     method: "POST",
     body: JSON.stringify({
-      initData: window.Telegram.WebApp.initData
+      initData: initData
     })
   });
 
-  if (!res?.access_token) {
-    console.error("Telegram auth failed");
+  if (!res || !res.access_token) {
+    console.error("Telegram login failed");
     return;
   }
 
   USER.set(res.access_token);
 
-  console.log("JWT received");
+  console.log("JWT authenticated");
 
   loadWallet();
- }
+}
+
 /* ================= INIT ================= */
 
 document.addEventListener("DOMContentLoaded", () => {
