@@ -173,7 +173,7 @@ async def stream_symbol(quote):
     if not symbol:
         return
 
-    uri = f"wss://stream.binance.com:9443/ws/{symbol}@miniTicker"
+    uri = f"wss://data-stream.binance.vision/ws/{symbol}@miniTicker"
 
     while True:
 
