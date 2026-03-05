@@ -1,7 +1,6 @@
 # ==========================================================
-# BLOXIO MARKET ENGINE
-# Price Engine • OrderBook • Binance Stream
-# Compatible with market.js
+# BLOXIO MARKET ENGINE v2
+# Price Engine • Binance Feed • Exchange Sync
 # ==========================================================
 
 import os
@@ -9,8 +8,8 @@ import json
 import time
 import asyncio
 import logging
-import websockets
 import sqlite3
+import websockets
 
 from collections import defaultdict, deque
 from contextlib import contextmanager
@@ -27,7 +26,6 @@ BX_REFERENCE_PRICE = 45.0
 
 SUPPORTED_QUOTES = [
     "USDT",
-    "USDC",
     "BTC",
     "ETH",
     "BNB",
@@ -39,8 +37,8 @@ SUPPORTED_QUOTES = [
 ]
 
 BINANCE_SYMBOLS = {
+
     "USDT": "btcusdt",
-    "USDC": "btcusdt",
     "BTC": "btcusdt",
     "ETH": "ethusdt",
     "BNB": "bnbusdt",
@@ -59,7 +57,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("market")
 
 # ==========================================================
-# DB SAFE
+# DATABASE
 # ==========================================================
 
 @contextmanager
@@ -89,6 +87,8 @@ ORDER_BOOKS = defaultdict(lambda: {"buy": [], "sell": []})
 
 RECENT_TRADES = defaultdict(lambda: deque(maxlen=500))
 
+TICKERS = {}
+
 LOCK = Lock()
 
 # ==========================================================
@@ -100,15 +100,17 @@ def compute_bx_price(quote, quote_price):
     if quote_price <= 0:
         return
 
-    bx_price = BX_REFERENCE_PRICE / quote_price
-
     pair = f"BX/{quote}"
+
+    bx_price = BX_REFERENCE_PRICE / quote_price
 
     with LOCK:
 
         MARKET_PRICES[pair] = bx_price
 
         generate_orderbook(pair, bx_price)
+
+        update_ticker(pair, bx_price)
 
         store_price(pair, bx_price)
 
@@ -125,14 +127,54 @@ def generate_orderbook(pair, price):
 
     for i in range(ROWS):
 
-        bid = round(price - i * price * 0.0005, 8)
-        ask = round(price + i * price * 0.0005, 8)
+        spread = price * 0.0005 * i
 
-        bids.append(bid)
-        asks.append(ask)
+        bids.append(round(price - spread, 8))
+        asks.append(round(price + spread, 8))
 
     ORDER_BOOKS[pair]["buy"] = bids
     ORDER_BOOKS[pair]["sell"] = asks
+
+# ==========================================================
+# TICKER
+# ==========================================================
+
+def update_ticker(pair, price):
+
+    ticker = TICKERS.get(pair)
+
+    if not ticker:
+
+        ticker = {
+            "open": price,
+            "high": price,
+            "low": price,
+            "volume": 0
+        }
+
+    ticker["high"] = max(ticker["high"], price)
+    ticker["low"] = min(ticker["low"], price)
+
+    TICKERS[pair] = ticker
+
+# ==========================================================
+# TRADE RECORD
+# ==========================================================
+
+def record_trade(pair, price, amount):
+
+    RECENT_TRADES[pair].append({
+
+        "price": price,
+        "amount": amount,
+        "ts": int(time.time())
+    })
+
+    ticker = TICKERS.get(pair)
+
+    if ticker:
+
+        ticker["volume"] += amount
 
 # ==========================================================
 # STORE PRICE
@@ -151,11 +193,7 @@ def store_price(pair, price):
                 VALUES(?,?,?)
                 """,
 
-                (
-                    pair,
-                    price,
-                    int(time.time())
-                )
+                (pair, price, int(time.time()))
             )
 
     except Exception as e:
@@ -213,11 +251,20 @@ def pairs():
 @router.get("/price/{pair}")
 def price(pair: str):
 
-    return {
+    if pair not in MARKET_PRICES:
+        raise HTTPException(404, "PAIR_NOT_FOUND")
 
+    return {
         "pair": pair,
-        "price": MARKET_PRICES.get(pair, 0)
+        "price": MARKET_PRICES[pair]
     }
+
+# ==========================================================
+
+@router.get("/ticker/{pair}")
+def ticker(pair: str):
+
+    return TICKERS.get(pair)
 
 # ==========================================================
 
@@ -234,20 +281,7 @@ def trades(pair: str):
     return list(RECENT_TRADES[pair])
 
 # ==========================================================
-# INTERNAL TRADE RECORD
-# ==========================================================
-
-def record_trade(pair, price, amount):
-
-    RECENT_TRADES[pair].append({
-
-        "price": price,
-        "amount": amount,
-        "ts": int(time.time())
-    })
-
-# ==========================================================
-# START STREAMS
+# START ENGINE
 # ==========================================================
 
 def start_market():
