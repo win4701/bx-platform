@@ -896,22 +896,37 @@ function renderMiningPlans() {
 
 /* ================= SUBSCRIBE ================= */
 
-function subscribeMining(planId) {
-  if (MINING.subscription) {
-    alert("You already have an active mining subscription.");
+async function subscribeMining(planId) {
+
+  const amount = prompt("Amount to mine");
+
+  if (!amount) return;
+
+  const res = await safeFetch("/mining/subscribe", {
+    method: "POST",
+    body: JSON.stringify({
+      coin: MINING.coin,
+      plan_id: planId,
+      amount: Number(amount)
+    })
+  });
+
+  if (!res) {
+    alert("Mining failed");
     return;
   }
+
+  alert("Mining started");
 
   MINING.subscription = {
     coin: MINING.coin,
     planId
   };
 
-  log.info("Mining subscription:", MINING.subscription);
   renderMining();
-       }
+}
 
-       /* =========================================================
+ /* =========================================================
    PART   / CONFIG / Airdrop 
 ========================================================= */
 
