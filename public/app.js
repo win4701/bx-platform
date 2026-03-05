@@ -1131,3 +1131,93 @@ document
   ?.addEventListener("click", () => {
     setTimeout(initTopupV6, 200);
   });
+// ===============================
+ // CASINO
+ // ===============================
+
+async function openCasino(){
+
+    const r = await safeFetch("/casino/play",{
+        method:"POST",
+        body: JSON.stringify({
+            bet:1
+        })
+    });
+
+    const data = await r.json();
+
+    alert("Result: " + data.result);
+}
+
+
+// ===============================
+ // WALLET
+ // ===============================
+
+async function openWallet(){
+
+    const r = await safeFetch("/finance/wallet");
+
+    const data = await r.json();
+
+    alert("BX Balance: " + data.BX);
+}
+
+
+// ===============================
+ // MINING
+ // ===============================
+
+async function openMining(){
+
+    const r = await safeFetch("/mining/start");
+
+    const data = await r.json();
+
+    alert(data.status);
+}
+
+
+// ===============================
+ // MARKET
+ // ===============================
+
+async function openMarket(){
+
+    const r = await safeFetch("/market/prices");
+
+    const data = await r.json();
+
+    console.log(data);
+
+    alert("Market loaded");
+
+}
+// ===============================
+ // CARD NAVIGATION
+ // ===============================
+
+document.addEventListener("DOMContentLoaded", () => {
+
+    const casino = document.getElementById("casinoCard");
+    const wallet = document.getElementById("walletCard");
+    const mining = document.getElementById("miningCard");
+    const market = document.getElementById("marketCard");
+
+    if (casino) {
+        casino.onclick = () => openCasino();
+    }
+
+    if (wallet) {
+        wallet.onclick = () => openWallet();
+    }
+
+    if (mining) {
+        mining.onclick = () => openMining();
+    }
+
+    if (market) {
+        market.onclick = () => openMarket();
+    }
+
+});
