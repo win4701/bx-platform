@@ -444,7 +444,7 @@ function bindWalletActions() {
 
   if (depositBtn) {
     depositBtn.onclick = async () => {
-      const res = await safeFetch("/finance/deposit/address?asset=USDT");
+      const res = await safeFetch("/finance/deposit/USDT");
       if (!res) return alert("Failed to load deposit address");
       alert("Deposit Address:\n" + res.address);
     };
@@ -469,7 +469,33 @@ function bindWalletActions() {
       alert("Withdraw submitted");
     };
   }
-   }
+   const transferBtn = document.querySelector(".wallet-transfer .confirm");
+
+if (transferBtn) {
+
+  transferBtn.onclick = async () => {
+
+    const user = document.getElementById("transferTelegram").value;
+    const amount = Number(document.getElementById("transferAmount").value);
+
+    if (!user || !amount) return alert("Invalid transfer");
+
+    const res = await safeFetch("/finance/transfer", {
+      method: "POST",
+      body: JSON.stringify({
+        to_user: user,
+        asset: "BX",
+        amount: amount
+      })
+    });
+
+    if (!res) return alert("Transfer failed");
+
+    alert("Transfer sent");
+    loadWallet();
+  };
+  }
+ }
 /* ================= INIT TÉLÉGRAMME ===============*/
 
 async function initTelegramLogin() {
@@ -490,7 +516,7 @@ async function initTelegramLogin() {
     return;
   }
 
-  const res = await safeFetch("/api/auth/telegram", {
+  const res = await safeFetch("/auth/telegram", {
     method: "POST",
     body: JSON.stringify({
       initData: initData
