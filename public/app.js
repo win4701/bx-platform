@@ -374,7 +374,7 @@ function restoreWalletSession() {
 /* ================= BACKEND SYNC ================= */
 
 function notifyBackend() {
-  safeFetch("/api/wallet/connect", {
+  safeFetch("/finance/wallet/connect", {
     method: "POST",
     body: JSON.stringify({
       type: WALLET_STATE.type,
@@ -391,7 +391,7 @@ async function requestWithdraw(asset, amount, toAddress) {
     return;
   }
 
-  const res = await safeFetch("/api/withdraw", {
+  const res = await safeFetch("/finance/withdraw", {
     method: "POST",
     body: JSON.stringify({
       asset,
@@ -413,7 +413,7 @@ async function requestWithdraw(asset, amount, toAddress) {
 function getDepositAddress(asset) {
   if (!WALLET_STATE.connected) return null;
 
-  return safeFetch(`/api/deposit/address?asset=${asset}`, {
+  return safeFetch(`/finance/deposit/address?asset=${asset}`, {
     headers: {
       Authorization: `Bearer ${USER.jwt || ""}`
     }
