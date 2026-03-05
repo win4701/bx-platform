@@ -15,6 +15,7 @@ from fastapi.middleware.cors import CORSMiddleware
 # ==========================================================
 
 from auth import router as auth_router
+from api import router as api_router
 from finance import router as finance_router
 from casino import router as casino_router
 from mining import router as mining_router
@@ -50,6 +51,7 @@ app.add_middleware(
 # ==========================================================
 
 app.include_router(auth_router)
+app.include_router(api_router)
 app.include_router(finance_router)
 app.include_router(casino_router)
 app.include_router(mining_router)
