@@ -102,7 +102,10 @@ def slot(bet):
     payout = bet * 5 if win else 0
 
     return win, payout
-
+    
+if payout >= bet * 5:
+    from bot import notify_big_win
+    notify_big_win(user_id, payout, game)
 
 # ==========================================================
 # PLAY
