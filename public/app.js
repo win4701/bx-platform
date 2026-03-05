@@ -443,9 +443,9 @@ function bindWalletActions() {
 
   if (depositBtn) {
     depositBtn.onclick = async () => {
-      const res = await safeFetch("/finance/deposit/USDT");
+      const res = await safeFetch(`/finance/deposit/USDT`);
       if (!res) return alert("Failed to load deposit address");
-      alert("Deposit Address:\n" + res.address);
+      alert(`Deposit Address:\n${res.address}`);
     };
   }
 
@@ -515,12 +515,18 @@ async function initTelegramLogin() {
     return;
   }
 
-  const res = await safeFetch("/auth/telegram", {
-    method: "POST",
-    body: JSON.stringify({
-      initData: initData
-    })
-  });
+  const user = tg.initDataUnsafe?.user;
+
+if (!user) return;
+
+const res = await safeFetch("/auth/telegram", {
+  method: "POST",
+  body: JSON.stringify({
+    telegram_id: user.id,
+    username: user.username,
+    first_name: user.first_name
+  })
+});
 
   if (!res || !res.access_token) {
     console.error("Telegram login failed");
@@ -721,15 +727,18 @@ async function startCasinoGame() {
 function handleCasinoResult(res) {
 
   animateGameResult(res.game, res.win);
+
   playSound(res.win ? "win" : "lose");
+
+  WALLET.BX = Number(WALLET.BX) + (res.payout - res.bet);
+
+  renderWallet();
 
   alert(
     res.win
       ? `WIN!\nPayout: ${res.payout}`
       : `LOSE`
   );
-
-  loadWallet();
 }
 
 /* =====================================================
@@ -928,6 +937,7 @@ async function subscribeMining(planId) {
   };
 
   renderMining();
+  loadWallet();
 }
 
  /* =========================================================
