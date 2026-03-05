@@ -1,36 +1,32 @@
 # ==========================================================
-# BLOXIO EXCHANGE ENGINE v2
-# Matching Engine • Wallet Settlement • Orders API
+# BLOXIO EXCHANGE CORE ENGINE
+# CEX + AMM + Liquidity + Arbitrage
 # ==========================================================
 
 import os
 import time
 import uuid
+import random
 import sqlite3
 
 from collections import defaultdict, deque
 from contextlib import contextmanager
 from fastapi import APIRouter, HTTPException
 
+from market import MARKET_PRICES
+
 DB_PATH = os.getenv("DB_PATH", "db/db.sqlite")
 
 router = APIRouter(prefix="/exchange", tags=["exchange"])
 
 # ==========================================================
-# PAIRS
+# CONFIG
 # ==========================================================
 
-ALLOWED_PAIRS = {
-    "BX/USDT",
-    "BX/BTC",
-    "BX/ETH",
-    "BX/BNB",
-    "BX/SOL",
-    "BX/AVAX",
-    "BX/LTC",
-    "BX/ZEC",
-    "BX/TON"
-}
+SPREAD = 0.002
+LIQ_LEVELS = 20
+BOT_UID = 0
+FEE = 0.002
 
 # ==========================================================
 # DATABASE
@@ -57,37 +53,29 @@ def db():
 # MEMORY STATE
 # ==========================================================
 
-ORDER_BOOK = defaultdict(lambda: {
-    "buy": [],
-    "sell": []
-})
-
+ORDER_BOOK = defaultdict(lambda: {"buy": [], "sell": []})
 TRADES = defaultdict(lambda: deque(maxlen=500))
-
 OPEN_ORDERS = {}
 
 # ==========================================================
-# WALLET
+# WALLET OPERATIONS
 # ==========================================================
 
 def debit_wallet(conn, uid, asset, amount, ref):
-
-    if amount <= 0:
-        raise HTTPException(400, "INVALID_AMOUNT")
 
     cursor = conn.cursor()
 
     cursor.execute(
         f"""
         UPDATE wallets
-        SET {asset} = {asset} - ?
-        WHERE uid=? AND {asset} >= ?
+        SET {asset}={asset}-?
+        WHERE uid=? AND {asset}>=?
         """,
         (amount, uid, amount)
     )
 
     if cursor.rowcount == 0:
-        raise HTTPException(400, "INSUFFICIENT_BALANCE")
+        raise HTTPException(400,"INSUFFICIENT_BALANCE")
 
     cursor.execute(
         """
@@ -100,15 +88,12 @@ def debit_wallet(conn, uid, asset, amount, ref):
 
 def credit_wallet(conn, uid, asset, amount, ref):
 
-    if amount <= 0:
-        return
-
     cursor = conn.cursor()
 
     cursor.execute(
         f"""
         UPDATE wallets
-        SET {asset} = {asset} + ?
+        SET {asset}={asset}+?
         WHERE uid=?
         """,
         (amount, uid)
@@ -123,52 +108,70 @@ def credit_wallet(conn, uid, asset, amount, ref):
     )
 
 # ==========================================================
-# CREATE ORDER
+# LIQUIDITY ENGINE
 # ==========================================================
 
-def place_order(uid, pair, side, price, amount):
+def generate_liquidity(pair):
 
-    if pair not in ALLOWED_PAIRS:
-        raise HTTPException(400, "PAIR_NOT_SUPPORTED")
+    price = MARKET_PRICES.get(pair)
 
-    if side not in ["buy","sell"]:
-        raise HTTPException(400, "INVALID_SIDE")
+    if not price:
+        return
 
-    if price <= 0 or amount <= 0:
-        raise HTTPException(400, "INVALID_ORDER")
+    bids = []
+    asks = []
 
-    base, quote = pair.split("/")
+    for i in range(1,LIQ_LEVELS):
 
-    order_id = str(uuid.uuid4())
+        bid = price * (1 - SPREAD*i)
+        ask = price * (1 + SPREAD*i)
 
-    with db() as conn:
+        amount = random.uniform(50,500)
 
-        if side == "buy":
+        bids.append({
+            "id":str(uuid.uuid4()),
+            "uid":BOT_UID,
+            "price":round(bid,8),
+            "amount":amount,
+            "remaining":amount,
+            "ts":int(time.time())
+        })
 
-            cost = price * amount
+        asks.append({
+            "id":str(uuid.uuid4()),
+            "uid":BOT_UID,
+            "price":round(ask,8),
+            "amount":amount,
+            "remaining":amount,
+            "ts":int(time.time())
+        })
 
-            debit_wallet(conn,uid,quote.lower(),cost,f"order_lock:{pair}")
+    ORDER_BOOK[pair]["buy"]=bids
+    ORDER_BOOK[pair]["sell"]=asks
 
-        else:
+# ==========================================================
+# ORDERBOOK ENGINE
+# ==========================================================
 
-            debit_wallet(conn,uid,base.lower(),amount,f"order_lock:{pair}")
+def place_order(uid,pair,side,price,amount):
 
-        order = {
+    order_id=str(uuid.uuid4())
 
-            "id": order_id,
-            "uid": uid,
-            "price": price,
-            "amount": amount,
-            "remaining": amount,
-            "side": side,
-            "pair": pair,
-            "ts": int(time.time())
-        }
+    order={
+        "id":order_id,
+        "uid":uid,
+        "price":price,
+        "amount":amount,
+        "remaining":amount,
+        "side":side,
+        "pair":pair,
+        "ts":int(time.time())
+    }
 
-        ORDER_BOOK[pair][side].append(order)
-        OPEN_ORDERS[order_id] = order
+    ORDER_BOOK[pair][side].append(order)
+    OPEN_ORDERS[order_id]=order
 
-        match_orders(conn,pair)
+    match_orders(pair)
 
     return order_id
 
@@ -176,118 +179,155 @@ def place_order(uid, pair, side, price, amount):
 # MATCH ENGINE
 # ==========================================================
 
-def match_orders(conn,pair):
+def match_orders(pair):
 
-    buys = ORDER_BOOK[pair]["buy"]
-    sells = ORDER_BOOK[pair]["sell"]
+    buys=ORDER_BOOK[pair]["buy"]
+    sells=ORDER_BOOK[pair]["sell"]
 
     buys.sort(key=lambda o:(-o["price"],o["ts"]))
     sells.sort(key=lambda o:(o["price"],o["ts"]))
 
-    base, quote = pair.split("/")
+    base,quote=pair.split("/")
 
-    while buys and sells:
+    with db() as conn:
 
-        buy = buys[0]
-        sell = sells[0]
+        while buys and sells:
 
-        if buy["price"] < sell["price"]:
-            break
+            buy=buys[0]
+            sell=sells[0]
 
-        trade_price = sell["price"]
+            if buy["price"]<sell["price"]:
+                break
 
-        trade_amount = min(
-            buy["remaining"],
-            sell["remaining"]
-        )
+            price=sell["price"]
 
-        trade_value = trade_price * trade_amount
+            amount=min(buy["remaining"],sell["remaining"])
 
-        credit_wallet(conn,buy["uid"],base.lower(),trade_amount,"trade_buy")
+            value=price*amount
 
-        credit_wallet(conn,sell["uid"],quote.lower(),trade_value,"trade_sell")
+            credit_wallet(conn,buy["uid"],base.lower(),amount,"trade_buy")
+            credit_wallet(conn,sell["uid"],quote.lower(),value,"trade_sell")
 
-        TRADES[pair].append({
+            TRADES[pair].append({
+                "price":price,
+                "amount":amount,
+                "ts":int(time.time())
+            })
 
-            "price": trade_price,
-            "amount": trade_amount,
-            "buy_uid": buy["uid"],
-            "sell_uid": sell["uid"],
-            "ts": int(time.time())
-        })
+            buy["remaining"]-=amount
+            sell["remaining"]-=amount
 
-        buy["remaining"] -= trade_amount
-        sell["remaining"] -= trade_amount
+            if buy["remaining"]<=0:
+                buys.pop(0)
 
-        if buy["remaining"] <= 0:
-            buys.pop(0)
-            OPEN_ORDERS.pop(buy["id"],None)
-
-        if sell["remaining"] <= 0:
-            sells.pop(0)
-            OPEN_ORDERS.pop(sell["id"],None)
+            if sell["remaining"]<=0:
+                sells.pop(0)
 
 # ==========================================================
-# CANCEL ORDER
+# AMM SWAP ENGINE
 # ==========================================================
 
-def cancel_order(uid, order_id):
+POOLS={
+    "BX/USDT":{"bx":100000,"usdt":4500000}
+}
 
-    order = OPEN_ORDERS.get(order_id)
+def amount_out(amount,reserve_in,reserve_out):
 
-    if not order:
-        raise HTTPException(404,"ORDER_NOT_FOUND")
+    amount=amount*(1-FEE)
 
-    if order["uid"] != uid:
-        raise HTTPException(403,"NOT_OWNER")
+    return (amount*reserve_out)/(reserve_in+amount)
 
-    pair = order["pair"]
-    side = order["side"]
+# ==========================================================
 
-    ORDER_BOOK[pair][side] = [
-        o for o in ORDER_BOOK[pair][side] if o["id"] != order_id
-    ]
+@router.post("/swap")
 
-    OPEN_ORDERS.pop(order_id,None)
+def swap(uid:int,pair:str,side:str,amount:float):
 
-    return True
+    pool=POOLS.get(pair)
+
+    if not pool:
+        raise HTTPException(404,"pool not found")
+
+    with db() as conn:
+
+        if side=="buy":
+
+            debit_wallet(conn,uid,"usdt",amount,"swap")
+
+            bx=amount_out(amount,pool["usdt"],pool["bx"])
+
+            pool["usdt"]+=amount
+            pool["bx"]-=bx
+
+            credit_wallet(conn,uid,"bx",bx,"swap")
+
+            return {"bx":bx}
+
+        else:
+
+            debit_wallet(conn,uid,"bx",amount,"swap")
+
+            usdt=amount_out(amount,pool["bx"],pool["usdt"])
+
+            pool["bx"]+=amount
+            pool["usdt"]-=usdt
+
+            credit_wallet(conn,uid,"usdt",usdt,"swap")
+
+            return {"usdt":usdt}
+
+# ==========================================================
+# ARBITRAGE ENGINE
+# ==========================================================
+
+def arbitrage(pair):
+
+    price=MARKET_PRICES.get(pair)
+
+    if not price:
+        return
+
+    book=ORDER_BOOK[pair]
+
+    if not book["buy"] or not book["sell"]:
+        return
+
+    best_buy=book["buy"][0]["price"]
+    best_sell=book["sell"][0]["price"]
+
+    spread=best_sell-best_buy
+
+    if spread>price*0.01:
+
+        generate_liquidity(pair)
 
 # ==========================================================
 # API
 # ==========================================================
 
 @router.post("/order")
+
 def create_order(uid:int,pair:str,side:str,price:float,amount:float):
 
-    order_id = place_order(uid,pair,side,price,amount)
+    oid=place_order(uid,pair,side,price,amount)
 
-    return {
-        "status":"order placed",
-        "order_id":order_id
-    }
+    return {"order_id":oid}
 
-
-@router.post("/cancel")
-def cancel(uid:int,order_id:str):
-
-    cancel_order(uid,order_id)
-
-    return {"status":"cancelled"}
-
+# ==========================================================
 
 @router.get("/orderbook/{pair}")
+
 def orderbook(pair:str):
+
+    if pair not in ORDER_BOOK:
+        generate_liquidity(pair)
 
     return ORDER_BOOK[pair]
 
+# ==========================================================
 
 @router.get("/trades/{pair}")
+
 def trades(pair:str):
 
     return list(TRADES[pair])
-
-
-@router.get("/orders")
-def orders():
-
-    return list(OPEN_ORDERS.values())
