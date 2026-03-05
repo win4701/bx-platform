@@ -537,12 +537,17 @@ async function initTelegramLogin() {
 /* ================= INIT ================= */
 
 document.addEventListener("DOMContentLoaded", () => {
+
   APP.init();               
   restoreWalletSession();
   bindWalletUI();
   bindWalletActions(); 
   renderWalletButtons();
-  initTelegramLogin(); 
+  initTelegramLogin();
+
+  document
+    .getElementById("claim-airdrop")
+    ?.addEventListener("click", claimAirdrop);
 });
 
 /* =================================== */
