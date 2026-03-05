@@ -54,6 +54,17 @@ const pairButtons = document.querySelectorAll(".pair-btn");
 /* ================= WALLET ================= */
 
 let wallet = { BX: 0, USDT: 0 };
+async function loadWallet(){
+
+const r = await fetch("/finance/wallet?uid="+window.USER_ID);
+
+const w = await r.json();
+
+wallet.BX = w.bx;
+wallet.USDT = w.usdt;
+
+updateWalletUI();
+}
 
 /* ================= INIT ================= */
 
@@ -61,6 +72,7 @@ document.addEventListener("DOMContentLoaded", init);
 
 function init() {
   updateWalletUI();
+  loadWallet();
   bindEvents();
   connectBinance();
 
@@ -173,45 +185,49 @@ function updatePriceUI() {
 
 /* ================= TRADE ================= */
 
-function executeTrade() {
-  const amount = parseFloat(orderAmount.value);
-  if (!amount || amount <= 0) return;
+async function executeTrade(){
 
-  const bestAsk = parseFloat(asks[0]);
-  const bestBid = parseFloat(bids[0]);
-  let execPrice;
+const amount = parseFloat(orderAmount.value);
 
-  if (tradeSide === "buy") {
-    execPrice = bestAsk;
-    const cost = amount * execPrice;
-    if (wallet.USDT >= cost) {
-      wallet.USDT -= cost;
-      wallet.BX += amount;
-    }
-  } else {
-    execPrice = bestBid;
-    if (wallet.BX >= amount) {
-      wallet.BX -= amount;
-      wallet.USDT += amount * execPrice;
-    }
-  }
+if(!amount || amount <= 0) return;
 
-  execPriceEl.textContent = execPrice.toFixed(6);
+const pair = `BX/${currentQuote}`;
 
-  const slippage =
-    tradeSide === "buy"
-      ? ((execPrice - marketPrice) / marketPrice) * 100
-      : ((marketPrice - execPrice) / marketPrice) * 100;
+const side = tradeSide;
 
-  slippageEl.textContent = slippage.toFixed(3);
+const price =
+side === "buy"
+? parseFloat(asks[0])
+: parseFloat(bids[0]);
 
-  updateWalletUI();
+const res = await fetch("/exchange/order",{
+
+method:"POST",
+
+headers:{
+"Content-Type":"application/json"
+},
+
+body:JSON.stringify({
+
+uid:window.USER_ID,
+pair:pair,
+side:side,
+price:price,
+amount:amount
+
+})
+
+});
+
+const data = await res.json();
+
+if(data.status){
+
+loadWallet();
+
 }
-
-function updateWalletUI() {
-  walletBXEl.textContent = wallet.BX.toFixed(4);
-  walletUSDTEl.textContent = wallet.USDT.toFixed(2);
-}
+ }
 
 /* ================= TOGGLE ================= */
 
