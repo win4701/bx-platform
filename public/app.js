@@ -409,14 +409,13 @@ async function requestWithdraw(asset, amount, toAddress) {
 }
 
 /* ================= DEPOSIT ================= */
+
 function getDepositAddress(asset) {
+
   if (!WALLET_STATE.connected) return null;
 
-  return safeFetch(`/finance/deposit/${asset}`);
-}, {
-    headers: {
-      Authorization: `Bearer ${USER.jwt || ""}`
-    }
+  return safeFetch(`/finance/deposit/${asset}`, {
+    method: "GET"
   });
 }
 
