@@ -1180,18 +1180,13 @@ document
 
 async function openCasino(){
 
-    const r = await safeFetch("/casino/play",{
+    const data = await safeFetch("/casino/play",{
         method:"POST",
-        body: JSON.stringify({
-            bet:1
-        })
+        body: JSON.stringify({ bet:1 })
     });
-
-    const data = await r.json();
 
     alert("Result: " + data.result);
 }
-
 
 // ===============================
  // WALLET
@@ -1199,9 +1194,7 @@ async function openCasino(){
 
 async function openWallet(){
 
-    const r = await safeFetch("/finance/wallet");
-
-    const data = await r.json();
+    const data = await safeFetch("/finance/wallet");
 
     alert("BX Balance: " + data.BX);
 }
@@ -1213,13 +1206,10 @@ async function openWallet(){
 
 async function openMining(){
 
-    const r = await safeFetch("/mining/start");
-
-    const data = await r.json();
+    const data = await safeFetch("/mining/start");
 
     alert(data.status);
 }
-
 
 // ===============================
  // MARKET
