@@ -544,16 +544,27 @@ const res = await safeFetch("/auth/telegram", {
 
 document.addEventListener("DOMContentLoaded", async () => {
 
-  APP.init();
-  restoreWalletSession();
-  bindWalletUI();
-  bindWalletActions();
-  renderWalletButtons();
-  await initTelegramLogin();
-  switchView("wallet");
-  loadWallet();
-  bindCasinoGames();
-  renderMining();
+    APP.init();
+    restoreWalletSession();
+    bindWalletUI();
+    bindWalletActions();
+    renderWalletButtons();
+    initTelegramLogin();
+    loadWallet();
+    bindCasinoGames();
+    renderMining();
+    switchView("wallet");
+
+    const casino = document.getElementById("casinoCard");
+    const wallet = document.getElementById("walletCard");
+    const mining = document.getElementById("miningCard");
+    const market = document.getElementById("marketCard");
+
+    if (casino) casino.onclick = () => switchView("casino");
+    if (wallet) wallet.onclick = () => switchView("wallet");
+    if (mining) mining.onclick = () => switchView("mining");
+    if (market) market.onclick = () => switchView("market");
+
 });
 
 /* =================================== */
@@ -1238,32 +1249,4 @@ async function openMarket(){
     console.log(data);
 
     alert("Market loaded");
-
 }
-// ===============================
- // CARD NAVIGATION
- // ===============================
-
-document.addEventListener("DOMContentLoaded", () => {
-
-    const casino = document.getElementById("casinoCard");
-    const wallet = document.getElementById("walletCard");
-    const mining = document.getElementById("miningCard");
-    const market = document.getElementById("marketCard");
-
-    if (casino) {
-        casino.onclick = () => switchView("casino");
-    }
-
-    if (wallet) {
-        casino.onclick = () => switchView("wallet");
-    }
-
-    if (mining) {
-        mining.onclick = () => switchView("mining");
-    }
-
-    if (market) {
-        market.onclick = () => switchView("market");
-    }
-});
