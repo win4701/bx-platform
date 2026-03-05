@@ -1242,19 +1242,18 @@ document.addEventListener("DOMContentLoaded", () => {
     const market = document.getElementById("marketCard");
 
     if (casino) {
-        casino.onclick = () => openCasino();
+        casino.onclick = () => switchView("casino");
     }
 
     if (wallet) {
-        wallet.onclick = () => openWallet();
+        casino.onclick = () => switchView("wallet");
     }
 
     if (mining) {
-        mining.onclick = () => openMining();
+        mining.onclick = () => switchView("mining");
     }
 
     if (market) {
-        market.onclick = () => openMarket();
+        market.onclick = () => switchView("market");
     }
-
 });
