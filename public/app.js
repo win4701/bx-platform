@@ -409,11 +409,11 @@ async function requestWithdraw(asset, amount, toAddress) {
 }
 
 /* ================= DEPOSIT ================= */
-
 function getDepositAddress(asset) {
   if (!WALLET_STATE.connected) return null;
 
-  return safeFetch(`/finance/deposit/address?asset=${asset}`, {
+  return safeFetch(`/finance/deposit/${asset}`);
+}, {
     headers: {
       Authorization: `Bearer ${USER.jwt || ""}`
     }
@@ -715,14 +715,17 @@ async function startCasinoGame() {
 ===================================================== */
 
 function handleCasinoResult(res) {
+
   animateGameResult(res.game, res.win);
   playSound(res.win ? "win" : "lose");
 
   alert(
     res.win
-      ? ` WIN!\nPayout: ${res.payout}`
-      : ` LOSE`
+      ? `WIN!\nPayout: ${res.payout}`
+      : `LOSE`
   );
+
+  loadWallet();
 }
 
 /* =====================================================
