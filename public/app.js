@@ -1230,8 +1230,7 @@ async function openMarket(){
 
     const r = await safeFetch("/market/prices");
 
-    const data = await r.json();
-
+    const data = r;
     console.log(data);
 
     alert("Market loaded");
