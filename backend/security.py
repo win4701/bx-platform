@@ -1,6 +1,6 @@
 # ==========================================================
 # BLOXIO SECURITY CORE
-# JWT • HASH • INTERNAL AUTH • RATE LIMIT
+# JWT • HASH • INTERNAL AUTH • RATE LIMIT • EVENT ENGINE
 # ==========================================================
 
 import os
@@ -8,6 +8,7 @@ import time
 import hashlib
 import hmac
 from typing import Optional
+from collections import defaultdict
 
 from jose import jwt, JWTError
 from fastapi import HTTPException, Request, Depends
@@ -129,7 +130,7 @@ def verify_signature(payload: str, signature: str):
         )
 
 # ==========================================================
-# SIMPLE RATE LIMIT
+# RATE LIMIT
 # ==========================================================
 
 RATE_LIMIT = {}
@@ -140,7 +141,8 @@ WINDOW_SECONDS = 60
 
 def rate_limit(request: Request):
 
-    ip = request.client.host
+    ip = get_ip(request)
+
     now = time.time()
 
     if ip not in RATE_LIMIT:
@@ -148,6 +150,7 @@ def rate_limit(request: Request):
         RATE_LIMIT[ip] = []
 
     RATE_LIMIT[ip] = [
+
         t for t in RATE_LIMIT[ip]
         if now - t < WINDOW_SECONDS
     ]
@@ -192,3 +195,39 @@ def require_admin(user):
             status_code=403,
             detail="Admin only"
         )
+
+# ==========================================================
+# BLOXIO EVENT ENGINE
+# ==========================================================
+
+EVENTS = defaultdict(list)
+
+
+def emit(event: str, data: dict):
+    """
+    Emit event to listeners
+    """
+
+    listeners = EVENTS.get(event, [])
+
+    for fn in listeners:
+
+        try:
+            fn(data)
+
+        except Exception:
+            pass
+
+
+def on(event: str):
+    """
+    Register event listener
+    """
+
+    def wrapper(fn):
+
+        EVENTS[event].append(fn)
+
+        return fn
+
+    return wrapper
