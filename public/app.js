@@ -544,7 +544,8 @@ document.addEventListener("DOMContentLoaded", () => {
   bindWalletActions(); 
   renderWalletButtons();
   initTelegramLogin();
-
+  switchView("wallet");
+   
   document
     .getElementById("claim-airdrop")
     ?.addEventListener("click", claimAirdrop);
