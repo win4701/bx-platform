@@ -96,31 +96,22 @@ const APP = {
 /* ================= SAFE FETCH ================= */
 
 async function safeFetch(path, options = {}) {
-  try {
-    log.info("FETCH →", path);
 
-    const res = await fetch(path, {   // ✅ بدون API_BASE
-      headers: {
-        "Content-Type": "application/json",
-        ...authHeaders(),
-        ...(options.headers || {})
-      },
-      ...options
-    });
+  const res = await fetch(path,{
+    method: options.method || "GET",
+    headers:{
+      "Content-Type":"application/json",
+      ...authHeaders()
+    },
+    body: options.body || null
+  });
 
-    if (!res.ok) {
-      log.error("API ERROR", path, res.status);
+  if(!res.ok){
+      console.error("API ERROR", path);
       return null;
-    }
-
-    const data = await res.json();
-    log.info("FETCH OK ←", path);
-    return data;
-
-  } catch (err) {
-    log.error("NETWORK ERROR", path, err);
-    return null;
   }
+
+  return await res.json();
 }
 
 /* =========================================================
@@ -542,18 +533,32 @@ const res = await safeFetch("/auth/telegram", {
 
 /* ================= INIT ================= */
 
-document.addEventListener("DOMContentLoaded", async () => {
+async function bootApp(){
 
-    APP.init();
-    restoreWalletSession();
-    bindWalletUI();
-    bindWalletActions();
-    renderWalletButtons();
-    initTelegramLogin();
-    loadWallet();
-    bindCasinoGames();
-    renderMining();
-    switchView("wallet");
+  APP.init();
+
+  restoreWalletSession();
+
+  bindWalletUI();
+  bindWalletActions();
+  renderWalletButtons();
+
+  await initTelegramLogin();
+
+  if(isAuthenticated()){
+      await loadWallet();
+  }
+
+  bindCasinoGames();
+  renderMining();
+
+  switchView("wallet");
+
+  console.log("BLOXIO APP READY");
+
+}
+
+document.addEventListener("DOMContentLoaded", bootApp);
 
     const casino = document.getElementById("casinoCard");
     const wallet = document.getElementById("walletCard");
