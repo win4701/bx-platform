@@ -117,35 +117,28 @@ async function safeFetch(path, options = {}) {
 /* =========================================================
    PART 2 — NAVIGATION (General Update)
 ================================================*/
-function switchView(view) {
-  document.querySelectorAll(".view").forEach(v => {
-    v.classList.remove("active");
+function switchView(view){
+
+  const sections = document.querySelectorAll(
+    "#wallet, #casino, #mining, #market, #airdrop"
+  );
+
+  sections.forEach(el=>{
+      el.style.display = "none";
   });
 
   const target = document.getElementById(view);
-  if (target) target.classList.add("active");
 
-  document.querySelectorAll(".bottom-nav button").forEach(b => {
-    b.classList.toggle("active", b.dataset.view === view);
-  });
-
-  document.dispatchEvent(
-    new CustomEvent("view:change", { detail: view })
-  );
-}
-document.addEventListener("click", e => {
-  const btn = e.target.closest("[data-view]");
-  if (btn) {
-    switchView(btn.dataset.view);
-    return;
+  if(target){
+      target.style.display = "block";
   }
 
-  const action = e.target.closest("[data-action]");
-  if (!action) return;
+  APP.view = view;
 
-  if (action.dataset.action === "go-casino") switchView("casino");
-  if (action.dataset.action === "go-mining") switchView("mining");
-});
+  document.dispatchEvent(
+      new CustomEvent("view:change",{detail:view})
+  );
+}
 
 /* ================= VIEW LIFECYCLE (SSOT) ================= */
 
@@ -558,17 +551,19 @@ async function bootApp(){
 
 }
 
-document.addEventListener("DOMContentLoaded", bootApp);
+document.addEventListener("DOMContentLoaded", () => {
 
-    const casino = document.getElementById("casinoCard");
-    const wallet = document.getElementById("walletCard");
-    const mining = document.getElementById("miningCard");
-    const market = document.getElementById("marketCard");
+  bootApp();
 
-    if (casino) casino.onclick = () => switchView("casino");
-    if (wallet) wallet.onclick = () => switchView("wallet");
-    if (mining) mining.onclick = () => switchView("mining");
-    if (market) market.onclick = () => switchView("market");
+  const casino = document.getElementById("casinoCard");
+  const wallet = document.getElementById("walletCard");
+  const mining = document.getElementById("miningCard");
+  const market = document.getElementById("marketCard");
+
+  if (casino) casino.onclick = () => switchView("casino");
+  if (wallet) wallet.onclick = () => switchView("wallet");
+  if (mining) mining.onclick = () => switchView("mining");
+  if (market) market.onclick = () => switchView("market");
 
 });
 
