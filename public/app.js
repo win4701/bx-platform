@@ -96,66 +96,65 @@ const APP = {
 /* ================= SAFE FETCH ================= */
 
 async function safeFetch(path, options = {}) {
+  try {
+    log.info("FETCH →", path);
 
-  const res = await fetch(path,{
-    method: options.method || "GET",
-    headers:{
-      "Content-Type":"application/json",
-      ...authHeaders()
-    },
-    body: options.body || null
-  });
+    const res = await fetch(path, {   // ✅ بدون API_BASE
+      headers: {
+        "Content-Type": "application/json",
+        ...authHeaders(),
+        ...(options.headers || {})
+      },
+      ...options
+    });
 
-  if(!res.ok){
-      console.error("API ERROR", path);
+    if (!res.ok) {
+      log.error("API ERROR", path, res.status);
       return null;
-  }
+    }
 
-  return await res.json();
+    const data = await res.json();
+    log.info("FETCH OK ←", path);
+    return data;
+
+  } catch (err) {
+    log.error("NETWORK ERROR", path, err);
+    return null;
+  }
 }
 
 /* =========================================================
    PART 2 — NAVIGATION (General Update)
 ================================================*/
-const VIEW_CACHE = {};
-
-function switchView(view){
-
-  const views = document.querySelectorAll(".view");
-
-  views.forEach(v=>{
-    v.style.display="none";
+function switchView(view) {
+  document.querySelectorAll(".view").forEach(v => {
     v.classList.remove("active");
   });
 
   const target = document.getElementById(view);
+  if (target) target.classList.add("active");
 
-  if(target){
-    target.style.display="block";
-    target.classList.add("active");
-  }
-
-  document.querySelectorAll(".bottom-nav button")
-  .forEach(btn=>{
-    btn.classList.toggle(
-      "active",
-      btn.dataset.view === view
-    );
+  document.querySelectorAll(".bottom-nav button").forEach(b => {
+    b.classList.toggle("active", b.dataset.view === view);
   });
 
-  APP.view = view;
-
-  /* ===== LAZY INIT ===== */
-
-  if(!VIEW_CACHE[view]){
-
-    VIEW_CACHE[view] = true;
-
-    initView(view);
-
+  document.dispatchEvent(
+    new CustomEvent("view:change", { detail: view })
+  );
+}
+document.addEventListener("click", e => {
+  const btn = e.target.closest("[data-view]");
+  if (btn) {
+    switchView(btn.dataset.view);
+    return;
   }
 
-}
+  const action = e.target.closest("[data-action]");
+  if (!action) return;
+
+  if (action.dataset.action === "go-casino") switchView("casino");
+  if (action.dataset.action === "go-mining") switchView("mining");
+});
 
 /* ================= VIEW LIFECYCLE (SSOT) ================= */
 
@@ -543,37 +542,18 @@ const res = await safeFetch("/auth/telegram", {
 
 /* ================= INIT ================= */
 
-async function bootApp(){
+document.addEventListener("DOMContentLoaded", async () => {
 
   APP.init();
-
   restoreWalletSession();
   bindWalletUI();
   bindWalletActions();
   renderWalletButtons();
   await initTelegramLogin();
-  if(isAuthenticated()){
-      await loadWallet();
-  }
-
+  switchView("wallet");
+  loadWallet();
   bindCasinoGames();
   renderMining();
-
-  switchView("wallet");
-
-  console.log("BLOXIO ENGINE READY");
-
-}
-  const casino = document.getElementById("casinoCard");
-  const wallet = document.getElementById("walletCard");
-  const mining = document.getElementById("miningCard");
-  const market = document.getElementById("marketCard");
-
-  if (casino) casino.onclick = () => switchView("casino");
-  if (wallet) wallet.onclick = () => switchView("wallet");
-  if (mining) mining.onclick = () => switchView("mining");
-  if (market) market.onclick = () => switchView("market");
-
 });
 
 /* =================================== */
@@ -1177,6 +1157,7 @@ async function confirmTopup() {
   toast("Topup Executed");
 }
 
+
 /* ================= HISTORY ================= */
 
 function saveHistory() {
@@ -1184,6 +1165,7 @@ function saveHistory() {
   list.unshift({ ...STATE, time: Date.now() });
   localStorage.setItem("topupHistory", JSON.stringify(list.slice(0,50)));
 }
+
 
 /* ================= ERROR ================= */
 
@@ -1199,6 +1181,7 @@ function toast(msg) {
   console.log(msg);
 }
 
+
 /* ================= AUTO INIT ================= */
 
 document
@@ -1206,7 +1189,6 @@ document
   ?.addEventListener("click", () => {
     setTimeout(initTopupV6, 200);
   });
-
 // ===============================
  // CASINO
  // ===============================
@@ -1256,31 +1238,32 @@ async function openMarket(){
     console.log(data);
 
     alert("Market loaded");
+
 }
-/* =========================================
-   APP START
-========================================= */
+// ===============================
+ // CARD NAVIGATION
+ // ===============================
 
 document.addEventListener("DOMContentLoaded", () => {
 
-  bootApp();
+    const casino = document.getElementById("casinoCard");
+    const wallet = document.getElementById("walletCard");
+    const mining = document.getElementById("miningCard");
+    const market = document.getElementById("marketCard");
 
-  /* ===== Bottom Navigation ===== */
+    if (casino) {
+        casino.onclick = () => switchView("casino");
+    }
 
-  document
-  .querySelectorAll(".bottom-nav button")
-  .forEach(btn => {
+    if (wallet) {
+        casino.onclick = () => switchView("wallet");
+    }
 
-    btn.addEventListener("click", () => {
+    if (mining) {
+        mining.onclick = () => switchView("mining");
+    }
 
-      const view = btn.dataset.view;
-
-      if(!view) return;
-
-      switchView(view);
-
-    });
-
-  });
-
+    if (market) {
+        market.onclick = () => switchView("market");
+    }
 });
