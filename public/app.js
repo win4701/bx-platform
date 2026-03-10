@@ -117,9 +117,7 @@ async function safeFetch(path, options = {}) {
 /* =========================================================
    PART 2 — NAVIGATION (General Update)
 ================================================*/
-/* =========================================
-   NAVIGATION ENGINE
-========================================= */
+const VIEW_CACHE = {};
 
 function switchView(view){
 
@@ -139,19 +137,26 @@ function switchView(view){
 
   document.querySelectorAll(".bottom-nav button")
   .forEach(btn=>{
-      btn.classList.toggle(
-        "active",
-        btn.dataset.view === view
-      );
+    btn.classList.toggle(
+      "active",
+      btn.dataset.view === view
+    );
   });
 
   APP.view = view;
 
-  document.dispatchEvent(
-    new CustomEvent("view:change",{detail:view})
-  );
+  /* ===== LAZY INIT ===== */
+
+  if(!VIEW_CACHE[view]){
+
+    VIEW_CACHE[view] = true;
+
+    initView(view);
+
+  }
 
 }
+
 /* ================= VIEW LIFECYCLE (SSOT) ================= */
 
 let CURRENT_VIEW = null;
