@@ -177,29 +177,24 @@ const el = document.getElementById(view)
 
 if(el) el.classList.add("active")
 
-STATE.ui.view=view
-
 document.dispatchEvent(
 new CustomEvent("view:change",{detail:view})
 )
 
 }
 
-
 /* =====================================================
 8 UI BINDER ENGINE
 ===================================================== */
 
-function bindUI(){
+document.addEventListener("DOMContentLoaded",()=>{
 
 document.querySelectorAll("[data-view]")
 .forEach(btn=>{
-
-btn.onclick=()=>switchView(btn.dataset.view)
-
+btn.onclick = ()=>switchView(btn.dataset.view)
 })
 
-}
+})
 
 
 /* =====================================================
@@ -478,4 +473,38 @@ switchView("wallet")
 
 if(STATE.jwt) loadWallet()
 
+})
+
+/* ================= VIEW CONTROLLER ================= */
+
+function handleView(view){
+
+switch(view){
+
+case "wallet":
+if(typeof loadWallet === "function") loadWallet()
+break
+
+case "casino":
+if(typeof initCasino === "function") initCasino()
+break
+
+case "mining":
+if(typeof renderMining === "function") renderMining()
+break
+
+case "market":
+if(typeof loadMarket === "function") loadMarket()
+break
+
+case "airdrop":
+if(typeof loadAirdrop === "function") loadAirdrop()
+break
+
+}
+
+}
+
+document.addEventListener("view:change",(e)=>{
+handleView(e.detail)
 })
