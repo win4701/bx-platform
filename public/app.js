@@ -1,1269 +1,520 @@
 "use strict";
 
 /* =========================================================
-   PART 1 — CORE / CONFIG / DEBUG
+   BLOXIO SUPER ENGINE v11
 ========================================================= */
 
-const $ = (id) => document.getElementById(id);
-const $$ = (selector) => document.querySelectorAll(selector);
-
-/* ================= DEBUG MODE ================= */
-
-const DEBUG = (() => {
-  try {
-    if (location.search.includes("debug=1")) return true;
-    if (localStorage.getItem("DEBUG") === "1") return true;
-  } catch (e) {}
-  return false;
-})();
-
-/* ================= LOGGER ================= */
-
-const log = {
-  info(...args) {
-    if (DEBUG) console.log("[INFO]", ...args);
-  },
-  warn(...args) {
-    if (DEBUG) console.warn("[WARN]", ...args);
-  },
-  error(...args) {
-    console.error("[ERROR]", ...args);
-  }
-};
-
-/* ================= USER / AUTH ================= */
-
-const USER = {
-  jwt: null,
-  authenticated: false,
-
-  load() {
-    try {
-      const token = localStorage.getItem("jwt");
-      if (token && typeof token === "string") {
-        this.jwt = token;
-        this.authenticated = true;
-        log.info("JWT loaded");
-      }
-    } catch (e) {
-      log.warn("JWT load failed");
-    }
-  },
-
-  set(token) {
-    if (!token) return;
-    this.jwt = token;
-    this.authenticated = true;
-    try {
-      localStorage.setItem("jwt", token);
-    } catch (e) {}
-    log.info("JWT set");
-  },
-
-  clear() {
-    this.jwt = null;
-    this.authenticated = false;
-    try {
-      localStorage.removeItem("jwt");
-    } catch (e) {}
-    log.info("JWT cleared");
-  }
-};
-
-function isAuthenticated() {
-  return USER.authenticated === true;
-}
-
-function authHeaders() {
-  return USER.jwt
-    ? { Authorization: "Bearer " + USER.jwt }
-    : {};
-}
-
-/* ================= APP STATE ================= */
-
-const APP = {
-  ready: false,
-  view: "wallet", 
-
-  init() {
-    USER.load();
-    this.ready = true;
-    log.info("APP initialized");
-  }
-};
-
-/* ================= SAFE FETCH ================= */
-
-async function safeFetch(path, options = {}) {
-  try {
-    log.info("FETCH →", path);
-
-    const res = await fetch(path, {   // ✅ بدون API_BASE
-      headers: {
-        "Content-Type": "application/json",
-        ...authHeaders(),
-        ...(options.headers || {})
-      },
-      ...options
-    });
-
-    if (!res.ok) {
-      log.error("API ERROR", path, res.status);
-      return null;
-    }
-
-    const data = await res.json();
-    log.info("FETCH OK ←", path);
-    return data;
-
-  } catch (err) {
-    log.error("NETWORK ERROR", path, err);
-    return null;
-  }
-}
+const $ = id => document.getElementById(id)
+const $$ = q => document.querySelectorAll(q)
 
 /* =========================================================
-   PART 2 — NAVIGATION (General Update)
-================================================*/
-function switchView(view) {
-  document.querySelectorAll(".view").forEach(v => {
-    v.classList.remove("active");
-  });
-
-  const target = document.getElementById(view);
-  if (target) target.classList.add("active");
-
-  document.querySelectorAll(".bottom-nav button").forEach(b => {
-    b.classList.toggle("active", b.dataset.view === view);
-  });
-
-  document.dispatchEvent(
-    new CustomEvent("view:change", { detail: view })
-  );
-}
-document.addEventListener("click", e => {
-  const btn = e.target.closest("[data-view]");
-  if (btn) {
-    switchView(btn.dataset.view);
-    return;
-  }
-
-  const action = e.target.closest("[data-action]");
-  if (!action) return;
-
-  if (action.dataset.action === "go-casino") switchView("casino");
-  if (action.dataset.action === "go-mining") switchView("mining");
-});
-
-/* ================= VIEW LIFECYCLE (SSOT) ================= */
-
-let CURRENT_VIEW = null;
-
-document.addEventListener("view:change", e => {
-  const view = e.detail;
-  if (!view || view === CURRENT_VIEW) return;
-
-  /* ===== EXIT OLD VIEW ===== */
-  switch (CURRENT_VIEW) {
-    case "market":
-      if (typeof stopMarket === "function") stopMarket();
-      if (window.depthWS) {
-        window.depthWS.close();
-        window.depthWS = null;
-      }
-      break;
-  }
-
-  CURRENT_VIEW = view;
-
-  /* ===== ENTER NEW VIEW ===== */
-  switch (view) {
-    case "wallet":
-      if (typeof loadWallet === "function") loadWallet();
-      break;
-
-    case "market":
-      if (typeof initMarket === "function") initMarket();
-      break;
-
-    case "casino":
-      if (typeof initCasino === "function") initCasino();
-      break;
-
-    case "mining":
-      if (typeof renderMining === "function") renderMining();
-      break;
-
-    case "airdrop":
-      if (typeof loadAirdrop === "function") loadAirdrop();
-      break;
-  }
-});
-/* =========================================================
-   PART 3 — WALLET (General Update)
+   CORE
 ========================================================= */
 
-const WALLET = {
-  BX: 0,
-  USDT: 0,
-  USDC: 0,
-  BTC: 0,
-  BNB: 0,
-  ETH: 0,
-  AVAX: 0,
-  ZEC: 0,
-  TON: 0,
-  SOL: 0,
-  LTC: 0,
-  loaded: false
-};
+const BLOXIO = {
 
-/* ================= DOM MAP ================= */
+config:{
+api:"/api",
+sync:20000
+},
 
-const WALLET_DOM = {
-  BX: "bal-bx",
-  USDT: "bal-usdt",
-  USDC: "bal-usdc",
-  BTC: "bal-btc",
-  BNB: "bal-bnb",
-  ETH: "bal-eth",
-  AVAX: "bal-avax",
-  ZEC: "bal-zec",
-  TON: "bal-ton",
-  SOL: "bal-sol",
-  LTC: "bal-ltc",
-};
+state:{
+jwt:localStorage.getItem("jwt"),
+user:null,
+wallet:{},
+view:"wallet",
+ready:false
+},
 
-/* ================= RENDER ================= */
+/* =========================================================
+   API
+========================================================= */
 
-function renderWallet() {
-  let total = 0;
+async api(endpoint,method="GET",body=null){
 
-  Object.keys(WALLET_DOM).forEach(symbol => {
-    const el = $(WALLET_DOM[symbol]);
-    if (!el) return;
-
-    const value = Number(WALLET[symbol] || 0);
-    el.textContent = value.toFixed(2);
-    total += value;
-  });
-
-  const totalEl = $("walletTotal");
-  if (totalEl) {
-    totalEl.textContent = total.toFixed(2);
-  }
+const headers={
+"Content-Type":"application/json",
+...(this.state.jwt && {Authorization:`Bearer ${this.state.jwt}`})
 }
 
+const res=await fetch(`${this.config.api}${endpoint}`,{
+method,
+headers,
+body:body?JSON.stringify(body):null
+})
 
-    async function loadWallet() {
-  if (!isAuthenticated()) return;
+if(res.status===401){
 
-  const data = await safeFetch("/finance/wallet");
+this.auth.logout()
+throw new Error("Session expired")
 
-  if (!data) return;
-
-  Object.keys(WALLET).forEach(k => {
-    if (data[k] !== undefined) {
-      WALLET[k] = Number(data[k]);
-    }
-  });
-
-  renderWallet();
 }
 
-/* ======================================================
-   CONNECT WALLET – SSOT (TON + EVM)
-====================================================== */
+const data=await res.json()
 
-const WALLET_STATE = {
-  type: null,          // ton | evm
-  address: null,
-  connected: false
-};
+if(!res.ok) throw new Error(data.detail || "API error")
 
-/* ================= UI RENDER ================= */
+return data
 
-function renderWalletButtons() {
-  const wcBtn = document.getElementById("walletConnectBtn");
-  const binanceBtn = document.getElementById("binanceConnectBtn");
+},
 
-  if (wcBtn) {
-    wcBtn.classList.toggle("connected", WALLET_STATE.connected);
-    wcBtn.textContent = WALLET_STATE.connected
-      ? `Wallet Connected`
-      : `Connect Wallet`;
-  }
+/* =========================================================
+   AUTH
+========================================================= */
 
-  if (binanceBtn) {
-    binanceBtn.textContent = "Binance Pay (Coming Soon)";
-    binanceBtn.disabled = true;
-  }
+auth:{
+
+async load(){
+
+if(!BLOXIO.state.jwt) return
+
+const user=await BLOXIO.api("/auth/me")
+
+BLOXIO.state.user=user
+
+this.render()
+
+},
+
+render(){
+
+if($("u-name"))
+$("u-name").textContent=BLOXIO.state.user.first_name
+
+if($("u-id"))
+$("u-id").textContent=BLOXIO.state.user.id
+
+},
+
+logout(){
+
+localStorage.removeItem("jwt")
+location.reload()
+
 }
 
-/* ================= TON WALLETCONNECT ================= */
+},
 
-let tonConnectUI = null;
+/* =========================================================
+   NAVIGATION
+========================================================= */
 
-function initTonConnect() {
-  if (!window.TON_CONNECT_UI) return;
+nav:{
 
-  tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
-    manifestUrl: "https://your-domain.com/tonconnect-manifest.json",
-    buttonRootId: "walletConnectBtn"
-  });
+switch(view){
 
-  tonConnectUI.onStatusChange(wallet => {
-    if (!wallet) return;
+BLOXIO.state.view=view
 
-    WALLET_STATE.type = "ton";
-    WALLET_STATE.address = wallet.account.address;
-    WALLET_STATE.connected = true;
+$$(".view").forEach(v=>v.classList.remove("active"))
 
-    saveWalletSession();
-    notifyBackend();
-    renderWalletButtons();
+const el=$(view)
+if(el) el.classList.add("active")
 
-    console.log("TON connected:", WALLET_STATE.address);
-  });
+$$(".bottom-nav button")
+.forEach(b=>b.classList.toggle("active",b.dataset.view===view))
+
+document.dispatchEvent(new CustomEvent("viewChange",{detail:view}))
+
+},
+
+bind(){
+
+$$(".bottom-nav button").forEach(btn=>{
+btn.onclick=()=>this.switch(btn.dataset.view)
+})
+
 }
 
-/* ================= EVM WALLETCONNECT ================= */
+},
 
-async function connectEVM() {
-  if (!window.WalletConnectProvider || !window.Web3) return;
+/* =========================================================
+   WALLET
+========================================================= */
 
-  const provider = new WalletConnectProvider.default({
-    rpc: {
-      1: "https://rpc.ankr.com/eth",
-      56: "https://rpc.ankr.com/bsc"
-    }
-  });
+wallet:{
 
-  await provider.enable();
-  const web3 = new Web3(provider);
-  const accounts = await web3.eth.getAccounts();
+assets:[
+"BX","USDT","USDC","BTC","BNB",
+"ETH","AVAX","ZEC","TON","SOL","LTC"
+],
 
-  WALLET_STATE.type = "evm";
-  WALLET_STATE.address = accounts[0];
-  WALLET_STATE.connected = true;
+async load(){
 
-  saveWalletSession();
-  notifyBackend();
-  renderWalletButtons();
+const data=await BLOXIO.api("/finance/wallet")
 
-  console.log("EVM connected:", WALLET_STATE.address);
+BLOXIO.state.wallet=data
+
+this.render()
+
+},
+
+render(){
+
+let total=0
+
+this.assets.forEach(a=>{
+
+const el=$(`bal-${a.toLowerCase()}`)
+if(!el) return
+
+const v=BLOXIO.state.wallet[a]||0
+
+el.textContent=a==="BX"?v.toFixed(2):v.toFixed(6)
+
+total+=v
+
+})
+
+if($("walletTotal"))
+$("walletTotal").textContent=total.toFixed(2)
+
+this.updateMini()
+
+},
+
+updateMini(){
+
+if($("walletBX"))
+$("walletBX").textContent=(BLOXIO.state.wallet.BX||0).toFixed(2)
+
+if($("walletUSDT"))
+$("walletUSDT").textContent=(BLOXIO.state.wallet.USDT||0).toFixed(2)
+
+},
+
+async transfer(uid,amount){
+
+await BLOXIO.api("/finance/transfer","POST",{
+to_user:uid,
+asset:"BX",
+amount
+})
+
+await this.load()
+
+BLOXIO.ui.toast("Transfer success")
+
+},
+
+async withdraw(asset,amount,address){
+
+await BLOXIO.api("/finance/withdraw","POST",{
+asset,
+amount,
+address
+})
+
+BLOXIO.ui.toast("Withdraw submitted")
+
+},
+
+async deposit(asset){
+
+const res=await BLOXIO.api(`/finance/deposit/${asset}`)
+
+navigator.clipboard.writeText(res.address)
+
+BLOXIO.ui.toast("Deposit address copied")
+
 }
 
-/* ================= SESSION ================= */
+},
 
-function saveWalletSession() {
-  localStorage.setItem("wallet_session", JSON.stringify(WALLET_STATE));
+/* =========================================================
+   WALLETCONNECT
+========================================================= */
+
+walletconnect:{
+
+state:{
+connected:false,
+address:null
+},
+
+async connect(){
+
+if(window.ethereum){
+
+const accounts=await window.ethereum.request({
+method:"eth_requestAccounts"
+})
+
+this.state.connected=true
+this.state.address=accounts[0]
+
+localStorage.setItem("web3wallet",accounts[0])
+
+BLOXIO.ui.toast("Wallet connected")
+
 }
 
-function restoreWalletSession() {
-  const saved = localStorage.getItem("wallet_session");
-  if (!saved) return;
-
-  try {
-    const data = JSON.parse(saved);
-    Object.assign(WALLET_STATE, data);
-  } catch {}
 }
 
-/* ================= BACKEND SYNC ================= */
+},
 
-function notifyBackend() {
-  safeFetch("/finance/wallet/connect", {
-    method: "POST",
-    body: JSON.stringify({
-      type: WALLET_STATE.type,
-      address: WALLET_STATE.address
-    })
-  });
+/* =========================================================
+   MINING
+========================================================= */
+
+mining:{
+
+coin:"BX",
+
+async subscribe(plan,amount){
+
+await BLOXIO.api("/mining/subscribe","POST",{
+coin:this.coin,
+plan_id:plan,
+amount
+})
+
+BLOXIO.ui.toast("Mining started")
+
+BLOXIO.wallet.load()
+
+},
+
+async claim(){
+
+const res=await BLOXIO.api("/mining/claim","POST")
+
+BLOXIO.ui.toast(`+${res.profit} ${res.coin}`)
+
+BLOXIO.wallet.load()
+
 }
 
-/* ================= WITHDRAW ================= */
+},
 
-async function requestWithdraw(asset, amount, toAddress) {
-  if (!WALLET_STATE.connected) {
-    alert("Connect wallet first");
-    return;
-  }
+/* =========================================================
+   CASINO
+========================================================= */
 
-  const res = await safeFetch("/finance/withdraw", {
-    method: "POST",
-    body: JSON.stringify({
-      asset,
-      amount,
-      address: toAddress
-    })
-  });
+casino:{
 
-  if (!res) {
-    alert("Withdraw failed");
-    return;
-  }
+async play(game,bet,extra={}){
 
-  alert(res.message || "Withdraw submitted");
+const res=await BLOXIO.api("/casino/play","POST",{
+game,
+bet,
+...extra
+})
+
+if(res.win){
+
+BLOXIO.ui.toast(`WIN +${res.payout}`)
+
+}else{
+
+BLOXIO.ui.toast("Lose")
+
 }
 
-/* ================= DEPOSIT ================= */
+BLOXIO.wallet.load()
 
-function getDepositAddress(asset) {
-
-  if (!WALLET_STATE.connected) return null;
-
-  return safeFetch(`/finance/deposit/${asset}`, {
-    method: "GET"
-  });
 }
 
-/* ================= EVENTS ================= */
+},
 
-function bindWalletUI() {
-  const wcBtn = document.getElementById("walletConnectBtn");
+/* =========================================================
+   AIRDROP
+========================================================= */
 
-  if (wcBtn) {
-    wcBtn.addEventListener("click", () => {
-      if (window.TON_CONNECT_UI) {
-        initTonConnect();
-      } else {
-        connectEVM();
-      }
-    });
-  }
+airdrop:{
+
+async status(){
+
+return await BLOXIO.api("/bxing/airdrop/status")
+
+},
+
+async claim(){
+
+const res=await BLOXIO.api("/bxing/airdrop/claim","POST")
+
+if(res.status==="ok")
+BLOXIO.ui.toast(`+${res.reward} BX`)
+else
+BLOXIO.ui.toast("Already claimed")
+
+BLOXIO.wallet.load()
+
 }
 
-/* ================= Bin WALLET ===============*/
-function bindWalletActions() {
+},
 
-  const depositBtn = document.querySelector(".wallet-actions .primary");
-  const withdrawBtn = document.querySelectorAll(".wallet-actions .btn")[1];
+/* =========================================================
+   REFERRAL
+========================================================= */
 
-  if (depositBtn) {
-    depositBtn.onclick = async () => {
-      const res = await safeFetch(`/finance/deposit/USDT`);
-      if (!res) return alert("Failed to load deposit address");
-      alert(`Deposit Address:\n${res.address}`);
-    };
-  }
+referral:{
 
-  if (withdrawBtn) {
-    withdrawBtn.onclick = async () => {
-      const amount = prompt("Amount?");
-      const address = prompt("Destination address?");
-      if (!amount || !address) return;
+generate(){
 
-      const res = await safeFetch("/finance/withdraw", {
-        method: "POST",
-        body: JSON.stringify({
-          asset: "USDT",
-          amount: parseFloat(amount),
-          address
-        })
-      });
+if(!BLOXIO.state.user) return
 
-      if (!res) return alert("Withdraw failed");
-      alert("Withdraw submitted");
-    };
-  }
-   const transferBtn = document.querySelector(".wallet-transfer .confirm");
+const link=
+`${location.origin}?ref=${BLOXIO.state.user.id}`
 
-if (transferBtn) {
+const el=document.querySelector(".ref-link")
 
-  transferBtn.onclick = async () => {
+if(el) el.textContent=link
 
-    const user = document.getElementById("transferTelegram").value;
-    const amount = Number(document.getElementById("transferAmount").value);
+},
 
-    if (!user || !amount) return alert("Invalid transfer");
+copy(){
 
-    const res = await safeFetch("/finance/transfer", {
-      method: "POST",
-      body: JSON.stringify({
-        to_user: user,
-        asset: "BX",
-        amount: amount
-      })
-    });
+const el=document.querySelector(".ref-link")
 
-    if (!res) return alert("Transfer failed");
+if(!el) return
 
-    alert("Transfer sent");
-    loadWallet();
-  };
-  }
- }
-/* ================= INIT TÉLÉGRAMME ===============*/
+navigator.clipboard.writeText(el.textContent)
 
-async function initTelegramLogin() {
+BLOXIO.ui.toast("Referral copied")
 
-  if (!window.Telegram || !window.Telegram.WebApp) {
-    console.warn("Telegram WebApp not detected");
-    return;
-  }
-
-  const tg = window.Telegram.WebApp;
-
-  tg.ready();
-
-  const initData = tg.initData;
-
-  if (!initData) {
-    console.warn("No Telegram initData");
-    return;
-  }
-
-  const user = tg.initDataUnsafe?.user;
-
-if (!user) return;
-
-const res = await safeFetch("/auth/telegram", {
-  method: "POST",
-  body: JSON.stringify({
-    telegram_id: user.id,
-    username: user.username,
-    first_name: user.first_name
-  })
-});
-
-  if (!res || !res.access_token) {
-    console.error("Telegram login failed");
-    return;
-  }
-
-  USER.set(res.access_token);
-
-  console.log("JWT authenticated");
-
-  loadWallet();
 }
 
-/* ================= INIT ================= */
+},
 
-document.addEventListener("DOMContentLoaded", async () => {
+/* =========================================================
+   TOPUP
+========================================================= */
 
-  APP.init();
-  restoreWalletSession();
-  bindWalletUI();
-  bindWalletActions();
-  renderWalletButtons();
-  await initTelegramLogin();
-  switchView("wallet");
-  loadWallet();
-  bindCasinoGames();
-  renderMining();
-});
+topup:{
 
-/* =================================== */
+async execute(data){
 
-const CASINO = {
-  currentGame: null,
-  flags: {},
-  ws: null
- };
+await BLOXIO.api("/topup/execute","POST",data)
 
-/* =====================================================
-   GAME UI SCHEMA (12 GAMES)
-===================================================== */
+BLOXIO.ui.toast("Topup completed")
 
-const GAME_UI = {
-  coinflip: ["bet"],
-  crash: ["bet", "multiplier"],
-  limbo: ["bet", "multiplier"],
-  dice: ["bet", "multiplier"],
-  slot: ["bet"],
-  plinko: ["bet", "multiplier"],
-  hilo: ["bet", "choice"],
-  airboss: ["bet", "multiplier"],
-  fruit_party: ["bet"],
-  banana_farm: ["bet"],
-  blackjack_fast: ["bet"],
-  birds_party: ["bet"]
-};
-
-/* =====================================================
-   SOUND FX (Telegram-friendly)
-===================================================== */
-
-const sounds = {
-  win: new Audio("/assets/sounds/win.mp3"),
-  lose: new Audio("/assets/sounds/lose.mp3")
-};
-
-function playSound(type) {
-  try {
-    sounds[type].currentTime = 0;
-    sounds[type].play();
-  } catch (_) {}
 }
 
-/* =====================================================
-   CARD ANIMATION (WIN / LOSE)
-===================================================== */
+},
 
-function animateGameResult(game, win) {
-  const card = document.querySelector(`.game[data-game="${game}"]`);
-  if (!card) return;
+/* =========================================================
+   UI
+========================================================= */
 
-  card.classList.remove("win", "lose");
-  card.classList.add(win ? "win" : "lose");
+ui:{
 
-  setTimeout(() => {
-    card.classList.remove("win", "lose");
-  }, 900);
+toast(msg){
+
+const el=document.createElement("div")
+
+el.className="toast"
+el.textContent=msg
+
+document.body.appendChild(el)
+
+setTimeout(()=>el.remove(),3000)
+
 }
 
-/* =====================================================
-   BIND CASINO CARDS
-===================================================== */
+},
 
-function bindCasinoGames() {
-  document.querySelectorAll(".game[data-game]").forEach(card => {
-    const game = card.dataset.game;
+/* =========================================================
+   EVENTS
+========================================================= */
 
-    if (CASINO.flags[game] === false) {
-      card.classList.add("disabled");
-      card.onclick = () => alert(" Game disabled");
-      return;
-    }
+events(){
 
-    card.classList.remove("disabled");
-    card.onclick = () => openCasinoGame(game);
-  });
+document.addEventListener("viewChange",e=>{
+
+const v=e.detail
+
+if(v==="wallet") BLOXIO.wallet.load()
+
+if(v==="airdrop") BLOXIO.referral.generate()
+
+})
+
+const transferBtn=document.querySelector(".wallet-transfer .confirm")
+
+if(transferBtn){
+
+transferBtn.onclick=()=>{
+
+const uid=$("transferTelegram").value
+const amount=$("transferAmount").value
+
+BLOXIO.wallet.transfer(uid,amount)
+
 }
 
-/* =====================================================
-   OPEN GAME
-===================================================== */
-
-function openCasinoGame(game) {
-  CASINO.currentGame = game;
-
-  document.querySelectorAll(".game").forEach(g =>
-    g.classList.remove("active")
-  );
-
-  const card = document.querySelector(`.game[data-game="${game}"]`);
-  if (card) card.classList.add("active");
-
-  renderGameUI(game);
 }
 
-/* =====================================================
-   RENDER GAME UI
-===================================================== */
+const depBtn=document.querySelector(".wallet-actions .primary")
 
-function renderGameUI(game) {
-  const box = $("casinoGameBox");
-  if (!box) return;
-
-  const fields = GAME_UI[game] || ["bet"];
-  let html = `<h3>${game.replace("_", " ").toUpperCase()}</h3>`;
-
-  fields.forEach(f => {
-    if (f === "choice") {
-      html += `
-        <select id="choice">
-          <option value="high">High</option>
-          <option value="low">Low</option>
-        </select>`;
-    } else {
-      html += `<input id="${f}" type="number" placeholder="${f}">`;
-    }
-  });
-
-  html += `<button id="playBtn">Play</button>`;
-  box.innerHTML = html;
-
-  $("playBtn").onclick = startCasinoGame;
+if(depBtn){
+depBtn.onclick=()=>BLOXIO.wallet.deposit("USDT")
 }
 
-/* =====================================================
-   START GAME
-===================================================== */
+const wdBtn=document.querySelectorAll(".wallet-actions .btn")[1]
 
-async function startCasinoGame() {
-  if (!isAuthenticated()) {
-    alert("Please login first");
-    return;
-  }
+if(wdBtn){
+wdBtn.onclick=()=>{
 
-  const game = CASINO.currentGame;
-  if (!game) return;
+const amount=prompt("Amount")
+const address=prompt("Address")
 
-  const bet = Number($("bet")?.value || 0);
-  if (bet <= 0) {
-    alert("Invalid bet");
-    return;
-  }
+if(amount && address)
+BLOXIO.wallet.withdraw("USDT",amount,address)
 
-  const payload = {
-    game,
-    bet,
-    multiplier: Number($("multiplier")?.value || null),
-    choice: $("choice")?.value || null,
-    client_seed: Date.now().toString()
-  };
-
-  const res = await safeFetch("/casino/play", {
-    method: "POST",
-    body: JSON.stringify(payload)
-  });
-
-  if (!res) {
-    alert("Game failed");
-    return;
-  }
-
-  handleCasinoResult(res);
+}
 }
 
-/* =====================================================
-   HANDLE RESULT
-===================================================== */
+},
 
-function handleCasinoResult(res) {
+/* =========================================================
+   SYNC
+========================================================= */
 
-  animateGameResult(res.game, res.win);
+sync(){
 
-  playSound(res.win ? "win" : "lose");
+setInterval(()=>{
 
-  WALLET.BX = Number(WALLET.BX) + (res.payout - res.bet);
+if(!this.state.ready) return
 
-  renderWallet();
+if(this.state.view==="wallet")
+this.wallet.load()
 
-  alert(
-    res.win
-      ? `WIN!\nPayout: ${res.payout}`
-      : `LOSE`
-  );
-}
+},this.config.sync)
 
-/* =====================================================
-   BIG WINS — WEBSOCKET TICKER
-===================================================== */
+},
 
-function initBigWinsTicker() {
-  try {
-    CASINO.ws = new WebSocket(
-      `${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/ws/big-wins`
-    );
-
-    CASINO.ws.onmessage = e => {
-      const w = JSON.parse(e.data);
-      pushBigWin(w);
-    };
-  } catch (_) {}
-}
-
-function pushBigWin(w) {
-  const box = $("bigWinsList");
-  if (!box) return;
-
-  const row = document.createElement("div");
-  row.className = "big-win-row";
-  row.innerHTML = `
-    <span>${w.user}</span>
-    <span>${w.game}</span>
-    <strong>+${w.amount} BX</strong>
-  `;
-
-  box.prepend(row);
-  setTimeout(() => row.remove(), 8000);
-}
-
-/* =====================================================
-   GAME FLAGS (ADMIN LIVE TOGGLE)
-===================================================== */
-
-async function refreshGameFlags() {
-  const res = await safeFetch("/casino/flags");
-  if (!res) return;
-
-  CASINO.flags = res;
-  bindCasinoGames();
-}
-
-/* =====================================================
+/* =========================================================
    INIT
-===================================================== */
+========================================================= */
 
-function initCasino() {
-  refreshGameFlags();
-  initBigWinsTicker();
+async init(){
 
-  setInterval(refreshGameFlags, 10000);
-  console.info("Casino initialized");
+await this.auth.load()
+
+await this.wallet.load()
+
+this.nav.bind()
+
+this.events()
+
+this.referral.generate()
+
+this.sync()
+
+this.state.ready=true
+
+console.log("BLOXIO SUPER ENGINE v11 READY")
+
 }
-  
+
+}
+
 /* =========================================================
-   PART 5 — MINING (Per-Coin Plans)
+   BOOT
 ========================================================= */
 
-const MINING = {
-  coin: "BX",
-  subscription: null // { coin, planId }
-};
+document.addEventListener("DOMContentLoaded",()=>{
 
-/* ================= PLANS BY COIN ================= */
+BLOXIO.init()
 
-const MINING_PLANS_BY_COIN = {
-  BX: [
-    { id:"p10", name:"Starter",  days:10, roi:2.5, min:5,   max:60  },
-    { id:"p21", name:"Basic",    days:21, roi:5,   min:50,   max:250  },
-    { id:"p30", name:"Golden",   days:30, roi:8,   min:200,  max:800  },
-    { id:"p45", name:"Pro", days:45, roi:12,  min:400,  max:2500 },
-    { id:"p60", name:"Platine",  days:60, roi:17,  min:750,  max:9000 },
-    { id:"p90", name:"Infinity", days:90, roi:25,  min:1000, max:20000, sub:true }
-  ],
-
-  SOL: [
-    { id:"p10", name:"Starter",  days:10, roi:1,   min:1,    max:5   },
-    { id:"p21", name:"Basic",    days:21, roi:2.8, min:10,   max:50  },
-    { id:"p30", name:"Golden",   days:30, roi:4,   min:40,   max:160 },
-    { id:"p45", name:"Pro", days:45, roi:7,   min:120,  max:500 },
-    { id:"p60", name:"Platine",  days:60, roi:9,   min:200,  max:1000 },
-    { id:"p90", name:"Infinity", days:90, roi:14,  min:500,  max:2500, sub:true }
-  ],
-
-  BNB: [
-    { id:"p10", name:"Starter",  days:10, roi:0.8, min:0.05, max:1   },
-    { id:"p21", name:"Basic",    days:21, roi:1.8, min:1,    max:4   },
-    { id:"p30", name:"Golden",   days:30, roi:3,   min:5,    max:50  },
-    { id:"p45", name:"Pro", days:45, roi:5,   min:10,   max:100 },
-    { id:"p60", name:"Platine",  days:60, roi:7,   min:15,   max:150 },
-    { id:"p90", name:"Infinity", days:90, roi:11,  min:25,   max:200, sub:true }
-  ]
-};
-
-/* ================= ENTRY ================= */
-
-function renderMining() {
-  bindMiningTabs();
-  renderMiningPlans();
-}
-
-/* ================= COIN TABS ================= */
-
-function bindMiningTabs() {
-  const buttons = $$(".mining-tabs button");
-
-  buttons.forEach(btn => {
-    const coin = btn.dataset.coin;
-    if (!MINING_PLANS_BY_COIN[coin]) return;
-
-    btn.classList.toggle("active", coin === MINING.coin);
-
-    btn.onclick = () => {
-      if (MINING.coin === coin) return;
-      MINING.coin = coin;
-      renderMining();
-      log.info("Mining coin switched:", coin);
-    };
-  });
-}
-
-/* ================= PLANS RENDER ================= */
-
-function renderMiningPlans() {
-  const grid = $("miningGrid");
-  if (!grid) return;
-
-  const plans = MINING_PLANS_BY_COIN[MINING.coin] || [];
-  grid.innerHTML = "";
-
-  plans.forEach(plan => {
-    const isActive =
-      MINING.subscription &&
-      MINING.subscription.coin === MINING.coin &&
-      MINING.subscription.planId === plan.id;
-
-    const card = document.createElement("div");
-    card.className = "card mining-plan";
-
-    card.innerHTML = `
-      <h3>
-        ${plan.name}
-        ${plan.sub ? '<span class="sub-tag">SUB</span>' : ''}
-      </h3>
-      <div class="mining-profit">${plan.roi}%</div>
-      <ul>
-        <li>Time: ${plan.days} days</li>
-        <li>Min: ${plan.min} ${MINING.coin}</li>
-        <li>Max: ${plan.max} ${MINING.coin}</li>
-      </ul>
-      <button ${isActive ? "disabled" : ""}>
-        ${isActive ? "Active" : "Subscribe"}
-      </button>
-    `;
-
-    card.querySelector("button").onclick = () => {
-      if (!isActive) subscribeMining(plan.id);
-    };
-
-    grid.appendChild(card);
-  });
-}
-
-/* ================= SUBSCRIBE ================= */
-
-async function subscribeMining(planId) {
-
-  const amount = prompt("Amount to mine");
-
-  if (!amount) return;
-
-  const res = await safeFetch("/mining/subscribe", {
-    method: "POST",
-    body: JSON.stringify({
-      coin: MINING.coin,
-      plan_id: planId,
-      amount: Number(amount)
-    })
-  });
-
-  if (!res) {
-    alert("Mining failed");
-    return;
-  }
-
-  alert("Mining started");
-
-  MINING.subscription = {
-    coin: MINING.coin,
-    planId
-  };
-
-  renderMining();
-  loadWallet();
-}
-
- /* =========================================================
-   PART   / CONFIG / Airdrop 
-========================================================= */
-
-async function loadAirdrop() {
-  try {
-    const response = await apiGet("/bxing/airdrop/status");
-
-    const airdropStatusText = response.claimed
-      ? " You've already claimed your Airdrop!"
-      : `Reward: ${response.reward} BX`;
-
-    document.getElementById("airdrop-status").textContent = airdropStatusText;
-
-    document.getElementById("claim-airdrop").classList.toggle("hidden", response.claimed);
-
-  } catch (error) {
-    console.error("Error loading airdrop status", error);
-    document.getElementById("airdrop-status").textContent = " Failed to load Airdrop status";
-  }
-}
-
-/* ================= Airdrop  Calim ================= */
-
-async function claimAirdrop() {
-  try {
-    const response = await apiPost("/bxing/airdrop/claim");
-
-    if (response.status === "ok") {
-      loadAirdrop();  
-      alert(" You've successfully claimed your Airdrop!");
-    } else {
-      alert(" You have already claimed your Airdrop.");
-    }
-
-  } catch (error) {
-    console.error("Error claiming Airdrop", error);
-    alert(" Something went wrong while claiming your Airdrop.");
-  }
-}
-  
-   
-/* ================= Airdrop Click ================= */
-const apiGet = (url) => safeFetch(url, { method: "GET" });
-const apiPost = (url, body = {}) =>
-  safeFetch(url, {
-    method: "POST",
-    body: JSON.stringify(body)
-  });
-
-/*=========================================================
-   AIRDROP / TOPUP v6 — INSTITUTIONAL CLEAN
-   Stable • Deterministic • No Break
-=========================================================*/
-
-const BX_REFERENCE = 45; // BX = 38 USDT (internal anchor)
-const MIN_USDT = 5;
-
-const STATE = {
-  fiat: 0,
-  usdt: 0,
-  bx: 0,
-  rate: 0,
-  lockedUntil: 0,
-  country: "",
-  provider: "",
-  phone: "",
-  hedgeCost: 0
-};
-
-let RESERVE = 100000;
-let EXPOSURE = 0;
-
-
-/* ================= INIT ================= */
-
-function initTopupV6() {
-  const calc = document.getElementById("topup-calc");
-  const confirm = document.getElementById("topup-confirm");
-
-  if (calc) calc.onclick = calculate;
-  if (confirm) confirm.onclick = confirmTopup;
-}
-
-
-/* ================= SAFE FETCH BINANCE ================= */
-
-async function fetchP2P(fiat) {
-  try {
-    const res = await fetch(
-      "https://p2p.binance.com/bapi/c2c/v2/friendly/c2c/adv/search",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          asset: "USDT",
-          fiat,
-          tradeType: "SELL",
-          page: 1,
-          rows: 5
-        })
-      }
-    );
-
-    const data = await res.json();
-    const prices = data.data.map(x => parseFloat(x.adv.price));
-    return prices.reduce((a,b)=>a+b,0) / prices.length;
-
-  } catch {
-    return 1;
-  }
-}
-
-/* ================= CALCULATE ================= */
-
-async function calculate() {
-
-  const amount = parseFloat(document.getElementById("topup-amount")?.value);
-  const country = document.getElementById("topup-country")?.value;
-  const provider = document.getElementById("topup-provider")?.value;
-  const phone = document.getElementById("topup-phone")?.value;
-
-  if (!amount || amount <= 0) return;
-
-  const p2p = await fetchP2P(country);
-
-  const volatility = 0.01;
-  const risk = 0.03;
-
-  const baseRate = p2p * (1 + volatility + risk);
-
-  const usdt = amount / baseRate;
-
-  if (usdt < MIN_USDT) {
-    renderError("Minimum 5 USDT");
-    return;
-  }
-
-  const bx = usdt / BX_REFERENCE;
-
-  STATE.fiat = amount;
-  STATE.usdt = usdt;
-  STATE.bx = bx;
-  STATE.rate = baseRate;
-  STATE.country = country;
-  STATE.provider = provider;
-  STATE.phone = phone;
-  STATE.lockedUntil = Date.now() + 20000;
-
-  render();
-}
-
-
-/* ================= RENDER ================= */
-
-function render() {
-
-  const box = document.getElementById("topup-result");
-  if (!box) return;
-
-  box.innerHTML = `
-    <div class="topup-card">
-      <div>Rate: ${STATE.rate.toFixed(4)}</div>
-      <div>USDT: <b>${STATE.usdt.toFixed(2)}</b></div>
-      <div>BX: <b>${STATE.bx.toFixed(4)}</b></div>
-      <div class="lock"></div>
-    </div>
-  `;
-
-  countdown();
-}
-
-
-/* ================= LOCK ================= */
-
-function countdown() {
-  const el = document.querySelector(".lock");
-  if (!el) return;
-
-  const int = setInterval(() => {
-    const left = Math.floor((STATE.lockedUntil - Date.now()) / 1000);
-    if (left <= 0) {
-      el.innerText = "Expired";
-      clearInterval(int);
-      return;
-    }
-    el.innerText = `Lock ${left}s`;
-  }, 1000);
-}
-
-
-/* ================= CONFIRM ================= */
-
-async function confirmTopup() {
-
-  if (Date.now() > STATE.lockedUntil) {
-    toast("Rate expired");
-    return;
-  }
-
-  if (STATE.usdt > RESERVE) {
-    toast("Reserve insufficient");
-    return;
-  }
-
-  RESERVE -= STATE.usdt;
-  EXPOSURE += STATE.usdt;
-
-  await safeFetch("/topup/execute", {
-  method: "POST",
-  body: JSON.stringify(STATE)
-});
-
-  saveHistory();
-  toast("Topup Executed");
-}
-
-
-/* ================= HISTORY ================= */
-
-function saveHistory() {
-  const list = JSON.parse(localStorage.getItem("topupHistory") || "[]");
-  list.unshift({ ...STATE, time: Date.now() });
-  localStorage.setItem("topupHistory", JSON.stringify(list.slice(0,50)));
-}
-
-
-/* ================= ERROR ================= */
-
-function renderError(msg) {
-  const box = document.getElementById("topup-result");
-  if (box) box.innerHTML = `<div class="error">${msg}</div>`;
-}
-
-
-/* ================= TOAST ================= */
-
-function toast(msg) {
-  console.log(msg);
-}
-
-
-/* ================= AUTO INIT ================= */
-
-document
-  .querySelector('[data-view="airdrop"]')
-  ?.addEventListener("click", () => {
-    setTimeout(initTopupV6, 200);
-  });
-// ===============================
- // CASINO
- // ===============================
-
-async function openCasino(){
-
-    const data = await safeFetch("/casino/play",{
-        method:"POST",
-        body: JSON.stringify({ bet:1 })
-    });
-
-    alert("Result: " + data.result);
-}
-
-// ===============================
- // WALLET
- // ===============================
-
-async function openWallet(){
-
-    const data = await safeFetch("/finance/wallet");
-
-    alert("BX Balance: " + data.BX);
-}
-
-
-// ===============================
- // MINING
- // ===============================
-
-async function openMining(){
-
-    const data = await safeFetch("/mining/start");
-
-    alert(data.status);
-}
-
-// ===============================
- // MARKET
- // ===============================
-
-async function openMarket(){
-
-    const r = await safeFetch("/market/prices");
-
-    const data = r;
-    console.log(data);
-
-    alert("Market loaded");
-
-}
-// ===============================
- // CARD NAVIGATION
- // ===============================
-
-document.addEventListener("DOMContentLoaded", () => {
-
-    const casino = document.getElementById("casinoCard");
-    const wallet = document.getElementById("walletCard");
-    const mining = document.getElementById("miningCard");
-    const market = document.getElementById("marketCard");
-
-    if (casino) {
-        casino.onclick = () => switchView("casino");
-    }
-
-    if (wallet) {
-    wallet.onclick = () => switchView("wallet");
-}
-
-    if (mining) {
-        mining.onclick = () => switchView("mining");
-    }
-
-    if (market) {
-        market.onclick = () => switchView("market");
-    }
-});
+})
