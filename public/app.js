@@ -1182,7 +1182,6 @@ async function confirmTopup() {
   toast("Topup Executed");
 }
 
-
 /* ================= HISTORY ================= */
 
 function saveHistory() {
@@ -1190,7 +1189,6 @@ function saveHistory() {
   list.unshift({ ...STATE, time: Date.now() });
   localStorage.setItem("topupHistory", JSON.stringify(list.slice(0,50)));
 }
-
 
 /* ================= ERROR ================= */
 
@@ -1206,7 +1204,6 @@ function toast(msg) {
   console.log(msg);
 }
 
-
 /* ================= AUTO INIT ================= */
 
 document
@@ -1214,6 +1211,7 @@ document
   ?.addEventListener("click", () => {
     setTimeout(initTopupV6, 200);
   });
+
 // ===============================
  // CASINO
  // ===============================
@@ -1264,3 +1262,30 @@ async function openMarket(){
 
     alert("Market loaded");
 }
+/* =========================================
+   APP START
+========================================= */
+
+document.addEventListener("DOMContentLoaded", () => {
+
+  bootApp();
+
+  /* ===== Bottom Navigation ===== */
+
+  document
+  .querySelectorAll(".bottom-nav button")
+  .forEach(btn => {
+
+    btn.addEventListener("click", () => {
+
+      const view = btn.dataset.view;
+
+      if(!view) return;
+
+      switchView(view);
+
+    });
+
+  });
+
+});
