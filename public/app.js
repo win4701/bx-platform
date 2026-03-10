@@ -548,15 +548,10 @@ async function bootApp(){
   APP.init();
 
   restoreWalletSession();
-
-  bindNavigation();
   bindWalletUI();
   bindWalletActions();
-
   renderWalletButtons();
-
   await initTelegramLogin();
-
   if(isAuthenticated()){
       await loadWallet();
   }
