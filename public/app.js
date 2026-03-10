@@ -1256,8 +1256,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     if (wallet) {
-        casino.onclick = () => switchView("wallet");
-    }
+    wallet.onclick = () => switchView("wallet");
+}
 
     if (mining) {
         mining.onclick = () => switchView("mining");
