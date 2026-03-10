@@ -117,29 +117,41 @@ async function safeFetch(path, options = {}) {
 /* =========================================================
    PART 2 — NAVIGATION (General Update)
 ================================================*/
+/* =========================================
+   NAVIGATION ENGINE
+========================================= */
+
 function switchView(view){
 
-  const sections = document.querySelectorAll(
-    "#wallet, #casino, #mining, #market, #airdrop"
-  );
+  const views = document.querySelectorAll(".view");
 
-  sections.forEach(el=>{
-      el.style.display = "none";
+  views.forEach(v=>{
+    v.style.display="none";
+    v.classList.remove("active");
   });
 
   const target = document.getElementById(view);
 
   if(target){
-      target.style.display = "block";
+    target.style.display="block";
+    target.classList.add("active");
   }
+
+  document.querySelectorAll(".bottom-nav button")
+  .forEach(btn=>{
+      btn.classList.toggle(
+        "active",
+        btn.dataset.view === view
+      );
+  });
 
   APP.view = view;
 
   document.dispatchEvent(
-      new CustomEvent("view:change",{detail:view})
+    new CustomEvent("view:change",{detail:view})
   );
-}
 
+}
 /* ================= VIEW LIFECYCLE (SSOT) ================= */
 
 let CURRENT_VIEW = null;
@@ -532,8 +544,10 @@ async function bootApp(){
 
   restoreWalletSession();
 
+  bindNavigation();
   bindWalletUI();
   bindWalletActions();
+
   renderWalletButtons();
 
   await initTelegramLogin();
@@ -547,14 +561,9 @@ async function bootApp(){
 
   switchView("wallet");
 
-  console.log("BLOXIO APP READY");
+  console.log("BLOXIO ENGINE READY");
 
 }
-
-document.addEventListener("DOMContentLoaded", () => {
-
-  bootApp();
-
   const casino = document.getElementById("casinoCard");
   const wallet = document.getElementById("walletCard");
   const mining = document.getElementById("miningCard");
