@@ -4,13 +4,11 @@ import {API,STATE,UI,$,$$} from "./app.js"
 
 window.MINING = {
 
-coins:["BX","BNB","SOL"],
-
 activeCoin:"BX",
 
 plans:{},
 
-active:[],
+activePlans:[],
 
 profitTimer:null,
 
@@ -22,13 +20,13 @@ this.bindTabs()
 
 await this.loadPlans()
 
-await this.loadActive()
+await this.loadUserPlans()
 
-this.startProfitLoop()
+this.startProfitUpdater()
 
 },
 
-/* ================= COIN SWITCH ================= */
+/* ================= COIN TABS ================= */
 
 bindTabs(){
 
@@ -75,11 +73,11 @@ if(!grid) return
 
 grid.innerHTML=""
 
-const list = this.plans[this.activeCoin]
+const coinPlans = this.plans[this.activeCoin]
 
-if(!list) return
+if(!coinPlans) return
 
-list.forEach(plan=>{
+coinPlans.forEach(plan=>{
 
 const card=document.createElement("div")
 
@@ -92,25 +90,26 @@ card.innerHTML=`
 <div class="roi">${plan.roi}%</div>
 
 <ul>
-
 <li>Time: ${plan.days} days</li>
 <li>Min: ${plan.min} ${this.activeCoin}</li>
 <li>Max: ${plan.max} ${this.activeCoin}</li>
-
 </ul>
 
 <button class="btn primary">Subscribe</button>
 
 `
 
-card.querySelector("button")
-.onclick=()=>this.subscribe(plan)
+card.querySelector("button").onclick=()=>{
+
+this.subscribe(plan)
+
+}
 
 grid.appendChild(card)
 
 })
 
-this.renderActive()
+this.renderActivePlans()
 
 },
 
@@ -119,7 +118,7 @@ this.renderActive()
 async subscribe(plan){
 
 const amount = prompt(
-`Enter amount (${plan.min}-${plan.max})`
+`Enter amount (${plan.min} - ${plan.max})`
 )
 
 if(!amount) return
@@ -159,47 +158,45 @@ return
 
 UI.toast("Mining started")
 
-await this.loadActive()
+await this.loadUserPlans()
 
 },
 
-/* ================= ACTIVE MINING ================= */
+/* ================= USER PLANS ================= */
 
-async loadActive(){
+async loadUserPlans(){
 
 const res = await API.get("/mining/status")
 
 if(!res) return
 
-this.active = res
+this.activePlans = res
 
 },
 
-renderActive(){
+renderActivePlans(){
 
 const grid = $("miningGrid")
 
-this.active
-.filter(m=>m.coin===this.activeCoin)
-.forEach(m=>{
+this.activePlans
+.filter(p=>p.coin===this.activeCoin)
+.forEach(p=>{
 
-const card=document.createElement("div")
+const row=document.createElement("div")
 
-card.className="user-mining"
+row.className="user-mining"
 
-card.innerHTML=`
+row.innerHTML=`
 
-<div class="plan-name">
-${m.plan}
-</div>
+<div class="plan-name">${p.plan}</div>
 
 <div class="profit">
 
-<span id="profit-${m.id}">
-${m.profit}
+<span id="profit-${p.id}">
+${p.profit}
 </span>
 
-${m.coin}
+${p.coin}
 
 </div>
 
@@ -209,10 +206,13 @@ Claim
 
 `
 
-card.querySelector("button")
-.onclick=()=>this.claim(m.id)
+row.querySelector("button").onclick=()=>{
 
-grid.appendChild(card)
+this.claim(p.id)
+
+}
+
+grid.appendChild(row)
 
 })
 
@@ -221,6 +221,8 @@ grid.appendChild(card)
 /* ================= CLAIM ================= */
 
 async claim(id){
+
+UI.toast("Claiming reward...")
 
 const res = await API.post("/mining/claim",{id})
 
@@ -231,15 +233,15 @@ return
 
 }
 
-UI.toast("Rewards claimed")
+UI.toast("Reward claimed")
 
-await this.loadActive()
+await this.loadUserPlans()
 
 },
 
 /* ================= PROFIT LOOP ================= */
 
-startProfitLoop(){
+startProfitUpdater(){
 
 if(this.profitTimer)
 clearInterval(this.profitTimer)
