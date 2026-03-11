@@ -1,13 +1,24 @@
 "use strict"
 
+/* ======================================================
+   BLOXIO APP CORE
+   Modular System
+====================================================== */
+
+/* ================= IMPORT MODULES ================= */
+
 import "./wallet.js"
 import "./casino.js"
 import "./mining.js"
 import "./airdrop.js"
 import "./market.js"
 
+/* ================= HELPERS ================= */
+
 export const $ = id => document.getElementById(id)
 export const $$ = q => document.querySelectorAll(q)
+
+/* ================= CONFIG ================= */
 
 export const CONFIG = {
 
@@ -18,19 +29,33 @@ location.protocol==="https:"
 ?`wss://${location.host}`
 :`ws://${location.host}`,
 
+VERSION:"2.0",
+
 COINS:[
-"BX","USDT","USDC","BTC","BNB",
-"ETH","AVAX","ZEC","TON","SOL","LTC"
-]
+"BX","USDT","USDC",
+"BTC","ETH","BNB",
+"SOL","TON","AVAX","LTC"
+],
+
+WALLET_REFRESH:15000
 
 }
 
+/* ================= GLOBAL STATE ================= */
+
 export const STATE = {
+
+user:null,
 
 balances:{},
 
+wallet:{
+addresses:{}
+},
+
 market:{
-pair:"BX/USDT"
+pair:"BX/USDT",
+price:0
 },
 
 casino:{
@@ -39,37 +64,107 @@ game:null
 
 mining:{
 coin:"BX"
+},
+
+airdrop:{
+referrals:0
 }
 
 }
+
+/* ================= LOGGER ================= */
+
+export const LOG = {
+
+info(...a){console.log("[BLOXIO]",...a)},
+
+warn(...a){console.warn("[BLOXIO]",...a)},
+
+error(...a){console.error("[BLOXIO]",...a)}
+
+}
+
+/* ================= EVENT BUS ================= */
+
+export const BUS = {
+
+events:{},
+
+on(name,fn){
+
+if(!this.events[name])
+this.events[name]=[]
+
+this.events[name].push(fn)
+
+},
+
+emit(name,data){
+
+;(this.events[name]||[])
+.forEach(fn=>fn(data))
+
+}
+
+}
+
+/* ================= API ENGINE ================= */
 
 export const API = {
 
 async get(url){
 
+try{
+
 const r = await fetch(CONFIG.API+url)
 
-if(!r.ok) throw "api error"
+if(!r.ok) throw r.status
 
 return r.json()
+
+}catch(e){
+
+LOG.error("GET FAIL",url)
+
+return null
+
+}
 
 },
 
 async post(url,data){
 
+try{
+
 const r = await fetch(CONFIG.API+url,{
+
 method:"POST",
+
 headers:{
 "Content-Type":"application/json"
 },
+
 body:JSON.stringify(data)
+
 })
+
+if(!r.ok) throw r.status
 
 return r.json()
 
+}catch(e){
+
+LOG.error("POST FAIL",url)
+
+return null
+
 }
 
 }
+
+}
+
+/* ================= UI ENGINE ================= */
 
 export const UI = {
 
@@ -100,31 +195,82 @@ setTimeout(()=>el.remove(),3000)
 
 }
 
+/* ================= NAVIGATION ================= */
+
 document.addEventListener("click",e=>{
 
 const btn=e.target.closest("[data-view]")
 
-if(btn){
+if(!btn) return
 
 UI.view(btn.dataset.view)
 
+})
+
+/* ================= SOCKET MANAGER ================= */
+
+export const SOCKET = {
+
+connect(path){
+
+return new WebSocket(CONFIG.WS+path)
+
 }
+
+}
+
+/* ================= BALANCE RENDER ================= */
+
+export function renderBalances(balances){
+
+CONFIG.COINS.forEach(asset=>{
+
+const el=$("bal-"+asset.toLowerCase())
+
+if(!el) return
+
+el.textContent=
+Number(balances[asset]||0)
+.toFixed(4)
 
 })
 
+}
+
+/* ================= APP BOOT ================= */
+
 async function boot(){
 
+LOG.info("Starting BLOXIO")
+
+try{
+
+if(window.WALLET?.init)
 await WALLET.init()
+
+if(window.CASINO?.init)
 await CASINO.init()
+
+if(window.MINING?.init)
 await MINING.init()
+
+if(window.AIRDROP?.init)
 await AIRDROP.init()
 
-if(typeof MARKET?.init==="function")
+if(window.MARKET?.init)
 await MARKET.init()
 
-console.log("BLOXIO READY")
+LOG.info("APP READY")
+
+}catch(e){
+
+LOG.error("BOOT ERROR",e)
 
 }
+
+}
+
+/* ================= START ================= */
 
 window.addEventListener(
 "DOMContentLoaded",
