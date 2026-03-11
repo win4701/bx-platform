@@ -1,17 +1,18 @@
 "use strict"
 
-/* =========================================================
-   BLOXIO WALLET ENGINE
-   Fully compatible with index.html structure
-========================================================= */
-
-import {API,STATE,CONFIG,UI,$,$$} from "./app.js"
-
-/* ================= WALLET MODULE ================= */
+import {API,STATE,CONFIG,UI,$,$$,renderBalances} from "./app.js"
 
 window.WALLET = {
 
+coins:CONFIG.COINS,
+
+balances:{},
+
 addresses:{},
+
+activeCoin:"BX",
+
+connectedWallet:null,
 
 refreshTimer:null,
 
@@ -19,15 +20,17 @@ refreshTimer:null,
 
 async init(){
 
-await this.loadBalances()
+this.bindCoins()
 
-this.bindActions()
-
-this.startAutoRefresh()
+this.bindTransfer()
 
 this.bindWalletConnect()
 
-this.bindBinancePay()
+this.bindBinance()
+
+await this.loadBalances()
+
+this.startAutoRefresh()
 
 },
 
@@ -39,68 +42,11 @@ const res = await API.get("/finance/wallet")
 
 if(!res) return
 
-STATE.balances = res
+this.balances=res
 
-this.renderBalances()
+STATE.balances=res
 
-this.renderMarketMini()
-
-this.renderTotal()
-
-},
-
-/* ================= RENDER BALANCES ================= */
-
-renderBalances(){
-
-CONFIG.COINS.forEach(asset=>{
-
-const el = $("bal-"+asset.toLowerCase())
-
-if(!el) return
-
-const val = STATE.balances[asset] || 0
-
-el.textContent = Number(val).toFixed(4)
-
-})
-
-},
-
-/* ================= TOTAL VALUE ================= */
-
-renderTotal(){
-
-let total = 0
-
-Object.values(STATE.balances).forEach(v=>{
-
-total += Number(v || 0)
-
-})
-
-const el = $("walletTotal")
-
-if(el){
-
-el.textContent = "$"+total.toFixed(2)
-
-}
-
-},
-
-/* ================= MARKET MINI ================= */
-
-renderMarketMini(){
-
-const bx = STATE.balances.BX || 0
-const usdt = STATE.balances.USDT || 0
-
-const bxEl = $("walletBX")
-const usdtEl = $("walletUSDT")
-
-if(bxEl) bxEl.textContent = Number(bx).toFixed(4)
-if(usdtEl) usdtEl.textContent = Number(usdt).toFixed(4)
+renderBalances(res)
 
 },
 
@@ -111,7 +57,7 @@ startAutoRefresh(){
 if(this.refreshTimer)
 clearInterval(this.refreshTimer)
 
-this.refreshTimer = setInterval(()=>{
+this.refreshTimer=setInterval(()=>{
 
 this.loadBalances()
 
@@ -119,31 +65,67 @@ this.loadBalances()
 
 },
 
-/* ================= ACTION BUTTONS ================= */
+/* ================= COIN CLICK ================= */
 
-bindActions(){
+bindCoins(){
 
-const btns = $$(".wallet-actions button")
+$$(".coin-row").forEach(row=>{
 
-if(btns[0]) btns[0].onclick = ()=>this.deposit("BX")
-if(btns[1]) btns[1].onclick = ()=>this.withdraw()
-if(btns[2]) btns[2].onclick = ()=>this.transfer()
+row.onclick=()=>{
 
-const confirm = $(".wallet-transfer .confirm")
+const coin=row.dataset.coin
 
-if(confirm){
-
-confirm.onclick = ()=>this.transfer()
+this.openCoin(coin)
 
 }
+
+})
+
+},
+
+/* ================= OPEN COIN ================= */
+
+openCoin(asset){
+
+this.activeCoin=asset
+
+const balance=this.balances[asset]||0
+
+const box=$("walletDetails")
+
+if(!box) return
+
+box.innerHTML=`
+
+<div class="wallet-coin">
+
+<h3>${asset}</h3>
+
+<div class="coin-balance">
+
+${balance}
+
+</div>
+
+<div class="wallet-actions">
+
+<button id="depositBtn">Deposit</button>
+<button id="withdrawBtn">Withdraw</button>
+
+</div>
+
+</div>
+
+`
+
+$("#depositBtn").onclick=()=>this.deposit(asset)
+$("#withdrawBtn").onclick=()=>this.withdraw(asset)
 
 },
 
 /* ================= DEPOSIT ================= */
 
 async deposit(asset){
-
-try{
 
 UI.toast("Generating address...")
 
@@ -158,38 +140,32 @@ const res = await API.get("/finance/deposit/"+asset)
 
 if(!res){
 
-UI.toast("Deposit unavailable")
+UI.toast("Deposit error")
 return
 
 }
 
-this.addresses[asset] = res.address
+this.addresses[asset]=res.address
 
 this.showDeposit(asset,res.address)
-
-}catch(e){
-
-UI.toast("Deposit error")
-
-}
 
 },
 
 showDeposit(asset,address){
 
-const box = document.createElement("div")
+const modal=document.createElement("div")
 
-box.className = "deposit-modal"
+modal.className="deposit-modal"
 
-box.innerHTML = `
+modal.innerHTML=`
 
-<div class="deposit-card">
+<div class="deposit-box">
 
 <h3>Deposit ${asset}</h3>
 
 <input value="${address}" readonly>
 
-<button id="copyDeposit">Copy</button>
+<button id="copyAddr">Copy</button>
 
 <button id="closeDeposit">Close</button>
 
@@ -197,9 +173,9 @@ box.innerHTML = `
 
 `
 
-document.body.appendChild(box)
+document.body.appendChild(modal)
 
-$("#copyDeposit").onclick = ()=>{
+$("#copyAddr").onclick=()=>{
 
 navigator.clipboard.writeText(address)
 
@@ -207,9 +183,9 @@ UI.toast("Address copied")
 
 }
 
-$("#closeDeposit").onclick = ()=>{
+$("#closeDeposit").onclick=()=>{
 
-box.remove()
+modal.remove()
 
 }
 
@@ -217,20 +193,20 @@ box.remove()
 
 /* ================= WITHDRAW ================= */
 
-async withdraw(){
+async withdraw(asset){
 
-const asset = prompt("Asset")
-const amount = prompt("Amount")
-const address = prompt("Address")
+const amount=prompt("Amount")
 
-if(!asset || !amount || !address){
+const address=prompt("Address")
 
-UI.toast("Invalid withdraw data")
+if(!amount||!address){
+
+UI.toast("Invalid withdraw")
 return
 
 }
 
-UI.toast("Sending withdraw...")
+UI.toast("Processing withdraw...")
 
 const res = await API.post("/finance/withdraw",{
 
@@ -247,7 +223,7 @@ return
 
 }
 
-UI.toast("Withdraw request sent")
+UI.toast("Withdraw submitted")
 
 this.loadBalances()
 
@@ -255,24 +231,32 @@ this.loadBalances()
 
 /* ================= TRANSFER ================= */
 
+bindTransfer(){
+
+const btn=$(".wallet-transfer button")
+
+if(!btn) return
+
+btn.onclick=()=>this.transfer()
+
+},
+
 async transfer(){
 
-const user = $("transferTelegram")?.value
-const amount = $("transferAmount")?.value
+const user=$("transferTelegram")?.value
+const amount=$("transferAmount")?.value
 
-if(!user || !amount){
+if(!user||!amount){
 
 UI.toast("Invalid transfer")
 return
 
 }
 
-UI.toast("Processing transfer")
-
-const res = await API.post("/finance/transfer",{
+const res=await API.post("/finance/transfer",{
 
 to_user:user,
-asset:"BX",
+asset:this.activeCoin,
 amount
 
 })
@@ -284,9 +268,9 @@ return
 
 }
 
-UI.toast("Transfer completed")
+UI.toast("Transfer success")
 
-$("transferAmount").value = ""
+$("transferAmount").value=""
 
 this.loadBalances()
 
@@ -296,36 +280,37 @@ this.loadBalances()
 
 bindWalletConnect(){
 
-const btn = $("walletConnectBtn")
+const btn=document.querySelector(".connect-wallet")
 
 if(!btn) return
 
-btn.onclick = ()=>this.connectWallet()
+btn.onclick=()=>this.connectWallet()
 
 },
 
 async connectWallet(){
 
-if(!window.ethereum){
-
-UI.toast("Wallet not installed")
-return
-
-}
-
 try{
 
+if(window.ethereum){
+
 const accounts = await ethereum.request({
-
 method:"eth_requestAccounts"
-
 })
+
+this.connectedWallet=accounts[0]
 
 UI.toast("Connected: "+accounts[0])
 
-}catch(e){
+}else{
 
-UI.toast("Connection rejected")
+UI.toast("Wallet not installed")
+
+}
+
+}catch{
+
+UI.toast("Wallet connection rejected")
 
 }
 
@@ -333,31 +318,51 @@ UI.toast("Connection rejected")
 
 /* ================= BINANCE PAY ================= */
 
-bindBinancePay(){
+bindBinance(){
 
-const btn = $("binanceConnectBtn")
+const btn=document.querySelector(".binance-pay")
 
 if(!btn) return
 
-btn.onclick = ()=>this.openBinancePay()
+btn.onclick=()=>this.openBinancePay()
 
 },
 
-openBinancePay(){
+async openBinancePay(){
 
-const modal = document.createElement("div")
+UI.toast("Creating payment...")
 
-modal.className = "binance-modal"
+const res = await API.post("/finance/binance-pay",{
 
-modal.innerHTML = `
+asset:this.activeCoin,
+amount:10
+
+})
+
+if(!res){
+
+UI.toast("Payment error")
+return
+
+}
+
+this.showBinanceQR(res.qr)
+
+},
+
+showBinanceQR(url){
+
+const modal=document.createElement("div")
+
+modal.className="binance-modal"
+
+modal.innerHTML=`
 
 <div class="binance-box">
 
 <h3>Binance Pay</h3>
 
-<p>Scan with Binance App</p>
-
-<img src="assets/images/binance-qr.png"/>
+<img src="${url}">
 
 <button id="closeBinance">Close</button>
 
@@ -367,15 +372,11 @@ modal.innerHTML = `
 
 document.body.appendChild(modal)
 
-$("#closeBinance").onclick = ()=>{
-
-modal.remove()
-
-}
+$("#closeBinance").onclick=()=>modal.remove()
 
 },
 
-/* ================= TRANSACTION HISTORY ================= */
+/* ================= HISTORY ================= */
 
 async loadHistory(){
 
@@ -383,17 +384,19 @@ const res = await API.get("/finance/history")
 
 if(!res) return
 
-const list = document.createElement("div")
+const box=$("walletHistory")
 
-list.className = "wallet-history"
+if(!box) return
+
+box.innerHTML=""
 
 res.forEach(tx=>{
 
-const row = document.createElement("div")
+const row=document.createElement("div")
 
-row.className = "tx-row"
+row.className="tx-row"
 
-row.innerHTML = `
+row.innerHTML=`
 
 <span>${tx.asset}</span>
 <span>${tx.amount}</span>
@@ -401,31 +404,9 @@ row.innerHTML = `
 
 `
 
-list.appendChild(row)
+box.appendChild(row)
 
 })
-
-},
-
-/* ================= SECURITY CHECK ================= */
-
-validateAmount(val){
-
-if(!val) return false
-
-if(isNaN(val)) return false
-
-if(Number(val)<=0) return false
-
-return true
-
-},
-
-/* ================= DEBUG ================= */
-
-debug(){
-
-console.log("Balances",STATE.balances)
 
 }
 
