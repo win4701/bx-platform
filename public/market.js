@@ -16,8 +16,6 @@ let quotePriceUSDT = 1;
 const quoteMap = {
   USDT: null,
   USDC: null,
-  USDT: "btcusdt",
-  USDC: "btcusdt",
   BTC: "btcusdt",
   ETH: "ethusdt",
   BNB: "bnbusdt",
@@ -89,6 +87,12 @@ let ws = null;
 
 function connectBinance(symbol = "btcusdt") {
 
+  if (!symbol) {
+    quotePriceUSDT = 1;
+    computeBXPrice();
+    return;
+  }
+
   if (ws) {
     ws.onmessage = null;
     ws.close();
@@ -98,7 +102,7 @@ function connectBinance(symbol = "btcusdt") {
   ws = new WebSocket(
     `wss://stream.binance.com:9443/ws/${symbol}@miniTicker`
   );
-
+   
   ws.onmessage = (event) => {
     const msg = JSON.parse(event.data);
     const price = parseFloat(msg.c);
@@ -137,8 +141,10 @@ function generateOrderBook() {
   asks = [];
 
   for (let i = ROWS; i > 0; i--) {
-    bids.push((marketPrice - i * marketPrice * 0.0005).toFixed(6));
-  }
+    bids.push({
+price:(marketPrice - i * marketPrice * 0.0005),
+amount:(Math.random()*5).toFixed(2)
+});
 
   for (let i = 1; i <= ROWS; i++) {
     asks.push((marketPrice + i * marketPrice * 0.0005).toFixed(6));
@@ -189,6 +195,8 @@ function updatePriceUI() {
 
 async function executeTrade(){
 
+try{
+
 const amount = parseFloat(orderAmount.value);
 
 if(!amount || amount <= 0) return;
@@ -226,11 +234,16 @@ const data = await res.json();
 
 if(data.status){
 
-loadWallet();
+await loadWallet();
+
+}
+
+}catch(e){
+
+console.error("Trade error",e);
 
 }
  }
-
 /* ================= TOGGLE ================= */
 
 function setTradeSide(side) {
@@ -316,14 +329,18 @@ const PRO_CHART = {
     this.tooltip = document.getElementById("chartTooltip");
 
     this.resize();
-    window.addEventListener("resize", () => this.resize());
+    window.addEventListener("resize", () => {
+requestAnimationFrame(()=>this.resize())
+});
 
     this.bindTimeframes();
     this.bindMouse();
     this.bindControls(); // Bind zoom and reset controls
     this.reset(38); // Set default price on initialization
 
-    requestAnimationFrame(() => this.render());
+    if(window.CURRENT_VIEW && window.CURRENT_VIEW !== "market"){
+requestAnimationFrame(()=>this.render())
+return }
   },
 
   // Reset the chart and prepare for new data
