@@ -27,8 +27,9 @@ const log = {
     if (DEBUG) console.warn("[WARN]", ...args);
   },
   error(...args) {
-    console.error("[ERROR]", ...args);
-  }
+  console.error("[ERROR]", ...args);
+  if(DEBUG) alert(args.join(" "));
+}
 };
 
 /* ================= USER / AUTH ================= */
@@ -776,7 +777,7 @@ function pushBigWin(w) {
   `;
 
   box.prepend(row);
-  setTimeout(() => row.remove(), 8000);
+  setTimeout(() => row.remove(), 5000);
 }
 
 /* =====================================================
@@ -916,10 +917,12 @@ function renderMiningPlans() {
 
 async function subscribeMining(planId) {
 
-  const amount = prompt("Amount to mine");
+  const amount = Number(prompt("Amount to mine"));
 
-  if (!amount) return;
-
+if(!amount || amount <= 0){
+  alert("Invalid amount");
+  return;
+}
   const res = await safeFetch("/mining/subscribe", {
     method: "POST",
     body: JSON.stringify({
@@ -1015,9 +1018,10 @@ const STATE = {
   hedgeCost: 0
 };
 
-let RESERVE = 100000;
-let EXPOSURE = 0;
-
+const TOPUP_STATS = {
+  reserve:100000,
+  exposure:0
+};
 
 /* ================= INIT ================= */
 
@@ -1150,8 +1154,8 @@ async function confirmTopup() {
     return;
   }
 
-  RESERVE -= STATE.usdt;
-  EXPOSURE += STATE.usdt;
+  TOPUP_STATS.reserve -= STATE.usdt;
+  TOPUP_STATS.exposure += STATE.usdt;
 
   await safeFetch("/topup/execute", {
   method: "POST",
