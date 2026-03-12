@@ -936,7 +936,7 @@ async function subscribeMining(planId) {
 
 async function loadAirdrop() {
   try {
-    const response = await apiGet("/bxing/airdrop/status");
+    const response = await apiGet("/airdrop/status");
 
     const airdropStatusText = response.claimed
       ? " You've already claimed your Airdrop!"
@@ -956,7 +956,7 @@ async function loadAirdrop() {
 
 async function claimAirdrop() {
   try {
-    const response = await apiPost("/bxing/airdrop/claim");
+    const response = await apiPost("/airdrop/claim");
 
     if (response.status === "ok") {
       loadAirdrop();  
