@@ -94,23 +94,33 @@ const APP = {
 };
 
 /* ================= SAFE FETCH ================= */
-
 async function safeFetch(path, options = {}) {
 
   const API_BASE = "https://bx-vw7a.onrender.com";
 
-  const res = await fetch(API_BASE + path,{
-    headers:{
-      "Content-Type":"application/json",
+  if (options.body && typeof options.body !== "string") {
+    options.body = JSON.stringify(options.body);
+  }
+
+  const res = await fetch(API_BASE + path, {
+    headers: {
+      "Content-Type": "application/json",
       ...authHeaders(),
       ...(options.headers || {})
     },
     ...options
   });
 
-  if(!res.ok) return null;
+  if (!res.ok) {
+    log.warn("API error:", path, res.status);
+    return null;
+  }
 
-  return res.json();
+  try {
+    return await res.json();
+  } catch {
+    return null;
+  }
 }
 
 /* =========================================================
@@ -535,15 +545,20 @@ const res = await safeFetch("/auth/telegram", {
 document.addEventListener("DOMContentLoaded", async () => {
 
   APP.init();
+
   restoreWalletSession();
   bindWalletUI();
   bindWalletActions();
   renderWalletButtons();
+
   await initTelegramLogin();
   switchView("wallet");
+
   loadWallet();
   bindCasinoGames();
   renderMining();
+  bindCardNavigation();
+
 });
 
 /* =================================== */
@@ -737,9 +752,9 @@ function handleCasinoResult(res) {
 
 function initBigWinsTicker() {
   try {
-    CASINO.ws = new WebSocket(
-      `${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/ws/big-wins`
-    );
+    CASINO.ws = const WS_BASE = "wss://bx-vw7a.onrender.com"
+
+CASINO.ws = new WebSocket(`${WS_BASE}/ws/big-wins`);
 
     CASINO.ws.onmessage = e => {
       const w = JSON.parse(e.data);
@@ -1234,26 +1249,16 @@ async function openMarket(){
  // CARD NAVIGATION
  // ===============================
 
-document.addEventListener("DOMContentLoaded", () => {
+function bindCardNavigation(){
 
-    const casino = document.getElementById("casinoCard");
-    const wallet = document.getElementById("walletCard");
-    const mining = document.getElementById("miningCard");
-    const market = document.getElementById("marketCard");
+  const casino = document.getElementById("casinoCard");
+  const wallet = document.getElementById("walletCard");
+  const mining = document.getElementById("miningCard");
+  const market = document.getElementById("marketCard");
 
-    if (casino) {
-        casino.onclick = () => switchView("casino");
-    }
+  if (casino) casino.onclick = () => switchView("casino");
+  if (wallet) wallet.onclick = () => switchView("wallet");
+  if (mining) mining.onclick = () => switchView("mining");
+  if (market) market.onclick = () => switchView("market");
 
-    if (wallet) {
-    wallet.onclick = () => switchView("wallet");
 }
-
-    if (mining) {
-        mining.onclick = () => switchView("mining");
-    }
-
-    if (market) {
-        market.onclick = () => switchView("market");
-    }
-});
