@@ -14,6 +14,8 @@ let tradeSide = "buy";
 let quotePriceUSDT = 1;
 
 const quoteMap = {
+  USDT: null,
+  USDC: null,
   USDT: "btcusdt",
   USDC: "btcusdt",
   BTC: "btcusdt",
@@ -49,11 +51,11 @@ const bidsEl = document.getElementById("bids");
 const asksEl = document.getElementById("asks");
 const priceLadderEl = document.getElementById("priceLadder");
 
-const pairButtons = document.querySelectorAll(".pair-btn");
+const pairButtons = document.querySelectorAll("#market .pair-btn")
 
 /* ================= WALLET ================= */
 
-let wallet = { BX: 0, USDT: 0 };
+const wallet = window.WALLET || {BX:0,USDT:0}
 async function loadWallet(){
 
 const r = await fetch("/finance/wallet?uid="+window.USER_ID);
@@ -78,7 +80,7 @@ function init() {
 
   marketPrice = BX_USDT_REFERENCE;
   PRO_CHART.init();
-  this.bindControls();
+  PRO_CHART.bindControls();
 }
 
 /* ================= BINANCE TICKER ================= */
