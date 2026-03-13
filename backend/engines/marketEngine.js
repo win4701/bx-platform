@@ -1,6 +1,10 @@
 const db = require("../database")
 const ledger = require("../core/ledger")
 
+/* =========================
+   MATCH ORDERS
+========================= */
+
 async function matchOrders(pair){
 
 const buys = await db.query(
@@ -9,7 +13,8 @@ const buys = await db.query(
 WHERE pair=$1
 AND side='buy'
 AND status='open'
-ORDER BY price DESC`,
+ORDER BY price DESC
+LIMIT 50`,
 
 [pair]
 
@@ -21,7 +26,8 @@ const sells = await db.query(
 WHERE pair=$1
 AND side='sell'
 AND status='open'
-ORDER BY price ASC`,
+ORDER BY price ASC
+LIMIT 50`,
 
 [pair]
 
@@ -51,6 +57,10 @@ price:sell.price
 
 }
 
+/* =========================
+   EXECUTE TRADE
+========================= */
+
 async function executeTrade({
 
 buy,
@@ -62,6 +72,8 @@ price
 
 await db.transaction(async(client)=>{
 
+/* buyer receives BX */
+
 await ledger.adjustBalance({
 
 userId:buy.user_id,
@@ -72,10 +84,14 @@ reference:buy.id
 
 })
 
+/* seller receives quote */
+
+const quote = buy.pair.split("_")[1]
+
 await ledger.adjustBalance({
 
 userId:sell.user_id,
-asset:"USDT",
+asset:quote,
 amount:price*amount,
 type:"trade_sell",
 reference:sell.id
@@ -122,8 +138,77 @@ WHERE id=$1`,
 
 }
 
-module.exports={
+/* =========================
+   ORDERBOOK
+========================= */
 
-matchOrders
+async function orderbook(pair){
+
+const bids = await db.query(
+
+`SELECT price,SUM(amount) as amount
+FROM market_orders
+WHERE pair=$1
+AND side='buy'
+AND status='open'
+GROUP BY price
+ORDER BY price DESC
+LIMIT 20`,
+
+[pair]
+
+)
+
+const asks = await db.query(
+
+`SELECT price,SUM(amount) as amount
+FROM market_orders
+WHERE pair=$1
+AND side='sell'
+AND status='open'
+GROUP BY price
+ORDER BY price ASC
+LIMIT 20`,
+
+[pair]
+
+)
+
+return {
+
+bids:bids.rows,
+asks:asks.rows
 
 }
+
+}
+
+/* =========================
+   MARKET STATS
+========================= */
+
+async function stats(pair){
+
+const r = await db.query(
+
+`SELECT
+COUNT(*) as trades,
+SUM(amount) as volume
+FROM market_trades
+WHERE pair=$1`,
+
+[pair]
+
+)
+
+return r.rows[0]
+
+}
+
+module.exports={
+
+matchOrders,
+orderbook,
+stats
+
+  }
