@@ -234,9 +234,9 @@ const side = tradeSide;
 
 const price =
 side === "buy"
-? parseFloat(asks[0])
-: parseFloat(bids[0]);
-
+? asks[0].price
+: bids[0].price;
+   
 const res = await fetch("/exchange/order",{
 
 method:"POST",
