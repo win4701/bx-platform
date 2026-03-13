@@ -2,183 +2,99 @@ const db = require("../database")
 const ledger = require("../core/ledger")
 
 /* =========================
-   MATCH ORDERS
+   CONSTANT PRICE
 ========================= */
 
-async function matchOrders(pair){
-
-const buys = await db.query(
-
-`SELECT * FROM market_orders
-WHERE pair=$1
-AND side='buy'
-AND status='open'
-ORDER BY price DESC
-LIMIT 50`,
-
-[pair]
-
-)
-
-const sells = await db.query(
-
-`SELECT * FROM market_orders
-WHERE pair=$1
-AND side='sell'
-AND status='open'
-ORDER BY price ASC
-LIMIT 50`,
-
-[pair]
-
-)
-
-for(const buy of buys.rows){
-
-for(const sell of sells.rows){
-
-if(buy.price < sell.price)
-continue
-
-const amount = Math.min(buy.amount,sell.amount)
-
-await executeTrade({
-
-buy,
-sell,
-amount,
-price:sell.price
-
-})
-
-}
-
-}
-
-}
+const BX_PRICE = 45
 
 /* =========================
-   EXECUTE TRADE
+   BUY BX
 ========================= */
 
-async function executeTrade({
+async function buyBX(userId, amount){
 
-buy,
-sell,
-amount,
-price
+const total = amount * BX_PRICE
 
-}){
+await db.transaction(async()=>{
 
-await db.transaction(async(client)=>{
-
-/* buyer receives BX */
+/* deduct USDT */
 
 await ledger.adjustBalance({
+userId,
+asset:"USDT",
+amount:-total,
+type:"market_buy"
+})
 
-userId:buy.user_id,
+/* give BX */
+
+await ledger.adjustBalance({
+userId,
 asset:"BX",
 amount:amount,
-type:"trade_buy",
-reference:buy.id
-
+type:"market_buy"
 })
 
-/* seller receives quote */
+/* trade log */
 
-const quote = buy.pair.split("_")[1]
-
-await ledger.adjustBalance({
-
-userId:sell.user_id,
-asset:quote,
-amount:price*amount,
-type:"trade_sell",
-reference:sell.id
-
-})
-
-await client.query(
-
+await db.query(
 `INSERT INTO market_trades
-(pair,buy_order_id,sell_order_id,price,amount)
-VALUES($1,$2,$3,$4,$5)`,
-
-[
-buy.pair,
-buy.id,
-sell.id,
-price,
-amount
-]
-
-)
-
-await client.query(
-
-`UPDATE market_orders
-SET status='filled'
-WHERE id=$1`,
-
-[buy.id]
-
-)
-
-await client.query(
-
-`UPDATE market_orders
-SET status='filled'
-WHERE id=$1`,
-
-[sell.id]
-
+(user_id,side,price,amount)
+VALUES($1,'buy',$2,$3)`,
+[userId,BX_PRICE,amount]
 )
 
 })
+
+return {
+price:BX_PRICE,
+amount,
+total
+}
 
 }
 
 /* =========================
-   ORDERBOOK
+   SELL BX
 ========================= */
 
-async function orderbook(pair){
+async function sellBX(userId, amount){
 
-const bids = await db.query(
+const total = amount * BX_PRICE
 
-`SELECT price,SUM(amount) as amount
-FROM market_orders
-WHERE pair=$1
-AND side='buy'
-AND status='open'
-GROUP BY price
-ORDER BY price DESC
-LIMIT 20`,
+await db.transaction(async()=>{
 
-[pair]
+/* deduct BX */
 
+await ledger.adjustBalance({
+userId,
+asset:"BX",
+amount:-amount,
+type:"market_sell"
+})
+
+/* give USDT */
+
+await ledger.adjustBalance({
+userId,
+asset:"USDT",
+amount:total,
+type:"market_sell"
+})
+
+await db.query(
+`INSERT INTO market_trades
+(user_id,side,price,amount)
+VALUES($1,'sell',$2,$3)`,
+[userId,BX_PRICE,amount]
 )
 
-const asks = await db.query(
-
-`SELECT price,SUM(amount) as amount
-FROM market_orders
-WHERE pair=$1
-AND side='sell'
-AND status='open'
-GROUP BY price
-ORDER BY price ASC
-LIMIT 20`,
-
-[pair]
-
-)
+})
 
 return {
-
-bids:bids.rows,
-asks:asks.rows
-
+price:BX_PRICE,
+amount,
+total
 }
 
 }
@@ -187,28 +103,54 @@ asks:asks.rows
    MARKET STATS
 ========================= */
 
-async function stats(pair){
+async function stats(){
 
 const r = await db.query(
 
 `SELECT
 COUNT(*) as trades,
 SUM(amount) as volume
-FROM market_trades
-WHERE pair=$1`,
-
-[pair]
+FROM market_trades`
 
 )
 
-return r.rows[0]
+return {
+
+price:BX_PRICE,
+trades:Number(r.rows[0].trades||0),
+volume:Number(r.rows[0].volume||0)
+
+}
+
+}
+
+/* =========================
+   TRADE HISTORY
+========================= */
+
+async function history(limit=50){
+
+const r = await db.query(
+
+`SELECT side,price,amount,created_at
+FROM market_trades
+ORDER BY created_at DESC
+LIMIT $1`,
+
+[limit]
+
+)
+
+return r.rows
 
 }
 
 module.exports={
 
-matchOrders,
-orderbook,
-stats
+BX_PRICE,
+buyBX,
+sellBX,
+stats,
+history
 
-  }
+ }
