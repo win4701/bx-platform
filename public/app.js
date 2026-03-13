@@ -128,6 +128,9 @@ async function safeFetch(path, options = {}) {
    PART 2 — NAVIGATION (General Update)
 ================================================*/
 function switchView(view) {
+
+  APP.view = view;
+
   document.querySelectorAll(".view").forEach(v => {
     v.classList.remove("active");
   });
@@ -168,12 +171,15 @@ document.addEventListener("view:change", e => {
   /* ===== EXIT OLD VIEW ===== */
   switch (CURRENT_VIEW) {
     case "market":
-      if (typeof stopMarket === "function") stopMarket();
-      if (window.depthWS) {
-        window.depthWS.close();
-        window.depthWS = null;
-      }
-      break;
+
+  if (typeof stopMarket === "function") stopMarket();
+
+  if (window.marketWS) {
+    window.marketWS.close();
+    window.marketWS = null;
+  }
+
+break;
   }
 
   CURRENT_VIEW = view;
@@ -736,8 +742,9 @@ function handleCasinoResult(res) {
 
   playSound(res.win ? "win" : "lose");
 
-  WALLET.BX = Number(WALLET.BX) + (res.payout - res.bet);
-
+  if (typeof res.payout === "number" && typeof res.bet === "number") {
+  WALLET.BX += (res.payout - res.bet);
+}
   renderWallet();
 
   alert(
@@ -753,14 +760,16 @@ function handleCasinoResult(res) {
 
 function initBigWinsTicker() {
   try {
-    CASINO.ws = const WS_BASE = "wss://bx-vw7a.onrender.com"
 
-CASINO.ws = new WebSocket(`${WS_BASE}/ws/big-wins`);
+    const WS_BASE = "wss://bx-vw7a.onrender.com";
+
+    CASINO.ws = new WebSocket(`${WS_BASE}/ws/big-wins`);
 
     CASINO.ws.onmessage = e => {
       const w = JSON.parse(e.data);
       pushBigWin(w);
     };
+
   } catch (_) {}
 }
 
@@ -919,7 +928,7 @@ async function subscribeMining(planId) {
 
   const amount = Number(prompt("Amount to mine"));
 
-if(!amount || amount <= 0){
+if (!Number.isFinite(amount) || amount <= 0) {
   alert("Invalid amount");
   return;
 }
@@ -1026,13 +1035,10 @@ const TOPUP_STATS = {
 /* ================= INIT ================= */
 
 function initTopupV6() {
-  const calc = document.getElementById("topup-calc");
   const confirm = document.getElementById("topup-confirm");
 
-  if (calc) calc.onclick = calculate;
   if (confirm) confirm.onclick = confirmTopup;
 }
-
 
 /* ================= SAFE FETCH BINANCE ================= */
 
@@ -1149,11 +1155,10 @@ async function confirmTopup() {
     return;
   }
 
-  if (STATE.usdt > RESERVE) {
-    toast("Reserve insufficient");
-    return;
-  }
-
+  if (STATE.usdt > TOPUP_STATS.reserve) {
+  toast("Reserve insufficient");
+  return;
+}
   TOPUP_STATS.reserve -= STATE.usdt;
   TOPUP_STATS.exposure += STATE.usdt;
 
