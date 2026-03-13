@@ -1,6 +1,0 @@
-fastapi
-uvicorn
-python-jose[cryptography]
-python-telegram-bot
-requests
-websockets
