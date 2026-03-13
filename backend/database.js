@@ -5,18 +5,54 @@ const {Pool} = require("pg")
 const pool = new Pool({
 
 connectionString:process.env.DATABASE_URL,
-ssl:{rejectUnauthorized:false}
+
+ssl:{
+rejectUnauthorized:false
+},
+
+max:20,
+idleTimeoutMillis:30000,
+connectionTimeoutMillis:2000
 
 })
 
-async function query(q,p){
+async function query(text,params){
 
-return pool.query(q,p)
+return pool.query(text,params)
 
 }
 
-module.exports = {
+async function transaction(callback){
 
-query
+const client = await pool.connect()
+
+try{
+
+await client.query("BEGIN")
+
+const result = await callback(client)
+
+await client.query("COMMIT")
+
+return result
+
+}catch(e){
+
+await client.query("ROLLBACK")
+throw e
+
+}finally{
+
+client.release()
+
+}
+
+}
+
+module.exports={
+
+query,
+transaction,
+pool
 
 }
