@@ -1,111 +1,42 @@
-const db = require("../database")
 const engine = require("../engines/marketEngine")
-const ledger = require("../core/ledger")
 
 /* =========================
-   CREATE ORDER
+   BUY BX
 ========================= */
 
-exports.order = async (req,res)=>{
+exports.buy = async (req,res)=>{
 
 try{
 
-const {pair,side,price,amount} = req.body
+const {amount} = req.body
 
-const userId=req.user.id
-
-if(!pair || !side || !price || !amount)
+if(!amount || amount<=0)
 return res.status(400).json({
-error:"invalid_order"
+error:"invalid_amount"
 })
 
-const base = pair.split("_")[0]
-const quote = pair.split("_")[1]
-
-/* =====================
-   LOCK FUNDS
-===================== */
-
-if(side==="buy"){
-
-await ledger.lockBalance({
-
-userId,
-asset:quote,
-amount:price*amount
-
-})
-
-}
-
-if(side==="sell"){
-
-await ledger.lockBalance({
-
-userId,
-asset:base,
-amount:amount
-
-})
-
-}
-
-/* =====================
-   INSERT ORDER
-===================== */
-
-const order = await db.query(
-
-`INSERT INTO market_orders
-(user_id,pair,side,price,amount,status)
-VALUES($1,$2,$3,$4,$5,'open')
-RETURNING id`,
-
-[
-userId,
-pair,
-side,
-price,
+const trade = await engine.buyBX(
+req.user.id,
 amount
-]
-
 )
-
-/* =====================
-   MATCH
-===================== */
-
-await engine.matchOrders(pair)
-
-/* =====================
-   FEED
-===================== */
 
 if(global.broadcast){
 
 global.broadcast({
-
-type:"market_order",
-pair,
-side,
-price,
-amount
-
+type:"trade",
+side:"buy",
+price:trade.price,
+amount:trade.amount
 })
 
 }
 
-res.json({
+res.json(trade)
 
-status:"created",
-order_id:order.rows[0].id
-
-})
-
-}catch(e){
+}catch{
 
 res.status(500).json({
-error:"order_failed"
+error:"market_buy_failed"
 })
 
 }
@@ -113,16 +44,45 @@ error:"order_failed"
 }
 
 /* =========================
-   ORDERBOOK
+   SELL BX
 ========================= */
 
-exports.orderbook = async (req,res)=>{
+exports.sell = async (req,res)=>{
 
-const {pair} = req.params
+try{
 
-const book = await engine.orderbook(pair)
+const {amount} = req.body
 
-res.json(book)
+if(!amount || amount<=0)
+return res.status(400).json({
+error:"invalid_amount"
+})
+
+const trade = await engine.sellBX(
+req.user.id,
+amount
+)
+
+if(global.broadcast){
+
+global.broadcast({
+type:"trade",
+side:"sell",
+price:trade.price,
+amount:trade.amount
+})
+
+}
+
+res.json(trade)
+
+}catch{
+
+res.status(500).json({
+error:"market_sell_failed"
+})
+
+}
 
 }
 
@@ -132,74 +92,20 @@ res.json(book)
 
 exports.stats = async (req,res)=>{
 
-const {pair} = req.params
-
-const s = await engine.stats(pair)
+const s = await engine.stats()
 
 res.json(s)
 
 }
 
 /* =========================
-   USER ORDERS
+   TRADE HISTORY
 ========================= */
 
-exports.myOrders = async (req,res)=>{
+exports.history = async (req,res)=>{
 
-const r = await db.query(
+const h = await engine.history()
 
-`SELECT *
-FROM market_orders
-WHERE user_id=$1
-ORDER BY created_at DESC
-LIMIT 50`,
-
-[req.user.id]
-
-)
-
-res.json(r.rows)
+res.json(h)
 
 }
-
-/* =========================
-   CANCEL ORDER
-========================= */
-
-exports.cancel = async (req,res)=>{
-
-const {order_id}=req.body
-
-const order = await db.query(
-
-`SELECT *
-FROM market_orders
-WHERE id=$1
-AND user_id=$2`,
-
-[order_id,req.user.id]
-
-)
-
-if(!order.rows.length)
-return res.status(404).json({
-error:"order_not_found"
-})
-
-await db.query(
-
-`UPDATE market_orders
-SET status='cancelled'
-WHERE id=$1`,
-
-[order_id]
-
-)
-
-res.json({
-
-status:"cancelled"
-
-})
-
-          }
