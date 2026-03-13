@@ -1,7 +1,50 @@
-function calculateReward(hashRate){
+const db = require("../database")
+const economy = require("../core/bxEconomy")
 
-return hashRate * 0.001
+async function processMining(){
+
+const sessions = await db.query(
+`SELECT *
+FROM mining_sessions
+WHERE status='active'`
+)
+
+for(const s of sessions.rows){
+
+const reward = Number(s.hash_rate) * 0.001
+
+await economy.rewardBX(
+
+s.user_id,
+reward,
+"mining_reward"
+
+)
 
 }
 
-module.exports={calculateReward}
+}
+
+function startMiningScheduler(){
+
+setInterval(async()=>{
+
+try{
+
+await processMining()
+
+}catch(e){
+
+console.error("mining error",e)
+
+}
+
+},60000)
+
+}
+
+module.exports={
+
+startMiningScheduler
+
+}
