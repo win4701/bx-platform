@@ -103,15 +103,16 @@ async function safeFetch(path, options = {}) {
     options.body = JSON.stringify(options.body);
   }
 
-  const res = await fetch(API_BASE + path, {
-    headers: {
-      "Content-Type": "application/json",
-      ...authHeaders(),
-      ...(options.headers || {})
-    },
-    ...options
-  });
+  const headers = {
+  "Content-Type": "application/json",
+  ...authHeaders(),
+  ...(options.headers || {})
+};
 
+const res = await fetch(API_BASE + path, {
+  ...options,
+  headers
+});
   if (!res.ok) {
     log.warn("API error:", path, res.status);
     return null;
@@ -253,7 +254,7 @@ function renderWallet() {
 
     const value = Number(WALLET[symbol] || 0);
     el.textContent = value.toFixed(2);
-    total += value;
+    if(symbol === "BX") total += value;
   });
 
   const totalEl = $("walletTotal");
@@ -380,16 +381,22 @@ function restoreWalletSession() {
 
 /* ================= BACKEND SYNC ================= */
 
-function notifyBackend() {
-  safeFetch("/finance/wallet/connect", {
-    method: "POST",
-    body: JSON.stringify({
-      type: WALLET_STATE.type,
-      address: WALLET_STATE.address
-    })
-  });
-}
+async function notifyBackend() {
 
+  try{
+
+    await safeFetch("/finance/wallet/connect",{
+      method:"POST",
+      body:{
+        type: WALLET_STATE.type,
+        address: WALLET_STATE.address
+      }
+    });
+
+  }catch(e){
+    log.warn("Wallet sync failed");
+  }
+}
 /* ================= WITHDRAW ================= */
 
 async function requestWithdraw(asset, amount, toAddress) {
@@ -786,9 +793,11 @@ function pushBigWin(w) {
   `;
 
   box.prepend(row);
-  setTimeout(() => row.remove(), 5000);
-}
 
+if(box.children.length > 20){
+  box.removeChild(box.lastChild);
+}
+   
 /* =====================================================
    GAME FLAGS (ADMIN LIVE TOGGLE)
 ===================================================== */
@@ -809,7 +818,8 @@ function initCasino() {
   refreshGameFlags();
   initBigWinsTicker();
 
-  setInterval(refreshGameFlags, 10000);
+  CASINO.flagsInterval = setInterval(refreshGameFlags,10000);
+  clearInterval(CASINO.flagsInterval);
   console.info("Casino initialized");
 }
   
@@ -1061,6 +1071,7 @@ async function fetchP2P(fiat) {
 
     const data = await res.json();
     const prices = data.data.map(x => parseFloat(x.adv.price));
+     if(!data?.data?.length) return 1;
     return prices.reduce((a,b)=>a+b,0) / prices.length;
 
   } catch {
@@ -1076,6 +1087,7 @@ async function calculate() {
   const country = document.getElementById("topup-country")?.value;
   const provider = document.getElementById("topup-provider")?.value;
   const phone = document.getElementById("topup-phone")?.value;
+   if(!phone) return renderError("Phone required");
 
   if (!amount || amount <= 0) return;
 
