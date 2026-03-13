@@ -1,5 +1,7 @@
 const router = require("express").Router()
 
+/* modules */
+
 const auth = require("./modules/auth")
 const wallet = require("./modules/wallet")
 const casino = require("./modules/casino")
@@ -9,47 +11,145 @@ const airdrop = require("./modules/airdrop")
 const topup = require("./modules/topup")
 const admin = require("./modules/admin")
 
-const {auth:authMiddleware} = require("./core/security")
-const adminAuth = require("./core/security").adminAuth
+/* security */
+
+const {auth:authMiddleware,adminAuth} = require("./core/security")
+
+/* ===========================
+   SYSTEM
+=========================== */
 
 router.get("/health",(req,res)=>{
-res.json({status:"ok"})
+res.json({
+status:"ok",
+time:Date.now()
+})
 })
 
-/* auth */
+/* ===========================
+   AUTH
+=========================== */
 
 router.post("/auth/telegram",auth.telegram)
 
-/* wallet */
+/* ===========================
+   WALLET
+=========================== */
 
-router.get("/finance/wallet",authMiddleware,wallet.getWallet)
-router.post("/finance/transfer",authMiddleware,wallet.transfer)
-router.post("/finance/withdraw",authMiddleware,wallet.withdraw)
+router.get(
+"/finance/wallet",
+authMiddleware,
+wallet.getWallet
+)
 
-/* casino */
+router.post(
+"/finance/transfer",
+authMiddleware,
+wallet.transfer
+)
 
-router.post("/casino/play",authMiddleware,casino.play)
+router.post(
+"/finance/connect",
+authMiddleware,
+wallet.connectWallet
+)
 
-/* mining */
+router.get(
+"/finance/deposit/:asset",
+authMiddleware,
+wallet.deposit
+)
 
-router.post("/mining/subscribe",authMiddleware,mining.subscribe)
+router.post(
+"/finance/binancepay",
+authMiddleware,
+wallet.binancePay
+)
 
-/* market */
+router.post(
+"/finance/withdraw",
+authMiddleware,
+wallet.withdraw
+)
 
-router.post("/exchange/order",authMiddleware,market.order)
+router.get(
+"/finance/history",
+authMiddleware,
+wallet.history
+)
 
-/* airdrop */
+/* ===========================
+   CASINO
+=========================== */
 
-router.get("/airdrop/status",authMiddleware,airdrop.status)
-router.post("/airdrop/claim",authMiddleware,airdrop.claim)
+router.post(
+"/casino/play",
+authMiddleware,
+casino.play
+)
 
-/* topup */
+/* ===========================
+   MINING
+=========================== */
 
-router.post("/topup/execute",authMiddleware,topup.execute)
+router.post(
+"/mining/subscribe",
+authMiddleware,
+mining.subscribe
+)
 
-/* admin */
+/* ===========================
+   MARKET
+=========================== */
 
-router.get("/admin/stats",authMiddleware,adminAuth,admin.stats)
-router.get("/admin/system",authMiddleware,adminAuth,admin.system)
+router.post(
+"/exchange/order",
+authMiddleware,
+market.order
+)
+
+/* ===========================
+   AIRDROP
+=========================== */
+
+router.get(
+"/airdrop/status",
+authMiddleware,
+airdrop.status
+)
+
+router.post(
+"/airdrop/claim",
+authMiddleware,
+airdrop.claim
+)
+
+/* ===========================
+   TOPUP
+=========================== */
+
+router.post(
+"/topup/execute",
+authMiddleware,
+topup.execute
+)
+
+/* ===========================
+   ADMIN
+=========================== */
+
+router.get(
+"/admin/stats",
+authMiddleware,
+adminAuth,
+admin.stats
+)
+
+router.get(
+"/admin/system",
+authMiddleware,
+adminAuth,
+admin.system
+)
 
 module.exports = router
