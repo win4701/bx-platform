@@ -1,39 +1,41 @@
-require("dotenv").config()
-
-const express = require("express")
-const cors = require("cors")
 const http = require("http")
 const WebSocket = require("ws")
 
-const routes = require("./routes")
-
-const app = express()
-
-app.use(cors())
-app.use(express.json())
-
-app.use("/",routes)
-
-app.get("/",(req,res)=>{
-res.json({status:"Bloxio Backend Running"})
-})
+const app = require("./app")
 
 const server = http.createServer(app)
 
 const wss = new WebSocket.Server({
 server,
-path:"/ws/big-wins"
+path:"/ws"
+})
+
+const clients = new Set()
+
+wss.on("connection",(ws)=>{
+
+clients.add(ws)
+
+ws.on("close",()=>{
+clients.delete(ws)
+})
+
 })
 
 function broadcast(data){
 
-wss.clients.forEach(c=>{
-if(c.readyState===1)
-c.send(JSON.stringify(data))
+const msg = JSON.stringify(data)
+
+clients.forEach(c=>{
+if(c.readyState===1){
+c.send(msg)
+}
 })
 
 }
 
-global.broadcastBigWin = broadcast
+global.broadcast = broadcast
 
-server.listen(process.env.PORT || 3000)
+server.listen(process.env.PORT || 3000,()=>{
+console.log("Bloxio server started")
+})
