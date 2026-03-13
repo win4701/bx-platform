@@ -3,77 +3,65 @@ require("dotenv").config()
 const express = require("express")
 const cors = require("cors")
 const compression = require("compression")
-const http = require("http")
-const WebSocket = require("ws")
 const rateLimit = require("express-rate-limit")
+const os = require("os")
 
 const routes = require("./routes")
-const wsHub = require("./core/wsHub")
 
 const app = express()
 
-/* middlewares */
+let REQUEST_COUNT = 0
 
 app.use(cors())
-
 app.use(express.json())
-
 app.use(compression())
 
-/* rate limit */
-
 const limiter = rateLimit({
-
 windowMs:60000,
 max:120
-
 })
 
 app.use(limiter)
 
-/* routes */
+app.use((req,res,next)=>{
+REQUEST_COUNT++
+next()
+})
 
 app.use("/",routes)
 
 app.get("/",(req,res)=>{
-
 res.json({
 status:"Bloxio backend running"
 })
-
 })
 
-/* http server */
+function getSystemStats(){
 
-const server = http.createServer(app)
+const mem = process.memoryUsage()
 
-/* websocket */
+return{
 
-const wss = new WebSocket.Server({
+uptime:process.uptime(),
 
-server,
-path:"/ws"
+cpu_load:os.loadavg()[0],
 
-})
+total_memory:os.totalmem(),
 
-wss.on("connection",(ws)=>{
+free_memory:os.freemem(),
 
-wsHub.add(ws)
+heap_used:mem.heapUsed,
 
-ws.on("close",()=>{
+heap_total:mem.heapTotal,
 
-wsHub.remove(ws)
+requests:REQUEST_COUNT,
 
-})
+time:Date.now()
 
-})
+}
 
-/* start */
+}
 
-server.listen(process.env.PORT || 3000,()=>{
+global.getSystemStats = getSystemStats
 
-console.log("Bloxio backend started")
-
-})
-
-module.exports = server
+module.exports = app
