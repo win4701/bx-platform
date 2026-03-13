@@ -52,3 +52,20 @@ rollDice,
 coinflip
 
 }
+
+function publishBet(data){
+
+global.broadcastMarket({
+
+type:"casino_bet",
+user:data.user,
+game:data.game,
+bet:data.bet,
+win:data.win,
+payout:data.payout
+
+})
+
+}
+
+module.exports={publishBet}
