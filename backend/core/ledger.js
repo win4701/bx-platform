@@ -5,55 +5,108 @@ async function adjustBalance({
 userId,
 asset,
 amount,
-type
+type,
+reference=null
 
 }){
 
-const col = asset.toLowerCase()+"_balance"
+const column = asset.toLowerCase()+"_balance"
 
-await db.query("BEGIN")
+return db.transaction(async (client)=>{
 
-try{
+const wallet = await client.query(
 
-const r = await db.query(
-`SELECT ${col}
+`SELECT ${column}
 FROM wallets
 WHERE user_id=$1
 FOR UPDATE`,
+
 [userId]
+
 )
 
-const current = Number(r.rows[0][col])
+if(!wallet.rows.length)
+throw new Error("wallet_not_found")
+
+const current = Number(wallet.rows[0][column])
 const next = current + amount
 
 if(next < 0)
-throw new Error("insufficient")
+throw new Error("insufficient_balance")
 
-await db.query(
+await client.query(
+
 `UPDATE wallets
-SET ${col}=$1
+SET ${column}=$1,
+updated_at=NOW()
 WHERE user_id=$2`,
+
 [next,userId]
+
 )
 
-await db.query(
+await client.query(
+
 `INSERT INTO wallet_transactions
-(user_id,asset,amount,type)
-VALUES($1,$2,$3,$4)`,
-[userId,asset,amount,type]
-)
+(user_id,asset,amount,type,reference_id)
+VALUES($1,$2,$3,$4,$5)`,
 
-await db.query("COMMIT")
+[userId,asset,amount,type,reference]
+
+)
 
 return next
 
-}catch(e){
-
-await db.query("ROLLBACK")
-throw e
+})
 
 }
 
+async function transfer({
+
+fromUser,
+toUser,
+asset,
+amount
+
+}){
+
+return db.transaction(async(client)=>{
+
+await adjustBalance({
+
+userId:fromUser,
+asset,
+amount:-amount,
+type:"transfer_out"
+
+})
+
+await adjustBalance({
+
+userId:toUser,
+asset,
+amount:amount,
+type:"transfer_in"
+
+})
+
+await client.query(
+
+`INSERT INTO internal_transfers
+(from_user,to_user,asset,amount)
+VALUES($1,$2,$3,$4)`,
+
+[fromUser,toUser,asset,amount]
+
+)
+
+})
+
 }
 
-module.exports={adjustBalance}
+module.exports={
+
+adjustBalance,
+transfer
+
+}
