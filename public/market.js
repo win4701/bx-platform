@@ -56,12 +56,12 @@ const pairButtons = document.querySelectorAll("#market .pair-btn")
 const wallet = window.WALLET || {BX:0,USDT:0}
 async function loadWallet(){
 
-const r = await fetch("/finance/wallet?uid="+window.USER_ID);
+const r = await fetch("https://bx-vw7a.onrender.com/finance/wallet?uid="+window.USER_ID);
 
 const w = await r.json();
 
-wallet.BX = w.bx;
-wallet.USDT = w.usdt;
+wallet.BX = w.BX || 0;
+wallet.USDT = w.USDT || 0;
 
 updateWalletUI();
 }
@@ -79,6 +79,7 @@ function init() {
   marketPrice = BX_USDT_REFERENCE;
   PRO_CHART.init();
   PRO_CHART.bindControls();
+  PRO_CHART.render();
 }
 
 /* ================= BINANCE TICKER ================= */
@@ -103,8 +104,7 @@ function connectBinance(symbol = "btcusdt") {
     `wss://stream.binance.com:9443/ws/${symbol}@miniTicker`
   );
    
-   window.marketWS = ws;
-   
+  window.marketWS = ws
   ws.onmessage = (event) => {
     const msg = JSON.parse(event.data);
     const price = parseFloat(msg.c);
@@ -139,50 +139,72 @@ function computeBXPrice() {
 /* ================= ORDERBOOK ================= */
 
 function generateOrderBook() {
+
   bids = [];
   asks = [];
 
   for (let i = ROWS; i > 0; i--) {
     bids.push({
-price:(marketPrice - i * marketPrice * 0.0005),
-amount:(Math.random()*5).toFixed(2)
-});
+      price: (marketPrice - i * marketPrice * 0.0005),
+      amount: (Math.random() * 5).toFixed(2)
+    });
+  }
 
   for (let i = 1; i <= ROWS; i++) {
-    asks.push((marketPrice + i * marketPrice * 0.0005).toFixed(6));
+    asks.push({
+      price: (marketPrice + i * marketPrice * 0.0005),
+      amount: (Math.random() * 5).toFixed(2)
+    });
   }
 }
 
-function renderOrderBook() {
-  bidsEl.innerHTML = "";
-  asksEl.innerHTML = "";
-  priceLadderEl.innerHTML = "";
+function renderOrderBook(){
 
-  bids.forEach(p => {
-    const div = document.createElement("div");
-    div.className = "ob-row bid";
-    div.textContent = p;
+  bidsEl.innerHTML="";
+  asksEl.innerHTML="";
+  priceLadderEl.innerHTML="";
+
+  bids.forEach(o=>{
+
+    const div=document.createElement("div");
+    div.className="ob-row bid";
+
+    div.innerHTML=
+    `<span>${o.amount}</span>
+     <span>${o.price.toFixed(6)}</span>`;
+
     bidsEl.appendChild(div);
+
   });
 
-  const mid = document.createElement("div");
-  mid.className = "ob-row mid";
-  mid.textContent = marketPrice.toFixed(6);
-  priceLadderEl.appendChild(mid);
+  const mid=document.createElement("div");
 
-  asks.forEach(p => {
-    const div = document.createElement("div");
-    div.className = "ob-row ask";
-    div.textContent = p;
+  mid.className="ob-row mid";
+  mid.textContent=marketPrice.toFixed(6);
+  priceLadderEl.appendChild(mid);
+  asks.forEach(o=>{
+
+    const div=document.createElement("div");
+
+    div.className="ob-row ask";
+
+    div.innerHTML=
+    `<span>${o.price.toFixed(6)}</span>
+     <span>${o.amount}</span>`;
+
     asksEl.appendChild(div);
+
   });
 
   updateSpread();
 }
 
-function updateSpread() {
-  const spread = parseFloat(asks[0]) - parseFloat(bids[0]);
+function updateSpread(){
+
+  if(!asks.length || !bids.length) return;
+  const spread = asks[0].price - bids[0].price;
   spreadEl.textContent = spread.toFixed(6);
+
 }
 
 /* ================= PRICE ================= */
