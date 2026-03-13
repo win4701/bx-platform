@@ -1,9 +1,9 @@
 const db = require("../database")
 const ledger = require("../core/ledger")
 
-/* ==============================
+/* =============================
    SUPPORTED COINS
-============================== */
+============================= */
 
 const COINS = [
 "BX",
@@ -18,25 +18,21 @@ const COINS = [
 "LTC"
 ]
 
-/* ==============================
-   GET WALLET
-============================== */
+/* =============================
+   WALLET BALANCE
+============================= */
 
 exports.getWallet = async (req,res)=>{
 
 const r = await db.query(
-
-`SELECT *
-FROM wallets
+`SELECT * FROM wallets
 WHERE user_id=$1`,
-
 [req.user.id]
-
 )
 
-const w = r.rows[0]
-
 const wallet = {}
+
+const w = r.rows[0]
 
 for(const c of COINS){
 
@@ -50,9 +46,9 @@ res.json(wallet)
 
 }
 
-/* ==============================
+/* =============================
    TRANSFER BX
-============================== */
+============================= */
 
 exports.transfer = async (req,res)=>{
 
@@ -60,9 +56,9 @@ try{
 
 const {to_user,amount} = req.body
 
-if(amount <= 0)
+if(!to_user || amount <= 0)
 return res.status(400).json({
-error:"invalid_amount"
+error:"invalid_request"
 })
 
 await ledger.transfer({
@@ -74,7 +70,9 @@ amount
 
 })
 
-res.json({status:"ok"})
+res.json({
+status:"ok"
+})
 
 }catch(e){
 
@@ -86,13 +84,18 @@ error:e.message
 
 }
 
-/* ==============================
+/* =============================
    WALLET CONNECT
-============================== */
+============================= */
 
 exports.connectWallet = async (req,res)=>{
 
 const {type,address} = req.body
+
+if(!address)
+return res.status(400).json({
+error:"invalid_address"
+})
 
 await db.query(
 
@@ -106,14 +109,17 @@ WHERE id=$3`,
 )
 
 res.json({
-status:"connected"
+
+status:"connected",
+address
+
 })
 
 }
 
-/* ==============================
+/* =============================
    DEPOSIT ADDRESS
-============================== */
+============================= */
 
 exports.deposit = async (req,res)=>{
 
@@ -126,22 +132,29 @@ error:"unsupported_asset"
 
 /* demo address */
 
-const address = `DEPOSIT_${asset}_${req.user.id}`
+const address = `BX_${asset}_${req.user.id}`
 
 res.json({
+
 asset,
 address
+
 })
 
 }
 
-/* ==============================
+/* =============================
    BINANCE PAY
-============================== */
+============================= */
 
 exports.binancePay = async (req,res)=>{
 
 const {amount} = req.body
+
+if(!amount || amount <= 0)
+return res.status(400).json({
+error:"invalid_amount"
+})
 
 const order = await db.query(
 
@@ -163,9 +176,9 @@ order_id:order.rows[0].id
 
 }
 
-/* ==============================
+/* =============================
    WITHDRAW
-============================== */
+============================= */
 
 exports.withdraw = async (req,res)=>{
 
@@ -174,6 +187,11 @@ const {asset,amount,address} = req.body
 if(!COINS.includes(asset))
 return res.status(400).json({
 error:"unsupported_asset"
+})
+
+if(amount <= 0)
+return res.status(400).json({
+error:"invalid_amount"
 })
 
 await db.query(
@@ -193,3 +211,25 @@ status:"submitted"
 })
 
 }
+
+/* =============================
+   WALLET HISTORY
+============================= */
+
+exports.history = async (req,res)=>{
+
+const r = await db.query(
+
+`SELECT asset,amount,type,created_at
+FROM wallet_transactions
+WHERE user_id=$1
+ORDER BY created_at DESC
+LIMIT 50`,
+
+[req.user.id]
+
+)
+
+res.json(r.rows)
+
+   }
