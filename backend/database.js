@@ -1,13 +1,22 @@
 require("dotenv").config()
-const { Pool } = require("pg")
+
+const {Pool} = require("pg")
 
 const pool = new Pool({
-connectionString: process.env.DATABASE_URL,
+
+connectionString:process.env.DATABASE_URL,
 ssl:{rejectUnauthorized:false}
+
 })
+
+async function query(q,p){
+
+return pool.query(q,p)
+
+}
 
 module.exports = {
 
-query:(q,p)=>pool.query(q,p)
+query
 
-       }
+}
