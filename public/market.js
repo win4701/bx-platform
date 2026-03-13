@@ -103,6 +103,8 @@ function connectBinance(symbol = "btcusdt") {
     `wss://stream.binance.com:9443/ws/${symbol}@miniTicker`
   );
    
+   window.marketWS = ws;
+   
   ws.onmessage = (event) => {
     const msg = JSON.parse(event.data);
     const price = parseFloat(msg.c);
