@@ -1213,8 +1213,9 @@ function toast(msg) {
 document
   .querySelector('[data-view="airdrop"]')
   ?.addEventListener("click", () => {
-    setTimeout(initTopupV6, 200);
+    setTimeout(loadAirdrop,200);
   });
+   
 // ===============================
  // CASINO
  // ===============================
