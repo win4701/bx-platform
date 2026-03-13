@@ -15,12 +15,10 @@ app.use(express.json())
 app.use("/",routes)
 
 app.get("/",(req,res)=>{
-res.json({status:"BX backend running"})
+res.json({status:"Bloxio Backend Running"})
 })
 
 const server = http.createServer(app)
-
-/* ================= WEBSOCKET ================= */
 
 const wss = new WebSocket.Server({
 server,
@@ -29,22 +27,13 @@ path:"/ws/big-wins"
 
 function broadcast(data){
 
-wss.clients.forEach(client=>{
-if(client.readyState === WebSocket.OPEN){
-client.send(JSON.stringify(data))
-}
+wss.clients.forEach(c=>{
+if(c.readyState===1)
+c.send(JSON.stringify(data))
 })
 
 }
 
 global.broadcastBigWin = broadcast
 
-/* ============================================= */
-
-const PORT = process.env.PORT || 3000
-
-server.listen(PORT,()=>{
-
-console.log("Server running on port",PORT)
-
-})
+server.listen(process.env.PORT || 3000)
