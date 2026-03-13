@@ -354,7 +354,7 @@ const PRO_CHART = {
 
     this.resize();
     window.addEventListener("resize", () => {
-requestAnimationFrame(()=>this.resize())
+    requestAnimationFrame(()=>this.resize())
 });
 
     this.bindTimeframes();
@@ -363,8 +363,8 @@ requestAnimationFrame(()=>this.resize())
     this.reset(38); // Set default price on initialization
 
     if(window.CURRENT_VIEW && window.CURRENT_VIEW !== "market"){
-requestAnimationFrame(()=>this.render())
-return }
+    requestAnimationFrame(()=>this.render())
+     return }
   },
 
   // Reset the chart and prepare for new data
