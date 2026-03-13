@@ -1,5 +1,9 @@
 const db = require("../database")
 
+/* ============================
+   BALANCE UPDATE
+============================ */
+
 async function adjustBalance({
 
 userId,
@@ -29,6 +33,7 @@ if(!wallet.rows.length)
 throw new Error("wallet_not_found")
 
 const current = Number(wallet.rows[0][column])
+
 const next = current + amount
 
 if(next < 0)
@@ -61,6 +66,10 @@ return next
 
 }
 
+/* ============================
+   TRANSFER
+============================ */
+
 async function transfer({
 
 fromUser,
@@ -70,7 +79,7 @@ amount
 
 }){
 
-return db.transaction(async(client)=>{
+return db.transaction(async (client)=>{
 
 await adjustBalance({
 
@@ -104,9 +113,89 @@ VALUES($1,$2,$3,$4)`,
 
 }
 
+/* ============================
+   LOCK BALANCE
+============================ */
+
+async function lockBalance({
+
+userId,
+asset,
+amount
+
+}){
+
+const column = asset.toLowerCase()+"_balance"
+
+return db.transaction(async (client)=>{
+
+const wallet = await client.query(
+
+`SELECT ${column}
+FROM wallets
+WHERE user_id=$1
+FOR UPDATE`,
+
+[userId]
+
+)
+
+const current = Number(wallet.rows[0][column])
+
+if(current < amount)
+throw new Error("insufficient_balance")
+
+await client.query(
+
+`UPDATE wallets
+SET ${column}=${column}-$1,
+locked_balance=locked_balance+$1
+WHERE user_id=$2`,
+
+[amount,userId]
+
+)
+
+})
+
+}
+
+/* ============================
+   UNLOCK BALANCE
+============================ */
+
+async function unlockBalance({
+
+userId,
+asset,
+amount
+
+}){
+
+const column = asset.toLowerCase()+"_balance"
+
+return db.transaction(async (client)=>{
+
+await client.query(
+
+`UPDATE wallets
+SET ${column}=${column}+$1,
+locked_balance=locked_balance-$1
+WHERE user_id=$2`,
+
+[amount,userId]
+
+)
+
+})
+
+}
+
 module.exports={
 
 adjustBalance,
-transfer
+transfer,
+lockBalance,
+unlockBalance
 
 }
