@@ -1,49 +1,24 @@
-const jwt = require("jsonwebtoken")
+const rateMap = new Map()
 
-function generateToken(userId){
+function casinoRateLimit(userId){
 
-return jwt.sign(
+const now = Date.now()
 
-{id:userId},
-process.env.JWT_SECRET,
-{expiresIn:"7d"}
+const last = rateMap.get(userId) || 0
 
-)
+if(now-last < 800){
 
-}
-
-function verifyToken(token){
-
-return jwt.verify(token,process.env.JWT_SECRET)
+throw new Error("too_fast")
 
 }
 
-function auth(req,res,next){
-
-const h = req.headers.authorization
-
-if(!h) return res.status(401).json({error:"no token"})
-
-try{
-
-const token = h.split(" ")[1]
-
-req.user = verifyToken(token)
-
-next()
-
-}catch{
-
-res.status(401).json({error:"invalid token"})
-
-}
+rateMap.set(userId,now)
 
 }
 
 module.exports = {
-
 generateToken,
 verifyToken,
-auth
-
+auth,
+casinoRateLimit
 }
