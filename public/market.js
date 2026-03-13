@@ -56,8 +56,11 @@ const pairButtons = document.querySelectorAll("#market .pair-btn")
 const wallet = window.WALLET || {BX:0,USDT:0}
 async function loadWallet(){
 
-const r = await fetch("https://bx-vw7a.onrender.com/finance/wallet?uid="+window.USER_ID);
-
+const r = await fetch("https://bx-vw7a.onrender.com/finance/wallet",{
+headers:{
+"Authorization":"Bearer "+localStorage.getItem("jwt")
+}
+});
 const w = await r.json();
 
 wallet.BX = w.BX || 0;
