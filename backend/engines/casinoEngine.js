@@ -1,18 +1,54 @@
 const crypto = require("../utils/crypto")
 
-function dice(serverSeed,clientSeed,nonce){
+function generateSeeds(){
 
-const hash = crypto.hmac(
+const serverSeed = crypto.randomHex(32)
+
+const serverSeedHash = crypto.sha256(serverSeed)
+
+return {
 
 serverSeed,
-clientSeed+":"+nonce
-
-)
-
-const n = parseInt(hash.slice(0,8),16)
-
-return (n/0xffffffff)*100
+serverSeedHash,
+clientSeed:"default",
+nonce:0
 
 }
 
-module.exports={dice}
+}
+
+function rollDice(serverSeed,clientSeed,nonce){
+
+const hash = crypto.hmac(
+serverSeed,
+`${clientSeed}:${nonce}`
+)
+
+const n = parseInt(hash.substring(0,8),16)
+
+const result = (n / 0xffffffff) * 100
+
+return Number(result.toFixed(2))
+
+}
+
+function coinflip(serverSeed,clientSeed,nonce){
+
+const hash = crypto.hmac(
+serverSeed,
+`${clientSeed}:${nonce}`
+)
+
+const n = parseInt(hash.substring(0,8),16)
+
+return n % 2 === 0 ? "heads":"tails"
+
+}
+
+module.exports = {
+
+generateSeeds,
+rollDice,
+coinflip
+
+}
