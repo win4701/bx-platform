@@ -56,7 +56,7 @@ const pairButtons = document.querySelectorAll("#market .pair-btn")
 const wallet = window.WALLET || {BX:0,USDT:0}
 async function loadWallet(){
 
-const r = await fetch("https://bx-vw7a.onrender.com/finance/wallet",{
+const r = await fetch("https://bx-9m3n.onrender.com/finance/wallet",{
 headers:{
 "Authorization":"Bearer "+localStorage.getItem("jwt")
 }
@@ -79,9 +79,7 @@ function init() {
   bindEvents();
   connectBinance();
 
-  marketPrice = BX_USDT_REFERENCE;
-  PRO_CHART.init();
-  PRO_CHART.bindControls();
+  marketPrice = BX_USDT_bindControls();
   PRO_CHART.render();
 }
 
