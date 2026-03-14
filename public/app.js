@@ -1,5 +1,10 @@
 "use strict";
 
+/* ================= BACKEND CONFIG ================= */
+
+const API_BASE = "https://bx-9m3n.onrender.com";
+const WS_BASE = "wss://bx-9m3n.onrender.com";
+
 /* =========================================================
    PART 1 — CORE / CONFIG / DEBUG
 ========================================================= */
@@ -95,36 +100,38 @@ const APP = {
 };
 
 /* ================= SAFE FETCH ================= */
-async function safeFetch(path, options = {}) {
 
-  const API_BASE = "https://bx-9m3n.onrender.com";
+async function safeFetch(path, options = {}) {
 
   if (options.body && typeof options.body !== "string") {
     options.body = JSON.stringify(options.body);
   }
 
   const headers = {
-  "Content-Type": "application/json",
-  ...authHeaders(),
-  ...(options.headers || {})
-};
-
-const res = await fetch(API_BASE + path, {
-  ...options,
-  headers
-});
-  if (!res.ok) {
-    log.warn("API error:", path, res.status);
-    return null;
-  }
+    "Content-Type": "application/json",
+    ...authHeaders(),
+    ...(options.headers || {})
+  };
 
   try {
+
+    const res = await fetch(API_BASE + path, {
+      ...options,
+      headers
+    });
+
+    if (!res.ok) {
+      log.warn("API error:", path, res.status);
+      return null;
+    }
+
     return await res.json();
-  } catch {
+
+  } catch (e) {
+    log.error("Network error:", path);
     return null;
   }
 }
-
 /* =========================================================
    PART 2 — NAVIGATION (General Update)
 ================================================*/
@@ -265,11 +272,18 @@ function renderWallet() {
 
 
     async function loadWallet() {
-  if (!isAuthenticated()) return;
+
+  if (!isAuthenticated()) {
+    log.warn("Wallet: not authenticated");
+    return;
+  }
 
   const data = await safeFetch("/finance/wallet");
 
-  if (!data) return;
+  if (!data) {
+    log.warn("Wallet load failed");
+    return;
+  }
 
   Object.keys(WALLET).forEach(k => {
     if (data[k] !== undefined) {
@@ -278,7 +292,7 @@ function renderWallet() {
   });
 
   renderWallet();
-}
+  }
 
 /* ======================================================
    CONNECT WALLET – SSOT (TON + EVM)
@@ -459,7 +473,8 @@ function bindWalletActions() {
     depositBtn.onclick = async () => {
       const res = await safeFetch(`/finance/deposit/USDT`);
       if (!res) return alert("Failed to load deposit address");
-      alert(`Deposit Address:\n${res.address || res.deposit_address}`);
+      const addr = res.address || res.deposit_address || "Not available";
+      alert(`Deposit Address:\n${addr}`);
     };
   }
 
@@ -509,6 +524,7 @@ if (transferBtn) {
   };
   }
  }
+
 /* ================= INIT TÉLÉGRAMME ===============*/
 
 async function initTelegramLogin() {
@@ -769,7 +785,7 @@ function initBigWinsTicker() {
   try {
 
     CASINO.ws = new WebSocket(`${WS_BASE}/ws/big-wins`);
-
+     
     CASINO.ws.onmessage = e => {
       const w = JSON.parse(e.data);
       pushBigWin(w);
@@ -937,8 +953,13 @@ function renderMiningPlans() {
 
 async function subscribeMining(planId) {
 
-  const amount = Number(prompt("Amount to mine"));
+  if(!isAuthenticated()){
+    alert("Please login first");
+    return;
+  }
 
+  const amount = Number(prompt("Amount to mine"));
+   
 if (!Number.isFinite(amount) || amount <= 0) {
   alert("Invalid amount");
   return;
