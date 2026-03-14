@@ -97,7 +97,7 @@ const APP = {
 /* ================= SAFE FETCH ================= */
 async function safeFetch(path, options = {}) {
 
-  const API_BASE = "https://bx-vw7a.onrender.com";
+  const API_BASE = "https://bx-9m3n.onrender.com";
 
   if (options.body && typeof options.body !== "string") {
     options.body = JSON.stringify(options.body);
