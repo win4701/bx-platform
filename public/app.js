@@ -838,7 +838,6 @@ function initCasino() {
   initBigWinsTicker();
 
   CASINO.flagsInterval = setInterval(refreshGameFlags,10000);
-  clearInterval(CASINO.flagsInterval);
   console.info("Casino initialized");
 }
   
