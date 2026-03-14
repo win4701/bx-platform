@@ -1,6 +1,12 @@
 const db = require("../database")
 
-async function generateLiquidity(pair, price){
+async function generateLiquidity(pair,price){
+
+await db.query(
+`DELETE FROM market_liquidity
+WHERE pair=$1`,
+[pair]
+)
 
 for(let i=1;i<=10;i++){
 
@@ -25,4 +31,4 @@ VALUES($1,'sell',$2,$3)`,
 
 }
 
-module.exports = {generateLiquidity}
+module.exports={generateLiquidity}
