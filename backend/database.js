@@ -49,7 +49,7 @@ client.release()
 
 }
 
-module.exports={
+module.exports = {
 
 query,
 transaction,
