@@ -63,15 +63,13 @@ headers:{
 });
 const w = await r.json();
 
-wallet.BX = w.BX || 0;
-wallet.USDT = w.USDT || 0;
+wallet.BX = w.bx_balance || 0;
+wallet.USDT = w.usdt_balance || 0;
 
 updateWalletUI();
 }
 
 /* ================= INIT ================= */
-
-let marketRunning = false;
 
 function initMarket(){
 
@@ -90,13 +88,15 @@ generateOrderBook();
 renderOrderBook();
 
 PRO_CHART.init();
+
+/* FIX CHART START */
+PRO_CHART.reset(marketPrice);
+PRO_CHART.update(marketPrice);
+/* FIX END */
+
 PRO_CHART.render();
 
 }
-
-function stopMarket(){
-
-marketRunning = false;
 
 if(window.marketWS){
 window.marketWS.close();
@@ -256,8 +256,7 @@ side === "buy"
 ? asks[0].price
 : bids[0].price;
    
-const res = await fetch("/exchange/order",{
-
+const res = await safeFetch("/exchange/order",{
 method:"POST",
 
 headers:{
@@ -282,8 +281,14 @@ if(data.status){
 
 await loadWallet();
 
-}
+/* FIX ORDERBOOK */
 
+generateOrderBook();
+renderOrderBook();
+
+PRO_CHART.update(price);
+}
+   
 }catch(e){
 
 console.error("Trade error",e);
