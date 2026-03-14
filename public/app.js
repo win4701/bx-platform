@@ -459,7 +459,7 @@ function bindWalletActions() {
     depositBtn.onclick = async () => {
       const res = await safeFetch(`/finance/deposit/USDT`);
       if (!res) return alert("Failed to load deposit address");
-      alert(`Deposit Address:\n${res.address}`);
+      alert(`Deposit Address:\n${res.address || res.deposit_address}`);
     };
   }
 
@@ -767,8 +767,6 @@ function handleCasinoResult(res) {
 
 function initBigWinsTicker() {
   try {
-
-    const WS_BASE = "wss://bx-9m3n.onrender.com";
 
     CASINO.ws = new WebSocket(`${WS_BASE}/ws/big-wins`);
 
