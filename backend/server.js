@@ -1,9 +1,23 @@
+require("dotenv").config()
+
 const http = require("http")
 const WebSocket = require("ws")
 
 const app = require("./app")
 
+const marketBot = require("./engines/marketBot")
+
+const PORT = process.env.PORT || 3000
+
+/* ======================
+   HTTP SERVER
+====================== */
+
 const server = http.createServer(app)
+
+/* ======================
+   WEBSOCKET
+====================== */
 
 const wss = new WebSocket.Server({
 server,
@@ -22,20 +36,38 @@ clients.delete(ws)
 
 })
 
-function broadcast(data){
+/* ======================
+   BROADCAST
+====================== */
+
+global.broadcast = (data)=>{
 
 const msg = JSON.stringify(data)
 
-clients.forEach(c=>{
-if(c.readyState===1){
-c.send(msg)
-}
-})
+for(const client of clients){
+
+if(client.readyState === WebSocket.OPEN){
+
+client.send(msg)
 
 }
 
-global.broadcast = broadcast
+}
 
-server.listen(process.env.PORT || 3000,()=>{
-console.log("Bloxio server started")
+}
+
+/* ======================
+   START MARKET BOT
+====================== */
+
+marketBot.startBot()
+
+/* ======================
+   START SERVER
+====================== */
+
+server.listen(PORT,()=>{
+
+console.log("Bloxio backend running on port",PORT)
+
 })
