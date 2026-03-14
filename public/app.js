@@ -768,7 +768,7 @@ function handleCasinoResult(res) {
 function initBigWinsTicker() {
   try {
 
-    const WS_BASE = "wss://bx-vw7a.onrender.com";
+    const WS_BASE = "wss://bx-9m3n.onrender.com";
 
     CASINO.ws = new WebSocket(`${WS_BASE}/ws/big-wins`);
 
@@ -781,11 +781,13 @@ function initBigWinsTicker() {
 }
 
 function pushBigWin(w) {
+
   const box = $("bigWinsList");
   if (!box) return;
 
   const row = document.createElement("div");
   row.className = "big-win-row";
+
   row.innerHTML = `
     <span>${w.user}</span>
     <span>${w.game}</span>
@@ -794,8 +796,9 @@ function pushBigWin(w) {
 
   box.prepend(row);
 
-if(box.children.length > 20){
-  box.removeChild(box.lastChild);
+  if(box.children.length > 20){
+    box.removeChild(box.lastChild);
+  }
 }
    
 /* =====================================================
