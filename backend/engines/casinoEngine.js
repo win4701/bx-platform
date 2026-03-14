@@ -171,18 +171,18 @@ Math.floor(rng(serverSeed,clientSeed,nonce+2) * 7)
 }
 
 module.exports = {
-
-dice,
+   
 coinflip,
-limbo,
 crash,
-roulette,
-blackjack,
-hilo,
-wheel,
-mines,
+limbo,
+dice,
+slot,
 plinko,
-keno,
-slots
+hilo,
+airboss,
+fruit_party,
+banana_farm,
+blackjack_fast,
+birds_party
 
 }
