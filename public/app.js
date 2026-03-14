@@ -1281,7 +1281,7 @@ async function openMining(){
 
 async function openMarket(){
 
-    const r = await safeFetch("/market/prices");
+    const r = await safeFetch("/exchange/stats");
 
     const data = r;
     console.log(data);
