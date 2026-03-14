@@ -794,12 +794,14 @@ function initBigWinsTicker() {
   } catch (_) {}
 }
 
-function pushBigWin(w) {
+function pushBigWin(w){
 
-  const box = $("bigWinsList");
-  if (!box) return;
+  const box = document.getElementById("bigWinsList");
+
+  if(!box) return;
 
   const row = document.createElement("div");
+
   row.className = "big-win-row";
 
   row.innerHTML = `
@@ -813,7 +815,7 @@ function pushBigWin(w) {
   if(box.children.length > 20){
     box.removeChild(box.lastChild);
   }
-}
+ }
    
 /* =====================================================
    GAME FLAGS (ADMIN LIVE TOGGLE)
