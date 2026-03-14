@@ -71,38 +71,17 @@ updateWalletUI();
 
 /* ================= INIT ================= */
 
-let marketRunning = false;
+document.addEventListener("DOMContentLoaded", init);
 
-function initMarket(){
+function init() {
+  updateWalletUI();
+  loadWallet();
+  bindEvents();
+  connectBinance();
 
-if(marketRunning) return;
-
-marketRunning = true;
-
-updateWalletUI();
-loadWallet();
-bindEvents();
-connectBinance();
-
-marketPrice = BX_USDT_REFERENCE;
-
-generateOrderBook();
-renderOrderBook();
-
-PRO_CHART.init();
-PRO_CHART.render();
-
+  marketPrice = BX_USDT_bindControls();
+  PRO_CHART.render();
 }
-
-function stopMarket(){
-
-marketRunning = false;
-
-if(window.marketWS){
-window.marketWS.close();
-window.marketWS = null;
-}
- }
 
 /* ================= BINANCE TICKER ================= */
 
