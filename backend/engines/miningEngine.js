@@ -14,11 +14,16 @@ for(const s of sessions.rows){
 const reward = Number(s.hash_rate) * 0.001
 
 await economy.rewardBX(
-
 s.user_id,
 reward,
 "mining_reward"
+)
 
+await db.query(
+`UPDATE mining_sessions
+SET last_reward = NOW()
+WHERE id=$1`,
+[s.id]
 )
 
 }
@@ -44,7 +49,5 @@ console.error("mining error",e)
 }
 
 module.exports={
-
 startMiningScheduler
-
 }
