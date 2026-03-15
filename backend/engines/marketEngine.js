@@ -1,107 +1,170 @@
+"use strict"
+
 const db = require("../database")
 const ledger = require("../core/ledger")
 
-/* =========================
-   CONSTANT PRICE
-========================= */
+/* =========================================
+   MARKET CONFIG
+========================================= */
 
-const BX_PRICE = 45
+const PAIR = "BX_USDT"
+const REFERENCE_PRICE = 45
 
-/* =========================
+/* =========================================
+   GET MARKET PRICE
+========================================= */
+
+async function getPrice(){
+
+const r = await db.query(
+
+`SELECT price
+FROM trades
+WHERE pair=$1
+ORDER BY id DESC
+LIMIT 1`,
+
+[PAIR]
+
+)
+
+if(!r.rows.length) return REFERENCE_PRICE
+
+return Number(r.rows[0].price)
+
+}
+
+/* =========================================
    BUY BX
-========================= */
+========================================= */
 
-async function buyBX(userId, amount){
+async function buyBX(userId, amountUSDT){
 
-const total = amount * BX_PRICE
+amountUSDT = Number(amountUSDT)
 
-await db.transaction(async()=>{
+if(amountUSDT <= 0){
+throw new Error("invalid_amount")
+}
 
-/* deduct USDT */
+const price = await getPrice()
 
-await ledger.adjustBalance({
+const bx = amountUSDT / price
+
+await ledger.trade({
+
 userId,
-asset:"USDT",
-amount:-total,
-type:"market_buy"
+assetIn:"USDT",
+assetOut:"BX",
+amountIn:amountUSDT,
+amountOut:bx
+
 })
-
-/* give BX */
-
-await ledger.adjustBalance({
-userId,
-asset:"BX",
-amount:amount,
-type:"market_buy"
-})
-
-/* trade log */
 
 await db.query(
-`INSERT INTO market_trades
-(user_id,side,price,amount)
-VALUES($1,'buy',$2,$3)`,
-[userId,BX_PRICE,amount]
+
+`INSERT INTO trades
+(pair,price,amount,side,user_id)
+VALUES($1,$2,$3,'buy',$4)`,
+
+[
+PAIR,
+price,
+bx,
+userId
+]
+
 )
 
+if(global.broadcast){
+
+global.broadcast({
+type:"trade",
+pair:PAIR,
+side:"buy",
+price,
+amount:bx
 })
 
+}
+
 return {
-price:BX_PRICE,
-amount,
-total
-}
+
+pair:PAIR,
+side:"buy",
+price,
+amount:bx
 
 }
 
-/* =========================
+}
+
+/* =========================================
    SELL BX
-========================= */
+========================================= */
 
-async function sellBX(userId, amount){
+async function sellBX(userId, amountBX){
 
-const total = amount * BX_PRICE
+amountBX = Number(amountBX)
 
-await db.transaction(async()=>{
+if(amountBX <= 0){
+throw new Error("invalid_amount")
+}
 
-/* deduct BX */
+const price = await getPrice()
 
-await ledger.adjustBalance({
+const usdt = amountBX * price
+
+await ledger.trade({
+
 userId,
-asset:"BX",
-amount:-amount,
-type:"market_sell"
-})
+assetIn:"BX",
+assetOut:"USDT",
+amountIn:amountBX,
+amountOut:usdt
 
-/* give USDT */
-
-await ledger.adjustBalance({
-userId,
-asset:"USDT",
-amount:total,
-type:"market_sell"
 })
 
 await db.query(
-`INSERT INTO market_trades
-(user_id,side,price,amount)
-VALUES($1,'sell',$2,$3)`,
-[userId,BX_PRICE,amount]
+
+`INSERT INTO trades
+(pair,price,amount,side,user_id)
+VALUES($1,$2,$3,'sell',$4)`,
+
+[
+PAIR,
+price,
+amountBX,
+userId
+]
+
 )
 
+if(global.broadcast){
+
+global.broadcast({
+type:"trade",
+pair:PAIR,
+side:"sell",
+price,
+amount:amountBX
 })
 
+}
+
 return {
-price:BX_PRICE,
-amount,
-total
-}
+
+pair:PAIR,
+side:"sell",
+price,
+amount:amountBX
 
 }
 
-/* =========================
+}
+
+/* =========================================
    MARKET STATS
-========================= */
+========================================= */
 
 async function stats(){
 
@@ -109,35 +172,51 @@ const r = await db.query(
 
 `SELECT
 COUNT(*) as trades,
-SUM(amount) as volume
-FROM market_trades`
+SUM(amount) as volume,
+MAX(price) as high,
+MIN(price) as low
+FROM trades
+WHERE pair=$1
+AND created_at > NOW() - INTERVAL '24 hours'`,
+
+[PAIR]
 
 )
 
+const price = await getPrice()
+
 return {
 
-price:BX_PRICE,
-trades:Number(r.rows[0].trades||0),
-volume:Number(r.rows[0].volume||0)
+pair:PAIR,
+price,
+volume:Number(r.rows[0].volume || 0),
+high:Number(r.rows[0].high || price),
+low:Number(r.rows[0].low || price),
+trades:Number(r.rows[0].trades || 0)
 
 }
 
 }
 
-/* =========================
+/* =========================================
    TRADE HISTORY
-========================= */
+========================================= */
 
-async function history(limit=50){
+async function history(){
 
 const r = await db.query(
 
-`SELECT side,price,amount,created_at
-FROM market_trades
-ORDER BY created_at DESC
-LIMIT $1`,
+`SELECT
+price,
+amount,
+side,
+created_at
+FROM trades
+WHERE pair=$1
+ORDER BY id DESC
+LIMIT 100`,
 
-[limit]
+[PAIR]
 
 )
 
@@ -145,12 +224,59 @@ return r.rows
 
 }
 
-module.exports={
+/* =========================================
+   ORDERBOOK
+========================================= */
 
-BX_PRICE,
+async function orderbook(){
+
+const buys = await db.query(
+
+`SELECT price,SUM(amount) as amount
+FROM orders
+WHERE pair=$1 AND side='buy'
+GROUP BY price
+ORDER BY price DESC
+LIMIT 20`,
+
+[PAIR]
+
+)
+
+const sells = await db.query(
+
+`SELECT price,SUM(amount) as amount
+FROM orders
+WHERE pair=$1 AND side='sell'
+GROUP BY price
+ORDER BY price ASC
+LIMIT 20`,
+
+[PAIR]
+
+)
+
+return {
+
+pair:PAIR,
+bids:buys.rows,
+asks:sells.rows
+
+}
+
+}
+
+/* =========================================
+   EXPORT
+========================================= */
+
+module.exports = {
+
 buyBX,
 sellBX,
 stats,
-history
+history,
+orderbook,
+getPrice
 
- }
+   }
