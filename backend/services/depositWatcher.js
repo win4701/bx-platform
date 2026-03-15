@@ -4,9 +4,17 @@ const db = require("../database")
 const ledger = require("../core/ledger")
 const fetch = require("node-fetch")
 
-/* ================================
+/* =================================
+CONFIG
+================================= */
+
+const ETHERSCAN_KEY = process.env.ETHERSCAN_KEY || ""
+
+const SCAN_INTERVAL = 20000
+
+/* =================================
 SUPPORTED COINS
-================================ */
+================================= */
 
 const COINS = {
 
@@ -31,9 +39,9 @@ LTC:{ chain:"LTC", decimals:8 }
 
 }
 
-/* ================================
-CONFIRMATION REQUIREMENTS
-================================ */
+/* =================================
+CONFIRMATIONS
+================================= */
 
 const CONFIRMATIONS = {
 
@@ -50,69 +58,67 @@ LTC:6
 
 }
 
-/* ================================
-CHECK TX ALREADY PROCESSED
-================================ */
+/* =================================
+CHECK TX EXISTS
+================================= */
 
 async function txExists(txid){
 
-const r = await db.query(`
-SELECT id FROM wallet_transactions
-WHERE txid=$1
-`,[txid])
+const r = await db.query(
+`SELECT id FROM wallet_transactions WHERE txid=$1`,
+[txid]
+)
 
 return r.rows.length > 0
 
 }
 
-/* ================================
-CREDIT USER WALLET
-================================ */
+/* =================================
+CREDIT WALLET
+================================= */
 
 async function creditDeposit(userId,asset,amount,txid){
 
 await ledger.credit({
 
-userId,
+user_id:userId,
 asset,
 amount,
-type:"deposit",
-txid
+reason:"deposit"
 
 })
 
-await db.query(`
-INSERT INTO wallet_transactions
+await db.query(
+`INSERT INTO wallet_transactions
 (user_id,asset,amount,type,txid)
-VALUES($1,$2,$3,'deposit',$4)
-`,[
-userId,
-asset,
-amount,
-txid
-])
+VALUES($1,$2,$3,'deposit',$4)`,
+[userId,asset,amount,txid]
+)
+
+console.log("Deposit credited",asset,amount,userId)
 
 }
 
-/* ================================
-GET USER ADDRESSES
-================================ */
+/* =================================
+GET USER WALLETS
+================================= */
 
 async function getWallets(asset){
 
-const r = await db.query(`
-SELECT user_id,deposit_address
+const r = await db.query(
+`SELECT user_id,deposit_address
 FROM wallets
-WHERE asset=$1
-`,[asset])
+WHERE asset=$1`,
+[asset]
+)
 
 return r.rows
 
 }
 
-/* ================================
-BTC / LTC / ZEC SCANNER
-================================ */
+/* =================================
+UTXO SCANNER
+================================= */
 
 async function scanUTXO(asset){
 
@@ -122,9 +128,10 @@ for(const w of wallets){
 
 try{
 
-const res = await fetch(
+const url =
 `https://api.blockcypher.com/v1/${asset.toLowerCase()}/main/addrs/${w.deposit_address}`
-)
+
+const res = await fetch(url,{timeout:8000})
 
 const data = await res.json()
 
@@ -134,7 +141,8 @@ if(tx.confirmations < CONFIRMATIONS[asset]) continue
 
 if(await txExists(tx.tx_hash)) continue
 
-const amount = tx.value / Math.pow(10,COINS[asset].decimals)
+const amount =
+tx.value / Math.pow(10,COINS[asset].decimals)
 
 await creditDeposit(
 w.user_id,
@@ -155,9 +163,9 @@ console.log(asset,"scan error",e)
 
 }
 
-/* ================================
-EVM SCANNER (ETH / USDT / USDC / BNB / AVAX)
-================================ */
+/* =================================
+EVM SCANNER
+================================= */
 
 async function scanEVM(asset){
 
@@ -168,19 +176,25 @@ for(const w of wallets){
 try{
 
 const url =
-`https://api.etherscan.io/api?module=account&action=txlist&address=${w.deposit_address}`
+`https://api.etherscan.io/api
+?module=account
+&action=txlist
+&address=${w.deposit_address}
+&apikey=${ETHERSCAN_KEY}`
 
-const res = await fetch(url)
+const res = await fetch(url,{timeout:8000})
 
 const data = await res.json()
 
 for(const tx of data.result || []){
 
-if(tx.confirmations < CONFIRMATIONS[asset]) continue
+if(Number(tx.confirmations) < CONFIRMATIONS[asset]) continue
 
 if(await txExists(tx.hash)) continue
 
-const value = tx.value / Math.pow(10,COINS[asset].decimals)
+const value =
+Number(tx.value) /
+Math.pow(10,COINS[asset].decimals)
 
 if(value <= 0) continue
 
@@ -203,9 +217,9 @@ console.log(asset,"scan error",e)
 
 }
 
-/* ================================
+/* =================================
 TON SCANNER
-================================ */
+================================= */
 
 async function scanTON(){
 
@@ -251,9 +265,9 @@ console.log("TON scan error",e)
 
 }
 
-/* ================================
+/* =================================
 SOL SCANNER
-================================ */
+================================= */
 
 async function scanSOL(){
 
@@ -264,20 +278,20 @@ for(const w of wallets){
 try{
 
 const res = await fetch(
-"https://api.mainnet-beta.solana.com"
+"https://public-api.solscan.io/account/transactions?account="+w.deposit_address
 )
 
 const data = await res.json()
 
-for(const tx of data.result || []){
+for(const tx of data || []){
 
-if(await txExists(tx.signature)) continue
+if(await txExists(tx.txHash)) continue
 
 await creditDeposit(
 w.user_id,
 "SOL",
-tx.amount,
-tx.signature
+tx.changeAmount,
+tx.txHash
 )
 
 }
@@ -292,9 +306,9 @@ console.log("SOL scan error",e)
 
 }
 
-/* ================================
-MAIN WATCHER
-================================ */
+/* =================================
+SCAN ALL
+================================= */
 
 async function scanAll(){
 
@@ -314,9 +328,9 @@ await scanSOL()
 
 }
 
-/* ================================
+/* =================================
 START WATCHER
-================================ */
+================================= */
 
 function startWatcher(){
 
@@ -334,10 +348,10 @@ console.error("Deposit watcher error",e)
 
 }
 
-},20000)
+},SCAN_INTERVAL)
 
 }
 
 module.exports = {
 startWatcher
-  }
+}
