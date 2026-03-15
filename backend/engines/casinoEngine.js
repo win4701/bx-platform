@@ -1,7 +1,7 @@
 const crypto = require("crypto")
 
 /* =========================
-   HASH FUNCTION
+HASH
 ========================= */
 
 function hash(serverSeed, clientSeed, nonce){
@@ -14,7 +14,7 @@ return crypto
 }
 
 /* =========================
-   RNG FLOAT
+RNG
 ========================= */
 
 function rng(serverSeed,clientSeed,nonce){
@@ -30,18 +30,17 @@ return num / 0x1fffffffffffff
 }
 
 /* =========================
-   DICE
-   0 - 100
+DICE
 ========================= */
 
 function dice(serverSeed,clientSeed,nonce){
 
-return Number((rng(serverSeed,clientSeed,nonce) * 100).toFixed(2))
+return Number((rng(serverSeed,clientSeed,nonce)*100).toFixed(2))
 
 }
 
 /* =========================
-   COINFLIP
+COINFLIP
 ========================= */
 
 function coinflip(serverSeed,clientSeed,nonce){
@@ -51,7 +50,7 @@ return rng(serverSeed,clientSeed,nonce) > 0.5 ? "heads":"tails"
 }
 
 /* =========================
-   LIMBO
+LIMBO
 ========================= */
 
 function limbo(serverSeed,clientSeed,nonce){
@@ -63,7 +62,7 @@ return Number((1/(1-r)).toFixed(2))
 }
 
 /* =========================
-   CRASH
+CRASH
 ========================= */
 
 function crash(serverSeed,clientSeed,nonce){
@@ -75,8 +74,7 @@ return Number((1/(1-r)).toFixed(2))
 }
 
 /* =========================
-   ROULETTE
-   0 - 36
+ROULETTE
 ========================= */
 
 function roulette(serverSeed,clientSeed,nonce){
@@ -86,13 +84,12 @@ return Math.floor(rng(serverSeed,clientSeed,nonce) * 37)
 }
 
 /* =========================
-   BLACKJACK
+BLACKJACK
 ========================= */
 
 function blackjack(serverSeed,clientSeed,nonce){
 
 const player = Math.floor(rng(serverSeed,clientSeed,nonce) * 11) + 16
-
 const dealer = Math.floor(rng(serverSeed,clientSeed,nonce+1) * 11) + 16
 
 return {
@@ -103,7 +100,7 @@ dealer
 }
 
 /* =========================
-   HI-LO
+HI-LO
 ========================= */
 
 function hilo(serverSeed,clientSeed,nonce){
@@ -113,7 +110,7 @@ return Math.floor(rng(serverSeed,clientSeed,nonce) * 13) + 1
 }
 
 /* =========================
-   WHEEL
+WHEEL
 ========================= */
 
 function wheel(serverSeed,clientSeed,nonce){
@@ -123,7 +120,7 @@ return Math.floor(rng(serverSeed,clientSeed,nonce) * 10)
 }
 
 /* =========================
-   MINES
+MINES
 ========================= */
 
 function mines(serverSeed,clientSeed,nonce){
@@ -133,7 +130,7 @@ return Math.floor(rng(serverSeed,clientSeed,nonce) * 25)
 }
 
 /* =========================
-   PLINKO
+PLINKO
 ========================= */
 
 function plinko(serverSeed,clientSeed,nonce){
@@ -143,7 +140,7 @@ return Math.floor(rng(serverSeed,clientSeed,nonce) * 16)
 }
 
 /* =========================
-   KENO
+KENO
 ========================= */
 
 function keno(serverSeed,clientSeed,nonce){
@@ -153,7 +150,7 @@ return Math.floor(rng(serverSeed,clientSeed,nonce) * 40) + 1
 }
 
 /* =========================
-   SLOTS
+SLOTS
 ========================= */
 
 function slots(serverSeed,clientSeed,nonce){
@@ -170,19 +167,23 @@ Math.floor(rng(serverSeed,clientSeed,nonce+2) * 7)
 
 }
 
+/* =========================
+EXPORT
+========================= */
+
 module.exports = {
-   
+
 coinflip,
 crash,
 limbo,
 dice,
-slot,
-plinko,
+roulette,
+blackjack,
 hilo,
-airboss,
-fruit_party,
-banana_farm,
-blackjack_fast,
-birds_party
+wheel,
+mines,
+plinko,
+keno,
+slots
 
-}
+   }
