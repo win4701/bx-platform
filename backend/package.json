@@ -1,16 +1,14 @@
 {
-  "name": "backend",
+  "name": "bloxio-backend",
   "version": "1.0.0",
   "description": "Bloxio Casino + Exchange Backend",
-  "main": "backend/server.js",
-  "type": "commonjs",
+  "main": "server.js",
   "engines": {
     "node": ">=18"
   },
   "scripts": {
     "start": "node server.js",
-    "dev": "node server.js",
-    "install-clean": "rm -rf node_modules package-lock.json && npm install"
+    "dev": "node server.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
@@ -20,14 +18,5 @@
     "node-fetch": "^2.6.9",
     "pg": "^8.11.5",
     "ws": "^8.17.0"
-  },
-  "keywords": [
-    "crypto",
-    "casino",
-    "exchange",
-    "bloxio",
-    "blockchain"
-  ],
-  "author": "Bloxio",
-  "license": "MIT"
+  }
 }
