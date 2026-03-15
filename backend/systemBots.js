@@ -12,9 +12,11 @@ running = true
 
 console.log("Starting Bloxio system bots")
 
+/* MARKET BOT */
+
 try{
 
-if(marketBot && marketBot.start){
+if(marketBot?.start){
 
 marketBot.start()
 
@@ -24,13 +26,15 @@ console.log("Market bot started")
 
 }catch(e){
 
-console.error("Market bot error:",e)
+console.error("Market bot error",e)
 
 }
 
+/* MINING ENGINE */
+
 try{
 
-if(miningEngine && miningEngine.start){
+if(miningEngine?.start){
 
 miningEngine.start()
 
@@ -40,13 +44,15 @@ console.log("Mining engine started")
 
 }catch(e){
 
-console.error("Mining engine error:",e)
+console.error("Mining engine error",e)
 
 }
 
+/* DEPOSIT WATCHER */
+
 try{
 
-if(depositWatcher && depositWatcher.start){
+if(depositWatcher?.start){
 
 depositWatcher.start()
 
@@ -56,11 +62,27 @@ console.log("Deposit watcher started")
 
 }catch(e){
 
-console.error("Deposit watcher error:",e)
+console.error("Deposit watcher error",e)
 
 }
 
-console.log("All bots started")
+/* CASINO LOOP */
+
+setInterval(()=>{
+
+console.log("Casino system active")
+
+},15000)
+
+/* AIRDROP LOOP */
+
+setInterval(()=>{
+
+console.log("Airdrop system active")
+
+},30000)
+
+console.log("All Bloxio systems running")
 
 }
 
