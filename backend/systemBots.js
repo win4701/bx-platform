@@ -1,5 +1,6 @@
 const marketBot = require("./engines/marketBot")
 const miningEngine = require("./engines/miningEngine")
+const liquidityEngine = require("./engines/liquidityEngine")
 const depositWatcher = require("./services/depositWatcher")
 
 let running = false
@@ -11,8 +12,6 @@ if(running) return
 running = true
 
 console.log("Starting Bloxio system bots")
-
-/* MARKET BOT */
 
 try{
 
@@ -30,8 +29,6 @@ console.error("Market bot error",e)
 
 }
 
-/* MINING ENGINE */
-
 try{
 
 if(miningEngine?.start){
@@ -48,7 +45,21 @@ console.error("Mining engine error",e)
 
 }
 
-/* DEPOSIT WATCHER */
+try{
+
+if(liquidityEngine?.start){
+
+liquidityEngine.start()
+
+console.log("Liquidity engine started")
+
+}
+
+}catch(e){
+
+console.error("Liquidity engine error",e)
+
+}
 
 try{
 
@@ -66,23 +77,7 @@ console.error("Deposit watcher error",e)
 
 }
 
-/* CASINO LOOP */
-
-setInterval(()=>{
-
-console.log("Casino system active")
-
-},15000)
-
-/* AIRDROP LOOP */
-
-setInterval(()=>{
-
-console.log("Airdrop system active")
-
-},30000)
-
-console.log("All Bloxio systems running")
+console.log("All system bots running")
 
 }
 
