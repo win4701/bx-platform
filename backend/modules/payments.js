@@ -21,10 +21,18 @@ router.post("/binance/create", async (req,res)=>{
 
 try{
 
-const { amount, asset="USDT" } = req.body
+const userId = req.user?.id
+
+if(!userId){
+return res.status(401).json({error:"unauthorized"})
+}
+
+let { amount, asset="USDT" } = req.body
+
+amount = Number(amount)
 
 if(!amount || amount <= 0){
-return res.status(400).json({error:"invalid amount"})
+return res.status(400).json({error:"invalid_amount"})
 }
 
 const orderId = "BNP_" + Date.now()
@@ -38,7 +46,7 @@ await db.query(
 VALUES($1,$2,$3,$4,$5,$6,$7)`,
 
 [
-req.user.id,
+userId,
 "deposit",
 "binance",
 amount,
@@ -61,7 +69,7 @@ asset
 console.error("binance pay error",e)
 
 res.status(500).json({
-error:"binance payment failed"
+error:"binance_payment_failed"
 })
 
 }
@@ -77,7 +85,15 @@ router.post("/topup/execute", async (req,res)=>{
 
 try{
 
-const {
+const userId = req.user?.id
+
+if(!userId){
+return res.status(401).json({
+error:"unauthorized"
+})
+}
+
+let {
 usdt,
 bx,
 rate,
@@ -87,24 +103,25 @@ provider,
 phone
 } = req.body
 
+usdt = Number(usdt)
+bx = Number(bx)
+
 if(!bx || !usdt){
-
 return res.status(400).json({
-error:"invalid topup"
+error:"invalid_topup"
 })
-
 }
 
 /* CREDIT BX */
 
 await ledger.credit({
-
-user_id:req.user.id,
+user_id:userId,
 asset:"BX",
 amount:bx,
 reason:"topup"
-
 })
+
+/* SAVE TOPUP */
 
 await db.query(
 
@@ -113,7 +130,7 @@ await db.query(
 VALUES($1,$2,$3,$4,$5,$6,$7,$8)`,
 
 [
-req.user.id,
+userId,
 usdt,
 bx,
 rate,
@@ -135,7 +152,7 @@ bx
 console.error("topup failed",e)
 
 res.status(500).json({
-error:"topup failed"
+error:"topup_failed"
 })
 
 }
@@ -150,14 +167,20 @@ router.post("/wallet/connect", async (req,res)=>{
 
 try{
 
+const userId = req.user?.id
+
+if(!userId){
+return res.status(401).json({
+error:"unauthorized"
+})
+}
+
 const { type,address } = req.body
 
 if(!address){
-
 return res.status(400).json({
-error:"invalid wallet"
+error:"invalid_wallet"
 })
-
 }
 
 await db.query(
@@ -170,7 +193,7 @@ WHERE id=$3`,
 [
 type,
 address,
-req.user.id
+userId
 ]
 
 )
@@ -186,7 +209,7 @@ address
 console.error("wallet connect error",e)
 
 res.status(500).json({
-error:"wallet connect failed"
+error:"wallet_connect_failed"
 })
 
 }
@@ -198,6 +221,8 @@ error:"wallet connect failed"
 ========================================= */
 
 router.get("/status/:id", async (req,res)=>{
+
+try{
 
 const id = req.params.id
 
@@ -214,12 +239,22 @@ WHERE external_id=$1`,
 if(!r.rows.length){
 
 return res.status(404).json({
-error:"payment not found"
+error:"payment_not_found"
 })
 
 }
 
 res.json(r.rows[0])
+
+}catch(e){
+
+console.error("payment status error",e)
+
+res.status(500).json({
+error:"payment_status_failed"
+})
+
+}
 
 })
 
@@ -229,6 +264,16 @@ res.json(r.rows[0])
 
 router.get("/history", async (req,res)=>{
 
+try{
+
+const userId = req.user?.id
+
+if(!userId){
+return res.status(401).json({
+error:"unauthorized"
+})
+}
+
 const r = await db.query(
 
 `SELECT id,type,provider,amount,asset,status,created_at
@@ -237,11 +282,21 @@ WHERE user_id=$1
 ORDER BY created_at DESC
 LIMIT 50`,
 
-[req.user.id]
+[userId]
 
 )
 
 res.json(r.rows)
+
+}catch(e){
+
+console.error("payment history error",e)
+
+res.status(500).json({
+error:"payment_history_failed"
+})
+
+}
 
 })
 
