@@ -1,79 +1,158 @@
-const router = require("express").Router()
+"use strict"
 
-const auth = require("./modules/auth")
-const wallet = require("./modules/wallet")
-const casino = require("./modules/casino")
-const market = require("./modules/market")
-const mining = require("./modules/mining")
-const airdrop = require("./modules/airdrop")
-const admin = require("./modules/admin")
+const express = require("express")
 
-const {auth:authMiddleware,adminAuth} = require("./core/security")
+const router = express.Router()
 
-/* ======================
-   HEALTH
-====================== */
+/* ===============================
+MODULES
+=============================== */
 
-router.get("/health",(req,res)=>{
-res.json({status:"ok"})
+const authRoutes = require("./modules/auth")
+const walletRoutes = require("./modules/wallet")
+const casinoRoutes = require("./modules/casino")
+const marketRoutes = require("./modules/market")
+const miningRoutes = require("./modules/mining")
+const airdropRoutes = require("./modules/airdrop")
+const paymentRoutes = require("./modules/payments")
+
+/* ===============================
+SYSTEM ROUTES
+=============================== */
+
+router.get("/", (req,res)=>{
+
+res.json({
+name:"Bloxio API",
+status:"online",
+version:"1.0",
+time:Date.now()
 })
 
-/* ======================
-   AUTH
-====================== */
+})
 
-router.post("/auth/telegram",auth.telegram)
+router.get("/health",(req,res)=>{
 
-/* ======================
-   WALLET
-====================== */
+res.json({
+status:"ok",
+uptime:process.uptime()
+})
 
-router.get("/finance/wallet",authMiddleware,wallet.getWallet)
+})
 
-router.post("/finance/transfer",authMiddleware,wallet.transfer)
+/* ===============================
+AUTH
+=============================== */
 
-router.post("/finance/withdraw",authMiddleware,wallet.withdraw)
+router.use("/auth", authRoutes)
 
-router.get("/finance/history",authMiddleware,wallet.history)
+/*
+Endpoints:
 
-/* ======================
-   CASINO
-====================== */
+POST /auth/login
+POST /auth/register
+POST /auth/telegram
+GET  /auth/me
+*/
 
-router.post("/casino/play",authMiddleware,casino.play)
+/* ===============================
+WALLET
+=============================== */
 
-/* ======================
-   MARKET
-====================== */
+router.use("/finance", walletRoutes)
 
-router.post("/exchange/buy",authMiddleware,market.buy)
+/*
+Endpoints:
 
-router.post("/exchange/sell",authMiddleware,market.sell)
+GET  /finance/wallet
+GET  /finance/deposit/:asset
+POST /finance/withdraw
+POST /finance/transfer
+POST /finance/wallet/connect
+*/
 
-router.get("/exchange/stats",market.stats)
+/* ===============================
+CASINO
+=============================== */
 
-router.get("/exchange/history",market.history)
+router.use("/casino", casinoRoutes)
 
-/* ======================
-   MINING
-====================== */
+/*
+Endpoints:
 
-router.post("/mining/subscribe",authMiddleware,mining.subscribe)
+POST /casino/play
+GET  /casino/history
+GET  /casino/flags
+*/
 
-/* ======================
-   AIRDROP
-====================== */
+/* ===============================
+MARKET
+=============================== */
 
-router.get("/airdrop/status",authMiddleware,airdrop.status)
+router.use("/exchange", marketRoutes)
 
-router.post("/airdrop/claim",authMiddleware,airdrop.claim)
+/*
+Endpoints:
 
-/* ======================
-   ADMIN
-====================== */
+GET  /exchange/orderbook
+GET  /exchange/trades
+POST /exchange/order
+GET  /exchange/stats
+*/
 
-router.get("/admin/stats",authMiddleware,adminAuth,admin.stats)
+/* ===============================
+MINING
+=============================== */
 
-router.get("/admin/system",authMiddleware,adminAuth,admin.system)
+router.use("/mining", miningRoutes)
+
+/*
+Endpoints:
+
+GET  /mining/status
+POST /mining/subscribe
+POST /mining/claim
+*/
+
+/* ===============================
+AIRDROP
+=============================== */
+
+router.use("/airdrop", airdropRoutes)
+
+/*
+Endpoints:
+
+GET  /airdrop/status
+POST /airdrop/claim
+*/
+
+/* ===============================
+PAYMENTS
+=============================== */
+
+router.use("/payments", paymentRoutes)
+
+/*
+Endpoints:
+
+POST /payments/binance/create
+POST /topup/execute
+GET  /payments/history
+GET  /payments/status/:id
+*/
+
+/* ===============================
+404 HANDLER
+=============================== */
+
+router.use((req,res)=>{
+
+res.status(404).json({
+error:"endpoint_not_found",
+path:req.originalUrl
+})
+
+})
 
 module.exports = router
