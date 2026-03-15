@@ -2,22 +2,68 @@ const marketBot = require("./engines/marketBot")
 const miningEngine = require("./engines/miningEngine")
 const depositWatcher = require("./services/depositWatcher")
 
-let started = false
+let running = false
 
 function startSystemBots(){
 
-if(started) return
+if(running) return
 
-started = true
+running = true
 
-console.log("Starting Bloxio bots")
+console.log("Starting Bloxio system bots")
+
+try{
+
+if(marketBot && marketBot.start){
 
 marketBot.start()
-miningEngine.start()
-depositWatcher.start()
 
-console.log("Bots running")
+console.log("Market bot started")
 
 }
 
-module.exports = { startSystemBots }
+}catch(e){
+
+console.error("Market bot error:",e)
+
+}
+
+try{
+
+if(miningEngine && miningEngine.start){
+
+miningEngine.start()
+
+console.log("Mining engine started")
+
+}
+
+}catch(e){
+
+console.error("Mining engine error:",e)
+
+}
+
+try{
+
+if(depositWatcher && depositWatcher.start){
+
+depositWatcher.start()
+
+console.log("Deposit watcher started")
+
+}
+
+}catch(e){
+
+console.error("Deposit watcher error:",e)
+
+}
+
+console.log("All bots started")
+
+}
+
+module.exports = {
+startSystemBots
+}
