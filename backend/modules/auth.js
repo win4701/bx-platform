@@ -4,7 +4,6 @@ const express = require("express")
 const router = express.Router()
 
 const jwt = require("jsonwebtoken")
-
 const db = require("../database")
 
 /* ================================
@@ -38,19 +37,25 @@ AUTH MIDDLEWARE
 
 function authMiddleware(req,res,next){
 
-const auth = req.headers.authorization
+try{
 
-if(!auth){
+const authHeader = req.headers.authorization
 
+if(!authHeader){
 return res.status(401).json({
 error:"unauthorized"
 })
-
 }
 
-try{
+const parts = authHeader.split(" ")
 
-const token = auth.split(" ")[1]
+if(parts.length !== 2){
+return res.status(401).json({
+error:"invalid_authorization_format"
+})
+}
+
+const token = parts[1]
 
 const decoded = jwt.verify(token,JWT_SECRET)
 
@@ -76,7 +81,7 @@ router.post("/telegram", async(req,res)=>{
 
 try{
 
-const { telegram_id, username } = req.body
+let { telegram_id, username } = req.body
 
 if(!telegram_id){
 
@@ -86,37 +91,37 @@ error:"telegram_id_required"
 
 }
 
-/* check user */
+username = username || "player"
+
+/* CHECK USER */
 
 let user = await db.query(
 
-`SELECT * FROM users
+`SELECT id,telegram_id,username
+FROM users
 WHERE telegram_id=$1`,
 [telegram_id]
 
 )
 
-if(user.rows.length === 0){
+/* CREATE USER */
 
-/* create user */
+if(user.rows.length === 0){
 
 const result = await db.query(
 
 `INSERT INTO users
 (telegram_id,username)
 VALUES($1,$2)
-RETURNING *`,
+RETURNING id,telegram_id,username`,
 
-[
-telegram_id,
-username || "player"
-]
+[telegram_id,username]
 
 )
 
 user = result.rows[0]
 
-/* create wallets */
+/* CREATE WALLET BALANCES */
 
 const assets = [
 "BX",
@@ -138,7 +143,8 @@ await db.query(
 
 `INSERT INTO wallet_balances
 (user_id,asset,balance)
-VALUES($1,$2,0)`,
+VALUES($1,$2,0)
+ON CONFLICT DO NOTHING`,
 
 [user.id,asset]
 
@@ -152,27 +158,28 @@ user = user.rows[0]
 
 }
 
-/* create token */
+/* CREATE JWT */
 
 const token = createToken(user)
+
+/* RESPONSE */
 
 res.json({
 
 success:true,
 token,
-user:{
 
+user:{
 id:user.id,
 telegram_id:user.telegram_id,
 username:user.username
-
 }
 
 })
 
 }catch(e){
 
-console.error("Auth error:",e)
+console.error("auth error",e)
 
 res.status(500).json({
 error:"auth_failed"
@@ -195,12 +202,11 @@ const user = await db.query(
 `SELECT id,telegram_id,username
 FROM users
 WHERE id=$1`,
-
 [req.user.id]
 
 )
 
-if(user.rows.length === 0){
+if(!user.rows.length){
 
 return res.status(404).json({
 error:"user_not_found"
@@ -209,14 +215,12 @@ error:"user_not_found"
 }
 
 res.json({
-
 user:user.rows[0]
-
 })
 
 }catch(e){
 
-console.error(e)
+console.error("auth me error",e)
 
 res.status(500).json({
 error:"internal_error"
