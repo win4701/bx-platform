@@ -1,86 +1,42 @@
-const marketBot = require("./engines/marketBot")
-const miningEngine = require("./engines/miningEngine")
-const liquidityEngine = require("./engines/liquidityEngine")
-const depositWatcher = require("./services/depositWatcher")
+"use strict"
 
-let running = false
+const marketBot = require("./engines/marketBot")
+const liquidity = require("./engines/liquidityEngine")
+const mining = require("./engines/miningEngine")
+const deposits = require("./services/depositWatcher")
+
+let started = false
 
 function startSystemBots(){
 
-if(running) return
+if(started) return
 
-running = true
+started = true
 
-console.log("Starting Bloxio system bots")
+console.log("Starting Bloxio bots")
 
 try{
-
-if(marketBot?.start){
-
 marketBot.start()
-
 console.log("Market bot started")
-
-}
-
-}catch(e){
-
-console.error("Market bot error",e)
-
-}
+}catch(e){}
 
 try{
-
-if(miningEngine?.start){
-
-miningEngine.start()
-
-console.log("Mining engine started")
-
-}
-
-}catch(e){
-
-console.error("Mining engine error",e)
-
-}
-
-try{
-
-if(liquidityEngine?.start){
-
-liquidityEngine.start()
-
+liquidity.start()
 console.log("Liquidity engine started")
-
-}
-
-}catch(e){
-
-console.error("Liquidity engine error",e)
-
-}
+}catch(e){}
 
 try{
+mining.start()
+console.log("Mining engine started")
+}catch(e){}
 
-if(depositWatcher?.start){
-
-depositWatcher.start()
-
+try{
+deposits.start()
 console.log("Deposit watcher started")
+}catch(e){}
+
+console.log("All bots running")
 
 }
 
-}catch(e){
-
-console.error("Deposit watcher error",e)
-
-}
-
-console.log("All system bots running")
-
-}
-
-module.exports = {
-startSystemBots
-}
+module.exports = { startSystemBots }
