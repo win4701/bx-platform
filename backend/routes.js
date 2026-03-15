@@ -4,32 +4,29 @@ const express = require("express")
 
 const router = express.Router()
 
-/* ===============================
-MODULES
-=============================== */
+/* MODULES */
 
-const authRoutes = require("./modules/auth")
-const walletRoutes = require("./modules/wallet")
-const casinoRoutes = require("./modules/casino")
-const marketRoutes = require("./modules/market")
-const miningRoutes = require("./modules/mining")
-const airdropRoutes = require("./modules/airdrop")
-const paymentRoutes = require("./modules/payments")
+const auth = require("./modules/auth")
+const wallet = require("./modules/wallet")
+const casino = require("./modules/casino")
+const market = require("./modules/market")
+const mining = require("./modules/mining")
+const airdrop = require("./modules/airdrop")
+const payments = require("./modules/payments")
 
-/* ===============================
-SYSTEM ROUTES
-=============================== */
+/* ROOT */
 
 router.get("/", (req,res)=>{
 
 res.json({
 name:"Bloxio API",
 status:"online",
-version:"1.0",
-time:Date.now()
+version:"1.0"
 })
 
 })
+
+/* HEALTH */
 
 router.get("/health",(req,res)=>{
 
@@ -40,111 +37,17 @@ uptime:process.uptime()
 
 })
 
-/* ===============================
-AUTH
-=============================== */
+/* MODULE ROUTES */
 
-router.use("/auth", authRoutes)
+router.use("/auth", auth)
+router.use("/finance", wallet)
+router.use("/casino", casino)
+router.use("/exchange", market)
+router.use("/mining", mining)
+router.use("/airdrop", airdrop)
+router.use("/payments", payments)
 
-/*
-Endpoints:
-
-POST /auth/login
-POST /auth/register
-POST /auth/telegram
-GET  /auth/me
-*/
-
-/* ===============================
-WALLET
-=============================== */
-
-router.use("/finance", walletRoutes)
-
-/*
-Endpoints:
-
-GET  /finance/wallet
-GET  /finance/deposit/:asset
-POST /finance/withdraw
-POST /finance/transfer
-POST /finance/wallet/connect
-*/
-
-/* ===============================
-CASINO
-=============================== */
-
-router.use("/casino", casinoRoutes)
-
-/*
-Endpoints:
-
-POST /casino/play
-GET  /casino/history
-GET  /casino/flags
-*/
-
-/* ===============================
-MARKET
-=============================== */
-
-router.use("/exchange", marketRoutes)
-
-/*
-Endpoints:
-
-GET  /exchange/orderbook
-GET  /exchange/trades
-POST /exchange/order
-GET  /exchange/stats
-*/
-
-/* ===============================
-MINING
-=============================== */
-
-router.use("/mining", miningRoutes)
-
-/*
-Endpoints:
-
-GET  /mining/status
-POST /mining/subscribe
-POST /mining/claim
-*/
-
-/* ===============================
-AIRDROP
-=============================== */
-
-router.use("/airdrop", airdropRoutes)
-
-/*
-Endpoints:
-
-GET  /airdrop/status
-POST /airdrop/claim
-*/
-
-/* ===============================
-PAYMENTS
-=============================== */
-
-router.use("/payments", paymentRoutes)
-
-/*
-Endpoints:
-
-POST /payments/binance/create
-POST /topup/execute
-GET  /payments/history
-GET  /payments/status/:id
-*/
-
-/* ===============================
-404 HANDLER
-=============================== */
+/* 404 */
 
 router.use((req,res)=>{
 
