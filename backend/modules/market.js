@@ -1,29 +1,48 @@
+const express = require("express")
+const router = express.Router()
+
 const engine = require("../engines/marketEngine")
 
 /* =========================
    BUY BX
 ========================= */
 
-exports.buy = async (req,res)=>{
+router.post("/buy", async (req,res)=>{
 
 try{
 
-const {amount} = req.body
+const userId = req.user?.id
 
-if(!amount || amount<=0)
+if(!userId){
+return res.status(401).json({
+error:"unauthorized"
+})
+}
+
+let {amount} = req.body
+
+amount = Number(amount)
+
+if(!amount || amount <= 0){
 return res.status(400).json({
 error:"invalid_amount"
 })
+}
+
+/* EXECUTE TRADE */
 
 const trade = await engine.buyBX(
-req.user.id,
+userId,
 amount
 )
+
+/* BROADCAST */
 
 if(global.broadcast){
 
 global.broadcast({
 type:"trade",
+pair:"BX_USDT",
 side:"buy",
 price:trade.price,
 amount:trade.amount
@@ -31,9 +50,16 @@ amount:trade.amount
 
 }
 
-res.json(trade)
+/* RESPONSE */
 
-}catch{
+res.json({
+success:true,
+trade
+})
+
+}catch(e){
+
+console.error("market buy error",e)
 
 res.status(500).json({
 error:"market_buy_failed"
@@ -41,32 +67,48 @@ error:"market_buy_failed"
 
 }
 
-}
+})
 
 /* =========================
    SELL BX
 ========================= */
 
-exports.sell = async (req,res)=>{
+router.post("/sell", async (req,res)=>{
 
 try{
 
-const {amount} = req.body
+const userId = req.user?.id
 
-if(!amount || amount<=0)
+if(!userId){
+return res.status(401).json({
+error:"unauthorized"
+})
+}
+
+let {amount} = req.body
+
+amount = Number(amount)
+
+if(!amount || amount <= 0){
 return res.status(400).json({
 error:"invalid_amount"
 })
+}
+
+/* EXECUTE TRADE */
 
 const trade = await engine.sellBX(
-req.user.id,
+userId,
 amount
 )
+
+/* BROADCAST */
 
 if(global.broadcast){
 
 global.broadcast({
 type:"trade",
+pair:"BX_USDT",
 side:"sell",
 price:trade.price,
 amount:trade.amount
@@ -74,9 +116,16 @@ amount:trade.amount
 
 }
 
-res.json(trade)
+/* RESPONSE */
 
-}catch{
+res.json({
+success:true,
+trade
+})
+
+}catch(e){
+
+console.error("market sell error",e)
 
 res.status(500).json({
 error:"market_sell_failed"
@@ -84,28 +133,54 @@ error:"market_sell_failed"
 
 }
 
-}
+})
 
 /* =========================
    MARKET STATS
 ========================= */
 
-exports.stats = async (req,res)=>{
+router.get("/stats", async (req,res)=>{
+
+try{
 
 const s = await engine.stats()
 
 res.json(s)
 
+}catch(e){
+
+console.error("market stats error",e)
+
+res.status(500).json({
+error:"stats_failed"
+})
+
 }
+
+})
 
 /* =========================
    TRADE HISTORY
 ========================= */
 
-exports.history = async (req,res)=>{
+router.get("/history", async (req,res)=>{
+
+try{
 
 const h = await engine.history()
 
 res.json(h)
 
+}catch(e){
+
+console.error("market history error",e)
+
+res.status(500).json({
+error:"history_failed"
+})
+
 }
+
+})
+
+module.exports = router
