@@ -1,3 +1,8 @@
+"use strict"
+
+const express = require("express")
+const router = express.Router()
+
 const db = require("../database")
 const ledger = require("../core/ledger")
 
@@ -22,48 +27,78 @@ const COINS = [
    WALLET BALANCE
 ============================= */
 
-exports.getWallet = async (req,res)=>{
+router.get("/wallet", async (req,res)=>{
+
+try{
+
+const userId = req.user?.id
+
+if(!userId){
+return res.status(401).json({error:"unauthorized"})
+}
 
 const r = await db.query(
-`SELECT * FROM wallets
-WHERE user_id=$1`,
-[req.user.id]
+`SELECT * FROM wallets WHERE user_id=$1`,
+[userId]
 )
 
-const wallet = {}
+if(!r.rows.length){
+return res.json({})
+}
 
+const wallet = {}
 const w = r.rows[0]
 
 for(const c of COINS){
 
 const col = c.toLowerCase()+"_balance"
-
 wallet[c] = Number(w[col] || 0)
 
 }
 
 res.json(wallet)
 
+}catch(e){
+
+console.error("wallet error",e)
+
+res.status(500).json({
+error:"wallet_load_failed"
+})
+
 }
+
+})
 
 /* =============================
    TRANSFER BX
 ============================= */
 
-exports.transfer = async (req,res)=>{
+router.post("/transfer", async (req,res)=>{
 
 try{
 
-const {to_user,amount} = req.body
+const userId = req.user?.id
 
-if(!to_user || amount <= 0)
+if(!userId){
+return res.status(401).json({error:"unauthorized"})
+}
+
+let {to_user,amount} = req.body
+
+amount = Number(amount)
+
+if(!to_user || !amount || amount <= 0){
+
 return res.status(400).json({
 error:"invalid_request"
 })
 
+}
+
 await ledger.transfer({
 
-fromUser:req.user.id,
+fromUser:userId,
 toUser:to_user,
 asset:"BX",
 amount
@@ -76,26 +111,39 @@ status:"ok"
 
 }catch(e){
 
+console.error("transfer error",e)
+
 res.status(400).json({
 error:e.message
 })
 
 }
 
-}
+})
 
 /* =============================
    WALLET CONNECT
 ============================= */
 
-exports.connectWallet = async (req,res)=>{
+router.post("/wallet/connect", async (req,res)=>{
+
+try{
+
+const userId = req.user?.id
+
+if(!userId){
+return res.status(401).json({error:"unauthorized"})
+}
 
 const {type,address} = req.body
 
-if(!address)
+if(!address){
+
 return res.status(400).json({
 error:"invalid_address"
 })
+
+}
 
 await db.query(
 
@@ -104,57 +152,97 @@ SET wallet_type=$1,
 wallet_address=$2
 WHERE id=$3`,
 
-[type,address,req.user.id]
+[type,address,userId]
 
 )
 
 res.json({
-
 status:"connected",
 address
+})
 
+}catch(e){
+
+console.error("wallet connect error",e)
+
+res.status(500).json({
+error:"wallet_connect_failed"
 })
 
 }
+
+})
 
 /* =============================
    DEPOSIT ADDRESS
 ============================= */
 
-exports.deposit = async (req,res)=>{
+router.get("/deposit/:asset", async (req,res)=>{
+
+try{
+
+const userId = req.user?.id
+
+if(!userId){
+return res.status(401).json({error:"unauthorized"})
+}
 
 const {asset} = req.params
 
-if(!COINS.includes(asset))
+if(!COINS.includes(asset)){
+
 return res.status(400).json({
 error:"unsupported_asset"
 })
 
+}
+
 /* demo address */
 
-const address = `BX_${asset}_${req.user.id}`
+const address = `BX_${asset}_${userId}`
 
 res.json({
-
 asset,
 address
+})
 
+}catch(e){
+
+console.error("deposit error",e)
+
+res.status(500).json({
+error:"deposit_failed"
 })
 
 }
+
+})
 
 /* =============================
    BINANCE PAY
 ============================= */
 
-exports.binancePay = async (req,res)=>{
+router.post("/binance/pay", async (req,res)=>{
 
-const {amount} = req.body
+try{
 
-if(!amount || amount <= 0)
+const userId = req.user?.id
+
+if(!userId){
+return res.status(401).json({error:"unauthorized"})
+}
+
+let {amount} = req.body
+
+amount = Number(amount)
+
+if(!amount || amount <= 0){
+
 return res.status(400).json({
 error:"invalid_amount"
 })
+
+}
 
 const order = await db.query(
 
@@ -163,36 +251,60 @@ const order = await db.query(
 VALUES($1,$2,'pending')
 RETURNING id`,
 
-[req.user.id,amount]
+[userId,amount]
 
 )
 
 res.json({
-
 status:"created",
 order_id:order.rows[0].id
+})
 
+}catch(e){
+
+console.error("binance pay error",e)
+
+res.status(500).json({
+error:"binance_pay_failed"
 })
 
 }
+
+})
 
 /* =============================
    WITHDRAW
 ============================= */
 
-exports.withdraw = async (req,res)=>{
+router.post("/withdraw", async (req,res)=>{
 
-const {asset,amount,address} = req.body
+try{
 
-if(!COINS.includes(asset))
+const userId = req.user?.id
+
+if(!userId){
+return res.status(401).json({error:"unauthorized"})
+}
+
+let {asset,amount,address} = req.body
+
+amount = Number(amount)
+
+if(!COINS.includes(asset)){
+
 return res.status(400).json({
 error:"unsupported_asset"
 })
 
-if(amount <= 0)
+}
+
+if(!amount || amount <= 0){
+
 return res.status(400).json({
 error:"invalid_amount"
 })
+
+}
 
 await db.query(
 
@@ -200,23 +312,39 @@ await db.query(
 (user_id,asset,amount,address)
 VALUES($1,$2,$3,$4)`,
 
-[req.user.id,asset,amount,address]
+[userId,asset,amount,address]
 
 )
 
 res.json({
-
 status:"submitted"
+})
 
+}catch(e){
+
+console.error("withdraw error",e)
+
+res.status(500).json({
+error:"withdraw_failed"
 })
 
 }
+
+})
 
 /* =============================
    WALLET HISTORY
 ============================= */
 
-exports.history = async (req,res)=>{
+router.get("/history", async (req,res)=>{
+
+try{
+
+const userId = req.user?.id
+
+if(!userId){
+return res.status(401).json({error:"unauthorized"})
+}
 
 const r = await db.query(
 
@@ -226,10 +354,22 @@ WHERE user_id=$1
 ORDER BY created_at DESC
 LIMIT 50`,
 
-[req.user.id]
+[userId]
 
 )
 
 res.json(r.rows)
 
-   }
+}catch(e){
+
+console.error("wallet history error",e)
+
+res.status(500).json({
+error:"history_failed"
+})
+
+}
+
+})
+
+module.exports = router
