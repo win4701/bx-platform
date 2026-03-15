@@ -1,3 +1,5 @@
+"use strict"
+
 require("dotenv").config()
 
 const express = require("express")
@@ -7,29 +9,21 @@ const http = require("http")
 const routes = require("./routes")
 const db = require("./database")
 
-const { startSystemBots } = require("./systemBots")
 const startWS = require("./ws/wsHub")
+const { startSystemBots } = require("./systemBots")
 
 const app = express()
 
 app.use(cors())
 app.use(express.json())
 
-/* API ROUTES */
-
 app.use("/", routes)
 
-/* HEALTH CHECK (Render) */
-
 app.get("/", (req,res)=>{
-res.json({
-status:"BLOXIO_BACKEND_RUNNING"
-})
+res.json({status:"Bloxio backend running"})
 })
 
-/* START SERVER */
-
-async function startServer(){
+async function start(){
 
 try{
 
@@ -39,25 +33,31 @@ console.log("Database connected")
 
 const server = http.createServer(app)
 
-/* WebSocket */
+/* websocket */
 
 startWS(server)
 
-/* Bots */
+/* start bots only on Fly */
+
+if(process.env.BOTS === "true"){
+
+console.log("Starting system bots")
 
 startSystemBots()
+
+}
 
 const PORT = process.env.PORT || 3000
 
 server.listen(PORT,()=>{
 
-console.log("Bloxio backend running on port",PORT)
+console.log("Server running on",PORT)
 
 })
 
-}catch(err){
+}catch(e){
 
-console.error("Server startup error:",err)
+console.error("Startup error",e)
 
 process.exit(1)
 
@@ -65,4 +65,4 @@ process.exit(1)
 
 }
 
-startServer()
+start()
