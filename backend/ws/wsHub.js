@@ -1,10 +1,14 @@
+"use strict"
+
 const WebSocket = require("ws")
 
-let wss = null
+let wss
 
 function startWS(server){
 
-wss = new WebSocket.Server({ server })
+wss = new WebSocket.Server({server})
+
+console.log("WebSocket server started")
 
 wss.on("connection",(ws)=>{
 
@@ -16,11 +20,15 @@ try{
 
 const data = JSON.parse(msg)
 
-handleMessage(ws,data)
+if(data.type === "ping"){
+
+ws.send(JSON.stringify({type:"pong"}))
+
+}
 
 }catch(e){
 
-console.error("WS message error",e)
+console.error("WS error",e)
 
 }
 
@@ -34,9 +42,11 @@ console.log("WS client disconnected")
 
 })
 
-console.log("WebSocket server started")
-
 }
+
+/* =========================
+   BROADCAST
+========================= */
 
 function broadcast(data){
 
@@ -44,11 +54,11 @@ if(!wss) return
 
 const msg = JSON.stringify(data)
 
-wss.clients.forEach(client=>{
+wss.clients.forEach(c=>{
 
-if(client.readyState === WebSocket.OPEN){
+if(c.readyState === WebSocket.OPEN){
 
-client.send(msg)
+c.send(msg)
 
 }
 
@@ -56,23 +66,6 @@ client.send(msg)
 
 }
 
-function handleMessage(ws,data){
-
-switch(data.type){
-
-case "ping":
-
-ws.send(JSON.stringify({type:"pong"}))
-
-break
-
-default:
-
-break
-
-}
-
-}
+global.broadcast = broadcast
 
 module.exports = startWS
-module.exports.broadcast = broadcast
