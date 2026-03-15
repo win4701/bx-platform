@@ -1,167 +1,163 @@
-"use strict";
+"use strict"
 
-/* =========================================
-   BLOXIO SERVER
-   Production Core
-========================================= */
+/* =================================
+ENV
+================================= */
 
-require("dotenv").config();
+require("dotenv").config()
 
-const express = require("express");
-const cors = require("cors");
-const http = require("http");
-const WebSocket = require("ws");
+/* =================================
+IMPORTS
+================================= */
 
-const routes = require("./routes");
-const db = require("./database");
+const express = require("express")
+const cors = require("cors")
+const http = require("http")
+const WebSocket = require("ws")
 
-const systemBots = require("./systemBots");
+const routes = require("./routes")
+const systemBots = require("./systemBots")
 
-/* =========================================
-   CONFIG
-========================================= */
+/* =================================
+APP INIT
+================================= */
 
-const PORT = process.env.PORT || 3000;
-
-const app = express();
-const server = http.createServer(app);
-
-/* =========================================
-   WEBSOCKET
-========================================= */
-
-const wss = new WebSocket.Server({ server });
-
-const WS_CLIENTS = {
-  bigwins: new Set(),
-  market: new Set()
-};
-
-function broadcast(channel, data){
-
-  const msg = JSON.stringify(data);
-
-  if(!WS_CLIENTS[channel]) return;
-
-  WS_CLIENTS[channel].forEach(ws => {
-
-    if(ws.readyState === WebSocket.OPEN){
-      ws.send(msg);
-    }
-
-  });
-
-}
-
-/* =========================================
-   WS ROUTING
-========================================= */
-
-wss.on("connection",(ws,req)=>{
-
-  const url = req.url;
-
-  if(url === "/ws/big-wins"){
-    WS_CLIENTS.bigwins.add(ws);
-  }
-
-  if(url === "/ws/market"){
-    WS_CLIENTS.market.add(ws);
-  }
-
-  ws.on("close",()=>{
-
-    WS_CLIENTS.bigwins.delete(ws);
-    WS_CLIENTS.market.delete(ws);
-
-  });
-
-});
-
-/* =========================================
-   MIDDLEWARE
-========================================= */
+const app = express()
 
 app.use(cors({
 origin:"*",
 methods:["GET","POST","PUT","DELETE"],
 allowedHeaders:["Content-Type","Authorization"]
-}));
+}))
 
-app.use(express.json());
+app.use(express.json({limit:"2mb"}))
 
-/* =========================================
-   ROUTES
-========================================= */
+/* =================================
+API ROUTES
+================================= */
 
-app.use("/",routes);
+app.use("/", routes)
 
-/* =========================================
-   HEALTH CHECK (Render)
-========================================= */
+/* =================================
+HTTP SERVER
+================================= */
 
-app.get("/health",(req,res)=>{
-res.json({
-status:"ok",
-time:Date.now()
-});
-});
+const server = http.createServer(app)
 
-/* =========================================
-   ENGINE EVENTS
-========================================= */
+/* =================================
+WEBSOCKET HUB
+================================= */
 
-global.BLOXIO_WS = {
+const wss = new WebSocket.Server({ server })
 
-bigWin(data){
-broadcast("bigwins",data);
-},
+global.broadcast = function(data){
 
-marketTrade(data){
-broadcast("market",data);
+const msg = JSON.stringify(data)
+
+wss.clients.forEach(client => {
+
+if(client.readyState === WebSocket.OPEN){
+client.send(msg)
 }
 
-};
+})
 
-/* =========================================
-   DATABASE
-========================================= */
+}
 
-async function initDatabase(){
+/* =================================
+WS CONNECTION
+================================= */
+
+wss.on("connection",(ws,req)=>{
+
+console.log("WS client connected")
+
+ws.on("message",(msg)=>{
 
 try{
 
-await db.connect();
+const data = JSON.parse(msg)
 
-console.log("Database connected");
+/* Example ping */
+
+if(data.type === "ping"){
+
+ws.send(JSON.stringify({
+type:"pong",
+time:Date.now()
+}))
+
+}
 
 }catch(e){
-
-console.error("Database connection failed");
-process.exit(1);
-
+console.log("WS message error")
 }
 
-}
+})
 
-/* =========================================
-   SERVER START
-========================================= */
+ws.on("close",()=>{
+console.log("WS client disconnected")
+})
 
-async function startServer(){
+})
 
-await initDatabase();
+/* =================================
+ERROR HANDLER
+================================= */
+
+app.use((err,req,res,next)=>{
+
+console.error("Server error:",err)
+
+res.status(500).json({
+error:"internal_server_error"
+})
+
+})
+
+/* =================================
+START SERVER
+================================= */
+
+const PORT = process.env.PORT || 3000
 
 server.listen(PORT,()=>{
 
-console.log("Bloxio server running on port",PORT);
+console.log("================================")
+console.log("BLOXIO SERVER STARTED")
+console.log("PORT:",PORT)
+console.log("================================")
 
-/* START ENGINES */
+/* START SYSTEM ENGINES */
 
-systemBots.start();
+systemBots.start()
 
-});
+})
 
-}
+/* =================================
+PROCESS HANDLERS
+================================= */
 
-startServer();
+process.on("uncaughtException",(err)=>{
+
+console.error("Uncaught Exception:",err)
+
+})
+
+process.on("unhandledRejection",(err)=>{
+
+console.error("Unhandled Rejection:",err)
+
+})
+
+/* =================================
+GRACEFUL SHUTDOWN
+================================= */
+
+process.on("SIGTERM",()=>{
+
+console.log("Server shutting down")
+
+process.exit()
+
+})
