@@ -1,163 +1,68 @@
-"use strict"
-
-/* =================================
-ENV
-================================= */
-
 require("dotenv").config()
-
-/* =================================
-IMPORTS
-================================= */
 
 const express = require("express")
 const cors = require("cors")
 const http = require("http")
-const WebSocket = require("ws")
 
 const routes = require("./routes")
-const systemBots = require("./systemBots")
+const db = require("./database")
 
-/* =================================
-APP INIT
-================================= */
+const { startSystemBots } = require("./systemBots")
+const startWS = require("./ws/wsHub")
 
 const app = express()
 
-app.use(cors({
-origin:"*",
-methods:["GET","POST","PUT","DELETE"],
-allowedHeaders:["Content-Type","Authorization"]
-}))
+app.use(cors())
+app.use(express.json())
 
-app.use(express.json({limit:"2mb"}))
-
-/* =================================
-API ROUTES
-================================= */
+/* API ROUTES */
 
 app.use("/", routes)
 
-/* =================================
-HTTP SERVER
-================================= */
+/* HEALTH CHECK (Render) */
 
-const server = http.createServer(app)
-
-/* =================================
-WEBSOCKET HUB
-================================= */
-
-const wss = new WebSocket.Server({ server })
-
-global.broadcast = function(data){
-
-const msg = JSON.stringify(data)
-
-wss.clients.forEach(client => {
-
-if(client.readyState === WebSocket.OPEN){
-client.send(msg)
-}
-
+app.get("/", (req,res)=>{
+res.json({
+status:"BLOXIO_BACKEND_RUNNING"
+})
 })
 
-}
+/* START SERVER */
 
-/* =================================
-WS CONNECTION
-================================= */
-
-wss.on("connection",(ws,req)=>{
-
-console.log("WS client connected")
-
-ws.on("message",(msg)=>{
+async function startServer(){
 
 try{
 
-const data = JSON.parse(msg)
+await db.connect()
 
-/* Example ping */
+console.log("Database connected")
 
-if(data.type === "ping"){
+const server = http.createServer(app)
 
-ws.send(JSON.stringify({
-type:"pong",
-time:Date.now()
-}))
+/* WebSocket */
 
-}
+startWS(server)
 
-}catch(e){
-console.log("WS message error")
-}
+/* Bots */
 
-})
-
-ws.on("close",()=>{
-console.log("WS client disconnected")
-})
-
-})
-
-/* =================================
-ERROR HANDLER
-================================= */
-
-app.use((err,req,res,next)=>{
-
-console.error("Server error:",err)
-
-res.status(500).json({
-error:"internal_server_error"
-})
-
-})
-
-/* =================================
-START SERVER
-================================= */
+startSystemBots()
 
 const PORT = process.env.PORT || 3000
 
 server.listen(PORT,()=>{
 
-console.log("================================")
-console.log("BLOXIO SERVER STARTED")
-console.log("PORT:",PORT)
-console.log("================================")
-
-/* START SYSTEM ENGINES */
-
-systemBots.start()
+console.log("Bloxio backend running on port",PORT)
 
 })
 
-/* =================================
-PROCESS HANDLERS
-================================= */
+}catch(err){
 
-process.on("uncaughtException",(err)=>{
+console.error("Server startup error:",err)
 
-console.error("Uncaught Exception:",err)
+process.exit(1)
 
-})
+}
 
-process.on("unhandledRejection",(err)=>{
+}
 
-console.error("Unhandled Rejection:",err)
-
-})
-
-/* =================================
-GRACEFUL SHUTDOWN
-================================= */
-
-process.on("SIGTERM",()=>{
-
-console.log("Server shutting down")
-
-process.exit()
-
-})
+startServer()
