@@ -1,53 +1,33 @@
 const WebSocket = require("ws")
 
-let wss = null
+function startWS(server){
 
-function init(server){
+const wss = new WebSocket.Server({ noServer:true })
 
-wss = new WebSocket.Server({ server })
+server.on("upgrade",(req,socket,head)=>{
 
-wss.on("connection",(ws,req)=>{
+wss.handleUpgrade(req,socket,head,(ws)=>{
 
-ws.isAlive = true
+wss.emit("connection",ws,req)
 
-ws.on("pong",()=>{
-ws.isAlive = true
+})
+
+})
+
+wss.on("connection",(ws)=>{
+
+console.log("WS client connected")
+
+ws.on("close",()=>{
+
+console.log("WS client disconnected")
+
 })
 
 })
 
-setInterval(()=>{
-
-wss.clients.forEach(ws=>{
-
-if(!ws.isAlive) return ws.terminate()
-
-ws.isAlive = false
-ws.ping()
-
-})
-
-},30000)
+console.log("WebSocket started")
 
 }
 
-function broadcast(data){
-
-if(!wss) return
-
-const msg = JSON.stringify(data)
-
-wss.clients.forEach(client=>{
-
-if(client.readyState === WebSocket.OPEN){
-client.send(msg)
-}
-
-})
-
-}
-
-module.exports = {
-init,
-broadcast
-  }
+module.exports = startWS
