@@ -2,8 +2,8 @@
 
 /* ================= BACKEND CONFIG ================= */
 
-const API_BASE = "https://bx-9m3n.onrender.com";
-const WS_BASE = "wss://bx-9m3n.onrender.com";
+const API_BASE = "https://api.bloxio.online";
+const WS_BASE = "wss://api.bloxio.online";
 
 /* =========================================================
    PART 1 — CORE / CONFIG / DEBUG
