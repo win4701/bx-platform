@@ -203,4 +203,5 @@ module.exports = {
 startMatching,
 stopMatching,
 matchOrders
-  }
+
+}
