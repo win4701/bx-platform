@@ -18,6 +18,7 @@ ENV
 
 const PORT = process.env.PORT || 3000
 const RUN_BOTS = process.env.BOTS === "true"
+const IS_PROD = process.env.NODE_ENV === "production"
 
 /* =========================================
 APP
@@ -26,140 +27,130 @@ APP
 const app = express()
 
 app.use(cors())
-app.use(express.json({limit:"2mb"}))
+app.use(express.json({ limit: "2mb" }))
 
 /* =========================================
 ROOT
 ========================================= */
 
-app.get("/",(req,res)=>{
-
-res.json({
-name:"Bloxio Backend",
-mode: RUN_BOTS ? "BOT" : "API",
-status:"running",
-time: Date.now()
-})
-
-})
-
-/* =========================================
-HEALTH (RENDER)
-========================================= */
-
-app.get("/health", async (req,res)=>{
-
-try{
-
-await db.query("SELECT 1")
-
-res.json({
-status:"ok",
-uptime:process.uptime()
-})
-
-}catch(e){
-
-res.status(500).json({
-status:"db_error"
-})
-
-}
-
+app.get("/", (req, res) => {
+  res.json({
+    name: "Bloxio Backend",
+    mode: RUN_BOTS ? "BOT" : "API",
+    status: "running",
+    time: Date.now()
+  })
 })
 
 /* =========================================
-ROUTES (API MODE ONLY)
+HEALTH CHECK (CRITICAL FOR RENDER)
 ========================================= */
 
-if(!RUN_BOTS){
+app.get("/health", async (req, res) => {
+  try {
+    const dbHealth = await db.health()
 
-app.use("/", routes)
+    res.json({
+      status: "ok",
+      db: dbHealth,
+      uptime: process.uptime()
+    })
 
+  } catch (e) {
+    res.status(500).json({
+      status: "error",
+      error: e.message
+    })
+  }
+})
+
+/* =========================================
+API ROUTES (ONLY ON RENDER)
+========================================= */
+
+if (!RUN_BOTS) {
+  app.use("/api", routes)
 }
 
 /* =========================================
 ERROR HANDLER
 ========================================= */
 
-app.use((err,req,res,next)=>{
+app.use((err, req, res, next) => {
+  console.error("❌ API ERROR:", err.message)
 
-console.error("API ERROR:",err)
-
-res.status(500).json({
-error:"internal_server_error"
-})
-
+  res.status(500).json({
+    error: "internal_server_error"
+  })
 })
 
 /* =========================================
 SERVER START
 ========================================= */
 
-async function start(){
+async function start() {
+  try {
+    console.log("🔌 Connecting to database...")
 
-try{
+    await db.query("SELECT NOW()")
 
-/* DB check */
+    console.log("✅ Database connected")
 
-await db.query("SELECT NOW()")
+    const server = http.createServer(app)
 
-console.log("✓ Database connected")
+    /* WebSocket (API only) */
+    if (!RUN_BOTS) {
+      startWS(server)
+      console.log("📡 WebSocket started")
+    }
 
-const server = http.createServer(app)
+    /* Start HTTP server */
+    server.listen(PORT, () => {
+      console.log(`🚀 Server running on port ${PORT}`)
+      console.log(`Mode: ${RUN_BOTS ? "BOT" : "API"}`)
+    })
 
-/* WebSocket */
+    /* START BOTS (Fly only) */
+    if (RUN_BOTS) {
+      console.log("🤖 Starting system bots...")
 
-startWS(server)
+      setTimeout(() => {
+        try {
+          startSystemBots()
+          console.log("✅ Bots started")
+        } catch (e) {
+          console.error("❌ Bot startup failed:", e.message)
+        }
+      }, 3000)
+    }
 
-/* Start server */
+    /* =========================================
+    KEEP ALIVE (VERY IMPORTANT FOR FLY)
+    ========================================= */
 
-server.listen(PORT,()=>{
+    setInterval(() => {
+      console.log("💓 Server alive:", new Date().toISOString())
+    }, 30000)
 
-console.log(`🚀 Server running on port ${PORT}`)
-console.log(`Mode: ${RUN_BOTS ? "BOT" : "API"}`)
+    /* =========================================
+    GRACEFUL SHUTDOWN
+    ========================================= */
 
-})
+    const shutdown = () => {
+      console.log("🔻 Shutting down...")
 
-/* START BOTS (Fly only) */
+      server.close(() => {
+        process.exit(0)
+      })
+    }
 
-if(RUN_BOTS){
+    process.on("SIGINT", shutdown)
+    process.on("SIGTERM", shutdown)
 
-console.log("🤖 Starting system bots...")
-
-setTimeout(()=>{
-
-startSystemBots()
-
-},2000)
-
-}
-
-/* =========================================
-GRACEFUL SHUTDOWN
-========================================= */
-
-process.on("SIGINT", shutdown)
-process.on("SIGTERM", shutdown)
-
-function shutdown(){
-
-console.log("Shutting down...")
-
-server.close(()=>{
-process.exit(0)
-})
-
-}
-
-}catch(e){
-
-console.error("Startup error:",e)
-
-process.exit(1)
-
-}
-
+  } catch (e) {
+    console.error("❌ Startup error:", e.message)
+    process.exit(1)
+  }
 }
 
 start()
