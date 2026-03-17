@@ -11,30 +11,26 @@ CONFIG
 const DATABASE_URL = process.env.DATABASE_URL
 
 if(!DATABASE_URL){
-
-console.error("DATABASE_URL missing")
+console.error(" DATABASE_URL missing")
 process.exit(1)
-
 }
 
 /* =====================================
-POOL
+POOL (SMART SSL)
 ===================================== */
 
-const pool = new Pool({
+const isProd = process.env.NODE_ENV === "production"
 
+const pool = new Pool({
 connectionString: DATABASE_URL,
 
-ssl: DATABASE_URL.includes("render")
+ssl: isProd
 ? { rejectUnauthorized:false }
 : false,
 
-max: 30,
+max: 20,
 idleTimeoutMillis: 30000,
-connectionTimeoutMillis: 8000,
-
-allowExitOnIdle:false
-
+connectionTimeoutMillis: 10000
 })
 
 /* =====================================
@@ -42,42 +38,41 @@ POOL EVENTS
 ===================================== */
 
 pool.on("connect", ()=>{
-
-console.log("✓ PostgreSQL connected")
-
+console.log(" PostgreSQL connected")
 })
 
 pool.on("error",(err)=>{
-
-console.error("PostgreSQL pool error:",err)
-
+console.error(" PostgreSQL pool error:",err)
 })
 
 /* =====================================
-QUERY
+SAFE QUERY (WITH RETRY)
 ===================================== */
 
-async function query(text,params){
+async function query(text, params, retry = 1){
 
 const start = Date.now()
 
 try{
 
-const res = await pool.query(text,params)
+const res = await pool.query(text, params)
 
 const duration = Date.now() - start
 
-if(duration > 800){
-
-console.log("Slow query:",duration,"ms")
-
+if(duration > 500){
+console.log(" Slow query:", duration, "ms")
 }
 
 return res
 
 }catch(err){
 
-console.error("DB query failed",err)
+console.error("DB query error:", err.message)
+
+if(retry > 0){
+console.log(" Retrying query...")
+return query(text, params, retry - 1)
+}
 
 throw err
 
@@ -86,7 +81,7 @@ throw err
 }
 
 /* =====================================
-TRANSACTION
+TRANSACTION (SAFE)
 ===================================== */
 
 async function transaction(fn){
@@ -103,11 +98,13 @@ await client.query("COMMIT")
 
 return result
 
-}catch(e){
+}catch(err){
 
 await client.query("ROLLBACK")
 
-throw e
+console.error(" Transaction failed:", err.message)
+
+throw err
 
 }finally{
 
@@ -118,28 +115,30 @@ client.release()
 }
 
 /* =====================================
-HEALTH
+HEALTH CHECK (PRODUCTION READY)
 ===================================== */
 
 async function health(){
 
 try{
 
-const r = await pool.query("SELECT NOW() as time")
+const start = Date.now()
+
+await pool.query("SELECT 1")
+
+const latency = Date.now() - start
 
 return {
-
 status:"ok",
-time:r.rows[0].time
-
+latency,
+connections: pool.totalCount
 }
 
 }catch(e){
 
 return {
-
-status:"down"
-
+status:"down",
+error:e.message
 }
 
 }
@@ -147,31 +146,32 @@ status:"down"
 }
 
 /* =====================================
-GRACEFUL SHUTDOWN
+GRACEFUL SHUTDOWN (SAFE)
 ===================================== */
 
 async function shutdown(){
 
-console.log("Closing PostgreSQL pool")
+console.log(" Closing PostgreSQL pool...")
 
+try{
 await pool.end()
-
-process.exit(0)
+console.log(" DB pool closed")
+}catch(e){
+console.error("Shutdown error:", e.message)
+}
 
 }
 
-process.on("SIGINT",shutdown)
-process.on("SIGTERM",shutdown)
+process.on("SIGINT", shutdown)
+process.on("SIGTERM", shutdown)
 
 /* =====================================
 EXPORT
 ===================================== */
 
 module.exports = {
-
 pool,
 query,
 transaction,
 health
-
   }
