@@ -4,63 +4,68 @@ const db = require("../database")
 const ledger = require("../core/ledger")
 const fetch = require("node-fetch")
 
-/* =================================
-CONFIG
-================================= */
-
-const ETHERSCAN_KEY = process.env.ETHERSCAN_KEY || ""
-
 const SCAN_INTERVAL = 20000
 
-/* =================================
-SUPPORTED COINS
-================================= */
+/* ===============================
+API KEYS
+=============================== */
+
+const ETHERSCAN = process.env.ETHERSCAN_KEY || ""
+const BSCSCAN = process.env.BSCSCAN_KEY || ""
+const SNOWTRACE = process.env.SNOWTRACE_KEY || ""
+
+/* ===============================
+COINS
+=============================== */
 
 const COINS = {
 
-USDT:{ chain:"ETH", decimals:6 },
-USDC:{ chain:"ETH", decimals:6 },
+BTC:{ type:"utxo", decimals:8 },
 
-BTC:{ chain:"BTC", decimals:8 },
+LTC:{ type:"utxo", decimals:8 },
 
-BNB:{ chain:"BSC", decimals:18 },
+ZEC:{ type:"utxo", decimals:8 },
 
-ETH:{ chain:"ETH", decimals:18 },
+ETH:{ type:"evm", decimals:18, explorer:"https://api.etherscan.io/api" },
 
-AVAX:{ chain:"AVAX", decimals:18 },
+USDT:{ type:"evm", decimals:6, explorer:"https://api.etherscan.io/api" },
 
-ZEC:{ chain:"ZEC", decimals:8 },
+USDC:{ type:"evm", decimals:6, explorer:"https://api.etherscan.io/api" },
 
-TON:{ chain:"TON", decimals:9 },
+BNB:{ type:"evm", decimals:18, explorer:"https://api.bscscan.com/api" },
 
-SOL:{ chain:"SOL", decimals:9 },
+AVAX:{ type:"evm", decimals:18, explorer:"https://api.snowtrace.io/api" },
 
-LTC:{ chain:"LTC", decimals:8 }
+TON:{ type:"ton", decimals:9 },
+
+SOL:{ type:"sol", decimals:9 }
 
 }
 
-/* =================================
+/* ===============================
 CONFIRMATIONS
-================================= */
+=============================== */
 
-const CONFIRMATIONS = {
+const CONFIRM = {
 
 BTC:3,
+LTC:6,
+ZEC:6,
+
 ETH:6,
-BNB:6,
 USDT:6,
 USDC:6,
+BNB:6,
 AVAX:6,
-ZEC:6,
+
 TON:3,
-SOL:10,
-LTC:6
+SOL:10
 
 }
 
-/* =================================
-CHECK TX EXISTS
-================================= */
+/* ===============================
+CHECK TX
+=============================== */
 
 async function txExists(txid){
 
@@ -73,15 +78,15 @@ return r.rows.length > 0
 
 }
 
-/* =================================
-CREDIT WALLET
-================================= */
+/* ===============================
+CREDIT
+=============================== */
 
-async function creditDeposit(userId,asset,amount,txid){
+async function creditDeposit(user,asset,amount,txid){
 
 await ledger.credit({
 
-user_id:userId,
+user_id:user,
 asset,
 amount,
 reason:"deposit"
@@ -89,36 +94,42 @@ reason:"deposit"
 })
 
 await db.query(
+
 `INSERT INTO wallet_transactions
 (user_id,asset,amount,type,txid)
 VALUES($1,$2,$3,'deposit',$4)`,
-[userId,asset,amount,txid]
+
+[user,asset,amount,txid]
+
 )
 
-console.log("Deposit credited",asset,amount,userId)
+console.log("Deposit credited",asset,amount)
 
 }
 
-/* =================================
-GET USER WALLETS
-================================= */
+/* ===============================
+GET WALLETS
+=============================== */
 
 async function getWallets(asset){
 
 const r = await db.query(
+
 `SELECT user_id,deposit_address
 FROM wallets
 WHERE asset=$1`,
+
 [asset]
+
 )
 
 return r.rows
 
 }
 
-/* =================================
-UTXO SCANNER
-================================= */
+/* ===============================
+UTXO SCAN
+=============================== */
 
 async function scanUTXO(asset){
 
@@ -129,27 +140,35 @@ for(const w of wallets){
 try{
 
 const url =
-`https://api.blockcypher.com/v1/${asset.toLowerCase()}/main/addrs/${w.deposit_address}`
+`https://api.blockcypher.com/v1/${asset.toLowerCase()}/main/addrs/${w.deposit_address}/full`
 
-const res = await fetch(url,{timeout:8000})
+const r = await fetch(url)
 
-const data = await res.json()
+const data = await r.json()
 
-for(const tx of data.txrefs || []){
+for(const tx of data.txs || []){
 
-if(tx.confirmations < CONFIRMATIONS[asset]) continue
+if(tx.confirmations < CONFIRM[asset]) continue
 
-if(await txExists(tx.tx_hash)) continue
+if(await txExists(tx.hash)) continue
+
+for(const out of tx.outputs){
+
+if(!out.addresses) continue
+
+if(!out.addresses.includes(w.deposit_address)) continue
 
 const amount =
-tx.value / Math.pow(10,COINS[asset].decimals)
+out.value / Math.pow(10,COINS[asset].decimals)
 
 await creditDeposit(
 w.user_id,
 asset,
 amount,
-tx.tx_hash
+tx.hash
 )
+
+}
 
 }
 
@@ -163,45 +182,45 @@ console.log(asset,"scan error",e)
 
 }
 
-/* =================================
-EVM SCANNER
-================================= */
+/* ===============================
+EVM SCAN
+=============================== */
 
 async function scanEVM(asset){
 
 const wallets = await getWallets(asset)
+
+const explorer = COINS[asset].explorer
 
 for(const w of wallets){
 
 try{
 
 const url =
-`https://api.etherscan.io/api
-?module=account
-&action=txlist
-&address=${w.deposit_address}
-&apikey=${ETHERSCAN_KEY}`
+`${explorer}?module=account&action=txlist&address=${w.deposit_address}&sort=desc&apikey=${ETHERSCAN}`
 
-const res = await fetch(url,{timeout:8000})
+const r = await fetch(url)
 
-const data = await res.json()
+const data = await r.json()
 
 for(const tx of data.result || []){
 
-if(Number(tx.confirmations) < CONFIRMATIONS[asset]) continue
+if(Number(tx.confirmations) < CONFIRM[asset]) continue
 
 if(await txExists(tx.hash)) continue
 
-const value =
+if(tx.to.toLowerCase() !== w.deposit_address.toLowerCase()) continue
+
+const amount =
 Number(tx.value) /
 Math.pow(10,COINS[asset].decimals)
 
-if(value <= 0) continue
+if(amount <= 0) continue
 
 await creditDeposit(
 w.user_id,
 asset,
-value,
+amount,
 tx.hash
 )
 
@@ -217,42 +236,39 @@ console.log(asset,"scan error",e)
 
 }
 
-/* =================================
-TON SCANNER
-================================= */
+/* ===============================
+TON
+=============================== */
 
 async function scanTON(){
 
 const wallets = await getWallets("TON")
 
+for(const w of wallets){
+
 try{
 
-const res = await fetch(
-"https://toncenter.com/api/v2/getTransactions"
-)
+const url =
+`https://toncenter.com/api/v2/getTransactions?address=${w.deposit_address}`
 
-const data = await res.json()
+const r = await fetch(url)
+
+const data = await r.json()
 
 for(const tx of data.result || []){
 
-const address = tx.in_msg.destination
+const hash = tx.transaction_id.hash
 
-const user = wallets.find(
-w => w.deposit_address === address
-)
-
-if(!user) continue
-
-if(await txExists(tx.transaction_id.hash)) continue
+if(await txExists(hash)) continue
 
 const amount =
 tx.in_msg.value / Math.pow(10,COINS.TON.decimals)
 
 await creditDeposit(
-user.user_id,
+w.user_id,
 "TON",
 amount,
-tx.transaction_id.hash
+hash
 )
 
 }
@@ -265,9 +281,11 @@ console.log("TON scan error",e)
 
 }
 
-/* =================================
-SOL SCANNER
-================================= */
+}
+
+/* ===============================
+SOL
+=============================== */
 
 async function scanSOL(){
 
@@ -277,20 +295,23 @@ for(const w of wallets){
 
 try{
 
-const res = await fetch(
-"https://public-api.solscan.io/account/transactions?account="+w.deposit_address
-)
+const url =
+`https://public-api.solscan.io/account/transactions?account=${w.deposit_address}`
 
-const data = await res.json()
+const r = await fetch(url)
+
+const data = await r.json()
 
 for(const tx of data || []){
 
 if(await txExists(tx.txHash)) continue
 
+const amount = Math.abs(tx.changeAmount)
+
 await creditDeposit(
 w.user_id,
 "SOL",
-tx.changeAmount,
+amount,
 tx.txHash
 )
 
@@ -306,9 +327,9 @@ console.log("SOL scan error",e)
 
 }
 
-/* =================================
+/* ===============================
 SCAN ALL
-================================= */
+=============================== */
 
 async function scanAll(){
 
@@ -328,9 +349,9 @@ await scanSOL()
 
 }
 
-/* =================================
-START WATCHER
-================================= */
+/* ===============================
+START
+=============================== */
 
 function startWatcher(){
 
@@ -352,6 +373,4 @@ console.error("Deposit watcher error",e)
 
 }
 
-module.exports = {
-startWatcher
-}
+module.exports = { startWatcher }
