@@ -12,11 +12,18 @@ const db = require("./database")
 const startWS = require("./ws/wsHub")
 const { startSystemBots } = require("./systemBots")
 
-const app = express()
+/* =========================================
+ENV
+========================================= */
+
+const PORT = process.env.PORT || 3000
+const RUN_BOTS = process.env.BOTS === "true"
 
 /* =========================================
-MIDDLEWARE
+APP
 ========================================= */
+
+const app = express()
 
 app.use(cors())
 app.use(express.json({limit:"2mb"}))
@@ -29,17 +36,18 @@ app.get("/",(req,res)=>{
 
 res.json({
 name:"Bloxio Backend",
+mode: RUN_BOTS ? "BOT" : "API",
 status:"running",
-time:Date.now()
+time: Date.now()
 })
 
 })
 
 /* =========================================
-HEALTH CHECK (Render)
+HEALTH (RENDER)
 ========================================= */
 
-app.get("/health",async(req,res)=>{
+app.get("/health", async (req,res)=>{
 
 try{
 
@@ -61,10 +69,14 @@ status:"db_error"
 })
 
 /* =========================================
-API ROUTES
+ROUTES (API MODE ONLY)
 ========================================= */
 
-app.use("/",routes)
+if(!RUN_BOTS){
+
+app.use("/", routes)
+
+}
 
 /* =========================================
 ERROR HANDLER
@@ -72,7 +84,7 @@ ERROR HANDLER
 
 app.use((err,req,res,next)=>{
 
-console.error("API ERROR",err)
+console.error("API ERROR:",err)
 
 res.status(500).json({
 error:"internal_server_error"
@@ -81,14 +93,14 @@ error:"internal_server_error"
 })
 
 /* =========================================
-START SERVER
+SERVER START
 ========================================= */
 
 async function start(){
 
 try{
 
-/* test database */
+/* DB check */
 
 await db.query("SELECT NOW()")
 
@@ -96,38 +108,43 @@ console.log("✓ Database connected")
 
 const server = http.createServer(app)
 
-/* start websocket */
+/* WebSocket */
 
 startWS(server)
 
-/* start bots only if enabled */
-
-if(process.env.BOTS === "true"){
-
-console.log("✓ Starting system bots")
-
-startSystemBots()
-
-}
-
-/* render port */
-
-const PORT = process.env.PORT || 3000
+/* Start server */
 
 server.listen(PORT,()=>{
 
-console.log("🚀 Bloxio backend running on port",PORT)
+console.log(`🚀 Server running on port ${PORT}`)
+console.log(`Mode: ${RUN_BOTS ? "BOT" : "API"}`)
 
 })
 
-/* graceful shutdown */
+/* START BOTS (Fly only) */
 
-process.on("SIGTERM",shutdown)
-process.on("SIGINT",shutdown)
+if(RUN_BOTS){
+
+console.log("🤖 Starting system bots...")
+
+setTimeout(()=>{
+
+startSystemBots()
+
+},2000)
+
+}
+
+/* =========================================
+GRACEFUL SHUTDOWN
+========================================= */
+
+process.on("SIGINT", shutdown)
+process.on("SIGTERM", shutdown)
 
 function shutdown(){
 
-console.log("Shutting down server")
+console.log("Shutting down...")
 
 server.close(()=>{
 process.exit(0)
@@ -137,7 +154,7 @@ process.exit(0)
 
 }catch(e){
 
-console.error("Startup error",e)
+console.error("Startup error:",e)
 
 process.exit(1)
 
