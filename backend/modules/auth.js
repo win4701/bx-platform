@@ -4,17 +4,26 @@ const express = require("express")
 const router = express.Router()
 
 const jwt = require("jsonwebtoken")
+const crypto = require("crypto")
+
 const db = require("../database")
 
-/* ================================
-JWT CONFIG
-================================ */
+/* =========================================
+CONFIG
+========================================= */
 
-const JWT_SECRET = process.env.JWT_SECRET || "bloxio_secret"
+const JWT_SECRET = process.env.JWT_SECRET
 
-/* ================================
+if(!JWT_SECRET){
+console.error("JWT_SECRET missing")
+process.exit(1)
+}
+
+const TOKEN_EXPIRY = "30d"
+
+/* =========================================
 CREATE TOKEN
-================================ */
+========================================= */
 
 function createToken(user){
 
@@ -25,37 +34,29 @@ telegram_id:user.telegram_id
 },
 JWT_SECRET,
 {
-expiresIn:"30d"
+expiresIn:TOKEN_EXPIRY
 }
 )
 
 }
 
-/* ================================
+/* =========================================
 AUTH MIDDLEWARE
-================================ */
+========================================= */
 
 function authMiddleware(req,res,next){
 
 try{
 
-const authHeader = req.headers.authorization
+const header = req.headers.authorization
 
-if(!authHeader){
+if(!header){
 return res.status(401).json({
 error:"unauthorized"
 })
 }
 
-const parts = authHeader.split(" ")
-
-if(parts.length !== 2){
-return res.status(401).json({
-error:"invalid_authorization_format"
-})
-}
-
-const token = parts[1]
+const token = header.split(" ")[1]
 
 const decoded = jwt.verify(token,JWT_SECRET)
 
@@ -73,55 +74,39 @@ error:"invalid_token"
 
 }
 
-/* ================================
-TELEGRAM LOGIN
-================================ */
+/* =========================================
+VERIFY TELEGRAM HASH
+========================================= */
 
-router.post("/telegram", async(req,res)=>{
+function verifyTelegram(data){
 
-try{
+if(!data.hash) return false
 
-let { telegram_id, username } = req.body
+const secret = crypto
+.createHash("sha256")
+.update(process.env.TELEGRAM_BOT_TOKEN)
+.digest()
 
-if(!telegram_id){
+const checkString = Object.keys(data)
+.filter(k => k !== "hash")
+.sort()
+.map(k => `${k}=${data[k]}`)
+.join("\n")
 
-return res.status(400).json({
-error:"telegram_id_required"
-})
+const hmac = crypto
+.createHmac("sha256",secret)
+.update(checkString)
+.digest("hex")
+
+return hmac === data.hash
 
 }
 
-username = username || "player"
+/* =========================================
+CREATE USER WALLETS
+========================================= */
 
-/* CHECK USER */
-
-let user = await db.query(
-
-`SELECT id,telegram_id,username
-FROM users
-WHERE telegram_id=$1`,
-[telegram_id]
-
-)
-
-/* CREATE USER */
-
-if(user.rows.length === 0){
-
-const result = await db.query(
-
-`INSERT INTO users
-(telegram_id,username)
-VALUES($1,$2)
-RETURNING id,telegram_id,username`,
-
-[telegram_id,username]
-
-)
-
-user = result.rows[0]
-
-/* CREATE WALLET BALANCES */
+async function createWallets(userId){
 
 const assets = [
 "BX",
@@ -146,19 +131,80 @@ await db.query(
 VALUES($1,$2,0)
 ON CONFLICT DO NOTHING`,
 
-[user.id,asset]
+[userId,asset]
 
 )
 
 }
 
+}
+
+/* =========================================
+TELEGRAM LOGIN
+========================================= */
+
+router.post("/telegram", async(req,res)=>{
+
+try{
+
+let { telegram_id, username } = req.body
+
+if(!telegram_id){
+
+return res.status(400).json({
+error:"telegram_id_required"
+})
+
+}
+
+username = username || "player"
+
+/* FIND USER */
+
+let user = await db.query(
+
+`SELECT id,telegram_id,username
+FROM users
+WHERE telegram_id=$1`,
+
+[telegram_id]
+
+)
+
+if(user.rows.length === 0){
+
+const result = await db.query(
+
+`INSERT INTO users
+(telegram_id,username,created_at)
+VALUES($1,$2,NOW())
+RETURNING id,telegram_id,username`,
+
+[telegram_id,username]
+
+)
+
+user = result.rows[0]
+
+await createWallets(user.id)
+
 }else{
 
 user = user.rows[0]
 
+await db.query(
+
+`UPDATE users
+SET last_login = NOW()
+WHERE id=$1`,
+
+[user.id]
+
+)
+
 }
 
-/* CREATE JWT */
+/* CREATE TOKEN */
 
 const token = createToken(user)
 
@@ -167,6 +213,7 @@ const token = createToken(user)
 res.json({
 
 success:true,
+
 token,
 
 user:{
@@ -189,24 +236,25 @@ error:"auth_failed"
 
 })
 
-/* ================================
+/* =========================================
 CURRENT USER
-================================ */
+========================================= */
 
 router.get("/me", authMiddleware, async(req,res)=>{
 
 try{
 
-const user = await db.query(
+const r = await db.query(
 
 `SELECT id,telegram_id,username
 FROM users
 WHERE id=$1`,
+
 [req.user.id]
 
 )
 
-if(!user.rows.length){
+if(!r.rows.length){
 
 return res.status(404).json({
 error:"user_not_found"
@@ -215,7 +263,7 @@ error:"user_not_found"
 }
 
 res.json({
-user:user.rows[0]
+user:r.rows[0]
 })
 
 }catch(e){
@@ -230,9 +278,9 @@ error:"internal_error"
 
 })
 
-/* ================================
-EXPORTS
-================================ */
+/* =========================================
+EXPORT
+========================================= */
 
 module.exports = router
 module.exports.authMiddleware = authMiddleware
