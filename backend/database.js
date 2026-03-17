@@ -4,57 +4,72 @@ require("dotenv").config()
 
 const { Pool } = require("pg")
 
-/* ================================
-DATABASE CONFIG
-================================ */
+/* =====================================
+CONFIG
+===================================== */
+
+const DATABASE_URL = process.env.DATABASE_URL
+
+if(!DATABASE_URL){
+
+console.error("DATABASE_URL missing")
+process.exit(1)
+
+}
+
+/* =====================================
+POOL
+===================================== */
 
 const pool = new Pool({
 
-connectionString: process.env.DATABASE_URL,
+connectionString: DATABASE_URL,
 
-ssl: process.env.DATABASE_URL?.includes("render")
+ssl: DATABASE_URL.includes("render")
 ? { rejectUnauthorized:false }
 : false,
 
-max: 20,
+max: 30,
 idleTimeoutMillis: 30000,
-connectionTimeoutMillis: 5000
+connectionTimeoutMillis: 8000,
+
+allowExitOnIdle:false
 
 })
 
-/* ================================
-TEST CONNECTION
-================================ */
+/* =====================================
+POOL EVENTS
+===================================== */
 
-pool.on("connect", () => {
+pool.on("connect", ()=>{
 
 console.log("✓ PostgreSQL connected")
 
 })
 
-pool.on("error", (err) => {
+pool.on("error",(err)=>{
 
-console.error("PostgreSQL error:", err)
+console.error("PostgreSQL pool error:",err)
 
 })
 
-/* ================================
-QUERY HELPER
-================================ */
+/* =====================================
+QUERY
+===================================== */
 
-async function query(text, params){
-
-try{
+async function query(text,params){
 
 const start = Date.now()
 
-const res = await pool.query(text, params)
+try{
+
+const res = await pool.query(text,params)
 
 const duration = Date.now() - start
 
-if(duration > 500){
+if(duration > 800){
 
-console.log("Slow query:", text, duration,"ms")
+console.log("Slow query:",duration,"ms")
 
 }
 
@@ -62,7 +77,7 @@ return res
 
 }catch(err){
 
-console.error("DB Query error:", err)
+console.error("DB query failed",err)
 
 throw err
 
@@ -70,11 +85,11 @@ throw err
 
 }
 
-/* ================================
-TRANSACTION HELPER
-================================ */
+/* =====================================
+TRANSACTION
+===================================== */
 
-async function transaction(callback){
+async function transaction(fn){
 
 const client = await pool.connect()
 
@@ -82,7 +97,7 @@ try{
 
 await client.query("BEGIN")
 
-const result = await callback(client)
+const result = await fn(client)
 
 await client.query("COMMIT")
 
@@ -102,31 +117,55 @@ client.release()
 
 }
 
-/* ================================
-HEALTH CHECK
-================================ */
+/* =====================================
+HEALTH
+===================================== */
 
 async function health(){
 
 try{
 
-const r = await pool.query("SELECT NOW()")
+const r = await pool.query("SELECT NOW() as time")
 
-return r.rows[0]
+return {
+
+status:"ok",
+time:r.rows[0].time
+
+}
 
 }catch(e){
 
-console.error("DB health check failed")
+return {
 
-return null
+status:"down"
+
+}
 
 }
 
 }
 
-/* ================================
-EXPORTS
-================================ */
+/* =====================================
+GRACEFUL SHUTDOWN
+===================================== */
+
+async function shutdown(){
+
+console.log("Closing PostgreSQL pool")
+
+await pool.end()
+
+process.exit(0)
+
+}
+
+process.on("SIGINT",shutdown)
+process.on("SIGTERM",shutdown)
+
+/* =====================================
+EXPORT
+===================================== */
 
 module.exports = {
 
@@ -135,4 +174,4 @@ query,
 transaction,
 health
 
-}
+  }
