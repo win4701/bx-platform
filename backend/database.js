@@ -1,7 +1,6 @@
 "use strict"
 
 require("dotenv").config()
-
 const { Pool } = require("pg")
 
 /* =====================================
@@ -10,156 +9,133 @@ CONFIG
 
 const DATABASE_URL = process.env.DATABASE_URL
 
-if(!DATABASE_URL){
-console.error(" DATABASE_URL missing")
-process.exit(1)
+if (!DATABASE_URL) {
+  console.error("❌ DATABASE_URL missing")
+  process.exit(1)
 }
 
 /* =====================================
-POOL (SMART SSL)
+SMART SSL (Render + Fly compatible)
 ===================================== */
 
 const isProd = process.env.NODE_ENV === "production"
 
 const pool = new Pool({
-connectionString: DATABASE_URL,
+  connectionString: DATABASE_URL,
 
-ssl: isProd
-? { rejectUnauthorized:false }
-: false,
+  ssl: {
+    rejectUnauthorized: false
+  },
 
-max: 20,
-idleTimeoutMillis: 30000,
-connectionTimeoutMillis: 10000
+  max: 10, // أقل = استقرار أعلى على Render
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 15000,
+
+  keepAlive: true,
 })
 
 /* =====================================
-POOL EVENTS
+AUTO RECONNECT (IMPORTANT)
 ===================================== */
 
-pool.on("connect", ()=>{
-console.log(" PostgreSQL connected")
+pool.on("error", (err) => {
+  console.error("❌ PostgreSQL pool error:", err.message)
 })
 
-pool.on("error",(err)=>{
-console.error(" PostgreSQL pool error:",err)
+pool.on("connect", () => {
+  console.log("✅ PostgreSQL connected")
 })
 
 /* =====================================
-SAFE QUERY (WITH RETRY)
+SAFE QUERY (WITH RETRY + BACKOFF)
 ===================================== */
 
-async function query(text, params, retry = 1){
+async function query(text, params, retry = 2) {
+  try {
+    return await pool.query(text, params)
+  } catch (err) {
+    console.error("❌ DB query error:", err.message)
 
-const start = Date.now()
+    if (retry > 0) {
+      console.log("🔁 Retrying query...")
+      await new Promise(res => setTimeout(res, 500))
+      return query(text, params, retry - 1)
+    }
 
-try{
-
-const res = await pool.query(text, params)
-
-const duration = Date.now() - start
-
-if(duration > 500){
-console.log(" Slow query:", duration, "ms")
-}
-
-return res
-
-}catch(err){
-
-console.error("DB query error:", err.message)
-
-if(retry > 0){
-console.log(" Retrying query...")
-return query(text, params, retry - 1)
-}
-
-throw err
-
-}
-
+    throw err
+  }
 }
 
 /* =====================================
-TRANSACTION (SAFE)
+TRANSACTION SAFE
 ===================================== */
 
-async function transaction(fn){
+async function transaction(fn) {
+  const client = await pool.connect()
 
-const client = await pool.connect()
+  try {
+    await client.query("BEGIN")
 
-try{
+    const result = await fn(client)
 
-await client.query("BEGIN")
+    await client.query("COMMIT")
 
-const result = await fn(client)
-
-await client.query("COMMIT")
-
-return result
-
-}catch(err){
-
-await client.query("ROLLBACK")
-
-console.error(" Transaction failed:", err.message)
-
-throw err
-
-}finally{
-
-client.release()
-
-}
-
+    return result
+  } catch (err) {
+    await client.query("ROLLBACK")
+    console.error("❌ Transaction failed:", err.message)
+    throw err
+  } finally {
+    client.release()
+  }
 }
 
 /* =====================================
-HEALTH CHECK (PRODUCTION READY)
+HEALTH CHECK
 ===================================== */
 
-async function health(){
-
-try{
-
-const start = Date.now()
-
-await pool.query("SELECT 1")
-
-const latency = Date.now() - start
-
-return {
-status:"ok",
-latency,
-connections: pool.totalCount
-}
-
-}catch(e){
-
-return {
-status:"down",
-error:e.message
-}
-
-}
-
+async function health() {
+  try {
+    const start = Date.now()
+    await pool.query("SELECT 1")
+    return {
+      status: "ok",
+      latency: Date.now() - start,
+      connections: pool.totalCount
+    }
+  } catch (e) {
+    return {
+      status: "down",
+      error: e.message
+    }
+  }
 }
 
 /* =====================================
-GRACEFUL SHUTDOWN (SAFE)
+KEEP ALIVE (VERY IMPORTANT FOR FLY)
 ===================================== */
 
-async function shutdown(){
+setInterval(async () => {
+  try {
+    await pool.query("SELECT 1")
+    console.log("💓 DB keep-alive")
+  } catch (e) {
+    console.error("⚠️ Keep-alive failed:", e.message)
+  }
+}, 30000)
 
-console.log(" Closing PostgreSQL pool...")
+/* =====================================
+GRACEFUL SHUTDOWN
+===================================== */
 
-try{
-await pool.end()
-console.log(" DB pool closed")
-}catch(e){
-console.error("Shutdown error:", e.message)
-}
-
+async function shutdown() {
+  console.log("🔻 Closing PostgreSQL pool...")
+  try {
+    await pool.end()
+    console.log("✅ DB pool closed")
+  } catch (e) {
+    console.error("Shutdown error:", e.message)
+  }
 }
 
 process.on("SIGINT", shutdown)
@@ -170,8 +146,8 @@ EXPORT
 ===================================== */
 
 module.exports = {
-pool,
-query,
-transaction,
-health
-  }
+  pool,
+  query,
+  transaction,
+  health
+}
