@@ -14,46 +14,126 @@ const { startSystemBots } = require("./systemBots")
 
 const app = express()
 
+/* =========================================
+MIDDLEWARE
+========================================= */
+
 app.use(cors())
-app.use(express.json())
+app.use(express.json({limit:"2mb"}))
 
-app.use("/", routes)
+/* =========================================
+ROOT
+========================================= */
 
-app.get("/", (req,res)=>{
-res.json({status:"Bloxio backend running"})
+app.get("/",(req,res)=>{
+
+res.json({
+name:"Bloxio Backend",
+status:"running",
+time:Date.now()
 })
+
+})
+
+/* =========================================
+HEALTH CHECK (Render)
+========================================= */
+
+app.get("/health",async(req,res)=>{
+
+try{
+
+await db.query("SELECT 1")
+
+res.json({
+status:"ok",
+uptime:process.uptime()
+})
+
+}catch(e){
+
+res.status(500).json({
+status:"db_error"
+})
+
+}
+
+})
+
+/* =========================================
+API ROUTES
+========================================= */
+
+app.use("/",routes)
+
+/* =========================================
+ERROR HANDLER
+========================================= */
+
+app.use((err,req,res,next)=>{
+
+console.error("API ERROR",err)
+
+res.status(500).json({
+error:"internal_server_error"
+})
+
+})
+
+/* =========================================
+START SERVER
+========================================= */
 
 async function start(){
 
 try{
 
-await db.connect()
+/* test database */
 
-console.log("Database connected")
+await db.query("SELECT NOW()")
+
+console.log("✓ Database connected")
 
 const server = http.createServer(app)
 
-/* websocket */
+/* start websocket */
 
 startWS(server)
 
-/* start bots only on Fly */
+/* start bots only if enabled */
 
 if(process.env.BOTS === "true"){
 
-console.log("Starting system bots")
+console.log("✓ Starting system bots")
 
 startSystemBots()
 
 }
 
+/* render port */
+
 const PORT = process.env.PORT || 3000
 
 server.listen(PORT,()=>{
 
-console.log("Server running on",PORT)
+console.log("🚀 Bloxio backend running on port",PORT)
 
 })
+
+/* graceful shutdown */
+
+process.on("SIGTERM",shutdown)
+process.on("SIGINT",shutdown)
+
+function shutdown(){
+
+console.log("Shutting down server")
+
+server.close(()=>{
+process.exit(0)
+})
+
+}
 
 }catch(e){
 
