@@ -1,42 +1,164 @@
 "use strict"
 
+/* =========================================
+IMPORT ENGINES
+========================================= */
+
+const { startMatching } = require("./engines/matchingEngine")
 const marketBot = require("./engines/marketBot")
-const liquidity = require("./engines/liquidityEngine")
-const mining = require("./engines/miningEngine")
-const deposits = require("./services/depositWatcher")
+const liquidityEngine = require("./engines/liquidityEngine")
+const candleEngine = require("./engines/candleEngine")
+const tradesFeed = require("./engines/tradesFeed")
+
+const miningEngine = require("./engines/miningEngine")
+const casinoEngine = require("./engines/casinoEngine")
+
+const depositWatcher = require("./services/depositWatcher")
+
+/* =========================================
+STATE
+========================================= */
 
 let started = false
 
-function startSystemBots(){
+/* =========================================
+SAFE START WRAPPER
+========================================= */
 
-if(started) return
-
-started = true
-
-console.log("Starting Bloxio bots")
+function safeStart(name, fn){
 
 try{
-marketBot.start()
-console.log("Market bot started")
-}catch(e){}
 
-try{
-liquidity.start()
-console.log("Liquidity engine started")
-}catch(e){}
+fn()
+console.log("✓",name,"started")
 
-try{
-mining.start()
-console.log("Mining engine started")
-}catch(e){}
+}catch(e){
 
-try{
-deposits.start()
-console.log("Deposit watcher started")
-}catch(e){}
-
-console.log("All bots running")
+console.error("❌",name,"failed:",e)
 
 }
 
-module.exports = { startSystemBots }
+}
+
+/* =========================================
+LOOP PROTECTION
+========================================= */
+
+function safeInterval(name, fn, time){
+
+setInterval(async()=>{
+
+try{
+
+await fn()
+
+}catch(e){
+
+console.error("Loop error:",name,e)
+
+}
+
+},time)
+
+}
+
+/* =========================================
+START SYSTEM BOTS
+========================================= */
+
+function startSystemBots(){
+
+if(started){
+console.log("Bots already running")
+return
+}
+
+started = true
+
+console.log("🚀 Starting Bloxio System Bots...")
+
+/* =========================================
+MARKET CORE
+========================================= */
+
+safeStart("Matching Engine", ()=>{
+
+startMatching()
+
+})
+
+safeStart("Market Bot", ()=>{
+
+if(marketBot.start) marketBot.start()
+
+})
+
+safeStart("Liquidity Engine", ()=>{
+
+if(liquidityEngine.start) liquidityEngine.start()
+
+})
+
+safeStart("Candle Engine", ()=>{
+
+if(candleEngine.start) candleEngine.start()
+
+})
+
+safeStart("Trades Feed", ()=>{
+
+if(tradesFeed.start) tradesFeed.start()
+
+})
+
+/* =========================================
+CASINO
+========================================= */
+
+safeStart("Casino Engine", ()=>{
+
+if(casinoEngine.start) casinoEngine.start()
+
+})
+
+/* =========================================
+MINING
+========================================= */
+
+safeStart("Mining Engine", ()=>{
+
+if(miningEngine.start) miningEngine.start()
+
+})
+
+/* =========================================
+DEPOSITS
+========================================= */
+
+safeStart("Deposit Watcher", ()=>{
+
+if(depositWatcher.startWatcher){
+depositWatcher.startWatcher()
+}
+
+})
+
+/* =========================================
+HEARTBEAT
+========================================= */
+
+safeInterval("Heartbeat", async()=>{
+
+console.log("💓 Bots running",new Date().toISOString())
+
+},60000)
+
+}
+
+/* =========================================
+EXPORT
+========================================= */
+
+module.exports = {
+startSystemBots
+}
