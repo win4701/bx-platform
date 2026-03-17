@@ -2,174 +2,145 @@
 
 const db = require("../database")
 const ledger = require("../core/ledger")
+const tradesFeed = require("./tradesFeed")
 
 /* =========================================
-   MARKET CONFIG
+CONFIG
 ========================================= */
 
 const PAIR = "BX_USDT"
-const REFERENCE_PRICE = 45
+const FEE = 0.002 // 0.2%
 
 /* =========================================
-   GET MARKET PRICE
+GET PRICE
 ========================================= */
 
 async function getPrice(){
 
 const r = await db.query(
-
-`SELECT price
-FROM trades
+`SELECT price FROM trades
 WHERE pair=$1
-ORDER BY id DESC
-LIMIT 1`,
-
+ORDER BY id DESC LIMIT 1`,
 [PAIR]
-
 )
 
-if(!r.rows.length) return REFERENCE_PRICE
+if(!r.rows.length) return 45
 
 return Number(r.rows[0].price)
 
 }
 
 /* =========================================
-   BUY BX
+EXECUTE TRADE
 ========================================= */
 
-async function buyBX(userId, amountUSDT){
+async function executeTrade({ userId, side, amount }){
 
-amountUSDT = Number(amountUSDT)
+amount = Number(amount)
 
-if(amountUSDT <= 0){
+if(amount <= 0){
 throw new Error("invalid_amount")
 }
 
 const price = await getPrice()
 
-const bx = amountUSDT / price
+let result
+
+if(side === "buy"){
+
+const cost = amount
+const bx = (cost / price) * (1 - FEE)
 
 await ledger.trade({
-
 userId,
 assetIn:"USDT",
 assetOut:"BX",
-amountIn:amountUSDT,
+amountIn:cost,
 amountOut:bx
-
 })
 
-await db.query(
+result = { amount: bx }
 
-`INSERT INTO trades
-(pair,price,amount,side,user_id)
-VALUES($1,$2,$3,'buy',$4)`,
+}else{
 
-[
-PAIR,
-price,
-bx,
-userId
-]
-
-)
-
-if(global.broadcast){
-
-global.broadcast({
-type:"trade",
-pair:PAIR,
-side:"buy",
-price,
-amount:bx
-})
-
-}
-
-return {
-
-pair:PAIR,
-side:"buy",
-price,
-amount:bx
-
-}
-
-}
-
-/* =========================================
-   SELL BX
-========================================= */
-
-async function sellBX(userId, amountBX){
-
-amountBX = Number(amountBX)
-
-if(amountBX <= 0){
-throw new Error("invalid_amount")
-}
-
-const price = await getPrice()
-
-const usdt = amountBX * price
+const usdt = (amount * price) * (1 - FEE)
 
 await ledger.trade({
-
 userId,
 assetIn:"BX",
 assetOut:"USDT",
-amountIn:amountBX,
+amountIn:amount,
 amountOut:usdt
-
 })
 
-await db.query(
-
-`INSERT INTO trades
-(pair,price,amount,side,user_id)
-VALUES($1,$2,$3,'sell',$4)`,
-
-[
-PAIR,
-price,
-amountBX,
-userId
-]
-
-)
-
-if(global.broadcast){
-
-global.broadcast({
-type:"trade",
-pair:PAIR,
-side:"sell",
-price,
-amount:amountBX
-})
+result = { amount: usdt }
 
 }
 
-return {
+/* store trade */
 
-pair:PAIR,
-side:"sell",
+await db.query(
+`INSERT INTO trades
+(pair,price,amount,side,user_id)
+VALUES($1,$2,$3,$4,$5)`,
+[
+PAIR,
 price,
-amount:amountBX
+amount,
+side,
+userId
+]
+)
 
+/* publish real-time */
+
+await tradesFeed.publishTrade({
+pair:PAIR,
+price,
+amount,
+side
+})
+
+return {
+pair:PAIR,
+price,
+side,
+...result
 }
 
 }
 
 /* =========================================
-   MARKET STATS
+PUBLIC API
+========================================= */
+
+async function buyBX(userId, usdt){
+
+return executeTrade({
+userId,
+side:"buy",
+amount:usdt
+})
+
+}
+
+async function sellBX(userId, bx){
+
+return executeTrade({
+userId,
+side:"sell",
+amount:bx
+})
+
+}
+
+/* =========================================
+STATS
 ========================================= */
 
 async function stats(){
 
 const r = await db.query(
-
 `SELECT
 COUNT(*) as trades,
 SUM(amount) as volume,
@@ -178,46 +149,35 @@ MIN(price) as low
 FROM trades
 WHERE pair=$1
 AND created_at > NOW() - INTERVAL '24 hours'`,
-
 [PAIR]
-
 )
 
 const price = await getPrice()
 
 return {
-
 pair:PAIR,
 price,
 volume:Number(r.rows[0].volume || 0),
 high:Number(r.rows[0].high || price),
 low:Number(r.rows[0].low || price),
 trades:Number(r.rows[0].trades || 0)
-
 }
 
 }
 
 /* =========================================
-   TRADE HISTORY
+HISTORY
 ========================================= */
 
 async function history(){
 
 const r = await db.query(
-
-`SELECT
-price,
-amount,
-side,
-created_at
+`SELECT price,amount,side,created_at
 FROM trades
 WHERE pair=$1
 ORDER BY id DESC
 LIMIT 100`,
-
 [PAIR]
-
 )
 
 return r.rows
@@ -225,58 +185,49 @@ return r.rows
 }
 
 /* =========================================
-   ORDERBOOK
+ORDERBOOK (REAL)
 ========================================= */
 
 async function orderbook(){
 
-const buys = await db.query(
-
-`SELECT price,SUM(amount) as amount
+const bids = await db.query(
+`SELECT price, SUM(amount) as amount
 FROM orders
 WHERE pair=$1 AND side='buy'
 GROUP BY price
 ORDER BY price DESC
 LIMIT 20`,
-
 [PAIR]
-
 )
 
-const sells = await db.query(
-
-`SELECT price,SUM(amount) as amount
+const asks = await db.query(
+`SELECT price, SUM(amount) as amount
 FROM orders
 WHERE pair=$1 AND side='sell'
 GROUP BY price
 ORDER BY price ASC
 LIMIT 20`,
-
 [PAIR]
-
 )
 
 return {
-
 pair:PAIR,
-bids:buys.rows,
-asks:sells.rows
-
+bids:bids.rows,
+asks:asks.rows
 }
 
 }
 
 /* =========================================
-   EXPORT
+EXPORT
 ========================================= */
 
 module.exports = {
-
 buyBX,
 sellBX,
 stats,
 history,
 orderbook,
-getPrice
-
+getPrice,
+executeTrade
    }
