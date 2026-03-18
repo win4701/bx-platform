@@ -1,130 +1,147 @@
-"use strict"
+"use strict";
 
-const express = require("express")
-const router = express.Router()
+const express = require("express");
+const router = express.Router();
+
+const rateLimit = require("express-rate-limit");
+const db = require("./database");
 
 /* ======================================
 MODULES
 ====================================== */
 
-const auth = require("./modules/auth")
-const wallet = require("./modules/wallet")
-const casino = require("./modules/casino")
-const market = require("./modules/market")
-const mining = require("./modules/mining")
-const airdrop = require("./modules/airdrop")
-const payments = require("./modules/payments")
+const auth = require("./modules/auth");
+const wallet = require("./modules/wallet");
+const casino = require("./modules/casino");
+const market = require("./modules/market");
+const mining = require("./modules/mining");
+const airdrop = require("./modules/airdrop");
+const payments = require("./modules/payments");
 
 /* ======================================
-MIDDLEWARE
+RATE LIMIT
 ====================================== */
 
-function requestLogger(req,res,next){
+const limiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 120,
+});
 
-console.log(
+router.use(limiter);
 
-req.method,
-req.originalUrl,
-req.ip
+/* ======================================
+LOGGER (ADVANCED)
+====================================== */
 
-)
+router.use((req, res, next) => {
 
-next()
+  const start = Date.now();
 
-}
+  res.on("finish", () => {
 
-router.use(requestLogger)
+    const duration = Date.now() - start;
+
+    console.log(
+      `${req.method} ${req.originalUrl} ${res.statusCode} ${duration}ms`
+    );
+
+  });
+
+  next();
+});
 
 /* ======================================
 ROOT
 ====================================== */
 
-router.get("/",(req,res)=>{
-
-res.json({
-
-name:"Bloxio API",
-status:"online",
-version:"1.0",
-time:Date.now()
-
-})
-
-})
+router.get("/", (req, res) => {
+  res.json({
+    name: "Bloxio API",
+    status: "online",
+    version: "2.0",
+    time: Date.now()
+  });
+});
 
 /* ======================================
-HEALTH
+HEALTH (REAL)
 ====================================== */
 
-router.get("/health",(req,res)=>{
+router.get("/health", async (req, res) => {
 
-res.json({
+  try {
 
-status:"ok",
-uptime:process.uptime(),
-memory:process.memoryUsage().rss
+    const dbHealth = await db.health();
 
-})
+    res.json({
+      status: "ok",
+      uptime: process.uptime(),
+      memory: process.memoryUsage().rss,
+      db: dbHealth
+    });
 
-})
+  } catch (e) {
+
+    res.status(500).json({
+      status: "error",
+      error: e.message
+    });
+
+  }
+
+});
 
 /* ======================================
 API VERSION
 ====================================== */
 
-const api = express.Router()
+const api = express.Router();
 
 /* ======================================
 MODULE ROUTES
 ====================================== */
 
-api.use("/auth", auth)
+api.use("/auth", auth);
+api.use("/wallet", wallet);
+api.use("/casino", casino);
+api.use("/market", market);
+api.use("/mining", mining);
+api.use("/airdrop", airdrop);
+api.use("/payments", payments);
 
-api.use("/wallet", wallet)
+/* ======================================
+ATTACH VERSION
+====================================== */
 
-api.use("/casino", casino)
-
-api.use("/market", market)
-
-api.use("/mining", mining)
-
-api.use("/airdrop", airdrop)
-
-api.use("/payments", payments)
-
-/* attach version */
-
-router.use("/api/v1", api)
+router.use("/api/v1", api);
 
 /* ======================================
 NOT FOUND
 ====================================== */
 
-router.use((req,res)=>{
+router.use((req, res) => {
 
-res.status(404).json({
+  res.status(404).json({
+    error: "endpoint_not_found",
+    path: req.originalUrl
+  });
 
-error:"endpoint_not_found",
-path:req.originalUrl
-
-})
-
-})
+});
 
 /* ======================================
-ERROR HANDLER
+ERROR HANDLER (SMART)
 ====================================== */
 
-router.use((err,req,res,next)=>{
+router.use((err, req, res, next) => {
 
-console.error("API error:",err)
+  console.error("🔥 API ERROR:", err.message);
 
-res.status(500).json({
+  const status = err.status || 500;
 
-error:"internal_server_error"
+  res.status(status).json({
+    error: err.message || "internal_server_error"
+  });
 
-})
+});
 
-})
-
-module.exports = router
+module.exports = router;
