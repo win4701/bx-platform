@@ -1,75 +1,159 @@
-const db = require("../database")
-const marketWS = require("../ws/marketWS")
+"use strict";
 
-let candles = {}
+const db = require("../database");
+const tradesFeed = require("./tradesFeed");
+
+/* =========================================
+CONFIG
+========================================= */
+
+const TIMEFRAMES = {
+  "1m": 60 * 1000,
+  "5m": 5 * 60 * 1000,
+  "15m": 15 * 60 * 1000
+};
+
+const candles = {}; // { pair: { tf: { bucket: candle } } }
+
+/* =========================================
+BUCKET
+========================================= */
+
+function getBucket(time, tf){
+  return Math.floor(time / tf) * tf;
+}
+
+/* =========================================
+UPDATE
+========================================= */
 
 function updateCandle(pair, price, amount){
 
-const minute = Math.floor(Date.now()/60000)
+  const now = Date.now();
 
-if(!candles[pair] || candles[pair].minute !== minute){
+  if(!candles[pair]) candles[pair] = {};
 
-candles[pair] = {
-minute,
-open:price,
-high:price,
-low:price,
-close:price,
-volume:amount
-}
+  for(const tfKey in TIMEFRAMES){
 
-}else{
+    const tf = TIMEFRAMES[tfKey];
+    const bucket = getBucket(now, tf);
 
-const c = candles[pair]
+    if(!candles[pair][tfKey]) candles[pair][tfKey] = {};
 
-c.high = Math.max(c.high,price)
-c.low = Math.min(c.low,price)
-c.close = price
-c.volume += amount
+    if(!candles[pair][tfKey][bucket]){
 
-}
+      candles[pair][tfKey][bucket] = {
+        time: bucket,
+        open: price,
+        high: price,
+        low: price,
+        close: price,
+        volume: amount
+      };
 
-}
+    }else{
 
-async function saveCandle(pair){
+      const c = candles[pair][tfKey][bucket];
 
-const c = candles[pair]
-if(!c) return
+      c.high = Math.max(c.high, price);
+      c.low = Math.min(c.low, price);
+      c.close = price;
+      c.volume += amount;
+    }
 
-await db.query(`
-INSERT INTO candles(pair,minute,open,high,low,close,volume)
-VALUES($1,$2,$3,$4,$5,$6,$7)
-`,[
-pair,
-c.minute,
-c.open,
-c.high,
-c.low,
-c.close,
-c.volume
-])
-
-marketWS.broadcast({
-type:"candle",
-pair,
-candle:c
-})
+  }
 
 }
+
+/* =========================================
+SAVE
+========================================= */
+
+async function save(pair, tfKey, candle){
+
+  await db.query(`
+    INSERT INTO candles(pair,timeframe,time,open,high,low,close,volume)
+    VALUES($1,$2,$3,$4,$5,$6,$7,$8)
+  `,[
+    pair,
+    tfKey,
+    candle.time,
+    candle.open,
+    candle.high,
+    candle.low,
+    candle.close,
+    candle.volume
+  ]);
+
+}
+
+/* =========================================
+LOOP
+========================================= */
 
 function start(){
 
-setInterval(()=>{
+  console.log("📊 Candle Engine started");
 
-Object.keys(candles).forEach(pair=>{
-saveCandle(pair)
-})
+  setInterval(async ()=>{
 
-},60000)
+    for(const pair in candles){
+
+      for(const tfKey in candles[pair]){
+
+        const tfCandles = candles[pair][tfKey];
+
+        for(const key in tfCandles){
+
+          const candle = tfCandles[key];
+
+          await save(pair, tfKey, candle);
+
+          /* broadcast via tradesFeed */
+
+          tradesFeed.publishTrade({
+            pair,
+            price: candle.close,
+            amount: candle.volume,
+            side: "candle"
+          });
+
+        }
+
+      }
+
+      /* clear memory */
+      candles[pair] = {};
+
+    }
+
+  }, 60 * 1000);
 
 }
 
-module.exports={
-updateCandle,
-start
+/* =========================================
+GET CANDLES
+========================================= */
+
+async function getCandles(pair, timeframe = "1m", limit = 100){
+
+  const r = await db.query(`
+    SELECT time,open,high,low,close,volume
+    FROM candles
+    WHERE pair=$1 AND timeframe=$2
+    ORDER BY time DESC
+    LIMIT $3
+  `,[pair,timeframe,limit]);
+
+  return r.rows.reverse();
 }
+
+/* =========================================
+EXPORT
+========================================= */
+
+module.exports = {
+  updateCandle,
+  start,
+  getCandles
+};
