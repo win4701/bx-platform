@@ -687,6 +687,7 @@ function bindCasinoGames() {
 ===================================================== */
 
 function openCasinoGame(game) {
+
   CASINO.currentGame = game;
 
   document.querySelectorAll(".game").forEach(g =>
@@ -696,9 +697,40 @@ function openCasinoGame(game) {
   const card = document.querySelector(`.game[data-game="${game}"]`);
   if (card) card.classList.add("active");
 
-  renderGameUI(game);
-}
+  /* ================= CRASH SPECIAL ================= */
 
+  if (game === "crash") {
+
+    const box = document.getElementById("casinoGameBox");
+
+    box.innerHTML = `
+      <div id="crashGame">
+
+        <canvas id="crashChart" width="600" height="300"></canvas>
+
+        <h1 id="crashMultiplier">1.00x</h1>
+
+        <button id="crashBetBtn">BET</button>
+        <button id="crashCashoutBtn">CASHOUT</button>
+
+        <div id="crashPlayers"></div>
+
+      </div>
+    `;
+
+    if (window.initCrash) {
+      setTimeout(() => {
+        window.initCrash();
+      }, 100);
+    }
+
+    return; 
+  }
+
+  /* ================= OTHER GAMES ================= */
+
+  renderGameUI(game);
+ }
 /* =====================================================
    RENDER GAME UI
 ===================================================== */
