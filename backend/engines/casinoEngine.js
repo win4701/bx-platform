@@ -1,189 +1,205 @@
-const crypto = require("crypto")
+"use strict";
 
-/* =========================
-HASH
-========================= */
+const crypto = require("crypto");
+const db = require("../database");
+const ledger = require("../core/ledger");
+const casinoFeed = require("../services/casinoFeed");
+
+/* =========================================
+CONFIG
+========================================= */
+
+const HOUSE_EDGE = 0.01;
+
+/* =========================================
+PROVABLY FAIR CORE
+========================================= */
 
 function hash(serverSeed, clientSeed, nonce){
+  return crypto
+    .createHmac("sha256", serverSeed)
+    .update(`${clientSeed}:${nonce}`)
+    .digest("hex");
+}
 
-return crypto
-.createHmac("sha256", serverSeed)
-.update(`${clientSeed}:${nonce}`)
-.digest("hex")
+function rng(serverSeed, clientSeed, nonce){
+  const h = hash(serverSeed, clientSeed, nonce);
+  const slice = h.slice(0, 13);
+  const num = parseInt(slice, 16);
+  return num / 0x1fffffffffffff;
+}
+
+/* =========================================
+GAME LOGIC
+========================================= */
+
+function gameLogic(game, r){
+
+  switch(game){
+
+    case "coinflip":
+      return {
+        result: r > 0.5 ? "heads" : "tails",
+        multiplier: 2 * (1 - HOUSE_EDGE)
+      };
+
+    case "dice":
+      const roll = Number((r * 100).toFixed(2));
+      return {
+        result: roll,
+        win: roll > 50,
+        multiplier: 2 * (1 - HOUSE_EDGE)
+      };
+
+    case "crash":
+    case "limbo":
+      const m = Number((1 / (1 - r)).toFixed(2));
+      return {
+        result: m,
+        multiplier: m * (1 - HOUSE_EDGE)
+      };
+
+    default:
+      throw new Error("unsupported_game");
+  }
 
 }
 
-/* =========================
-RNG
-========================= */
+/* =========================================
+GET USER SEED + NONCE
+========================================= */
 
-function rng(serverSeed,clientSeed,nonce){
+async function getUserState(userId){
 
-const h = hash(serverSeed,clientSeed,nonce)
+  let r = await db.query(`
+    SELECT server_seed, client_seed, nonce
+    FROM casino_users
+    WHERE user_id=$1
+  `,[userId]);
 
-const slice = h.slice(0,13)
+  if(!r.rows.length){
 
-const num = parseInt(slice,16)
+    const serverSeed = crypto.randomBytes(32).toString("hex");
+    const clientSeed = crypto.randomBytes(16).toString("hex");
 
-return num / 0x1fffffffffffff
+    await db.query(`
+      INSERT INTO casino_users(user_id,server_seed,client_seed,nonce)
+      VALUES($1,$2,$3,0)
+    `,[userId,serverSeed,clientSeed]);
 
-}
+    return {
+      serverSeed,
+      clientSeed,
+      nonce:0
+    };
 
-/* =========================
-DICE
-========================= */
+  }
 
-function dice(serverSeed,clientSeed,nonce){
-
-return Number((rng(serverSeed,clientSeed,nonce)*100).toFixed(2))
-
-}
-
-/* =========================
-COINFLIP
-========================= */
-
-function coinflip(serverSeed,clientSeed,nonce){
-
-return rng(serverSeed,clientSeed,nonce) > 0.5 ? "heads":"tails"
-
-}
-
-/* =========================
-LIMBO
-========================= */
-
-function limbo(serverSeed,clientSeed,nonce){
-
-const r = rng(serverSeed,clientSeed,nonce)
-
-return Number((1/(1-r)).toFixed(2))
+  return {
+    serverSeed: r.rows[0].server_seed,
+    clientSeed: r.rows[0].client_seed,
+    nonce: Number(r.rows[0].nonce)
+  };
 
 }
 
-/* =========================
-CRASH
-========================= */
+/* =========================================
+PLAY GAME (REAL)
+========================================= */
 
-function crash(serverSeed,clientSeed,nonce){
+async function play({ userId, game, bet }){
 
-const r = rng(serverSeed,clientSeed,nonce)
+  if(!userId) throw new Error("unauthorized");
+  if(!bet || bet <= 0) throw new Error("invalid_bet");
 
-return Number((1/(1-r)).toFixed(2))
+  const state = await getUserState(userId);
 
-}
+  const r = rng(state.serverSeed, state.clientSeed, state.nonce);
 
-/* =========================
-ROULETTE
-========================= */
+  const g = gameLogic(game, r);
 
-function roulette(serverSeed,clientSeed,nonce){
+  let payout = 0;
 
-return Math.floor(rng(serverSeed,clientSeed,nonce) * 37)
+  if(g.win === undefined){
+    payout = bet * g.multiplier;
+  }else{
+    payout = g.win ? bet * g.multiplier : 0;
+  }
 
-}
+  /* ================= LEDGER ================= */
 
-/* =========================
-BLACKJACK
-========================= */
+  await ledger.trade({
+    userId,
+    assetIn: "BX",
+    assetOut: "BX",
+    amountIn: bet,
+    amountOut: payout
+  });
 
-function blackjack(serverSeed,clientSeed,nonce){
+  /* ================= SAVE ================= */
 
-const player = Math.floor(rng(serverSeed,clientSeed,nonce) * 11) + 16
-const dealer = Math.floor(rng(serverSeed,clientSeed,nonce+1) * 11) + 16
+  await db.query(`
+    INSERT INTO casino_bets
+    (user_id,game,bet,payout,result,nonce)
+    VALUES($1,$2,$3,$4,$5,$6)
+  `,[
+    userId,
+    game,
+    bet,
+    payout,
+    JSON.stringify(g.result),
+    state.nonce
+  ]);
 
-return {
-player,
-dealer
-}
+  /* ================= UPDATE NONCE ================= */
 
-}
+  await db.query(`
+    UPDATE casino_users
+    SET nonce = nonce + 1
+    WHERE user_id=$1
+  `,[userId]);
 
-/* =========================
-HI-LO
-========================= */
+  /* ================= FEED ================= */
 
-function hilo(serverSeed,clientSeed,nonce){
+  casinoFeed.broadcastBet(userId, game, bet);
 
-return Math.floor(rng(serverSeed,clientSeed,nonce) * 13) + 1
+  if(payout > 0){
+    casinoFeed.broadcastWin(userId, game, payout, g.multiplier);
+  }
 
-}
-
-/* =========================
-WHEEL
-========================= */
-
-function wheel(serverSeed,clientSeed,nonce){
-
-return Math.floor(rng(serverSeed,clientSeed,nonce) * 10)
-
-}
-
-/* =========================
-MINES
-========================= */
-
-function mines(serverSeed,clientSeed,nonce){
-
-return Math.floor(rng(serverSeed,clientSeed,nonce) * 25)
-
-}
-
-/* =========================
-PLINKO
-========================= */
-
-function plinko(serverSeed,clientSeed,nonce){
-
-return Math.floor(rng(serverSeed,clientSeed,nonce) * 16)
+  return {
+    game,
+    result: g.result,
+    payout,
+    multiplier: g.multiplier,
+    nonce: state.nonce
+  };
 
 }
 
-/* =========================
-KENO
-========================= */
+/* =========================================
+SEED ROTATION
+========================================= */
 
-function keno(serverSeed,clientSeed,nonce){
+async function rotateSeed(userId){
 
-return Math.floor(rng(serverSeed,clientSeed,nonce) * 40) + 1
+  const newSeed = crypto.randomBytes(32).toString("hex");
 
-}
+  await db.query(`
+    UPDATE casino_users
+    SET server_seed=$1, nonce=0
+    WHERE user_id=$2
+  `,[newSeed,userId]);
 
-/* =========================
-SLOTS
-========================= */
-
-function slots(serverSeed,clientSeed,nonce){
-
-return [
-
-Math.floor(rng(serverSeed,clientSeed,nonce) * 7),
-
-Math.floor(rng(serverSeed,clientSeed,nonce+1) * 7),
-
-Math.floor(rng(serverSeed,clientSeed,nonce+2) * 7)
-
-]
+  return { success:true };
 
 }
 
-/* =========================
+/* =========================================
 EXPORT
-========================= */
+========================================= */
 
 module.exports = {
-
-coinflip,
-crash,
-limbo,
-dice,
-roulette,
-blackjack,
-hilo,
-wheel,
-mines,
-plinko,
-keno,
-slots
-
-   }
+  play,
+  rotateSeed
+};
