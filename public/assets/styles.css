@@ -905,32 +905,58 @@ h3{
   100% { transform: translateX(0); }
    
 /* ============= CRASH VIEW ===============*/
-   
-.crash{
-  padding:10px;
+  
+   .crash-pro{
+  background:#020617;
+  padding:15px;
+  border-radius:12px;
 }
 
-.crash.hidden{
-  display:none;
+.crash-header{
+  display:flex;
+  justify-content:space-between;
+  margin-bottom:10px;
 }
 
 #crashMultiplier{
   font-size:42px;
-  text-align:center;
+  font-weight:bold;
+  color:#22c55e;
+  transition:0.05s linear;
+}
+
+.crash-controls{
+  display:flex;
+  gap:10px;
+  margin-top:10px;
+}
+
+.crash-controls input{
+  width:120px;
+  padding:6px;
+}
+
+.bet{
+  background:#3b82f6;
+}
+
+.cashout{
+  background:#ef4444;
+}
+
+.players{
+  margin-top:10px;
+  max-height:120px;
+  overflow:auto;
+  font-size:12px;
+}
+
+.player.win{
   color:#22c55e;
 }
 
-.crash-actions{
-  display:flex;
-  gap:10px;
-  justify-content:center;
-  margin-top:10px;
-}
-
-.crash-players{
-  margin-top:10px;
-  font-size:12px;
-  opacity:0.8;
+.player.lose{
+  color:#ef4444;
    }
 
 /* ================= GLOBAL VIEW FIX ================= */
