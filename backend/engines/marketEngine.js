@@ -1,15 +1,9 @@
-"use strict"
+"use strict";
 
-const db = require("../database")
-const ledger = require("../core/ledger")
-const tradesFeed = require("./tradesFeed")
+const db = require("../database");
+const tradesFeed = require("./tradesFeed");
 
-/* =========================================
-CONFIG
-========================================= */
-
-const PAIR = "BX_USDT"
-const FEE = 0.002 // 0.2%
+const PAIR = "BX_USDT";
 
 /* =========================================
 GET PRICE
@@ -17,121 +11,120 @@ GET PRICE
 
 async function getPrice(){
 
-const r = await db.query(
-`SELECT price FROM trades
-WHERE pair=$1
-ORDER BY id DESC LIMIT 1`,
-[PAIR]
-)
+  const r = await db.query(`
+    SELECT price FROM trades
+    WHERE pair=$1
+    ORDER BY id DESC LIMIT 1
+  `,[PAIR]);
 
-if(!r.rows.length) return 45
+  if(!r.rows.length) return 45;
 
-return Number(r.rows[0].price)
-
+  return Number(r.rows[0].price);
 }
 
 /* =========================================
-EXECUTE TRADE
+PLACE ORDER (REAL)
 ========================================= */
 
-async function executeTrade({ userId, side, amount }){
+async function placeOrder({ userId, side, price, amount }){
 
-amount = Number(amount)
+  if(!userId) throw new Error("invalid_user");
+  if(!side || !["buy","sell"].includes(side)) throw new Error("invalid_side");
 
-if(amount <= 0){
-throw new Error("invalid_amount")
-}
+  price = Number(price);
+  amount = Number(amount);
 
-const price = await getPrice()
+  if(price <= 0 || amount <= 0){
+    throw new Error("invalid_values");
+  }
 
-let result
+  await db.query(`
+    INSERT INTO orders (pair,side,price,amount,user_id)
+    VALUES ($1,$2,$3,$4,$5)
+  `,[
+    PAIR,
+    side,
+    price,
+    amount,
+    userId
+  ]);
 
-if(side === "buy"){
-
-const cost = amount
-const bx = (cost / price) * (1 - FEE)
-
-await ledger.trade({
-userId,
-assetIn:"USDT",
-assetOut:"BX",
-amountIn:cost,
-amountOut:bx
-})
-
-result = { amount: bx }
-
-}else{
-
-const usdt = (amount * price) * (1 - FEE)
-
-await ledger.trade({
-userId,
-assetIn:"BX",
-assetOut:"USDT",
-amountIn:amount,
-amountOut:usdt
-})
-
-result = { amount: usdt }
-
-}
-
-/* store trade */
-
-await db.query(
-`INSERT INTO trades
-(pair,price,amount,side,user_id)
-VALUES($1,$2,$3,$4,$5)`,
-[
-PAIR,
-price,
-amount,
-side,
-userId
-]
-)
-
-/* publish real-time */
-
-await tradesFeed.publishTrade({
-pair:PAIR,
-price,
-amount,
-side
-})
-
-return {
-pair:PAIR,
-price,
-side,
-...result
-}
-
+  return {
+    success:true,
+    pair:PAIR,
+    side,
+    price,
+    amount
+  };
 }
 
 /* =========================================
-PUBLIC API
+MARKET ORDER (SIMULATED LIMIT)
 ========================================= */
 
-async function buyBX(userId, usdt){
+async function marketOrder({ userId, side, amount }){
 
-return executeTrade({
-userId,
-side:"buy",
-amount:usdt
-})
+  const price = await getPrice();
 
+  // نحط order قريب من السوق
+  const finalPrice = side === "buy"
+    ? price * 1.01
+    : price * 0.99;
+
+  return placeOrder({
+    userId,
+    side,
+    price: finalPrice,
+    amount
+  });
 }
 
-async function sellBX(userId, bx){
+/* =========================================
+ORDERBOOK
+========================================= */
 
-return executeTrade({
-userId,
-side:"sell",
-amount:bx
-})
+async function orderbook(){
 
+  const bids = await db.query(`
+    SELECT price, SUM(amount) as amount
+    FROM orders
+    WHERE pair=$1 AND side='buy' AND amount > 0
+    GROUP BY price
+    ORDER BY price DESC
+    LIMIT 20
+  `,[PAIR]);
+
+  const asks = await db.query(`
+    SELECT price, SUM(amount) as amount
+    FROM orders
+    WHERE pair=$1 AND side='sell' AND amount > 0
+    GROUP BY price
+    ORDER BY price ASC
+    LIMIT 20
+  `,[PAIR]);
+
+  return {
+    pair:PAIR,
+    bids:bids.rows,
+    asks:asks.rows
+  };
+}
+
+/* =========================================
+TRADES HISTORY
+========================================= */
+
+async function history(){
+
+  const r = await db.query(`
+    SELECT price,amount,side,created_at
+    FROM trades
+    WHERE pair=$1
+    ORDER BY id DESC
+    LIMIT 100
+  `,[PAIR]);
+
+  return r.rows;
 }
 
 /* =========================================
@@ -140,82 +133,42 @@ STATS
 
 async function stats(){
 
-const r = await db.query(
-`SELECT
-COUNT(*) as trades,
-SUM(amount) as volume,
-MAX(price) as high,
-MIN(price) as low
-FROM trades
-WHERE pair=$1
-AND created_at > NOW() - INTERVAL '24 hours'`,
-[PAIR]
-)
+  const r = await db.query(`
+    SELECT
+    COUNT(*) as trades,
+    SUM(amount) as volume,
+    MAX(price) as high,
+    MIN(price) as low
+    FROM trades
+    WHERE pair=$1
+    AND created_at > NOW() - INTERVAL '24 hours'
+  `,[PAIR]);
 
-const price = await getPrice()
+  const price = await getPrice();
 
-return {
-pair:PAIR,
-price,
-volume:Number(r.rows[0].volume || 0),
-high:Number(r.rows[0].high || price),
-low:Number(r.rows[0].low || price),
-trades:Number(r.rows[0].trades || 0)
-}
-
-}
-
-/* =========================================
-HISTORY
-========================================= */
-
-async function history(){
-
-const r = await db.query(
-`SELECT price,amount,side,created_at
-FROM trades
-WHERE pair=$1
-ORDER BY id DESC
-LIMIT 100`,
-[PAIR]
-)
-
-return r.rows
-
+  return {
+    pair:PAIR,
+    price,
+    volume:Number(r.rows[0].volume || 0),
+    high:Number(r.rows[0].high || price),
+    low:Number(r.rows[0].low || price),
+    trades:Number(r.rows[0].trades || 0)
+  };
 }
 
 /* =========================================
-ORDERBOOK (REAL)
+CANCEL ORDER
 ========================================= */
 
-async function orderbook(){
+async function cancelOrder(userId, orderId){
 
-const bids = await db.query(
-`SELECT price, SUM(amount) as amount
-FROM orders
-WHERE pair=$1 AND side='buy'
-GROUP BY price
-ORDER BY price DESC
-LIMIT 20`,
-[PAIR]
-)
+  await db.query(`
+    UPDATE orders
+    SET amount = 0
+    WHERE id=$1 AND user_id=$2
+  `,[orderId,userId]);
 
-const asks = await db.query(
-`SELECT price, SUM(amount) as amount
-FROM orders
-WHERE pair=$1 AND side='sell'
-GROUP BY price
-ORDER BY price ASC
-LIMIT 20`,
-[PAIR]
-)
-
-return {
-pair:PAIR,
-bids:bids.rows,
-asks:asks.rows
-}
-
+  return { success:true };
 }
 
 /* =========================================
@@ -223,11 +176,11 @@ EXPORT
 ========================================= */
 
 module.exports = {
-buyBX,
-sellBX,
-stats,
-history,
-orderbook,
-getPrice,
-executeTrade
-   }
+  placeOrder,
+  marketOrder,
+  orderbook,
+  history,
+  stats,
+  getPrice,
+  cancelOrder
+};
