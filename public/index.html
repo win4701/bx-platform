@@ -433,9 +433,24 @@
 
   <!-- ================= GAME ACTION BOX ================= -->
   <div id="casinoGameBox" class="casino-game-box">
-    <p class="hint">Select a game to start playing </p>
-  </div>
 
+  <!-- ===== CRASH GAME ===== -->
+  <div id="crashGame" class="crash hidden">
+
+    <canvas id="crashChart" width="600" height="300"></canvas>
+
+    <div class="crash-ui">
+      <h1 id="crashMultiplier">1.00x</h1>
+
+      <div class="crash-actions">
+        <button id="crashBetBtn" class="btn primary">BET</button>
+        <button id="crashCashoutBtn" class="btn danger">CASHOUT</button>
+      </div>
+    </div>
+    <div id="crashPlayers" class="crash-players"></div>
+
+  </div>
+  </div>
   <!-- ================= BIG WINS ================= -->
   <div class="big-wins">
     <h3 class="big-wins-title">Recent Big Wins</h3>
