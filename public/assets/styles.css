@@ -1144,6 +1144,36 @@ button:active,
   padding:18px;
 }
 
+/*============ CRASH GAME =============*/
+
+#crash-game{
+  background:#0f172a;
+  color:white;
+  padding:20px;
+}
+
+#multiplier{
+  font-size:48px;
+  color:#22c55e;
+  transition:0.1s linear;
+}
+
+canvas{
+  background:#020617;
+  border-radius:10px;
+}
+
+button{
+  padding:10px 20px;
+  margin:5px;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+}
+
+#betBtn{ background:#3b82f6; }
+#cashoutBtn{ background:#ef4444; }
+
 /* ================= AIRDROP – CLEAN FIX ================= */
 
 #airdrop {
