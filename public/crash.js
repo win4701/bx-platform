@@ -1,14 +1,48 @@
-let crashWS;
+"use strict";
+
+/* =========================================
+STATE
+========================================= */
+
+let crashWS = null;
 let points = [];
 let running = false;
 let autoCashout = null;
+let reconnectTimer = null;
 
-const canvas = document.getElementById("crashChart");
-const ctx = canvas.getContext("2d");
+let ctx = null;
+let canvas = null;
 
-/* ================= SMOOTH DRAW ================= */
+/* =========================================
+SAFE DOM GETTER
+========================================= */
+
+function el(id){
+  return document.getElementById(id);
+}
+
+/* =========================================
+INIT CANVAS (DYNAMIC SAFE)
+========================================= */
+
+function initCanvas(){
+
+  canvas = el("crashChart");
+
+  if(!canvas) return false;
+
+  ctx = canvas.getContext("2d");
+
+  return true;
+}
+
+/* =========================================
+DRAW (SMOOTH)
+========================================= */
 
 function draw(){
+
+  if(!ctx || !canvas) return;
 
   ctx.clearRect(0,0,canvas.width,canvas.height);
 
@@ -29,12 +63,17 @@ function draw(){
   if(running) requestAnimationFrame(draw);
 }
 
-/* ================= UPDATE ================= */
+/* =========================================
+UPDATE GRAPH
+========================================= */
 
 function update(m){
 
-  document.getElementById("crashMultiplier").innerText =
-    m.toFixed(2) + "x";
+  const mult = el("crashMultiplier");
+
+  if(mult){
+    mult.innerText = m.toFixed(2) + "x";
+  }
 
   points.push(m);
 
@@ -48,18 +87,24 @@ function update(m){
     cashout();
     autoCashout = null;
   }
-
 }
 
-/* ================= STATES ================= */
+/* =========================================
+STATE HANDLERS
+========================================= */
 
 function start(){
 
   points = [];
   running = true;
 
-  document.getElementById("crashStatus").innerText = "Running";
-  document.getElementById("crashMultiplier").style.color = "#22c55e";
+  const status = el("crashStatus");
+  const mult = el("crashMultiplier");
+
+  if(status) status.innerText = "Running";
+  if(mult) mult.style.color = "#22c55e";
+
+  clearPlayers();
 
   draw();
 }
@@ -68,49 +113,97 @@ function end(crash){
 
   running = false;
 
-  document.getElementById("crashStatus").innerText = "Crashed";
-  document.getElementById("crashMultiplier").innerText =
-    crash.toFixed(2) + "x 💥";
+  const status = el("crashStatus");
+  const mult = el("crashMultiplier");
 
-  document.getElementById("crashMultiplier").style.color = "#ef4444";
+  if(status) status.innerText = "Crashed";
 
+  if(mult){
+    mult.innerText = crash.toFixed(2) + "x 💥";
+    mult.style.color = "#ef4444";
+  }
 }
 
-/* ================= PLAYERS ================= */
+/* =========================================
+PLAYERS UI
+========================================= */
+
+function clearPlayers(){
+  const box = el("crashPlayers");
+  if(box) box.innerHTML = "";
+}
 
 function addPlayer(user, bet){
 
-  const el = document.createElement("div");
+  const box = el("crashPlayers");
+  if(!box) return;
 
-  el.className = "player";
-  el.innerText = `${user} → ${bet} BX`;
+  const elx = document.createElement("div");
 
-  document.getElementById("crashPlayers").prepend(el);
+  elx.className = "player";
+  elx.innerText = `${user} → ${bet} BX`;
+
+  box.prepend(elx);
 }
 
 function playerWin(user, payout){
 
-  const el = document.createElement("div");
+  const box = el("crashPlayers");
+  if(!box) return;
 
-  el.className = "player win";
-  el.innerText = `${user} WON ${payout.toFixed(2)} BX`;
+  const elx = document.createElement("div");
 
-  document.getElementById("crashPlayers").prepend(el);
+  elx.className = "player win";
+  elx.innerText = `🚀 ${user} WON ${payout.toFixed(2)} BX`;
+
+  elx.style.animation = "pop 0.3s ease";
+
+  box.prepend(elx);
 }
 
-/* ================= WS ================= */
+/* =========================================
+BIG WINS
+========================================= */
+
+function bigWin(user, amount){
+
+  const box = el("crashPlayers");
+  if(!box) return;
+
+  const elx = document.createElement("div");
+
+  elx.className = "player win";
+  elx.innerText = `💰 BIG WIN ${user} +${amount.toFixed(2)} BX`;
+
+  elx.style.fontWeight = "bold";
+  elx.style.color = "#facc15";
+
+  box.prepend(elx);
+}
+
+/* =========================================
+WS CONNECT (AUTO RECONNECT)
+========================================= */
 
 function connect(){
 
-  if(crashWS) return;
+  if(crashWS && crashWS.readyState === 1) return;
 
-  crashWS = new WebSocket("wss://api.bloxio.online");
+  const url = location.protocol === "https:"
+    ? "wss://" + location.host
+    : "ws://" + location.host;
+
+  crashWS = new WebSocket(url);
 
   crashWS.onopen = ()=>{
+
+    console.log("🔥 Crash WS connected");
+
     crashWS.send(JSON.stringify({
       type:"subscribe",
       channel:"casino"
     }));
+
   };
 
   crashWS.onmessage = (e)=>{
@@ -139,21 +232,34 @@ function connect(){
         playerWin(msg.user, msg.payout);
         break;
 
+      case "big_win":
+        bigWin(msg.user, msg.amount);
+        break;
     }
+
+  };
+
+  crashWS.onclose = ()=>{
+
+    console.log("❌ WS disconnected");
+
+    reconnectTimer = setTimeout(connect, 2000);
 
   };
 
 }
 
-/* ================= ACTIONS ================= */
+/* =========================================
+API ACTIONS
+========================================= */
 
 async function bet(){
 
-  const value = Number(document.getElementById("crashBet").value);
+  const value = Number(el("crashBet")?.value || 0);
 
-  autoCashout = Number(
-    document.getElementById("autoCashout").value || 0
-  );
+  autoCashout = Number(el("autoCashout")?.value || 0);
+
+  if(value <= 0) return;
 
   await fetch("/api/v1/casino/crash/join",{
     method:"POST",
@@ -177,13 +283,23 @@ async function cashout(){
 
 }
 
-/* ================= INIT ================= */
+/* =========================================
+INIT
+========================================= */
 
 window.initCrash = function(){
 
+  if(!initCanvas()){
+    console.error("Crash canvas not ready");
+    return;
+  }
+
   connect();
 
-  document.getElementById("crashBetBtn").onclick = bet;
-  document.getElementById("crashCashoutBtn").onclick = cashout;
+  const betBtn = el("crashBetBtn");
+  const cashBtn = el("crashCashoutBtn");
+
+  if(betBtn) betBtn.onclick = bet;
+  if(cashBtn) cashBtn.onclick = cashout;
 
 };
