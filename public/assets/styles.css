@@ -903,7 +903,35 @@ h3{
   50%  { transform: translateX(4px); }
   75%  { transform: translateX(-4px); }
   100% { transform: translateX(0); }
-                               }
+   
+/* ============= CRASH VIEW ===============*/
+   
+.crash{
+  padding:10px;
+}
+
+.crash.hidden{
+  display:none;
+}
+
+#crashMultiplier{
+  font-size:42px;
+  text-align:center;
+  color:#22c55e;
+}
+
+.crash-actions{
+  display:flex;
+  gap:10px;
+  justify-content:center;
+  margin-top:10px;
+}
+
+.crash-players{
+  margin-top:10px;
+  font-size:12px;
+  opacity:0.8;
+   }
 
 /* ================= GLOBAL VIEW FIX ================= */
 
