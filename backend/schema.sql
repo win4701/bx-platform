@@ -3,22 +3,19 @@
 -- =====================================================
 
 CREATE TABLE users (
+  id SERIAL PRIMARY KEY,
+  telegram_id BIGINT UNIQUE,
+  username TEXT,
 
-id SERIAL PRIMARY KEY,
+  referral_code TEXT UNIQUE,
+  referred_by INTEGER REFERENCES users(id),
 
-telegram_id BIGINT UNIQUE,
-username TEXT,
+  wallet_type TEXT,
+  wallet_address TEXT,
 
-referral_code TEXT UNIQUE,
-referred_by INTEGER REFERENCES users(id),
+  is_admin BOOLEAN DEFAULT FALSE,
 
-wallet_type TEXT,
-wallet_address TEXT,
-
-is_admin BOOLEAN DEFAULT FALSE,
-
-created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX idx_users_telegram ON users(telegram_id);
@@ -28,184 +25,175 @@ CREATE INDEX idx_users_telegram ON users(telegram_id);
 -- =====================================================
 
 CREATE TABLE wallet_balances (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+  asset TEXT,
 
-id SERIAL PRIMARY KEY,
+  balance NUMERIC(30,10) DEFAULT 0,
+  locked NUMERIC(30,10) DEFAULT 0,
 
-user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
-asset TEXT,
-balance NUMERIC(30,10) DEFAULT 0,
-
-locked NUMERIC(30,10) DEFAULT 0,
-
-updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-
+  UNIQUE(user_id, asset)
 );
 
-CREATE INDEX idx_wallet_balance_user
-ON wallet_balances(user_id);
+CREATE INDEX idx_wallet_user_asset
+ON wallet_balances(user_id, asset);
 
 -- =====================================================
 -- WALLET TRANSACTIONS
 -- =====================================================
 
 CREATE TABLE wallet_transactions (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER REFERENCES users(id),
 
-id SERIAL PRIMARY KEY,
+  asset TEXT,
+  amount NUMERIC(30,10),
 
-user_id INTEGER REFERENCES users(id),
+  type TEXT,
+  reason TEXT,
 
-asset TEXT,
-amount NUMERIC(30,10),
+  txid TEXT,
+  reference_id INTEGER,
 
-type TEXT,
-
-txid TEXT,
-
-reference_id INTEGER,
-
-created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_wallet_tx_user
-ON wallet_transactions(user_id);
+CREATE INDEX idx_wallet_tx_user_time
+ON wallet_transactions(user_id, created_at DESC);
 
 -- =====================================================
 -- DEPOSITS
 -- =====================================================
 
 CREATE TABLE deposits (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER REFERENCES users(id),
 
-id SERIAL PRIMARY KEY,
+  asset TEXT,
+  amount NUMERIC(30,10),
 
-user_id INTEGER REFERENCES users(id),
+  tx_hash TEXT UNIQUE,
 
-asset TEXT,
+  confirmations INTEGER DEFAULT 0,
+  confirmed BOOLEAN DEFAULT FALSE,
 
-amount NUMERIC(30,10),
-
-tx_hash TEXT UNIQUE,
-
-confirmations INTEGER DEFAULT 0,
-confirmed BOOLEAN DEFAULT FALSE,
-
-created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE INDEX idx_deposit_user
+ON deposits(user_id);
 
 -- =====================================================
 -- WITHDRAWALS
 -- =====================================================
 
 CREATE TABLE withdrawals (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER REFERENCES users(id),
 
-id SERIAL PRIMARY KEY,
+  asset TEXT,
+  amount NUMERIC(30,10),
 
-user_id INTEGER REFERENCES users(id),
+  address TEXT,
 
-asset TEXT,
-amount NUMERIC(30,10),
+  status TEXT DEFAULT 'pending',
 
-address TEXT,
+  tx_hash TEXT,
 
-status TEXT DEFAULT 'pending',
-
-tx_hash TEXT,
-
-created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE INDEX idx_withdraw_user
+ON withdrawals(user_id);
+
 -- =====================================================
--- ORDERS (MATCHING ENGINE)
+-- ORDERS
 -- =====================================================
 
 CREATE TABLE orders (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER REFERENCES users(id),
 
-id SERIAL PRIMARY KEY,
+  pair TEXT,
+  side TEXT CHECK (side IN ('buy','sell')),
 
-user_id INTEGER REFERENCES users(id),
+  price NUMERIC(30,10),
+  amount NUMERIC(30,10),
 
-pair TEXT,
+  status TEXT DEFAULT 'open',
 
-side TEXT,
-
-price NUMERIC(30,10),
-amount NUMERIC(30,10),
-
-status TEXT DEFAULT 'open',
-
-created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_orders_pair
-ON orders(pair);
+CREATE INDEX idx_orders_book
+ON orders(pair, side, price DESC);
+
+CREATE INDEX idx_orders_user
+ON orders(user_id);
 
 -- =====================================================
 -- TRADES
 -- =====================================================
 
 CREATE TABLE trades (
+  id SERIAL PRIMARY KEY,
 
-id SERIAL PRIMARY KEY,
+  pair TEXT,
 
-pair TEXT,
+  price NUMERIC(30,10),
+  amount NUMERIC(30,10),
 
-price NUMERIC(30,10),
-amount NUMERIC(30,10),
+  buy_user INTEGER,
+  sell_user INTEGER,
 
-buy_user INTEGER,
-sell_user INTEGER,
-
-created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE INDEX idx_trades_pair_time
+ON trades(pair, created_at DESC);
 
 -- =====================================================
 -- CANDLES
 -- =====================================================
 
 CREATE TABLE candles (
+  id SERIAL PRIMARY KEY,
 
-id SERIAL PRIMARY KEY,
+  pair TEXT,
+  minute INTEGER,
 
-pair TEXT,
+  open NUMERIC(30,10),
+  high NUMERIC(30,10),
+  low NUMERIC(30,10),
+  close NUMERIC(30,10),
 
-minute INTEGER,
+  volume NUMERIC(30,10),
 
-open NUMERIC(30,10),
-high NUMERIC(30,10),
-low NUMERIC(30,10),
-close NUMERIC(30,10),
-
-volume NUMERIC(30,10)
-
+  UNIQUE(pair, minute)
 );
 
-CREATE INDEX idx_candle_pair
-ON candles(pair);
+CREATE INDEX idx_candle_pair_time
+ON candles(pair, minute DESC);
 
 -- =====================================================
 -- CASINO SEEDS
 -- =====================================================
 
 CREATE TABLE casino_seeds (
+  id SERIAL PRIMARY KEY,
 
-id SERIAL PRIMARY KEY,
+  user_id INTEGER UNIQUE REFERENCES users(id),
 
-user_id INTEGER UNIQUE REFERENCES users(id),
+  server_seed TEXT,
+  server_seed_hash TEXT,
 
-server_seed TEXT,
-server_seed_hash TEXT,
+  client_seed TEXT,
 
-client_seed TEXT,
+  nonce INTEGER DEFAULT 0,
 
-nonce INTEGER DEFAULT 0,
-
-created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- =====================================================
@@ -213,104 +201,100 @@ created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 -- =====================================================
 
 CREATE TABLE casino_sessions (
+  id SERIAL PRIMARY KEY,
 
-id SERIAL PRIMARY KEY,
+  user_id INTEGER REFERENCES users(id),
 
-user_id INTEGER REFERENCES users(id),
+  game TEXT,
 
-game TEXT,
+  bet NUMERIC(30,10),
 
-bet NUMERIC(30,10),
+  result TEXT,
 
-result TEXT,
+  profit NUMERIC(30,10),
 
-profit NUMERIC(30,10),
-
-created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_casino_user
-ON casino_sessions(user_id);
+CREATE INDEX idx_casino_user_time
+ON casino_sessions(user_id, created_at DESC);
 
 -- =====================================================
 -- CASINO AUDIT
 -- =====================================================
 
 CREATE TABLE casino_audit (
+  id SERIAL PRIMARY KEY,
 
-id SERIAL PRIMARY KEY,
+  user_id INTEGER REFERENCES users(id),
 
-user_id INTEGER REFERENCES users(id),
+  game TEXT,
 
-game TEXT,
+  server_seed TEXT,
+  client_seed TEXT,
 
-server_seed TEXT,
-client_seed TEXT,
+  nonce INTEGER,
 
-nonce INTEGER,
+  result JSONB,
 
-result JSONB,
+  bet NUMERIC(30,10),
+  payout NUMERIC(30,10),
 
-bet NUMERIC(30,10),
-payout NUMERIC(30,10),
-
-created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE INDEX idx_casino_audit_user
+ON casino_audit(user_id);
 
 -- =====================================================
 -- MINING
 -- =====================================================
 
 CREATE TABLE mining_sessions (
+  id SERIAL PRIMARY KEY,
 
-id SERIAL PRIMARY KEY,
+  user_id INTEGER REFERENCES users(id),
 
-user_id INTEGER REFERENCES users(id),
+  hash_rate NUMERIC(20,5),
 
-hash_rate NUMERIC(20,5),
+  total_earned NUMERIC(30,10) DEFAULT 0,
 
-reward NUMERIC(30,10),
+  status TEXT DEFAULT 'active',
 
-status TEXT DEFAULT 'active',
-
-started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-
-ended_at TIMESTAMP
-
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  last_reward TIMESTAMP
 );
+
+CREATE INDEX idx_mining_user
+ON mining_sessions(user_id);
 
 -- =====================================================
 -- AIRDROP
 -- =====================================================
 
 CREATE TABLE airdrops (
+  id SERIAL PRIMARY KEY,
 
-id SERIAL PRIMARY KEY,
+  title TEXT,
 
-title TEXT,
+  reward NUMERIC(30,10),
 
-reward NUMERIC(30,10),
+  active BOOLEAN DEFAULT TRUE,
 
-active BOOLEAN DEFAULT TRUE,
-
-created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE airdrop_claims (
+  id SERIAL PRIMARY KEY,
 
-id SERIAL PRIMARY KEY,
+  airdrop_id INTEGER REFERENCES airdrops(id),
+  user_id INTEGER REFERENCES users(id),
 
-airdrop_id INTEGER REFERENCES airdrops(id),
+  claimed BOOLEAN DEFAULT FALSE,
 
-user_id INTEGER REFERENCES users(id),
+  claimed_at TIMESTAMP,
 
-claimed BOOLEAN DEFAULT FALSE,
-
-claimed_at TIMESTAMP
-
+  UNIQUE(airdrop_id, user_id)
 );
 
 -- =====================================================
@@ -318,17 +302,14 @@ claimed_at TIMESTAMP
 -- =====================================================
 
 CREATE TABLE referral_rewards (
+  id SERIAL PRIMARY KEY,
 
-id SERIAL PRIMARY KEY,
+  referrer_id INTEGER REFERENCES users(id),
+  referred_id INTEGER REFERENCES users(id),
 
-referrer_id INTEGER REFERENCES users(id),
+  reward NUMERIC(30,10),
 
-referred_id INTEGER REFERENCES users(id),
-
-reward NUMERIC(30,10),
-
-created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- =====================================================
@@ -336,13 +317,10 @@ created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 -- =====================================================
 
 CREATE TABLE system_settings (
+  id SERIAL PRIMARY KEY,
 
-id SERIAL PRIMARY KEY,
+  key TEXT UNIQUE,
+  value TEXT,
 
-key TEXT UNIQUE,
-
-value TEXT,
-
-updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
