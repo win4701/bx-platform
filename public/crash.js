@@ -1,59 +1,74 @@
 let crashWS;
-let crashPoints = [];
+let points = [];
+let running = false;
+let autoCashout = null;
 
 const canvas = document.getElementById("crashChart");
 const ctx = canvas.getContext("2d");
 
-/* ================= DRAW ================= */
+/* ================= SMOOTH DRAW ================= */
 
-function drawCrash(){
+function draw(){
 
   ctx.clearRect(0,0,canvas.width,canvas.height);
 
   ctx.beginPath();
 
-  crashPoints.forEach((p,i)=>{
-    const x = i * 5;
-    const y = canvas.height - (p * 20);
+  points.forEach((p,i)=>{
+    const x = i * 6;
+    const y = canvas.height - Math.log(p) * 120;
 
     if(i===0) ctx.moveTo(x,y);
     else ctx.lineTo(x,y);
   });
 
   ctx.strokeStyle = "#22c55e";
+  ctx.lineWidth = 2;
   ctx.stroke();
+
+  if(running) requestAnimationFrame(draw);
 }
 
 /* ================= UPDATE ================= */
 
-function updateCrash(m){
+function update(m){
 
   document.getElementById("crashMultiplier").innerText =
     m.toFixed(2) + "x";
 
-  crashPoints.push(m);
+  points.push(m);
 
-  if(crashPoints.length > 100){
-    crashPoints.shift();
+  if(points.length > 120){
+    points.shift();
   }
 
-  drawCrash();
+  /* AUTO CASHOUT */
+
+  if(autoCashout && m >= autoCashout){
+    cashout();
+    autoCashout = null;
+  }
+
 }
 
-/* ================= START ================= */
+/* ================= STATES ================= */
 
-function startCrashUI(){
+function start(){
 
-  crashPoints = [];
+  points = [];
+  running = true;
 
+  document.getElementById("crashStatus").innerText = "Running";
   document.getElementById("crashMultiplier").style.color = "#22c55e";
 
+  draw();
 }
 
-/* ================= END ================= */
+function end(crash){
 
-function endCrash(crash){
+  running = false;
 
+  document.getElementById("crashStatus").innerText = "Crashed";
   document.getElementById("crashMultiplier").innerText =
     crash.toFixed(2) + "x 💥";
 
@@ -61,37 +76,69 @@ function endCrash(crash){
 
 }
 
+/* ================= PLAYERS ================= */
+
+function addPlayer(user, bet){
+
+  const el = document.createElement("div");
+
+  el.className = "player";
+  el.innerText = `${user} → ${bet} BX`;
+
+  document.getElementById("crashPlayers").prepend(el);
+}
+
+function playerWin(user, payout){
+
+  const el = document.createElement("div");
+
+  el.className = "player win";
+  el.innerText = `${user} WON ${payout.toFixed(2)} BX`;
+
+  document.getElementById("crashPlayers").prepend(el);
+}
+
 /* ================= WS ================= */
 
-function connectCrashWS(){
+function connect(){
 
   if(crashWS) return;
 
   crashWS = new WebSocket("wss://api.bloxio.online");
 
   crashWS.onopen = ()=>{
-
     crashWS.send(JSON.stringify({
       type:"subscribe",
       channel:"casino"
     }));
-
   };
 
   crashWS.onmessage = (e)=>{
 
     const msg = JSON.parse(e.data);
 
-    if(msg.type === "crash_start"){
-      startCrashUI();
-    }
+    switch(msg.type){
 
-    if(msg.type === "crash_tick"){
-      updateCrash(msg.multiplier);
-    }
+      case "crash_start":
+        start();
+        break;
 
-    if(msg.type === "crash_end"){
-      endCrash(msg.crash);
+      case "crash_tick":
+        update(msg.multiplier);
+        break;
+
+      case "crash_end":
+        end(msg.crash);
+        break;
+
+      case "player_join":
+        addPlayer(msg.user, msg.bet);
+        break;
+
+      case "cashout":
+        playerWin(msg.user, msg.payout);
+        break;
+
     }
 
   };
@@ -100,7 +147,13 @@ function connectCrashWS(){
 
 /* ================= ACTIONS ================= */
 
-document.getElementById("crashBetBtn").onclick = async ()=>{
+async function bet(){
+
+  const value = Number(document.getElementById("crashBet").value);
+
+  autoCashout = Number(
+    document.getElementById("autoCashout").value || 0
+  );
 
   await fetch("/api/v1/casino/crash/join",{
     method:"POST",
@@ -108,12 +161,12 @@ document.getElementById("crashBetBtn").onclick = async ()=>{
       "Content-Type":"application/json",
       "Authorization":"Bearer "+localStorage.getItem("token")
     },
-    body:JSON.stringify({ bet:10 })
+    body:JSON.stringify({ bet:value })
   });
 
-};
+}
 
-document.getElementById("crashCashoutBtn").onclick = async ()=>{
+async function cashout(){
 
   await fetch("/api/v1/casino/crash/cashout",{
     method:"POST",
@@ -122,14 +175,15 @@ document.getElementById("crashCashoutBtn").onclick = async ()=>{
     }
   });
 
-};
+}
 
-/* ================= EXPORT ================= */
+/* ================= INIT ================= */
 
 window.initCrash = function(){
 
-  document.getElementById("crashGame").classList.remove("hidden");
+  connect();
 
-  connectCrashWS();
+  document.getElementById("crashBetBtn").onclick = bet;
+  document.getElementById("crashCashoutBtn").onclick = cashout;
 
 };
