@@ -1,67 +1,82 @@
-const db = require("../database")
-const engine = require("./marketEngine")
+"use strict";
 
-const BOT_USER = 0
-const BOT_INTERVAL = 15000
+const db = require("../database");
 
-const PAIRS=["BX_USDT"]
+const PAIR = "BX_USDT";
+const BOT_USER = 0;
+const INTERVAL = 1000;
 
-function rand(min,max){
-return Math.random()*(max-min)+min
+/* ================= RANDOM ================= */
+
+function rand(min, max){
+  return Math.random() * (max - min) + min;
 }
 
-function randSide(){
-return Math.random()>0.5?"buy":"sell"
+/* ================= BASE PRICE ================= */
+
+async function getBasePrice(){
+
+  const r = await db.query(`
+    SELECT price FROM trades
+    WHERE pair=$1
+    ORDER BY id DESC LIMIT 1
+  `,[PAIR]);
+
+  if(!r.rows.length) return 45;
+
+  return Number(r.rows[0].price);
 }
 
-async function runBotTrade(pair){
+/* ================= PLACE ORDER ================= */
 
-try{
+async function placeOrder(side, price, amount){
 
-const side = randSide()
-const amount = Number(rand(0.5,5).toFixed(2))
-const price = engine.getPrice(pair)
-
-await db.query(
-`INSERT INTO market_trades
-(user_id,pair,side,price,amount)
-VALUES($1,$2,$3,$4,$5)`,
-[BOT_USER,pair,side,price,amount]
-)
-
-if(global.broadcast){
-
-global.broadcast({
-type:"trade",
-pair,
-side,
-price,
-amount,
-bot:true
-})
-
-}
-
-}catch(e){
-
-console.error("marketBot error",e)
+  await db.query(`
+    INSERT INTO orders (pair, side, price, amount, user_id)
+    VALUES ($1,$2,$3,$4,$5)
+  `,[
+    PAIR,
+    side,
+    price,
+    amount,
+    BOT_USER
+  ]);
 
 }
 
+/* ================= BOT LOOP ================= */
+
+async function runBot(){
+
+  console.log("🤖 REAL Market Bot Started");
+
+  setInterval(async () => {
+
+    try{
+
+      const base = await getBasePrice();
+
+      const spread = rand(0.1, 0.5);
+
+      const buyPrice = base - spread;
+      const sellPrice = base + spread;
+
+      const buyAmount = rand(1,5);
+      const sellAmount = rand(1,5);
+
+      /* place real orders */
+
+      await placeOrder("buy", buyPrice, buyAmount);
+      await placeOrder("sell", sellPrice, sellAmount);
+
+    }catch(e){
+      console.error("BOT ERROR:", e.message);
+    }
+
+  }, INTERVAL);
+
 }
 
-function startBot(){
-
-setInterval(async()=>{
-
-for(const pair of PAIRS){
-await runBotTrade(pair)
-}
-
-},BOT_INTERVAL)
-
-}
-
-module.exports={
-startBot
-}
+module.exports = {
+  runBot
+};
