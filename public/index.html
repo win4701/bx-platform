@@ -435,22 +435,34 @@
   <div id="casinoGameBox" class="casino-game-box">
 
   <!-- ===== CRASH GAME ===== -->
-  <div id="crashGame" class="crash hidden">
+  <div id="crashGame" class="crash-pro">
 
-    <canvas id="crashChart" width="600" height="300"></canvas>
+  <!-- TOP BAR -->
+  <div class="crash-header">
+    <div id="crashStatus">Waiting...</div>
+    <div id="crashMultiplier">1.00x</div>
+  </div>
 
-    <div class="crash-ui">
-      <h1 id="crashMultiplier">1.00x</h1>
+  <!-- CHART -->
+  <canvas id="crashChart" width="600" height="300"></canvas>
 
-      <div class="crash-actions">
-        <button id="crashBetBtn" class="btn primary">BET</button>
-        <button id="crashCashoutBtn" class="btn danger">CASHOUT</button>
-      </div>
-    </div>
-    <div id="crashPlayers" class="crash-players"></div>
+  <!-- ACTIONS -->
+  <div class="crash-controls">
+
+    <input id="crashBet" type="number" placeholder="Bet (BX)" value="10">
+
+    <input id="autoCashout" type="number" placeholder="Auto Cashout (e.g 2.0)">
+
+    <button id="crashBetBtn" class="bet">BET</button>
+    <button id="crashCashoutBtn" class="cashout">CASHOUT</button>
 
   </div>
+
+  <!-- PLAYERS -->
+  <div id="crashPlayers" class="players"></div>
+
   </div>
+    
   <!-- ================= BIG WINS ================= -->
   <div class="big-wins">
     <h3 class="big-wins-title">Recent Big Wins</h3>
