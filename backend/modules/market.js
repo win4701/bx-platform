@@ -1,186 +1,208 @@
-const express = require("express")
-const router = express.Router()
+"use strict";
 
-const engine = require("../engines/marketEngine")
+const express = require("express");
+const router = express.Router();
 
-/* =========================
-   BUY BX
-========================= */
+const engine = require("../engines/marketEngine");
+const tradesFeed = require("../engines/tradesFeed");
 
-router.post("/buy", async (req,res)=>{
+/* =========================================
+AUTH CHECK
+========================================= */
 
-try{
+function requireAuth(req,res){
+  const userId = req.user?.id;
 
-const userId = req.user?.id
+  if(!userId){
+    res.status(401).json({ error:"unauthorized" });
+    return null;
+  }
 
-if(!userId){
-return res.status(401).json({
-error:"unauthorized"
-})
+  return userId;
 }
 
-let {amount} = req.body
+/* =========================================
+PLACE LIMIT ORDER
+========================================= */
 
-amount = Number(amount)
+router.post("/order", async (req,res)=>{
 
-if(!amount || amount <= 0){
-return res.status(400).json({
-error:"invalid_amount"
-})
-}
+  try{
 
-/* EXECUTE TRADE */
+    const userId = requireAuth(req,res);
+    if(!userId) return;
 
-const trade = await engine.buyBX(
-userId,
-amount
-)
+    let { side, price, amount } = req.body;
 
-/* BROADCAST */
+    const result = await engine.placeOrder({
+      userId,
+      side,
+      price,
+      amount
+    });
 
-if(global.broadcast){
+    res.json({
+      success:true,
+      order: result
+    });
 
-global.broadcast({
-type:"trade",
-pair:"BX_USDT",
-side:"buy",
-price:trade.price,
-amount:trade.amount
-})
+  }catch(e){
 
-}
+    console.error("order error", e);
 
-/* RESPONSE */
+    res.status(500).json({
+      error:"order_failed"
+    });
 
-res.json({
-success:true,
-trade
-})
+  }
 
-}catch(e){
+});
 
-console.error("market buy error",e)
+/* =========================================
+MARKET ORDER
+========================================= */
 
-res.status(500).json({
-error:"market_buy_failed"
-})
+router.post("/market", async (req,res)=>{
 
-}
+  try{
 
-})
+    const userId = requireAuth(req,res);
+    if(!userId) return;
 
-/* =========================
-   SELL BX
-========================= */
+    let { side, amount } = req.body;
 
-router.post("/sell", async (req,res)=>{
+    const result = await engine.marketOrder({
+      userId,
+      side,
+      amount
+    });
 
-try{
+    res.json({
+      success:true,
+      order: result
+    });
 
-const userId = req.user?.id
+  }catch(e){
 
-if(!userId){
-return res.status(401).json({
-error:"unauthorized"
-})
-}
+    console.error("market order error", e);
 
-let {amount} = req.body
+    res.status(500).json({
+      error:"market_order_failed"
+    });
 
-amount = Number(amount)
+  }
 
-if(!amount || amount <= 0){
-return res.status(400).json({
-error:"invalid_amount"
-})
-}
+});
 
-/* EXECUTE TRADE */
+/* =========================================
+ORDERBOOK
+========================================= */
 
-const trade = await engine.sellBX(
-userId,
-amount
-)
+router.get("/orderbook", async (req,res)=>{
 
-/* BROADCAST */
+  try{
 
-if(global.broadcast){
+    const ob = await engine.orderbook();
+    res.json(ob);
 
-global.broadcast({
-type:"trade",
-pair:"BX_USDT",
-side:"sell",
-price:trade.price,
-amount:trade.amount
-})
+  }catch(e){
 
-}
+    res.status(500).json({
+      error:"orderbook_failed"
+    });
 
-/* RESPONSE */
+  }
 
-res.json({
-success:true,
-trade
-})
+});
 
-}catch(e){
+/* =========================================
+PRICE
+========================================= */
 
-console.error("market sell error",e)
+router.get("/price", async (req,res)=>{
 
-res.status(500).json({
-error:"market_sell_failed"
-})
+  try{
 
-}
+    const price = await engine.getPrice();
 
-})
+    res.json({
+      pair:"BX_USDT",
+      price
+    });
 
-/* =========================
-   MARKET STATS
-========================= */
+  }catch(e){
+
+    res.status(500).json({
+      error:"price_failed"
+    });
+
+  }
+
+});
+
+/* =========================================
+TRADES
+========================================= */
+
+router.get("/trades", (req,res)=>{
+
+  try{
+
+    const trades = tradesFeed.getTrades("BX_USDT");
+
+    res.json(trades);
+
+  }catch(e){
+
+    res.status(500).json({
+      error:"trades_failed"
+    });
+
+  }
+
+});
+
+/* =========================================
+CANDLES
+========================================= */
+
+router.get("/candles", (req,res)=>{
+
+  try{
+
+    const candles = tradesFeed.getCandles(100);
+
+    res.json(candles);
+
+  }catch(e){
+
+    res.status(500).json({
+      error:"candles_failed"
+    });
+
+  }
+
+});
+
+/* =========================================
+STATS
+========================================= */
 
 router.get("/stats", async (req,res)=>{
 
-try{
+  try{
 
-const s = await engine.stats()
+    const s = await engine.stats();
+    res.json(s);
 
-res.json(s)
+  }catch(e){
 
-}catch(e){
+    res.status(500).json({
+      error:"stats_failed"
+    });
 
-console.error("market stats error",e)
+  }
 
-res.status(500).json({
-error:"stats_failed"
-})
+});
 
-}
-
-})
-
-/* =========================
-   TRADE HISTORY
-========================= */
-
-router.get("/history", async (req,res)=>{
-
-try{
-
-const h = await engine.history()
-
-res.json(h)
-
-}catch(e){
-
-console.error("market history error",e)
-
-res.status(500).json({
-error:"history_failed"
-})
-
-}
-
-})
-
-module.exports = router
+module.exports = router;
