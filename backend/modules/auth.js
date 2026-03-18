@@ -8,12 +8,16 @@ const crypto = require("crypto")
 const db = require("../database")
 
 /* =========================================
-CONFIG (SAFE FOR RENDER/FLY)
+CONFIG
 ========================================= */
 
 const JWT_SECRET = process.env.JWT_SECRET || "dev_secret_key"
 const TELEGRAM_TOKEN = process.env.TELEGRAM_BOT_TOKEN || null
 const TOKEN_EXPIRY = "30d"
+
+if (!process.env.JWT_SECRET) {
+  console.warn("⚠️ Using default JWT_SECRET (NOT SAFE FOR PROD)")
+}
 
 /* =========================================
 CREATE TOKEN
@@ -31,10 +35,10 @@ function createToken(user){
 }
 
 /* =========================================
-AUTH MIDDLEWARE (STRONG)
+AUTH MIDDLEWARE (DB VALIDATION)
 ========================================= */
 
-function authMiddleware(req,res,next){
+async function authMiddleware(req,res,next){
 
   try{
 
@@ -44,19 +48,25 @@ function authMiddleware(req,res,next){
       return res.status(401).json({ error:"NO_TOKEN" })
     }
 
-    let token
-
-    if(header.startsWith("Bearer ")){
-      token = header.split(" ")[1]
-    }else{
-      token = header
-    }
+    let token = header.startsWith("Bearer ")
+      ? header.split(" ")[1]
+      : header
 
     if(!token){
       return res.status(401).json({ error:"EMPTY_TOKEN" })
     }
 
     const decoded = jwt.verify(token, JWT_SECRET)
+
+    // 🔥 CHECK USER EXISTS
+    const user = await db.query(
+      `SELECT id FROM users WHERE id=$1`,
+      [decoded.id]
+    )
+
+    if(!user.rows.length){
+      return res.status(401).json({ error:"USER_NOT_FOUND" })
+    }
 
     req.user = decoded
 
@@ -75,12 +85,12 @@ function authMiddleware(req,res,next){
 }
 
 /* =========================================
-VERIFY TELEGRAM (OPTIONAL SECURITY)
+VERIFY TELEGRAM (STRONG)
 ========================================= */
 
 function verifyTelegram(data){
 
-  if(!TELEGRAM_TOKEN) return true // allow dev mode
+  if(!TELEGRAM_TOKEN) return true
 
   if(!data.hash) return false
 
@@ -101,7 +111,6 @@ function verifyTelegram(data){
     .digest("hex")
 
   return hmac === data.hash
-
 }
 
 /* =========================================
@@ -113,20 +122,18 @@ async function createWallets(userId){
   const assets = ["BX","USDT","BTC"]
 
   for(const asset of assets){
-
     await db.query(
       `INSERT INTO wallet_balances (user_id,asset,balance)
        VALUES($1,$2,0)
        ON CONFLICT DO NOTHING`,
       [userId,asset]
     )
-
   }
 
 }
 
 /* =========================================
-TELEGRAM LOGIN (FIXED + SECURE)
+LOGIN
 ========================================= */
 
 router.post("/telegram", async(req,res)=>{
@@ -141,7 +148,6 @@ router.post("/telegram", async(req,res)=>{
       })
     }
 
-    // verify if enabled
     if(!verifyTelegram(data)){
       return res.status(403).json({
         error:"telegram_verification_failed"
@@ -152,8 +158,7 @@ router.post("/telegram", async(req,res)=>{
 
     let user = await db.query(
       `SELECT id,telegram_id,username
-       FROM users
-       WHERE telegram_id=$1`,
+       FROM users WHERE telegram_id=$1`,
       [data.telegram_id]
     )
 
@@ -178,7 +183,6 @@ router.post("/telegram", async(req,res)=>{
         `UPDATE users SET last_login=NOW() WHERE id=$1`,
         [user.id]
       )
-
     }
 
     const token = createToken(user)
@@ -202,40 +206,31 @@ router.post("/telegram", async(req,res)=>{
 })
 
 /* =========================================
-CURRENT USER
+ME
 ========================================= */
 
 router.get("/me", authMiddleware, async(req,res)=>{
 
-  try{
+  const r = await db.query(
+    `SELECT id,telegram_id,username
+     FROM users WHERE id=$1`,
+    [req.user.id]
+  )
 
-    const r = await db.query(
-      `SELECT id,telegram_id,username
-       FROM users
-       WHERE id=$1`,
-      [req.user.id]
-    )
-
-    if(!r.rows.length){
-      return res.status(404).json({
-        error:"user_not_found"
-      })
-    }
-
-    res.json({ user:r.rows[0] })
-
-  }catch(e){
-
-    res.status(500).json({
-      error:"internal_error"
-    })
-
-  }
+  res.json({ user:r.rows[0] })
 
 })
 
 /* =========================================
-PING AUTH (DEBUG)
+LOGOUT (CLIENT SIDE SUPPORT)
+========================================= */
+
+router.post("/logout", authMiddleware, (req,res)=>{
+  res.json({ success:true })
+})
+
+/* =========================================
+CHECK
 ========================================= */
 
 router.get("/check", authMiddleware, (req,res)=>{
