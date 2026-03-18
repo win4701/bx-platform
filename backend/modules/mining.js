@@ -1,227 +1,120 @@
-const express = require("express")
-const router = express.Router()
+"use strict";
 
-const db = require("../database")
-const engine = require("../engines/miningEngine")
+const express = require("express");
+const router = express.Router();
 
-/* ===============================
-   START MINING
-================================ */
+const engine = require("../engines/miningEngine");
 
-router.post("/subscribe", async (req,res)=>{
+/* =========================================
+AUTH
+========================================= */
 
-try{
+function requireAuth(req,res){
+  const userId = req.user?.id;
 
-const userId = req.user?.id
+  if(!userId){
+    res.status(401).json({ error:"unauthorized" });
+    return null;
+  }
 
-if(!userId){
-return res.status(401).json({
-error:"unauthorized"
-})
+  return userId;
 }
 
-let {hashRate} = req.body
+/* =========================================
+START MINING
+========================================= */
 
-hashRate = Number(hashRate)
+router.post("/start", async (req,res)=>{
 
-if(!hashRate || hashRate <= 0){
-return res.status(400).json({
-error:"invalid_hashrate"
-})
-}
+  try{
 
-/* CHECK ACTIVE SESSION */
+    const userId = requireAuth(req,res);
+    if(!userId) return;
 
-const active = await db.query(
-`SELECT id
-FROM mining_sessions
-WHERE user_id=$1
-AND status='active'`,
-[userId]
-)
+    let { hashRate } = req.body;
 
-if(active.rows.length){
-return res.status(400).json({
-error:"mining_already_active"
-})
-}
+    hashRate = Number(hashRate);
 
-/* CALCULATE REWARD */
+    if(!hashRate || hashRate <= 0){
+      return res.status(400).json({
+        error:"invalid_hashrate"
+      });
+    }
 
-const reward = engine.calculateReward(hashRate)
+    const result = await engine.startMining(userId, hashRate);
 
-/* CREATE SESSION */
+    res.json({
+      success:true,
+      ...result
+    });
 
-await db.query(
-`INSERT INTO mining_sessions
-(user_id,hash_rate,reward,status,started_at)
-VALUES($1,$2,$3,'active',NOW())`,
-[userId,hashRate,reward]
-)
+  }catch(e){
 
-/* BROADCAST */
+    console.error("mining start error:", e);
 
-if(global.broadcast){
+    res.status(500).json({
+      error:e.message || "mining_start_failed"
+    });
 
-global.broadcast({
-type:"mining_start",
-user:userId,
-hashRate,
-reward
-})
+  }
 
-}
+});
 
-/* RESPONSE */
+/* =========================================
+STOP MINING
+========================================= */
 
-res.json({
-status:"started",
-hashRate,
-reward
-})
+router.post("/stop", async (req,res)=>{
 
-}catch(e){
+  try{
 
-console.error("mining start error",e)
+    const userId = requireAuth(req,res);
+    if(!userId) return;
 
-res.status(500).json({
-error:"mining_start_failed"
-})
+    const result = await engine.stopMining(userId);
 
-}
+    res.json(result);
 
-})
+  }catch(e){
 
-/* ===============================
-   MINING STATUS
-================================ */
+    res.status(500).json({
+      error:"mining_stop_failed"
+    });
+
+  }
+
+});
+
+/* =========================================
+STATUS
+========================================= */
 
 router.get("/status", async (req,res)=>{
 
-try{
+  try{
 
-const userId = req.user?.id
+    const userId = requireAuth(req,res);
+    if(!userId) return;
 
-if(!userId){
-return res.status(401).json({
-error:"unauthorized"
-})
-}
+    const status = await engine.getMiningStatus(userId);
 
-const s = await db.query(
-`SELECT hash_rate,reward,status,started_at
-FROM mining_sessions
-WHERE user_id=$1
-AND status='active'`,
-[userId]
-)
+    res.json({
+      active: !!status && status.status === "active",
+      session: status
+    });
 
-if(!s.rows.length){
+  }catch(e){
 
-return res.json({
-active:false
-})
+    res.status(500).json({
+      error:"mining_status_failed"
+    });
 
-}
+  }
 
-res.json({
-active:true,
-session:s.rows[0]
-})
+});
 
-}catch(e){
+/* =========================================
+EXPORT
+========================================= */
 
-console.error("mining status error",e)
-
-res.status(500).json({
-error:"mining_status_failed"
-})
-
-}
-
-})
-
-/* ===============================
-   CLAIM REWARD
-================================ */
-
-router.post("/claim", async (req,res)=>{
-
-try{
-
-const userId = req.user?.id
-
-if(!userId){
-return res.status(401).json({
-error:"unauthorized"
-})
-}
-
-const session = await db.query(
-`SELECT id,reward
-FROM mining_sessions
-WHERE user_id=$1
-AND status='active'`,
-[userId]
-)
-
-if(!session.rows.length){
-return res.status(400).json({
-error:"no_active_mining"
-})
-}
-
-const reward = session.rows[0].reward
-
-/* ADD REWARD */
-
-await db.query(
-`UPDATE wallet_balances
-SET balance = balance + $1
-WHERE user_id=$2
-AND asset='BX'`,
-[reward,userId]
-)
-
-/* CLOSE SESSION */
-
-await db.query(
-`UPDATE mining_sessions
-SET status='claimed',
-ended_at=NOW()
-WHERE id=$1`,
-[session.rows[0].id]
-)
-
-/* BROADCAST */
-
-if(global.broadcast){
-
-global.broadcast({
-type:"mining_claim",
-user:userId,
-reward
-})
-
-}
-
-/* RESPONSE */
-
-res.json({
-claimed:true,
-reward
-})
-
-}catch(e){
-
-console.error("mining claim error",e)
-
-res.status(500).json({
-error:"mining_claim_failed"
-})
-
-}
-
-})
-
-module.exports = router
+module.exports = router;
