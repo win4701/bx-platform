@@ -1,71 +1,157 @@
-"use strict"
+"use strict";
 
-const WebSocket = require("ws")
+const WebSocket = require("ws");
 
-let wss
+let wss;
+
+/* =========================================
+STATE
+========================================= */
+
+const clients = new Map(); // ws -> {channels:Set}
+
+/* =========================================
+START
+========================================= */
 
 function startWS(server){
 
-wss = new WebSocket.Server({server})
+  wss = new WebSocket.Server({ server });
 
-console.log("WebSocket server started")
+  console.log("📡 WebSocket Hub started");
 
-wss.on("connection",(ws)=>{
+  wss.on("connection", (ws)=>{
 
-console.log("WS client connected")
+    console.log("🔌 WS connected");
 
-ws.on("message",(msg)=>{
+    clients.set(ws, {
+      channels: new Set()
+    });
 
-try{
+    ws.isAlive = true;
 
-const data = JSON.parse(msg)
+    /* ================= HEARTBEAT ================= */
 
-if(data.type === "ping"){
+    ws.on("pong", ()=> ws.isAlive = true);
 
-ws.send(JSON.stringify({type:"pong"}))
+    /* ================= MESSAGE ================= */
+
+    ws.on("message", (msg)=>{
+
+      try{
+
+        const data = JSON.parse(msg);
+
+        /* SUBSCRIBE */
+
+        if(data.type === "subscribe"){
+
+          const { channel } = data;
+
+          if(channel){
+            clients.get(ws).channels.add(channel);
+          }
+
+        }
+
+        /* UNSUBSCRIBE */
+
+        if(data.type === "unsubscribe"){
+
+          const { channel } = data;
+
+          clients.get(ws).channels.delete(channel);
+
+        }
+
+        /* PING */
+
+        if(data.type === "ping"){
+          ws.send(JSON.stringify({ type:"pong" }));
+        }
+
+      }catch(e){
+        console.error("WS parse error:", e.message);
+      }
+
+    });
+
+    /* ================= CLOSE ================= */
+
+    ws.on("close", ()=>{
+
+      console.log("❌ WS disconnected");
+      clients.delete(ws);
+
+    });
+
+  });
+
+  /* =========================================
+  HEARTBEAT LOOP
+  ========================================= */
+
+  setInterval(()=>{
+
+    wss.clients.forEach(ws=>{
+
+      if(!ws.isAlive){
+        return ws.terminate();
+      }
+
+      ws.isAlive = false;
+      ws.ping();
+
+    });
+
+  }, 30000);
 
 }
 
-}catch(e){
+/* =========================================
+BROADCAST (CHANNEL BASED)
+========================================= */
 
-console.error("WS error",e)
+function broadcast(channel, data){
 
-}
+  if(!wss) return;
 
-})
+  const msg = JSON.stringify(data);
 
-ws.on("close",()=>{
+  wss.clients.forEach(ws=>{
 
-console.log("WS client disconnected")
+    const meta = clients.get(ws);
 
-})
+    if(
+      ws.readyState === WebSocket.OPEN &&
+      meta &&
+      meta.channels.has(channel)
+    ){
+      ws.send(msg);
+    }
 
-})
-
-}
-
-/* =========================
-   BROADCAST
-========================= */
-
-function broadcast(data){
-
-if(!wss) return
-
-const msg = JSON.stringify(data)
-
-wss.clients.forEach(c=>{
-
-if(c.readyState === WebSocket.OPEN){
-
-c.send(msg)
+  });
 
 }
 
-})
+/* =========================================
+SEND TO ONE
+========================================= */
+
+function send(ws, data){
+
+  if(ws.readyState === WebSocket.OPEN){
+    ws.send(JSON.stringify(data));
+  }
 
 }
 
-global.broadcast = broadcast
+/* =========================================
+EXPORT
+========================================= */
 
-module.exports = startWS
+module.exports = {
+  startWS,
+  broadcast,
+  send
+};
