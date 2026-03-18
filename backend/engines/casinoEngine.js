@@ -3,7 +3,8 @@
 const crypto = require("crypto");
 const db = require("../database");
 const ledger = require("../core/ledger");
-const casinoFeed = require("../services/casinoFeed");
+const risk = require("../core/riskEngine");
+const casinoWS = require("../ws/casinoWS");
 
 /* =========================================
 CONFIG
@@ -12,7 +13,7 @@ CONFIG
 const HOUSE_EDGE = 0.01;
 
 /* =========================================
-PROVABLY FAIR CORE
+FAIR RNG
 ========================================= */
 
 function hash(serverSeed, clientSeed, nonce){
@@ -30,50 +31,120 @@ function rng(serverSeed, clientSeed, nonce){
 }
 
 /* =========================================
-GAME LOGIC
+GAMES (12)
 ========================================= */
 
-function gameLogic(game, r){
+function playGame(game, r, data){
 
   switch(game){
 
     case "coinflip":
+      const side = r > 0.5 ? "heads" : "tails";
       return {
-        result: r > 0.5 ? "heads" : "tails",
+        result: side,
+        win: side === data.side,
         multiplier: 2 * (1 - HOUSE_EDGE)
       };
 
     case "dice":
       const roll = Number((r * 100).toFixed(2));
+      const win = roll > (data.target || 50);
       return {
         result: roll,
-        win: roll > 50,
-        multiplier: 2 * (1 - HOUSE_EDGE)
+        win,
+        multiplier: 100 / (100 - (data.target || 50)) * (1 - HOUSE_EDGE)
       };
 
-    case "crash":
     case "limbo":
       const m = Number((1 / (1 - r)).toFixed(2));
       return {
         result: m,
-        multiplier: m * (1 - HOUSE_EDGE)
+        win: m >= data.multiplier,
+        multiplier: data.multiplier * (1 - HOUSE_EDGE)
+      };
+
+    case "crash":
+      const crash = Number((1 / (1 - r)).toFixed(2));
+      return {
+        result: crash,
+        win: crash >= data.cashout,
+        multiplier: data.cashout * (1 - HOUSE_EDGE)
+      };
+
+    case "roulette":
+      const num = Math.floor(r * 37);
+      return {
+        result: num,
+        win: num === data.number,
+        multiplier: 36
+      };
+
+    case "slots":
+      const slot = Math.floor(r * 10);
+      return {
+        result: slot,
+        win: slot === 7,
+        multiplier: 10
+      };
+
+    case "hi-lo":
+      return {
+        result: r,
+        win: data.choice === (r > 0.5 ? "high" : "low"),
+        multiplier: 2
+      };
+
+    case "wheel":
+      const wheel = Math.floor(r * 10);
+      return {
+        result: wheel,
+        win: wheel === data.number,
+        multiplier: 5
+      };
+
+    case "keno":
+      return {
+        result: Math.floor(r * 20),
+        win: true,
+        multiplier: 1 + r
+      };
+
+    case "plinko":
+      return {
+        result: r,
+        win: true,
+        multiplier: 0.5 + r * 2
+      };
+
+    case "mines":
+      return {
+        result: r,
+        win: true,
+        multiplier: 1 + r
+      };
+
+    case "blackjack":
+      return {
+        result: r,
+        win: r > 0.5,
+        multiplier: 2
       };
 
     default:
-      throw new Error("unsupported_game");
+      throw new Error("game_not_supported");
   }
 
 }
 
 /* =========================================
-GET USER SEED + NONCE
+USER SEED
 ========================================= */
 
 async function getUserState(userId){
 
   let r = await db.query(`
     SELECT server_seed, client_seed, nonce
-    FROM casino_users
+    FROM casino_seeds
     WHERE user_id=$1
   `,[userId]);
 
@@ -83,15 +154,11 @@ async function getUserState(userId){
     const clientSeed = crypto.randomBytes(16).toString("hex");
 
     await db.query(`
-      INSERT INTO casino_users(user_id,server_seed,client_seed,nonce)
+      INSERT INTO casino_seeds(user_id,server_seed,client_seed,nonce)
       VALUES($1,$2,$3,0)
     `,[userId,serverSeed,clientSeed]);
 
-    return {
-      serverSeed,
-      clientSeed,
-      nonce:0
-    };
+    return { serverSeed, clientSeed, nonce:0 };
 
   }
 
@@ -104,81 +171,85 @@ async function getUserState(userId){
 }
 
 /* =========================================
-PLAY GAME (REAL)
+PLAY
 ========================================= */
 
-async function play({ userId, game, bet }){
+async function processGame({ userId, game, bet, data }){
 
-  if(!userId) throw new Error("unauthorized");
-  if(!bet || bet <= 0) throw new Error("invalid_bet");
+  await risk.checkBet(userId, bet);
 
   const state = await getUserState(userId);
 
   const r = rng(state.serverSeed, state.clientSeed, state.nonce);
 
-  const g = gameLogic(game, r);
+  const g = playGame(game, r, data);
 
-  let payout = 0;
+  let payout = g.win ? bet * g.multiplier : 0;
 
-  if(g.win === undefined){
-    payout = bet * g.multiplier;
-  }else{
-    payout = g.win ? bet * g.multiplier : 0;
-  }
+  await risk.checkWin(payout);
+  await risk.checkExposure(payout);
 
   /* ================= LEDGER ================= */
 
-  await ledger.trade({
+  await ledger.debit({
     userId,
-    assetIn: "BX",
-    assetOut: "BX",
-    amountIn: bet,
-    amountOut: payout
+    asset: "BX",
+    amount: bet,
+    reason: "casino_bet"
   });
+
+  if(payout > 0){
+    await ledger.credit({
+      userId,
+      asset: "BX",
+      amount: payout,
+      reason: "casino_win"
+    });
+  }
 
   /* ================= SAVE ================= */
 
   await db.query(`
-    INSERT INTO casino_bets
-    (user_id,game,bet,payout,result,nonce)
-    VALUES($1,$2,$3,$4,$5,$6)
+    INSERT INTO casino_sessions
+    (user_id,game,bet,result,profit)
+    VALUES($1,$2,$3,$4,$5)
   `,[
     userId,
     game,
     bet,
-    payout,
     JSON.stringify(g.result),
-    state.nonce
+    payout - bet
   ]);
 
-  /* ================= UPDATE NONCE ================= */
+  /* ================= NONCE ================= */
 
   await db.query(`
-    UPDATE casino_users
+    UPDATE casino_seeds
     SET nonce = nonce + 1
     WHERE user_id=$1
   `,[userId]);
 
-  /* ================= FEED ================= */
+  /* ================= WS ================= */
 
-  casinoFeed.broadcastBet(userId, game, bet);
-
-  if(payout > 0){
-    casinoFeed.broadcastWin(userId, game, payout, g.multiplier);
-  }
+  casinoWS.broadcast("casino", {
+    type:"game",
+    user:userId,
+    game,
+    bet,
+    payout
+  });
 
   return {
     game,
     result: g.result,
     payout,
-    multiplier: g.multiplier,
-    nonce: state.nonce
+    multiplier: g.multiplier
   };
 
 }
 
 /* =========================================
-SEED ROTATION
+SEED ROTATE
 ========================================= */
 
 async function rotateSeed(userId){
@@ -186,7 +257,7 @@ async function rotateSeed(userId){
   const newSeed = crypto.randomBytes(32).toString("hex");
 
   await db.query(`
-    UPDATE casino_users
+    UPDATE casino_seeds
     SET server_seed=$1, nonce=0
     WHERE user_id=$2
   `,[newSeed,userId]);
@@ -195,11 +266,7 @@ async function rotateSeed(userId){
 
 }
 
-/* =========================================
-EXPORT
-========================================= */
-
 module.exports = {
-  play,
+  processGame,
   rotateSeed
 };
