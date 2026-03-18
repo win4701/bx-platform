@@ -904,6 +904,11 @@ h3{
   75%  { transform: translateX(-4px); }
   100% { transform: translateX(0); }
    
+@keyframes pop{
+  0%{ transform:scale(0.8); opacity:0; }
+  100%{ transform:scale(1); opacity:1; }
+}
+
 /* ============= CRASH VIEW ===============*/
   
    .crash-pro{
@@ -1142,14 +1147,17 @@ button:active,
 /* =========================================================
    UX – MICRO HOVER
 ========================================================= */
+
 .trade:hover,
 .deposit-method:hover,
 .mining-plan:hover{
   border-color:var(--green);
 }
+
 /* =========================================================
    UX – ERROR STATES
 ========================================================= */
+
 .status.error{
   background:rgba(255,143,163,.08);
   border:1px solid rgba(255,143,163,.4);
