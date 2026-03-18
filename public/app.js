@@ -40,61 +40,73 @@ const log = {
 /* ================= USER / AUTH ================= */
 
 const USER = {
-  jwt: null,
+  token: null,
   authenticated: false,
 
+  /* ================= LOAD ================= */
   load() {
     try {
-      const token = localStorage.getItem("jwt");
-      if (token && typeof token === "string") {
-        this.jwt = token;
+      const token = localStorage.getItem("token");
+
+      if (token && typeof token === "string" && token.length > 10) {
+        this.token = token;
         this.authenticated = true;
-        log.info("JWT loaded");
+        log.info("TOKEN loaded");
+      } else {
+        this.clear();
       }
+
     } catch (e) {
-      log.warn("JWT load failed");
+      log.warn("TOKEN load failed");
+      this.clear();
     }
   },
 
+  /* ================= SET ================= */
   set(token) {
-    if (!token) return;
-    this.jwt = token;
+    if (!token || typeof token !== "string") return;
+
+    this.token = token;
     this.authenticated = true;
+
     try {
-      localStorage.setItem("jwt", token);
-    } catch (e) {}
-    log.info("JWT set");
+      localStorage.setItem("token", token);
+    } catch (e) {
+      log.warn("TOKEN save failed");
+    }
+
+    log.info("TOKEN saved");
   },
 
+  /* ================= CLEAR ================= */
   clear() {
-    this.jwt = null;
+    this.token = null;
     this.authenticated = false;
+
     try {
-      localStorage.removeItem("jwt");
+      localStorage.removeItem("token");
     } catch (e) {}
-    log.info("JWT cleared");
+
+    log.info("TOKEN cleared");
+  },
+
+  /* ================= VALIDATION ================= */
+  isValid() {
+    return !!this.token && this.token.length > 10;
   }
 };
 
+/* ================= HELPERS ================= */
+
 function isAuthenticated() {
-  return USER.authenticated === true;
+  return USER.isValid();
 }
 
 function authHeaders() {
-  return USER.jwt
-    ? { Authorization: "Bearer " + USER.jwt }
+  return USER.token
+    ? { Authorization: "Bearer " + USER.token }
     : {};
 }
-
-/* ================= APP STATE ================= */
-
-const APP = {
-  ready: false,
-  view: "wallet", 
-
-  init() {
-    USER.load();
-    this.ready = true;
     log.info("APP initialized");
   }
 };
