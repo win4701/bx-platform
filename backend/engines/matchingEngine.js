@@ -3,6 +3,7 @@
 const db = require("../database");
 const ledger = require("../core/ledger");
 const tradesFeed = require("./tradesFeed");
+const candleEngine = require("./candleEngine");
 
 const PAIR = "BX_USDT";
 const FEE = 0.002;
@@ -19,7 +20,6 @@ async function matchOrders(pair){
 
     await client.query("BEGIN");
 
-    /* best buy */
     const buy = await client.query(`
       SELECT * FROM orders
       WHERE pair=$1 AND side='buy' AND amount > 0
@@ -28,7 +28,6 @@ async function matchOrders(pair){
       FOR UPDATE SKIP LOCKED
     `,[pair]);
 
-    /* best sell */
     const sell = await client.query(`
       SELECT * FROM orders
       WHERE pair=$1 AND side='sell' AND amount > 0
@@ -50,25 +49,42 @@ async function matchOrders(pair){
       return false;
     }
 
-    /* execution */
+    /* ================= EXECUTION ================= */
+
     const price = Number(s.price);
     const amount = Math.min(Number(b.amount), Number(s.amount));
     const value = price * amount;
 
-    /* fees */
     const feeBuy = amount * FEE;
     const feeSell = value * FEE;
 
-    /* update orders */
+    const side = "buy"; // buyer initiated
+
+    /* ================= UPDATE ORDERS ================= */
+
     await client.query(`
-      UPDATE orders SET amount = amount - $1 WHERE id=$2
+      UPDATE orders
+      SET amount = amount - $1,
+          status = CASE WHEN amount - $1 <= 0 THEN 'filled' ELSE 'partial' END
+      WHERE id=$2
     `,[amount,b.id]);
 
     await client.query(`
-      UPDATE orders SET amount = amount - $1 WHERE id=$2
+      UPDATE orders
+      SET amount = amount - $1,
+          status = CASE WHEN amount - $1 <= 0 THEN 'filled' ELSE 'partial' END
+      WHERE id=$2
     `,[amount,s.id]);
 
-    /* ledger buyer */
+    /* ================= CLEAN FILLED ================= */
+
+    await client.query(`
+      DELETE FROM orders
+      WHERE amount <= 0
+    `);
+
+    /* ================= LEDGER ================= */
+
     await ledger.trade({
       userId: b.user_id,
       assetIn: "USDT",
@@ -77,7 +93,6 @@ async function matchOrders(pair){
       amountOut: amount - feeBuy
     });
 
-    /* ledger seller */
     await ledger.trade({
       userId: s.user_id,
       assetIn: "BX",
@@ -86,33 +101,37 @@ async function matchOrders(pair){
       amountOut: value - feeSell
     });
 
-    /* insert trade (FULL DATA) */
+    /* ================= TRADE ================= */
+
     await client.query(`
       INSERT INTO trades
-      (pair,price,amount,buyer_id,seller_id,buy_order_id,sell_order_id,fee_buy,fee_sell)
-      VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)
+      (pair,price,amount,buyer_id,seller_id,side)
+      VALUES($1,$2,$3,$4,$5,$6)
     `,[
       pair,
       price,
       amount,
       b.user_id,
       s.user_id,
-      b.id,
-      s.id,
-      feeBuy,
-      feeSell
+      side
     ]);
 
     await client.query("COMMIT");
 
-    /* broadcast (FULL) */
+    /* ================= REALTIME ================= */
+
     await tradesFeed.publishTrade({
       pair,
       price,
       amount,
+      side,
       buyer: b.user_id,
       seller: s.user_id
     });
+
+    /* ================= CANDLES ================= */
+
+    candleEngine.updateCandle(pair, price, amount);
 
     return true;
 
@@ -120,12 +139,12 @@ async function matchOrders(pair){
 
     await client.query("ROLLBACK");
     console.error("Matching error:", e);
-
     return false;
 
   }finally{
     client.release();
   }
+
 }
 
 /* =========================================
@@ -139,7 +158,7 @@ async function runMatching(){
   if(running) return;
   running = true;
 
-  console.log("🚀 Matching Engine LIVE");
+  console.log("🚀 Matching Engine PRO LIVE");
 
   while(running){
 
@@ -148,13 +167,13 @@ async function runMatching(){
       const didMatch = await matchOrders(PAIR);
 
       await new Promise(r =>
-        setTimeout(r, didMatch ? 5 : 100)
+        setTimeout(r, didMatch ? 1 : 50)
       );
 
     }catch(e){
 
       console.error("Loop error:", e);
-      await new Promise(r=>setTimeout(r,500));
+      await new Promise(r=>setTimeout(r,200));
 
     }
 
