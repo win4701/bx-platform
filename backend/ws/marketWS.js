@@ -1,50 +1,66 @@
-const wsHub = require("./wsHub")
+"use strict";
 
-function broadcastPrice(pair,price){
+const wsHub = require("./wsHub");
+const tradesFeed = require("../engines/tradesFeed");
+const marketEngine = require("../engines/marketEngine");
 
-wsHub.broadcast({
+/* =========================================
+INIT
+========================================= */
 
-type:"market_price",
-pair,
-price,
-time:Date.now()
+function initMarketWS(){
 
-})
+  console.log("📡 Market WS initialized");
 
-}
-
-function broadcastTrade(pair,price,amount,side){
-
-wsHub.broadcast({
-
-type:"market_trade",
-pair,
-price,
-amount,
-side,
-time:Date.now()
-
-})
+  /* attach hub to trades feed */
+  tradesFeed.attachWS(wsHub);
 
 }
 
-function broadcastOrderbook(pair,bids,asks){
+/* =========================================
+PUSH SNAPSHOT (on connect)
+========================================= */
 
-wsHub.broadcast({
+async function sendSnapshot(ws){
 
-type:"orderbook",
-pair,
-bids,
-asks
+  try{
 
-})
+    const price = await marketEngine.getPrice();
+    const orderbook = await marketEngine.orderbook();
+    const trades = tradesFeed.getTrades();
+
+    ws.send(JSON.stringify({
+      type: "snapshot",
+      data: {
+        price,
+        orderbook,
+        trades
+      }
+    }));
+
+  }catch(e){
+    console.error("Snapshot error:", e);
+  }
 
 }
+
+/* =========================================
+SUBSCRIBE HANDLER
+========================================= */
+
+function handleConnection(ws){
+
+  console.log(" WS client connected");
+
+  sendSnapshot(ws);
+
+}
+
+/* =========================================
+EXPORT
+========================================= */
 
 module.exports = {
-
-broadcastPrice,
-broadcastTrade,
-broadcastOrderbook
-
-}
+  initMarketWS,
+  handleConnection
+};
