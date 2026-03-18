@@ -535,39 +535,40 @@ async function initTelegramLogin() {
   }
 
   const tg = window.Telegram.WebApp;
-
   tg.ready();
-
-  const initData = tg.initData;
-
-  if (!initData) {
-    console.warn("No Telegram initData");
-    return;
-  }
 
   const user = tg.initDataUnsafe?.user;
 
-if (!user) return;
-
-const res = await safeFetch("/auth/telegram", {
-  method: "POST",
-  body: JSON.stringify({
-    telegram_id: user.id,
-    username: user.username,
-    first_name: user.first_name
-  })
-});
-
-  if (!res || !res.access_token) {
-    console.error("Telegram login failed");
+  if (!user) {
+    console.warn("No Telegram user");
     return;
   }
 
-  USER.set(res.access_token);
+  try {
 
-  console.log("JWT authenticated");
+    const res = await safeFetch("/auth/telegram", {
+      method: "POST",
+      body: {
+        telegram_id: user.id,
+        username: user.username,
+        first_name: user.first_name
+      }
+    });
 
-  loadWallet();
+    if (!res || !res.token) {
+      console.error("Login failed", res);
+      return;
+    }
+
+    USER.set(res.token);
+
+    console.log(" Logged in:", res.user);
+
+    await loadWallet();
+
+  } catch (e) {
+    console.error("Telegram login error", e);
+  }
 }
 
 /* ================= INIT ================= */
