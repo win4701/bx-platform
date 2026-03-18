@@ -3,7 +3,7 @@
 const express = require("express");
 const router = express.Router();
 
-const engine = require("../engines/casinoEngine");
+const { addJob } = require("../queues/systemQueue");
 
 /* =========================================
 AUTH
@@ -21,7 +21,49 @@ function requireAuth(req,res){
 }
 
 /* =========================================
-PLAY GAME (CLEAN)
+VALIDATION
+========================================= */
+
+function validateGame(game, data){
+
+  switch(game){
+
+    case "dice":
+      if(!data.target) throw new Error("invalid_target");
+      break;
+
+    case "coinflip":
+      if(!["heads","tails"].includes(data.side)){
+        throw new Error("invalid_side");
+      }
+      break;
+
+    case "limbo":
+      if(!data.multiplier) throw new Error("invalid_multiplier");
+      break;
+
+    case "crash":
+      if(!data.cashout) throw new Error("invalid_cashout");
+      break;
+
+    case "roulette":
+    case "blackjack":
+    case "mines":
+    case "plinko":
+    case "slots":
+    case "hi-lo":
+    case "wheel":
+      break;
+
+    default:
+      throw new Error("game_not_supported");
+
+  }
+
+}
+
+/* =========================================
+PLAY GAME (QUEUE)
 ========================================= */
 
 router.post("/play", async (req,res)=>{
@@ -31,50 +73,42 @@ router.post("/play", async (req,res)=>{
     const userId = requireAuth(req,res);
     if(!userId) return;
 
-    const { game, bet } = req.body;
+    const { game, bet, data } = req.body;
 
-    const result = await engine.play({
+    if(!game || !bet){
+      return res.status(400).json({
+        error:"missing_params"
+      });
+    }
+
+    if(bet <= 0){
+      return res.status(400).json({
+        error:"invalid_bet"
+      });
+    }
+
+    validateGame(game, data || {});
+
+    /* ================= QUEUE ================= */
+
+    await addJob("casino_play", {
       userId,
       game,
-      bet
+      bet,
+      data
     });
 
     res.json({
       success:true,
-      ...result
+      queued:true
     });
 
   }catch(e){
 
-    console.error("casino play error:", e);
+    console.error("casino error:", e.message);
 
     res.status(500).json({
       error:e.message || "casino_failed"
-    });
-
-  }
-
-});
-
-/* =========================================
-ROTATE SEED
-========================================= */
-
-router.post("/seed/rotate", async (req,res)=>{
-
-  try{
-
-    const userId = requireAuth(req,res);
-    if(!userId) return;
-
-    const result = await engine.rotateSeed(userId);
-
-    res.json(result);
-
-  }catch(e){
-
-    res.status(500).json({
-      error:"seed_rotate_failed"
     });
 
   }
@@ -95,8 +129,8 @@ router.get("/history", async (req,res)=>{
     const db = require("../database");
 
     const r = await db.query(`
-      SELECT game,bet,payout,result,created_at
-      FROM casino_bets
+      SELECT game,bet,profit,result,created_at
+      FROM casino_sessions
       WHERE user_id=$1
       ORDER BY id DESC
       LIMIT 50
@@ -115,16 +149,24 @@ router.get("/history", async (req,res)=>{
 });
 
 /* =========================================
-GAMES LIST
+GAMES LIST (12 GAMES)
 ========================================= */
 
 router.get("/games",(req,res)=>{
 
   res.json([
-    "coinflip",
     "dice",
+    "coinflip",
     "limbo",
-    "crash"
+    "crash",
+    "roulette",
+    "blackjack",
+    "mines",
+    "plinko",
+    "slots",
+    "hi-lo",
+    "wheel",
+    "keno"
   ]);
 
 });
