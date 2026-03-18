@@ -1,33 +1,62 @@
-"use strict"
+"use strict";
 
-require("dotenv").config()
+require("dotenv").config();
 
-const express = require("express")
-const cors = require("cors")
-const http = require("http")
+const express = require("express");
+const cors = require("cors");
+const http = require("http");
+const helmet = require("helmet");
+const rateLimit = require("express-rate-limit");
 
-const routes = require("./routes")
-const db = require("./database")
+const routes = require("./routes");
+const db = require("./database");
 
-const startWS = require("./ws/wsHub")
-const { startSystemBots } = require("./systemBots")
+const wsHub = require("./ws/wsHub");
+const { startSystemBots } = require("./systemBots");
 
 /* =========================================
-ENV
+ENV VALIDATION
 ========================================= */
 
-const PORT = process.env.PORT || 3000
-const RUN_BOTS = process.env.BOTS === "true"
-const IS_PROD = process.env.NODE_ENV === "production"
+const requiredEnv = ["DATABASE_URL", "JWT_SECRET"];
+
+requiredEnv.forEach((key) => {
+  if (!process.env[key]) {
+    console.error(`❌ Missing ENV: ${key}`);
+    process.exit(1);
+  }
+});
+
+/* =========================================
+CONFIG
+========================================= */
+
+const PORT = process.env.PORT || 3000;
+const RUN_BOTS = process.env.BOTS === "true";
 
 /* =========================================
 APP
 ========================================= */
 
-const app = express()
+const app = express();
 
-app.use(cors())
-app.use(express.json({ limit: "2mb" }))
+app.use(helmet());
+
+app.use(cors({
+  origin: "*",
+  methods: ["GET", "POST"],
+}));
+
+app.use(express.json({ limit: "1mb" }));
+
+/* =========================================
+RATE LIMIT
+========================================= */
+
+app.use(rateLimit({
+  windowMs: 60 * 1000,
+  max: 200,
+}));
 
 /* =========================================
 ROOT
@@ -39,37 +68,31 @@ app.get("/", (req, res) => {
     mode: RUN_BOTS ? "BOT" : "API",
     status: "running",
     time: Date.now()
-  })
-})
+  });
+});
 
 /* =========================================
-HEALTH CHECK (CRITICAL FOR RENDER)
+HEALTH
 ========================================= */
 
 app.get("/health", async (req, res) => {
-  try {
-    const dbHealth = await db.health()
 
-    res.json({
-      status: "ok",
-      db: dbHealth,
-      uptime: process.uptime()
-    })
+  const dbHealth = await db.health();
 
-  } catch (e) {
-    res.status(500).json({
-      status: "error",
-      error: e.message
-    })
-  }
-})
+  res.json({
+    status: "ok",
+    db: dbHealth,
+    uptime: process.uptime()
+  });
+
+});
 
 /* =========================================
-API ROUTES (ONLY ON RENDER)
+ROUTES
 ========================================= */
 
 if (!RUN_BOTS) {
-  app.use("/api", routes)
+  app.use("/api", routes);
 }
 
 /* =========================================
@@ -77,80 +100,104 @@ ERROR HANDLER
 ========================================= */
 
 app.use((err, req, res, next) => {
-  console.error("❌ API ERROR:", err.message)
+
+  console.error("🔥 API ERROR:", err.message);
 
   res.status(500).json({
-    error: "internal_server_error"
-  })
-})
+    error: err.message || "internal_error"
+  });
+
+});
 
 /* =========================================
-SERVER START
+START SERVER
 ========================================= */
 
-async function start() {
-  try {
-    console.log("🔌 Connecting to database...")
+async function start(){
 
-    await db.query("SELECT NOW()")
+  try{
 
-    console.log("✅ Database connected")
+    console.log("🔌 Connecting DB...");
 
-    const server = http.createServer(app)
+    await db.query("SELECT 1");
 
-    /* WebSocket (API only) */
-    if (!RUN_BOTS) {
-      startWS(server)
-      console.log("📡 WebSocket started")
+    console.log("✅ DB Connected");
+
+    const server = http.createServer(app);
+
+    /* ================= WS ================= */
+
+    if(!RUN_BOTS){
+      wsHub.startWS(server);
+      console.log("📡 WS Ready");
     }
 
-    /* Start HTTP server */
-    server.listen(PORT, () => {
-      console.log(`🚀 Server running on port ${PORT}`)
-      console.log(`Mode: ${RUN_BOTS ? "BOT" : "API"}`)
-    })
+    /* ================= HTTP ================= */
 
-    /* START BOTS (Fly only) */
-    if (RUN_BOTS) {
-      console.log("🤖 Starting system bots...")
+    server.listen(PORT, ()=>{
 
-      setTimeout(() => {
-        try {
-          startSystemBots()
-          console.log("✅ Bots started")
-        } catch (e) {
-          console.error("❌ Bot startup failed:", e.message)
-        }
-      }, 3000)
+      console.log(`🚀 Server running: ${PORT}`);
+      console.log(`Mode: ${RUN_BOTS ? "BOT" : "API"}`);
+
+    });
+
+    /* ================= BOTS ================= */
+
+    if(RUN_BOTS){
+
+      setTimeout(()=>{
+
+        console.log("🤖 Starting bots...");
+        startSystemBots();
+
+      }, 2000);
+
     }
 
     /* =========================================
-    KEEP ALIVE (VERY IMPORTANT FOR FLY)
+    HEARTBEAT
     ========================================= */
 
-    setInterval(() => {
-      console.log("💓 Server alive:", new Date().toISOString())
-    }, 30000)
+    setInterval(()=>{
+      console.log("💓 Alive:", new Date().toISOString());
+    }, 30000);
 
     /* =========================================
-    GRACEFUL SHUTDOWN
+    CRASH HANDLING (CRITICAL)
     ========================================= */
 
-    const shutdown = () => {
-      console.log("🔻 Shutting down...")
+    process.on("uncaughtException", (err)=>{
+      console.error("💥 Uncaught:", err.message);
+    });
 
-      server.close(() => {
-        process.exit(0)
-      })
-    }
+    process.on("unhandledRejection", (err)=>{
+      console.error("💥 Rejection:", err);
+    });
 
-    process.on("SIGINT", shutdown)
-    process.on("SIGTERM", shutdown)
+    /* =========================================
+    SHUTDOWN
+    ========================================= */
 
-  } catch (e) {
-    console.error("❌ Startup error:", e.message)
-    process.exit(1)
+    const shutdown = ()=>{
+
+      console.log("🔻 Shutting down...");
+
+      server.close(()=>{
+        process.exit(0);
+      });
+
+    };
+
+    process.on("SIGINT", shutdown);
+    process.on("SIGTERM", shutdown);
+
+  }catch(e){
+
+    console.error("❌ Startup failed:", e.message);
+    process.exit(1);
+
   }
+
 }
 
-start()
+start();
