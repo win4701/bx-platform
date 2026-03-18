@@ -1,380 +1,284 @@
-"use strict"
+"use strict";
 
-const db = require("../database")
+const db = require("../database");
 
-/* ========================================
-CREATE BALANCE IF NOT EXISTS
-======================================== */
+/* =========================================
+CONFIG
+========================================= */
 
-async function ensureBalance(userId, asset){
+const PRECISION = 1e8;
 
-await db.query(
+/* =========================================
+UTILS
+========================================= */
 
-`INSERT INTO wallet_balances (user_id,asset,balance)
-VALUES ($1,$2,0)
-ON CONFLICT (user_id,asset) DO NOTHING`,
+function toInt(amount){
+  return Math.floor(Number(amount) * PRECISION);
+}
 
-[userId,asset]
+function toFloat(amount){
+  return Number(amount) / PRECISION;
+}
 
-)
+/* =========================================
+ENSURE BALANCE
+========================================= */
+
+async function ensureBalance(client, userId, asset){
+
+  await client.query(`
+    INSERT INTO wallet_balances (user_id,asset,balance)
+    VALUES ($1,$2,0)
+    ON CONFLICT (user_id,asset) DO NOTHING
+  `,[userId,asset]);
 
 }
 
-/* ========================================
+/* =========================================
 GET BALANCE
-======================================== */
+========================================= */
 
-async function getBalance(userId,asset){
+async function getBalance(userId, asset){
 
-await ensureBalance(userId,asset)
+  const r = await db.query(`
+    SELECT balance
+    FROM wallet_balances
+    WHERE user_id=$1 AND asset=$2
+  `,[userId,asset]);
 
-const r = await db.query(
+  if(!r.rows.length) return 0;
 
-`SELECT balance
-FROM wallet_balances
-WHERE user_id=$1 AND asset=$2`,
-
-[userId,asset]
-
-)
-
-return Number(r.rows[0].balance)
+  return Number(r.rows[0].balance);
 
 }
 
-/* ========================================
+/* =========================================
 CREDIT
-======================================== */
+========================================= */
 
-async function credit({user_id,asset,amount,reason}){
+async function credit({userId, asset, amount, reason}){
 
-if(!amount || amount <= 0){
-throw new Error("invalid_amount")
-}
+  if(amount <= 0) throw new Error("invalid_amount");
 
-await ensureBalance(user_id,asset)
+  const client = await db.pool.connect();
 
-await db.query("BEGIN")
+  try{
 
-try{
+    await client.query("BEGIN");
 
-await db.query(
+    await ensureBalance(client, userId, asset);
 
-`UPDATE wallet_balances
-SET balance = balance + $1
-WHERE user_id=$2 AND asset=$3`,
+    await client.query(`
+      UPDATE wallet_balances
+      SET balance = balance + $1
+      WHERE user_id=$2 AND asset=$3
+    `,[amount, userId, asset]);
 
-[amount,user_id,asset]
+    await client.query(`
+      INSERT INTO wallet_transactions
+      (user_id,asset,amount,type,reason)
+      VALUES($1,$2,$3,'credit',$4)
+    `,[userId,asset,amount,reason]);
 
-)
+    await client.query("COMMIT");
 
-await db.query(
-
-`INSERT INTO wallet_transactions
-(user_id,asset,amount,type,reason)
-VALUES($1,$2,$3,'credit',$4)`,
-
-[user_id,asset,amount,reason]
-
-)
-
-await db.query("COMMIT")
-
-}catch(e){
-
-await db.query("ROLLBACK")
-throw e
+  }catch(e){
+    await client.query("ROLLBACK");
+    throw e;
+  }finally{
+    client.release();
+  }
 
 }
 
-}
-
-/* ========================================
+/* =========================================
 DEBIT
-======================================== */
+========================================= */
 
-async function debit({user_id,asset,amount,reason}){
+async function debit({userId, asset, amount, reason}){
 
-if(!amount || amount <= 0){
-throw new Error("invalid_amount")
-}
+  if(amount <= 0) throw new Error("invalid_amount");
 
-await ensureBalance(user_id,asset)
+  const client = await db.pool.connect();
 
-await db.query("BEGIN")
+  try{
 
-try{
+    await client.query("BEGIN");
 
-const r = await db.query(
+    await ensureBalance(client, userId, asset);
 
-`SELECT balance
-FROM wallet_balances
-WHERE user_id=$1 AND asset=$2
-FOR UPDATE`,
+    const r = await client.query(`
+      SELECT balance
+      FROM wallet_balances
+      WHERE user_id=$1 AND asset=$2
+      FOR UPDATE
+    `,[userId,asset]);
 
-[user_id,asset]
+    const balance = Number(r.rows[0].balance);
 
-)
+    if(balance < amount){
+      throw new Error("insufficient_balance");
+    }
 
-const balance = Number(r.rows[0].balance)
+    await client.query(`
+      UPDATE wallet_balances
+      SET balance = balance - $1
+      WHERE user_id=$2 AND asset=$3
+    `,[amount,userId,asset]);
 
-if(balance < amount){
-throw new Error("insufficient_balance")
-}
+    await client.query(`
+      INSERT INTO wallet_transactions
+      (user_id,asset,amount,type,reason)
+      VALUES($1,$2,$3,'debit',$4)
+    `,[userId,asset,amount,reason]);
 
-await db.query(
+    await client.query("COMMIT");
 
-`UPDATE wallet_balances
-SET balance = balance - $1
-WHERE user_id=$2 AND asset=$3`,
-
-[amount,user_id,asset]
-
-)
-
-await db.query(
-
-`INSERT INTO wallet_transactions
-(user_id,asset,amount,type,reason)
-VALUES($1,$2,$3,'debit',$4)`,
-
-[user_id,asset,amount,reason]
-
-)
-
-await db.query("COMMIT")
-
-}catch(e){
-
-await db.query("ROLLBACK")
-throw e
+  }catch(e){
+    await client.query("ROLLBACK");
+    throw e;
+  }finally{
+    client.release();
+  }
 
 }
 
-}
+/* =========================================
+TRANSFER (SAFE)
+========================================= */
 
-/* ========================================
-TRANSFER
-======================================== */
+async function transfer({fromUser, toUser, asset, amount}){
 
-async function transfer({fromUser,toUser,asset,amount}){
+  if(amount <= 0) throw new Error("invalid_amount");
 
-if(amount <= 0){
-throw new Error("invalid_amount")
-}
+  const client = await db.pool.connect();
 
-await ensureBalance(fromUser,asset)
-await ensureBalance(toUser,asset)
+  try{
 
-await db.query("BEGIN")
+    await client.query("BEGIN");
 
-try{
+    await ensureBalance(client, fromUser, asset);
+    await ensureBalance(client, toUser, asset);
 
-const r = await db.query(
+    const r = await client.query(`
+      SELECT balance
+      FROM wallet_balances
+      WHERE user_id=$1 AND asset=$2
+      FOR UPDATE
+    `,[fromUser,asset]);
 
-`SELECT balance
-FROM wallet_balances
-WHERE user_id=$1 AND asset=$2
-FOR UPDATE`,
+    const balance = Number(r.rows[0].balance);
 
-[fromUser,asset]
+    if(balance < amount){
+      throw new Error("insufficient_balance");
+    }
 
-)
+    await client.query(`
+      UPDATE wallet_balances
+      SET balance = balance - $1
+      WHERE user_id=$2 AND asset=$3
+    `,[amount,fromUser,asset]);
 
-const balance = Number(r.rows[0].balance)
+    await client.query(`
+      UPDATE wallet_balances
+      SET balance = balance + $1
+      WHERE user_id=$2 AND asset=$3
+    `,[amount,toUser,asset]);
 
-if(balance < amount){
-throw new Error("insufficient_balance")
-}
+    await client.query(`
+      INSERT INTO wallet_transactions
+      (user_id,asset,amount,type,reason)
+      VALUES($1,$2,$3,'transfer_out','transfer')
+    `,[fromUser,asset,amount]);
 
-/* debit sender */
+    await client.query(`
+      INSERT INTO wallet_transactions
+      (user_id,asset,amount,type,reason)
+      VALUES($1,$2,$3,'transfer_in','transfer')
+    `,[toUser,asset,amount]);
 
-await db.query(
+    await client.query("COMMIT");
 
-`UPDATE wallet_balances
-SET balance = balance - $1
-WHERE user_id=$2 AND asset=$3`,
-
-[amount,fromUser,asset]
-
-)
-
-/* credit receiver */
-
-await db.query(
-
-`UPDATE wallet_balances
-SET balance = balance + $1
-WHERE user_id=$2 AND asset=$3`,
-
-[amount,toUser,asset]
-
-)
-
-/* logs */
-
-await db.query(
-
-`INSERT INTO wallet_transactions
-(user_id,asset,amount,type,reason)
-VALUES($1,$2,$3,'transfer_out','transfer')`,
-
-[fromUser,asset,amount]
-
-)
-
-await db.query(
-
-`INSERT INTO wallet_transactions
-(user_id,asset,amount,type,reason)
-VALUES($1,$2,$3,'transfer_in','transfer')`,
-
-[toUser,asset,amount]
-
-)
-
-await db.query("COMMIT")
-
-}catch(e){
-
-await db.query("ROLLBACK")
-throw e
+  }catch(e){
+    await client.query("ROLLBACK");
+    throw e;
+  }finally{
+    client.release();
+  }
 
 }
 
-}
+/* =========================================
+TRADE (CRITICAL)
+========================================= */
 
-/* ========================================
-CASINO
-======================================== */
+async function trade({userId, assetIn, assetOut, amountIn, amountOut}){
 
-async function placeBet(userId,amount){
+  const client = await db.pool.connect();
 
-await debit({
+  try{
 
-user_id:userId,
-asset:"BX",
-amount,
-reason:"casino_bet"
+    await client.query("BEGIN");
 
-})
+    await ensureBalance(client, userId, assetIn);
+    await ensureBalance(client, userId, assetOut);
 
-}
+    const r = await client.query(`
+      SELECT balance
+      FROM wallet_balances
+      WHERE user_id=$1 AND asset=$2
+      FOR UPDATE
+    `,[userId,assetIn]);
 
-async function payout(userId,amount){
+    const balance = Number(r.rows[0].balance);
 
-await credit({
+    if(balance < amountIn){
+      throw new Error("insufficient_balance");
+    }
 
-user_id:userId,
-asset:"BX",
-amount,
-reason:"casino_win"
+    await client.query(`
+      UPDATE wallet_balances
+      SET balance = balance - $1
+      WHERE user_id=$2 AND asset=$3
+    `,[amountIn,userId,assetIn]);
 
-})
+    await client.query(`
+      UPDATE wallet_balances
+      SET balance = balance + $1
+      WHERE user_id=$2 AND asset=$3
+    `,[amountOut,userId,assetOut]);
 
-}
+    await client.query(`
+      INSERT INTO wallet_transactions
+      (user_id,asset,amount,type,reason)
+      VALUES($1,$2,$3,'trade_sell','market')
+    `,[userId,assetIn,amountIn]);
 
-/* ========================================
-MARKET TRADE
-======================================== */
+    await client.query(`
+      INSERT INTO wallet_transactions
+      (user_id,asset,amount,type,reason)
+      VALUES($1,$2,$3,'trade_buy','market')
+    `,[userId,assetOut,amountOut]);
 
-async function trade({userId,assetIn,assetOut,amountIn,amountOut}){
+    await client.query("COMMIT");
 
-await ensureBalance(userId,assetIn)
-await ensureBalance(userId,assetOut)
-
-await db.query("BEGIN")
-
-try{
-
-/* lock */
-
-const r = await db.query(
-
-`SELECT balance
-FROM wallet_balances
-WHERE user_id=$1 AND asset=$2
-FOR UPDATE`,
-
-[userId,assetIn]
-
-)
-
-const balance = Number(r.rows[0].balance)
-
-if(balance < amountIn){
-throw new Error("insufficient_balance")
-}
-
-/* sell */
-
-await db.query(
-
-`UPDATE wallet_balances
-SET balance = balance - $1
-WHERE user_id=$2 AND asset=$3`,
-
-[amountIn,userId,assetIn]
-
-)
-
-/* buy */
-
-await db.query(
-
-`UPDATE wallet_balances
-SET balance = balance + $1
-WHERE user_id=$2 AND asset=$3`,
-
-[amountOut,userId,assetOut]
-
-)
-
-/* logs */
-
-await db.query(
-
-`INSERT INTO wallet_transactions
-(user_id,asset,amount,type,reason)
-VALUES($1,$2,$3,'trade_sell','market')`,
-
-[userId,assetIn,amountIn]
-
-)
-
-await db.query(
-
-`INSERT INTO wallet_transactions
-(user_id,asset,amount,type,reason)
-VALUES($1,$2,$3,'trade_buy','market')`,
-
-[userId,assetOut,amountOut]
-
-)
-
-await db.query("COMMIT")
-
-}catch(e){
-
-await db.query("ROLLBACK")
-throw e
+  }catch(e){
+    await client.query("ROLLBACK");
+    throw e;
+  }finally{
+    client.release();
+  }
 
 }
 
-}
-
-/* ========================================
+/* =========================================
 EXPORT
-======================================== */
+========================================= */
 
 module.exports = {
-
-getBalance,
-credit,
-debit,
-transfer,
-placeBet,
-payout,
-trade
-
-   }
+  getBalance,
+  credit,
+  debit,
+  transfer,
+  trade
+};
