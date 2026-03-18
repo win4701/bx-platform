@@ -1,38 +1,119 @@
-const wsHub = require("./wsHub")
+"use strict";
 
-function broadcastBet(user,game,bet){
+const wsHub = require("./wsHub");
 
-wsHub.broadcast({
+/* =========================================
+STATE
+========================================= */
 
-type:"casino_bet",
-user,
-game,
-bet,
-time:Date.now()
+const recent = [];
+const MAX = 50;
 
-})
+/* =========================================
+HELPER
+========================================= */
+
+function push(data){
+
+  recent.unshift(data);
+
+  if(recent.length > MAX){
+    recent.pop();
+  }
+
+}
+
+/* =========================================
+BROADCAST GENERIC
+========================================= */
+
+function send(data){
+
+  push(data);
+
+  wsHub.broadcast("casino", data);
 
 }
 
-function broadcastWin(user,game,payout){
+/* =========================================
+BET
+========================================= */
 
-if(payout < 20) return
+function broadcastBet(user, game, bet){
 
-wsHub.broadcast({
-
-type:"big_win",
-user,
-game,
-amount:payout,
-time:Date.now()
-
-})
+  send({
+    type: "bet",
+    user,
+    game,
+    bet: Number(bet),
+    time: Date.now()
+  });
 
 }
+
+/* =========================================
+WIN
+========================================= */
+
+function broadcastWin(user, game, payout, multiplier=null){
+
+  send({
+    type: "win",
+    user,
+    game,
+    payout: Number(payout),
+    multiplier,
+    time: Date.now()
+  });
+
+  /* BIG WIN */
+
+  if(payout >= 50){
+
+    send({
+      type: "big_win",
+      user,
+      game,
+      payout,
+      time: Date.now()
+    });
+
+    console.log("💰 BIG WIN:", user, payout);
+  }
+
+}
+
+/* =========================================
+SNAPSHOT
+========================================= */
+
+function sendSnapshot(ws){
+
+  ws.send(JSON.stringify({
+    type: "casino_snapshot",
+    data: recent
+  }));
+
+}
+
+/* =========================================
+ON CONNECT
+========================================= */
+
+function handleConnection(ws){
+
+  console.log("🎰 Casino WS connected");
+
+  sendSnapshot(ws);
+
+}
+
+/* =========================================
+EXPORT
+========================================= */
 
 module.exports = {
-
-broadcastBet,
-broadcastWin
-
-}
+  broadcastBet,
+  broadcastWin,
+  handleConnection
+};
