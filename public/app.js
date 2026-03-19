@@ -319,19 +319,74 @@ const WALLET_STATE = {
 /* ================= UI RENDER ================= */
 
 function renderWalletButtons() {
+
   const wcBtn = document.getElementById("walletConnectBtn");
   const binanceBtn = document.getElementById("binanceConnectBtn");
 
+  /* ===== WalletConnect ===== */
+
   if (wcBtn) {
+
     wcBtn.classList.toggle("connected", WALLET_STATE.connected);
+
     wcBtn.textContent = WALLET_STATE.connected
-      ? `Wallet Connected`
-      : `Connect Wallet`;
+      ? `Connected`
+      : `WalletConnect`;
+
   }
 
+  /* ===== Binance Pay ===== */
+
   if (binanceBtn) {
-    binanceBtn.textContent = "Binance Pay (Coming Soon)";
-    binanceBtn.disabled = true;
+
+    binanceBtn.disabled = false;
+    binanceBtn.textContent = "Binance Pay";
+
+    binanceBtn.onclick = async () => {
+
+      try{
+
+        const amount = prompt("Enter amount (USDT)");
+
+        if (!amount || Number(amount) <= 0) {
+          return alert("Invalid amount");
+        }
+
+        const res = await safeFetch("/payments/binance/create", {
+          method: "POST",
+          body: {
+            amount: Number(amount),
+            asset: "USDT"
+          }
+        });
+
+        if (!res) {
+          return alert("Payment failed");
+        }
+
+        /* ===== Binance Response Handling ===== */
+
+        const url =
+          res.data?.checkoutUrl ||
+          res.checkoutUrl ||
+          res.url;
+
+        if (!url) {
+          console.error("Invalid Binance response", res);
+          return alert("Payment link error");
+        }
+
+        /* ===== OPEN PAYMENT ===== */
+
+        window.open(url, "_blank");
+
+      }catch(e){
+        console.error(e);
+        alert("Binance Pay error");
+      }
+
+    };
+
   }
 }
 
