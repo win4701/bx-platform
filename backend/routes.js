@@ -19,18 +19,18 @@ const airdrop = require("./modules/airdrop");
 const payments = require("./modules/payments");
 
 /* ======================================
-RATE LIMIT
+RATE LIMIT (GLOBAL)
 ====================================== */
 
 const limiter = rateLimit({
   windowMs: 60 * 1000,
-  max: 120,
+  max: 300
 });
 
 router.use(limiter);
 
 /* ======================================
-LOGGER (ADVANCED)
+LOGGER
 ====================================== */
 
 router.use((req, res, next) => {
@@ -58,13 +58,13 @@ router.get("/", (req, res) => {
   res.json({
     name: "Bloxio API",
     status: "online",
-    version: "2.0",
+    version: "LIVE",
     time: Date.now()
   });
 });
 
 /* ======================================
-HEALTH (REAL)
+HEALTH
 ====================================== */
 
 router.get("/health", async (req, res) => {
@@ -76,15 +76,13 @@ router.get("/health", async (req, res) => {
     res.json({
       status: "ok",
       uptime: process.uptime(),
-      memory: process.memoryUsage().rss,
       db: dbHealth
     });
 
   } catch (e) {
 
     res.status(500).json({
-      status: "error",
-      error: e.message
+      status: "error"
     });
 
   }
@@ -92,26 +90,35 @@ router.get("/health", async (req, res) => {
 });
 
 /* ======================================
-API VERSION
+🔥 DIRECT ROUTES (CRITICAL FIX)
+====================================== */
+
+/* ⚠️ نفس المسارات اللي frontend يستخدمها */
+
+router.use("/auth", auth);
+
+/* 🔥 FIX مهم */
+router.use("/finance", wallet);   // بدل /wallet
+
+router.use("/casino", casino);
+router.use("/market", market);
+router.use("/mining", mining);
+router.use("/airdrop", airdrop);
+router.use("/payments", payments);
+
+/* ======================================
+OPTIONAL VERSION (لا يكسر شيء)
 ====================================== */
 
 const api = express.Router();
 
-/* ======================================
-MODULE ROUTES
-====================================== */
-
 api.use("/auth", auth);
-api.use("/wallet", wallet);
+api.use("/finance", wallet);
 api.use("/casino", casino);
 api.use("/market", market);
 api.use("/mining", mining);
 api.use("/airdrop", airdrop);
 api.use("/payments", payments);
-
-/* ======================================
-ATTACH VERSION
-====================================== */
 
 router.use("/api/v1", api);
 
@@ -129,17 +136,15 @@ router.use((req, res) => {
 });
 
 /* ======================================
-ERROR HANDLER (SMART)
+ERROR HANDLER
 ====================================== */
 
 router.use((err, req, res, next) => {
 
-  console.error("🔥 API ERROR:", err.message);
+  console.error(" API ERROR:", err.message);
 
-  const status = err.status || 500;
-
-  res.status(status).json({
-    error: err.message || "internal_server_error"
+  res.status(err.status || 500).json({
+    error: err.message || "internal_error"
   });
 
 });
