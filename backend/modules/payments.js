@@ -11,6 +11,8 @@ const ledger = require("../core/ledger")
 
 const NOWPAY_API = "https://api.nowpayments.io/v1"
 
+const BINANCE_API = "https://bpay.binanceapi.com"
+
 const NOWPAY_KEY = process.env.NOWPAY_API_KEY
 const NOWPAY_IPN = process.env.NOWPAY_IPN_SECRET
 
