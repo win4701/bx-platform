@@ -56,7 +56,7 @@ const pairButtons = document.querySelectorAll("#market .pair-btn")
 const wallet = window.WALLET || {BX:0,USDT:0}
 async function loadWallet(){
 
-const r = await fetch("https://bx-9m3n.onrender.com/finance/wallet",{
+const r = await fetch("https://api.bloxio.online/finance/wallet",{
 headers:{
 "Authorization":"Bearer "+localStorage.getItem("jwt")
 }
@@ -67,13 +67,14 @@ wallet.BX = w.bx_balance || 0;
 wallet.USDT = w.usdt_balance || 0;
 
 updateWalletUI();
+   
 }
 
 /* ================= INIT ================= */
 
 function initMarket(){
 
-if(marketRunning) return;
+let marketRunning = false;
 
 marketRunning = true;
 
@@ -96,12 +97,6 @@ PRO_CHART.update(marketPrice);
 
 PRO_CHART.render();
 
-}
-
-if(window.marketWS){
-window.marketWS.close();
-window.marketWS = null;
-}
 }
 
 /* ================= BINANCE TICKER ================= */
@@ -293,8 +288,8 @@ PRO_CHART.update(price);
 
 console.error("Trade error",e);
 
-}
  }
+}
 /* ================= TOGGLE ================= */
 
 function setTradeSide(side) {
@@ -643,3 +638,11 @@ const PRO_CHART = {
     });
   }
 };
+
+/* ================= LOAD MARKET ================= */
+
+window.addEventListener("DOMContentLoaded", () => {
+  console.log("🚀 Market starting...");
+  initMarket();
+});
+   
