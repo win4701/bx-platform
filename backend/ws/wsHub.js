@@ -2,13 +2,14 @@
 
 const WebSocket = require("ws");
 
-let wss;
-
 /* =========================================
 STATE
 ========================================= */
 
-const clients = new Map(); // ws -> {channels:Set}
+let wss;
+
+const clients = new Map(); 
+// ws -> { channels:Set, userId }
 
 /* =========================================
 START
@@ -18,14 +19,15 @@ function startWS(server){
 
   wss = new WebSocket.Server({ server });
 
-  console.log("📡 WebSocket Hub started");
+  console.log("📡 WS Hub started");
 
-  wss.on("connection", (ws)=>{
+  wss.on("connection", (ws, req)=>{
 
     console.log("🔌 WS connected");
 
     clients.set(ws, {
-      channels: new Set()
+      channels: new Set(),
+      userId: null
     });
 
     ws.isAlive = true;
@@ -41,30 +43,43 @@ function startWS(server){
       try{
 
         const data = JSON.parse(msg);
+        const meta = clients.get(ws);
 
-        /* SUBSCRIBE */
+        if(!meta) return;
+
+        /* ================= AUTH ================= */
+
+        if(data.type === "auth"){
+          meta.userId = data.userId;
+        }
+
+        /* ================= SUBSCRIBE ================= */
 
         if(data.type === "subscribe"){
 
           const { channel } = data;
 
           if(channel){
-            clients.get(ws).channels.add(channel);
+            meta.channels.add(channel);
+
+            ws.send(JSON.stringify({
+              type:"subscribed",
+              channel
+            }));
           }
 
         }
 
-        /* UNSUBSCRIBE */
+        /* ================= UNSUBSCRIBE ================= */
 
         if(data.type === "unsubscribe"){
 
           const { channel } = data;
-
-          clients.get(ws).channels.delete(channel);
+          meta.channels.delete(channel);
 
         }
 
-        /* PING */
+        /* ================= PING ================= */
 
         if(data.type === "ping"){
           ws.send(JSON.stringify({ type:"pong" }));
@@ -96,6 +111,7 @@ function startWS(server){
     wss.clients.forEach(ws=>{
 
       if(!ws.isAlive){
+        clients.delete(ws);
         return ws.terminate();
       }
 
@@ -109,14 +125,17 @@ function startWS(server){
 }
 
 /* =========================================
-BROADCAST (CHANNEL BASED)
+BROADCAST (CHANNEL)
 ========================================= */
 
 function broadcast(channel, data){
 
   if(!wss) return;
 
-  const msg = JSON.stringify(data);
+  const msg = JSON.stringify({
+    channel,
+    ...data
+  });
 
   wss.clients.forEach(ws=>{
 
@@ -135,14 +154,60 @@ function broadcast(channel, data){
 }
 
 /* =========================================
-SEND TO ONE
+SEND TO USER
 ========================================= */
 
-function send(ws, data){
+function sendToUser(userId, data){
 
-  if(ws.readyState === WebSocket.OPEN){
-    ws.send(JSON.stringify(data));
-  }
+  if(!wss) return;
+
+  const msg = JSON.stringify(data);
+
+  wss.clients.forEach(ws=>{
+
+    const meta = clients.get(ws);
+
+    if(
+      ws.readyState === WebSocket.OPEN &&
+      meta &&
+      meta.userId === userId
+    ){
+      ws.send(msg);
+    }
+
+  });
+
+}
+
+/* =========================================
+SYSTEM EVENTS
+========================================= */
+
+function broadcastMarket(data){
+  broadcast("market", data);
+}
+
+function broadcastCasino(data){
+  broadcast("casino", data);
+}
+
+function broadcastMining(data){
+  broadcast("mining", data);
+}
+
+/* =========================================
+STATS
+========================================= */
+
+function getStats(){
+
+  return {
+    clients: clients.size,
+    channels: [...new Set(
+      [...clients.values()]
+        .flatMap(c => [...c.channels])
+    )]
+  };
 
 }
 
@@ -153,5 +218,9 @@ EXPORT
 module.exports = {
   startWS,
   broadcast,
-  send
+  sendToUser,
+  broadcastMarket,
+  broadcastCasino,
+  broadcastMining,
+  getStats
 };
