@@ -398,7 +398,7 @@ function initTonConnect() {
   if (!window.TON_CONNECT_UI) return;
 
   tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
-    manifestUrl: "https://your-domain.com/tonconnect-manifest.json",
+    manifestUrl: "https://www.bloxio.online/tonconnect-manifest.json",
     buttonRootId: "walletConnectBtn"
   });
 
