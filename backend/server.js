@@ -18,9 +18,9 @@ const { startSystemBots } = require("./systemBots");
 ENV VALIDATION
 ========================================= */
 
-const requiredEnv = ["DATABASE_URL", "JWT_SECRET"];
+const REQUIRED = ["DATABASE_URL", "JWT_SECRET"];
 
-requiredEnv.forEach((key) => {
+REQUIRED.forEach((key) => {
   if (!process.env[key]) {
     console.error(`❌ Missing ENV: ${key}`);
     process.exit(1);
@@ -34,17 +34,33 @@ CONFIG
 const PORT = process.env.PORT || 3000;
 const RUN_BOTS = process.env.BOTS === "true";
 
+const ALLOWED_ORIGINS = [
+  "https://www.bloxio.online",
+  "https://bloxio.online",
+  "http://localhost:3000"
+];
+
 /* =========================================
 APP
 ========================================= */
 
 const app = express();
 
+/* ===== TRUST PROXY (Render / Fly) ===== */
+app.set("trust proxy", 1);
+
+/* ===== SECURITY ===== */
+
 app.use(helmet());
 
 app.use(cors({
-  origin: "*",
-  methods: ["GET", "POST"],
+  origin: (origin, cb) => {
+    if (!origin || ALLOWED_ORIGINS.includes(origin)) {
+      return cb(null, true);
+    }
+    return cb(null, false);
+  },
+  credentials: true
 }));
 
 app.use(express.json({ limit: "1mb" }));
@@ -53,10 +69,12 @@ app.use(express.json({ limit: "1mb" }));
 RATE LIMIT
 ========================================= */
 
-app.use(rateLimit({
+const globalLimiter = rateLimit({
   windowMs: 60 * 1000,
-  max: 200,
-}));
+  max: 300
+});
+
+app.use(globalLimiter);
 
 /* =========================================
 ROOT
@@ -72,27 +90,35 @@ app.get("/", (req, res) => {
 });
 
 /* =========================================
-HEALTH
+HEALTH (Render uses this)
 ========================================= */
 
 app.get("/health", async (req, res) => {
 
-  const dbHealth = await db.health();
+  try{
+    const dbHealth = await db.health();
 
-  res.json({
-    status: "ok",
-    db: dbHealth,
-    uptime: process.uptime()
-  });
+    res.json({
+      status: "ok",
+      db: dbHealth,
+      uptime: process.uptime()
+    });
+
+  }catch(e){
+    res.status(500).json({ status:"error" });
+  }
 
 });
 
 /* =========================================
-ROUTES
+ROUTES (🔥 FIXED)
 ========================================= */
 
 if (!RUN_BOTS) {
-  app.use("/api", routes);
+
+  /* ⚠️ بدون /api */
+  app.use("/", routes);
+
 }
 
 /* =========================================
@@ -136,7 +162,7 @@ async function start(){
 
     server.listen(PORT, ()=>{
 
-      console.log(`🚀 Server running: ${PORT}`);
+      console.log(`🚀 Server running on ${PORT}`);
       console.log(`Mode: ${RUN_BOTS ? "BOT" : "API"}`);
 
     });
@@ -163,7 +189,7 @@ async function start(){
     }, 30000);
 
     /* =========================================
-    CRASH HANDLING (CRITICAL)
+    CRASH SAFETY
     ========================================= */
 
     process.on("uncaughtException", (err)=>{
@@ -175,7 +201,7 @@ async function start(){
     });
 
     /* =========================================
-    SHUTDOWN
+    GRACEFUL SHUTDOWN
     ========================================= */
 
     const shutdown = ()=>{
@@ -193,7 +219,7 @@ async function start(){
 
   }catch(e){
 
-    console.error("❌ Startup failed:", e.message);
+    console.error(" Startup failed:", e.message);
     process.exit(1);
 
   }
