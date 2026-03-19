@@ -364,29 +364,37 @@ function initTonConnect() {
 
 /* ================= EVM WALLETCONNECT ================= */
 
-async function connectEVM() {
-  if (!window.WalletConnectProvider || !window.Web3) return;
+async function connectEVM(){
 
-  const provider = new WalletConnectProvider.default({
-    rpc: {
-      1: "https://rpc.ankr.com/eth",
-      56: "https://rpc.ankr.com/bsc"
-    }
-  });
+  try{
 
-  await provider.enable();
-  const web3 = new Web3(provider);
-  const accounts = await web3.eth.getAccounts();
+    const provider = new WalletConnectProvider.default({
+      rpc: {
+        1: "https://rpc.ankr.com/eth",
+        56: "https://rpc.ankr.com/bsc"
+      }
+    });
 
-  WALLET_STATE.type = "evm";
-  WALLET_STATE.address = accounts[0];
-  WALLET_STATE.connected = true;
+    await provider.enable();
 
-  saveWalletSession();
-  notifyBackend();
-  renderWalletButtons();
+    const web3 = new Web3(provider);
 
-  console.log("EVM connected:", WALLET_STATE.address);
+    const accounts = await web3.eth.getAccounts();
+
+    WALLET_STATE.type = "evm";
+    WALLET_STATE.address = accounts[0];
+    WALLET_STATE.connected = true;
+
+    saveWalletSession();
+    notifyBackend();
+    renderWalletButtons();
+
+    alert("Wallet Connected: " + accounts[0]);
+
+  }catch(e){
+    alert("Wallet connect failed");
+  }
+
 }
 
 /* ================= SESSION ================= */
@@ -476,6 +484,7 @@ function bindWalletUI() {
 }
 
 /* ================= Bin WALLET ===============*/
+
 function bindWalletActions() {
 
   const depositBtn = document.querySelector(".wallet-actions .primary");
