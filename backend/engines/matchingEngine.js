@@ -4,8 +4,8 @@ const db = require("../database");
 const ledger = require("../core/ledger");
 const tradesFeed = require("./tradesFeed");
 const candleEngine = require("./candleEngine");
+const wsHub = require("../ws/wsHub");
 
-const PAIR = "BX_USDT";
 const FEE = 0.002;
 
 /* =========================================
@@ -58,30 +58,31 @@ async function matchOrders(pair){
     const feeBuy = amount * FEE;
     const feeSell = value * FEE;
 
-    const side = "buy"; // buyer initiated
-
     /* ================= UPDATE ORDERS ================= */
 
     await client.query(`
       UPDATE orders
       SET amount = amount - $1,
-          status = CASE WHEN amount - $1 <= 0 THEN 'filled' ELSE 'partial' END
+          filled = filled + $1,
+          status = CASE 
+            WHEN amount - $1 <= 0 THEN 'filled' 
+            ELSE 'partial' 
+          END
       WHERE id=$2
     `,[amount,b.id]);
 
     await client.query(`
       UPDATE orders
       SET amount = amount - $1,
-          status = CASE WHEN amount - $1 <= 0 THEN 'filled' ELSE 'partial' END
+          filled = filled + $1,
+          status = CASE 
+            WHEN amount - $1 <= 0 THEN 'filled' 
+            ELSE 'partial' 
+          END
       WHERE id=$2
     `,[amount,s.id]);
 
-    /* ================= CLEAN FILLED ================= */
-
-    await client.query(`
-      DELETE FROM orders
-      WHERE amount <= 0
-    `);
+    /* ❌ حذف محذوف → تم إلغاء DELETE */
 
     /* ================= LEDGER ================= */
 
@@ -103,35 +104,61 @@ async function matchOrders(pair){
 
     /* ================= TRADE ================= */
 
-    await client.query(`
+    const tradeRes = await client.query(`
       INSERT INTO trades
       (pair,price,amount,buyer_id,seller_id,side)
       VALUES($1,$2,$3,$4,$5,$6)
+      RETURNING *
     `,[
       pair,
       price,
       amount,
       b.user_id,
       s.user_id,
-      side
+      "buy"
     ]);
 
     await client.query("COMMIT");
 
+    const trade = tradeRes.rows[0];
+
     /* ================= REALTIME ================= */
 
-    await tradesFeed.publishTrade({
-      pair,
-      price,
-      amount,
-      side,
-      buyer: b.user_id,
-      seller: s.user_id
-    });
-
-    /* ================= CANDLES ================= */
+    await tradesFeed.publishTrade(trade);
 
     candleEngine.updateCandle(pair, price, amount);
+
+    wsHub.broadcast("market", {
+      type:"trade",
+      price,
+      amount,
+      pair
+    });
+
+    /* ================= ORDERBOOK ================= */
+
+    const ob = await db.query(`
+      SELECT side, price, SUM(amount) as volume
+      FROM orders
+      WHERE pair=$1 AND amount > 0
+      GROUP BY side, price
+    `,[pair]);
+
+    const bids = ob.rows
+      .filter(o=>o.side==="buy")
+      .sort((a,b)=>b.price-a.price)
+      .slice(0,10);
+
+    const asks = ob.rows
+      .filter(o=>o.side==="sell")
+      .sort((a,b)=>a.price-b.price)
+      .slice(0,10);
+
+    wsHub.broadcast("market", {
+      type:"orderbook",
+      bids,
+      asks
+    });
 
     return true;
 
@@ -148,27 +175,29 @@ async function matchOrders(pair){
 }
 
 /* =========================================
-ENGINE LOOP
+ENGINE LOOP (MULTI PAIR)
 ========================================= */
 
 let running = false;
+
+const PAIRS = ["BX_USDT"];
 
 async function runMatching(){
 
   if(running) return;
   running = true;
 
-  console.log("🚀 Matching Engine PRO LIVE");
+  console.log("🚀 Matching Engine LIVE");
 
   while(running){
 
     try{
 
-      const didMatch = await matchOrders(PAIR);
+      for(const pair of PAIRS){
+        await matchOrders(pair);
+      }
 
-      await new Promise(r =>
-        setTimeout(r, didMatch ? 1 : 50)
-      );
+      await new Promise(r=>setTimeout(r,10));
 
     }catch(e){
 
