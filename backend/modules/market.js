@@ -7,52 +7,76 @@ const engine = require("../engines/marketEngine");
 const tradesFeed = require("../engines/tradesFeed");
 
 /* =========================================
-AUTH CHECK
+UTILS
 ========================================= */
 
-function requireAuth(req,res){
+function requireAuth(req, res) {
   const userId = req.user?.id;
 
-  if(!userId){
-    res.status(401).json({ error:"unauthorized" });
+  if (!userId) {
+    res.status(401).json({ success:false, error: "unauthorized" });
     return null;
   }
 
   return userId;
 }
 
+function parseNumber(v){
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+}
+
+function ok(res, data = {}){
+  res.json({ success:true, ...data });
+}
+
+function fail(res, error="error"){
+  res.status(400).json({ success:false, error });
+}
+
 /* =========================================
 PLACE LIMIT ORDER
 ========================================= */
 
-router.post("/order", async (req,res)=>{
+router.post("/order", async (req, res) => {
 
-  try{
+  try {
 
-    const userId = requireAuth(req,res);
-    if(!userId) return;
+    const userId = requireAuth(req, res);
+    if (!userId) return;
 
-    let { side, price, amount } = req.body;
+    let { side, price, amount, pair } = req.body;
 
-    const result = await engine.placeOrder({
+    if (!side || !["buy","sell"].includes(side)) {
+      return fail(res, "invalid_side");
+    }
+
+    price = parseNumber(price);
+    amount = parseNumber(amount);
+    pair = pair || "BX_USDT";
+
+    if (!price || price <= 0) {
+      return fail(res, "invalid_price");
+    }
+
+    if (!amount || amount <= 0) {
+      return fail(res, "invalid_amount");
+    }
+
+    const order = await engine.placeOrder({
       userId,
       side,
       price,
-      amount
+      amount,
+      pair
     });
 
-    res.json({
-      success:true,
-      order: result
-    });
+    return ok(res, { order });
 
-  }catch(e){
+  } catch (e) {
 
     console.error("order error", e);
-
-    res.status(500).json({
-      error:"order_failed"
-    });
+    return fail(res, "order_failed");
 
   }
 
@@ -62,33 +86,39 @@ router.post("/order", async (req,res)=>{
 MARKET ORDER
 ========================================= */
 
-router.post("/market", async (req,res)=>{
+router.post("/market", async (req, res) => {
 
-  try{
+  try {
 
-    const userId = requireAuth(req,res);
-    if(!userId) return;
+    const userId = requireAuth(req, res);
+    if (!userId) return;
 
-    let { side, amount } = req.body;
+    let { side, amount, pair } = req.body;
 
-    const result = await engine.marketOrder({
+    if (!side || !["buy","sell"].includes(side)) {
+      return fail(res, "invalid_side");
+    }
+
+    amount = parseNumber(amount);
+    pair = pair || "BX_USDT";
+
+    if (!amount || amount <= 0) {
+      return fail(res, "invalid_amount");
+    }
+
+    const order = await engine.marketOrder({
       userId,
       side,
-      amount
+      amount,
+      pair
     });
 
-    res.json({
-      success:true,
-      order: result
-    });
+    return ok(res, { order });
 
-  }catch(e){
+  } catch (e) {
 
     console.error("market order error", e);
-
-    res.status(500).json({
-      error:"market_order_failed"
-    });
+    return fail(res, "market_order_failed");
 
   }
 
@@ -98,18 +128,20 @@ router.post("/market", async (req,res)=>{
 ORDERBOOK
 ========================================= */
 
-router.get("/orderbook", async (req,res)=>{
+router.get("/orderbook", async (req, res) => {
 
-  try{
+  try {
 
-    const ob = await engine.orderbook();
-    res.json(ob);
+    const pair = req.query.pair || "BX_USDT";
 
-  }catch(e){
+    const ob = await engine.orderbook(pair);
 
-    res.status(500).json({
-      error:"orderbook_failed"
-    });
+    return ok(res, ob);
+
+  } catch (e) {
+
+    console.error(e);
+    return fail(res, "orderbook_failed");
 
   }
 
@@ -119,22 +151,19 @@ router.get("/orderbook", async (req,res)=>{
 PRICE
 ========================================= */
 
-router.get("/price", async (req,res)=>{
+router.get("/price", async (req, res) => {
 
-  try{
+  try {
 
-    const price = await engine.getPrice();
+    const pair = req.query.pair || "BX_USDT";
 
-    res.json({
-      pair:"BX_USDT",
-      price
-    });
+    const price = await engine.getPrice(pair);
 
-  }catch(e){
+    return ok(res, { pair, price });
 
-    res.status(500).json({
-      error:"price_failed"
-    });
+  } catch (e) {
+
+    return fail(res, "price_failed");
 
   }
 
@@ -144,19 +173,19 @@ router.get("/price", async (req,res)=>{
 TRADES
 ========================================= */
 
-router.get("/trades", (req,res)=>{
+router.get("/trades", (req, res) => {
 
-  try{
+  try {
 
-    const trades = tradesFeed.getTrades("BX_USDT");
+    const pair = req.query.pair || "BX_USDT";
 
-    res.json(trades);
+    const trades = tradesFeed.getTrades(pair);
 
-  }catch(e){
+    return ok(res, { trades });
 
-    res.status(500).json({
-      error:"trades_failed"
-    });
+  } catch (e) {
+
+    return fail(res, "trades_failed");
 
   }
 
@@ -166,19 +195,19 @@ router.get("/trades", (req,res)=>{
 CANDLES
 ========================================= */
 
-router.get("/candles", (req,res)=>{
+router.get("/candles", (req, res) => {
 
-  try{
+  try {
 
-    const candles = tradesFeed.getCandles(100);
+    const limit = parseNumber(req.query.limit) || 100;
 
-    res.json(candles);
+    const candles = tradesFeed.getCandles(limit);
 
-  }catch(e){
+    return ok(res, { candles });
 
-    res.status(500).json({
-      error:"candles_failed"
-    });
+  } catch (e) {
+
+    return fail(res, "candles_failed");
 
   }
 
@@ -188,18 +217,51 @@ router.get("/candles", (req,res)=>{
 STATS
 ========================================= */
 
-router.get("/stats", async (req,res)=>{
+router.get("/stats", async (req, res) => {
+
+  try {
+
+    const pair = req.query.pair || "BX_USDT";
+
+    const stats = await engine.stats(pair);
+
+    return ok(res, { stats });
+
+  } catch (e) {
+
+    return fail(res, "stats_failed");
+
+  }
+
+});
+
+/* =========================================
+CANCEL ORDER (🔥 مهم)
+========================================= */
+
+router.post("/cancel", async (req,res)=>{
 
   try{
 
-    const s = await engine.stats();
-    res.json(s);
+    const userId = requireAuth(req,res);
+    if(!userId) return;
+
+    const orderId = parseNumber(req.body.orderId);
+
+    if(!orderId){
+      return fail(res,"invalid_order_id");
+    }
+
+    await engine.cancelOrder({
+      userId,
+      orderId
+    });
+
+    return ok(res,{ message:"order_cancelled" });
 
   }catch(e){
 
-    res.status(500).json({
-      error:"stats_failed"
-    });
+    return fail(res,"cancel_failed");
 
   }
 
