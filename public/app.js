@@ -647,20 +647,124 @@ async function initTelegramLogin() {
   }
 }
 
+/* =========================================
+GLOBAL WS CONNECTION
+========================================= */
+
+let ws;
+
+function connectWS(){
+
+  if(ws) return;
+
+  ws = new WebSocket(WS_BASE);
+
+  ws.onopen = () => {
+
+    console.log("✅ WS Connected");
+
+    ws.send(JSON.stringify({ type:"subscribe", channel:"market" }));
+    ws.send(JSON.stringify({ type:"subscribe", channel:"casino" }));
+    ws.send(JSON.stringify({ type:"subscribe", channel:"system" }));
+
+  };
+
+  ws.onmessage = (event)=>{
+
+    try{
+      const msg = JSON.parse(event.data);
+      handleWSMessage(msg);
+    }catch(e){
+      console.error("WS parse error");
+    }
+
+  };
+
+  ws.onclose = ()=>{
+
+    console.log(" WS Disconnected");
+
+    ws = null;
+
+    setTimeout(connectWS, 2000);
+
+  };
+
+}
+
+/* =========================================
+WS HANDLER
+========================================= */
+
+function handleWSMessage(msg){
+
+  /* ===== MARKET ===== */
+  if(msg.channel === "market"){
+
+    if(msg.type === "tick"){
+
+      if(typeof marketPrice !== "undefined"){
+        marketPrice = msg.price;
+      }
+
+      if(typeof updatePriceUI === "function"){
+        updatePriceUI();
+      }
+
+      if(typeof generateOrderBook === "function"){
+        generateOrderBook();
+        renderOrderBook();
+      }
+
+      if(window.PRO_CHART){
+        PRO_CHART.update(msg.price);
+      }
+
+    }
+
+  }
+
+  /* ===== CASINO ===== */
+  if(msg.channel === "casino"){
+
+    if(msg.type === "big_win"){
+
+      const box = document.getElementById("crashPlayers");
+      if(!box) return;
+
+      const el = document.createElement("div");
+
+      el.innerText = `🔥 ${msg.user} won ${msg.amount} BX`;
+      el.style.color = "#22c55e";
+
+      box.prepend(el);
+
+    }
+
+  }
+
+  /* ===== SYSTEM ===== */
+  if(msg.channel === "system"){
+
+    console.log("📊 System:", msg.services);
+
+  }
+
+}
+
 /* ================= INIT ================= */
 
 document.addEventListener("DOMContentLoaded", async () => {
-
+   
+ connectWS(); 
+   
   APP.init();
-
   restoreWalletSession();
   bindWalletUI();
   bindWalletActions();
   renderWalletButtons();
-
   await initTelegramLogin();
   switchView("wallet");
-
   loadWallet();
   bindCasinoGames();
   renderMining();
