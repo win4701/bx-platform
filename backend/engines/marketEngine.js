@@ -1,21 +1,30 @@
 "use strict";
 
 const db = require("../database");
-const tradesFeed = require("./tradesFeed");
+const ledger = require("../core/ledger");
 
-const PAIR = "BX_USDT";
+const DEFAULT_PAIR = "BX_USDT";
+
+/* =========================================
+UTILS
+========================================= */
+
+function parseNumber(v){
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+}
 
 /* =========================================
 GET PRICE
 ========================================= */
 
-async function getPrice(){
+async function getPrice(pair = DEFAULT_PAIR){
 
   const r = await db.query(`
     SELECT price FROM trades
     WHERE pair=$1
     ORDER BY id DESC LIMIT 1
-  `,[PAIR]);
+  `,[pair]);
 
   if(!r.rows.length) return 45;
 
@@ -23,67 +32,88 @@ async function getPrice(){
 }
 
 /* =========================================
-PLACE ORDER (REAL)
+PLACE ORDER (🔥 FIXED)
 ========================================= */
 
-async function placeOrder({ userId, side, price, amount }){
+async function placeOrder({ userId, side, price, amount, pair }){
 
   if(!userId) throw new Error("invalid_user");
-  if(!side || !["buy","sell"].includes(side)) throw new Error("invalid_side");
 
-  price = Number(price);
-  amount = Number(amount);
-
-  if(price <= 0 || amount <= 0){
-    throw new Error("invalid_values");
+  if(!["buy","sell"].includes(side)){
+    throw new Error("invalid_side");
   }
 
-  await db.query(`
-    INSERT INTO orders (pair,side,price,amount,user_id)
-    VALUES ($1,$2,$3,$4,$5)
+  price = parseNumber(price);
+  amount = parseNumber(amount);
+  pair = pair || DEFAULT_PAIR;
+
+  if(!price || price <= 0) throw new Error("invalid_price");
+  if(!amount || amount <= 0) throw new Error("invalid_amount");
+
+  /* =========================================
+  🔥 FREEZE FUNDS
+  ========================================= */
+
+  if(side === "buy"){
+    await ledger.freeze({
+      userId,
+      asset:"USDT",
+      amount: price * amount
+    });
+  }
+
+  if(side === "sell"){
+    await ledger.freeze({
+      userId,
+      asset:"BX",
+      amount
+    });
+  }
+
+  /* =========================================
+  INSERT ORDER
+  ========================================= */
+
+  const r = await db.query(`
+    INSERT INTO orders (pair,side,price,amount,user_id,status)
+    VALUES ($1,$2,$3,$4,$5,'open')
+    RETURNING *
   `,[
-    PAIR,
+    pair,
     side,
     price,
     amount,
     userId
   ]);
 
-  return {
-    success:true,
-    pair:PAIR,
-    side,
-    price,
-    amount
-  };
+  return r.rows[0];
 }
 
 /* =========================================
-MARKET ORDER (SIMULATED LIMIT)
+MARKET ORDER (🔥 REAL)
 ========================================= */
 
-async function marketOrder({ userId, side, amount }){
+async function marketOrder({ userId, side, amount, pair }){
 
-  const price = await getPrice();
+  pair = pair || DEFAULT_PAIR;
 
-  // نحط order قريب من السوق
-  const finalPrice = side === "buy"
-    ? price * 1.01
-    : price * 0.99;
+  const price = await getPrice(pair);
 
   return placeOrder({
     userId,
     side,
-    price: finalPrice,
-    amount
+    price,
+    amount,
+    pair
   });
+
 }
 
 /* =========================================
 ORDERBOOK
 ========================================= */
 
-async function orderbook(){
+async function orderbook(pair = DEFAULT_PAIR){
 
   const bids = await db.query(`
     SELECT price, SUM(amount) as amount
@@ -92,7 +122,7 @@ async function orderbook(){
     GROUP BY price
     ORDER BY price DESC
     LIMIT 20
-  `,[PAIR]);
+  `,[pair]);
 
   const asks = await db.query(`
     SELECT price, SUM(amount) as amount
@@ -101,37 +131,66 @@ async function orderbook(){
     GROUP BY price
     ORDER BY price ASC
     LIMIT 20
-  `,[PAIR]);
+  `,[pair]);
 
   return {
-    pair:PAIR,
-    bids:bids.rows,
-    asks:asks.rows
+    pair,
+    bids: bids.rows,
+    asks: asks.rows
   };
 }
 
 /* =========================================
-TRADES HISTORY
+CANCEL ORDER (🔥 FIXED)
 ========================================= */
 
-async function history(){
+async function cancelOrder({ userId, orderId }){
 
   const r = await db.query(`
-    SELECT price,amount,side,created_at
-    FROM trades
-    WHERE pair=$1
-    ORDER BY id DESC
-    LIMIT 100
-  `,[PAIR]);
+    SELECT * FROM orders
+    WHERE id=$1 AND user_id=$2 AND amount > 0
+  `,[orderId,userId]);
 
-  return r.rows;
+  if(!r.rows.length){
+    throw new Error("order_not_found");
+  }
+
+  const o = r.rows[0];
+
+  /* =========================================
+  🔥 UNFREEZE
+  ========================================= */
+
+  if(o.side === "buy"){
+    await ledger.unfreeze({
+      userId,
+      asset:"USDT",
+      amount: o.price * o.amount
+    });
+  }
+
+  if(o.side === "sell"){
+    await ledger.unfreeze({
+      userId,
+      asset:"BX",
+      amount: o.amount
+    });
+  }
+
+  await db.query(`
+    UPDATE orders
+    SET amount=0, status='cancelled'
+    WHERE id=$1
+  `,[orderId]);
+
+  return { success:true };
 }
 
 /* =========================================
 STATS
 ========================================= */
 
-async function stats(){
+async function stats(pair = DEFAULT_PAIR){
 
   const r = await db.query(`
     SELECT
@@ -142,33 +201,18 @@ async function stats(){
     FROM trades
     WHERE pair=$1
     AND created_at > NOW() - INTERVAL '24 hours'
-  `,[PAIR]);
+  `,[pair]);
 
-  const price = await getPrice();
+  const price = await getPrice(pair);
 
   return {
-    pair:PAIR,
+    pair,
     price,
     volume:Number(r.rows[0].volume || 0),
     high:Number(r.rows[0].high || price),
     low:Number(r.rows[0].low || price),
     trades:Number(r.rows[0].trades || 0)
   };
-}
-
-/* =========================================
-CANCEL ORDER
-========================================= */
-
-async function cancelOrder(userId, orderId){
-
-  await db.query(`
-    UPDATE orders
-    SET amount = 0
-    WHERE id=$1 AND user_id=$2
-  `,[orderId,userId]);
-
-  return { success:true };
 }
 
 /* =========================================
@@ -179,8 +223,7 @@ module.exports = {
   placeOrder,
   marketOrder,
   orderbook,
-  history,
-  stats,
   getPrice,
+  stats,
   cancelOrder
 };
