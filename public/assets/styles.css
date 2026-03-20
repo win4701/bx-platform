@@ -1,4 +1,4 @@
-/* =========================================================
+وتشغيل/* =========================================================
    ROOT / THEME
 ========================================================= */
 :root{
@@ -23,9 +23,10 @@
 }
 
 html,body{
+  height:100%;
+  overflow:hidden;
   margin:0;
   padding:0;
-  min-height:100%;
   background:var(--bg);
   color:var(--text);
   font-family:system-ui,-apple-system,Segoe UI,Roboto;
@@ -70,7 +71,10 @@ img{
 ========================================================= */
 
 .app-container{
-  padding:14px 14px 80px;
+  padding:14px 14px 90px; 
+  height: calc(100vh - 60px);
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 /* ===================== VIEW SYSTEM FIX ===================== */
