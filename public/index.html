@@ -503,103 +503,130 @@
   <div class="mining-plans" id="miningGrid"></div>
    </section>
   <!-- ================= AIRDROP ================= -->
+  
   <section id="airdrop" class="view">
+
   <div class="airdrop-container">
 
+    <!-- ================= AIRDROP BOX ================= -->
     <div class="airdrop-box">
+
       <img src="assets/images/bx.png" alt="BX">
-      <div class="airdrop-reward">+0.33 BX</div>
-      <button class="airdrop-action" data-action="go-casino">
-  Play any casino game
-</button>
+
+      <!-- REWARD -->
+      <div class="airdrop-reward" id="airdropReward">
+        +0.00 BX
+      </div>
+
+      <!-- CLAIM -->
+      <button id="claimAirdropBtn" class="airdrop-action">
+        Claim Airdrop
+      </button>
+
+      <!-- STATUS -->
       <div class="airdrop-status" id="airdrop-ref-stats">
-  Referrals: 0 · Each = 0.25 BX </div>
+        Loading...
+      </div>
+
     </div>
 
+    <!-- ================= REFERRAL ================= -->
     <div class="airdrop-referral">
+
       <h3>Referral</h3>
+
       <div class="referral-box">
-        <span class="ref-link" id="ref-link-airdrop">Loading...</span>
-        <button>Copy</button>
+        <span class="ref-link" id="ref-link-airdrop">
+          Loading...
+        </span>
+
+        <button id="copyRefBtn">
+          Copy
+        </button>
       </div>
+
     </div>
+
+    <!-- ================= WHITEPAPER ================= -->
     <div class="airdrop-whitepaper">
       <a
-  class="whitepaper-btn"
-  href="assets/bloxio.pdf"
-  target="_blank"
-  rel="noopener"> Read Whitepaper
+        class="whitepaper-btn"
+        href="assets/bloxio.pdf"
+        target="_blank"
+        rel="noopener">
+        Read Whitepaper
       </a>
     </div>
+
   </div>
 
-  <!-- ================= AIRDROP PARTNERS ================= -->
-<div class="airdrop-partners">
-  <h3 class="section-title">Partners</h3>
+  <!-- ================= PARTNERS ================= -->
+  <div class="airdrop-partners">
 
-  <div class="partners-grid">
-    <div class="partner-item">
-      <img src="assets/images/aliexpress.png" alt="AliExpress">
+    <h3 class="section-title">Partners</h3>
+
+    <div class="partners-grid">
+      <div class="partner-item">
+        <img src="assets/images/aliexpress.png">
+      </div>
+      <div class="partner-item">
+        <img src="assets/images/xiaomi.png">
+      </div>
+      <div class="partner-item">
+        <img src="assets/images/nike.png">
+      </div>
+      <div class="partner-item">
+        <img src="assets/images/samsung.png">
+      </div>
     </div>
-    <div class="partner-item">
-      <img src="assets/images/xiaomi.png" alt="Xiaomi">
-    </div>
-    <div class="partner-item">
-      <img src="assets/images/nike.png" alt="Nike">
-    </div>
-    <div class="partner-item">
-      <img src="assets/images/samsung.png" alt="Samsung">
-    </div>
+
   </div>
-<!-- ================= AIRDROP PROMOS ================= -->
+
+  <!-- ================= PROMOS ================= -->
+
+  <!-- Mining -->
   <div class="min-card">
-  <img src="assets/images/min.jpg" alt="">
-  <h3>Start Mining</h3>
-  <p>Sub Mininig and earn extra (BX-BNB-SOL) rewards.</p>
-  <button class="btn secondary" data-action="go-mining">
-  Start Mining
-  </button>
+    <img src="assets/images/min.jpg" alt="">
+    <h3>Start Mining</h3>
+    <p>Sub Mining and earn extra (BX-BNB-SOL) rewards.</p>
+
+    <button class="btn secondary" data-action="go-mining">
+      Start Mining
+    </button>
   </div>
+
+  <!-- TopUp -->
   <div class="topup-card">
 
-  <div class="topup-header">
-    <h3>Mobile Top-Up</h3>
-    <span>Min 5 USDT • Number + country Code </span>
+    <div class="topup-header">
+      <h3>Mobile Top-Up</h3>
+      <span>Min 5 USDT • Number + country code</span>
+    </div>
+
+    <div class="topup-body">
+
+      <div class="input-group">
+        <input type="text" id="topup-country" placeholder="Country">
+      </div>
+
+      <div class="input-group">
+        <input type="tel" id="topup-phone" placeholder="+33">
+      </div>
+
+      <div class="input-group">
+        <input type="number" id="topup-amount" min="5" placeholder="Amount USDT">
+      </div>
+
+      <button id="topup-confirm" class="btn-confirm">
+        Confirm Payment
+      </button>
+
+      <div id="topup-message" class="topup-message"></div>
+
+    </div>
   </div>
 
-  <div class="topup-body">
-
-    <!-- Country confirmation (simple text only) -->
-    <div class="input-group">
-      <input type="text" id="topup-country" placeholder="Country (confirmation only)">
-    </div>
-    
-    <!-- Phone with + -->
-    <div class="input-group">
-      <input 
-        type="tel" 
-        id="topup-phone" 
-        placeholder="+33"
-      >
-    </div>
-    <!-- Amount -->
-    <div class="input-group">
-      <input 
-        type="number" 
-        id="topup-amount" 
-        placeholder="Amount (Min 5 USDT)"
-        min="5"
-      >
-    </div>
-    <button id="topup-confirm" class="btn-confirm">
-      Confirm Payment
-    </button>
-    <div id="topup-message" class="topup-message"></div>
-
-  </div>
-  </div>
-</section>
-  
+   </section>
 <!-- ================= SETTINGS ================= -->
 <section id="settings" class="view">
 
