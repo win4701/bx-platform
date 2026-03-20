@@ -1212,142 +1212,165 @@ if (!Number.isFinite(amount) || amount <= 0) {
 const AIRDROP = {
   reward: 0,
   referrals: 0,
-  referralReward: 0,
-  claimed: false
+  refReward: 0,
+  claimed: false,
+  refCode: null
 };
 
 /* ================= LOAD ================= */
 
-async function loadAirdrop() {
+async function loadAirdrop(){
 
-  try {
+  if (!isAuthenticated()) return;
 
-    const res = await apiGet("/airdrop/status");
+  try{
+
+    const res = await safeFetch("/airdrop/status");
 
     if (!res) return;
 
-    AIRDROP.reward = res.reward || 0;
-    AIRDROP.referrals = res.referrals || 0;
-    AIRDROP.referralReward = res.referralReward || 0;
-    AIRDROP.claimed = res.claimed;
+    AIRDROP.reward     = res.reward || 0;
+    AIRDROP.referrals  = res.referrals || 0;
+    AIRDROP.refReward  = res.ref_reward || 0;
+    AIRDROP.claimed    = res.claimed || false;
+    AIRDROP.refCode    = res.ref_code || null;
 
-    /* ===== STATUS ===== */
+    renderAirdrop();
 
-    const status = document.getElementById("airdrop-status");
+  }catch(e){
+    console.error("Airdrop load error", e);
+  }
+}
 
-    if (status) {
-      status.textContent = AIRDROP.claimed
-        ? "Airdrop already claimed"
-        : `Reward: ${AIRDROP.reward} BX`;
-    }
+/* ================= RENDER ================= */
 
-    /* ===== CLAIM BUTTON ===== */
+function renderAirdrop(){
 
-    const btn = document.getElementById("claim-airdrop");
-
-    if (btn) {
-      btn.classList.toggle("hidden", AIRDROP.claimed);
-    }
-
-    /* ===== REFERRALS ===== */
-
-    const refStats = document.getElementById("airdrop-ref-stats");
-
-    if (refStats) {
-      refStats.textContent =
-        `Referrals: ${AIRDROP.referrals} · Each = ${AIRDROP.referralReward} BX`;
-    }
-
-    /* ===== REF LINK ===== */
-
-    renderReferral();
-
-  } catch (err) {
-
-    console.error("Airdrop error:", err);
-
+  /* ===== REWARD ===== */
+  const rewardEl = document.getElementById("airdropReward");
+  if (rewardEl){
+    rewardEl.innerText = "+" + AIRDROP.reward + " BX";
   }
 
+  /* ===== STATS ===== */
+  const stats = document.getElementById("airdrop-ref-stats");
+  if (stats){
+    stats.innerText =
+      `Referrals: ${AIRDROP.referrals} · Each = ${AIRDROP.refReward} BX`;
+  }
+
+  /* ===== REF LINK ===== */
+  const linkEl = document.getElementById("ref-link-airdrop");
+
+  if (linkEl){
+    const link = generateReferralLink();
+    linkEl.innerText = link || "Login required";
+  }
+
+  /* ===== BUTTON ===== */
+  const btn = document.getElementById("claimAirdropBtn");
+
+  if (btn){
+    if (AIRDROP.claimed){
+      btn.innerText = "Claimed";
+      btn.disabled = true;
+    } else {
+      btn.innerText = `Claim ${AIRDROP.reward} BX`;
+      btn.disabled = false;
+    }
+  }
 }
 
 /* ================= CLAIM ================= */
 
-async function claimAirdrop() {
+async function claimAirdrop(){
 
-  try {
-
-    const res = await apiPost("/airdrop/claim");
-
-    if (!res) {
-      alert("Claim failed");
-      return;
-    }
-
-    if (res.status === "ok") {
-      alert("Airdrop claimed!");
-      await loadAirdrop();
-      if (typeof loadWallet === "function") loadWallet();
-    } else {
-      alert("Already claimed");
-    }
-
-  } catch (err) {
-
-    console.error("Claim error:", err);
-
-  }
-
-}
-
-/* ================= REFERRAL ================= */
-
-function generateReferralLink() {
-
-  if (!USER?.token) return null;
-
-  return `${location.origin}?ref=${USER.token.slice(0, 8)}`;
-
-}
-
-function renderReferral() {
-
-  const link = generateReferralLink();
-
-  if (!link) return;
-
-  const settings = document.getElementById("ref-link");
-  const airdrop = document.getElementById("ref-link-airdrop");
-
-  if (settings) settings.innerText = link;
-  if (airdrop) airdrop.innerText = link;
-
-}
-
-/* ================= COPY ================= */
-
-function copyReferral() {
-
-  const link = generateReferralLink();
-
-  if (!link) {
+  if (!isAuthenticated()){
     alert("Login first");
     return;
   }
 
-  navigator.clipboard.writeText(link);
-  alert("Copied!");
+  try{
 
+    const res = await safeFetch("/airdrop/claim", {
+      method: "POST"
+    });
+
+    if (!res){
+      alert("Claim failed");
+      return;
+    }
+
+    if (res.status === "ok"){
+
+      alert(`Claimed ${res.reward} BX`);
+
+      await loadAirdrop();
+
+      if (typeof loadWallet === "function"){
+        loadWallet();
+      }
+
+    } else {
+      alert("Already claimed");
+    }
+
+  }catch(e){
+    console.error("Claim error", e);
+  }
 }
+
+/* ================= REFERRAL ================= */
+
+function generateReferralLink(){
+
+  if (!AIRDROP.refCode) return null;
+
+  return `${location.origin}?ref=${AIRDROP.refCode}`;
+}
+
+/* ================= COPY ================= */
+
+function copyReferral(){
+
+  const link = generateReferralLink();
+
+  if (!link){
+    alert("No referral link");
+    return;
+  }
+
+  navigator.clipboard.writeText(link);
+
+  alert("Copied!");
+}
+
+/* ================= EVENTS ================= */
+
+document.addEventListener("click", (e)=>{
+
+  if (e.target.id === "claimAirdropBtn"){
+    claimAirdrop();
+  }
+
+  if (e.target.id === "copyRefBtn"){
+    copyReferral();
+  }
+
+});
 
 /* ================= HELPERS ================= */
 
-const apiGet = (url) => safeFetch(url, { method: "GET" });
+function apiGet(url){
+  return safeFetch(url, { method: "GET" });
+}
 
-const apiPost = (url, body = {}) =>
-  safeFetch(url, {
+function apiPost(url, body = {}){
+  return safeFetch(url, {
     method: "POST",
     body: JSON.stringify(body)
   });
+}
 
 /*=========================================================
    AIRDROP / TOPUP v6 — INSTITUTIONAL CLEAN
