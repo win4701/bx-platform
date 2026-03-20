@@ -512,13 +512,14 @@
       <button class="airdrop-action" data-action="go-casino">
   Play any casino game
 </button>
-      <div class="airdrop-status">Referrals: 0 · Each = 0.25 BX</div>
+      <div class="airdrop-status" id="airdrop-ref-stats">
+  Referrals: 0 · Each = 0.25 BX </div>
     </div>
 
     <div class="airdrop-referral">
       <h3>Referral</h3>
       <div class="referral-box">
-        <span class="ref-link" id="ref-link">Loading...</span>
+        <span class="ref-link" id="ref-link-airdrop">Loading...</span>
         <button>Copy</button>
       </div>
     </div>
@@ -608,7 +609,7 @@
   <div class="card">
     <h3>🔗 Referral</h3>
     <p>Your referral link:</p>
-    <span class="ref-link" id="ref-link-airdrop">Loading...</span>
+    <span class="ref-link" id="ref-link">Loading...</span>
     <button class="btn" onclick="copyReferral()">Copy</button>
   </div>
 
