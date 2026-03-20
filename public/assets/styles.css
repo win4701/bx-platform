@@ -78,7 +78,10 @@ img{
   display: none;
   opacity: 0;
   transform: translateY(6px);
-  transition: opacity .25s ease, transform .25s ease;
+  transition: .25s;
+  min-height: 100vh;
+  padding-bottom: 120px;
+  overflow-y: auto;
 }
 
 .view.active {
