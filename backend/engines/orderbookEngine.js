@@ -1,38 +1,107 @@
-const db = require("../database")
+"use strict";
 
-async function broadcastOrderbook(pair){
+const db = require("../database");
+const wsHub = require("../ws/wsHub");
 
-const bids = await db.query(
-`SELECT price,amount
-FROM market_orders
-WHERE pair=$1
-AND side='buy'
-AND status='open'
-ORDER BY price DESC
-LIMIT 20`,
-[pair]
-)
+/* =========================================
+GET ORDERBOOK
+========================================= */
 
-const asks = await db.query(
-`SELECT price,amount
-FROM market_orders
-WHERE pair=$1
-AND side='sell'
-AND status='open'
-ORDER BY price ASC
-LIMIT 20`,
-[pair]
-)
+async function getOrderbook(pair){
 
-global.broadcastMarket({
+  if(!pair) throw new Error("pair_required");
 
-type:"orderbook",
-pair,
-bids:bids.rows,
-asks:asks.rows
+  /* ===== BIDS ===== */
+  const bids = await db.query(`
+    SELECT price, SUM(amount) as amount
+    FROM orders
+    WHERE pair=$1
+      AND side='buy'
+      AND amount > 0
+    GROUP BY price
+    ORDER BY price DESC
+    LIMIT 20
+  `,[pair]);
 
-})
+  /* ===== ASKS ===== */
+  const asks = await db.query(`
+    SELECT price, SUM(amount) as amount
+    FROM orders
+    WHERE pair=$1
+      AND side='sell'
+      AND amount > 0
+    GROUP BY price
+    ORDER BY price ASC
+    LIMIT 20
+  `,[pair]);
+
+  return {
+    pair,
+    bids: bids.rows.map(b => ({
+      price: Number(b.price),
+      amount: Number(b.amount)
+    })),
+    asks: asks.rows.map(a => ({
+      price: Number(a.price),
+      amount: Number(a.amount)
+    }))
+  };
 
 }
 
-module.exports={broadcastOrderbook}
+/* =========================================
+BROADCAST ORDERBOOK (🔥 مهم)
+========================================= */
+
+async function broadcastOrderbook(pair){
+
+  try{
+
+    const ob = await getOrderbook(pair);
+
+    wsHub.broadcast("market", {
+      type: "orderbook",
+      pair: ob.pair,
+      bids: ob.bids,
+      asks: ob.asks
+    });
+
+  }catch(e){
+
+    console.error("Orderbook error:", e.message);
+
+  }
+
+}
+
+/* =========================================
+AUTO LOOP (اختياري)
+========================================= */
+
+let running = false;
+
+function startOrderbookFeed(pair){
+
+  if(running) return;
+
+  running = true;
+
+  console.log("📊 Orderbook Feed started");
+
+  setInterval(()=>{
+
+    broadcastOrderbook(pair);
+
+  }, 1000);
+
+}
+
+/* =========================================
+EXPORT
+========================================= */
+
+module.exports = {
+  getOrderbook,
+  broadcastOrderbook,
+  startOrderbookFeed
+};
