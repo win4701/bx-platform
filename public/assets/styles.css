@@ -82,12 +82,16 @@ img{
   min-height: 100vh;
   padding-bottom: 120px;
   overflow-y: auto;
+
+  position: relative; 
+  z-index: 1;
 }
 
 .view.active {
   display: block;
   opacity: 1;
   transform: translateY(0);
+  z-index: 2;
 }
 
 /* =========================================================
@@ -857,7 +861,7 @@ h3{
   font-size: 13px;
 }
 
-.big-win-row .game {
+.big-win-row .game-name {
   color: #7dd3fc;
   font-size: 13px;
 }
@@ -966,7 +970,7 @@ h3{
 
 /*============ CRASH GAME =============*/
 
-#crash-game{
+#crashGame{
   background:#0f172a;
   color:white;
   padding:20px;
@@ -978,7 +982,7 @@ h3{
   transition:0.1s linear;
 }
 
-canvas{
+#crashChart{
   background:#020617;
   border-radius:10px;
 }
@@ -1077,17 +1081,6 @@ button{
   border:none;
 }
 
-/* ================= BOTTOM NAV ================= */
-
-.bottom-nav{
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 48px;
-  z-index: 999;
-}
-
 /* =========================================================
    BOTTOM NAV
 ========================================================= */
@@ -1097,12 +1090,13 @@ button{
   bottom:0;
   left:0;
   right:0;
+  height:60px;
   background:#0b0f14;
   border-top:1px solid var(--border);
   display:grid;
   grid-template-columns:repeat(5,1fr);
-  padding:6px 0 env(safe-area-inset-bottom);
-  z-index:100;
+  padding:6px 0;
+  z-index:9999;
 }
 
 .bottom-nav button{
@@ -1124,6 +1118,7 @@ button{
   width:22px;
   height:22px;
 }
+
 /* =========================================================
    UX – TAP FEEDBACK
 ========================================================= */
