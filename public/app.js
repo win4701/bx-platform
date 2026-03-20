@@ -31,10 +31,10 @@ const log = {
   warn(...args) {
     if (DEBUG) console.warn("[WARN]", ...args);
   },
+   
   error(...args) {
   console.error("[ERROR]", ...args);
-  if(DEBUG) alert(args.join(" "));
-}
+  }  
 };
 
 /* ================= USER / AUTH ================= */
@@ -44,6 +44,7 @@ const USER = {
   authenticated: false,
 
   /* ================= LOAD ================= */
+   
   load() {
     try {
       const token = localStorage.getItem("token");
@@ -144,9 +145,22 @@ async function safeFetch(path, options = {}) {
     return null;
   }
 }
+
+/* ================= APP view ================= */
+
+const APP = {
+  view: null,
+
+  init() {
+    console.log("APP started");
+    USER.load();
+  }
+};
+
 /* =========================================================
    PART 2 — NAVIGATION (General Update)
 ================================================*/
+
 function switchView(view) {
 
   APP.view = view;
@@ -166,12 +180,16 @@ function switchView(view) {
     new CustomEvent("view:change", { detail: view })
   );
 }
-document.addEventListener("click", e => {
-  const btn = e.target.closest("[data-view]");
+
+document.addEventListener("click", (e) => {
+
+  const btn = e.target.closest("button[data-view]");
   if (btn) {
     switchView(btn.dataset.view);
     return;
   }
+
+});
 
   const action = e.target.closest("[data-action]");
   if (!action) return;
@@ -1221,8 +1239,11 @@ const AIRDROP = {
 
 async function loadAirdrop(){
 
-  if (!isAuthenticated()) return;
-
+  if (!isAuthenticated()) {
+    renderAirdrop(); // 👈 مهم
+    return;
+  }
+   
   try{
 
     const res = await safeFetch("/airdrop/status");
