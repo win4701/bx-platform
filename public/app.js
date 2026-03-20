@@ -813,7 +813,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   bindWalletActions();
   renderWalletButtons();
   await initTelegramLogin();
-  switchView("wallet");
   loadWallet();
   bindCasinoGames();
   renderMining();
