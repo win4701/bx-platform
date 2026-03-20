@@ -1,82 +1,166 @@
 "use strict";
 
-const db = require("../database");
+const marketEngine = require("./marketEngine");
 
 const PAIR = "BX_USDT";
-const BOT_USER = 0;
-const INTERVAL = 1000;
+const BOT_USER = 999; // ⚠️ لازم يكون له wallet
 
-/* ================= RANDOM ================= */
+let running = false;
+
+/* =========================================
+CONFIG
+========================================= */
+
+const CONFIG = {
+  interval: 1500,
+  spread: 0.2,      // فرق السعر
+  depthLevels: 3,   // عدد مستويات orderbook
+  baseAmount: 2
+};
+
+/* =========================================
+UTILS
+========================================= */
 
 function rand(min, max){
   return Math.random() * (max - min) + min;
 }
 
-/* ================= BASE PRICE ================= */
+/* =========================================
+CREATE LIQUIDITY
+========================================= */
 
-async function getBasePrice(){
+async function createLiquidity(){
 
-  const r = await db.query(`
-    SELECT price FROM trades
-    WHERE pair=$1
-    ORDER BY id DESC LIMIT 1
-  `,[PAIR]);
+  const basePrice = await marketEngine.getPrice(PAIR);
 
-  if(!r.rows.length) return 45;
+  for(let i=1; i<=CONFIG.depthLevels; i++){
 
-  return Number(r.rows[0].price);
-}
+    const spread = CONFIG.spread * i;
 
-/* ================= PLACE ORDER ================= */
+    const buyPrice = basePrice - spread;
+    const sellPrice = basePrice + spread;
 
-async function placeOrder(side, price, amount){
+    const amount = rand(CONFIG.baseAmount, CONFIG.baseAmount * 2);
 
-  await db.query(`
-    INSERT INTO orders (pair, side, price, amount, user_id)
-    VALUES ($1,$2,$3,$4,$5)
-  `,[
-    PAIR,
-    side,
-    price,
-    amount,
-    BOT_USER
-  ]);
+    /* BUY */
 
-}
+    await marketEngine.placeOrder({
+      userId: BOT_USER,
+      side: "buy",
+      price: buyPrice,
+      amount,
+      pair: PAIR
+    });
 
-/* ================= BOT LOOP ================= */
+    /* SELL */
 
-async function runBot(){
+    await marketEngine.placeOrder({
+      userId: BOT_USER,
+      side: "sell",
+      price: sellPrice,
+      amount,
+      pair: PAIR
+    });
 
-  console.log("🤖 REAL Market Bot Started");
-
-  setInterval(async () => {
-
-    try{
-
-      const base = await getBasePrice();
-
-      const spread = rand(0.1, 0.5);
-
-      const buyPrice = base - spread;
-      const sellPrice = base + spread;
-
-      const buyAmount = rand(1,5);
-      const sellAmount = rand(1,5);
-
-      /* place real orders */
-
-      await placeOrder("buy", buyPrice, buyAmount);
-      await placeOrder("sell", sellPrice, sellAmount);
-
-    }catch(e){
-      console.error("BOT ERROR:", e.message);
-    }
-
-  }, INTERVAL);
+  }
 
 }
+
+/* =========================================
+PRICE SUPPORT (🔥 مهم)
+========================================= */
+
+async function stabilizePrice(){
+
+  const price = await marketEngine.getPrice(PAIR);
+
+  /* منع انهيار السعر */
+
+  if(price < 40){
+
+    await marketEngine.placeOrder({
+      userId: BOT_USER,
+      side: "buy",
+      price: price + 1,
+      amount: rand(5,10),
+      pair: PAIR
+    });
+
+  }
+
+  /* منع التضخم */
+
+  if(price > 60){
+
+    await marketEngine.placeOrder({
+      userId: BOT_USER,
+      side: "sell",
+      price: price - 1,
+      amount: rand(5,10),
+      pair: PAIR
+    });
+
+  }
+
+}
+
+/* =========================================
+BOT LOOP
+========================================= */
+
+async function loop(){
+
+  if(!running) return;
+
+  try{
+
+    await createLiquidity();
+
+    await stabilizePrice();
+
+  }catch(e){
+
+    console.error("BOT ERROR:", e.message);
+
+  }
+
+  setTimeout(loop, CONFIG.interval);
+
+}
+
+/* =========================================
+START / STOP
+========================================= */
+
+function start(){
+
+  if(running){
+    console.log(" Market Bot already running");
+    return;
+  }
+
+  running = true;
+
+  console.log(" Market Maker Bot STARTED");
+
+  loop();
+
+}
+
+function stop(){
+
+  running = false;
+
+  console.log(" Market Bot STOPPED");
+
+}
+
+/* =========================================
+EXPORT
+========================================= */
 
 module.exports = {
-  runBot
+  start,
+  stop
 };
