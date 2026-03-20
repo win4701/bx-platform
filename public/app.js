@@ -161,93 +161,120 @@ const APP = {
    PART 2 — NAVIGATION (General Update)
 ================================================*/
 
-function switchView(view) {
+// ===============================
+// SPA NAVIGATION ENGINE 🔥
+// ===============================
 
-  const target = document.getElementById(view);
+const SPA = {
+  current: null,
 
-  if (!target) {
-    console.error("View not found:", view);
-    return;
+  views: ["wallet", "market", "casino", "mining", "airdrop"],
+
+  init() {
+    this.bindNav();
+    this.go("wallet");
+  },
+
+  go(view) {
+
+    if (!this.views.includes(view)) {
+      console.error("Invalid view:", view);
+      return;
+    }
+
+    if (this.current === view) return;
+
+    this.exit(this.current);
+
+    this.current = view;
+
+    this.render(view);
+    this.enter(view);
+
+  },
+
+  render(view) {
+
+    document.querySelectorAll(".view").forEach(v => {
+      v.classList.remove("active");
+    });
+
+    const el = document.getElementById(view);
+    if (el) el.classList.add("active");
+
+    document.querySelectorAll(".bottom-nav button").forEach(btn => {
+      btn.classList.toggle("active", btn.dataset.view === view);
+    });
+
+  },
+
+  enter(view) {
+
+    console.log("ENTER:", view);
+
+    switch (view) {
+
+      case "wallet":
+        loadWallet();
+        break;
+
+      case "market":
+        initMarket?.();
+        break;
+
+      case "casino":
+        initCasino?.();
+        break;
+
+      case "mining":
+        renderMining?.();
+        break;
+
+      case "airdrop":
+        loadAirdrop?.();
+        break;
+
+    }
+
+  },
+
+  exit(view) {
+
+    console.log("EXIT:", view);
+
+    switch (view) {
+
+      case "market":
+        if (window.marketWS) {
+          window.marketWS.close();
+          window.marketWS = null;
+        }
+        stopMarket?.();
+        break;
+
+      case "casino":
+        if (window.CASINO?.ws) {
+          CASINO.ws.close();
+        }
+        break;
+
+    }
+
+  },
+
+  bindNav() {
+
+    document.querySelectorAll(".bottom-nav button").forEach(btn => {
+
+      btn.addEventListener("click", () => {
+        const view = btn.dataset.view;
+        this.go(view);
+      });
+
+    });
+
   }
-
-  document.querySelectorAll(".view").forEach(v => {
-    v.classList.remove("active");
-  });
-
-  target.classList.add("active");
-
-  document.querySelectorAll(".bottom-nav button").forEach(b => {
-    b.classList.toggle("active", b.dataset.view === view);
-  });
-
-  document.dispatchEvent(
-    new CustomEvent("view:change", { detail: view })
-  );
-}
-
-document.addEventListener("click", (e) => {
-
-  const btn = e.target.closest("button[data-view]");
-  if (btn) {
-    switchView(btn.dataset.view);
-    return;
-  }
-
-  const action = e.target.closest("[data-action]");
-  if (!action) return;
-
-  if (action.dataset.action === "go-casino") switchView("casino");
-  if (action.dataset.action === "go-mining") switchView("mining");
-
-});
-
-/* ================= VIEW LIFECYCLE (SSOT) ================= */
-
-let CURRENT_VIEW = null;
-
-document.addEventListener("view:change", e => {
-  const view = e.detail;
-  if (!view || view === CURRENT_VIEW) return;
-
-  /* ===== EXIT OLD VIEW ===== */
-  switch (CURRENT_VIEW) {
-    case "market":
-
-  if (typeof stopMarket === "function") stopMarket();
-
-  if (window.marketWS) {
-    window.marketWS.close();
-    window.marketWS = null;
-  }
-
-break;
-  }
-
-  CURRENT_VIEW = view;
-
-  /* ===== ENTER NEW VIEW ===== */
-  switch (view) {
-    case "wallet":
-      if (typeof loadWallet === "function") loadWallet();
-      break;
-
-    case "market":
-      if (typeof initMarket === "function") initMarket();
-      break;
-
-    case "casino":
-      if (typeof initCasino === "function") initCasino();
-      break;
-
-    case "mining":
-      if (typeof renderMining === "function") renderMining();
-      break;
-
-    case "airdrop":
-  if (typeof loadAirdrop === "function") loadAirdrop();
-  break;
-  }
-});
+};
 
 /* =========================================================
    PART 3 — WALLET (General Update)
@@ -780,7 +807,7 @@ document.addEventListener("DOMContentLoaded", async () => {
    
  connectWS(); 
    
-  APP.init();
+  SPA.init();
   restoreWalletSession();
   bindWalletUI();
   bindWalletActions();
@@ -790,8 +817,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   loadWallet();
   bindCasinoGames();
   renderMining();
-  bindCardNavigation();
-
+  
 });
 
 /* =================================== */
@@ -1634,22 +1660,5 @@ async function openMarket(){
     console.log(data);
 
     alert("Market loaded");
-
-}
-// ===============================
- // CARD NAVIGATION
- // ===============================
-
-function bindCardNavigation(){
-
-  const casino = document.getElementById("casinoCard");
-  const wallet = document.getElementById("walletCard");
-  const mining = document.getElementById("miningCard");
-  const market = document.getElementById("marketCard");
-
-  if (casino) casino.onclick = () => switchView("casino");
-  if (wallet) wallet.onclick = () => switchView("wallet");
-  if (mining) mining.onclick = () => switchView("mining");
-  if (market) market.onclick = () => switchView("market");
 
 }
