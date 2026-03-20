@@ -73,6 +73,7 @@ img{
 }
 
 /* ===================== VIEW SYSTEM FIX ===================== */
+
 .view {
   display: none;
   opacity: 0;
@@ -990,18 +991,6 @@ button{
 #betBtn{ background:#3b82f6; }
 #cashoutBtn{ background:#ef4444; }
 
-/* ================= GLOBAL VIEW FIX ================= */
-
-.view {
-  display: none;
-  min-height: 100vh;
-  padding-bottom: 120px;
-  overflow-y: auto;
-}
-
-.view.active {
-  display: block;
-}
 /* ================= MINING ================= */
 
 #mining{
