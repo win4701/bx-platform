@@ -1,29 +1,23 @@
-"use strict";
-
-/* =========================================
-STATE
-========================================= */
+// ===============================
+// CRASH ENGINE PRO 🔥
+// ===============================
 
 let crashWS = null;
 let points = [];
 let running = false;
 let autoCashout = null;
-let reconnectTimer = null;
 
 let ctx = null;
 let canvas = null;
+let animationFrame = null;
 
-/* =========================================
-SAFE DOM GETTER
-========================================= */
+/* ================= DOM ================= */
 
 function el(id){
   return document.getElementById(id);
 }
 
-/* =========================================
-INIT CANVAS (DYNAMIC SAFE)
-========================================= */
+/* ================= CANVAS ================= */
 
 function initCanvas(){
 
@@ -31,14 +25,16 @@ function initCanvas(){
 
   if(!canvas) return false;
 
+  // responsive size
+  canvas.width = canvas.offsetWidth;
+  canvas.height = 250;
+
   ctx = canvas.getContext("2d");
 
   return true;
 }
 
-/* =========================================
-DRAW (SMOOTH)
-========================================= */
+/* ================= DRAW ================= */
 
 function draw(){
 
@@ -49,8 +45,8 @@ function draw(){
   ctx.beginPath();
 
   points.forEach((p,i)=>{
-    const x = i * 6;
-    const y = canvas.height - Math.log(p) * 120;
+    const x = i * 5;
+    const y = canvas.height - Math.log(p) * 100;
 
     if(i===0) ctx.moveTo(x,y);
     else ctx.lineTo(x,y);
@@ -60,12 +56,12 @@ function draw(){
   ctx.lineWidth = 2;
   ctx.stroke();
 
-  if(running) requestAnimationFrame(draw);
+  if(running){
+    animationFrame = requestAnimationFrame(draw);
+  }
 }
 
-/* =========================================
-UPDATE GRAPH
-========================================= */
+/* ================= UPDATE ================= */
 
 function update(m){
 
@@ -77,11 +73,9 @@ function update(m){
 
   points.push(m);
 
-  if(points.length > 120){
+  if(points.length > 150){
     points.shift();
   }
-
-  /* AUTO CASHOUT */
 
   if(autoCashout && m >= autoCashout){
     cashout();
@@ -89,20 +83,19 @@ function update(m){
   }
 }
 
-/* =========================================
-STATE HANDLERS
-========================================= */
+/* ================= STATES ================= */
 
 function start(){
 
   points = [];
   running = true;
 
-  const status = el("crashStatus");
   const mult = el("crashMultiplier");
 
-  if(status) status.innerText = "Running";
-  if(mult) mult.style.color = "#22c55e";
+  if(mult){
+    mult.style.color = "#22c55e";
+    mult.innerText = "1.00x";
+  }
 
   clearPlayers();
 
@@ -113,10 +106,9 @@ function end(crash){
 
   running = false;
 
-  const status = el("crashStatus");
-  const mult = el("crashMultiplier");
+  cancelAnimationFrame(animationFrame);
 
-  if(status) status.innerText = "Crashed";
+  const mult = el("crashMultiplier");
 
   if(mult){
     mult.innerText = crash.toFixed(2) + "x 💥";
@@ -124,9 +116,7 @@ function end(crash){
   }
 }
 
-/* =========================================
-PLAYERS UI
-========================================= */
+/* ================= PLAYERS ================= */
 
 function clearPlayers(){
   const box = el("crashPlayers");
@@ -138,12 +128,11 @@ function addPlayer(user, bet){
   const box = el("crashPlayers");
   if(!box) return;
 
-  const elx = document.createElement("div");
+  const row = document.createElement("div");
+  row.className = "player";
+  row.innerText = `${user} → ${bet} BX`;
 
-  elx.className = "player";
-  elx.innerText = `${user} → ${bet} BX`;
-
-  box.prepend(elx);
+  box.prepend(row);
 }
 
 function playerWin(user, payout){
@@ -151,59 +140,23 @@ function playerWin(user, payout){
   const box = el("crashPlayers");
   if(!box) return;
 
-  const elx = document.createElement("div");
+  const row = document.createElement("div");
+  row.className = "player win";
+  row.innerText = `🚀 ${user} ${payout.toFixed(2)} BX`;
 
-  elx.className = "player win";
-  elx.innerText = `🚀 ${user} WON ${payout.toFixed(2)} BX`;
-
-  elx.style.animation = "pop 0.3s ease";
-
-  box.prepend(elx);
+  box.prepend(row);
 }
 
-/* =========================================
-BIG WINS
-========================================= */
-
-function bigWin(user, amount){
-
-  const box = el("crashPlayers");
-  if(!box) return;
-
-  const elx = document.createElement("div");
-
-  elx.className = "player win";
-  elx.innerText = `💰 BIG WIN ${user} +${amount.toFixed(2)} BX`;
-
-  elx.style.fontWeight = "bold";
-  elx.style.color = "#facc15";
-
-  box.prepend(elx);
-}
-
-/* =========================================
-WS CONNECT (AUTO RECONNECT)
-========================================= */
+/* ================= WS ================= */
 
 function connect(){
 
   if(crashWS && crashWS.readyState === 1) return;
 
-  const url = location.protocol === "https:"
-    ? "wss://" + location.host
-    : "ws://" + location.host;
-
-  crashWS = new WebSocket(url);
+  crashWS = new WebSocket("wss://bx-9m3n.onrender.com");
 
   crashWS.onopen = ()=>{
-
     console.log("🔥 Crash WS connected");
-
-    crashWS.send(JSON.stringify({
-      type:"subscribe",
-      channel:"casino"
-    }));
-
   };
 
   crashWS.onmessage = (e)=>{
@@ -231,27 +184,16 @@ function connect(){
       case "cashout":
         playerWin(msg.user, msg.payout);
         break;
-
-      case "big_win":
-        bigWin(msg.user, msg.amount);
-        break;
     }
 
   };
 
   crashWS.onclose = ()=>{
-
-    console.log("❌ WS disconnected");
-
-    reconnectTimer = setTimeout(connect, 2000);
-
+    setTimeout(connect, 2000);
   };
-
 }
 
-/* =========================================
-API ACTIONS
-========================================= */
+/* ================= ACTIONS ================= */
 
 async function bet(){
 
@@ -261,7 +203,7 @@ async function bet(){
 
   if(value <= 0) return;
 
-  await fetch("/api/v1/casino/crash/join",{
+  await fetch("https://bx-9m3n.onrender.com/casino/crash/join",{
     method:"POST",
     headers:{
       "Content-Type":"application/json",
@@ -274,7 +216,7 @@ async function bet(){
 
 async function cashout(){
 
-  await fetch("/api/v1/casino/crash/cashout",{
+  await fetch("https://bx-9m3n.onrender.com/casino/crash/cashout",{
     method:"POST",
     headers:{
       "Authorization":"Bearer "+localStorage.getItem("token")
@@ -283,14 +225,26 @@ async function cashout(){
 
 }
 
-/* =========================================
-INIT
-========================================= */
+/* ================= CLEANUP ================= */
+
+function stopCrash(){
+
+  running = false;
+
+  cancelAnimationFrame(animationFrame);
+
+  if(crashWS){
+    crashWS.close();
+    crashWS = null;
+  }
+}
+
+/* ================= INIT ================= */
 
 window.initCrash = function(){
 
   if(!initCanvas()){
-    console.error("Crash canvas not ready");
+    console.error("Crash canvas missing");
     return;
   }
 
