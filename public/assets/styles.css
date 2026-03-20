@@ -879,7 +879,7 @@ h3{
   white-space: normal !important;
 }
 
-/* ===== WIN / LOSE ANIMATIONS ===== */
+/* ========= WIN / LOSE ANIMATIONS ========= */
 
 .game.win {
   animation: winPulse 0.8s ease;
@@ -905,14 +905,9 @@ h3{
   100% { transform: translateX(0); }
 }
 
-@keyframes pop{
-  0%{ transform:scale(0.8); opacity:0; }
-  100%{ transform:scale(1); opacity:1; }
- }
-
 /* ============= CRASH VIEW ===============*/
   
-   .crash-pro{
+.crash-pro{
   background:#020617;
   padding:15px;
   border-radius:12px;
@@ -925,7 +920,7 @@ h3{
 }
 
 #crashMultiplier{
-  font-size:42px;
+  font-size:38px;
   font-weight:bold;
   color:#22c55e;
   transition:0.05s linear;
@@ -963,7 +958,37 @@ h3{
 
 .player.lose{
   color:#ef4444;
-   }
+}
+
+/*============ CRASH GAME =============*/
+
+#crash-game{
+  background:#0f172a;
+  color:white;
+  padding:20px;
+}
+
+#multiplier{
+  font-size:38px;
+  color:#22c55e;
+  transition:0.1s linear;
+}
+
+canvas{
+  background:#020617;
+  border-radius:10px;
+}
+
+button{
+  padding:10px 20px;
+  margin:5px;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+}
+
+#betBtn{ background:#3b82f6; }
+#cashoutBtn{ background:#ef4444; }
 
 /* ================= GLOBAL VIEW FIX ================= */
 
@@ -1074,6 +1099,7 @@ h3{
 /* =========================================================
    BOTTOM NAV
 ========================================================= */
+
 .bottom-nav{
   position:fixed;
   bottom:0;
@@ -1126,6 +1152,7 @@ button:active,
 /* =========================================================
    UX – MARKET EMPHASIS
 ========================================================= */
+
 .btn.buy{
   outline:2px solid rgba(74,222,187,.25);
 }
@@ -1177,7 +1204,6 @@ button:active,
    IMAGE SYSTEM – SCOPED & SAFE (REPLACEMENT)
 ========================================================= */
 
-/* ===== ICON SYSTEM (Small icons) ===== */
 .balances img,
 .wallet img,
 .bottom-nav img{
@@ -1186,14 +1212,12 @@ button:active,
   object-fit:contain;
 }
 
-/* Mining tabs icons (BX / TON / SOL) */
 .mining-tabs img{
   width:22px;
   height:22px;
   object-fit:contain;
 }
 
-/* Deposit / Payment logos */
 .deposit-method img{
   width:48px;
   height:56px;
@@ -1206,36 +1230,6 @@ button:active,
   object-fit:contain;
   padding:18px;
 }
-
-/*============ CRASH GAME =============*/
-
-#crash-game{
-  background:#0f172a;
-  color:white;
-  padding:20px;
-}
-
-#multiplier{
-  font-size:48px;
-  color:#22c55e;
-  transition:0.1s linear;
-}
-
-canvas{
-  background:#020617;
-  border-radius:10px;
-}
-
-button{
-  padding:10px 20px;
-  margin:5px;
-  border:none;
-  border-radius:6px;
-  cursor:pointer;
-}
-
-#betBtn{ background:#3b82f6; }
-#cashoutBtn{ background:#ef4444; }
 
 /* ================= AIRDROP – CLEAN FIX ================= */
 
