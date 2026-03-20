@@ -247,35 +247,38 @@ const SPA = {
     });
 
   },
+   
+bindNav() {
 
-  bindNav() {
+  const buttons = document.querySelectorAll(".bottom-nav button");
+
+  buttons.forEach(btn => {
 
     btn.onclick = () => {
 
-  const view = btn.getAttribute("data-view");
+      const view = btn.getAttribute("data-view");
 
-  if (!view) {
-    console.error(" Missing data-view", btn);
-    return;
-  }
+      if (!view) {
+        console.error(" Missing data-view", btn);
+        return;
+      }
 
-  if (!document.getElementById(view)) {
-    console.error(" View not found:", view);
-    return;
-  }
+      const el = document.getElementById(view);
 
-  this.navigate(view);
+      if (!el) {
+        console.error(" View not found:", view);
+        return;
+      }
 
-};
-    });
+      this.navigate(view);
 
-  }
+    };
 
-};
+  });
 
-  
-
-/* =========================================================
+}
+   
+/*==============================================
    PART 3 — WALLET (General Update)
 ========================================================= */
 
