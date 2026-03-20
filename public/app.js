@@ -158,107 +158,93 @@ const APP = {
 };
 
 /* =========================================================
-   PART 2 — NAVIGATION (General Update)
+   PART 2 — NAVIGATION ( SPA ENGINE PRO )
 ================================================*/
 
-// ===============================
-// SPA NAVIGATION ENGINE 🔥
-// ===============================
-
 const SPA = {
+
   current: null,
 
-  views: ["wallet", "market", "casino", "mining", "airdrop"],
+  routes: {
 
-  init() {
-    this.bindNav();
-    this.go("wallet");
+    wallet: {
+      onEnter: () => loadWallet(),
+      onExit: () => {}
+    },
+
+    market: {
+      onEnter: () => initMarket?.(),
+      onExit: () => stopMarket?.()
+    },
+
+    casino: {
+      onEnter: () => initCasino?.(),
+      onExit: () => {
+        if (window.CASINO?.ws) CASINO.ws.close();
+      }
+    },
+
+    mining: {
+      onEnter: () => renderMining(),
+      onExit: () => {}
+    },
+
+    airdrop: {
+      onEnter: () => loadAirdrop(),
+      onExit: () => {}
+    }
+
   },
 
-  go(view) {
+  init() {
 
-    if (!this.views.includes(view)) {
-      console.error("Invalid view:", view);
+    this.bindNav();
+
+    // start
+    setTimeout(() => {
+      this.navigate("wallet");
+    }, 50);
+
+  },
+
+  navigate(route) {
+
+    if (!this.routes[route]) {
+      console.error("Route not found:", route);
       return;
     }
 
-    if (this.current === view) return;
+    if (this.current === route) return;
 
-    this.exit(this.current);
+    // exit previous
+    if (this.current && this.routes[this.current]) {
+      this.routes[this.current].onExit?.();
+    }
 
-    this.current = view;
+    this.current = route;
 
-    this.render(view);
-    this.enter(view);
+    // render UI
+    this.render(route);
+
+    // enter new
+    this.routes[route].onEnter?.();
 
   },
 
-  render(view) {
+  render(route) {
 
+    // views
     document.querySelectorAll(".view").forEach(v => {
       v.classList.remove("active");
     });
 
-    const el = document.getElementById(view);
+    const el = document.getElementById(route);
     if (el) el.classList.add("active");
 
+    // nav buttons
     document.querySelectorAll(".bottom-nav button").forEach(btn => {
-      btn.classList.toggle("active", btn.dataset.view === view);
+      btn.classList.toggle("active", btn.dataset.view === route);
     });
-
-  },
-
-  enter(view) {
-
-    console.log("ENTER:", view);
-
-    switch (view) {
-
-      case "wallet":
-        loadWallet();
-        break;
-
-      case "market":
-        initMarket?.();
-        break;
-
-      case "casino":
-        initCasino?.();
-        break;
-
-      case "mining":
-        renderMining?.();
-        break;
-
-      case "airdrop":
-        loadAirdrop?.();
-        break;
-
-    }
-
-  },
-
-  exit(view) {
-
-    console.log("EXIT:", view);
-
-    switch (view) {
-
-      case "market":
-        if (window.marketWS) {
-          window.marketWS.close();
-          window.marketWS = null;
-        }
-        stopMarket?.();
-        break;
-
-      case "casino":
-        if (window.CASINO?.ws) {
-          CASINO.ws.close();
-        }
-        break;
-
-    }
 
   },
 
@@ -266,15 +252,18 @@ const SPA = {
 
     document.querySelectorAll(".bottom-nav button").forEach(btn => {
 
-      btn.addEventListener("click", () => {
+      btn.onclick = () => {
         const view = btn.dataset.view;
-        this.go(view);
-      });
+        this.navigate(view);
+      };
 
     });
 
   }
+
 };
+
+  
 
 /* =========================================================
    PART 3 — WALLET (General Update)
@@ -804,19 +793,16 @@ function handleWSMessage(msg){
 /* ================= INIT ================= */
 
 document.addEventListener("DOMContentLoaded", async () => {
-   
- connectWS(); 
-   
-  SPA.init();
+
+  USER.load();
+  SPA.init(); 
+  connectWS();
   restoreWalletSession();
   bindWalletUI();
   bindWalletActions();
   renderWalletButtons();
   await initTelegramLogin();
-  loadWallet();
-  bindCasinoGames();
-  renderMining();
-  
+
 });
 
 /* =================================== */
