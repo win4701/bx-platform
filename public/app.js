@@ -768,6 +768,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   loadWallet();
   bindCasinoGames();
   renderMining();
+  renderReferral();
   bindCardNavigation();
 
 });
@@ -1225,6 +1226,46 @@ async function loadAirdrop() {
   }
 }
 
+/* ================= REFERRAL SYSTEM ================= */
+
+function generateReferralLink() {
+
+  if (!USER.token) return null;
+
+  // نجيب user id من التوكن (بسيط)
+  const id = USER.token.slice(0, 8);
+
+  return `${location.origin}?ref=${id}`;
+}
+
+function renderReferral() {
+
+  const link = generateReferralLink();
+
+  if (!link) return;
+
+  // Settings
+  const main = document.getElementById("ref-link");
+  if (main) main.innerText = link;
+
+  // Airdrop
+  const air = document.getElementById("ref-link-airdrop");
+  if (air) air.innerText = link;
+
+}
+
+/* ================= COPY ================= */
+
+function copyReferral(){
+
+  const link = generateReferralLink();
+
+  if (!link) return alert("Login first");
+
+  navigator.clipboard.writeText(link);
+
+  alert("Copied!");
+}
 /* ================= Airdrop  Calim ================= */
 
 async function claimAirdrop() {
@@ -1255,7 +1296,6 @@ const apiPost = (url, body = {}) =>
 
 /*=========================================================
    AIRDROP / TOPUP v6 — INSTITUTIONAL CLEAN
-   Stable • Deterministic • No Break
 =========================================================*/
 
 const BX_REFERENCE = 45; // BX = 38 USDT (internal anchor)
