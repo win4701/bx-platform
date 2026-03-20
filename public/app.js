@@ -247,37 +247,40 @@ const SPA = {
     });
 
   },
-   
-bindNav() {
+   bindNav() {
 
   const buttons = document.querySelectorAll(".bottom-nav button");
 
+  if (!buttons.length) {
+    console.error(" NAV buttons not found");
+    return;
+  }
+
   buttons.forEach(btn => {
 
-    btn.onclick = () => {
+    btn.addEventListener("click", () => {
 
-      const view = btn.getAttribute("data-view");
+      const view = btn.dataset.view;
 
       if (!view) {
         console.error(" Missing data-view", btn);
         return;
       }
 
-      const el = document.getElementById(view);
-
-      if (!el) {
+      if (!document.getElementById(view)) {
         console.error(" View not found:", view);
         return;
       }
 
       this.navigate(view);
 
-    };
+    });
 
   });
 
-}
-   
+  console.log("✅ Navigation bound:", buttons.length);
+
+ }
 /*==============================================
    PART 3 — WALLET (General Update)
 ========================================================= */
@@ -807,6 +810,11 @@ function handleWSMessage(msg){
 
 document.addEventListener("DOMContentLoaded", async () => {
 
+   document.querySelectorAll(".view").forEach(v=>{
+  v.classList.remove("active");
+});
+
+document.getElementById("wallet")?.classList.add("active");
   USER.load();
   SPA.init(); 
   connectWS();
