@@ -810,11 +810,6 @@ function handleWSMessage(msg){
 
 document.addEventListener("DOMContentLoaded", async () => {
 
-   document.querySelectorAll(".view").forEach(v=>{
-  v.classList.remove("active");
-});
-
-document.getElementById("wallet")?.classList.add("active");
   USER.load();
   SPA.init(); 
   connectWS();
