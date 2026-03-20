@@ -189,13 +189,12 @@ document.addEventListener("click", (e) => {
     return;
   }
 
-});
-
   const action = e.target.closest("[data-action]");
   if (!action) return;
 
   if (action.dataset.action === "go-casino") switchView("casino");
   if (action.dataset.action === "go-mining") switchView("mining");
+
 });
 
 /* ================= VIEW LIFECYCLE (SSOT) ================= */
@@ -241,10 +240,11 @@ break;
       break;
 
     case "airdrop":
-      if (typeof loadAirdrop === "function") loadAirdrop();
-      break;
+  if (typeof loadAirdrop === "function") loadAirdrop();
+  break;
   }
 });
+
 /* =========================================================
    PART 3 — WALLET (General Update)
 ========================================================= */
@@ -786,7 +786,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   loadWallet();
   bindCasinoGames();
   renderMining();
-  loadAirdrop();
   bindCardNavigation();
 
 });
