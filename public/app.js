@@ -250,13 +250,23 @@ const SPA = {
 
   bindNav() {
 
-    document.querySelectorAll(".bottom-nav button").forEach(btn => {
+    btn.onclick = () => {
 
-      btn.onclick = () => {
-        const view = btn.dataset.view;
-        this.navigate(view);
-      };
+  const view = btn.getAttribute("data-view");
 
+  if (!view) {
+    console.error(" Missing data-view", btn);
+    return;
+  }
+
+  if (!document.getElementById(view)) {
+    console.error(" View not found:", view);
+    return;
+  }
+
+  this.navigate(view);
+
+};
     });
 
   }
