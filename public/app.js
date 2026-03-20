@@ -786,7 +786,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   loadWallet();
   bindCasinoGames();
   renderMining();
-  bindCardNavigation();
 
 });
 
