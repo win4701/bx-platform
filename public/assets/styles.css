@@ -903,11 +903,12 @@ h3{
   50%  { transform: translateX(4px); }
   75%  { transform: translateX(-4px); }
   100% { transform: translateX(0); }
-   
+}
+
 @keyframes pop{
   0%{ transform:scale(0.8); opacity:0; }
   100%{ transform:scale(1); opacity:1; }
-}
+ }
 
 /* ============= CRASH VIEW ===============*/
   
