@@ -163,14 +163,18 @@ const APP = {
 
 function switchView(view) {
 
-  APP.view = view;
+  const target = document.getElementById(view);
+
+  if (!target) {
+    console.error("View not found:", view);
+    return;
+  }
 
   document.querySelectorAll(".view").forEach(v => {
     v.classList.remove("active");
   });
 
-  const target = document.getElementById(view);
-  if (target) target.classList.add("active");
+  target.classList.add("active");
 
   document.querySelectorAll(".bottom-nav button").forEach(b => {
     b.classList.toggle("active", b.dataset.view === view);
@@ -786,6 +790,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   loadWallet();
   bindCasinoGames();
   renderMining();
+  bindCardNavigation();
 
 });
 
@@ -1579,15 +1584,6 @@ function renderError(msg) {
 function toast(msg) {
   console.log(msg);
 }
-
-
-/* ================= AUTO INIT ================= */
-
-document
-  .querySelector('[data-view="airdrop"]')
-  ?.addEventListener("click", () => {
-    setTimeout(loadAirdrop,200);
-  });
    
 // ===============================
  // CASINO
