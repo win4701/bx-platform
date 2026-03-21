@@ -77,14 +77,11 @@ img{
 .view {
   display: none;
   opacity: 0;
-  transform: translateY(6px);
-  transition: opacity .25s ease, transform .25s ease;
 }
 
 .view.active {
   display: block;
   opacity: 1;
-  transform: translateY(0);
 }
 
 /* =========================================================
