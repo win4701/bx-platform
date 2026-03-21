@@ -1077,38 +1077,36 @@ button{
    BOTTOM NAV
 ========================================================= */
 
-.bottom-nav{
+..bottom-nav{
   position:fixed;
   bottom:0;
   left:0;
-  right:0;
-  background:#0b0f14;
-  border-top:1px solid var(--border);
+  width:100%;
+  height:60px;
+  background:#020617;
+  border-top:1px solid #1e293b;
+
   display:grid;
   grid-template-columns:repeat(5,1fr);
-  padding:6px 0 env(safe-area-inset-bottom);
-  z-index:100;
+  z-index:999;
 }
 
 .bottom-nav button{
+  border:none;
   background:none;
-  border:0;
-  color:var(--muted);
-  font-size:11px;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  gap:4px;
+  color:#94a3b8;
+  font-weight:800;
 }
 
 .bottom-nav button.active{
-  color:var(--green);
+  color:#22c55e;
 }
 
 .bottom-nav img{
   width:22px;
   height:22px;
 }
+
 /* =========================================================
    UX – TAP FEEDBACK
 ========================================================= */
