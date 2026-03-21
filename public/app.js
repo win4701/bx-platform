@@ -181,13 +181,15 @@ function switchView(view) {
   );
 }
 
-document.addEventListener("click", (e) => {
+document.querySelectorAll(".bottom-nav button").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const view = btn.dataset.view;
+    if (!view) return;
 
-  const btn = e.target.closest("button[data-view]");
-  if (btn) {
-    switchView(btn.dataset.view);
-    return;
-  }
+    console.log("Switching to:", view); // debug
+
+    switchView(view);
+  });
 });
 
   const action = e.target.closest("[data-action]");
