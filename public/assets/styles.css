@@ -146,14 +146,6 @@ h3{
   margin-left:6px;
 }
 
-.wallet-bottom-actions{
-  position:sticky;
-  bottom:70px;
-  background:#020617;
-  padding:10px;
-  z-index:5;
-}
-
 /* ================= ACTION BUTTONS ================= */
 
 .wallet-actions{
@@ -287,10 +279,11 @@ h3{
 /* ================= CONNECT / PAY ================= */
 
 .wallet-bottom-actions{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:12px;
-  margin-top:16px;
+  position:sticky;
+  bottom:70px;
+  background:#020617;
+  padding:10px;
+  z-index:5;
 }
 
 .wallet-btn{
