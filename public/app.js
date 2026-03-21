@@ -160,68 +160,64 @@ const APP = {
 /* =========================================================
    PART 2 — NAVIGATION (General Update)
 ================================================*/
+/* ================= NAVIGATION SYSTEM (CLEAN v2) ================= */
+
+let CURRENT_VIEW = null;
 
 function switchView(view) {
 
+  if (!view) return;
+
+  console.log("Switching to:", view);
+
   APP.view = view;
 
+  // 🔹 إخفاء كل الأقسام
   document.querySelectorAll(".view").forEach(v => {
     v.classList.remove("active");
   });
 
+  // 🔹 إظهار القسم المطلوب
   const target = document.getElementById(view);
-  if (target) target.classList.add("active");
+  if (!target) {
+    console.warn("View not found:", view);
+    return;
+  }
 
-  document.querySelectorAll(".bottom-nav button").forEach(b => {
-    b.classList.toggle("active", b.dataset.view === view);
+  target.classList.add("active");
+
+  // 🔹 تحديث أزرار التنقل
+  document.querySelectorAll(".bottom-nav button").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.view === view);
   });
 
+  // 🔹 lifecycle (خروج/دخول)
+  handleViewLifecycle(view);
+
+  // 🔹 event عام
   document.dispatchEvent(
     new CustomEvent("view:change", { detail: view })
   );
 }
 
-document.querySelectorAll(".bottom-nav button").forEach(btn => {
-  btn.addEventListener("click", () => {
-    const view = btn.dataset.view;
-    if (!view) return;
 
-    console.log("Switching to:", view); // debug
+/* ================= LIFECYCLE ================= */
 
-    switchView(view);
-  });
-});
-});
+function handleViewLifecycle(view){
 
-/* ================= VIEW LIFECYCLE (SSOT) ================= */
-
-let CURRENT_VIEW = null;
-
-document.addEventListener("view:change", (e) => {
-  if (e.detail === "wallet") {
-    setTimeout(() => {
-      const el = document.getElementById("wallet");
-      if (el) el.style.height = "auto";
-    }, 50);
-  }
-});
-  /* ===== EXIT OLD VIEW ===== */
+  // 🔸 خروج من القسم السابق
   switch (CURRENT_VIEW) {
     case "market":
-
-  if (typeof stopMarket === "function") stopMarket();
-
-  if (window.marketWS) {
-    window.marketWS.close();
-    window.marketWS = null;
-  }
-
-break;
+      if (window.marketWS) {
+        window.marketWS.close();
+        window.marketWS = null;
+      }
+      break;
   }
 
   CURRENT_VIEW = view;
 
-  /* ===== ENTER NEW VIEW ===== */
+  // 🔸 دخول القسم الجديد
   switch (view) {
     case "wallet":
       if (typeof loadWallet === "function") loadWallet();
@@ -240,10 +236,37 @@ break;
       break;
 
     case "airdrop":
-  if (typeof loadAirdrop === "function") loadAirdrop();
-  break;
+      if (typeof loadAirdrop === "function") loadAirdrop();
+      break;
   }
-});
+}
+
+
+/* ================= NAV BIND ================= */
+
+function bindNavigation(){
+
+  const buttons = document.querySelectorAll(".bottom-nav button");
+
+  if (!buttons.length) {
+    console.warn("No navigation buttons found");
+    return;
+  }
+
+  buttons.forEach(btn => {
+    btn.addEventListener("click", () => {
+      const view = btn.dataset.view;
+
+      if (!view) {
+        console.warn("Missing data-view");
+        return;
+      }
+
+      switchView(view);
+    });
+  });
+
+}
 
 /* =========================================================
    PART 3 — WALLET (General Update)
@@ -780,7 +803,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   bindWalletActions();
   renderWalletButtons();
   await initTelegramLogin();
-  switchView("wallet");
+  bindNavigation(); 
+  switchView("wallet");  
   loadWallet();
   bindCasinoGames();
   renderMining();
