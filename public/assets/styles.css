@@ -990,16 +990,6 @@ button{
 #betBtn{ background:#3b82f6; }
 #cashoutBtn{ background:#ef4444; }
 
-/* ================= GLOBAL VIEW FIX ================= */
-
-.view {
-  display: none;
-}
-
-.view.active {
-  display: block;
-}
-
 /* ================= MINING ================= */
 
 #mining{
@@ -1083,17 +1073,6 @@ button{
   border:none;
 }
 
-/* ================= BOTTOM NAV ================= */
-
-.bottom-nav{
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 48px;
-  z-index: 999;
-}
-
 /* =========================================================
    BOTTOM NAV
 ========================================================= */
@@ -1133,6 +1112,7 @@ button{
 /* =========================================================
    UX – TAP FEEDBACK
 ========================================================= */
+
 button,
 .deposit-method,
 .game,
@@ -1162,6 +1142,7 @@ button:active,
 /* =========================================================
    UX – WALLET READABILITY
 ========================================================= */
+
 .balances li{
   justify-content:space-between;
 }
