@@ -279,12 +279,12 @@ h3{
 /* ================= CONNECT / PAY ================= */
 
 .wallet-bottom-actions{
-  position:sticky;
-  bottom:70px;
-  background:#020617;
-  padding:10px;
-  z-index:5;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+  margin-top:16px;
 }
+
 
 .wallet-btn{
   height:46px;
@@ -318,7 +318,7 @@ h3{
   background:linear-gradient(135deg,#22c55e,#16a34a);
   color:#022c22;
   border:none;
-   }
+}
 
 /* =========================================================
    BLOXIO MARKET CSS — GLOBAL PRO VERSION 3.0
