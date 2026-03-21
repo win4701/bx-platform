@@ -161,78 +161,95 @@ const APP = {
 /* =========================================================
    PART 2 — NAVIGATION (General Update)
 ================================================*/
-function switchView(viewId) {
-    if (!viewId) return;
 
-    console.log(`[Navigation] Switching to: ${viewId}`);
+function switchView(view){
 
-    const allViews = document.querySelectorAll('.view');
-    allViews.forEach(view => {
-        view.classList.remove('active');
-    });
+  if (!view) return;
 
-    const targetView = document.getElementById(viewId);
-    if (targetView) {
-        targetView.classList.add('active');
-        
-        if (typeof APP !== 'undefined') {
-            APP.view = viewId;
-            CURRENT_VIEW = viewId;
-        }
+  // 🛑 منع إعادة نفس الصفحة
+  if (APP.view === view) return;
 
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else {
-        console.error(`[Error] View ID "${viewId}" not found in HTML.`);
-        return;
+  console.log("Switching to:", view);
+
+  const views = document.querySelectorAll(".view");
+  const buttons = document.querySelectorAll(".bottom-nav button");
+
+  // 🔴 STEP 1: إخفاء الكل (مهم مع !important)
+  views.forEach(v => {
+    v.classList.remove("active");
+  });
+
+  // 🔴 STEP 2: انتظار frame (حل مشاكل CSS)
+  requestAnimationFrame(() => {
+
+    const target = document.getElementById(view);
+
+    if (!target){
+      console.error("View not found:", view);
+      return;
     }
 
-    const navButtons = document.querySelectorAll('.bottom-nav button');
-    navButtons.forEach(btn => {
-        if (btn.dataset.view === viewId) {
-            btn.classList.add('active');
-        } else {
-            btn.classList.remove('active');
-        }
-    });
+    target.classList.add("active");
 
-    handleViewLogic(viewId);
+    // ✅ تحديث الحالة
+    APP.view = view;
+    CURRENT_VIEW = view;
+
+    // ✅ Scroll داخل القسم
+    target.scrollTop = 0;
+
+  });
+
+  // 🔴 STEP 3: تحديث الأزرار
+  buttons.forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.view === view);
+  });
+
+  // 🔴 STEP 4: lifecycle (مهم لنظامك)
+  handleViewLifecycle(view);
+
+  // 🔴 STEP 5: event system
+  document.dispatchEvent(
+    new CustomEvent("view:change", { detail: view })
+  );
+
 }
+/*=========================== BND view =====================*/
 
-function handleViewLogic(viewId) {
-    switch (viewId) {
-        case 'market':
+function bindNavigation(){
 
-            if (typeof initMarketChart === 'function') initMarketChart();
-            break;
-        case 'casino':
-            
-            break;
-        case 'mining':
-      
-            if (typeof renderMining === 'function') renderMining();
-            break;
-    }
-}
+  const buttons = document.querySelectorAll(".bottom-nav button");
 
-/* ================= NAV BIND ================= */
-
-function bindNavigation() {
-    const navButtons = document.querySelectorAll('.bottom-nav button');
-    navButtons.forEach(btn => {
-        btn.onclick = () => {
-            const target = btn.getAttribute('data-view');
-            switchView(target);
-        };
-    });
-
-    document.querySelectorAll('[data-action^="go-"]').forEach(el => {
-        el.onclick = () => {
-            const view = el.getAttribute('data-action').replace('go-', '');
-            switchView(view);
-        };
-    });
+  if (!buttons.length){
+    console.warn("Navigation not found");
+    return;
   }
 
+  buttons.forEach(btn => {
+
+    // 🛑 إزالة أي events قديمة (منع duplication)
+    btn.onclick = null;
+
+    btn.onclick = (e) => {
+
+      e.preventDefault();
+      e.stopPropagation();
+
+      const view = btn.dataset.view;
+
+      if (!view){
+        console.warn("Missing data-view");
+        return;
+      }
+
+      switchView(view);
+
+    };
+
+  });
+
+}
+   
 /*=========================================================
    PART 3 — WALLET (General Update)
 ========================================================= */
