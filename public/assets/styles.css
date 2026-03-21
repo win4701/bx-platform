@@ -994,8 +994,6 @@ button{
 
 .view {
   display: none;
-  min-height: 100vh;
-  overflow-y: auto;
 }
 
 .view.active {
