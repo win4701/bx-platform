@@ -1602,15 +1602,6 @@ function renderError(msg) {
 function toast(msg) {
   console.log(msg);
 }
-
-
-/* ================= AUTO INIT ================= */
-
-document
-  .querySelector('[data-view="airdrop"]')
-  ?.addEventListener("click", () => {
-    setTimeout(loadAirdrop,200);
-  });
    
 // ===============================
  // CASINO
