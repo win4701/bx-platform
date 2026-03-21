@@ -68,7 +68,7 @@ img{
    MAIN CONTAINER
 ========================================================= */
 .app-container{
-  padding:14px 14px 120px;
+  padding:14px;
   min-height:100vh;
 }
 
@@ -962,7 +962,7 @@ h3{
 
 /*============ CRASH GAME =============*/
 
-#crash-game{
+#crashGame{
   background:#0f172a;
   color:white;
   padding:20px;
@@ -980,7 +980,7 @@ canvas{
 }
 
 button{
-  padding:10px 20px;
+  padding:14px;
   margin:5px;
   border:none;
   border-radius:6px;
@@ -995,13 +995,13 @@ button{
 .view {
   display: none;
   min-height: 100vh;
-  padding-bottom: 120px;
   overflow-y: auto;
 }
 
 .view.active {
   display: block;
 }
+
 /* ================= MINING ================= */
 
 #mining{
