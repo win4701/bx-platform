@@ -303,20 +303,12 @@ function renderWallet() {
   }
 }
 
-
     async function loadWallet() {
 
-  if (!isAuthenticated()) {
-    log.warn("Wallet: not authenticated");
-    return;
-  }
+  if (!isAuthenticated()) return;
 
   const data = await safeFetch("/finance/wallet");
-
-  if (!data) {
-    log.warn("Wallet load failed");
-    return;
-  }
+  if (!data) return;
 
   Object.keys(WALLET).forEach(k => {
     if (data[k] !== undefined) {
@@ -325,7 +317,13 @@ function renderWallet() {
   });
 
   renderWallet();
-  }
+
+  // ✅ الحل هنا
+  requestAnimationFrame(() => {
+    const el = document.getElementById("wallet");
+    if (el) el.scrollTop = 0;
+  });
+ }
 
 /* ======================================================
    CONNECT WALLET – SSOT (TON + EVM)
