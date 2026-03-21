@@ -69,7 +69,7 @@ img{
 ========================================================= */
 .app-container{
   padding:14px;
-  min-height:auto;
+  min-height:calc(100vh - 60px);
 }
 
 /* ===================== VIEW SYSTEM FIX ===================== */
