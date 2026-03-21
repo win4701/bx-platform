@@ -188,6 +188,7 @@ document.addEventListener("click", (e) => {
     switchView(btn.dataset.view);
     return;
   }
+});
 
   const action = e.target.closest("[data-action]");
   if (!action) return;
