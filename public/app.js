@@ -192,14 +192,6 @@ document.querySelectorAll(".bottom-nav button").forEach(btn => {
   });
 });
 
-  const action = e.target.closest("[data-action]");
-  if (!action) return;
-
-  if (action.dataset.action === "go-casino") switchView("casino");
-  if (action.dataset.action === "go-mining") switchView("mining");
-
-});
-
 /* ================= VIEW LIFECYCLE (SSOT) ================= */
 
 let CURRENT_VIEW = null;
