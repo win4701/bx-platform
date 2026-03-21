@@ -191,6 +191,7 @@ document.querySelectorAll(".bottom-nav button").forEach(btn => {
     switchView(view);
   });
 });
+});
 
 /* ================= VIEW LIFECYCLE (SSOT) ================= */
 
