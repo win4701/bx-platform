@@ -161,119 +161,80 @@ const APP = {
 /* =========================================================
    PART 2 — NAVIGATION (General Update)
 ================================================*/
-/* ================= NAVIGATION SYSTEM (CLEAN v2) ================= */
+function switchView(viewId) {
+    if (!viewId) return;
 
-let CURRENT_VIEW = null;
+    console.log(`[Navigation] Switching to: ${viewId}`);
 
-function switchView(view) {
+    const allViews = document.querySelectorAll('.view');
+    allViews.forEach(view => {
+        view.classList.remove('active');
+    });
 
-  if (!view) return;
+    const targetView = document.getElementById(viewId);
+    if (targetView) {
+        targetView.classList.add('active');
+        
+        if (typeof APP !== 'undefined') {
+            APP.view = viewId;
+            CURRENT_VIEW = viewId;
+        }
 
-  console.log("Switching to:", view);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+        console.error(`[Error] View ID "${viewId}" not found in HTML.`);
+        return;
+    }
 
-  APP.view = view;
+    const navButtons = document.querySelectorAll('.bottom-nav button');
+    navButtons.forEach(btn => {
+        if (btn.dataset.view === viewId) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
 
-  // 🔹 إخفاء كل الأقسام
-  document.querySelectorAll(".view").forEach(v => {
-    v.classList.remove("active");
-  });
-
-  // 🔹 إظهار القسم المطلوب
-  const target = document.getElementById(view);
-  if (!target) {
-    console.warn("View not found:", view);
-    return;
-  }
-
-  target.classList.add("active");
-
-  // 🔹 تحديث أزرار التنقل
-  document.querySelectorAll(".bottom-nav button").forEach(btn => {
-    btn.classList.toggle("active", btn.dataset.view === view);
-  });
-
-  // 🔹 lifecycle (خروج/دخول)
-  handleViewLifecycle(view);
-
-  // 🔹 event عام
-  document.dispatchEvent(
-    new CustomEvent("view:change", { detail: view })
-  );
+    handleViewLogic(viewId);
 }
 
+function handleViewLogic(viewId) {
+    switch (viewId) {
+        case 'market':
 
-/* ================= LIFECYCLE ================= */
-
-function handleViewLifecycle(view){
-
-  // 🔸 خروج من القسم السابق
-  switch (CURRENT_VIEW) {
-    case "market":
-      if (window.marketWS) {
-        window.marketWS.close();
-        window.marketWS = null;
-      }
-      break;
-  }
-
-  CURRENT_VIEW = view;
-
-  // 🔸 دخول القسم الجديد
-  switch (view) {
-    case "wallet":
-      if (typeof loadWallet === "function") loadWallet();
-      break;
-
-    case "market":
-      if (typeof initMarket === "function") initMarket();
-      break;
-
-    case "casino":
-      if (typeof initCasino === "function") initCasino();
-      break;
-
-    case "mining":
-      if (typeof renderMining === "function") renderMining();
-      break;
-
-    case "airdrop":
-      if (typeof loadAirdrop === "function") loadAirdrop();
-      break;
-  }
+            if (typeof initMarketChart === 'function') initMarketChart();
+            break;
+        case 'casino':
+            
+            break;
+        case 'mining':
+      
+            if (typeof renderMining === 'function') renderMining();
+            break;
+    }
 }
-
 
 /* ================= NAV BIND ================= */
 
-function bindNavigation(){
+function bindNavigation() {
+    const navButtons = document.querySelectorAll('.bottom-nav button');
+    navButtons.forEach(btn => {
+        btn.onclick = () => {
+            const target = btn.getAttribute('data-view');
+            switchView(target);
+        };
+    });
 
-  const buttons = document.querySelectorAll(".bottom-nav button");
-
-  if (!buttons.length) {
-    console.warn("No navigation buttons found");
-    return;
+    document.querySelectorAll('[data-action^="go-"]').forEach(el => {
+        el.onclick = () => {
+            const view = el.getAttribute('data-action').replace('go-', '');
+            switchView(view);
+        };
+    });
   }
 
-  buttons.forEach(btn => {
-    btn.addEventListener("click", () => {
-      const view = btn.dataset.view;
+/*=================== WALLET COIN =========================*/
 
-      if (!view) {
-        console.warn("Missing data-view");
-        return;
-      }
-
-      switchView(view);
-    });
-  });
-
-}
-
-/* =========================================================
-   PART 3 — WALLET (General Update)
-========================================================= */
-
-const WALLET = {
   BX: 0,
   USDT: 0,
   USDC: 0,
