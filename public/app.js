@@ -204,10 +204,14 @@ document.querySelectorAll(".bottom-nav button").forEach(btn => {
 
 let CURRENT_VIEW = null;
 
-document.addEventListener("view:change", e => {
-  const view = e.detail;
-  if (!view || view === CURRENT_VIEW) return;
-
+document.addEventListener("view:change", (e) => {
+  if (e.detail === "wallet") {
+    setTimeout(() => {
+      const el = document.getElementById("wallet");
+      if (el) el.style.height = "auto";
+    }, 50);
+  }
+});
   /* ===== EXIT OLD VIEW ===== */
   switch (CURRENT_VIEW) {
     case "market":
