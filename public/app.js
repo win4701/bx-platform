@@ -154,6 +154,7 @@ const APP = {
   init() {
     console.log("APP started");
     USER.load();
+    log.info("APP initialized"); // داخل init
   }
 };
 
