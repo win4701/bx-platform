@@ -270,11 +270,11 @@ amount:amount
 
 });
 
-const data = await res.json();
-
+const data = res;
+   
 if(data.status){
 
-await loadWallet();
+await loadMarketWallet();
 
 /* FIX ORDERBOOK */
 
