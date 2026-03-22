@@ -1636,9 +1636,10 @@ async function openMarket(){
     alert("Market loaded");
 
 }
-// ===============================
+
+//* ====================================================
  // CARD NAVIGATION
- // ===============================
+ //* ====================================================*/
 
 function bindCardNavigation(){
 
@@ -1646,10 +1647,12 @@ function bindCardNavigation(){
   const wallet = document.getElementById("walletCard");
   const mining = document.getElementById("miningCard");
   const market = document.getElementById("marketCard");
+  const airdrop = document.getElementById("airdropCard"); // 👈 أضف
 
   if (casino) casino.onclick = () => switchView("casino");
   if (wallet) wallet.onclick = () => switchView("wallet");
   if (mining) mining.onclick = () => switchView("mining");
   if (market) market.onclick = () => switchView("market");
+  if (airdrop) airdrop.onclick = () => switchView("airdrop"); // 👈 مهم
 
 }
