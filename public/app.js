@@ -146,94 +146,81 @@ async function safeFetch(path, options = {}) {
   }
 }
 
-/* ================= APP view ================= */
-
-const APP = {
-  view: null,
-
-  init() {
-    console.log("APP started");
-    USER.load();
-    log.info("APP initialized"); // داخل init
-  }
-};
-
 /* =========================================================
    PART 2 — NAVIGATION (General Update)
 ================================================*/
 
+window.APP = window.APP || {};
+APP.view = null;
+init() {
+    console.log("APP started");
+    USER.load();
+    log.info("APP initialized"); 
+  }
+};
+
+// ================= SWITCH VIEW =================
+
 function switchView(view){
 
-  if (!view) return;
-
-  // 🛑 منع إعادة نفس الصفحة
-  if (APP.view === view) return;
+  if (!view || APP.view === view) return;
 
   console.log("Switching to:", view);
 
   const views = document.querySelectorAll(".view");
   const buttons = document.querySelectorAll(".bottom-nav button");
 
-  // 🔴 STEP 1: إخفاء الكل (مهم مع !important)
-  views.forEach(v => {
-    v.classList.remove("active");
-  });
+  // 1. hide all
+  views.forEach(v => v.classList.remove("active"));
 
-  // 🔴 STEP 2: انتظار frame (حل مشاكل CSS)
+  // 2. get target
+  const target = document.getElementById(view);
+
+  if (!target){
+    console.error("View not found:", view);
+    return;
+  }
+
+  // 3. show
+  target.classList.add("active");
+
+  // 4. state
+  APP.view = view;
+
+  // 5. scroll reset
   requestAnimationFrame(() => {
-
-    const target = document.getElementById(view);
-
-    if (!target){
-      console.error("View not found:", view);
-      return;
-    }
-
-    target.classList.add("active");
-
-    // ✅ تحديث الحالة
-    APP.view = view;
-    CURRENT_VIEW = view;
-
-    // ✅ Scroll داخل القسم
     target.scrollTop = 0;
-
   });
 
-  // 🔴 STEP 3: تحديث الأزرار
+  // 6. nav active
   buttons.forEach(btn => {
     btn.classList.toggle("active", btn.dataset.view === view);
   });
 
-  // 🔴 STEP 4: lifecycle (مهم لنظامك)
+  // 7. lifecycle
   handleViewLifecycle(view);
 
-  // 🔴 STEP 5: event system
+  // 8. global event
   document.dispatchEvent(
     new CustomEvent("view:change", { detail: view })
   );
-
 }
-/*=========================== BND view =====================*/
+
+// ================= NAVIGATION =================
 
 function bindNavigation(){
 
   const buttons = document.querySelectorAll(".bottom-nav button");
 
   if (!buttons.length){
-    console.warn("Navigation not found");
+    console.warn("No navigation buttons found");
     return;
   }
 
   buttons.forEach(btn => {
 
-    // 🛑 إزالة أي events قديمة (منع duplication)
-    btn.onclick = null;
-
     btn.onclick = (e) => {
-
       e.preventDefault();
-      e.stopPropagation();
 
       const view = btn.dataset.view;
 
@@ -243,10 +230,61 @@ function bindNavigation(){
       }
 
       switchView(view);
-
     };
 
   });
+
+}
+
+// ================= CARD NAV =================
+function bindCardNavigation(){
+
+  const map = {
+    walletCard: "wallet",
+    marketCard: "market",
+    casinoCard: "casino",
+    miningCard: "mining",
+    airdropCard: "airdrop"
+  };
+
+  Object.keys(map).forEach(id => {
+    const el = document.getElementById(id);
+
+    if (el){
+      el.onclick = () => switchView(map[id]);
+    }
+  });
+
+}
+
+// ================= LIFECYCLE =================
+function handleViewLifecycle(view){
+
+  console.log("Lifecycle:", view);
+
+  switch(view){
+
+    case "wallet":
+      if (typeof loadWallet === "function") loadWallet();
+      break;
+
+    case "market":
+      if (typeof loadOrderBook === "function") loadOrderBook();
+      break;
+
+    case "casino":
+      if (typeof initCasino === "function") initCasino();
+      break;
+
+    case "mining":
+      if (typeof renderMining === "function") renderMining();
+      break;
+
+    case "airdrop":
+      if (typeof loadAirdrop === "function") loadAirdrop();
+      break;
+
+  }
 
 }
    
@@ -1634,25 +1672,5 @@ async function openMarket(){
     console.log(data);
 
     alert("Market loaded");
-
-}
-
-//* ====================================================
- // CARD NAVIGATION
- //* ====================================================*/
-
-function bindCardNavigation(){
-
-  const casino = document.getElementById("casinoCard");
-  const wallet = document.getElementById("walletCard");
-  const mining = document.getElementById("miningCard");
-  const market = document.getElementById("marketCard");
-  const airdrop = document.getElementById("airdropCard"); // 👈 أضف
-
-  if (casino) casino.onclick = () => switchView("casino");
-  if (wallet) wallet.onclick = () => switchView("wallet");
-  if (mining) mining.onclick = () => switchView("mining");
-  if (market) market.onclick = () => switchView("market");
-  if (airdrop) airdrop.onclick = () => switchView("airdrop"); // 👈 مهم
 
 }
