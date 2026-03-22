@@ -155,7 +155,6 @@ APP.view = null;
 APP.init = function(){
   console.log("APP started");
   USER.load();
-  log.info("APP initialized");
 };
 
 // ================= SWITCH VIEW =================
