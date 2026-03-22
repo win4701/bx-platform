@@ -17,6 +17,7 @@
 /* =========================================================
    RESET / BASE
 ========================================================= */
+
 *{
   box-sizing:border-box;
   -webkit-tap-highlight-color:transparent;
@@ -120,7 +121,7 @@ h3{
 
 #wallet.view{
   padding:16px;
-  padding-bottom:140px;
+  padding-bottom:100px;
   background:linear-gradient(180deg,#0b1220 0%,#020617 100%);
   color:#e5e7eb;
 }
