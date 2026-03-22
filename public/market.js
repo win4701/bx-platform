@@ -54,7 +54,7 @@ const pairButtons = document.querySelectorAll("#market .pair-btn")
 /* ================= WALLET ================= */
 
 const wallet = window.WALLET || {BX:0,USDT:0}
-async function loadWallet(){
+async function loadMarketWallet(){
 
 const r = await fetch("https://api.bloxio.online/finance/wallet",{
 headers:{
@@ -79,7 +79,7 @@ let marketRunning = false;
 marketRunning = true;
 
 updateWalletUI();
-loadWallet();
+loadMarketWallet();
 bindEvents();
 connectBinance();
 
