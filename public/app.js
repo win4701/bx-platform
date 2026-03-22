@@ -161,17 +161,20 @@ APP.init = function(){
 
 function switchView(view){
 
-  if (!view || APP.view === view) return;
+  if (!view) return;
+
+  if (APP.view === view) return;
 
   console.log("Switching to:", view);
 
   const views = document.querySelectorAll(".view");
   const buttons = document.querySelectorAll(".bottom-nav button");
 
-  // 1. hide all
-  views.forEach(v => v.classList.remove("active"));
+  views.forEach(v => {
+    v.classList.remove("active");
+    v.style.display = "none"; 
+  });
 
-  // 2. get target
   const target = document.getElementById(view);
 
   if (!target){
@@ -179,29 +182,21 @@ function switchView(view){
     return;
   }
 
-  // 3. show
+  target.style.display = "block";
   target.classList.add("active");
 
-  // 4. state
   APP.view = view;
 
-  // 5. scroll reset
   requestAnimationFrame(() => {
     target.scrollTop = 0;
   });
 
-  // 6. nav active
   buttons.forEach(btn => {
     btn.classList.toggle("active", btn.dataset.view === view);
   });
 
-  // 7. lifecycle
-  handleViewLifecycle(view);
+  safeViewLoader(view);
 
-  // 8. global event
-  document.dispatchEvent(
-    new CustomEvent("view:change", { detail: view })
-  );
 }
 
 // ================= NAVIGATION =================
@@ -217,7 +212,14 @@ function bindNavigation(){
 
   buttons.forEach(btn => {
 
-    btn.onclick = (e) => {
+    btn.replaceWith(btn.cloneNode(true));
+  });
+
+  const freshButtons = document.querySelectorAll(".bottom-nav button");
+
+  freshButtons.forEach(btn => {
+
+    btn.addEventListener("click", (e) => {
       e.preventDefault();
 
       const view = btn.dataset.view;
@@ -228,13 +230,15 @@ function bindNavigation(){
       }
 
       switchView(view);
-    };
+    });
 
   });
 
 }
 
-// ================= CARD NAV =================
+/* ================= CARD NAV ============================*/
+
+
 function bindCardNavigation(){
 
   const map = {
@@ -255,33 +259,43 @@ function bindCardNavigation(){
 
 }
 
-// ================= LIFECYCLE =================
-function handleViewLifecycle(view){
+/* ================= LIFECYCLE ============================*/
 
-  console.log("Lifecycle:", view);
 
-  switch(view){
+function safeViewLoader(view){
 
-    case "wallet":
-      if (typeof loadWallet === "function") loadWallet();
-      break;
+  try{
 
-    case "market":
-      if (typeof loadOrderBook === "function") loadOrderBook();
-      break;
+    switch(view){
 
-    case "casino":
-      if (typeof initCasino === "function") initCasino();
-      break;
+      case "wallet":
+        if (typeof loadWallet === "function") loadWallet();
+        break;
 
-    case "mining":
-      if (typeof renderMining === "function") renderMining();
-      break;
+      case "market":
+        if (typeof initMarket === "function") initMarket();
+        break;
 
-    case "airdrop":
-      if (typeof loadAirdrop === "function") loadAirdrop();
-      break;
+      case "casino":
+        if (typeof bindCasinoGames === "function") bindCasinoGames();
+        break;
 
+      case "mining":
+        if (typeof renderMining === "function") renderMining();
+        break;
+
+      case "airdrop":
+        if (typeof loadAirdrop === "function") loadAirdrop();
+        break;
+
+      case "settings":
+        console.log("Settings loaded");
+        break;
+
+    }
+
+  }catch(e){
+    console.error("View error:", view, e);
   }
 
 }
