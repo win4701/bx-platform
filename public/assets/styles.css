@@ -77,6 +77,8 @@ img{
 .view {
   display: none;
   opacity: 0;
+  position:relative;
+  z-index:1;
 }
 
 .view.active {
@@ -972,6 +974,7 @@ h3{
 }
 
 canvas{
+  pointer-events:none;
   background:#020617;
   border-radius:10px;
 }
@@ -1084,7 +1087,7 @@ button{
   display:grid;
   grid-template-columns:repeat(5,1fr);
   padding:6px 0 env(safe-area-inset-bottom);
-  z-index:100;
+  z-index:9999;
 }
 
 .bottom-nav button{
