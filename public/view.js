@@ -24,7 +24,42 @@ function switchView(view){
       console.error("View not found:", view);
       return;
     }
+    
+/*=========================== BND view =====================*/
 
+function bindNavigation(){
+
+  const buttons = document.querySelectorAll(".bottom-nav button");
+
+  if (!buttons.length){
+    console.warn("Navigation not found");
+    return;
+  }
+
+  buttons.forEach(btn => {
+
+    // 🛑 إزالة أي events قديمة (منع duplication)
+    btn.onclick = null;
+
+    btn.onclick = (e) => {
+
+      e.preventDefault();
+      e.stopPropagation();
+
+      const view = btn.dataset.view;
+
+      if (!view){
+        console.warn("Missing data-view");
+        return;
+      }
+
+      switchView(view);
+
+    };
+
+  });
+
+}
     target.classList.add("active");
 
     // ✅ تحديث الحالة
