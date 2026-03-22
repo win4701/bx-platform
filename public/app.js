@@ -967,8 +967,6 @@ function openCasinoGame(game) {
     return; 
   }
 
-  /* ================= OTHER GAMES ================= */
-
   renderGameUI(game);
  }
 
