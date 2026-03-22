@@ -108,9 +108,9 @@ function authHeaders() {
     ? { Authorization: "Bearer " + USER.token }
     : {};
 }
-    log.info("APP initialized");
-  }
-};
+
+// APP INIT LOG
+log.info("APP initialized");
 
 /* ================= SAFE FETCH ================= */
 
