@@ -152,11 +152,10 @@ async function safeFetch(path, options = {}) {
 
 window.APP = window.APP || {};
 APP.view = null;
-init() {
-    console.log("APP started");
-    USER.load();
-    log.info("APP initialized"); 
-  }
+APP.init = function(){
+  console.log("APP started");
+  USER.load();
+  log.info("APP initialized");
 };
 
 // ================= SWITCH VIEW =================
