@@ -626,10 +626,12 @@
 </section>
 <!-- ================= BOTTOM NAV ================= -->
 <nav class="bottom-nav">
-  <button data-view="wallet" class="active">
+
+  <button data-view="wallet">
     <img src="assets/images/wallet.svg" alt="Wallet"/>
     <span>Wallet</span>
   </button>
+
   <button data-view="market">
     <img src="assets/images/market.svg" alt="Market"/>
     <span>Market</span>
@@ -642,16 +644,30 @@
     <img src="assets/images/mining.svg" alt="Mining"/>
     <span>Mining</span>
   </button>
+
   <button data-view="airdrop">
     <img src="assets/images/airdrop.svg" alt="Airdrop"/>
     <span>Airdrop</span>
   </button>
+
 </nav>
-<!-- WalletConnect + Web3 -->
+
+<!-- ================= WEB3 ================= -->
 <script src="https://unpkg.com/web3@1.10.0/dist/web3.min.js"></script>
 <script src="https://unpkg.com/@walletconnect/web3-provider@1.8.0/dist/umd/index.min.js"></script>
-<!-- App Scripts -->
-<script src="assets/app.js"></script>
-<script src="assets/market.js"></script>
+
+<!-- ================= BX SYSTEM ================= -->
+<script src="bx/core.js"></script>
+<script src="bx/state.js"></script>
+
+<script src="bx/services/api.js"></script>
+<script src="bx/services/ws.js"></script>
+
+<script src="bx/wallet.js"></script>
+<script src="bx/market.js"></script>
+<script src="bx/casino.js"></script>
+<script src="bx/mining.js"></script>
+<script src="bx/airdrop.js"></script>
+<script src="bx/main.js"></script>
 </body>
 </html>
