@@ -1,55 +1,85 @@
-// ===============================
-// BX WALLET (NEW SYSTEM)
-// ===============================
+/* =========================================================
+   BX WALLET ULTRA (BINANCE STYLE + REAL + STABLE)
+========================================================= */
 
 window.WALLET = {
 
-  balances: {},
-  initialized: false,
+  balances:{},
+  initialized:false,
+  loading:false,
 
-  // ================= INIT =================
+  /* ================= INIT ================= */
+
   async init(){
 
-    if (this.initialized) return;
+    if(this.initialized) return;
 
-    console.log("BX Wallet init");
+    console.log("💰 WALLET ULTRA INIT");
 
     this.bindUI();
     await this.load();
 
+    this.autoRefresh();
+
     this.initialized = true;
   },
 
-  // ================= LOAD =================
+  /* ================= LOAD ================= */
+
   async load(){
 
-    const data = await safeFetch("/finance/wallet");
+    if(this.loading) return;
 
-    if (!data){
-      console.error("Wallet load failed");
-      return;
+    this.loading = true;
+
+    try{
+
+      const data = await safeFetch("/finance/wallet");
+
+      if(!data){
+        this.showError("API ERROR");
+        return;
+      }
+
+      this.balances = this.normalize(data);
+
+      this.render();
+
+    }catch(e){
+      console.error(e);
+      this.showError("LOAD FAILED");
     }
 
-    console.log("Wallet API:", data);
-
-    this.balances = this.normalize(data);
-
-    this.render();
+    this.loading = false;
   },
 
-  // ================= NORMALIZE =================
+  /* ================= NORMALIZE ================= */
+
   normalize(data){
 
     const result = {};
 
     Object.keys(data).forEach(k=>{
-      result[k.toUpperCase()] = Number(data[k]);
+
+      const sym = k.toUpperCase();
+      const val = data[k];
+
+      if(typeof val === "number"){
+        result[sym] = { free: val, locked:0 };
+      } else {
+        result[sym] = {
+          free: Number(val.free || 0),
+          locked: Number(val.locked || 0)
+        };
+      }
+
     });
 
     return result;
   },
 
-  // ================= RENDER =================
+  /* ================= RENDER ================= */
+
   render(){
 
     const supported = [
@@ -57,186 +87,212 @@ window.WALLET = {
       "ETH","AVAX","ZEC","TON","SOL","LTC"
     ];
 
+    let totalUSDT = 0;
+
     supported.forEach(sym=>{
 
-      const el = document.getElementById("bal-" + sym.toLowerCase());
+      const el = document.getElementById("bal-"+sym.toLowerCase());
+      if(!el) return;
 
-      if (!el) return;
+      const bal = this.balances[sym]?.free || 0;
 
-      const val = this.balances[sym] || 0;
+      el.innerText = this.format(bal);
 
-      el.innerText = val.toFixed(4);
+      // fake conversion (تقدر تربطها market)
+      if(sym === "USDT") totalUSDT += bal;
+      if(sym === "BX") totalUSDT += bal * 45;
 
     });
 
+    // total balance (اختياري لو عندك element)
+    const totalEl = document.getElementById("totalBalance");
+    if(totalEl){
+      totalEl.innerText = "$" + totalUSDT.toFixed(2);
+    }
+
   },
 
-  // ================= REFRESH =================
-  async refresh(){
-    await this.load();
+  /* ================= FORMAT ================= */
+
+  format(n){
+
+    if(n >= 1) return n.toFixed(4);
+    if(n >= 0.01) return n.toFixed(6);
+
+    return n.toFixed(8);
   },
 
-  // ================= BINANCE =================
-  async binance(){
+  /* ================= AUTO REFRESH ================= */
+
+  autoRefresh(){
+
+    setInterval(()=>{
+      this.load();
+    },4000);
+
+  },
+
+  /* ================= ERROR ================= */
+
+  showError(msg){
+    console.warn("WALLET:", msg);
+  },
+
+  /* ================= DEPOSIT ================= */
+
+  async deposit(){
+
+    const asset = prompt("Asset (USDT/BTC/ETH)");
+
+    if(!asset) return;
+
+    const res = await safeFetch(`/finance/deposit/${asset}`);
+
+    if(!res){
+      alert("Deposit failed");
+      return;
+    }
+
+    alert("Address:\n"+res.address);
+  },
+
+  /* ================= WITHDRAW ================= */
+
+  async withdraw(){
+
+    const asset = prompt("Asset");
+    const amount = prompt("Amount");
+    const address = prompt("Address");
+
+    if(!asset || !amount || !address) return;
+
+    const res = await safeFetch("/finance/withdraw",{
+      method:"POST",
+      body: JSON.stringify({
+        asset,
+        amount:Number(amount),
+        address
+      })
+    });
+
+    if(!res){
+      alert("Withdraw failed");
+      return;
+    }
+
+    alert("Withdraw sent");
+
+    this.load();
+  },
+
+  /* ================= TRANSFER ================= */
+
+  async transfer(){
+
+    const user = document.getElementById("transferTelegram")?.value;
+    const amount = Number(document.getElementById("transferAmount")?.value);
+
+    if(!user || !amount) return;
+
+    const res = await safeFetch("/finance/transfer",{
+      method:"POST",
+      body: JSON.stringify({
+        to_user:user,
+        asset:"BX",
+        amount
+      })
+    });
+
+    if(!res){
+      alert("Transfer failed");
+      return;
+    }
+
+    alert("Transfer OK");
+
+    this.load();
+  },
+
+  /* ================= BINANCE PAY ================= */
+
+  async binancePay(){
 
     const amount = prompt("USDT amount");
 
-    if (!amount) return;
+    if(!amount) return;
 
-    const res = await safeFetch("/payments/binance/create", {
+    const res = await safeFetch("/payments/binance/create",{
       method:"POST",
-      body:{
+      body: JSON.stringify({
         amount:Number(amount),
         asset:"USDT"
-      }
+      })
     });
 
-    if (!res) return alert("Payment failed");
+    if(!res){
+      alert("Payment failed");
+      return;
+    }
 
-    const url =
-      res.data?.checkoutUrl ||
-      res.checkoutUrl ||
-      res.url;
+    const url = res.checkoutUrl || res.url;
 
-    if (url) window.open(url, "_blank");
+    if(url){
+      window.open(url,"_blank");
+    }
+
   },
 
-  // ================= CONNECT =================
+  /* ================= WALLET CONNECT ================= */
+
   async connect(){
 
     try{
 
-      // TON
-      if (window.TON_CONNECT_UI){
+      if(window.ethereum){
 
-        const ton = new TON_CONNECT_UI.TonConnectUI({
-          manifestUrl:"https://www.bloxio.online/tonconnect-manifest.json",
-          buttonRootId:"walletConnectBtn"
+        const acc = await window.ethereum.request({
+          method:"eth_requestAccounts"
         });
 
-        ton.onStatusChange(w=>{
-          if (!w) return;
-
-          safeFetch("/finance/wallet/connect", {
-            method:"POST",
-            body:{
-              type:"ton",
-              address:w.account.address
-            }
-          });
-
+        await safeFetch("/finance/wallet/connect",{
+          method:"POST",
+          body: JSON.stringify({
+            type:"evm",
+            address:acc[0]
+          })
         });
 
-        return;
+        alert("Connected");
+
+      } else {
+        alert("No wallet found");
       }
 
-      // EVM fallback
-      const provider = new WalletConnectProvider.default({
-        rpc:{
-          1:"https://rpc.ankr.com/eth",
-          56:"https://rpc.ankr.com/bsc"
-        }
-      });
-
-      await provider.enable();
-
-      const web3 = new Web3(provider);
-      const acc = await web3.eth.getAccounts();
-
-      await safeFetch("/finance/wallet/connect", {
-        method:"POST",
-        body:{
-          type:"evm",
-          address:acc[0]
-        }
-      });
-
-      alert("Connected");
-
     }catch(e){
+      console.error(e);
       alert("Connect failed");
     }
 
   },
 
-  // ================= ACTIONS =================
-  async deposit(){
+  /* ================= UI ================= */
 
-    const res = await safeFetch("/finance/deposit/USDT");
-
-    if (!res) return alert("Deposit failed");
-
-    alert("Address:\n" + (res.address || res.deposit_address));
-  },
-
-  async withdraw(){
-
-    const amount = prompt("Amount");
-    const address = prompt("Address");
-
-    if (!amount || !address) return;
-
-    const res = await safeFetch("/finance/withdraw", {
-      method:"POST",
-      body:{
-        asset:"USDT",
-        amount:parseFloat(amount),
-        address
-      }
-    });
-
-    if (!res) return alert("Withdraw failed");
-
-    alert("Withdraw sent");
-
-    this.refresh();
-  },
-
-  async transfer(){
-
-    const user = document.getElementById("transferTelegram").value;
-    const amount = Number(document.getElementById("transferAmount").value);
-
-    if (!user || !amount) return;
-
-    const res = await safeFetch("/finance/transfer", {
-      method:"POST",
-      body:{
-        to_user:user,
-        asset:"BX",
-        amount
-      }
-    });
-
-    if (!res) return alert("Transfer failed");
-
-    alert("Transfer OK");
-
-    this.refresh();
-  },
-
-  // ================= UI =================
   bindUI(){
 
-    // Deposit
-    const d = document.querySelector(".wallet-actions .primary");
-    if (d) d.onclick = ()=>this.deposit();
+    document.querySelector(".wallet-actions .primary")
+      ?.addEventListener("click",()=>this.deposit());
 
-    // Withdraw
-    const w = document.querySelectorAll(".wallet-actions .btn")[1];
-    if (w) w.onclick = ()=>this.withdraw();
+    document.querySelectorAll(".wallet-actions .btn")[1]
+      ?.addEventListener("click",()=>this.withdraw());
 
-    // Transfer
-    const t = document.querySelector(".wallet-transfer .confirm");
-    if (t) t.onclick = ()=>this.transfer();
+    document.querySelector(".wallet-transfer .confirm")
+      ?.addEventListener("click",()=>this.transfer());
 
-    // Binance
-    const b = document.getElementById("binanceConnectBtn");
-    if (b) b.onclick = ()=>this.binance();
+    document.getElementById("binanceConnectBtn")
+      ?.addEventListener("click",()=>this.binancePay());
 
-    // WalletConnect
-    const wc = document.getElementById("walletConnectBtn");
-    if (wc) wc.onclick = ()=>this.connect();
+    document.getElementById("walletConnectBtn")
+      ?.addEventListener("click",()=>this.connect());
 
   }
 
