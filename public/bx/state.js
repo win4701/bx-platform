@@ -1,6 +1,6 @@
-// ===============================
-// BX STATE MANAGER (PRO)
-// ===============================
+/* =========================================================
+   BX STATE MANAGER (ULTRA FINAL STABLE)
+========================================================= */
 
 window.STATE = {
 
@@ -22,57 +22,129 @@ window.STATE = {
     }
   },
 
-  listeners: [],
+  listeners: new Map(),
 
-  // ================= GET =================
+  /* ================= GET ================= */
+
   get(path){
 
     return path.split(".").reduce((o,k)=>o?.[k], this.data);
 
   },
 
-  // ================= SET =================
+  /* ================= SET ================= */
+
   set(path, value){
 
     const keys = path.split(".");
     let obj = this.data;
 
     keys.slice(0,-1).forEach(k=>{
-      if(!obj[k]) obj[k] = {};
+      if(!obj[k] || typeof obj[k] !== "object"){
+        obj[k] = {};
+      }
       obj = obj[k];
     });
 
-    obj[keys.at(-1)] = value;
+    const lastKey = keys.at(-1);
 
-    this.notify(path, value);
+    const oldVal = obj[lastKey];
+
+    // ❌ avoid useless update
+    if(oldVal === value) return;
+
+    obj[lastKey] = value;
+
+    this.notify(path, value, oldVal);
   },
 
-  // ================= UPDATE =================
+  /* ================= UPDATE ================= */
+
   update(path, fn){
 
     const current = this.get(path);
+
     const next = fn(current);
 
     this.set(path, next);
   },
 
-  // ================= SUBSCRIBE =================
+  /* ================= SUBSCRIBE ================= */
+
   subscribe(path, callback){
 
-    this.listeners.push({ path, callback });
+    if(!this.listeners.has(path)){
+      this.listeners.set(path, []);
+    }
 
+    const arr = this.listeners.get(path);
+
+    arr.push(callback);
+
+    // 🔥 return unsubscribe
+    return () => {
+      const i = arr.indexOf(callback);
+      if(i !== -1) arr.splice(i,1);
+    };
   },
 
-  // ================= NOTIFY =================
-  notify(path, value){
+  /* ================= NOTIFY ================= */
 
-    this.listeners.forEach(l => {
+  notify(path, value, oldVal){
 
-      if(path.startsWith(l.path)){
-        l.callback(value, path);
+    this.listeners.forEach((callbacks, key)=>{
+
+      if(path.startsWith(key)){
+
+        callbacks.forEach(cb=>{
+          try{
+            cb(value, oldVal, path);
+          }catch(e){
+            console.error("STATE ERROR:", key, e);
+          }
+        });
+
       }
 
     });
+
+  },
+
+  /* ================= RESET ================= */
+
+  reset(){
+
+    this.data = {
+      user:null,
+      wallet:{},
+      mining:{ subscription:null },
+      airdrop:{ reward:0 },
+      ui:{ view:"wallet" }
+    };
+
+    this.listeners.clear();
+  },
+
+  /* ================= PERSIST (OPTIONAL) ================= */
+
+  save(){
+
+    try{
+      localStorage.setItem("BX_STATE", JSON.stringify(this.data));
+    }catch(e){}
+  },
+
+  load(){
+
+    try{
+
+      const saved = localStorage.getItem("BX_STATE");
+
+      if(saved){
+        this.data = JSON.parse(saved);
+      }
+
+    }catch(e){}
 
   }
 
