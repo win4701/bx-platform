@@ -1,5 +1,5 @@
 /* =========================================================
-   BX CORE ENGINE (ULTRA FINAL)
+   BX CORE ENGINE (FINAL STABLE - NO CONFLICT)
 ========================================================= */
 
 // ================= CONFIG =================
@@ -9,7 +9,7 @@ const CONFIG = {
   WS: "wss://api.bloxio.online"
 };
 
-// ================= GLOBAL STATE =================
+// ================= GLOBAL =================
 
 window.APP = {
   view: null,
@@ -17,128 +17,24 @@ window.APP = {
   ready: false
 };
 
-const SERVICES = {
-  market: false,
-  casino: false
-};
-
-// ================= API =================
-
-async function api(path, options = {}){
-
-  try{
-
-    const res = await fetch(CONFIG.API + path,{
-      headers:{
-        "Content-Type":"application/json",
-        "Authorization":"Bearer " + localStorage.getItem("token")
-      },
-      ...options
-    });
-
-    if(!res.ok){
-      console.warn("API FAIL:", path);
-      return null;
-    }
-
-    return await res.json();
-
-  }catch(e){
-    console.error("API ERROR:", path);
-    return null;
-  }
-
-}
-
-// ================= SAFE FETCH =================
-
-window.safeFetch = (url, options={}) => api(url, options);
-
-// ================= WS =================
-
-let ws;
-let reconnectTimer;
-
-function connectWS(){
-
-  if(ws) return;
-
-  ws = new WebSocket(CONFIG.WS);
-
-  ws.onopen = ()=>{
-    console.log("🟢 WS connected");
-  };
-
-  ws.onmessage = (e)=>{
-    try{
-      const msg = JSON.parse(e.data);
-      handleWS(msg);
-    }catch(err){
-      console.warn("WS parse error");
-    }
-  };
-
-  ws.onclose = ()=>{
-    console.log("🔴 WS disconnected");
-
-    ws = null;
-
-    reconnectTimer = setTimeout(()=>{
-      connectWS();
-    },3000);
-  };
-
-}
-
-// ================= SUBSCRIBE =================
-
-function subscribe(channel){
-
-  if(!ws) connectWS();
-
-  ws?.send(JSON.stringify({
-    type:"subscribe",
-    channel
-  }));
-
-  SERVICES[channel] = true;
-}
-
-// ================= UNSUBSCRIBE =================
-
-function unsubscribe(channel){
-
-  ws?.send(JSON.stringify({
-    type:"unsubscribe",
-    channel
-  }));
-
-  SERVICES[channel] = false;
-}
-
-// ================= STOP SERVICES =================
-
-function stopServices(){
-
-  Object.keys(SERVICES).forEach(s=>{
-    if(SERVICES[s]) unsubscribe(s);
-  });
-
-}
-
 // ================= NAVIGATION =================
 
 function switchView(view){
 
   if(!view || APP.view === view) return;
 
-  stopServices();
+  // 🔥 stop WS services (from ws.js)
+  if(window.WS){
+    WS.channels?.forEach(c => WS.unsubscribe(c));
+  }
 
+  // hide all
   document.querySelectorAll(".view").forEach(v=>{
     v.style.display = "none";
     v.classList.remove("active");
   });
 
+  // show current
   const el = document.getElementById(view);
 
   if(!el){
@@ -148,6 +44,13 @@ function switchView(view){
 
   el.style.display = "block";
   el.classList.add("active");
+
+  // 🔥 update nav active
+  document.querySelectorAll(".bottom-nav button")
+    .forEach(b => b.classList.remove("active"));
+
+  document.querySelector(`[data-view="${view}"]`)
+    ?.classList.add("active");
 
   APP.view = view;
 
@@ -167,12 +70,12 @@ function loadView(view){
         break;
 
       case "market":
-        subscribe("market");
+        window.WS?.subscribe("market");
         window.initMarket?.();
         break;
 
       case "casino":
-        subscribe("casino");
+        window.WS?.subscribe("casino");
         window.CASINO?.init();
         break;
 
@@ -205,23 +108,9 @@ function bindNavigation(){
 
 }
 
-// ================= WS HANDLER =================
-
-function handleWS(msg){
-
-  if(msg.channel === "market" && SERVICES.market){
-    window.onMarketWS?.(msg);
-  }
-
-  if(msg.channel === "casino" && SERVICES.casino){
-    window.onCasinoWS?.(msg);
-  }
-
-}
-
 // ================= TELEGRAM =================
 
-function initTelegram(){
+async function initTelegram(){
 
   const tg = window.Telegram?.WebApp;
 
@@ -233,26 +122,44 @@ function initTelegram(){
 
   const user = tg.initDataUnsafe?.user;
 
-  if(user){
-    APP.user = user;
+  if(!user) return;
 
-    console.log("TG USER:", user);
+  APP.user = user;
+
+  console.log("👤 TG USER:", user);
+
+  // 🔥 auto login
+  try{
+
+    const res = await API.post("/auth/telegram", {
+      telegram_id:user.id,
+      username:user.username
+    });
+
+    if(res?.token){
+      localStorage.setItem("token", res.token);
+    }
+
+  }catch(e){
+    console.warn("TG login failed");
   }
 
 }
 
-// ================= INIT APP =================
+// ================= INIT =================
 
 document.addEventListener("DOMContentLoaded", async ()=>{
 
   console.log("🚀 BX CORE START");
 
-  initTelegram();
-
   bindNavigation();
 
-  connectWS();
+  await initTelegram();
 
+  // 🔥 start WS (from ws.js)
+  window.WS?.connect();
+
+  // default view
   switchView("wallet");
 
   APP.ready = true;
