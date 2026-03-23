@@ -1,5 +1,5 @@
 /* =========================================================
-   PART 5 — MINING (FIXED + NO BREAK)
+   PART 5 — MINING (FINAL PRO CLEAN)
 ========================================================= */
 
 const MINING = {
@@ -36,21 +36,38 @@ function bindMiningTabs() {
 
 }
 
-/* ================= CALC EARNING (خفيف) ================= */
+/* ================= CALC ================= */
 
-function calcEarning(plan, amount, start){
+function calcMining(plan, amount, start){
 
-  if(!start) return 0;
+  if(!start) return { earning:0, progress:0, left:0 };
 
   const now = Date.now();
-
   const duration = plan.days * 86400000;
 
-  const progress = Math.min(1, (now - start) / duration);
+  const elapsed = now - start;
+
+  const progress = Math.min(1, elapsed / duration);
 
   const total = amount * (plan.roi / 100);
 
-  return total * progress;
+  const earning = total * progress;
+
+  const left = Math.max(0, duration - elapsed);
+
+  return { earning, progress, left };
+}
+
+/* ================= TIME FORMAT ================= */
+
+function formatTime(ms){
+
+  const s = Math.floor(ms / 1000);
+  const m = Math.floor(s / 60);
+  const h = Math.floor(m / 60);
+  const d = Math.floor(h / 24);
+
+  return `${d}d ${h%24}h ${m%60}m`;
 }
 
 /* ================= RENDER ================= */
@@ -70,10 +87,10 @@ function renderMiningPlans(){
       MINING.subscription.coin === MINING.coin &&
       MINING.subscription.planId === plan.id;
 
-    let earning = 0;
+    let data = { earning:0, progress:0, left:0 };
 
     if(isActive){
-      earning = calcEarning(
+      data = calcMining(
         plan,
         MINING.subscription.amount,
         MINING.subscription.start
@@ -101,18 +118,38 @@ function renderMiningPlans(){
         isActive
         ? `
           <div class="profit">
-            +${earning.toFixed(4)} ${MINING.coin}
+            +${data.earning.toFixed(4)} ${MINING.coin}
           </div>
+
+          <div class="progress-bar">
+            <div style="width:${(data.progress*100).toFixed(1)}%"></div>
+          </div>
+
+          <div class="time-left">
+            ⏳ ${formatTime(data.left)}
+          </div>
+
+          <button class="claim">Claim</button>
           <button disabled>Active</button>
         `
-        : `<button>Subscribe</button>`
+        : `<button class="sub">Subscribe</button>`
       }
     `;
 
-    const btn = card.querySelector("button");
+    // ================= EVENTS =================
 
-    if (!isActive){
-      btn.onclick = () => subscribeMining(plan);
+    if(!isActive){
+
+      card.querySelector(".sub").onclick = ()=>{
+        subscribeMining(plan);
+      };
+
+    } else {
+
+      card.querySelector(".claim").onclick = ()=>{
+        claimMining(plan);
+      };
+
     }
 
     grid.appendChild(card);
@@ -125,13 +162,8 @@ function renderMiningPlans(){
 
 function validatePlan(plan, amount){
 
-  if(amount < plan.min){
-    return `Min: ${plan.min}`;
-  }
-
-  if(amount > plan.max){
-    return `Max: ${plan.max}`;
-  }
+  if(amount < plan.min) return `Min: ${plan.min}`;
+  if(amount > plan.max) return `Max: ${plan.max}`;
 
   return null;
 }
@@ -174,7 +206,6 @@ async function subscribeMining(plan){
 
   alert("Mining started");
 
-  // 🔥 نفس structure القديم
   MINING.subscription = {
     coin: MINING.coin,
     planId: plan.id,
@@ -184,4 +215,49 @@ async function subscribeMining(plan){
 
   renderMining();
   loadWallet();
-    }
+}
+
+/* ================= CLAIM ================= */
+
+async function claimMining(plan){
+
+  const sub = MINING.subscription;
+
+  if(!sub) return;
+
+  const data = calcMining(plan, sub.amount, sub.start);
+
+  if(data.earning <= 0){
+    alert("No profit yet");
+    return;
+  }
+
+  await safeFetch("/mining/claim", {
+    method: "POST",
+    body: JSON.stringify({
+      coin: sub.coin,
+      plan_id: sub.planId
+    })
+  });
+
+  if(window.WALLET){
+    WALLET[sub.coin] += data.earning;
+    renderWallet();
+  }
+
+  sub.start = Date.now();
+
+  alert(`Claimed +${data.earning.toFixed(4)} ${sub.coin}`);
+
+  renderMining();
+}
+
+/* ================= AUTO REFRESH ================= */
+
+setInterval(()=>{
+
+  if(window.APP?.view === "mining"){
+    renderMining();
+  }
+
+},2000);
