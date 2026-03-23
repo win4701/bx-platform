@@ -1,150 +1,95 @@
-// ===============================
-// BX MAIN (PRO MAX CONTROLLER)
-// ===============================
+/* =========================================================
+   BX MAIN (CLEAN INTEGRATION WITH CORE)
+========================================================= */
 
-window.APP = {
-  booted: false
+window.APP_BOOT = {
+  started:false
 };
 
-// ================= BOOT =================
+// ================= START =================
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", ()=>{
 
-  console.log("🚀 BX APP BOOT");
+  if(APP_BOOT.started) return;
 
-  initNavigation();
-  initStateBindings();
-  initGlobalEvents();
+  console.log("🚀 MAIN START");
 
-  // 🔥 start websocket
-  if(window.WS){
-    WS.connect();
-  }
+  initApp();
 
-  // 🔥 default view
-  STATE.set("ui.view", "wallet");
-
-  APP.booted = true;
+  APP_BOOT.started = true;
 
 });
 
-// ================= NAVIGATION =================
+// ================= INIT =================
 
-function initNavigation(){
+function initApp(){
 
-  document.querySelectorAll("[data-view]").forEach(el => {
+  // ✅ Telegram auto login (اختياري)
+  initTelegramLogin();
 
-    el.addEventListener("click", () => {
-
-      const view = el.dataset.view;
-
-      if (!view) return;
-
-      STATE.set("ui.view", view);
-
-    });
-
-  });
-
-}
-
-// ================= STATE BINDINGS =================
-
-function initStateBindings(){
-
-  // 🔥 view change
-  STATE.subscribe("ui.view", (view) => {
-    renderView(view);
-    runModule(view);
-  });
-
-}
-
-// ================= VIEW RENDER =================
-
-function renderView(view){
-
-  // hide all
-  document.querySelectorAll(".view").forEach(v=>{
-    v.style.display = "none";
-  });
-
-  // show current
-  const el = document.getElementById(view);
-
-  if(el){
-    el.style.display = "block";
+  // ✅ default view via core
+  if(typeof switchView === "function"){
+    switchView("wallet");
   }
 
-  console.log("📺 View:", view);
+  // ✅ visibility fix (mobile / telegram)
+  handleVisibility();
 
 }
 
-// ================= MODULE RUNNER =================
+// ================= TELEGRAM LOGIN =================
 
-function runModule(view){
+async function initTelegramLogin(){
+
+  const tg = window.Telegram?.WebApp;
+
+  if(!tg) return;
+
+  const user = tg.initDataUnsafe?.user;
+
+  if(!user) return;
 
   try{
 
-    switch(view){
+    const res = await safeFetch("/auth/telegram",{
+      method:"POST",
+      body: JSON.stringify({
+        telegram_id:user.id,
+        username:user.username
+      })
+    });
 
-      case "wallet":
-        window.WALLET?.init();
-        break;
-
-      case "market":
-        window.loadMarket?.();
-        break;
-
-      case "casino":
-        window.CASINO?.init();
-        break;
-
-      case "mining":
-        window.loadMining?.();
-        break;
-
-      case "airdrop":
-        window.loadAirdrop?.();
-        break;
-
-      default:
-        console.warn("Unknown module:", view);
+    if(res?.token){
+      localStorage.setItem("token", res.token);
     }
 
   }catch(e){
-    console.error("Module crash:", view, e);
+    console.warn("TG login fail");
   }
 
 }
 
-// ================= GLOBAL EVENTS =================
+// ================= VISIBILITY =================
 
-function initGlobalEvents(){
+function handleVisibility(){
 
-  // 🔴 errors
-  window.addEventListener("error", e=>{
-    console.error("Global Error:", e.message);
-  });
-
-  window.addEventListener("unhandledrejection", e=>{
-    console.error("Promise Error:", e.reason);
-  });
-
-  // 🔄 visibility (resume WS)
-  document.addEventListener("visibilitychange", () => {
+  document.addEventListener("visibilitychange", ()=>{
 
     if(document.visibilityState === "visible"){
-      if(window.WS && !WS.connected){
-        WS.connect();
+
+      // reconnect WS إذا تقطع
+      if(typeof connectWS === "function"){
+        connectWS();
       }
+
     }
 
   });
 
 }
 
-// ================= HELPERS =================
+// ================= SAFE GLOBAL =================
 
-window.$ = (id)=> document.getElementById(id);
-window.$$ = (sel)=> document.querySelectorAll(sel);
+// fallback helpers (لو core ما حمّلش)
+window.$ = window.$ || ((id)=>document.getElementById(id));
+window.$$ = window.$$ || ((s)=>document.querySelectorAll(s));
