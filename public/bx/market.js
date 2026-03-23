@@ -1,6 +1,5 @@
 /* =========================================================
-   BX MARKET v3.1 PRO FINAL
-   Compatible 100% with provided market.html
+   BX MARKET PRO FINAL (STABLE + FIXED BX PRICE)
 ========================================================= */
 
 const ROWS = 15;
@@ -13,97 +12,68 @@ let asks = [];
 let tradeSide = "buy";
 let quotePriceUSDT = 1;
 
+let ws = null;
+let marketInitialized = false;
+
+/* ================= QUOTES ================= */
+
 const quoteMap = {
   USDT: null,
   USDC: null,
   BTC: "btcusdt",
   ETH: "ethusdt",
   BNB: "bnbusdt",
-  SOL: "solusdt",
-  AVAX: "avaxusdt",
-  LTC: "ltcusdt",
-  ZEC: "zecusdt",
-  TON: "tonusdt"
+  SOL: "solusdt"
 };
-
-/* ================= DOM ================= */
-
-const quoteAssetEl = document.getElementById("quoteAsset");
-const marketPriceEl = document.getElementById("marketPrice");
-const marketApproxEl = document.getElementById("marketApprox");
-
-const walletBXEl = document.getElementById("walletBX");
-const walletUSDTEl = document.getElementById("walletUSDT");
-
-const buyTab = document.getElementById("buyTab");
-const sellTab = document.getElementById("sellTab");
-const tradeBox = document.getElementById("tradeBox");
-const actionBtn = document.getElementById("actionBtn");
-
-const orderAmount = document.getElementById("orderAmount");
-const execPriceEl = document.getElementById("execPrice");
-const slippageEl = document.getElementById("slippage");
-const spreadEl = document.getElementById("spread");
-
-const bidsEl = document.getElementById("bids");
-const asksEl = document.getElementById("asks");
-const priceLadderEl = document.getElementById("priceLadder");
-
-const pairButtons = document.querySelectorAll("#market .pair-btn")
 
 /* ================= WALLET ================= */
 
-const wallet = window.WALLET || {BX:0,USDT:0}
+const wallet = {
+  BX: 0,
+  USDT: 0
+};
+
 async function loadMarketWallet(){
 
-const r = await fetch("https://api.bloxio.online/finance/wallet",{
-headers:{
-"Authorization":"Bearer "+localStorage.getItem("jwt")
-}
-});
-const w = await r.json();
+  const r = await safeFetch("/finance/wallet");
+  if(!r) return;
 
-wallet.BX = w.bx_balance || 0;
-wallet.USDT = w.usdt_balance || 0;
+  wallet.BX = r.bx_balance || 0;
+  wallet.USDT = r.usdt_balance || 0;
 
-updateWalletUI();
-   
+  updateWalletUI();
 }
 
 /* ================= INIT ================= */
 
 function initMarket(){
 
-let marketRunning = false;
+  if(marketInitialized) return;
+  marketInitialized = true;
 
-marketRunning = true;
+  bindEvents();
+  loadMarketWallet();
 
-updateWalletUI();
-loadMarketWallet();
-bindEvents();
-connectBinance();
+  connectBinance(quoteMap[currentQuote]);
 
-marketPrice = BX_USDT_REFERENCE;
+  marketPrice = BX_USDT_REFERENCE;
 
-generateOrderBook();
-renderOrderBook();
+  generateOrderBook();
+  renderOrderBook();
 
-PRO_CHART.init();
-
-/* FIX CHART START */
-PRO_CHART.reset(marketPrice);
-PRO_CHART.update(marketPrice);
-/* FIX END */
-
-PRO_CHART.render();
-
+  PRO_CHART.init();
+  PRO_CHART.reset(marketPrice);
+  PRO_CHART.update(marketPrice);
+  PRO_CHART.render();
 }
 
-/* ================= BINANCE TICKER ================= */
-
-let ws = null;
+/* ================= BINANCE WS ================= */
 
 function connectBinance(symbol = "btcusdt") {
+
+  if(window.marketWS){
+    window.marketWS.close();
+  }
 
   if (!symbol) {
     quotePriceUSDT = 1;
@@ -111,17 +81,12 @@ function connectBinance(symbol = "btcusdt") {
     return;
   }
 
-  if (ws) {
-    ws.onmessage = null;
-    ws.close();
-    ws = null;
-  }
-
   ws = new WebSocket(
     `wss://stream.binance.com:9443/ws/${symbol}@miniTicker`
   );
-   
-  window.marketWS = ws
+
+  window.marketWS = ws;
+
   ws.onmessage = (event) => {
     const msg = JSON.parse(event.data);
     const price = parseFloat(msg.c);
@@ -132,26 +97,33 @@ function connectBinance(symbol = "btcusdt") {
   };
 
   ws.onerror = () => {
-    console.log("Binance WS error");
+    console.log("WS error");
   };
-   }
+}
+
+/* ================= PRICE ENGINE ================= */
 
 function computeBXPrice() {
 
   if (!quotePriceUSDT || quotePriceUSDT <= 0) return;
 
+  let target;
+
   if (currentQuote === "USDT" || currentQuote === "USDC") {
-    marketPrice = BX_USDT_REFERENCE;
+    target = BX_USDT_REFERENCE;
   } else {
-    marketPrice = BX_USDT_REFERENCE / quotePriceUSDT;
+    target = BX_USDT_REFERENCE / quotePriceUSDT;
   }
+
+  // 🔥 smooth price
+  marketPrice = marketPrice * 0.9 + target * 0.1;
 
   updatePriceUI();
   generateOrderBook();
   renderOrderBook();
 
   PRO_CHART.update(marketPrice);
- }
+}
 
 /* ================= ORDERBOOK ================= */
 
@@ -160,16 +132,18 @@ function generateOrderBook() {
   bids = [];
   asks = [];
 
+  const spread = marketPrice * 0.001;
+
   for (let i = ROWS; i > 0; i--) {
     bids.push({
-      price: (marketPrice - i * marketPrice * 0.0005),
+      price: marketPrice - i * spread,
       amount: (Math.random() * 5).toFixed(2)
     });
   }
 
   for (let i = 1; i <= ROWS; i++) {
     asks.push({
-      price: (marketPrice + i * marketPrice * 0.0005),
+      price: marketPrice + i * spread,
       amount: (Math.random() * 5).toFixed(2)
     });
   }
@@ -182,49 +156,34 @@ function renderOrderBook(){
   priceLadderEl.innerHTML="";
 
   bids.forEach(o=>{
-
     const div=document.createElement("div");
     div.className="ob-row bid";
-
-    div.innerHTML=
-    `<span>${o.amount}</span>
-     <span>${o.price.toFixed(6)}</span>`;
-
+    div.innerHTML=`<span>${o.amount}</span><span>${o.price.toFixed(6)}</span>`;
     bidsEl.appendChild(div);
-
   });
 
   const mid=document.createElement("div");
-
   mid.className="ob-row mid";
   mid.textContent=marketPrice.toFixed(6);
   priceLadderEl.appendChild(mid);
+
   asks.forEach(o=>{
-
     const div=document.createElement("div");
-
     div.className="ob-row ask";
-
-    div.innerHTML=
-    `<span>${o.price.toFixed(6)}</span>
-     <span>${o.amount}</span>`;
-
+    div.innerHTML=`<span>${o.price.toFixed(6)}</span><span>${o.amount}</span>`;
     asksEl.appendChild(div);
-
   });
 
   updateSpread();
 }
 
 function updateSpread(){
-
   if(!asks.length || !bids.length) return;
   const spread = asks[0].price - bids[0].price;
   spreadEl.textContent = spread.toFixed(6);
-
 }
 
-/* ================= PRICE ================= */
+/* ================= PRICE UI ================= */
 
 function updatePriceUI() {
   marketPriceEl.textContent = marketPrice.toFixed(6);
@@ -236,63 +195,62 @@ function updatePriceUI() {
 
 async function executeTrade(){
 
-try{
+  const amount = parseFloat(orderAmount.value);
+  if(!amount || amount <= 0) return;
 
-const amount = parseFloat(orderAmount.value);
+  const price =
+    tradeSide === "buy"
+      ? asks[0].price
+      : bids[0].price;
 
-if(!amount || amount <= 0) return;
+  const res = await safeFetch("/exchange/order",{
+    method:"POST",
+    body: JSON.stringify({
+      pair:`BX/${currentQuote}`,
+      side:tradeSide,
+      price,
+      amount
+    })
+  });
 
-const pair = `BX/${currentQuote}`;
-
-const side = tradeSide;
-
-const price =
-side === "buy"
-? asks[0].price
-: bids[0].price;
-   
-const res = await safeFetch("/exchange/order",{
-method:"POST",
-
-headers:{
-"Content-Type":"application/json"
-},
-
-body:JSON.stringify({
-
-uid:window.USER_ID,
-pair:pair,
-side:side,
-price:price,
-amount:amount
-
-})
-
-});
-
-const data = res;
-   
-if(data.status){
-
-await loadMarketWallet();
-
-/* FIX ORDERBOOK */
-
-generateOrderBook();
-renderOrderBook();
-
-PRO_CHART.update(price);
+  if(res && res.status){
+    await loadMarketWallet();
+    generateOrderBook();
+    renderOrderBook();
+    PRO_CHART.update(price);
+  }
 }
-   
-}catch(e){
 
-console.error("Trade error",e);
+/* ================= EVENTS ================= */
 
- }
+function bindEvents(){
+
+  pairButtons.forEach(btn => {
+
+    btn.onclick = () => {
+
+      pairButtons.forEach(b=>b.classList.remove("active"));
+      btn.classList.add("active");
+
+      currentQuote = btn.dataset.quote;
+      quoteAssetEl.textContent = currentQuote;
+
+      connectBinance(quoteMap[currentQuote]);
+
+      PRO_CHART.reset(marketPrice);
+    };
+
+  });
+
+  buyTab.onclick = ()=> setTradeSide("buy");
+  sellTab.onclick = ()=> setTradeSide("sell");
+  actionBtn.onclick = executeTrade;
 }
-/* ================= TOGGLE ================= */
 
-function setTradeSide(side) {
+/* ================= SIDE ================= */
+
+function setTradeSide(side){
+
   tradeSide = side;
 
   tradeBox.classList.toggle("buy", side === "buy");
@@ -305,109 +263,75 @@ function setTradeSide(side) {
     side === "buy" ? "Buy BX" : "Sell BX";
 }
 
-/* ================= EVENTS ================= */
-
-function bindEvents() {
-
-  pairButtons.forEach(btn => {
-
-    btn.addEventListener("click", () => {
-
-      pairButtons.forEach(b =>
-        b.classList.remove("active")
-      );
-
-      btn.classList.add("active");
-
-      currentQuote = btn.dataset.quote;
-      quoteAssetEl.textContent = currentQuote;
-
-      connectBinance(quoteMap[currentQuote]);
-
-      PRO_CHART.reset(marketPrice);
-    });
-
-  });
-
-  buyTab.onclick = () => setTradeSide("buy");
-  sellTab.onclick = () => setTradeSide("sell");
-  actionBtn.onclick = executeTrade;
-
-  document.querySelectorAll(".percent-row button")
-    .forEach(btn => {
-      btn.onclick = () => {
-        const percent = parseInt(btn.dataset.percent);
-        const max = wallet.USDT / marketPrice;
-        orderAmount.value =
-          ((max * percent) / 100).toFixed(4);
-      };
-    });
-   }
-
 /* ======================================================
-   BX INSTITUTIONAL CHART ENGINE v4
-   Candlestick + EMA + VWAP + Gradient
+   BX INSTITUTIONAL CHART ENGINE v5 (OPTIMIZED)
 ====================================================== */
 
 const PRO_CHART = {
+
   canvas: null,
   ctx: null,
-  tooltip: null,
-  viewMax: null,
-  viewMin: null,
 
   candles: [],
   ema: [],
   vwap: [],
 
-  timeframe: 5000, // Default timeframe (in ms)
-  maxCandles: 150, // Max candles that can be shown
   current: null,
-  visibleCount: 60, // Number of candles visible on the chart
-  minVisible: 20,   // Minimum candles visible
-  maxVisible: 150,  // Maximum candles visible
 
-  init() {
+  timeframe: 5000,
+  maxCandles: 200,
+  visibleCount: 80,
+
+  lastRender: 0,
+  renderFPS: 30,
+
+  viewMax: null,
+  viewMin: null,
+
+  /* ================= INIT ================= */
+
+  init(){
+
     this.canvas = document.getElementById("bxChart");
-    if (!this.canvas) return;
+    if(!this.canvas) return;
 
     this.ctx = this.canvas.getContext("2d");
-    this.tooltip = document.getElementById("chartTooltip");
 
     this.resize();
-    window.addEventListener("resize", () => {
-    requestAnimationFrame(()=>this.resize())
-});
 
-    this.bindTimeframes();
-    this.bindMouse();
-    this.bindControls(); // Bind zoom and reset controls
-    this.reset(38); // Set default price on initialization
+    window.addEventListener("resize", ()=>this.resize());
 
-    if(window.CURRENT_VIEW && window.CURRENT_VIEW !== "market"){
-    requestAnimationFrame(()=>this.render())
-     return }
+    this.reset(45);
+    this.start();
   },
 
-  // Reset the chart and prepare for new data
-  reset(price) {
-    this.candles = [];
-    this.ema = [];
-    this.vwap = [];
-    this.current = null;
-    this.viewMax = null;
-    this.viewMin = null;
-    this.bootstrap(price);
-  },
+  resize(){
 
-  resize() {
     const p = this.canvas.parentElement;
     this.canvas.width = p.clientWidth;
     this.canvas.height = p.clientHeight;
+
   },
 
-  // Initialize first candle
-  bootstrap(price) {
+  /* ================= RESET ================= */
+
+  reset(price){
+
+    this.candles = [];
+    this.ema = [];
+    this.vwap = [];
+
+    this.current = null;
+
+    this.viewMax = null;
+    this.viewMin = null;
+
+    this.bootstrap(price);
+
+  },
+
+  bootstrap(price){
+
     this.current = {
       open: price,
       high: price,
@@ -416,21 +340,25 @@ const PRO_CHART = {
       volume: 1,
       time: Date.now()
     };
+
     this.candles.push(this.current);
   },
 
-  // Update the chart with new price data
-  update(price) {
-    if (!price || price <= 0) return;
+  /* ================= UPDATE ================= */
 
-    if (!this.current) {
+  update(price){
+
+    if(!price) return;
+
+    const now = Date.now();
+
+    if(!this.current){
       this.bootstrap(price);
       return;
     }
 
-    const now = Date.now();
+    if(now - this.current.time > this.timeframe){
 
-    if (now - this.current.time > this.timeframe) {
       this.current = {
         open: this.current.close,
         high: price,
@@ -442,207 +370,205 @@ const PRO_CHART = {
 
       this.candles.push(this.current);
 
-      if (this.candles.length > this.maxCandles)
+      if(this.candles.length > this.maxCandles){
         this.candles.shift();
+      }
+
     } else {
+
       this.current.high = Math.max(this.current.high, price);
       this.current.low = Math.min(this.current.low, price);
       this.current.close = price;
       this.current.volume++;
+
     }
 
-    this.calcEMA(14);
-    this.calcVWAP();
+    this.calcEMAFast();
+    this.calcVWAPFast();
+
   },
 
-  // Calculate the Exponential Moving Average (EMA)
-  calcEMA(period) {
-    if (this.candles.length < period) return;
+  /* ================= FAST EMA ================= */
+
+  calcEMAFast(){
+
+    const period = 14;
+
+    if(this.candles.length < period) return;
 
     const k = 2 / (period + 1);
-    this.ema = [];
-    let emaPrev = this.candles[0].close;
 
-    for (let i = 0; i < this.candles.length; i++) {
-      if (i === 0) {
-        this.ema.push(emaPrev);
-      } else {
-        const val = this.candles[i].close * k + emaPrev * (1 - k);
-        this.ema.push(val);
-        emaPrev = val;
+    const last = this.candles.at(-1).close;
+
+    if(!this.ema.length){
+      this.ema.push(last);
+      return;
+    }
+
+    const prev = this.ema.at(-1);
+    const next = last * k + prev * (1 - k);
+
+    this.ema.push(next);
+
+    if(this.ema.length > this.maxCandles){
+      this.ema.shift();
+    }
+
+  },
+
+  /* ================= FAST VWAP ================= */
+
+  calcVWAPFast(){
+
+    const c = this.candles.at(-1);
+
+    if(!c) return;
+
+    if(!this._pv){
+      this._pv = 0;
+      this._vol = 0;
+    }
+
+    const typical = (c.high + c.low + c.close)/3;
+
+    this._pv += typical * c.volume;
+    this._vol += c.volume;
+
+    const val = this._vol ? this._pv / this._vol : typical;
+
+    this.vwap.push(val);
+
+    if(this.vwap.length > this.maxCandles){
+      this.vwap.shift();
+    }
+
+  },
+
+  /* ================= LOOP ================= */
+
+  start(){
+
+    const loop = (t)=>{
+
+      if(t - this.lastRender > 1000 / this.renderFPS){
+
+        this.render();
+        this.lastRender = t;
+
       }
-    }
+
+      requestAnimationFrame(loop);
+
+    };
+
+    requestAnimationFrame(loop);
   },
 
-  // Calculate the Volume-Weighted Average Price (VWAP)
-  calcVWAP() {
-    let pv = 0;
-    let vol = 0;
-    this.vwap = [];
+  /* ================= RENDER ================= */
 
-    for (let c of this.candles) {
-      const typical = (c.high + c.low + c.close) / 3;
-      pv += typical * c.volume;
-      vol += c.volume;
-      this.vwap.push(vol ? pv / vol : typical);
-    }
-  },
+  render(){
 
-  // Render the chart with current data
-  render() {
     const ctx = this.ctx;
     const w = this.canvas.width;
     const h = this.canvas.height;
 
-    ctx.clearRect(0, 0, w, h);
+    ctx.clearRect(0,0,w,h);
 
     const visible = this.candles.slice(-this.visibleCount);
+    if(visible.length < 2) return;
 
-    if (visible.length < 2) {
-      requestAnimationFrame(() => this.render());
-      return;
-    }
-
-    const highs = visible.map(c => c.high);
-    const lows = visible.map(c => c.low);
+    const highs = visible.map(c=>c.high);
+    const lows  = visible.map(c=>c.low);
 
     let max = Math.max(...highs);
     let min = Math.min(...lows);
 
-    if (Math.abs(max - min) < 0.0000001) {
-      max += 0.0001;
-      min -= 0.0001;
-    }
+    const pad = (max-min)*0.1;
+    max+=pad; min-=pad;
 
-    const padding = (max - min) * 0.1;
-    max += padding;
-    min -= padding;
-
-    if (!this.viewMax) {
-      this.viewMax = max;
-      this.viewMin = min;
-    }
-
-    this.viewMax += (max - this.viewMax) * 0.1;
-    this.viewMin += (min - this.viewMin) * 0.1;
+    this.viewMax = max;
+    this.viewMin = min;
 
     const scaleY = p =>
-      h - ((p - this.viewMin) / (this.viewMax - this.viewMin)) * (h - 40);
+      h - ((p - min)/(max-min)) * (h-20);
 
-    const candleWidth = w / this.maxVisible;
+    const cw = w / this.visibleCount;
 
-    // Drawing candles
-    this.candles.forEach((c, i) => {
-      const x = i * candleWidth + candleWidth / 2;
-      const openY = scaleY(c.open);
+    /* ===== Gradient ===== */
+
+    const grad = ctx.createLinearGradient(0,0,0,h);
+    grad.addColorStop(0,"#0f172a");
+    grad.addColorStop(1,"#020617");
+
+    ctx.fillStyle = grad;
+    ctx.fillRect(0,0,w,h);
+
+    /* ===== Candles ===== */
+
+    visible.forEach((c,i)=>{
+
+      const x = i*cw + cw/2;
+
+      const openY  = scaleY(c.open);
       const closeY = scaleY(c.close);
-      const highY = scaleY(c.high);
-      const lowY = scaleY(c.low);
+      const highY  = scaleY(c.high);
+      const lowY   = scaleY(c.low);
+
       const up = c.close >= c.open;
 
-      ctx.strokeStyle = up ? "#21c87a" : "#ff4d4f";
-      ctx.fillStyle = up ? "#21c87a" : "#ff4d4f";
+      ctx.strokeStyle = up ? "#00ff88" : "#ff3b3b";
+      ctx.fillStyle   = up ? "#00ff88" : "#ff3b3b";
 
       ctx.beginPath();
-      ctx.moveTo(x, highY);
-      ctx.lineTo(x, lowY);
+      ctx.moveTo(x,highY);
+      ctx.lineTo(x,lowY);
       ctx.stroke();
 
       ctx.fillRect(
-        x - candleWidth * 0.3,
-        Math.min(openY, closeY),
-        candleWidth * 0.6,
-        Math.max(1, Math.abs(openY - closeY))
+        x - cw*0.3,
+        Math.min(openY,closeY),
+        cw*0.6,
+        Math.max(1,Math.abs(openY-closeY))
       );
+
     });
 
-    // EMA and VWAP lines
-    if (this.ema.length) {
-      ctx.beginPath();
-      ctx.strokeStyle = "#f4c430";
-      this.ema.forEach((v, i) => {
-        const x = i * candleWidth + candleWidth / 2;
-        const y = scaleY(v);
-        i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
-      });
-      ctx.stroke();
-    }
+    /* ===== EMA ===== */
 
-    if (this.vwap.length) {
-      ctx.beginPath();
-      ctx.strokeStyle = "#a855f7";
-      this.vwap.forEach((v, i) => {
-        const x = i * candleWidth + candleWidth / 2;
-        const y = scaleY(v);
-        i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
-      });
-      ctx.stroke();
-    }
+    ctx.beginPath();
+    ctx.strokeStyle="#facc15";
 
-    requestAnimationFrame(() => this.render());
-  },
-
-  // Timeframe and Zoom controls
-  bindTimeframes() {
-    document.querySelectorAll(".tf-btn").forEach(btn => {
-      btn.onclick = () => {
-        document.querySelectorAll(".tf-btn")
-          .forEach(b => b.classList.remove("active"));
-
-        btn.classList.add("active");
-        const days = parseInt(btn.dataset.days);
-        this.visibleCount = Math.min(this.maxVisible, days * 24);
-      };
-    });
-  },
-
-  bindControls() {
-    const zoomIn = document.getElementById("zoomIn");
-    const zoomOut = document.getElementById("zoomOut");
-    const reset = document.getElementById("resetView");
-
-    zoomIn.onclick = () => {
-      this.visibleCount = Math.max(this.minVisible, this.visibleCount - 10);
-    };
-
-    zoomOut.onclick = () => {
-      this.visibleCount = Math.min(this.maxVisible, this.visibleCount + 10);
-    };
-
-    reset.onclick = () => {
-      this.visibleCount = 60;
-    };
-  },
-
-  bindMouse() {
-    this.canvas.addEventListener("mousemove", (e) => {
-      const rect = this.canvas.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const idx = Math.floor((x / this.canvas.width) * this.candles.length);
-      const c = this.candles[idx];
-      if (!c) return;
-
-      this.tooltip.style.display = "block";
-      this.tooltip.style.left = e.clientX + "px";
-      this.tooltip.style.top = e.clientY + "px";
-
-      this.tooltip.innerHTML =
-        `O: ${c.open.toFixed(4)}<br>
-         H: ${c.high.toFixed(4)}<br>
-         L: ${c.low.toFixed(4)}<br>
-         C: ${c.close.toFixed(4)}`;
+    this.ema.slice(-visible.length).forEach((v,i)=>{
+      const x=i*cw+cw/2;
+      const y=scaleY(v);
+      i?ctx.lineTo(x,y):ctx.moveTo(x,y);
     });
 
-    this.canvas.addEventListener("mouseleave", () => {
-      this.tooltip.style.display = "none";
+    ctx.stroke();
+
+    /* ===== VWAP ===== */
+
+    ctx.beginPath();
+    ctx.strokeStyle="#a855f7";
+
+    this.vwap.slice(-visible.length).forEach((v,i)=>{
+      const x=i*cw+cw/2;
+      const y=scaleY(v);
+      i?ctx.lineTo(x,y):ctx.moveTo(x,y);
     });
+
+    ctx.stroke();
+
+    /* ===== Price Line ===== */
+
+    const last = visible.at(-1).close;
+    const y = scaleY(last);
+
+    ctx.strokeStyle="#ffffff33";
+    ctx.beginPath();
+    ctx.moveTo(0,y);
+    ctx.lineTo(w,y);
+    ctx.stroke();
+
   }
 };
-
-/* ================= LOAD MARKET ================= */
-
-window.addEventListener("DOMContentLoaded", () => {
-  console.log("🚀 Market starting...");
-  initMarket();
-});
-   
