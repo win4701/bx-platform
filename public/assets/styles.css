@@ -786,6 +786,16 @@ h3{
   background:#0b0b0b;
   border-radius:22px;
   overflow:hidden;
+  cursor:pointer;
+  transition:.2s ease;
+}
+
+#casino .game:active{
+  transform:scale(0.97);
+}
+
+#casino .game.active{
+  outline:2px solid #22c55e;
 }
 
 #casino .game img{
@@ -793,16 +803,6 @@ h3{
   height:auto;          
   display:block;
   object-fit:contain;   
-}
-
-#casino .game h4{
-  opacity: 0;
-  transform: translateY(10px);
-  transition: .25s ease;
-}
-
-#casino .game h4{
-  display: none;
 }
 
 .casino-card.disabled {
@@ -912,6 +912,10 @@ h3{
 
 /* ============= CRASH VIEW ===============*/
   
+#casinoGameBox{
+  display:none;
+  }
+
 .crash-pro{
   background:#020617;
   padding:15px;
@@ -925,17 +929,15 @@ h3{
 }
 
 #crashMultiplier{
-  font-size:38px;
-  font-weight:bold;
+  font-size:40px;
+  font-weight:800;
   color:#22c55e;
-  transition:0.05s linear;
 }
 
-.crash-controls{
-  display:flex;
-  gap:10px;
-  margin-top:10px;
-  flex-wrap:wrap;
+.crash-controls input{
+  flex:1;
+  min-width:120px;
+  padding:10px;
 }
 
 .crash-controls input{
@@ -968,18 +970,6 @@ h3{
 
 /*============ CRASH GAME =============*/
 
-#crashGame{
-  background:#0f172a;
-  color:white;
-  padding:20px;
-}
-
-#multiplier{
-  font-size:38px;
-  color:#22c55e;
-  transition:0.1s linear;
-}
-
 canvas{
   pointer-events:none;
   background:#020617;
@@ -993,9 +983,6 @@ button{
   border-radius:6px;
   cursor:pointer;
 }
-
-#betBtn{ background:#3b82f6; }
-#cashoutBtn{ background:#ef4444; }
 
 /* ================= MINING ================= */
 
