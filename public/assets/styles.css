@@ -69,23 +69,21 @@ img{
 /* =========================================================
    MAIN CONTAINER
 ========================================================= */
+
 .app-container{
   padding:14px;
-  min-height:auto;
-  height: calc(100vh - 60px);
-  overflow: hidden;
+  min-height:100vh;
+  height:auto;
+  overflow:visible;
 }
 
 /* ===================== VIEW SYSTEM FIX ===================== */
 
 .view {
-  display: none;
-  height: 100%;
-  overflow-y: auto;
-  transition: opacity .2s ease;
- -webkit-overflow-scrolling: touch;
-  opacity: 0;
-  position:relative;
+  display:none;
+  min-height: calc(100vh - 80px);
+  overflow-y:auto;
+  padding-bottom:100px;
   z-index:1;
 }
 
@@ -751,7 +749,7 @@ h3{
 }
 
 .chart-price-scale {
-  width: 60px;
+  width: 70px;
   background: #0f0f12;
 }
 
@@ -937,11 +935,12 @@ h3{
   display:flex;
   gap:10px;
   margin-top:10px;
+  flex-wrap:wrap;
 }
 
 .crash-controls input{
-  width:120px;
-  padding:6px;
+  flex:1;
+  min-width:120px;
 }
 
 .bet{
@@ -1095,7 +1094,7 @@ button{
   display:grid;
   grid-template-columns:repeat(5,1fr);
   padding:6px 0 env(safe-area-inset-bottom);
-  z-index:9999;
+  z-index:999;
 }
 
 .bottom-nav button{
@@ -1136,6 +1135,7 @@ button:active,
 .mining-plan:active{
   transform:scale(0.9);
 }
+
 /* =========================================================
    UX – MARKET EMPHASIS
 ========================================================= */
