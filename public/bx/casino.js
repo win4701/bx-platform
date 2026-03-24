@@ -308,3 +308,160 @@ window.CASINO = {
   }
 
 };
+/* =========================================================
+   CRASH GRAPH ENGINE (PRO CANVAS)
+========================================================= */
+
+const CRASH_GRAPH = {
+
+  canvas:null,
+  ctx:null,
+
+  points:[],
+  running:false,
+  startTime:0,
+
+  crashPoint:0,
+  current:1,
+
+  /* ================= INIT ================= */
+
+  init(){
+
+    this.canvas = document.getElementById("crashCanvas");
+    if(!this.canvas) return;
+
+    this.ctx = this.canvas.getContext("2d");
+
+    this.resize();
+
+    window.addEventListener("resize", ()=>this.resize());
+
+  },
+
+  resize(){
+
+    const rect = this.canvas.parentElement;
+
+    this.canvas.width = rect.clientWidth;
+    this.canvas.height = 220;
+
+  },
+
+  /* ================= START ================= */
+
+  start(crashPoint){
+
+    this.points = [];
+    this.running = true;
+    this.startTime = Date.now();
+    this.crashPoint = crashPoint || (Math.random()*5 + 1.5);
+
+    this.loop();
+  },
+
+  /* ================= LOOP ================= */
+
+  loop(){
+
+    if(!this.running) return;
+
+    const t = (Date.now() - this.startTime) / 1000;
+
+    // 🔥 exponential curve
+    this.current = Math.exp(t * 0.6);
+
+    this.points.push({
+      x: t,
+      y: this.current
+    });
+
+    if(this.current >= this.crashPoint){
+      this.running = false;
+      this.crash();
+      return;
+    }
+
+    this.render();
+
+    requestAnimationFrame(()=>this.loop());
+
+  },
+
+  /* ================= RENDER ================= */
+
+  render(){
+
+    const ctx = this.ctx;
+    const w = this.canvas.width;
+    const h = this.canvas.height;
+
+    ctx.clearRect(0,0,w,h);
+
+    if(this.points.length < 2) return;
+
+    const maxX = this.points.at(-1).x;
+    const maxY = Math.max(...this.points.map(p=>p.y));
+
+    const scaleX = x => (x/maxX)*w;
+    const scaleY = y => h - (y/maxY)*(h-20);
+
+    // 🔥 gradient line
+    const grad = ctx.createLinearGradient(0,0,0,h);
+    grad.addColorStop(0,"#22c55e");
+    grad.addColorStop(1,"#16a34a");
+
+    ctx.strokeStyle = grad;
+    ctx.lineWidth = 3;
+
+    ctx.beginPath();
+
+    this.points.forEach((p,i)=>{
+
+      const x = scaleX(p.x);
+      const y = scaleY(p.y);
+
+      i ? ctx.lineTo(x,y) : ctx.moveTo(x,y);
+
+    });
+
+    ctx.stroke();
+
+    // 🔥 glow
+    ctx.shadowBlur = 20;
+    ctx.shadowColor = "#22c55e";
+
+    // current dot
+    const last = this.points.at(-1);
+
+    ctx.beginPath();
+    ctx.arc(scaleX(last.x), scaleY(last.y), 4, 0, Math.PI*2);
+    ctx.fillStyle = "#22c55e";
+    ctx.fill();
+
+    // update UI
+    const el = document.getElementById("crashMultiplier");
+    if(el){
+      el.innerText = this.current.toFixed(2) + "x";
+    }
+
+  },
+
+  /* ================= CRASH ================= */
+
+  crash(){
+
+    const el = document.getElementById("crashMultiplier");
+
+    if(el){
+      el.style.color = "#ef4444";
+      el.innerText = this.crashPoint.toFixed(2) + "x";
+    }
+
+    // 💥 crash flash
+    this.ctx.fillStyle = "rgba(255,0,0,0.2)";
+    this.ctx.fillRect(0,0,this.canvas.width,this.canvas.height);
+
+  }
+
+};
