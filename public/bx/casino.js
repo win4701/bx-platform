@@ -1,17 +1,13 @@
 /* =========================================================
-   CASINO ULTRA ENGINE (12 GAMES + PROVABLY FAIR + SOUND)
+   CASINO REAL ENGINE (CLEAN + WORKING)
 ========================================================= */
 
 window.CASINO = {
 
   current:null,
-  active:false,
-
-  serverHash:null,
-  clientSeed:null,
-  nonce:0,
-
   playing:false,
+  nonce:0,
+  clientSeed:null,
 
   sounds:{
     win:new Audio("/assets/sounds/win.mp3"),
@@ -19,45 +15,32 @@ window.CASINO = {
     click:new Audio("/assets/sounds/click.mp3")
   },
 
-  games:[
-    "coinflip","banana_farm","limbo","fruit_party",
-    "dice","crash","slot","birds_party",
-    "blackjack_fast","airboss","hilo","plinko"
-  ],
-
   /* ================= INIT ================= */
 
   init(){
 
-    if(this.active) return;
-
-    console.log("🎰 CASINO ULTRA START");
-
     this.clientSeed = this.getClientSeed();
-    this.nonce = 0;
-
-    this.preloadSounds();
     this.bindGames();
+    this.preloadSounds();
 
-    this.active = true;
+    console.log("🎰 CASINO READY");
   },
 
   /* ================= SEED ================= */
 
   getClientSeed(){
 
-    let seed = localStorage.getItem("client_seed");
+    let s = localStorage.getItem("client_seed");
 
-    if(!seed){
-      seed = Math.random().toString(36).slice(2);
-      localStorage.setItem("client_seed", seed);
+    if(!s){
+      s = Math.random().toString(36).slice(2);
+      localStorage.setItem("client_seed", s);
     }
 
-    return seed;
+    return s;
   },
 
   rotateSeed(){
-
     this.clientSeed = Math.random().toString(36).slice(2);
     localStorage.setItem("client_seed", this.clientSeed);
     this.nonce = 0;
@@ -68,7 +51,6 @@ window.CASINO = {
   preloadSounds(){
     Object.values(this.sounds).forEach(s=>{
       s.volume = 0.5;
-      s.load();
     });
   },
 
@@ -85,11 +67,13 @@ window.CASINO = {
 
     document.querySelectorAll(".game").forEach(card=>{
 
-      const game = card.dataset.game;
-
       card.onclick = ()=>{
+
+        const game = card.dataset.game;
+
         this.playSound("click");
         this.open(game);
+
       };
 
     });
@@ -102,6 +86,16 @@ window.CASINO = {
 
     this.current = game;
 
+    const grid = document.querySelector(".casino-grid");
+    const box  = document.getElementById("casinoGameBox");
+
+    // hide grid
+    grid.style.display = "none";
+
+    // show game
+    box.style.display = "block";
+
+    // active UI
     document.querySelectorAll(".game")
       .forEach(g=>g.classList.remove("active"));
 
@@ -111,14 +105,30 @@ window.CASINO = {
     this.render(game);
   },
 
-  /* ================= UI ================= */
+  /* ================= CLOSE ================= */
+
+  close(){
+
+    const grid = document.querySelector(".casino-grid");
+    const box  = document.getElementById("casinoGameBox");
+
+    box.innerHTML = "";
+    box.style.display = "none";
+
+    grid.style.display = "grid";
+
+    this.current = null;
+  },
+
+  /* ================= RENDER ================= */
 
   render(game){
 
     const box = document.getElementById("casinoGameBox");
-    if(!box) return;
 
     box.innerHTML = `
+      <button id="exitGame">← Back</button>
+
       <h3>${game.toUpperCase()}</h3>
 
       <input id="bet" type="number" placeholder="Bet BX">
@@ -133,30 +143,26 @@ window.CASINO = {
       ${
         game === "hilo"
         ? `<select id="choice">
-             <option value="high">High</option>
-             <option value="low">Low</option>
-           </select>`
+            <option value="high">High</option>
+            <option value="low">Low</option>
+          </select>`
         : ""
       }
 
       <button id="playBtn">Play</button>
-
-      <button id="rotateSeedBtn">New Seed</button>
+      <button id="seedBtn">New Seed</button>
 
       <div id="gameResult"></div>
 
-      ${
-        game === "crash"
-        ? `<div id="crashMultiplier">1.00x</div>`
-        : ""
-      }
+      ${game === "crash" ? `<div id="crashMultiplier">1.00x</div>` : ""}
     `;
 
+    document.getElementById("exitGame").onclick = ()=> this.close();
     document.getElementById("playBtn").onclick = ()=> this.play();
-    document.getElementById("rotateSeedBtn").onclick = ()=> this.rotateSeed();
+    document.getElementById("seedBtn").onclick = ()=> this.rotateSeed();
 
     if(game === "crash"){
-      this.startCrashVisual();
+      this.initCrash();
     }
 
   },
@@ -175,39 +181,35 @@ window.CASINO = {
     }
 
     if(window.WALLET && WALLET.BX < bet){
-      alert("Insufficient balance");
+      alert("No balance");
       return;
     }
 
     this.playing = true;
 
-    const payload = {
-      game:this.current,
-      bet,
-      multiplier:Number(document.getElementById("multiplier")?.value || null),
-      choice:document.getElementById("choice")?.value || null,
-      client_seed:this.clientSeed,
-      nonce:this.nonce++
-    };
-
     const res = await safeFetch("/casino/play",{
       method:"POST",
-      body: JSON.stringify(payload)
+      body: JSON.stringify({
+        game:this.current,
+        bet,
+        multiplier:Number(document.getElementById("multiplier")?.value || null),
+        choice:document.getElementById("choice")?.value || null,
+        client_seed:this.clientSeed,
+        nonce:this.nonce++
+      })
     });
 
     this.playing = false;
 
     if(!res){
-      alert("Game failed");
+      alert("Error");
       return;
     }
-
-    this.serverHash = res.server_seed_hash;
 
     this.handle(res);
   },
 
-  /* ================= RESULT ================= */
+  /* ================= HANDLE ================= */
 
   handle(res){
 
@@ -215,253 +217,82 @@ window.CASINO = {
     const payout = res.payout || 0;
     const bet = res.bet || 0;
 
-    // 💰 wallet sync
     if(window.WALLET){
       WALLET.BX += (payout - bet);
-      if(typeof renderWallet === "function"){
-        renderWallet();
-      }
+      if(typeof renderWallet === "function") renderWallet();
     }
 
-    const box = document.getElementById("gameResult");
+    const el = document.getElementById("gameResult");
 
-    if(box){
-      box.innerHTML = `
+    if(el){
+      el.innerHTML = `
         <div class="${win ? "win":"lose"}">
           ${win ? "+"+payout : "-"+bet} BX
         </div>
-        <small>Nonce: ${this.nonce-1}</small>
       `;
     }
 
-    this.playSound(win ? "win" : "lose");
+    this.playSound(win ? "win":"lose");
+
     this.animate(win);
-    this.specialEffects(res);
-  },
 
-  /* ================= EFFECTS ================= */
-
-  specialEffects(res){
-
-    switch(this.current){
-
-      case "dice":
-        console.log("🎲", res.roll);
-        break;
-
-      case "limbo":
-        console.log("🎯", res.multiplier);
-        break;
-
-      case "plinko":
-        console.log("🔵", res.path);
-        break;
-
-      case "slot":
-        console.log("🎰", res.symbols);
-        break;
-
-      case "coinflip":
-        console.log("🪙", res.side);
-        break;
-
+    if(this.current === "crash"){
+      this.stopCrash(res.crash_point || 2);
     }
-
   },
 
   /* ================= CRASH ================= */
 
-  startCrashVisual(){
+  initCrash(){
 
-    let multi = 1;
+    this.crashRunning = true;
+    this.crashMulti = 1;
+
     const el = document.getElementById("crashMultiplier");
-
-    if(!el) return;
-
-    if(this.crashLoop){
-      cancelAnimationFrame(this.crashLoop);
-    }
 
     const loop = ()=>{
 
-      multi += multi * 0.015;
-      el.innerText = multi.toFixed(2) + "x";
+      if(!this.crashRunning) return;
 
-      this.crashLoop = requestAnimationFrame(loop);
+      this.crashMulti += this.crashMulti * 0.02;
+
+      if(el){
+        el.innerText = this.crashMulti.toFixed(2) + "x";
+      }
+
+      this.crashFrame = requestAnimationFrame(loop);
     };
 
     loop();
   },
 
-  /* ================= ANIMATION ================= */
+  stopCrash(point){
+
+    this.crashRunning = false;
+
+    const el = document.getElementById("crashMultiplier");
+
+    if(el){
+      el.innerText = point.toFixed(2) + "x";
+      el.style.color = "red";
+    }
+
+    cancelAnimationFrame(this.crashFrame);
+  },
+
+  /* ================= FX ================= */
 
   animate(win){
 
     const el = document.querySelector(`[data-game="${this.current}"]`);
+
     if(!el) return;
 
-    el.classList.add(win ? "win" : "lose");
+    el.classList.add(win ? "win":"lose");
 
     setTimeout(()=>{
       el.classList.remove("win","lose");
-    },600);
-  }
-
-};
-/* =========================================================
-   CRASH GRAPH ENGINE (PRO CANVAS)
-========================================================= */
-
-const CRASH_GRAPH = {
-
-  canvas:null,
-  ctx:null,
-
-  points:[],
-  running:false,
-  startTime:0,
-
-  crashPoint:0,
-  current:1,
-
-  /* ================= INIT ================= */
-
-  init(){
-
-    this.canvas = document.getElementById("crashCanvas");
-    if(!this.canvas) return;
-
-    this.ctx = this.canvas.getContext("2d");
-
-    this.resize();
-
-    window.addEventListener("resize", ()=>this.resize());
-
-  },
-
-  resize(){
-
-    const rect = this.canvas.parentElement;
-
-    this.canvas.width = rect.clientWidth;
-    this.canvas.height = 220;
-
-  },
-
-  /* ================= START ================= */
-
-  start(crashPoint){
-
-    this.points = [];
-    this.running = true;
-    this.startTime = Date.now();
-    this.crashPoint = crashPoint || (Math.random()*5 + 1.5);
-
-    this.loop();
-  },
-
-  /* ================= LOOP ================= */
-
-  loop(){
-
-    if(!this.running) return;
-
-    const t = (Date.now() - this.startTime) / 1000;
-
-    // 🔥 exponential curve
-    this.current = Math.exp(t * 0.6);
-
-    this.points.push({
-      x: t,
-      y: this.current
-    });
-
-    if(this.current >= this.crashPoint){
-      this.running = false;
-      this.crash();
-      return;
-    }
-
-    this.render();
-
-    requestAnimationFrame(()=>this.loop());
-
-  },
-
-  /* ================= RENDER ================= */
-
-  render(){
-
-    const ctx = this.ctx;
-    const w = this.canvas.width;
-    const h = this.canvas.height;
-
-    ctx.clearRect(0,0,w,h);
-
-    if(this.points.length < 2) return;
-
-    const maxX = this.points.at(-1).x;
-    const maxY = Math.max(...this.points.map(p=>p.y));
-
-    const scaleX = x => (x/maxX)*w;
-    const scaleY = y => h - (y/maxY)*(h-20);
-
-    // 🔥 gradient line
-    const grad = ctx.createLinearGradient(0,0,0,h);
-    grad.addColorStop(0,"#22c55e");
-    grad.addColorStop(1,"#16a34a");
-
-    ctx.strokeStyle = grad;
-    ctx.lineWidth = 3;
-
-    ctx.beginPath();
-
-    this.points.forEach((p,i)=>{
-
-      const x = scaleX(p.x);
-      const y = scaleY(p.y);
-
-      i ? ctx.lineTo(x,y) : ctx.moveTo(x,y);
-
-    });
-
-    ctx.stroke();
-
-    // 🔥 glow
-    ctx.shadowBlur = 20;
-    ctx.shadowColor = "#22c55e";
-
-    // current dot
-    const last = this.points.at(-1);
-
-    ctx.beginPath();
-    ctx.arc(scaleX(last.x), scaleY(last.y), 4, 0, Math.PI*2);
-    ctx.fillStyle = "#22c55e";
-    ctx.fill();
-
-    // update UI
-    const el = document.getElementById("crashMultiplier");
-    if(el){
-      el.innerText = this.current.toFixed(2) + "x";
-    }
-
-  },
-
-  /* ================= CRASH ================= */
-
-  crash(){
-
-    const el = document.getElementById("crashMultiplier");
-
-    if(el){
-      el.style.color = "#ef4444";
-      el.innerText = this.crashPoint.toFixed(2) + "x";
-    }
-
-    // 💥 crash flash
-    this.ctx.fillStyle = "rgba(255,0,0,0.2)";
-    this.ctx.fillRect(0,0,this.canvas.width,this.canvas.height);
-
+    },500);
   }
 
 };
