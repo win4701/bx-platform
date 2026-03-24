@@ -771,23 +771,61 @@ h3{
 .indicator-legend .vwap{ color:var(--purple); }
 
 /* =========================================================
-   CASINO – POSTER SYSTEM (MATCHES PROVIDED IMAGE)
+   CASINO FINAL CSS (CLEAN + NO CONFLICT)
 ========================================================= */
 
 #casino .casino-grid{
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-  align-items: start;
+  display:grid;
+  grid-template-columns: repeat(2,1fr);
+  gap:16px;
+  align-items:start;
+  transition:all .35s ease;
 }
 
+#casino .game:hover{
+  transform:translateY(-4px);
+  box-shadow:
+    0 10px 30px rgba(0,0,0,.8),
+    0 0 20px rgba(34,197,94,.15);
+}
+
+@media(min-width:500px){
+  #casino .casino-grid{
+    grid-template-columns: repeat(3,1fr);
+  }
+}
+
+/* hide animation */
+.casino-grid.hide{
+  opacity:0;
+  transform:scale(0.96);
+  pointer-events:none;
+}
+
+/* ================= GAME CARD ================= */
 
 #casino .game{
-  background:#0b0b0b;
-  border-radius:22px;
+  background:linear-gradient(180deg,#0f172a,#020617);
+  border-radius:20px;
   overflow:hidden;
   cursor:pointer;
-  transition:.2s ease;
+  position:relative;
+  transition:.25s ease;
+
+  border:1px solid rgba(255,255,255,0.05);
+  box-shadow:0 4px 20px rgba(0,0,0,.6);
+}
+
+#casino .game img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  filter:brightness(0.9);
+  transition:.25s;
+}
+
+#casino .game:hover img{
+  filter:brightness(1);
 }
 
 #casino .game:active{
@@ -795,126 +833,148 @@ h3{
 }
 
 #casino .game.active{
-  outline:2px solid #22c55e;
+  border:1px solid #22c55e;
+  box-shadow:
+    0 0 25px rgba(34,197,94,.4),
+    0 10px 30px rgba(0,0,0,.9);
 }
 
-#casino .game img{
-  width:100%;
-  height:auto;          
-  display:block;
-  object-fit:contain;   
+#casino .game::after{
+  content:"PLAY";
+  position:absolute;
+  bottom:12px;
+  left:50%;
+  transform:translateX(-50%);
+  background:rgba(0,0,0,.7);
+  backdrop-filter:blur(6px);
+  color:#fff;
+  padding:6px 14px;
+  border-radius:12px;
+  font-size:11px;
+  font-weight:800;
+  opacity:0;
+  transition:.2s;
 }
 
-.casino-card.disabled {
-  opacity: 0.4;
-  pointer-events: auto;
-  cursor: not-allowed;
+#casino .game:hover::after{
+  opacity:1;
 }
 
-/* =================================================================
-   RECENT BIG WINS – FINAL (VERTICAL OVERRIDE)
-=============================================================== */
+/* ================= GAME BOX ================= */
 
-.big-wins {
-  margin: 18px 16px;
-  padding: 14px;
-  border-radius: 16px;
-  background: linear-gradient(180deg,#0b1220,#060b14);
-}
-
-.big-wins-title {
-  margin-bottom: 10px;
-  font-size: 14px;
-  font-weight: 800;
-  color: #fff;
-}
-
-.big-wins-track {
-  display: block !important;
-  max-height: 260px;
-  overflow-y: auto;
-  overflow-x: hidden !important;
-}
-
-.big-win-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  padding: 10px 12px;
-  margin-bottom: 10px;
-  border-radius: 12px;
-  background: rgba(255,255,255,0.06);
-  box-sizing: border-box;
-}
-
-.big-win-row:last-child {
-  margin-bottom: 0;
-}
-
-.big-win-row .user {
-  color: #9ca3af;
-  font-size: 13px;
-}
-
-.big-win-row .game {
-  color: #7dd3fc;
-  font-size: 13px;
-}
-
-.big-win-row .amount {
-  color: #22c55e;
-  font-weight: 800;
-  font-size: 13px;
-}
-
-.big-win-row .amount.win {
-  color: #22c55e;
-  font-weight: 800;
-}
-
-.big-win-row .amount.loss {
-  color: #ef4444;
-  font-weight: 800;
-   
-}
-
-.big-win-row span {
-  white-space: normal !important;
-}
-
-/* ========= WIN / LOSE ANIMATIONS ========= */
-
-.game.win {
-  animation: winPulse 0.8s ease;
-  box-shadow: 0 0 25px rgba(0, 255, 150, 0.9);
-}
-
-.game.lose {
-  animation: loseShake 0.4s ease;
-  box-shadow: 0 0 20px rgba(255, 60, 60, 0.9);
-}
-
-@keyframes winPulse {
-  0%   { transform: scale(1); }
-  50%  { transform: scale(1.06); }
-  100% { transform: scale(1); }
-}
-
-@keyframes loseShake {
-  0%   { transform: translateX(0); }
-  25%  { transform: translateX(-4px); }
-  50%  { transform: translateX(4px); }
-  75%  { transform: translateX(-4px); }
-  100% { transform: translateX(0); }
-}
-
-/* ============= CRASH VIEW ===============*/
-  
 #casinoGameBox{
-  display:none;
-  }
+  background:linear-gradient(180deg,#020617,#020617);
+  border-radius:18px;
+  padding:14px;
+  box-shadow:
+    inset 0 0 20px rgba(0,0,0,.8),
+    0 10px 40px rgba(0,0,0,.9);
+}
+
+#casinoGameBox.show{
+  display:block;
+  opacity:1;
+  transform:scale(1);
+}
+
+/* ================= HEADER ================= */
+
+.casino-header{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-bottom:14px;
+}
+
+.casino-back{
+  width:38px;
+  height:38px;
+  border-radius:12px;
+  background:#020617;
+  border:1px solid rgba(255,255,255,0.06);
+  color:#fff;
+  font-size:18px;
+}
+
+.casino-back:hover{
+  background:#111827;
+}
+
+.casino-game-title{
+  font-size:18px;
+  font-weight:800;
+  letter-spacing:.5px;
+}
+
+/* ================= BIG WINS ================= */
+
+.big-wins{
+  margin:18px 16px;
+  padding:14px;
+  border-radius:16px;
+  background:linear-gradient(180deg,#0b1220,#060b14);
+}
+
+.big-wins-title{
+  margin-bottom:10px;
+  font-size:14px;
+  font-weight:800;
+  color:#fff;
+}
+
+.big-wins-track{
+  max-height:260px;
+  overflow-y:auto;
+  overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;
+}
+
+.big-win-row{
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.05);
+  transition:.2s;
+}
+
+.big-win-row:hover{
+  background:rgba(255,255,255,.08);
+}
+
+.big-win-row:last-child{
+  margin-bottom:0;
+}
+
+.big-win-row .user{ color:#9ca3af; font-size:13px; }
+.big-win-row .game{ color:#7dd3fc; font-size:13px; }
+.big-win-row .amount{ color:#22c55e; font-weight:800; font-size:13px; }
+.big-win-row .amount.loss{ color:#ef4444; }
+
+/* ================= WIN / LOSE FX ================= */
+
+.game.win{
+  animation:winPulse .8s ease;
+  box-shadow:0 0 25px rgba(0,255,150,.9);
+}
+
+.game.lose{
+  animation:loseShake .4s ease;
+  box-shadow:0 0 20px rgba(255,60,60,.9);
+}
+
+@keyframes winPulse{
+  0%{transform:scale(1);}
+  50%{transform:scale(1.06);}
+  100%{transform:scale(1);}
+}
+
+@keyframes loseShake{
+  0%{transform:translateX(0);}
+  25%{transform:translateX(-4px);}
+  50%{transform:translateX(4px);}
+  75%{transform:translateX(-4px);}
+  100%{transform:translateX(0);}
+}
+
+/* ================= CRASH ================= */
 
 .crash-pro{
   background:#020617;
@@ -932,25 +992,37 @@ h3{
   font-size:40px;
   font-weight:800;
   color:#22c55e;
+
+  text-shadow:
+    0 0 10px rgba(34,197,94,.6),
+    0 0 30px rgba(34,197,94,.4);
+}
+
+.crash-controls{
+  display:flex;
+  gap:10px;
+  margin-top:10px;
+  flex-wrap:wrap;
 }
 
 .crash-controls input{
   flex:1;
   min-width:120px;
   padding:10px;
-}
-
-.crash-controls input{
-  flex:1;
-  min-width:120px;
+  border-radius:10px;
+  border:1px solid #1e293b;
+  background:#020617;
+  color:#fff;
 }
 
 .bet{
-  background:#3b82f6;
+  background:linear-gradient(135deg,#3b82f6,#2563eb);
+  font-weight:800;
 }
 
 .cashout{
-  background:#ef4444;
+  background:linear-gradient(135deg,#ef4444,#dc2626);
+  font-weight:800;
 }
 
 .players{
@@ -960,15 +1032,10 @@ h3{
   font-size:12px;
 }
 
-.player.win{
-  color:#22c55e;
-}
+.player.win{ color:#22c55e; }
+.player.lose{ color:#ef4444; }
 
-.player.lose{
-  color:#ef4444;
-}
-
-/*============ CRASH GAME =============*/
+/* ================= CANVAS ================= */
 
 canvas{
   pointer-events:none;
@@ -976,14 +1043,27 @@ canvas{
   border-radius:10px;
 }
 
+/* ================= GLOBAL BUTTON ================= */
+
 button{
-  padding:14px;
-  margin:5px;
-  border:none;
-  border-radius:6px;
-  cursor:pointer;
+  padding:12px;
+  border-radius:10px;
+  font-weight:800;
+  transition:.2s;
 }
 
+.bet{
+  background:linear-gradient(135deg,#3b82f6,#2563eb);
+}
+
+.cashout{
+  background:linear-gradient(135deg,#ef4444,#dc2626);
+}
+
+button:hover{
+  transform:translateY(-1px);
+}
+  
 /* ================= MINING ================= */
 
 #mining{
@@ -1147,6 +1227,7 @@ button:active,
   font-size:15px;
   letter-spacing:.3px;
 }
+
 /* =========================================================
    UX – MICRO HOVER
 ========================================================= */
@@ -1198,12 +1279,6 @@ button:active,
   height:56px;
   object-fit:contain;
   margin-bottom:6px;
-}
-
-#casino .game img[src*="icon"],
-#casino .game img[src*="logo"]{
-  object-fit:contain;
-  padding:18px;
 }
 
 /* ================= AIRDROP – CLEAN FIX ================= */
