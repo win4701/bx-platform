@@ -363,107 +363,73 @@
   </div>
   </div>
     </section>
-  <!-- ================= CASINO ================= -->
+  <!-- ================= CASINO box ================= -->
   <section id="casino" class="view">
   <h2 class="casino-title">Casino</h2>
 
-  <!-- ================= CASINO GRID ================= -->
+  <!-- ================= GAME GRID ================= -->
   <div class="casino-grid">
 
     <div class="game" data-game="coinflip">
-      <img src="assets/images/coinflip.png" alt="Coin Flip">
-      <h4>Coin Flip</h4>
+      <img src="assets/images/coinflip.png">
     </div>
 
     <div class="game" data-game="banana_farm">
-      <img src="assets/images/banana_farm.png" alt="Banana Farm">
-      <h4>Banana Farm</h4>
+      <img src="assets/images/banana_farm.png">
     </div>
 
     <div class="game" data-game="limbo">
-      <img src="assets/images/limbo.png" alt="Limbo">
-      <h4>Limbo</h4>
+      <img src="assets/images/limbo.png">
     </div>
 
     <div class="game" data-game="fruit_party">
-      <img src="assets/images/fruit_party.png" alt="Fruit Party">
-      <h4>Fruit Party</h4>
+      <img src="assets/images/fruit_party.png">
     </div>
 
     <div class="game" data-game="dice">
-      <img src="assets/images/dice.png" alt="Dice">
-      <h4>Dice</h4>
+      <img src="assets/images/dice.png">
     </div>
 
     <div class="game" data-game="crash">
-      <img src="assets/images/crash.png" alt="Crash">
-      <h4>Crash</h4>
+      <img src="assets/images/crash.png">
     </div>
 
     <div class="game" data-game="slot">
-      <img src="assets/images/slot.png" alt="Slot">
-      <h4>Slot</h4>
+      <img src="assets/images/slot.png">
     </div>
 
     <div class="game" data-game="birds_party">
-      <img src="assets/images/birds_party.png" alt="Birds Party">
-      <h4>Birds Party</h4>
+      <img src="assets/images/birds_party.png">
     </div>
 
     <div class="game" data-game="blackjack_fast">
-      <img src="assets/images/blackjack_fast.png" alt="Blackjack Fast">
-      <h4>Blackjack</h4>
+      <img src="assets/images/blackjack_fast.png">
     </div>
 
     <div class="game" data-game="airboss">
-      <img src="assets/images/airboss.png" alt="Air Boss">
-      <h4>Air Boss</h4>
+      <img src="assets/images/airboss.png">
     </div>
+
     <div class="game" data-game="hilo">
-      <img src="assets/images/hilo.png" alt="Hi-Lo">
-      <h4>Hi-Lo</h4>
+      <img src="assets/images/hilo.png">
     </div>
+
     <div class="game" data-game="plinko">
-      <img src="assets/images/plinko.png" alt="Plinko">
-      <h4>Plinko</h4>
+      <img src="assets/images/plinko.png">
     </div>
+
   </div>
 
-  <!-- ================= GAME ACTION BOX ================= -->
-  <div id="casinoGameBox" class="casino-game-box">
+  <!-- ================= GAME ENGINE (EMPTY) ================= -->
+  <div id="casinoGameBox" class="casino-game-box"></div>
 
-  <!-- ===== CRASH GAME ===== -->
-  <div id="crashGame" class="crash-pro">
-
-  <!-- TOP BAR -->
-  <div class="crash-header">
-    <div id="crashStatus">Waiting...</div>
-    <div id="crashMultiplier">1.00x</div>
-  </div>
-
-  <!-- CHART -->
-  <canvas id="crashChart" width="600" height="300"></canvas>
-
-  <!-- ACTIONS -->
-  <div class="crash-controls">
-
-    <input id="crashBet" type="number" placeholder="Bet (BX)" value="10">
-    <input id="autoCashout" type="number" placeholder="Auto Cashout (e.g 2.0)">
-
-    <button id="crashBetBtn" class="bet">BET</button>
-    <button id="crashCashoutBtn" class="cashout">CASHOUT</button>
-  </div>
-  <!-- PLAYERS -->
-  <div id="crashPlayers" class="players"></div>
-  </div>
-    
   <!-- ================= BIG WINS ================= -->
   <div class="big-wins">
+
     <h3 class="big-wins-title">Recent Big Wins</h3>
-    <div
-      id="bigWinsList"
-      class="big-wins-track"
-      aria-live="polite">
+
+    <div id="bigWinsList" class="big-wins-track">
+
       <div class="big-win-row">
         <span class="user">@player01</span>
         <span class="game">Crash</span>
@@ -471,6 +437,7 @@
       </div>
     </div>
   </div>
+
   </section>
   <!-- ================= MINING ================= -->
    <section id="mining" class="view">
