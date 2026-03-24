@@ -1,298 +1,470 @@
 /* =========================================================
-   CASINO REAL ENGINE (CLEAN + WORKING)
+   CASINO ULTRA FINAL SYSTEM (CLEAN + MODULAR)
 ========================================================= */
 
 window.CASINO = {
 
-  current:null,
-  playing:false,
-  nonce:0,
-  clientSeed:null,
+  /* ================= STATE ================= */
 
-  sounds:{
-    win:new Audio("/assets/sounds/win.mp3"),
-    lose:new Audio("/assets/sounds/lose.mp3"),
-    click:new Audio("/assets/sounds/click.mp3")
+  state:{
+    view:"grid",
+    current:null,
+    playing:false
   },
+
+  clientSeed:null,
+  nonce:0,
 
   /* ================= INIT ================= */
 
   init(){
-
-    this.clientSeed = this.getClientSeed();
-    this.bindGames();
-    this.preloadSounds();
-
+    this.clientSeed = this.getSeed();
+    this.bind();
     console.log("🎰 CASINO READY");
   },
 
-  /* ================= SEED ================= */
-
-  getClientSeed(){
-
-    let s = localStorage.getItem("client_seed");
-
+  getSeed(){
+    let s = localStorage.getItem("seed");
     if(!s){
       s = Math.random().toString(36).slice(2);
-      localStorage.setItem("client_seed", s);
+      localStorage.setItem("seed", s);
     }
-
     return s;
   },
 
-  rotateSeed(){
-    this.clientSeed = Math.random().toString(36).slice(2);
-    localStorage.setItem("client_seed", this.clientSeed);
-    this.nonce = 0;
-  },
-
-  /* ================= SOUND ================= */
-
-  preloadSounds(){
-    Object.values(this.sounds).forEach(s=>{
-      s.volume = 0.5;
-    });
-  },
-
-  playSound(type){
-    const s = this.sounds[type];
-    if(!s) return;
-    s.currentTime = 0;
-    s.play().catch(()=>{});
+  hash(){
+    const str = this.clientSeed + ":" + this.nonce++;
+    let h = 0;
+    for(let i=0;i<str.length;i++){
+      h = Math.imul(31,h)+str.charCodeAt(i)|0;
+    }
+    return Math.abs(h);
   },
 
   /* ================= BIND ================= */
 
-  bindGames(){
-
+  bind(){
     document.querySelectorAll(".game").forEach(card=>{
-
       card.onclick = ()=>{
-
-        const game = card.dataset.game;
-
-        this.playSound("click");
-        this.open(game);
-
+        if(this.state.view === "game") return;
+        this.open(card.dataset.game);
       };
-
     });
-
   },
 
   /* ================= OPEN ================= */
 
   open(game){
 
-    this.current = game;
+    this.state.view = "game";
+    this.state.current = game;
 
     const grid = document.querySelector(".casino-grid");
     const box  = document.getElementById("casinoGameBox");
 
-    // hide grid
-    grid.style.display = "none";
+    grid.classList.add("hide");
 
-    // show game
-    box.style.display = "block";
+    setTimeout(()=>{
+      grid.style.display = "none";
 
-    // active UI
-    document.querySelectorAll(".game")
-      .forEach(g=>g.classList.remove("active"));
+      this.render(game);
 
-    document.querySelector(`[data-game="${game}"]`)
-      ?.classList.add("active");
+      box.style.display = "block";
 
-    this.render(game);
+      setTimeout(()=>box.classList.add("show"),20);
+    },250);
+
   },
 
   /* ================= CLOSE ================= */
 
   close(){
 
+    this.state.view = "grid";
+    this.state.current = null;
+
     const grid = document.querySelector(".casino-grid");
     const box  = document.getElementById("casinoGameBox");
 
-    box.innerHTML = "";
-    box.style.display = "none";
+    box.classList.remove("show");
 
-    grid.style.display = "grid";
+    setTimeout(()=>{
+      box.style.display = "none";
+      box.innerHTML = "";
 
-    this.current = null;
+      grid.style.display = "grid";
+
+      setTimeout(()=>grid.classList.remove("hide"),20);
+    },250);
+
   },
 
   /* ================= RENDER ================= */
 
   render(game){
 
+    const g = this.GAMES[game];
     const box = document.getElementById("casinoGameBox");
 
+    if(!g){
+      box.innerHTML = "Game not found";
+      return;
+    }
+
     box.innerHTML = `
-      <button id="exitGame">← Back</button>
+      <div class="casino-header">
+        <button class="casino-back">←</button>
+        <h3>${game.toUpperCase()}</h3>
+      </div>
 
-      <h3>${game.toUpperCase()}</h3>
-
-      <input id="bet" type="number" placeholder="Bet BX">
-
-      ${
-        ["dice","limbo","plinko","airboss","crash"]
-        .includes(game)
-        ? `<input id="multiplier" placeholder="Multiplier">`
-        : ""
-      }
-
-      ${
-        game === "hilo"
-        ? `<select id="choice">
-            <option value="high">High</option>
-            <option value="low">Low</option>
-          </select>`
-        : ""
-      }
-
-      <button id="playBtn">Play</button>
-      <button id="seedBtn">New Seed</button>
-
-      <div id="gameResult"></div>
-
-      ${game === "crash" ? `<div id="crashMultiplier">1.00x</div>` : ""}
+      ${g.render()}
     `;
 
-    document.getElementById("exitGame").onclick = ()=> this.close();
-    document.getElementById("playBtn").onclick = ()=> this.play();
-    document.getElementById("seedBtn").onclick = ()=> this.rotateSeed();
+    document.querySelector(".casino-back").onclick = ()=>this.close();
 
-    if(game === "crash"){
-      this.initCrash();
-    }
+    document.getElementById("playBtn").onclick = ()=>{
+      if(this.state.playing) return;
+      this.state.playing = true;
+      g.play(this);
+      setTimeout(()=>this.state.playing=false,300);
+    };
 
-  },
+    if(g.init) g.init(this);
 
-  /* ================= PLAY ================= */
-
-  async play(){
-
-    if(this.playing) return;
-
-    const bet = Number(document.getElementById("bet")?.value);
-
-    if(!bet || bet <= 0){
-      alert("Invalid bet");
-      return;
-    }
-
-    if(window.WALLET && WALLET.BX < bet){
-      alert("No balance");
-      return;
-    }
-
-    this.playing = true;
-
-    const res = await safeFetch("/casino/play",{
-      method:"POST",
-      body: JSON.stringify({
-        game:this.current,
-        bet,
-        multiplier:Number(document.getElementById("multiplier")?.value || null),
-        choice:document.getElementById("choice")?.value || null,
-        client_seed:this.clientSeed,
-        nonce:this.nonce++
-      })
-    });
-
-    this.playing = false;
-
-    if(!res){
-      alert("Error");
-      return;
-    }
-
-    this.handle(res);
   },
 
   /* ================= HANDLE ================= */
 
-  handle(res){
-
-    const win = res.win;
-    const payout = res.payout || 0;
-    const bet = res.bet || 0;
+  handle({win,payout,bet}){
 
     if(window.WALLET){
       WALLET.BX += (payout - bet);
-      if(typeof renderWallet === "function") renderWallet();
+      if(window.renderWallet) renderWallet();
     }
 
     const el = document.getElementById("gameResult");
 
     if(el){
-      el.innerHTML = `
-        <div class="${win ? "win":"lose"}">
-          ${win ? "+"+payout : "-"+bet} BX
-        </div>
-      `;
+      el.innerHTML = win
+        ? `<div class="win">+${payout}</div>`
+        : `<div class="lose">-${bet}</div>`;
     }
 
-    this.playSound(win ? "win":"lose");
+  },
 
-    this.animate(win);
+  /* ================= GAMES ================= */
 
-    if(this.current === "crash"){
-      this.stopCrash(res.crash_point || 2);
+   GAMES:{
+
+  /* ===== 1. DICE ===== */
+  dice:{
+    render:()=>`
+      <input id="bet">
+      <div id="diceResult">🎲</div>
+      <button id="playBtn">ROLL</button>
+      <div id="gameResult"></div>
+    `,
+    play(ctx){
+      const bet = +betInput(); if(!bet) return;
+      const v = ctx.hash()%100;
+
+      animateNumber("diceResult", v, ()=>{
+        ctx.handle({win:v>50,payout:v>50?bet*2:0,bet});
+      });
     }
   },
 
-  /* ================= CRASH ================= */
+  /* ===== 2. SLOT ===== */
+  slot:{
+    render:()=>`
+      <input id="bet">
+      <div id="slotReels">🍒 🍋 🍉</div>
+      <button id="playBtn">SPIN</button>
+      <div id="gameResult"></div>
+    `,
+    play(ctx){
+      const bet = +betInput(); if(!bet) return;
 
-  initCrash(){
+      const s=["🍒","🍋","🍉","⭐","💎"];
+      const h=ctx.hash();
 
-    this.crashRunning = true;
-    this.crashMulti = 1;
+      const r1=s[h%5], r2=s[(h>>3)%5], r3=s[(h>>5)%5];
 
-    const el = document.getElementById("crashMultiplier");
-
-    const loop = ()=>{
-
-      if(!this.crashRunning) return;
-
-      this.crashMulti += this.crashMulti * 0.02;
-
-      if(el){
-        el.innerText = this.crashMulti.toFixed(2) + "x";
-      }
-
-      this.crashFrame = requestAnimationFrame(loop);
-    };
-
-    loop();
-  },
-
-  stopCrash(point){
-
-    this.crashRunning = false;
-
-    const el = document.getElementById("crashMultiplier");
-
-    if(el){
-      el.innerText = point.toFixed(2) + "x";
-      el.style.color = "red";
+      spinReels(()=>{
+        slotSet(r1,r2,r3);
+        const win=r1===r2&&r2===r3;
+        ctx.handle({win,payout:win?bet*5:0,bet});
+      });
     }
-
-    cancelAnimationFrame(this.crashFrame);
   },
 
-  /* ================= FX ================= */
+  /* ===== 3. PLINKO ===== */
+  plinko:{
+    render:()=>`
+      <input id="bet">
+      <canvas id="plinkoCanvas" width="300" height="300"></canvas>
+      <button id="playBtn">DROP</button>
+      <div id="gameResult"></div>
+    `,
+    init(){
+      this.ctx = document.getElementById("plinkoCanvas").getContext("2d");
+    },
+    play(ctx){
+      const bet = +betInput(); if(!bet) return;
 
-  animate(win){
+      let x=150,y=0,h=ctx.hash(),step=0;
 
-    const el = document.querySelector(`[data-game="${this.current}"]`);
+      const loop=()=>{
+        this.ctx.clearRect(0,0,300,300);
 
-    if(!el) return;
+        drawBall(this.ctx,x,y);
 
-    el.classList.add(win ? "win":"lose");
+        y+=6;
+        x += ((h>>step)&1)?8:-8;
+        step++;
 
-    setTimeout(()=>{
-      el.classList.remove("win","lose");
-    },500);
+        if(y<280) requestAnimationFrame(loop);
+        else{
+          const m=1+((h%200)/100);
+          ctx.handle({win:m>1.2,payout:bet*m,bet});
+        }
+      };
+
+      loop();
+    }
+  },
+
+  /* ===== 4. CRASH ===== */
+  crash:{
+    render:()=>`
+      <input id="bet">
+      <div id="crashMultiplier">1.00x</div>
+      <button id="playBtn">START</button>
+      <div id="gameResult"></div>
+    `,
+    play(ctx){
+      const bet = +betInput(); if(!bet) return;
+
+      let m=1,target=1+((ctx.hash()%400)/100);
+      const el=elId("crashMultiplier");
+
+      const loop=()=>{
+        m+=m*0.02;
+        el.innerText=m.toFixed(2)+"x";
+
+        if(m>=target){
+          el.innerText=target.toFixed(2)+"x";
+          ctx.handle({win:false,payout:0,bet});
+          return;
+        }
+        requestAnimationFrame(loop);
+      };
+
+      loop();
+    }
+  },
+
+  /* ===== 5. COINFLIP ===== */
+  coinflip:{
+    render:()=>`
+      <input id="bet">
+      <div id="coin">🪙</div>
+      <button id="playBtn">FLIP</button>
+      <div id="gameResult"></div>
+    `,
+    play(ctx){
+      const bet = +betInput(); if(!bet) return;
+      const win = ctx.hash()%2===0;
+
+      animateFlip("coin", ()=>{
+        ctx.handle({win,payout:win?bet*2:0,bet});
+      });
+    }
+  },
+
+  /* ===== 6. LIMBO ===== */
+  limbo:{
+    render:()=>`
+      <input id="bet">
+      <input id="multiplier" placeholder="Target">
+      <button id="playBtn">PLAY</button>
+      <div id="gameResult"></div>
+    `,
+    play(ctx){
+      const bet = +betInput(); if(!bet) return;
+      const target = +elId("multiplier").value||2;
+
+      const r=1+((ctx.hash()%500)/100);
+
+      ctx.handle({win:r>=target,payout:r>=target?bet*target:0,bet});
+    }
+  },
+
+  /* ===== 7. HILO ===== */
+  hilo:{
+    render:()=>`
+      <input id="bet">
+      <select id="choice">
+        <option value="high">High</option>
+        <option value="low">Low</option>
+      </select>
+      <button id="playBtn">PLAY</button>
+      <div id="gameResult"></div>
+    `,
+    play(ctx){
+      const bet = +betInput(); if(!bet) return;
+
+      const c=elId("choice").value;
+      const v=ctx.hash()%13;
+
+      const win=(c==="high"&&v>6)||(c==="low"&&v<=6);
+
+      ctx.handle({win,payout:win?bet*1.8:0,bet});
+    }
+  },
+
+  /* ===== 8. BLACKJACK ===== */
+  blackjack_fast:{
+    render:()=>`
+      <input id="bet">
+      <button id="playBtn">DEAL</button>
+      <div id="gameResult"></div>
+    `,
+    play(ctx){
+      const bet = +betInput(); if(!bet) return;
+
+      const p=(ctx.hash()%11)+10;
+      const d=(ctx.hash()%11)+10;
+
+      ctx.handle({win:p>d,payout:p>d?bet*2:0,bet});
+    }
+  },
+
+  /* ===== 9. AIRBOSS ===== */
+  airboss:{
+    render:()=>`
+      <input id="bet">
+      <div id="air">✈️ 1.00x</div>
+      <button id="playBtn">FLY</button>
+      <div id="gameResult"></div>
+    `,
+    play(ctx){
+      const bet = +betInput(); if(!bet) return;
+
+      let m=1,target=1+((ctx.hash()%300)/100);
+      const el=elId("air");
+
+      const loop=()=>{
+        m+=0.05;
+        el.innerText="✈️ "+m.toFixed(2)+"x";
+
+        if(m>=target){
+          ctx.handle({win:false,payout:0,bet});
+          return;
+        }
+
+        requestAnimationFrame(loop);
+      };
+
+      loop();
+    }
+  },
+
+  /* ===== 10. BANANA ===== */
+  banana_farm:{
+    render:()=>`
+      <input id="bet">
+      <button id="playBtn">HARVEST</button>
+      <div id="gameResult"></div>
+    `,
+    play(ctx){
+      const bet = +betInput(); if(!bet) return;
+
+      const m=1+((ctx.hash()%300)/100);
+
+      ctx.handle({win:m>1.5,payout:m>1.5?bet*m:0,bet});
+    }
+  },
+
+  /* ===== 11. BIRDS ===== */
+  birds_party:{
+    render:()=>`
+      <input id="bet">
+      <button id="playBtn">PLAY</button>
+      <div id="gameResult"></div>
+    `,
+    play(ctx){
+      const bet = +betInput(); if(!bet) return;
+
+      const hits=ctx.hash()%5;
+
+      ctx.handle({win:hits>=3,payout:hits>=3?bet*3:0,bet});
+    }
+  },
+
+  /* ===== 12. FRUIT ===== */
+  fruit_party:{
+    render:()=>`
+      <input id="bet">
+      <button id="playBtn">PLAY</button>
+      <div id="gameResult"></div>
+    `,
+    play(ctx){
+      const bet = +betInput(); if(!bet) return;
+
+      const m=1+((ctx.hash()%200)/100);
+
+      ctx.handle({win:m>1.3,payout:m>1.3?bet*m:0,bet});
+    }
   }
 
-};
+   }
+      
+/* ================= HELPERS ================= */
+
+function elId(id){ return document.getElementById(id); }
+
+function betInput(){
+  return elId("bet").value || 0;
+}
+
+function slotSet(a,b,c){
+  elId("slotReels").innerText = `${a} ${b} ${c}`;
+}
+
+function drawBall(ctx,x,y){
+  ctx.beginPath();
+  ctx.arc(x,y,6,0,Math.PI*2);
+  ctx.fillStyle="#22c55e";
+  ctx.fill();
+}
+
+function animateFlip(id,cb){
+  const el = elId(id);
+  el.style.transform="rotateY(720deg)";
+  setTimeout(cb,400);
+}
+
+function animateNumber(id,target,cb){
+  let i=0,el=elId(id);
+  const loop=()=>{
+    el.innerText=Math.floor(Math.random()*100);
+    if(i++<15) requestAnimationFrame(loop);
+    else{ el.innerText=target; cb(); }
+  };
+  loop();
+}
+
+function spinReels(cb){
+  let i=0,s=["🍒","🍋","🍉","⭐","💎"];
+  const loop=()=>{
+    slotSet(rand(s),rand(s),rand(s));
+    if(i++<20) requestAnimationFrame(loop);
+    else cb();
+  };
+  loop();
+}
+
+function rand(a){
+  return a[Math.floor(Math.random()*a.length)];
+}}
