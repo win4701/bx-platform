@@ -75,7 +75,7 @@ img{
   min-height:100dvh;
   height:auto;
   overflow:visible;
-  padding-bottom:120px; 
+  padding-bottom:100px; 
 }
 
 /* ===================== VIEW SYSTEM FIX ===================== */
@@ -84,7 +84,7 @@ img{
   display:none;
   min-height: calc(100vh - 80px);
   overflow-y:auto;
-  padding-bottom:120px;
+  padding-bottom:100px;
   z-index:1;
 }
 
@@ -1024,7 +1024,7 @@ body{
 }
 
 #crashMultiplier{
-  font-size:40px;
+  font-size:38px;
   font-weight:800;
   color:#22c55e;
 
@@ -1042,7 +1042,7 @@ body{
 
 .crash-controls input{
   flex:1;
-  min-width:120px;
+  min-width:100px;
   padding:10px;
   border-radius:10px;
   border:1px solid #1e293b;
@@ -1062,7 +1062,7 @@ body{
 
 .players{
   margin-top:10px;
-  max-height:120px;
+  max-height:100px;
   overflow:auto;
   font-size:12px;
 }
@@ -1103,7 +1103,7 @@ button:hover{
 
 #mining{
   padding:16px;
-  padding-bottom:120px;  
+  padding-bottom:100px;  
   min-height:auto;
   overflow:visible;
 }
@@ -1152,7 +1152,7 @@ button:hover{
   display:flex;
   flex-direction:column;
   justify-content:space-between;
-  min-height:280px;
+  min-height:260px;
   padding:18px 16px;
   border-radius:18px;
   background:linear-gradient(180deg,#10252c,#0f1a1f);
