@@ -72,9 +72,10 @@ img{
 
 .app-container{
   padding:14px;
-  min-height:100vh;
+  min-height:100dvh;
   height:auto;
   overflow:visible;
+  padding-bottom:120px; 
 }
 
 /* ===================== VIEW SYSTEM FIX ===================== */
@@ -83,7 +84,7 @@ img{
   display:none;
   min-height: calc(100vh - 80px);
   overflow-y:auto;
-  padding-bottom:100px;
+  padding-bottom:120px;
   z-index:1;
 }
 
@@ -1101,7 +1102,10 @@ button:hover{
 /* ================= MINING ================= */
 
 #mining{
-  padding: 16px;
+  padding:16px;
+  padding-bottom:120px;  
+  min-height:auto;
+  overflow:visible;
 }
 
 .mining-tabs{
@@ -1139,14 +1143,21 @@ button:hover{
 
 .mining-plans{
   display:grid;
-  grid-template-columns: repeat(2,1fr);
+  grid-template-columns:repeat(2,minmax(0,1fr));
   gap:16px;
+  align-items:stretch;
 }
 
 .mining-plan{
   display:flex;
   flex-direction:column;
   justify-content:space-between;
+  min-height:280px;
+  padding:18px 16px;
+  border-radius:18px;
+  background:linear-gradient(180deg,#10252c,#0f1a1f);
+  border:1px solid #12323f;
+  box-shadow:0 16px 36px rgba(0,0,0,.35);
 }
 
 .mining-plan ul{
@@ -1155,7 +1166,9 @@ button:hover{
 }
 
 .mining-plan li{
-  line-height:0.95;
+  line-height:1.25;
+  margin-bottom:6px;
+  word-break:break-word;
 }
 
 .mining-plan h4{
@@ -1179,6 +1192,7 @@ button:hover{
   color:#022c22;
   font-weight:800;
   border:none;
+  margin-top:auto;
 }
 
 /* =========================================================
