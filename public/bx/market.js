@@ -95,11 +95,10 @@
     els.slippage = $("slippage");
     els.spread = $("spread");
 
-    els.bids = $("bids");
-    els.asks = $("asks");
-    els.priceLadder = $("priceLadder");
-
+    els.orderBookRows = $("orderBookRows");
+    els.orderbookQuote = $("orderbookQuote");
     els.bxChart = $("bxChart");
+     
     els.volumeChart = $("volumeChart");
     els.chartTooltip = $("chartTooltip");
 
@@ -271,34 +270,60 @@
   }
 
   function renderOrderBook() {
-    if (!els.bids || !els.asks || !els.priceLadder) return;
+  if (!els.orderBookRows) return;
 
-    els.bids.innerHTML = "";
-    els.asks.innerHTML = "";
-    els.priceLadder.innerHTML = "";
+  els.orderBookRows.innerHTML = "";
 
-    state.bids.forEach((row) => {
-      const div = document.createElement("div");
-      div.className = "ob-row";
-      div.innerHTML = `<span>${fmt(row.amount, 3)}</span><span>${fmt(row.price, 6)}</span>`;
-      els.bids.appendChild(div);
-    });
-
-    const mid = document.createElement("div");
-    mid.className = "ob-row";
-    mid.textContent = fmt(state.marketPrice, 6);
-    els.priceLadder.appendChild(mid);
-
-    state.asks.forEach((row) => {
-      const div = document.createElement("div");
-      div.className = "ob-row";
-      div.innerHTML = `<span>${fmt(row.price, 6)}</span><span>${fmt(row.amount, 3)}</span>`;
-      els.asks.appendChild(div);
-    });
-
-    updateTradePreview();
+  if (els.orderbookQuote) {
+    els.orderbookQuote.textContent = state.currentQuote;
   }
 
+  const rows = Math.max(state.bids.length, state.asks.length);
+
+  if (!rows) {
+    els.orderBookRows.innerHTML = `<div class="ob-empty">No market depth available</div>`;
+    updateTradePreview();
+    return;
+  }
+
+  const maxBidAmount = Math.max(...state.bids.map(r => r.amount || 0), 1);
+  const maxAskAmount = Math.max(...state.asks.map(r => r.amount || 0), 1);
+
+  for (let i = 0; i < rows; i++) {
+    const bid = state.bids[i];
+    const ask = state.asks[i];
+
+    const bidAmount = bid ? fmt(bid.amount, 3) : "—";
+    const bidPrice  = bid ? bid.price : null;
+
+    const askPrice  = ask ? ask.price : null;
+    const askAmount = ask ? fmt(ask.amount, 3) : "—";
+
+    const midPrice = bidPrice && askPrice
+      ? fmt((bidPrice + askPrice) / 2, 6)
+      : fmt(state.marketPrice, 6);
+
+    const bidDepth = bid ? Math.max(8, (bid.amount / maxBidAmount) * 46) : 0;
+    const askDepth = ask ? Math.max(8, (ask.amount / maxAskAmount) * 46) : 0;
+
+    const row = document.createElement("div");
+    row.className = "ob-row";
+
+    row.innerHTML = `
+      ${bid ? `<div class="depth-bid" style="width:${bidDepth}%"></div>` : ""}
+      ${ask ? `<div class="depth-ask" style="width:${askDepth}%"></div>` : ""}
+
+      <div class="ob-bid">${bidAmount}</div>
+      <div class="ob-mid">${midPrice}</div>
+      <div class="ob-ask">${askAmount}</div>
+    `;
+
+    els.orderBookRows.appendChild(row);
+  }
+
+  updateTradePreview();
+  }
+   
   /* =========================================================
      TRADE PREVIEW
   ========================================================= */
