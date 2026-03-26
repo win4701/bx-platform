@@ -218,23 +218,59 @@
        GAME RENDER
     ========================================================= */
     renderGame(game) {
-      switch (game) {
-        case "crash":
-          this.renderCrash();
-          break;
-        case "dice":
-          this.renderDice();
-          break;
-        case "plinko":
-          this.renderPlinko();
-          break;
-        case "slot":
-          this.renderSlot();
-          break;
-        default:
-          this.renderComingSoon(game);
-      }
-    },
+   switch (game) {
+    case "crash":
+      this.renderCrash();
+      break;
+
+    case "dice":
+      this.renderDice();
+      break;
+
+    case "plinko":
+      this.renderPlinko();
+      break;
+
+    case "slot":
+      this.renderSlot();
+      break;
+
+    case "coinflip":
+      this.renderCoinflip();
+      break;
+
+    case "limbo":
+      this.renderLimbo();
+      break;
+
+    case "hilo":
+      this.renderHilo();
+      break;
+
+    case "blackjack_fast":
+      this.renderBlackjack();
+      break;
+
+    case "airboss":
+      this.renderAirBoss();
+      break;
+
+    case "banana_farm":
+      this.renderBananaFarm();
+      break;
+
+    case "birds_party":
+      this.renderBirdsParty();
+      break;
+
+    case "fruit_party":
+      this.renderFruitParty();
+      break;
+
+    default:
+      this.renderComingSoon(game);
+   }
+      },
 
     renderComingSoon(game) {
       this.els.gameBox.innerHTML = `
@@ -801,23 +837,60 @@
     /* =========================================================
        PLAY ROUTER
     ========================================================= */
-    play() {
-      switch (this.state.currentGame) {
-        case "crash":
-          this.startCrashRound();
-          break;
-        case "dice":
-          this.playDice();
-          break;
-        case "plinko":
-          this.playPlinko();
-          break;
-        case "slot":
-          this.playSlot();
-          break;
-        default:
-          this.playGeneric();
-      }
+    
+   play() {
+  switch (this.state.currentGame) {
+    case "crash":
+      this.startCrashRound();
+      break;
+
+    case "dice":
+      this.playDice();
+      break;
+
+    case "plinko":
+      this.playPlinko();
+      break;
+
+    case "slot":
+      this.playSlot();
+      break;
+
+    case "coinflip":
+      this.playCoinflip();
+      break;
+
+    case "limbo":
+      this.playLimbo();
+      break;
+
+    case "hilo":
+      this.playHilo();
+      break;
+
+    case "blackjack_fast":
+      this.playBlackjack();
+      break;
+
+    case "airboss":
+      this.playAirBoss();
+      break;
+
+    case "banana_farm":
+      this.playBananaFarm();
+      break;
+
+    case "birds_party":
+      this.playBirdsParty();
+      break;
+
+    case "fruit_party":
+      this.playFruitParty();
+      break;
+
+    default:
+      this.playGeneric();
+   }
     },
 
     playGeneric() {
