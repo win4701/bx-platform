@@ -833,10 +833,529 @@
 
       return 0;
     },
+     
+/* =========================================================
+       GAME Real PLUS 
+========================================================= */
 
-    /* =========================================================
+renderCoinflip() {
+  this.els.gameBox.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:center;height:240px;flex-direction:column;gap:14px;">
+      <div id="coinflipCoin" style="font-size:90px;">🪙</div>
+      <div id="coinflipResult" style="font-size:28px;font-weight:900;">Choose Side</div>
+    </div>
+  `;
+
+  this.els.dynamicControls.innerHTML = `
+    <div class="game-info-box">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <button class="bet-quick-btn active" data-casino-action="coinflipHeads" type="button">Heads</button>
+        <button class="bet-quick-btn" data-casino-action="coinflipTails" type="button">Tails</button>
+      </div>
+    </div>
+  `;
+
+  this.state.coinflip = { choice: "heads" };
+  this.els.status.textContent = "Pick a side";
+  this.els.multiplier.textContent = "1.96x";
+},
+
+playCoinflip() {
+  const bet = this.getBet();
+  if (!bet) return;
+
+  this.balanceSubtract(bet);
+  this.els.status.textContent = "Flipping...";
+
+  const coin = document.getElementById("coinflipCoin");
+  const resultEl = document.getElementById("coinflipResult");
+
+  let spins = 0;
+  const anim = setInterval(() => {
+    spins++;
+    if (coin) coin.textContent = spins % 2 ? "🪙" : "💿";
+
+    if (spins >= 12) {
+      clearInterval(anim);
+
+      const outcome = this.provablyFairNumber(0, 1) === 1 ? "heads" : "tails";
+      const win = this.state.coinflip.choice === outcome;
+
+      if (coin) coin.textContent = outcome === "heads" ? "🪙" : "💿";
+      if (resultEl) resultEl.textContent = outcome.toUpperCase();
+
+      if (win) {
+        const payout = bet * 1.96;
+        this.balanceAdd(payout);
+        this.els.status.textContent = "WIN";
+        this.els.multiplier.textContent = "1.96x";
+        this.addBigWin(payout, "coinflip");
+        this.sound("win");
+      } else {
+        this.els.status.textContent = "LOSE";
+        this.els.multiplier.textContent = "0.00x";
+        this.sound("lose");
+      }
+
+      this.state.nonce++;
+      this.updateSeedsUI();
+    }
+  }, 90);
+},
+
+ renderLimbo() {
+  this.els.gameBox.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:center;height:240px;flex-direction:column;gap:12px;">
+      <div style="font-size:14px;opacity:.7;">Result Multiplier</div>
+      <div id="limboResult" style="font-size:56px;font-weight:1000;">--</div>
+    </div>
+  `;
+
+  this.els.dynamicControls.innerHTML = `
+    <div class="game-info-box">
+      <label style="display:block;margin-bottom:8px;font-weight:700;">Target Multiplier</label>
+      <input data-casino-input="limboTarget" id="limboTargetInput" type="number" min="1.01" step="0.01" value="2.00" style="width:100%;">
+    </div>
+  `;
+
+  this.state.limbo = { target: 2.00 };
+  this.els.status.textContent = "Set target";
+  this.els.multiplier.textContent = "2.00x";
+},
+
+playLimbo() {
+  const bet = this.getBet();
+  if (!bet) return;
+
+  const target = parseFloat(document.getElementById("limboTargetInput")?.value || 2);
+  this.balanceSubtract(bet);
+  this.els.status.textContent = "Rolling...";
+
+  const resultEl = document.getElementById("limboResult");
+  const result = +(1 + (Math.random() * 20)).toFixed(2);
+
+  setTimeout(() => {
+    if (resultEl) resultEl.textContent = result.toFixed(2) + "x";
+
+    if (result >= target) {
+      const payout = bet * target;
+      this.balanceAdd(payout);
+      this.els.status.textContent = "WIN";
+      this.els.multiplier.textContent = target.toFixed(2) + "x";
+      this.addBigWin(payout, "limbo");
+      this.sound("win");
+    } else {
+      this.els.status.textContent = "LOSE";
+      this.els.multiplier.textContent = "0.00x";
+      this.sound("lose");
+    }
+
+    this.state.nonce++;
+    this.updateSeedsUI();
+  }, 700);
+},
+
+renderHilo() {
+  this.els.gameBox.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:center;height:240px;flex-direction:column;gap:12px;">
+      <div id="hiloCard" style="font-size:92px;">🂡</div>
+      <div id="hiloValue" style="font-size:26px;font-weight:900;">Card: A</div>
+    </div>
+  `;
+
+  this.els.dynamicControls.innerHTML = `
+    <div class="game-info-box">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <button class="bet-quick-btn active" data-casino-action="hiloHigh" type="button">High</button>
+        <button class="bet-quick-btn" data-casino-action="hiloLow" type="button">Low</button>
+      </div>
+    </div>
+  `;
+
+  this.state.hilo = { choice: "high" };
+  this.els.status.textContent = "Guess next";
+  this.els.multiplier.textContent = "1.85x";
+},
+
+playHilo() {
+  const bet = this.getBet();
+  if (!bet) return;
+
+  this.balanceSubtract(bet);
+
+  const value = this.provablyFairNumber(1, 13);
+  const win = this.state.hilo.choice === "high" ? value >= 8 : value <= 6;
+
+  const cardEl = document.getElementById("hiloCard");
+  const valueEl = document.getElementById("hiloValue");
+
+  const cards = ["A","2","3","4","5","6","7","8","9","10","J","Q","K"];
+  if (cardEl) cardEl.textContent = "🂡";
+  if (valueEl) valueEl.textContent = "Card: " + cards[value - 1];
+
+  if (win) {
+    const payout = bet * 1.85;
+    this.balanceAdd(payout);
+    this.els.status.textContent = "WIN";
+    this.els.multiplier.textContent = "1.85x";
+    this.addBigWin(payout, "hilo");
+    this.sound("win");
+  } else {
+    this.els.status.textContent = "LOSE";
+    this.els.multiplier.textContent = "0.00x";
+    this.sound("lose");
+  }
+
+  this.state.nonce++;
+  this.updateSeedsUI();
+},
+
+renderBlackjack() {
+  this.els.gameBox.innerHTML = `
+    <div style="display:grid;gap:18px;padding:16px;">
+      <div>
+        <div style="opacity:.7;margin-bottom:6px;">Dealer</div>
+        <div id="bjDealer" style="font-size:38px;font-weight:900;">?</div>
+      </div>
+
+      <div>
+        <div style="opacity:.7;margin-bottom:6px;">Player</div>
+        <div id="bjPlayer" style="font-size:38px;font-weight:900;">?</div>
+      </div>
+    </div>
+  `;
+
+  this.els.dynamicControls.innerHTML = `
+    <div class="game-info-box">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <button class="bet-quick-btn" data-casino-action="bjHit" type="button">Hit</button>
+        <button class="bet-quick-btn" data-casino-action="bjStand" type="button">Stand</button>
+      </div>
+      <div style="margin-top:10px;opacity:.8;">Fast auto blackjack logic</div>
+    </div>
+  `;
+
+  this.state.blackjack = {
+    player: [],
+    dealer: [],
+    active: false
+  };
+
+  this.startBlackjackRound();
+},
+
+startBlackjackRound() {
+  const draw = () => this.provablyFairNumber(2, 11);
+
+  this.state.blackjack.player = [draw(), draw()];
+  this.state.blackjack.dealer = [draw(), draw()];
+  this.state.blackjack.active = true;
+
+  this.updateBlackjackUI();
+  this.els.status.textContent = "Blackjack round ready";
+  this.els.multiplier.textContent = "2.00x";
+},
+
+updateBlackjackUI() {
+  const p = this.state.blackjack.player;
+  const d = this.state.blackjack.dealer;
+
+  const pSum = p.reduce((a,b) => a+b, 0);
+  const dSum = d.reduce((a,b) => a+b, 0);
+
+  const pEl = document.getElementById("bjPlayer");
+  const dEl = document.getElementById("bjDealer");
+
+  if (pEl) pEl.textContent = `${p.join(" + ")} = ${pSum}`;
+  if (dEl) dEl.textContent = `${d.join(" + ")} = ${dSum}`;
+},
+
+playBlackjack() {
+  const bet = this.getBet();
+  if (!bet) return;
+
+  if (!this.state.blackjack?.active) {
+    this.balanceSubtract(bet);
+    this.state.blackjack.betPlaced = true;
+    this.startBlackjackRound();
+    return;
+  }
+
+  // إذا ضغط play نعتبرها stand مباشر
+  this.finishBlackjack();
+},
+
+blackjackHit() {
+  if (!this.state.blackjack?.active) return;
+  this.state.blackjack.player.push(this.provablyFairNumber(2, 11));
+  this.updateBlackjackUI();
+
+  const sum = this.state.blackjack.player.reduce((a,b)=>a+b,0);
+  if (sum > 21) {
+    this.els.status.textContent = "BUST";
+    this.els.multiplier.textContent = "0.00x";
+    this.sound("lose");
+    this.state.blackjack.active = false;
+    this.state.nonce++;
+    this.updateSeedsUI();
+  }
+},
+
+finishBlackjack() {
+  if (!this.state.blackjack?.active) return;
+
+  while (this.state.blackjack.dealer.reduce((a,b)=>a+b,0) < 17) {
+    this.state.blackjack.dealer.push(this.provablyFairNumber(2, 11));
+  }
+
+  this.updateBlackjackUI();
+
+  const pSum = this.state.blackjack.player.reduce((a,b)=>a+b,0);
+  const dSum = this.state.blackjack.dealer.reduce((a,b)=>a+b,0);
+
+  if (dSum > 21 || pSum > dSum) {
+    const payout = this.state.bet * 2;
+    this.balanceAdd(payout);
+    this.els.status.textContent = "WIN";
+    this.els.multiplier.textContent = "2.00x";
+    this.addBigWin(payout, "blackjack_fast");
+    this.sound("win");
+  } else {
+    this.els.status.textContent = "LOSE";
+    this.els.multiplier.textContent = "0.00x";
+    this.sound("lose");
+  }
+
+  this.state.blackjack.active = false;
+  this.state.nonce++;
+  this.updateSeedsUI();
+},
+
+renderAirBoss() {
+  this.els.gameBox.innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;padding:14px;" id="airbossGrid"></div>
+  `;
+
+  this.els.dynamicControls.innerHTML = `
+    <div class="game-info-box">
+      <div>Find safe flights. Avoid bombs.</div>
+      <div style="margin-top:8px;opacity:.8;">Each safe tile increases multiplier.</div>
+    </div>
+  `;
+
+  this.state.airboss = {
+    bombs: [],
+    revealed: [],
+    multiplier: 1.00,
+    active: false
+  };
+
+  this.buildAirBoss();
+},
+
+buildAirBoss() {
+  const grid = document.getElementById("airbossGrid");
+  if (!grid) return;
+
+  grid.innerHTML = "";
+  this.state.airboss.bombs = [];
+
+  while (this.state.airboss.bombs.length < 5) {
+    const n = this.provablyFairNumber(0, 24);
+    if (!this.state.airboss.bombs.includes(n)) this.state.airboss.bombs.push(n);
+  }
+
+  this.state.airboss.revealed = [];
+  this.state.airboss.multiplier = 1.00;
+  this.state.airboss.active = false;
+
+  for (let i = 0; i < 25; i++) {
+    const btn = document.createElement("button");
+    btn.className = "slot-cell";
+    btn.style.height = "64px";
+    btn.textContent = "✈️";
+    btn.dataset.casinoAction = "airbossPick";
+    btn.dataset.index = i;
+    grid.appendChild(btn);
+  }
+
+  this.els.status.textContent = "Press Play to start";
+  this.els.multiplier.textContent = "1.00x";
+},
+
+playAirBoss() {
+  const bet = this.getBet();
+  if (!bet) return;
+
+  this.balanceSubtract(bet);
+  this.state.airboss.active = true;
+  this.state.airboss.multiplier = 1.00;
+  this.els.status.textContent = "Pick safe flights";
+},
+
+renderBananaFarm() {
+  this.els.gameBox.innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;padding:14px;" id="bananaGrid"></div>
+  `;
+
+  this.els.dynamicControls.innerHTML = `
+    <div class="game-info-box">
+      <div>Find bananas, avoid rotten traps.</div>
+      <div style="margin-top:8px;opacity:.8;">Farm mode survival.</div>
+    </div>
+  `;
+
+  this.state.banana = {
+    traps: [],
+    found: [],
+    multiplier: 1.00,
+    active: false
+  };
+
+  this.buildBananaFarm();
+},
+
+buildBananaFarm() {
+  const grid = document.getElementById("bananaGrid");
+  if (!grid) return;
+
+  grid.innerHTML = "";
+  this.state.banana.traps = [];
+
+  while (this.state.banana.traps.length < 4) {
+    const n = this.provablyFairNumber(0, 24);
+    if (!this.state.banana.traps.includes(n)) this.state.banana.traps.push(n);
+  }
+
+  this.state.banana.found = [];
+  this.state.banana.multiplier = 1.00;
+  this.state.banana.active = false;
+
+  for (let i = 0; i < 25; i++) {
+    const btn = document.createElement("button");
+    btn.className = "slot-cell";
+    btn.style.height = "64px";
+    btn.textContent = "🌱";
+    btn.dataset.casinoAction = "bananaPick";
+    btn.dataset.index = i;
+    grid.appendChild(btn);
+  }
+
+  this.els.status.textContent = "Press Play to start";
+  this.els.multiplier.textContent = "1.00x";
+},
+
+playBananaFarm() {
+  const bet = this.getBet();
+  if (!bet) return;
+
+  this.balanceSubtract(bet);
+  this.state.banana.active = true;
+  this.state.banana.multiplier = 1.00;
+  this.els.status.textContent = "Pick bananas";
+},
+
+renderBirdsParty() {
+  this.els.gameBox.innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;padding:16px;" id="birdsGrid">
+      <button class="slot-cell" data-casino-action="birdsPick" data-multi="1.5">🐦</button>
+      <button class="slot-cell" data-casino-action="birdsPick" data-multi="2.0">🦜</button>
+      <button class="slot-cell" data-casino-action="birdsPick" data-multi="3.0">🦅</button>
+    </div>
+  `;
+
+  this.els.dynamicControls.innerHTML = `
+    <div class="game-info-box">
+      <div>Pick a bird and reveal payout.</div>
+    </div>
+  `;
+
+  this.els.status.textContent = "Choose a bird";
+  this.els.multiplier.textContent = "1.00x";
+},
+
+playBirdsParty() {
+  const bet = this.getBet();
+  if (!bet) return;
+
+  this.balanceSubtract(bet);
+  this.state.birds = { active: true, bet };
+  this.els.status.textContent = "Now pick a bird";
+},
+
+renderFruitParty() {
+  this.els.gameBox.innerHTML = `
+    <div id="fruitPartyBoard" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:16px;"></div>
+  `;
+
+  this.els.dynamicControls.innerHTML = `
+    <div class="game-info-box">
+      <div>Match fruits to win.</div>
+    </div>
+  `;
+
+  this.buildFruitParty();
+  this.els.status.textContent = "Press Play";
+  this.els.multiplier.textContent = "1.00x";
+},
+
+buildFruitParty() {
+  const board = document.getElementById("fruitPartyBoard");
+  if (!board) return;
+
+  const fruits = ["🍎","🍌","🍉","🍇","🍒","🍋"];
+  board.innerHTML = "";
+
+  for (let i = 0; i < 12; i++) {
+    const d = document.createElement("div");
+    d.className = "slot-cell";
+    d.style.height = "70px";
+    d.textContent = fruits[Math.floor(Math.random() * fruits.length)];
+    board.appendChild(d);
+  }
+},
+
+playFruitParty() {
+  const bet = this.getBet();
+  if (!bet) return;
+
+  this.balanceSubtract(bet);
+  this.buildFruitParty();
+
+  const cells = [...document.querySelectorAll("#fruitPartyBoard .slot-cell")];
+  const values = cells.map(c => c.textContent);
+
+  const counts = {};
+  values.forEach(v => counts[v] = (counts[v] || 0) + 1);
+
+  const best = Math.max(...Object.values(counts));
+  let multi = 0;
+
+  if (best >= 5) multi = 4;
+  else if (best >= 4) multi = 2.5;
+  else if (best >= 3) multi = 1.5;
+
+  if (multi > 0) {
+    const payout = bet * multi;
+    this.balanceAdd(payout);
+    this.els.status.textContent = "WIN";
+    this.els.multiplier.textContent = multi.toFixed(2) + "x";
+    this.addBigWin(payout, "fruit_party");
+    this.sound("win");
+  } else {
+    this.els.status.textContent = "LOSE";
+    this.els.multiplier.textContent = "0.00x";
+    this.sound("lose");
+  }
+
+  this.state.nonce++;
+  this.updateSeedsUI();
+},
+
+
+/* =========================================================
        PLAY ROUTER
-    ========================================================= */
+========================================================= */
     
    play() {
   switch (this.state.currentGame) {
@@ -1105,6 +1624,46 @@
           this.state.plinko.risk = "high";
           this.toggleActiveButton(el, ["plinkoRiskLow", "plinkoRiskMedium", "plinkoRiskHigh"]);
           break;
+
+         case "coinflipHeads":
+          this.state.coinflip.choice = "heads";
+          this.toggleActiveButton(el, ["coinflipHeads", "coinflipTails"]);
+         break;
+
+         case "coinflipTails":
+          this.state.coinflip.choice = "tails";
+          this.toggleActiveButton(el, ["coinflipHeads", "coinflipTails"]);
+          break;
+
+         case "hiloHigh":
+          this.state.hilo.choice = "high";
+          this.toggleActiveButton(el, ["hiloHigh", "hiloLow"]);
+         break;
+
+         case "hiloLow":
+          this.state.hilo.choice = "low";
+          this.toggleActiveButton(el, ["hiloHigh", "hiloLow"]);
+        break;
+
+         case "bjHit":
+          this.blackjackHit();
+          break;
+
+         case "bjStand":
+          this.finishBlackjack();
+          break;
+
+         case "airbossPick":
+           this.handleAirBossPick(Number(el.dataset.index), el);
+           break;
+
+         case "bananaPick":
+           this.handleBananaPick(Number(el.dataset.index), el);
+          break;
+
+        case "birdsPick":
+          this.handleBirdPick(Number(el.dataset.multi), el);
+         break;
       }
     },
 
@@ -1127,6 +1686,12 @@
           if (rowsEl) rowsEl.textContent = this.state.plinko.rows;
           this.drawPlinkoBoard();
           break;
+
+        case "limboTarget":
+         this.state.limbo = this.state.limbo || {};
+         this.state.limbo.target = Math.max(1.01, parseFloat(value || 2));
+         this.els.multiplier.textContent = this.state.limbo.target.toFixed(2) + "x";
+         break;
       }
     },
 
