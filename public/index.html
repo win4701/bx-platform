@@ -348,32 +348,21 @@
 
     <!-- ===== ORDER BOOK CARD ===== -->
     <div class="orderbook-card">
-      <div class="card-title">Order Book</div>
+  <div class="orderbook-head">
+    <h3>Order Book</h3>
+    <div class="orderbook-pair">BX / <span id="orderbookQuote">USDT</span></div>
+  </div>
 
-      <div class="orderbook-grid">
-
-        <!-- BIDS -->
-        <div class="ob-col bids">
-          <div class="ob-head buy">Bids</div>
-          <div id="bids" class="ob-list" data-rows="15"></div>
-        </div>
-
-        <!-- MID PRICE -->
-        <div class="ob-col price">
-          <div class="ob-head">Price</div>
-          <div id="priceLadder" class="price-ladder" data-rows="15"></div>
-        </div>
-
-        <!-- ASKS -->
-        <div class="ob-col asks">
-          <div class="ob-head sell">Asks</div>
-          <div id="asks" class="ob-list" data-rows="15"></div>
-        </div>
-
-      </div>
+  <div class="ob-table-wrap">
+    <div class="ob-table ob-head">
+      <div class="ob-col bid">Bids</div>
+      <div class="ob-col mid">Price</div>
+      <div class="ob-col ask">Asks</div>
     </div>
 
+    <div id="orderBookRows" class="ob-body"></div>
   </div>
+    </div>
 
   </section>
   <!-- ================= CASINO box ================= -->
