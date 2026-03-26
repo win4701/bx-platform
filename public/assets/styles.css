@@ -340,6 +340,8 @@ h3{
   --border:#1e2329;
   --muted:#848e9c;
   --purple:#a855f7;
+  --radius:18px;
+  --soft-border:rgba(255,255,255,.06);
   --green-soft:rgba(14,203,129,.15);
   --red-soft:rgba(246,70,93,.15);
 }
