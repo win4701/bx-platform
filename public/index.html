@@ -227,7 +227,8 @@
   
     
 <!-- =========== MARKET =========== -->
-  <section id="market" class="view">
+<section id="market" class="view market-view">
+
   <!-- ===== HEADER ===== -->
   <div class="market-header">
     <div class="pair-title">
@@ -237,132 +238,144 @@
     </div>
 
     <div class="price-box">
-      <div id="marketPrice" class="price-main">0.00</div>
-      <div id="marketApprox" class="approx"></div>
+      <div id="marketPrice" class="price-main">0.000000</div>
+      <div id="marketApprox" class="approx">≈ 0.00 USDT</div>
     </div>
   </div>
 
   <!-- ===== WALLET MINI ===== -->
   <div class="wallet-box compact">
     <div>BX <strong id="walletBX">0.00</strong></div>
-    <div>USDT <strong id="walletUSDT">0.00</strong></div>
+    <div><span id="walletQuoteLabel">USDT</span> <strong id="walletUSDT">0.00</strong></div>
   </div>
 
   <!-- ===== PAIRS ===== -->
   <div class="pair-grid">
-  <button class="pair-btn active" data-quote="USDT">USDT</button>
-  <button class="pair-btn" data-quote="USDC">USDC</button>
-  <button class="pair-btn" data-quote="BTC">BTC</button>
-  <button class="pair-btn" data-quote="BNB">BNB</button>
-  <button class="pair-btn" data-quote="ETH">ETH</button>
-  <button class="pair-btn" data-quote="AVAX">AVAX</button>
-  <button class="pair-btn" data-quote="ZEC">ZEC</button>
-  <button class="pair-btn" data-quote="TON">TON</button>
-  <button class="pair-btn" data-quote="SOL">SOL</button>
-  <button class="pair-btn" data-quote="LTC">LTC</button>
+    <button class="pair-btn active" data-quote="USDT">USDT</button>
+    <button class="pair-btn" data-quote="USDC">USDC</button>
+    <button class="pair-btn" data-quote="BTC">BTC</button>
+    <button class="pair-btn" data-quote="BNB">BNB</button>
+    <button class="pair-btn" data-quote="ETH">ETH</button>
+    <button class="pair-btn" data-quote="AVAX">AVAX</button>
+    <button class="pair-btn" data-quote="ZEC">ZEC</button>
+    <button class="pair-btn" data-quote="TON">TON</button>
+    <button class="pair-btn" data-quote="SOL">SOL</button>
+    <button class="pair-btn" data-quote="LTC">LTC</button>
   </div>
-  <!-- ===== CHART (CORE) ===== -->
-  <div class="chart-wrapper">
-  <!-- MAIN CHART -->
-  <div class="chart-main">
-    <canvas id="bxChart"></canvas>
-    <div id="chartTooltip" class="chart-tooltip"></div>
-  </div>
-  <!-- PRICE SCALE -->
-  <div class="chart-price-scale" id="priceScale"></div>
-</div>
 
-<!-- VOLUME PANEL -->
-<div class="chart-volume">
-  <canvas id="volumeChart"></canvas>
-</div>
-<!-- ===== GLOBAL CHART TOOLBAR ===== -->
-<div class="chart-toolbar">
+  <!-- ===== CHART CARD ===== -->
+  <div class="market-chart-card">
 
-  <div class="tf-group">
-    <button class="tf-btn active" data-days="1">1D</button>
-    <button class="tf-btn" data-days="2">2D</button>
-    <button class="tf-btn" data-days="3">3D</button>
-    <button class="tf-btn" data-days="7">7D</button>
-    <button class="tf-btn" data-days="14">14D</button>
-  </div>
-  <div class="chart-actions">
-    <button id="zoomIn">+</button>
-    <button id="zoomOut">−</button>
-    <button id="resetView">Reset</button>
-  </div>
-</div>
+    <!-- TOOLBAR -->
+    <div class="chart-toolbar">
+      <div class="tf-group">
+        <button class="tf-btn active" data-days="1">1D</button>
+        <button class="tf-btn" data-days="2">2D</button>
+        <button class="tf-btn" data-days="3">3D</button>
+        <button class="tf-btn" data-days="7">7D</button>
+        <button class="tf-btn" data-days="14">14D</button>
+      </div>
 
-  <!-- ===== INDICATOR LEGEND ===== -->
-  <div class="indicator-legend">
-    <span class="ema">EMA</span>
-    <span class="vwap">VWAP</span>
+      <div class="chart-controls">
+        <button id="zoomIn" type="button">+</button>
+        <button id="zoomOut" type="button">−</button>
+        <button id="resetView" type="button">Reset</button>
+      </div>
+    </div>
+
+    <!-- MAIN CHART -->
+    <div class="chart-wrapper">
+      <div class="chart-main">
+        <canvas id="bxChart"></canvas>
+        <div id="chartTooltip" class="chart-tooltip"></div>
+      </div>
+    </div>
+
+    <!-- VOLUME PANEL -->
+    <div class="chart-volume">
+      <canvas id="volumeChart"></canvas>
+    </div>
+
+    <!-- INDICATORS -->
+    <div class="indicator-legend">
+      <span class="ema">EMA</span>
+      <span class="vwap">VWAP</span>
+    </div>
   </div>
 
   <!-- ===== TRADE BOX ===== -->
   <div class="trade-box buy" id="tradeBox">
 
     <div class="trade-tabs">
-      <button id="buyTab" class="active">Buy</button>
-      <button id="sellTab">Sell</button>
+      <button id="buyTab" class="active" type="button">Buy</button>
+      <button id="sellTab" type="button">Sell</button>
     </div>
 
     <div class="trade-form">
-      <label>Amount Bx</label>
+      <label for="orderAmount">Amount BX</label>
+
       <input
         id="orderAmount"
         type="number"
         placeholder="0.00"
         inputmode="decimal"
+        step="0.0001"
+        min="0"
       >
 
       <div class="percent-row">
-        <button data-percent="10">10%</button>
-        <button data-percent="25">25%</button>
-        <button data-percent="50">50%</button>
-        <button data-percent="100">MAX</button>
+        <button type="button" data-percent="10">10%</button>
+        <button type="button" data-percent="25">25%</button>
+        <button type="button" data-percent="50">50%</button>
+        <button type="button" data-percent="100">MAX</button>
       </div>
 
-      <!-- ===== ORDER PREVIEW ===== -->
+      <!-- ORDER PREVIEW -->
       <div class="trade-stats">
-  Price: <span id="execPrice">—</span><br>
-  Slippage: <span id="slippage">—%</span><br>
-  Spread: <span id="spread">—</span>
+        <div>Price: <span id="execPrice">—</span></div>
+        <div>Slippage: <span id="slippage">—%</span></div>
+        <div>Spread: <span id="spread">—</span></div>
       </div>
 
-      <button class="action-btn buy" id="actionBtn">
+      <button class="action-btn buy" id="actionBtn" type="button">
         Buy BX
       </button>
     </div>
   </div>
 
+  <!-- ===== MARKET CARDS ===== -->
   <div class="market-cards">
 
-  <!-- ===== ORDER BOOK CARD ===== -->
-  <div class="orderbook-card">
-  <div class="card-title">Order Book</div>
+    <!-- ===== ORDER BOOK CARD ===== -->
+    <div class="orderbook-card">
+      <div class="card-title">Order Book</div>
 
-  <div class="orderbook-grid">
-    <!-- BIDS -->
-    <div class="ob-col bids">
-      <div class="ob-head buy">Bids</div>
-      <div id="bids" class="ob-list" data-rows="15"></div>
+      <div class="orderbook-grid">
+
+        <!-- BIDS -->
+        <div class="ob-col bids">
+          <div class="ob-head buy">Bids</div>
+          <div id="bids" class="ob-list" data-rows="15"></div>
+        </div>
+
+        <!-- MID PRICE -->
+        <div class="ob-col price">
+          <div class="ob-head">Price</div>
+          <div id="priceLadder" class="price-ladder" data-rows="15"></div>
+        </div>
+
+        <!-- ASKS -->
+        <div class="ob-col asks">
+          <div class="ob-head sell">Asks</div>
+          <div id="asks" class="ob-list" data-rows="15"></div>
+        </div>
+
+      </div>
     </div>
 
-    <!-- PRICE -->
-    <div class="ob-col price">
-      <div class="ob-head">Price</div>
-      <div id="priceLadder" class="price-ladder" data-rows="15"></div>
-    </div>
-
-    <!-- ASKS -->
-    <div class="ob-col asks">
-      <div class="ob-head sell">Asks</div>
-      <div id="asks" class="ob-list" data-rows="15"></div>
-    </div>
   </div>
-  </div>
-    </section>
+
+  </section>
   <!-- ================= CASINO box ================= -->
   <section id="casino" class="view">
   <h2 class="casino-title">Casino</h2>
