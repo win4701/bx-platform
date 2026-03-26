@@ -571,7 +571,7 @@ h3{
 .chart-wrapper{
   position:relative;
   width:100%;
-  height:320px;
+  height:260px;
   border-radius:18px;
   overflow:hidden;
   background:
@@ -605,7 +605,7 @@ h3{
   border-radius:12px;
   padding:8px 10px;
   font-size:12px;
-  font-weight:700;
+  font-weight:800;
   line-height:1.45;
   pointer-events:none;
   opacity:0;
@@ -701,7 +701,7 @@ h3{
 .trade-form label{
   color:#dce6f5;
   font-size:14px;
-  font-weight:700;
+  font-weight:800;
 }
 
 .trade-box input[type="number"],
@@ -832,94 +832,232 @@ h3{
   gap:16px;
 }
 
-/* ================= ORDER BOOK ================= */
-.orderbook-card{
-  background:linear-gradient(145deg,#0c1624,#0f1c2d);
-  border:1px solid var(--soft-border);
-  border-radius:22px;
-  padding:18px;
-  box-shadow:0 14px 40px rgba(0,0,0,.24);
-  overflow:hidden;
+/* =========================================================
+   ORDER BOOK —  TABLE CARD
+========================================================= */
+
+.orderbook-card {
+  background: linear-gradient(180deg, rgba(10,24,48,.95), rgba(8,18,34,.96));
+  border: 1px solid rgba(80, 180, 255, 0.08);
+  border-radius: 24px;
+  padding: 18px;
+  margin-top: 18px;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.28);
+  overflow: hidden;
 }
 
-.card-title{
-  font-size:20px;
-  font-weight:800;
-  color:#f4f8ff;
-  margin-bottom:14px;
+.orderbook-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
 }
 
-.orderbook-grid{
-  display:grid;
-  grid-template-columns:1fr .8fr 1fr;
-  gap:10px;
-  align-items:start;
+.orderbook-head h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 800;
+  color: #f4f7fb;
 }
 
-.ob-col{
-  min-width:0;
+.orderbook-pair {
+  font-size: 13px;
+  font-weight: 800;
+  color: #94a3b8;
+  background: rgba(255,255,255,.04);
+  padding: 8px 12px;
+  border-radius: 12px;
 }
 
-.ob-head{
-  font-size:13px;
-  font-weight:800;
-  opacity:.78;
-  margin-bottom:8px;
+.ob-table-wrap {
+  width: 100%;
+  overflow: hidden;
+  border-radius: 18px;
+  background: rgba(255,255,255,.02);
+  border: 1px solid rgba(255,255,255,.04);
 }
 
-.ob-head.buy{ color:#35d49a; }
-.ob-head.sell{ color:#ff6b6b; }
-
-.ob-list,
-.price-ladder{
-  display:flex;
-  flex-direction:column;
-  gap:5px;
-  min-height:360px;
+.ob-table {
+  display: grid;
+  grid-template-columns: 1fr .9fr 1fr;
+  align-items: center;
+  width: 100%;
 }
 
-.ob-row{
-  min-height:32px;
-  padding:7px 9px;
-  border-radius:10px;
-  font-size:13px;
-  font-weight:700;
-  line-height:1.2;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  transition:.2s ease;
-  overflow:hidden;
-  white-space:nowrap;
-  text-overflow:ellipsis;
-  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+.ob-head {
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(255,255,255,.05);
+  background: rgba(255,255,255,.03);
 }
 
-.bids .ob-row{
-  background:rgba(53,212,154,.08);
-  color:#35d49a;
+.ob-head .ob-col {
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: .2px;
 }
 
-.bids .ob-row:hover{
-  background:rgba(53,212,154,.15);
+.ob-head .bid {
+  color: #25d998;
+  text-align: left;
 }
 
-.asks .ob-row{
-  background:rgba(255,107,107,.08);
-  color:#ff6b6b;
+.ob-head .mid {
+  color: #cbd5e1;
+  text-align: center;
 }
 
-.asks .ob-row:hover{
-  background:rgba(255,107,107,.15);
+.ob-head .ask {
+  color: #ff6d84;
+  text-align: right;
 }
 
-.price-ladder .ob-row{
-  background:rgba(255,255,255,.04);
-  color:#cfd6e4;
-  justify-content:center;
-  text-align:center;
+.ob-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  max-height: 520px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
+.ob-row {
+  display: grid;
+  grid-template-columns: 1fr .9fr 1fr;
+  align-items: center;
+  gap: 10px;
+  min-height: 46px;
+  padding: 0 12px;
+  border-radius: 16px;
+  background: rgba(255,255,255,.018);
+  border: 1px solid rgba(255,255,255,.035);
+  position: relative;
+  overflow: hidden;
+}
+
+.ob-row::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(37,217,152,.05), transparent 45%, rgba(255,109,132,.05));
+  pointer-events: none;
+}
+
+.ob-bid,
+.ob-mid,
+.ob-ask {
+  position: relative;
+  z-index: 2;
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.ob-bid {
+  text-align: left;
+  color: #25d998;
+}
+
+.ob-mid {
+  text-align: center;
+  color: #f8fafc;
+}
+
+.ob-ask {
+  text-align: right;
+  color: #ff6d84;
+}
+
+.ob-empty {
+  padding: 22px 14px;
+  text-align: center;
+  color: #64748b;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+/* depth effect */
+.ob-row .depth-bid,
+.ob-row .depth-ask {
+  position: absolute;
+  top: 6px;
+  bottom: 6px;
+  border-radius: 12px;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.ob-row .depth-bid {
+  left: 6px;
+  background: linear-gradient(90deg, rgba(37,217,152,.18), rgba(37,217,152,.04));
+}
+
+.ob-row .depth-ask {
+  right: 6px;
+  background: linear-gradient(270deg, rgba(255,109,132,.18), rgba(255,109,132,.04));
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .orderbook-card {
+    padding: 15px;
+    border-radius: 20px;
+  }
+
+  .orderbook-head h3 {
+    font-size: 17px;
+  }
+
+  .orderbook-pair {
+    font-size: 12px;
+    padding: 7px 10px;
+  }
+
+  .ob-head {
+    padding: 12px 12px;
+  }
+
+  .ob-head .ob-col {
+    font-size: 13px;
+  }
+
+  .ob-body {
+    padding: 10px;
+    gap: 7px;
+    max-height: 460px;
+  }
+
+  .ob-row {
+    min-height: 42px;
+    padding: 0 10px;
+    border-radius: 14px;
+  }
+
+  .ob-bid,
+  .ob-mid,
+  .ob-ask {
+    font-size: 13.5px;
+  }
+}
+
+@media (max-width: 420px) {
+  .ob-table,
+  .ob-row {
+    grid-template-columns: 1fr .85fr 1fr;
+  }
+
+  .ob-bid,
+  .ob-mid,
+  .ob-ask {
+    font-size: 12.5px;
+  }
+
+  .ob-body {
+    max-height: 420px;
+  }
+}
 /* ================= EMPTY STATES ================= */
 .market-empty{
   display:flex;
@@ -1127,6 +1265,7 @@ h3{
 /* =========================================================
    CASINO FINAL CSS (CLEAN + NO CONFLICT)
 ========================================================= */
+
 #casino{
   width:100%;
   overflow-x:hidden;
