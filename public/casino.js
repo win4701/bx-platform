@@ -116,9 +116,9 @@
 
       // quick bet buttons (delegation)
       document.addEventListener("click", (e) => {
-        const btn = e.target.closest(".bet-quick-btn");
-        if (!btn) return;
-        this.handleQuickBet(btn);
+       const btn = e.target.closest(".bet-quick-btn[data-bet-multi], .bet-quick-btn[data-bet-percent]");
+      if (!btn) return;
+       this.handleQuickBet(btn);
       });
 
       // dynamic controls delegation
@@ -1694,7 +1694,74 @@ playFruitParty() {
          break;
       }
     },
+     
+    handleAirBossPick(index, el) {
+  if (!this.state.airboss?.active) return;
+  if (this.state.airboss.revealed.includes(index)) return;
 
+  this.state.airboss.revealed.push(index);
+
+  if (this.state.airboss.bombs.includes(index)) {
+    el.textContent = "💣";
+    el.disabled = true;
+    this.els.status.textContent = "BOOM";
+    this.els.multiplier.textContent = "0.00x";
+    this.state.airboss.active = false;
+    this.sound("lose");
+  } else {
+    el.textContent = "🛫";
+    el.disabled = true;
+    this.state.airboss.multiplier += 0.35;
+    this.els.multiplier.textContent = this.state.airboss.multiplier.toFixed(2) + "x";
+    this.els.status.textContent = "Safe";
+    this.sound("click");
+  }
+},
+
+   handleBananaPick(index, el) {
+  if (!this.state.banana?.active) return;
+  if (this.state.banana.found.includes(index)) return;
+
+  this.state.banana.found.push(index);
+
+  if (this.state.banana.traps.includes(index)) {
+    el.textContent = "💀";
+    el.disabled = true;
+    this.els.status.textContent = "Trap hit";
+    this.els.multiplier.textContent = "0.00x";
+    this.state.banana.active = false;
+    this.sound("lose");
+  } else {
+    el.textContent = "🍌";
+    el.disabled = true;
+    this.state.banana.multiplier += 0.30;
+    this.els.multiplier.textContent = this.state.banana.multiplier.toFixed(2) + "x";
+    this.els.status.textContent = "Banana found";
+    this.sound("click");
+  }
+},
+
+   handleBirdPick(multi, el) {
+  if (!this.state.birds?.active) return;
+
+  const win = Math.random() > 0.35;
+
+  if (win) {
+    const payout = this.state.birds.bet * multi;
+    this.balanceAdd(payout);
+    this.els.status.textContent = "WIN";
+    this.els.multiplier.textContent = multi.toFixed(2) + "x";
+    this.addBigWin(payout, "birds_party");
+    this.sound("win");
+  } else {
+    this.els.status.textContent = "LOSE";
+    this.els.multiplier.textContent = "0.00x";
+    this.sound("lose");
+  }
+
+    this.state.birds.active = false;
+},
+     
     toggleActiveButton(activeEl, actionNames = []) {
       actionNames.forEach(name => {
         document.querySelectorAll(`[data-casino-action="${name}"]`).forEach(btn => {
