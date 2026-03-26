@@ -1,6 +1,15 @@
 <section id="casino" class="view casino-view">
 
-  <!-- ================= CASINO HEADER ================= -->
+  <!-- =========================
+       CASINO PREMIUM BACKGROUND FX
+  ========================== -->
+  <div class="casino-bg-orb orb-1"></div>
+  <div class="casino-bg-orb orb-2"></div>
+  <div class="casino-bg-grid"></div>
+
+  <!-- =========================
+       CASINO HEADER
+  ========================== -->
   <div class="casino-topbar">
     <div class="casino-topbar-left">
       <h2 class="casino-title">Casino</h2>
@@ -13,83 +22,128 @@
     </div>
   </div>
 
-  <!-- ================= GAME LIST SCREEN ================= -->
+  <!-- =========================
+       LIVE STATS STRIP
+  ========================== -->
+  <div class="casino-stats-strip">
+    <div class="casino-stat-pill">
+      <span class="label">Players</span>
+      <strong id="casinoPlayersLive">1,284</strong>
+    </div>
+
+    <div class="casino-stat-pill">
+      <span class="label">Live Bets</span>
+      <strong id="casinoBetsLive">8,421</strong>
+    </div>
+
+    <div class="casino-stat-pill">
+      <span class="label">Volume</span>
+      <strong id="casinoVolumeLive">124,980 BX</strong>
+    </div>
+  </div>
+
+  <!-- =========================
+       GAME LIST SCREEN
+  ========================== -->
   <div id="casinoLobby" class="casino-lobby active">
 
     <!-- ===== GRID 3 × 4 ===== -->
     <div class="casino-grid" id="casinoGrid">
 
       <button class="game-card" data-game="coinflip" type="button">
+        <div class="game-card-glow"></div>
         <img src="assets/images/coinflip.png" alt="Coin Flip">
-        <span>Coin Flip</span>
+        <span></span>
       </button>
 
       <button class="game-card" data-game="banana_farm" type="button">
+        <div class="game-card-glow"></div>
         <img src="assets/images/banana_farm.png" alt="Banana Farm">
-        <span>Banana Farm</span>
+        <span></span>
       </button>
 
       <button class="game-card" data-game="limbo" type="button">
+        <div class="game-card-glow"></div>
         <img src="assets/images/limbo.png" alt="Limbo">
-        <span>Limbo</span>
+        <span></span>
       </button>
 
       <button class="game-card" data-game="fruit_party" type="button">
+        <div class="game-card-glow"></div>
         <img src="assets/images/fruit_party.png" alt="Fruit Party">
-        <span>Fruit Party</span>
+        <span></span>
       </button>
 
       <button class="game-card" data-game="dice" type="button">
+        <div class="game-card-glow"></div>
         <img src="assets/images/dice.png" alt="Dice">
-        <span>Dice</span>
+        <span></span>
       </button>
 
       <button class="game-card" data-game="crash" type="button">
+        <div class="game-card-glow"></div>
         <img src="assets/images/crash.png" alt="Crash">
-        <span>Crash</span>
+        <span></span>
       </button>
 
       <button class="game-card" data-game="slot" type="button">
+        <div class="game-card-glow"></div>
         <img src="assets/images/slot.png" alt="Slot">
-        <span>Slot</span>
+        <span></span>
       </button>
 
       <button class="game-card" data-game="birds_party" type="button">
+        <div class="game-card-glow"></div>
         <img src="assets/images/birds_party.png" alt="Birds Party">
-        <span>Birds Party</span>
+        <span></span>
       </button>
 
       <button class="game-card" data-game="blackjack_fast" type="button">
+        <div class="game-card-glow"></div>
         <img src="assets/images/blackjack_fast.png" alt="Blackjack Fast">
-        <span>Blackjack</span>
+        <span></span>
       </button>
 
       <button class="game-card" data-game="airboss" type="button">
+        <div class="game-card-glow"></div>
         <img src="assets/images/airboss.png" alt="AirBoss">
-        <span>AirBoss</span>
+        <span></span>
       </button>
 
       <button class="game-card" data-game="hilo" type="button">
+        <div class="game-card-glow"></div>
         <img src="assets/images/hilo.png" alt="HiLo">
-        <span>HiLo</span>
+        <span></span>
       </button>
 
       <button class="game-card" data-game="plinko" type="button">
+        <div class="game-card-glow"></div>
         <img src="assets/images/plinko.png" alt="Plinko">
-        <span>Plinko</span>
+        <span></span>
       </button>
 
     </div>
 
-    <!-- ===== TICKER / LIVE FEED ===== -->
+    <!-- =========================
+         LIVE TICKER
+    ========================== -->
     <div class="casino-live-strip">
       <div class="live-dot"></div>
-      <div id="casinoTicker" class="casino-ticker-track">
-        <span>🎰 Live Casino Ready</span>
+      <div class="casino-ticker-wrap">
+        <div id="casinoTicker" class="casino-ticker-track">
+          <span>🎰 Crash paid x14.22</span>
+          <span>🎲 Dice won +44.80 BX</span>
+          <span>🟢 Plinko hit x9.00</span>
+          <span>🃏 Blackjack player won 2x</span>
+          <span>🚀 Limbo landed at x28.55</span>
+          <span>🎰 Slot bonus triggered</span>
+        </div>
       </div>
     </div>
 
-    <!-- ===== RECENT BIG WINS ===== -->
+    <!-- =========================
+         RECENT BIG WINS
+    ========================== -->
     <div class="big-wins-card">
       <div class="section-head">
         <h3 class="big-wins-title">Recent Big Wins</h3>
@@ -125,7 +179,9 @@
 
   </div>
 
-  <!-- ================= GAME SCREEN ================= -->
+  <!-- =========================
+       GAME SCREEN
+  ========================== -->
   <div id="casinoGameScreen" class="casino-game-screen">
 
     <!-- ===== GAME HEADER ===== -->
@@ -145,86 +201,150 @@
       </div>
     </div>
 
-    <!-- ===== GAME BODY ===== -->
-    <div class="casino-game-layout">
-
-      <!-- LEFT: ENGINE -->
-      <div class="casino-engine-card">
-        <div class="engine-status-row">
-          <div class="engine-status-left">
-            <span class="engine-status-label">Status</span>
-            <strong id="casinoGameStatus">Waiting...</strong>
-          </div>
-
-          <div class="engine-status-right">
-            <span class="engine-multiplier-label">Multiplier</span>
-            <strong id="casinoGameMultiplier">1.00x</strong>
-          </div>
-        </div>
-
-        <div id="casinoGameBox" class="casino-game-box">
-          <!-- dynamic game engine render here -->
-        </div>
+    <!-- =========================
+         GAME STATUS STRIP
+    ========================== -->
+    <div class="casino-game-meta-strip">
+      <div class="casino-meta-pill">
+        <span>Status</span>
+        <strong id="casinoGameStatusTop">Waiting...</strong>
       </div>
 
-      <!-- RIGHT / BOTTOM: CONTROLS -->
-      <div class="casino-bet-card">
+      <div class="casino-meta-pill">
+        <span>Multiplier</span>
+        <strong id="casinoGameMultiplierTop">1.00x</strong>
+      </div>
 
-        <div class="bet-card-head">
-          <h4>Place Bet</h4>
-          <span>Instant Play</span>
-        </div>
+      <div class="casino-meta-pill">
+        <span>Game</span>
+        <strong id="casinoGameShortName">Casino</strong>
+      </div>
+    </div>
 
-        <div class="bet-input-group">
-          <label for="casinoBetAmount">Bet BX</label>
-          <input
-            id="casinoBetAmount"
-            type="number"
-            min="0"
-            step="0.0001"
-            placeholder="10.00"
-          >
-        </div>
+    <!-- =========================
+         GAME LAYOUT
+    ========================== -->
+    <div class="casino-game-layout">
 
-        <div class="bet-quick-row">
-          <button class="bet-quick-btn" data-bet-multi="0.5" type="button">½</button>
-          <button class="bet-quick-btn" data-bet-multi="2" type="button">2×</button>
-          <button class="bet-quick-btn" data-bet-percent="10" type="button">10%</button>
-          <button class="bet-quick-btn" data-bet-percent="25" type="button">25%</button>
-          <button class="bet-quick-btn" data-bet-percent="50" type="button">50%</button>
-          <button class="bet-quick-btn" data-bet-percent="100" type="button">MAX</button>
-        </div>
+      <!-- ================= ENGINE SIDE ================= -->
+      <div class="casino-engine-column">
 
-        <div id="casinoDynamicControls" class="casino-dynamic-controls">
-          <!-- game-specific controls injected here -->
-        </div>
+        <div class="casino-engine-card">
 
-        <div class="bet-actions">
-          <button id="casinoPlayBtn" class="casino-play-btn" type="button">
-            Play
-          </button>
+          <div class="engine-status-row">
+            <div class="engine-status-left">
+              <span class="engine-status-label">Status</span>
+              <strong id="casinoGameStatus">Waiting...</strong>
+            </div>
 
-          <button id="casinoSeedBtn" class="casino-seed-btn" type="button">
-            New Seed
-          </button>
-        </div>
-
-        <div class="provably-fair-box">
-          <div class="pf-row">
-            <span>Server Seed</span>
-            <strong id="serverSeedHash">hashed_seed_xxx</strong>
+            <div class="engine-status-right">
+              <span class="engine-multiplier-label">Multiplier</span>
+              <strong id="casinoGameMultiplier">1.00x</strong>
+            </div>
           </div>
-          <div class="pf-row">
-            <span>Client Seed</span>
-            <strong id="clientSeedValue">client_seed_xxx</strong>
+
+          <!-- ===== MAIN GAME ENGINE BOX ===== -->
+          <div id="casinoGameBox" class="casino-game-box">
+            <!-- dynamic game engine render here -->
           </div>
-          <div class="pf-row">
-            <span>Nonce</span>
-            <strong id="nonceValue">0</strong>
-          </div>
+
+          <!-- ===== ENGINE FX / FLOATING RESULT ===== -->
+          <div id="casinoResultFlash" class="casino-result-flash"></div>
         </div>
+
+      </div>
+
+      <!-- ================= CONTROL SIDE ================= -->
+      <div class="casino-control-column">
+
+        <div class="casino-bet-card">
+
+          <div class="bet-card-head">
+            <h4>Place Bet</h4>
+            <button id="instantPlayToggle" class="instant-play-pill" type="button">
+              Instant Play
+            </button>
+          </div>
+
+          <!-- ===== BET INPUT ===== -->
+          <div class="bet-input-group">
+            <label for="casinoBetAmount">Bet BX</label>
+            <input
+              id="casinoBetAmount"
+              type="number"
+              min="0"
+              step="0.0001"
+              placeholder="10.00"
+              inputmode="decimal"
+              autocomplete="off"
+            >
+          </div>
+
+          <!-- ===== QUICK BET ===== -->
+          <div class="bet-quick-row">
+            <button class="bet-quick-btn" data-bet-multi="0.5" type="button">½</button>
+            <button class="bet-quick-btn" data-bet-multi="2" type="button">2×</button>
+            <button class="bet-quick-btn" data-bet-percent="10" type="button">10%</button>
+            <button class="bet-quick-btn" data-bet-percent="25" type="button">25%</button>
+            <button class="bet-quick-btn" data-bet-percent="50" type="button">50%</button>
+            <button class="bet-quick-btn" data-bet-percent="100" type="button">MAX</button>
+          </div>
+
+          <!-- ===== GAME SPECIFIC CONTROLS ===== -->
+          <div id="casinoDynamicControls" class="casino-dynamic-controls">
+            <!-- game-specific controls injected here -->
+          </div>
+
+          <!-- ===== MAIN ACTIONS ===== -->
+          <div class="bet-actions">
+            <button id="casinoPlayBtn" class="casino-play-btn" type="button">
+              Play
+            </button>
+
+            <button id="casinoSeedBtn" class="casino-seed-btn" type="button">
+              New Seed
+            </button>
+          </div>
+
+          <!-- ===== LAST RESULT MINI CARD ===== -->
+          <div class="casino-last-result-card">
+            <div class="last-result-row">
+              <span>Last Result</span>
+              <strong id="casinoLastResult">—</strong>
+            </div>
+            <div class="last-result-row">
+              <span>Payout</span>
+              <strong id="casinoLastPayout">0.00 BX</strong>
+            </div>
+          </div>
+
+          <!-- ===== PROVABLY FAIR ===== -->
+          <div class="provably-fair-box">
+            <div class="pf-head">
+              <h5>Provably Fair</h5>
+              <span>Live Hash</span>
+            </div>
+
+            <div class="pf-row">
+              <span>Server Seed</span>
+              <strong id="serverSeedHash">hashed_seed_xxx</strong>
+            </div>
+
+            <div class="pf-row">
+              <span>Client Seed</span>
+              <strong id="clientSeedValue">client_seed_xxx</strong>
+            </div>
+
+            <div class="pf-row">
+              <span>Nonce</span>
+              <strong id="nonceValue">0</strong>
+            </div>
+          </div>
+
+        </div>
+
       </div>
     </div>
   </div>
 
-   </section>
+</section>
