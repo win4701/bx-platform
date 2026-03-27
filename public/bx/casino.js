@@ -76,19 +76,19 @@
     },
 
     games: [
-      { id: "coinflip", name: "Coin Flip", image: "assets/casino/coinflip.png", fair: true },
-      { id: "banana", name: "Banana Farm", image: "assets/casino/banana.png", fair: false },
-      { id: "limbo", name: "Limbo", image: "assets/casino/limbo.png", fair: true },
-      { id: "fruit", name: "Fruit Party", image: "assets/casino/fruit.png", fair: false },
-      { id: "dice", name: "Dice", image: "assets/casino/dice.png", fair: true },
-      { id: "crash", name: "Crash", image: "assets/casino/crash.png", fair: true },
-      { id: "slot", name: "Slot", image: "assets/casino/slot.png", fair: true },
-      { id: "birds", name: "Birds Party", image: "assets/casino/birds.png", fair: false },
-      { id: "blackjack", name: "Blackjack", image: "assets/casino/blackjack.png", fair: false },
-      { id: "airboss", name: "Air Boss", image: "assets/casino/airboss.png", fair: true },
-      { id: "hilo", name: "HiLo", image: "assets/casino/hilo.png", fair: true },
-      { id: "plinko", name: "Plinko", image: "assets/casino/plinko.png", fair: true }
-    ],
+  { id: "coinflip", name: "Coin Flip", image: "https://dummyimage.com/300x420/0d1733/ffffff&text=Coin+Flip", fair: true },
+  { id: "banana", name: "Banana Farm", image: "https://dummyimage.com/300x420/0d1733/ffffff&text=Banana+Farm", fair: false },
+  { id: "limbo", name: "Limbo", image: "https://dummyimage.com/300x420/0d1733/ffffff&text=Limbo", fair: true },
+  { id: "fruit", name: "Fruit Party", image: "https://dummyimage.com/300x420/0d1733/ffffff&text=Fruit+Party", fair: false },
+  { id: "dice", name: "Dice", image: "https://dummyimage.com/300x420/0d1733/ffffff&text=Dice", fair: true },
+  { id: "crash", name: "Crash", image: "https://dummyimage.com/300x420/0d1733/ffffff&text=Crash", fair: true },
+  { id: "slot", name: "Slot", image: "https://dummyimage.com/300x420/0d1733/ffffff&text=Slot", fair: true },
+  { id: "birds", name: "Birds Party", image: "https://dummyimage.com/300x420/0d1733/ffffff&text=Birds+Party", fair: false },
+  { id: "blackjack", name: "Blackjack", image: "https://dummyimage.com/300x420/0d1733/ffffff&text=Blackjack", fair: false },
+  { id: "airboss", name: "Air Boss", image: "https://dummyimage.com/300x420/0d1733/ffffff&text=Air+Boss", fair: true },
+  { id: "hilo", name: "HiLo", image: "https://dummyimage.com/300x420/0d1733/ffffff&text=HiLo", fair: true },
+  { id: "plinko", name: "Plinko", image: "https://dummyimage.com/300x420/0d1733/ffffff&text=Plinko", fair: true }
+],
 
     engines: {},
 
