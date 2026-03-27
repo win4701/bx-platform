@@ -1272,3 +1272,397 @@
     transform: translateY(0) scale(1);
   }
 }
+/* =========================================================
+   CASINO MOBILE FIX PACK
+   Fixes:
+   - Broken game cards proportions
+   - Huge buttons
+   - Oversized play button
+   - Better mobile spacing
+   - Better image fit
+========================================================= */
+
+/* ---------- LOBBY GAME GRID ---------- */
+.casino-grid,
+#casinoGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  align-items: stretch;
+}
+
+.game-card {
+  position: relative;
+  min-height: 188px !important;
+  height: 188px !important;
+  padding: 10px !important;
+  border-radius: 24px !important;
+  overflow: hidden;
+  display: flex !important;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  background:
+    linear-gradient(180deg, rgba(12,20,44,.92), rgba(6,12,28,.96));
+  border: 1px solid rgba(255,255,255,.06);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.03),
+    0 10px 30px rgba(0,0,0,.22);
+}
+
+.game-card-glow {
+  position: absolute;
+  inset: auto auto 0 0;
+  width: 90px;
+  height: 90px;
+  background: radial-gradient(circle, rgba(41,227,162,.14), transparent 70%);
+  pointer-events: none;
+  filter: blur(10px);
+}
+
+.game-card img {
+  width: 100% !important;
+  height: 118px !important;
+  min-height: 118px !important;
+  max-height: 118px !important;
+  object-fit: cover !important;
+  object-position: center !important;
+  border-radius: 18px !important;
+  display: block;
+  background: rgba(255,255,255,.02);
+  border: 1px solid rgba(255,255,255,.04);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.03),
+    0 8px 22px rgba(0,0,0,.18);
+}
+
+.game-card span {
+  width: 100%;
+  display: block;
+  text-align: center;
+  font-size: 0.95rem !important;
+  line-height: 1.1;
+  font-weight: 900 !important;
+  color: var(--casino-text, #fff);
+  margin-top: 8px;
+  padding: 0 4px;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ---------- PLACE BET CARD ---------- */
+.casino-bet-card,
+.place-bet-card,
+#casinoBetCard {
+  padding: 22px 18px !important;
+  border-radius: 28px !important;
+}
+
+.casino-bet-card h3,
+.place-bet-card h3,
+#casinoBetCard h3 {
+  font-size: 1.15rem !important;
+}
+
+/* ---------- BET INPUT ---------- */
+#casinoBetInput,
+.casino-bet-input,
+.casino-input {
+  height: 72px !important;
+  border-radius: 24px !important;
+  font-size: 1.05rem !important;
+  font-weight: 900 !important;
+  padding: 0 18px !important;
+}
+
+/* ---------- QUICK BET BUTTONS ---------- */
+.casino-quick-bets,
+.quick-bet-grid {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+  margin-top: 16px !important;
+}
+
+.casino-quick-bets button,
+.quick-bet-grid button,
+[data-bet-action] {
+  height: 66px !important;
+  min-height: 66px !important;
+  border-radius: 22px !important;
+  font-size: 0.98rem !important;
+  font-weight: 900 !important;
+  padding: 0 !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ---------- PLAY / SEED BUTTONS ---------- */
+#casinoPlayBtn,
+#casinoSeedBtn,
+.casino-primary-btn,
+.casino-secondary-btn {
+  width: 100% !important;
+  min-height: 72px !important;
+  height: 72px !important;
+  border-radius: 24px !important;
+  font-size: 1.15rem !important;
+  font-weight: 900 !important;
+  padding: 0 20px !important;
+}
+
+#casinoPlayBtn {
+  margin-top: 18px !important;
+}
+
+#casinoSeedBtn {
+  margin-top: 14px !important;
+}
+
+/* ---------- INSTANT TOGGLE ---------- */
+#casinoInstantToggle,
+.casino-toggle-pill {
+  min-width: 168px !important;
+  height: 58px !important;
+  border-radius: 999px !important;
+  font-size: 0.98rem !important;
+  font-weight: 900 !important;
+  padding: 0 18px !important;
+}
+
+/* ---------- DYNAMIC CONTROL BUTTONS ---------- */
+.casino-segmented {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px !important;
+}
+
+.casino-segmented.three {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+}
+
+.casino-segmented button {
+  min-height: 62px !important;
+  height: 62px !important;
+  border-radius: 20px !important;
+  font-size: 1rem !important;
+  font-weight: 900 !important;
+}
+
+/* ---------- GAME ENGINE AREA ---------- */
+#casinoGameBox {
+  min-height: 320px !important;
+  border-radius: 28px !important;
+  padding: 16px !important;
+}
+
+.casino-engine-panel {
+  min-height: 250px !important;
+  border-radius: 24px !important;
+  padding: 18px !important;
+}
+
+/* ---------- SLOT REELS ---------- */
+.slot-reels {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px !important;
+  width: 100%;
+}
+
+.slot-reel {
+  height: 120px !important;
+  border-radius: 22px !important;
+  font-size: 3rem !important;
+}
+
+/* ---------- BIRDS / PICK GAMES ---------- */
+.birds-grid {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px !important;
+  width: 100%;
+}
+
+.bird-pick {
+  height: 110px !important;
+  border-radius: 22px !important;
+  font-size: 2.3rem !important;
+}
+
+/* ---------- BLACKJACK ---------- */
+.bj-board {
+  display: grid !important;
+  gap: 16px !important;
+  width: 100%;
+}
+
+.bj-hand {
+  border-radius: 22px !important;
+  padding: 20px !important;
+}
+
+.bj-hand-title {
+  font-size: 1rem !important;
+}
+
+.bj-hand-score {
+  font-size: 3.2rem !important;
+  font-weight: 900 !important;
+}
+
+/* ---------- CANVAS GAMES ---------- */
+.crash-graph,
+.plinko-board {
+  min-height: 300px !important;
+  height: 300px !important;
+  border-radius: 24px !important;
+  overflow: hidden;
+}
+
+/* ---------- BIG WINS ---------- */
+.big-win-row {
+  padding: 14px 16px !important;
+  border-radius: 18px !important;
+}
+
+.big-win-amount {
+  font-size: 1rem !important;
+  font-weight: 900 !important;
+}
+
+/* ---------- LAST RESULT / PF ---------- */
+.casino-side-card,
+#casinoLastResult,
+#casinoProvablyFair {
+  border-radius: 24px !important;
+  padding: 18px !important;
+}
+
+/* =========================================================
+   RESPONSIVE TUNING
+========================================================= */
+@media (max-width: 480px) {
+  .casino-grid,
+  #casinoGrid {
+    gap: 12px;
+  }
+
+  .game-card {
+    min-height: 176px !important;
+    height: 176px !important;
+    padding: 9px !important;
+    border-radius: 22px !important;
+  }
+
+  .game-card img {
+    height: 108px !important;
+    min-height: 108px !important;
+    max-height: 108px !important;
+    border-radius: 16px !important;
+  }
+
+  .game-card span {
+    font-size: 0.9rem !important;
+    min-height: 38px;
+  }
+
+  #casinoBetInput,
+  .casino-bet-input,
+  .casino-input {
+    height: 66px !important;
+    border-radius: 22px !important;
+    font-size: 1rem !important;
+  }
+
+  .casino-quick-bets button,
+  .quick-bet-grid button,
+  [data-bet-action] {
+    height: 60px !important;
+    min-height: 60px !important;
+    border-radius: 18px !important;
+    font-size: 0.95rem !important;
+  }
+
+  #casinoPlayBtn,
+  #casinoSeedBtn,
+  .casino-primary-btn,
+  .casino-secondary-btn {
+    height: 66px !important;
+    min-height: 66px !important;
+    border-radius: 22px !important;
+    font-size: 1.05rem !important;
+  }
+
+  #casinoInstantToggle,
+  .casino-toggle-pill {
+    min-width: 152px !important;
+    height: 54px !important;
+    font-size: 0.92rem !important;
+  }
+
+  .casino-segmented button {
+    min-height: 58px !important;
+    height: 58px !important;
+    border-radius: 18px !important;
+    font-size: 0.95rem !important;
+  }
+
+  .slot-reel {
+    height: 104px !important;
+    font-size: 2.5rem !important;
+    border-radius: 18px !important;
+  }
+
+  .bird-pick {
+    height: 96px !important;
+    font-size: 2rem !important;
+    border-radius: 18px !important;
+  }
+
+  .crash-graph,
+  .plinko-board {
+    min-height: 270px !important;
+    height: 270px !important;
+  }
+}
+
+/* =========================================================
+   VERY SMALL DEVICES
+========================================================= */
+@media (max-width: 380px) {
+  .game-card {
+    min-height: 166px !important;
+    height: 166px !important;
+  }
+
+  .game-card img {
+    height: 98px !important;
+    min-height: 98px !important;
+    max-height: 98px !important;
+  }
+
+  .game-card span {
+    font-size: 0.84rem !important;
+  }
+
+  .casino-quick-bets button,
+  .quick-bet-grid button,
+  [data-bet-action] {
+    height: 56px !important;
+    min-height: 56px !important;
+    font-size: 0.9rem !important;
+  }
+
+  #casinoPlayBtn,
+  #casinoSeedBtn,
+  .casino-primary-btn,
+  .casino-secondary-btn {
+    height: 62px !important;
+    min-height: 62px !important;
+    font-size: 1rem !important;
+  }
+                                      }
