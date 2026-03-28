@@ -311,15 +311,20 @@
 
   <!-- Time Controls -->
   <div class="bx-chart-toolbar">
-    <div class="bx-time-tabs">
-      <button class="bx-time-tab active" data-range="1h">1H</button>
-      <button class="bx-time-tab" data-range="24h">24H</button>
-      <button class="bx-time-tab" data-range="7d">7D</button>
-      <button class="bx-time-tab" data-range="30d">30D</button>
-      <button class="bx-time-tab" data-range="90d">90D</button>
-      <button class="bx-time-tab" data-range="1y">1Y</button>
-      <button class="bx-time-tab" data-range="all">ALL</button>
-    </div>
+  <div class="bx-time-tabs">
+    <button class="tf-btn bx-time-tab active" data-days="1">1D</button>
+    <button class="tf-btn bx-time-tab" data-days="3">3D</button>
+    <button class="tf-btn bx-time-tab" data-days="7">7D</button>
+    <button class="tf-btn bx-time-tab" data-days="14">14D</button>
+    <button class="tf-btn bx-time-tab" data-days="30">30D</button>
+  </div>
+
+  <div class="bx-chart-tools">
+    <button id="zoomIn" class="bx-tool-btn" type="button">＋</button>
+    <button id="zoomOut" class="bx-tool-btn" type="button">－</button>
+    <button id="resetView" class="bx-tool-btn" type="button">⟳</button>
+  </div>
+  </div>
 
     <div class="bx-chart-tools">
       <button id="bxToggleChartType" class="bx-tool-btn active" type="button">📈</button>
@@ -329,14 +334,13 @@
 
   <!-- Chart -->
   <div class="bx-chart-wrap">
-    <div id="bloxioMarketChart"></div>
-  </div>
+  <canvas id="bxChart"></canvas>
+  <div id="chartTooltip" class="chart-tooltip"></div>
+</div>
 
-  <!-- Volume -->
-  <div class="bx-volume-wrap">
-    <div id="bloxioVolumeChart"></div>
-  </div>
-
+<div class="bx-volume-wrap">
+  <canvas id="volumeChart"></canvas>
+   </div>
   </div>
 
   <!-- ===== TRADE BOX ===== -->
