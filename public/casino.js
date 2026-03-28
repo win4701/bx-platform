@@ -1,1794 +1,1894 @@
-/* =========================================================
-   BX CASINO — REAL ENGINES FINAL
-   Crash + Dice + Plinko + Slot
-   Lobby / Game Screen / Provably Fair / Big Wins / Ticker
-========================================================= */
+/* =========================================
+   BLOXIO CASINO — PRO ENGINE UPGRADE
+   FINAL MATCH with uploaded casino.html + casino.css
+========================================= */
 
 (() => {
   "use strict";
 
-  const CASINO = {
-    state: {
-      currentGame: null,
-      balance: 250.00,
-      bet: 0,
+  /* =========================================
+     HELPERS
+  ========================================= */
+  const $ = (id) => document.getElementById(id);
+  const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
 
-      nonce: 0,
-      clientSeed: "client_" + Math.random().toString(36).slice(2),
-      serverSeed: "server_" + Math.random().toString(36).slice(2),
+  const rand = (arr) => arr[Math.floor(Math.random() * arr.length)];
+  const randInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+  const round = (n, d = 2) => {
+    const p = 10 ** d;
+    return Math.round(n * p) / p;
+  };
+  const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
 
-      crash: {
-        running: false,
-        crashed: false,
-        multiplier: 1.00,
-        target: 2.35,
-        raf: null,
-        hasBet: false,
-        cashedOut: false
-      },
+  const randomSeed = (len = 32) => {
+    const chars = "abcdef0123456789";
+    let out = "";
+    for (let i = 0; i < len; i++) out += chars[Math.floor(Math.random() * chars.length)];
+    return out;
+  };
 
-      dice: {
-        rollOver: true,
-        target: 50,
-        lastRoll: null
-      },
+  const cardFace = (n) => {
+    if (n === 11) return "J";
+    if (n === 12) return "Q";
+    if (n === 13) return "K";
+    if (n === 14) return "A";
+    return String(n);
+  };
 
-      plinko: {
-        rows: 8,
-        risk: "medium",
-        dropping: false
-      },
+  const cardSuit = () => rand(["♠", "♥", "♣", "♦"]);
+  const formatBX = (n) => `${Number(n).toFixed(2)} BX`;
 
-      slot: {
-        spinning: false,
-        reels: ["🍒", "🍋", "7️⃣"],
-        symbols: ["🍒", "🍋", "🍇", "⭐", "7️⃣", "💎"]
-      }
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+
+  /* =========================================
+     ROOT CHECK
+  ========================================= */
+  const casinoPage = $("casinoPage");
+  if (!casinoPage) return;
+
+  /* =========================================
+     DOM
+  ========================================= */
+  const casinoLobby = $("casinoLobby");
+  const casinoGameView = $("casinoGameView");
+  const casinoGamesGrid = $("casinoGamesGrid");
+
+  const tickerPulse = $("tickerPulse");
+  const bigWinsList = $("bigWinsList");
+
+  const casinoBalanceTop = $("casinoBalanceTop");
+  const casinoLiveBetsCount = $("casinoLiveBetsCount");
+  const casinoVolumeToday = $("casinoVolumeToday");
+
+  const casinoBackBtn = $("casinoBackBtn");
+  const casinoAuthBtn = $("casinoAuthBtn");
+  const casinoRefreshBtn = $("casinoRefreshBtn");
+
+  const gameEngineCaption = $("gameEngineCaption");
+  const gameMultiplierDisplay = $("gameMultiplierDisplay");
+  const gameEngineBody = $("gameEngineBody");
+
+  const betAmountInput = $("betAmountInput");
+  const dynamicBetControls = $("dynamicBetControls");
+  const casinoPlayBtn = $("casinoPlayBtn");
+
+  const serverSeedText = $("serverSeedText");
+  const clientSeedText = $("clientSeedText");
+  const nonceText = $("nonceText");
+  const newSeedBtn = $("newSeedBtn");
+
+  const playersCountText = $("playersCountText");
+  const playersVolumeText = $("playersVolumeText");
+  const playersTableBody = $("playersTableBody");
+
+  const pulseStrip = document.querySelector(".game-pulse-strip");
+
+  /* =========================================
+     STATE
+  ========================================= */
+  const state = {
+    balance: 250.0,
+    activeFilter: "all",
+    activeGame: null,
+
+    serverSeed: randomSeed(32),
+    clientSeed: "client_bloxio_seed",
+    nonce: 0,
+
+    betAmount: 10.0,
+    currentSettingsTab: "manual",
+    currentHeaderTab: "classic",
+
+    // game settings
+    limboTarget: 2.0,
+    crashAutoCashout: 2.0,
+    diceTarget: 50,
+    diceMode: "over",
+    coinSide: "heads",
+    slotMode: "normal",
+    plinkoRisk: "medium",
+    hiloMode: "higher",
+    birdsDifficulty: "easy",
+
+    // session state
+    isPlaying: false,
+    isTransitioning: false,
+    gameHistory: [],
+    livePulse: [],
+    recentWins: [],
+
+    // crash session
+    crashSession: {
+      running: false,
+      cashedOut: false,
+      current: 1.0,
+      final: 1.0,
+      frame: null,
+      startedBet: 0
     },
 
-    els: {},
-
-    /* =========================================================
-       INIT
-    ========================================================= */
-    init() {
-      this.cacheDOM();
-      if (!this.els.lobby || !this.els.gameScreen) return;
-
-      this.bindGlobal();
-      this.updateBalanceUI();
-      this.updateSeedsUI();
-      this.renderBigWins();
-      this.startTicker();
-
-      console.log("🎰 CASINO REAL ENGINES READY");
+    // blackjack session
+    blackjack: {
+      inRound: false,
+      player: [],
+      dealer: [],
+      bet: 0
     },
 
-    cacheDOM() {
-      const $ = (id) => document.getElementById(id);
-
-      this.els.lobby = $("casinoLobby");
-      this.els.gameScreen = $("casinoGameScreen");
-      this.els.grid = $("casinoGrid");
-
-      this.els.gameTitle = $("casinoGameTitle");
-      this.els.gameMode = $("casinoGameMode");
-      this.els.gameBox = $("casinoGameBox");
-
-      this.els.backBtn = $("casinoBackBtn");
-      this.els.playBtn = $("casinoPlayBtn");
-      this.els.seedBtn = $("casinoSeedBtn");
-
-      this.els.betInput = $("casinoBetAmount");
-      this.els.dynamicControls = $("casinoDynamicControls");
-
-      this.els.balanceMini = $("casinoBalance");
-      this.els.balanceGame = $("casinoGameBalance");
-
-      this.els.status = $("casinoGameStatus");
-      this.els.multiplier = $("casinoGameMultiplier");
-
-      this.els.serverSeed = $("serverSeedHash");
-      this.els.clientSeed = $("clientSeedValue");
-      this.els.nonce = $("nonceValue");
-
-      this.els.bigWins = $("bigWinsList");
-      this.els.ticker = $("casinoTicker");
+    // hilo session
+    hilo: {
+      inRound: false,
+      current: 8
     },
 
-    bindGlobal() {
-      // open game
-      this.els.grid?.addEventListener("click", (e) => {
-        const card = e.target.closest(".game-card");
-        if (!card) return;
-        const game = card.dataset.game;
-        this.open(game);
-      });
-
-      // close game
-      this.els.backBtn?.addEventListener("click", () => this.close());
-
-      // play
-      this.els.playBtn?.addEventListener("click", () => this.play());
-
-      // seed reset
-      this.els.seedBtn?.addEventListener("click", () => this.newSeed());
-
-      // quick bet buttons (delegation)
-      document.addEventListener("click", (e) => {
-       const btn = e.target.closest(".bet-quick-btn[data-bet-multi], .bet-quick-btn[data-bet-percent]");
-      if (!btn) return;
-       this.handleQuickBet(btn);
-      });
-
-      // dynamic controls delegation
-      document.addEventListener("click", (e) => {
-        const action = e.target.closest("[data-casino-action]");
-        if (!action) return;
-
-        const type = action.dataset.casinoAction;
-        this.handleDynamicAction(type, action);
-      });
-
-      document.addEventListener("change", (e) => {
-        const el = e.target;
-        if (!el.matches("[data-casino-input]")) return;
-        this.handleDynamicInput(el.dataset.casinoInput, el.value, el);
-      });
+    // birds session
+    birds: {
+      selected: null
     },
 
-    /* =========================================================
-       NAVIGATION
-    ========================================================= */
-    open(game) {
-      this.state.currentGame = game;
-
-      this.stopAllEngines();
-
-      this.els.lobby.style.display = "none";
-      this.els.gameScreen.style.display = "block";
-
-      this.els.gameTitle.textContent = this.prettyGameName(game);
-      this.els.gameMode.textContent = this.getGameMode(game);
-      this.els.status.textContent = "Waiting...";
-      this.els.multiplier.textContent = "1.00x";
-
-      this.els.betInput.value = "";
-      this.els.dynamicControls.innerHTML = "";
-      this.els.gameBox.innerHTML = "";
-
-      this.renderGame(game);
-      this.updateBalanceUI();
-      this.updateSeedsUI();
+    // plinko
+    plinko: {
+      dropping: false
     },
 
-    close() {
-      this.stopAllEngines();
-
-      this.els.gameScreen.style.display = "none";
-      this.els.lobby.style.display = "block";
-
-      this.els.gameBox.innerHTML = "";
-      this.els.dynamicControls.innerHTML = "";
-
-      this.state.currentGame = null;
-    },
-
-    stopAllEngines() {
-      // stop crash
-      if (this.state.crash.raf) {
-        cancelAnimationFrame(this.state.crash.raf);
-        this.state.crash.raf = null;
-      }
-      this.state.crash.running = false;
-      this.state.crash.crashed = false;
-      this.state.crash.hasBet = false;
-      this.state.crash.cashedOut = false;
-
-      this.state.plinko.dropping = false;
-      this.state.slot.spinning = false;
-    },
-
-    prettyGameName(game) {
-      const names = {
-        coinflip: "Coin Flip",
-        banana_farm: "Banana Farm",
-        limbo: "Limbo",
-        fruit_party: "Fruit Party",
-        dice: "Dice",
-        crash: "Crash",
-        slot: "Slot",
-        birds_party: "Birds Party",
-        blackjack_fast: "Blackjack",
-        airboss: "AirBoss",
-        hilo: "HiLo",
-        plinko: "Plinko"
-      };
-      return names[game] || game;
-    },
-
-    getGameMode(game) {
-      if (["crash", "dice", "plinko", "slot", "coinflip", "limbo"].includes(game)) {
-        return "Provably Fair";
-      }
-      return "Instant Play";
-    },
-
-    /* =========================================================
-       GAME RENDER
-    ========================================================= */
-    renderGame(game) {
-   switch (game) {
-    case "crash":
-      this.renderCrash();
-      break;
-
-    case "dice":
-      this.renderDice();
-      break;
-
-    case "plinko":
-      this.renderPlinko();
-      break;
-
-    case "slot":
-      this.renderSlot();
-      break;
-
-    case "coinflip":
-      this.renderCoinflip();
-      break;
-
-    case "limbo":
-      this.renderLimbo();
-      break;
-
-    case "hilo":
-      this.renderHilo();
-      break;
-
-    case "blackjack_fast":
-      this.renderBlackjack();
-      break;
-
-    case "airboss":
-      this.renderAirBoss();
-      break;
-
-    case "banana_farm":
-      this.renderBananaFarm();
-      break;
-
-    case "birds_party":
-      this.renderBirdsParty();
-      break;
-
-    case "fruit_party":
-      this.renderFruitParty();
-      break;
-
-    default:
-      this.renderComingSoon(game);
-   }
-      },
-
-    renderComingSoon(game) {
-      this.els.gameBox.innerHTML = `
-        <div class="game-placeholder">
-          <div style="font-size:52px;margin-bottom:10px;">🎮</div>
-          <h3 style="margin:0 0 8px;">${this.prettyGameName(game)}</h3>
-          <p style="opacity:.8;margin:0;">Engine ready for expansion</p>
-        </div>
-      `;
-
-      this.els.dynamicControls.innerHTML = `
-        <div class="game-info-box">
-          <div><strong>Mode:</strong> ${this.getGameMode(game)}</div>
-          <div><strong>Status:</strong> Ready</div>
-        </div>
-      `;
-    },
-
-    /* =========================================================
-       CRASH
-    ========================================================= */
-    renderCrash() {
-      this.els.gameBox.innerHTML = `
-        <div class="crash-wrap">
-          <canvas id="crashCanvas" style="width:100%;height:260px;display:block;border-radius:18px;background:#08111b;"></canvas>
-        </div>
-      `;
-
-      this.els.dynamicControls.innerHTML = `
-        <div class="game-info-box">
-          <div><strong>Auto Cashout</strong></div>
-          <input
-            data-casino-input="crashAutoCashout"
-            type="number"
-            min="1.01"
-            step="0.01"
-            value="2.00"
-            placeholder="2.00"
-            style="width:100%;margin-top:10px;"
-          >
-          <div style="margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-            <button class="bet-quick-btn" data-casino-action="crashStart" type="button">Start Round</button>
-            <button class="bet-quick-btn" data-casino-action="crashCashout" type="button">Cashout</button>
-          </div>
-        </div>
-      `;
-
-      this.state.crash.autoCashout = 2.00;
-      this.drawCrashBase();
-    },
-
-    drawCrashBase() {
-      const canvas = document.getElementById("crashCanvas");
-      if (!canvas) return;
-
-      const ctx = canvas.getContext("2d");
-      const w = canvas.width = Math.max(320, canvas.offsetWidth);
-      const h = canvas.height = 260;
-
-      ctx.clearRect(0, 0, w, h);
-
-      // bg
-      const g = ctx.createLinearGradient(0, 0, 0, h);
-      g.addColorStop(0, "#07101a");
-      g.addColorStop(1, "#091524");
-      ctx.fillStyle = g;
-      ctx.fillRect(0, 0, w, h);
-
-      // grid
-      ctx.strokeStyle = "rgba(255,255,255,.06)";
-      ctx.lineWidth = 1;
-
-      for (let i = 0; i < 6; i++) {
-        const y = (h / 6) * i;
-        ctx.beginPath();
-        ctx.moveTo(0, y);
-        ctx.lineTo(w, y);
-        ctx.stroke();
-      }
-
-      for (let i = 0; i < 8; i++) {
-        const x = (w / 8) * i;
-        ctx.beginPath();
-        ctx.moveTo(x, 0);
-        ctx.lineTo(x, h);
-        ctx.stroke();
-      }
-
-      ctx.fillStyle = "rgba(255,255,255,.75)";
-      ctx.font = "bold 14px system-ui";
-      ctx.fillText("BX Crash Engine", 16, 24);
-    },
-
-    startCrashRound() {
-      if (this.state.crash.running) return;
-
-      const bet = this.getBet();
-      if (!bet) return;
-
-      this.state.crash.hasBet = true;
-      this.state.crash.cashedOut = false;
-      this.state.crash.multiplier = 1.00;
-      this.state.crash.running = true;
-      this.state.crash.crashed = false;
-
-      // target crash
-      this.state.crash.target = this.randomCrashTarget();
-
-      this.balanceSubtract(bet);
-      this.els.status.textContent = "Flying...";
-      this.sound("click");
-
-      const canvas = document.getElementById("crashCanvas");
-      if (!canvas) return;
-      const ctx = canvas.getContext("2d");
-
-      const w = canvas.width = Math.max(320, canvas.offsetWidth);
-      const h = canvas.height = 260;
-
-      let t = 0;
-
-      const loop = () => {
-        if (!this.state.crash.running) return;
-
-        t += 0.018;
-        this.state.crash.multiplier = +(1 + Math.pow(t, 1.42)).toFixed(2);
-
-        this.els.multiplier.textContent = this.state.crash.multiplier.toFixed(2) + "x";
-
-        ctx.clearRect(0, 0, w, h);
-        this.drawCrashBase();
-
-        const x = Math.min(w - 20, 25 + t * 95);
-        const y = Math.max(20, h - 20 - Math.pow(t, 1.85) * 35);
-
-        // curve
-        ctx.beginPath();
-        ctx.moveTo(25, h - 20);
-        for (let i = 0; i <= x - 25; i++) {
-          const px = 25 + i;
-          const tt = i / 95;
-          const py = Math.max(20, h - 20 - Math.pow(tt, 1.85) * 35);
-          ctx.lineTo(px, py);
-        }
-        ctx.strokeStyle = "#25d998";
-        ctx.lineWidth = 3;
-        ctx.stroke();
-
-        // glow point
-        ctx.beginPath();
-        ctx.arc(x, y, 5, 0, Math.PI * 2);
-        ctx.fillStyle = "#25d998";
-        ctx.shadowColor = "#25d998";
-        ctx.shadowBlur = 18;
-        ctx.fill();
-        ctx.shadowBlur = 0;
-
-        // auto cashout
-        if (
-          this.state.crash.hasBet &&
-          !this.state.crash.cashedOut &&
-          this.state.crash.multiplier >= (this.state.crash.autoCashout || 2.00)
-        ) {
-          this.crashCashout();
-        }
-
-        // crash event
-        if (this.state.crash.multiplier >= this.state.crash.target) {
-          this.state.crash.running = false;
-          this.state.crash.crashed = true;
-          this.els.status.textContent = `Crashed @ ${this.state.crash.target.toFixed(2)}x`;
-
-          if (!this.state.crash.cashedOut && this.state.crash.hasBet) {
-            this.sound("lose");
-          }
-
-          this.state.crash.hasBet = false;
-          this.state.nonce++;
-          this.updateSeedsUI();
-          return;
-        }
-
-        this.state.crash.raf = requestAnimationFrame(loop);
-      };
-
-      loop();
-    },
-
-    crashCashout() {
-      if (!this.state.crash.running) return;
-      if (!this.state.crash.hasBet) return;
-      if (this.state.crash.cashedOut) return;
-
-      const payout = this.state.bet * this.state.crash.multiplier;
-      this.state.crash.cashedOut = true;
-      this.state.crash.hasBet = false;
-
-      this.balanceAdd(payout);
-      this.els.status.textContent = `Cashed out @ ${this.state.crash.multiplier.toFixed(2)}x`;
-
-      this.addBigWin(payout, "crash");
-      this.sound("win");
-    },
-
-    randomCrashTarget() {
-      // شبه realistic
-      const r = Math.random();
-      if (r < 0.40) return +(1.10 + Math.random() * 1.2).toFixed(2);
-      if (r < 0.75) return +(2.00 + Math.random() * 2.5).toFixed(2);
-      if (r < 0.93) return +(4.50 + Math.random() * 5.5).toFixed(2);
-      return +(10 + Math.random() * 20).toFixed(2);
-    },
-
-    /* =========================================================
-       DICE
-    ========================================================= */
-    renderDice() {
-      this.els.gameBox.innerHTML = `
-        <div class="dice-wrap" style="display:flex;align-items:center;justify-content:center;height:240px;">
-          <div id="diceResultBox" style="font-size:64px;font-weight:1000;color:#f8fafc;">--</div>
-        </div>
-      `;
-
-      this.els.dynamicControls.innerHTML = `
-        <div class="game-info-box">
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-            <button class="bet-quick-btn active" data-casino-action="diceModeOver" type="button">Roll Over</button>
-            <button class="bet-quick-btn" data-casino-action="diceModeUnder" type="button">Roll Under</button>
-          </div>
-
-          <div style="margin-top:14px;">
-            <label style="display:block;margin-bottom:8px;font-weight:700;">Target Number</label>
-            <input
-              data-casino-input="diceTarget"
-              type="range"
-              min="2"
-              max="98"
-              value="50"
-              style="width:100%;"
-            >
-            <div style="margin-top:8px;font-weight:800;">Target: <span id="diceTargetValue">50</span></div>
-          </div>
-        </div>
-      `;
-
-      this.state.dice.rollOver = true;
-      this.state.dice.target = 50;
-      this.els.status.textContent = "Ready to roll";
-      this.els.multiplier.textContent = this.getDiceMultiplier().toFixed(2) + "x";
-    },
-
-    playDice() {
-      const bet = this.getBet();
-      if (!bet) return;
-
-      const roll = this.provablyFairNumber(1, 100);
-      this.state.dice.lastRoll = roll;
-
-      const win = this.state.dice.rollOver
-        ? roll > this.state.dice.target
-        : roll < this.state.dice.target;
-
-      this.balanceSubtract(bet);
-
-      const resultBox = document.getElementById("diceResultBox");
-      if (resultBox) {
-        resultBox.textContent = roll;
-        resultBox.style.color = win ? "#25d998" : "#ff6d84";
-      }
-
-      if (win) {
-        const payout = bet * this.getDiceMultiplier();
-        this.balanceAdd(payout);
-        this.els.status.textContent = `Win! Rolled ${roll}`;
-        this.addBigWin(payout, "dice");
-        this.sound("win");
-      } else {
-        this.els.status.textContent = `Lost! Rolled ${roll}`;
-        this.sound("lose");
-      }
-
-      this.els.multiplier.textContent = this.getDiceMultiplier().toFixed(2) + "x";
-      this.state.nonce++;
-      this.updateSeedsUI();
-    },
-
-    getDiceMultiplier() {
-      const chance = this.state.dice.rollOver
-        ? (100 - this.state.dice.target)
-        : this.state.dice.target;
-
-      return +(99 / Math.max(2, chance)).toFixed(2);
-    },
-
-    /* =========================================================
-       PLINKO
-    ========================================================= */
-    renderPlinko() {
-      this.els.gameBox.innerHTML = `
-        <div class="plinko-wrap" style="padding:10px;">
-          <canvas id="plinkoCanvas" style="width:100%;height:260px;display:block;border-radius:18px;background:#08111b;"></canvas>
-        </div>
-      `;
-
-      this.els.dynamicControls.innerHTML = `
-        <div class="game-info-box">
-          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
-            <button class="bet-quick-btn" data-casino-action="plinkoRiskLow" type="button">Low</button>
-            <button class="bet-quick-btn active" data-casino-action="plinkoRiskMedium" type="button">Medium</button>
-            <button class="bet-quick-btn" data-casino-action="plinkoRiskHigh" type="button">High</button>
-          </div>
-
-          <div style="margin-top:14px;">
-            <label style="display:block;margin-bottom:8px;font-weight:700;">Rows</label>
-            <input
-              data-casino-input="plinkoRows"
-              type="range"
-              min="8"
-              max="12"
-              value="8"
-              style="width:100%;"
-            >
-            <div style="margin-top:8px;font-weight:800;">Rows: <span id="plinkoRowsValue">8</span></div>
-          </div>
-        </div>
-      `;
-
-      this.drawPlinkoBoard();
-      this.els.status.textContent = "Drop a ball";
-      this.els.multiplier.textContent = "1.00x";
-    },
-
-    drawPlinkoBoard(ball = null) {
-      const canvas = document.getElementById("plinkoCanvas");
-      if (!canvas) return;
-
-      const ctx = canvas.getContext("2d");
-      const w = canvas.width = Math.max(320, canvas.offsetWidth);
-      const h = canvas.height = 260;
-
-      ctx.clearRect(0, 0, w, h);
-
-      // bg
-      const g = ctx.createLinearGradient(0, 0, 0, h);
-      g.addColorStop(0, "#07101a");
-      g.addColorStop(1, "#091524");
-      ctx.fillStyle = g;
-      ctx.fillRect(0, 0, w, h);
-
-      const rows = this.state.plinko.rows;
-      const startY = 40;
-      const gapY = 20;
-
-      for (let r = 0; r < rows; r++) {
-        const count = r + 1;
-        const rowWidth = (count - 1) * 26;
-        const startX = (w / 2) - (rowWidth / 2);
-
-        for (let c = 0; c < count; c++) {
-          const x = startX + c * 26;
-          const y = startY + r * gapY;
-
-          ctx.beginPath();
-          ctx.arc(x, y, 4, 0, Math.PI * 2);
-          ctx.fillStyle = "rgba(255,255,255,.7)";
-          ctx.fill();
-        }
-      }
-
-      // bins
-      const bins = rows + 1;
-      const binW = w / bins;
-      for (let i = 0; i < bins; i++) {
-        const x = i * binW;
-        ctx.fillStyle = "rgba(255,255,255,.06)";
-        ctx.fillRect(x + 2, h - 28, binW - 4, 20);
-      }
-
-      // ball
-      if (ball) {
-        ctx.beginPath();
-        ctx.arc(ball.x, ball.y, 7, 0, Math.PI * 2);
-        ctx.fillStyle = "#25d998";
-        ctx.shadowColor = "#25d998";
-        ctx.shadowBlur = 16;
-        ctx.fill();
-        ctx.shadowBlur = 0;
-      }
-    },
-
-    playPlinko() {
-      if (this.state.plinko.dropping) return;
-
-      const bet = this.getBet();
-      if (!bet) return;
-
-      this.balanceSubtract(bet);
-      this.state.plinko.dropping = true;
-      this.els.status.textContent = "Ball dropping...";
-
-      const rows = this.state.plinko.rows;
-      const canvas = document.getElementById("plinkoCanvas");
-      if (!canvas) return;
-
-      const w = canvas.width = Math.max(320, canvas.offsetWidth);
-      const h = canvas.height = 260;
-
-      let step = 0;
-      let x = w / 2;
-      let y = 20;
-      const path = [];
-
-      // precompute path
-      for (let i = 0; i < rows; i++) {
-        const dir = Math.random() > 0.5 ? 1 : -1;
-        x += dir * 13;
-        y += 20;
-        path.push({ x, y });
-      }
-
-      let frame = 0;
-      const animate = () => {
-        if (frame < path.length) {
-          this.drawPlinkoBoard(path[frame]);
-          frame++;
-          requestAnimationFrame(animate);
-        } else {
-          this.drawPlinkoBoard(path[path.length - 1]);
-
-          const binIndex = Math.max(0, Math.min(rows, Math.floor((x / w) * (rows + 1))));
-          const multiplier = this.getPlinkoMultiplier(binIndex, rows);
-
-          const payout = bet * multiplier;
-
-          if (multiplier > 0) {
-            this.balanceAdd(payout);
-          }
-
-          this.els.multiplier.textContent = multiplier.toFixed(2) + "x";
-          this.els.status.textContent = multiplier >= 1 ? `Win ${multiplier.toFixed(2)}x` : `Low ${multiplier.toFixed(2)}x`;
-
-          if (payout > bet) {
-            this.addBigWin(payout, "plinko");
-            this.sound("win");
-          } else {
-            this.sound("lose");
-          }
-
-          this.state.plinko.dropping = false;
-          this.state.nonce++;
-          this.updateSeedsUI();
-        }
-      };
-
-      animate();
-    },
-
-    getPlinkoMultiplier(bin, rows) {
-      // central lower, edges higher
-      const center = rows / 2;
-      const dist = Math.abs(bin - center);
-
-      let base;
-      if (this.state.plinko.risk === "low") base = [0.5, 0.8, 1.0, 1.2, 1.5, 2.0];
-      else if (this.state.plinko.risk === "high") base = [0.2, 0.4, 0.8, 1.2, 2.5, 5.0];
-      else base = [0.3, 0.6, 0.9, 1.2, 2.0, 3.0];
-
-      const idx = Math.min(base.length - 1, Math.floor(dist));
-      return base[idx];
-    },
-
-    /* =========================================================
-       SLOT
-    ========================================================= */
-    renderSlot() {
-      this.els.gameBox.innerHTML = `
-        <div class="slot-wrap" style="display:flex;align-items:center;justify-content:center;height:240px;">
-          <div id="slotBoard" style="display:grid;grid-template-columns:repeat(3,88px);gap:10px;">
-            <div class="slot-cell">🍒</div>
-            <div class="slot-cell">🍋</div>
-            <div class="slot-cell">7️⃣</div>
-          </div>
-        </div>
-      `;
-
-      this.els.dynamicControls.innerHTML = `
-        <div class="game-info-box">
-          <div><strong>3-Reel Slot</strong></div>
-          <div style="margin-top:8px;opacity:.8;">3 same = jackpot</div>
-          <div style="margin-top:8px;opacity:.8;">2 same = partial win</div>
-        </div>
-      `;
-
-      this.els.status.textContent = "Ready to spin";
-      this.els.multiplier.textContent = "1.00x";
-    },
-
-    playSlot() {
-      if (this.state.slot.spinning) return;
-
-      const bet = this.getBet();
-      if (!bet) return;
-
-      this.balanceSubtract(bet);
-      this.state.slot.spinning = true;
-      this.els.status.textContent = "Spinning...";
-
-      const board = document.getElementById("slotBoard");
-      if (!board) return;
-
-      const cells = [...board.children];
-      const symbols = this.state.slot.symbols;
-
-      let ticks = 0;
-      const spin = setInterval(() => {
-        ticks++;
-
-        cells.forEach(cell => {
-          cell.textContent = symbols[Math.floor(Math.random() * symbols.length)];
-        });
-
-        if (ticks >= 16) {
-          clearInterval(spin);
-
-          const final = cells.map(c => c.textContent);
-          const payoutMulti = this.getSlotMultiplier(final);
-          const payout = bet * payoutMulti;
-
-          if (payout > 0) {
-            this.balanceAdd(payout);
-            this.els.status.textContent = `Win ${payoutMulti.toFixed(2)}x`;
-            this.els.multiplier.textContent = payoutMulti.toFixed(2) + "x";
-            this.addBigWin(payout, "slot");
-            this.sound("win");
-          } else {
-            this.els.status.textContent = "No match";
-            this.els.multiplier.textContent = "0.00x";
-            this.sound("lose");
-          }
-
-          this.state.slot.spinning = false;
-          this.state.nonce++;
-          this.updateSeedsUI();
-        }
-      }, 90);
-    },
-
-    getSlotMultiplier(reels) {
-      const [a, b, c] = reels;
-
-      if (a === b && b === c) {
-        if (a === "💎") return 10;
-        if (a === "7️⃣") return 7;
-        return 5;
-      }
-
-      if (a === b || b === c || a === c) {
-        return 2;
-      }
-
-      return 0;
-    },
-     
-/* =========================================================
-       GAME Real PLUS 
-========================================================= */
-
-renderCoinflip() {
-  this.els.gameBox.innerHTML = `
-    <div style="display:flex;align-items:center;justify-content:center;height:240px;flex-direction:column;gap:14px;">
-      <div id="coinflipCoin" style="font-size:90px;">🪙</div>
-      <div id="coinflipResult" style="font-size:28px;font-weight:900;">Choose Side</div>
-    </div>
-  `;
-
-  this.els.dynamicControls.innerHTML = `
-    <div class="game-info-box">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-        <button class="bet-quick-btn active" data-casino-action="coinflipHeads" type="button">Heads</button>
-        <button class="bet-quick-btn" data-casino-action="coinflipTails" type="button">Tails</button>
-      </div>
-    </div>
-  `;
-
-  this.state.coinflip = { choice: "heads" };
-  this.els.status.textContent = "Pick a side";
-  this.els.multiplier.textContent = "1.96x";
-},
-
-playCoinflip() {
-  const bet = this.getBet();
-  if (!bet) return;
-
-  this.balanceSubtract(bet);
-  this.els.status.textContent = "Flipping...";
-
-  const coin = document.getElementById("coinflipCoin");
-  const resultEl = document.getElementById("coinflipResult");
-
-  let spins = 0;
-  const anim = setInterval(() => {
-    spins++;
-    if (coin) coin.textContent = spins % 2 ? "🪙" : "💿";
-
-    if (spins >= 12) {
-      clearInterval(anim);
-
-      const outcome = this.provablyFairNumber(0, 1) === 1 ? "heads" : "tails";
-      const win = this.state.coinflip.choice === outcome;
-
-      if (coin) coin.textContent = outcome === "heads" ? "🪙" : "💿";
-      if (resultEl) resultEl.textContent = outcome.toUpperCase();
-
-      if (win) {
-        const payout = bet * 1.96;
-        this.balanceAdd(payout);
-        this.els.status.textContent = "WIN";
-        this.els.multiplier.textContent = "1.96x";
-        this.addBigWin(payout, "coinflip");
-        this.sound("win");
-      } else {
-        this.els.status.textContent = "LOSE";
-        this.els.multiplier.textContent = "0.00x";
-        this.sound("lose");
-      }
-
-      this.state.nonce++;
-      this.updateSeedsUI();
+    timers: {
+      ticker: null,
+      stats: null,
+      players: null,
+      engineAmbient: null
     }
-  }, 90);
-},
+  };
 
- renderLimbo() {
-  this.els.gameBox.innerHTML = `
-    <div style="display:flex;align-items:center;justify-content:center;height:240px;flex-direction:column;gap:12px;">
-      <div style="font-size:14px;opacity:.7;">Result Multiplier</div>
-      <div id="limboResult" style="font-size:56px;font-weight:1000;">--</div>
-    </div>
-  `;
+  const sampleNames = [
+    "alpha", "king", "nova", "ghost", "hex", "milo", "drift", "astro",
+    "luna", "volt", "echo", "zen", "omega", "delta", "saber", "raven",
+    "vex", "mamba", "hype", "orbit"
+  ];
 
-  this.els.dynamicControls.innerHTML = `
-    <div class="game-info-box">
-      <label style="display:block;margin-bottom:8px;font-weight:700;">Target Multiplier</label>
-      <input data-casino-input="limboTarget" id="limboTargetInput" type="number" min="1.01" step="0.01" value="2.00" style="width:100%;">
-    </div>
-  `;
+  const currencies = ["BX", "USDT", "USDC", "INR", "NGN", "PKR"];
 
-  this.state.limbo = { target: 2.00 };
-  this.els.status.textContent = "Set target";
-  this.els.multiplier.textContent = "2.00x";
-},
+  /* =========================================
+     INIT
+  ========================================= */
+  init();
 
-playLimbo() {
-  const bet = this.getBet();
-  if (!bet) return;
+  function init() {
+    injectProStyles();
+    syncInitialBet();
+    updateBalanceUI();
+    updateFairnessUI();
 
-  const target = parseFloat(document.getElementById("limboTargetInput")?.value || 2);
-  this.balanceSubtract(bet);
-  this.els.status.textContent = "Rolling...";
+    state.livePulse = generatePulseHistory(8);
+    state.recentWins = generateRecentWins(5);
 
-  const resultEl = document.getElementById("limboResult");
-  const result = +(1 + (Math.random() * 20)).toFixed(2);
+    renderTickerPulse();
+    renderBigWins();
+    renderPlayersTable();
+    updateTopStats();
+    renderPulseStrip();
+    bindGlobalEvents();
+    startAmbientLoops();
+    openLobby(true);
+  }
 
-  setTimeout(() => {
-    if (resultEl) resultEl.textContent = result.toFixed(2) + "x";
+  /* =========================================
+     PRO STYLES (JS ONLY)
+  ========================================= */
+  function injectProStyles() {
+    if ($("casinoProRuntimeStyles")) return;
 
-    if (result >= target) {
-      const payout = bet * target;
-      this.balanceAdd(payout);
-      this.els.status.textContent = "WIN";
-      this.els.multiplier.textContent = target.toFixed(2) + "x";
-      this.addBigWin(payout, "limbo");
-      this.sound("win");
-    } else {
-      this.els.status.textContent = "LOSE";
-      this.els.multiplier.textContent = "0.00x";
-      this.sound("lose");
+    const style = document.createElement("style");
+    style.id = "casinoProRuntimeStyles";
+    style.textContent = `
+      #casinoPage .view-enter {
+        animation: cxFadeIn .28s ease both;
+      }
+      #casinoPage .view-exit {
+        animation: cxFadeOut .20s ease both;
+      }
+      #casinoPage .card-enter {
+        animation: cxScaleIn .22s ease both;
+      }
+      #casinoPage .cashout-main-btn {
+        width: 100%;
+        min-height: 58px;
+        border: 0;
+        border-radius: 16px;
+        background: linear-gradient(180deg, #ffb340 0%, #ff9830 100%);
+        color: #121212;
+        font-size: 18px;
+        font-weight: 900;
+        cursor: pointer;
+        margin-bottom: 14px;
+        box-shadow: 0 10px 30px rgba(255, 173, 50, 0.18);
+      }
+      #casinoPage .result-flash-win {
+        animation: cxWinPulse .55s ease;
+      }
+      #casinoPage .result-flash-loss {
+        animation: cxLossPulse .55s ease;
+      }
+      #casinoPage .slot-reel.spin {
+        animation: cxSlotSpin .7s ease;
+      }
+      #casinoPage .pick-card.revealed-safe {
+        box-shadow: 0 0 0 1px rgba(46,229,127,.3), 0 0 24px rgba(46,229,127,.18);
+      }
+      #casinoPage .pick-card.revealed-bad {
+        box-shadow: 0 0 0 1px rgba(255,91,103,.3), 0 0 24px rgba(255,91,103,.18);
+      }
+      #casinoPage .casino-game-card.launching {
+        transform: scale(.98);
+        opacity: .88;
+      }
+      @keyframes cxFadeIn {
+        from { opacity:0; transform: translateY(10px); }
+        to { opacity:1; transform: translateY(0); }
+      }
+      @keyframes cxFadeOut {
+        from { opacity:1; transform: translateY(0); }
+        to { opacity:0; transform: translateY(8px); }
+      }
+      @keyframes cxScaleIn {
+        from { opacity:0; transform: scale(.98); }
+        to { opacity:1; transform: scale(1); }
+      }
+      @keyframes cxWinPulse {
+        0% { filter:none; }
+        50% { filter: drop-shadow(0 0 18px rgba(46,229,127,.35)); transform: scale(1.03); }
+        100% { filter:none; transform: scale(1); }
+      }
+      @keyframes cxLossPulse {
+        0% { filter:none; }
+        50% { filter: drop-shadow(0 0 16px rgba(255,91,103,.22)); transform: scale(.985); }
+        100% { filter:none; transform: scale(1); }
+      }
+      @keyframes cxSlotSpin {
+        0% { transform: translateY(0) scale(1); }
+        30% { transform: translateY(-12px) scale(1.02); }
+        70% { transform: translateY(10px) scale(.98); }
+        100% { transform: translateY(0) scale(1); }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  /* =========================================
+     BIND EVENTS
+  ========================================= */
+  function bindGlobalEvents() {
+    casinoGamesGrid?.addEventListener("click", async (e) => {
+      const card = e.target.closest(".casino-game-card");
+      if (!card || state.isTransitioning) return;
+
+      card.classList.add("launching");
+      await wait(110);
+      card.classList.remove("launching");
+
+      openGame({
+        id: card.dataset.game,
+        title: card.dataset.title || card.dataset.game || "Game",
+        mode: card.dataset.mode || "instant",
+        provider: card.dataset.provider || "Bloxio Originals",
+        image: card.dataset.image || ""
+      });
+    });
+
+    $$(".casino-filter-tab").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        $$(".casino-filter-tab").forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        state.activeFilter = btn.dataset.filter || "all";
+        filterLobbyCards();
+      });
+    });
+
+    casinoBackBtn?.addEventListener("click", async () => {
+      if (state.isTransitioning) return;
+      await closeCurrentGameAndReturn();
+    });
+
+    casinoAuthBtn?.addEventListener("click", () => {
+      casinoAuthBtn.textContent = casinoAuthBtn.textContent === "Connexion" ? "Connected" : "Connexion";
+    });
+
+    casinoRefreshBtn?.addEventListener("click", () => {
+      updateTopStats();
+      state.livePulse = generatePulseHistory(10);
+      state.recentWins = generateRecentWins(5);
+      renderTickerPulse();
+      renderBigWins();
+      renderPlayersTable();
+      renderPulseStrip();
+    });
+
+    betAmountInput?.addEventListener("input", () => {
+      const v = parseFloat(betAmountInput.value);
+      if (!isNaN(v) && v > 0) state.betAmount = round(v, 2);
+    });
+
+    document.addEventListener("click", (e) => {
+      const betBtn = e.target.closest("[data-bet-action]");
+      if (betBtn) {
+        handleBetAction(betBtn.dataset.betAction);
+        return;
+      }
+
+      const segBtn = e.target.closest(".seg-btn");
+      if (segBtn) {
+        handleSegBtn(segBtn);
+        return;
+      }
+
+      const pickCard = e.target.closest(".pick-card");
+      if (pickCard && state.activeGame?.id === "birdsparty") {
+        handleBirdPick(pickCard);
+        return;
+      }
+    });
+
+    $$(".game-header-tab").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        $$(".game-header-tab").forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        state.currentHeaderTab = btn.dataset.modeTab || "classic";
+      });
+    });
+
+    $$(".settings-tab").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        $$(".settings-tab").forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        state.currentSettingsTab = btn.dataset.settingsTab || "manual";
+      });
+    });
+
+    $$(".settings-tool-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        $$(".settings-tool-btn").forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+      });
+    });
+
+    casinoPlayBtn?.addEventListener("click", onPrimaryAction);
+
+    newSeedBtn?.addEventListener("click", () => {
+      state.serverSeed = randomSeed(32);
+      state.clientSeed = `client_${randInt(1000, 9999)}`;
+      state.nonce = 0;
+      updateFairnessUI();
+      setCaption("New fairness seed generated");
+    });
+  }
+
+  /* =========================================
+     LOBBY / VIEW TRANSITIONS
+  ========================================= */
+  function openLobby(initial = false) {
+    stopAmbientEngine();
+    stopCrashSession(true);
+
+    state.activeGame = null;
+    state.isPlaying = false;
+
+    casinoGameView?.classList.add("hidden");
+    casinoLobby?.classList.remove("hidden");
+
+    if (!initial) {
+      casinoLobby?.classList.remove("view-exit");
+      casinoLobby?.classList.add("view-enter");
+      setTimeout(() => casinoLobby?.classList.remove("view-enter"), 300);
     }
 
-    this.state.nonce++;
-    this.updateSeedsUI();
-  }, 700);
-},
+    filterLobbyCards();
+  }
 
-renderHilo() {
-  this.els.gameBox.innerHTML = `
-    <div style="display:flex;align-items:center;justify-content:center;height:240px;flex-direction:column;gap:12px;">
-      <div id="hiloCard" style="font-size:92px;">🂡</div>
-      <div id="hiloValue" style="font-size:26px;font-weight:900;">Card: A</div>
-    </div>
-  `;
+  async function openGame(game) {
+    state.isTransitioning = true;
+    stopAmbientEngine();
+    stopCrashSession(true);
+    resetGameSessionStates();
 
-  this.els.dynamicControls.innerHTML = `
-    <div class="game-info-box">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-        <button class="bet-quick-btn active" data-casino-action="hiloHigh" type="button">High</button>
-        <button class="bet-quick-btn" data-casino-action="hiloLow" type="button">Low</button>
+    casinoLobby?.classList.add("view-exit");
+    await wait(180);
+
+    casinoLobby?.classList.add("hidden");
+    casinoLobby?.classList.remove("view-exit");
+
+    state.activeGame = game;
+    state.isPlaying = false;
+
+    casinoGameView?.classList.remove("hidden");
+    casinoGameView?.classList.add("view-enter");
+    setTimeout(() => casinoGameView?.classList.remove("view-enter"), 300);
+
+    gameEngineCaption.textContent = getGameCaption(game.id);
+    gameMultiplierDisplay.textContent = "1.00×";
+
+    renderDynamicControls(game.id);
+    renderGameEngine(game.id);
+    renderPlayersTable();
+    renderPulseStrip();
+    updatePrimaryButtonState();
+    startAmbientEngine(game.id);
+
+    state.isTransitioning = false;
+  }
+
+  async function closeCurrentGameAndReturn() {
+    state.isTransitioning = true;
+    stopCrashSession(true);
+    stopAmbientEngine();
+
+    casinoGameView?.classList.add("view-exit");
+    await wait(180);
+
+    casinoGameView?.classList.add("hidden");
+    casinoGameView?.classList.remove("view-exit");
+
+    openLobby();
+    state.isTransitioning = false;
+  }
+
+  function filterLobbyCards() {
+    const cards = $$(".casino-game-card", casinoGamesGrid);
+    cards.forEach((card) => {
+      const mode = card.dataset.mode || "instant";
+      let show = true;
+
+      if (state.activeFilter === "instant") show = mode === "instant";
+      else if (state.activeFilter === "provably") show = mode === "provably";
+      else if (state.activeFilter === "slots") show = mode === "slots";
+
+      card.style.display = show ? "" : "none";
+    });
+  }
+
+  /* =========================================
+     TOP LIVE DATA
+  ========================================= */
+  function updateTopStats() {
+    const liveBets = randInt(6000, 15000);
+    const volume = randInt(80000, 300000);
+
+    if (casinoLiveBetsCount) casinoLiveBetsCount.textContent = liveBets.toLocaleString();
+    if (casinoVolumeToday) casinoVolumeToday.textContent = `${volume.toLocaleString()} BX`;
+  }
+
+  function generatePulseHistory(count = 8) {
+    return Array.from({ length: count }).map(() => {
+      const mult = Math.random() > 0.55
+        ? round(Math.random() * 3 + 1.1, 2)
+        : round(Math.random() * 0.5 + 1.01, 2);
+      return mult;
+    });
+  }
+
+  function generateRecentWins(count = 5) {
+    return Array.from({ length: count }).map(() => ({
+      player: `@${rand(sampleNames)}`,
+      game: rand(["Crash", "Dice", "Plinko", "Limbo", "Slot", "Blackjack"]),
+      amount: `+${(Math.random() * 250 + 10).toFixed(2)} BX`
+    }));
+  }
+
+  function renderTickerPulse() {
+    if (!tickerPulse) return;
+
+    const items = Array.from({ length: 10 }).map(() => {
+      const win = Math.random() > 0.4;
+      const player = rand(sampleNames);
+      const game = rand(["Crash", "Dice", "Plinko", "Limbo", "Coin Flip", "Slot"]);
+      const value = (Math.random() * 120 + 5).toFixed(2);
+      return `<div class="ticker-item ${win ? "win" : "loss"}">${win ? "🔥" : "🔻"} @${player} ${win ? "won" : "lost"} ${win ? "+" : "-"}${value} BX on ${game}</div>`;
+    });
+
+    tickerPulse.innerHTML = items.join("");
+  }
+
+  function renderBigWins() {
+    if (!bigWinsList) return;
+
+    bigWinsList.innerHTML = state.recentWins.map((w) => `
+      <div class="big-win-row">
+        <span class="player">${w.player}</span>
+        <span class="game">${w.game}</span>
+        <span class="amount">${w.amount}</span>
       </div>
-    </div>
-  `;
-
-  this.state.hilo = { choice: "high" };
-  this.els.status.textContent = "Guess next";
-  this.els.multiplier.textContent = "1.85x";
-},
-
-playHilo() {
-  const bet = this.getBet();
-  if (!bet) return;
-
-  this.balanceSubtract(bet);
-
-  const value = this.provablyFairNumber(1, 13);
-  const win = this.state.hilo.choice === "high" ? value >= 8 : value <= 6;
-
-  const cardEl = document.getElementById("hiloCard");
-  const valueEl = document.getElementById("hiloValue");
-
-  const cards = ["A","2","3","4","5","6","7","8","9","10","J","Q","K"];
-  if (cardEl) cardEl.textContent = "🂡";
-  if (valueEl) valueEl.textContent = "Card: " + cards[value - 1];
-
-  if (win) {
-    const payout = bet * 1.85;
-    this.balanceAdd(payout);
-    this.els.status.textContent = "WIN";
-    this.els.multiplier.textContent = "1.85x";
-    this.addBigWin(payout, "hilo");
-    this.sound("win");
-  } else {
-    this.els.status.textContent = "LOSE";
-    this.els.multiplier.textContent = "0.00x";
-    this.sound("lose");
+    `).join("");
   }
 
-  this.state.nonce++;
-  this.updateSeedsUI();
-},
+  function renderPulseStrip() {
+    if (!pulseStrip) return;
 
-renderBlackjack() {
-  this.els.gameBox.innerHTML = `
-    <div style="display:grid;gap:18px;padding:16px;">
-      <div>
-        <div style="opacity:.7;margin-bottom:6px;">Dealer</div>
-        <div id="bjDealer" style="font-size:38px;font-weight:900;">?</div>
-      </div>
+    const pills = state.livePulse.slice(-8).map((mult) => {
+      const green = mult >= 2;
+      return `<div class="pulse-pill ${green ? "green" : "orange"}">${mult.toFixed(2)}×</div>`;
+    }).join("");
 
-      <div>
-        <div style="opacity:.7;margin-bottom:6px;">Player</div>
-        <div id="bjPlayer" style="font-size:38px;font-weight:900;">?</div>
-      </div>
-    </div>
-  `;
-
-  this.els.dynamicControls.innerHTML = `
-    <div class="game-info-box">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-        <button class="bet-quick-btn" data-casino-action="bjHit" type="button">Hit</button>
-        <button class="bet-quick-btn" data-casino-action="bjStand" type="button">Stand</button>
-      </div>
-      <div style="margin-top:10px;opacity:.8;">Fast auto blackjack logic</div>
-    </div>
-  `;
-
-  this.state.blackjack = {
-    player: [],
-    dealer: [],
-    active: false
-  };
-
-  this.startBlackjackRound();
-},
-
-startBlackjackRound() {
-  const draw = () => this.provablyFairNumber(2, 11);
-
-  this.state.blackjack.player = [draw(), draw()];
-  this.state.blackjack.dealer = [draw(), draw()];
-  this.state.blackjack.active = true;
-
-  this.updateBlackjackUI();
-  this.els.status.textContent = "Blackjack round ready";
-  this.els.multiplier.textContent = "2.00x";
-},
-
-updateBlackjackUI() {
-  const p = this.state.blackjack.player;
-  const d = this.state.blackjack.dealer;
-
-  const pSum = p.reduce((a,b) => a+b, 0);
-  const dSum = d.reduce((a,b) => a+b, 0);
-
-  const pEl = document.getElementById("bjPlayer");
-  const dEl = document.getElementById("bjDealer");
-
-  if (pEl) pEl.textContent = `${p.join(" + ")} = ${pSum}`;
-  if (dEl) dEl.textContent = `${d.join(" + ")} = ${dSum}`;
-},
-
-playBlackjack() {
-  const bet = this.getBet();
-  if (!bet) return;
-
-  if (!this.state.blackjack?.active) {
-    this.balanceSubtract(bet);
-    this.state.blackjack.betPlaced = true;
-    this.startBlackjackRound();
-    return;
+    pulseStrip.innerHTML = `
+      ${pills}
+      <button class="pulse-mini-btn" type="button">🕒</button>
+      <button class="pulse-mini-btn" type="button">☷</button>
+    `;
   }
 
-  // إذا ضغط play نعتبرها stand مباشر
-  this.finishBlackjack();
-},
-
-blackjackHit() {
-  if (!this.state.blackjack?.active) return;
-  this.state.blackjack.player.push(this.provablyFairNumber(2, 11));
-  this.updateBlackjackUI();
-
-  const sum = this.state.blackjack.player.reduce((a,b)=>a+b,0);
-  if (sum > 21) {
-    this.els.status.textContent = "BUST";
-    this.els.multiplier.textContent = "0.00x";
-    this.sound("lose");
-    this.state.blackjack.active = false;
-    this.state.nonce++;
-    this.updateSeedsUI();
-  }
-},
-
-finishBlackjack() {
-  if (!this.state.blackjack?.active) return;
-
-  while (this.state.blackjack.dealer.reduce((a,b)=>a+b,0) < 17) {
-    this.state.blackjack.dealer.push(this.provablyFairNumber(2, 11));
+  function pushPulse(mult) {
+    state.livePulse.push(mult);
+    if (state.livePulse.length > 16) state.livePulse.shift();
+    renderPulseStrip();
   }
 
-  this.updateBlackjackUI();
-
-  const pSum = this.state.blackjack.player.reduce((a,b)=>a+b,0);
-  const dSum = this.state.blackjack.dealer.reduce((a,b)=>a+b,0);
-
-  if (dSum > 21 || pSum > dSum) {
-    const payout = this.state.bet * 2;
-    this.balanceAdd(payout);
-    this.els.status.textContent = "WIN";
-    this.els.multiplier.textContent = "2.00x";
-    this.addBigWin(payout, "blackjack_fast");
-    this.sound("win");
-  } else {
-    this.els.status.textContent = "LOSE";
-    this.els.multiplier.textContent = "0.00x";
-    this.sound("lose");
-  }
-
-  this.state.blackjack.active = false;
-  this.state.nonce++;
-  this.updateSeedsUI();
-},
-
-renderAirBoss() {
-  this.els.gameBox.innerHTML = `
-    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;padding:14px;" id="airbossGrid"></div>
-  `;
-
-  this.els.dynamicControls.innerHTML = `
-    <div class="game-info-box">
-      <div>Find safe flights. Avoid bombs.</div>
-      <div style="margin-top:8px;opacity:.8;">Each safe tile increases multiplier.</div>
-    </div>
-  `;
-
-  this.state.airboss = {
-    bombs: [],
-    revealed: [],
-    multiplier: 1.00,
-    active: false
-  };
-
-  this.buildAirBoss();
-},
-
-buildAirBoss() {
-  const grid = document.getElementById("airbossGrid");
-  if (!grid) return;
-
-  grid.innerHTML = "";
-  this.state.airboss.bombs = [];
-
-  while (this.state.airboss.bombs.length < 5) {
-    const n = this.provablyFairNumber(0, 24);
-    if (!this.state.airboss.bombs.includes(n)) this.state.airboss.bombs.push(n);
-  }
-
-  this.state.airboss.revealed = [];
-  this.state.airboss.multiplier = 1.00;
-  this.state.airboss.active = false;
-
-  for (let i = 0; i < 25; i++) {
-    const btn = document.createElement("button");
-    btn.className = "slot-cell";
-    btn.style.height = "64px";
-    btn.textContent = "✈️";
-    btn.dataset.casinoAction = "airbossPick";
-    btn.dataset.index = i;
-    grid.appendChild(btn);
-  }
-
-  this.els.status.textContent = "Press Play to start";
-  this.els.multiplier.textContent = "1.00x";
-},
-
-playAirBoss() {
-  const bet = this.getBet();
-  if (!bet) return;
-
-  this.balanceSubtract(bet);
-  this.state.airboss.active = true;
-  this.state.airboss.multiplier = 1.00;
-  this.els.status.textContent = "Pick safe flights";
-},
-
-renderBananaFarm() {
-  this.els.gameBox.innerHTML = `
-    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;padding:14px;" id="bananaGrid"></div>
-  `;
-
-  this.els.dynamicControls.innerHTML = `
-    <div class="game-info-box">
-      <div>Find bananas, avoid rotten traps.</div>
-      <div style="margin-top:8px;opacity:.8;">Farm mode survival.</div>
-    </div>
-  `;
-
-  this.state.banana = {
-    traps: [],
-    found: [],
-    multiplier: 1.00,
-    active: false
-  };
-
-  this.buildBananaFarm();
-},
-
-buildBananaFarm() {
-  const grid = document.getElementById("bananaGrid");
-  if (!grid) return;
-
-  grid.innerHTML = "";
-  this.state.banana.traps = [];
-
-  while (this.state.banana.traps.length < 4) {
-    const n = this.provablyFairNumber(0, 24);
-    if (!this.state.banana.traps.includes(n)) this.state.banana.traps.push(n);
-  }
-
-  this.state.banana.found = [];
-  this.state.banana.multiplier = 1.00;
-  this.state.banana.active = false;
-
-  for (let i = 0; i < 25; i++) {
-    const btn = document.createElement("button");
-    btn.className = "slot-cell";
-    btn.style.height = "64px";
-    btn.textContent = "🌱";
-    btn.dataset.casinoAction = "bananaPick";
-    btn.dataset.index = i;
-    grid.appendChild(btn);
-  }
-
-  this.els.status.textContent = "Press Play to start";
-  this.els.multiplier.textContent = "1.00x";
-},
-
-playBananaFarm() {
-  const bet = this.getBet();
-  if (!bet) return;
-
-  this.balanceSubtract(bet);
-  this.state.banana.active = true;
-  this.state.banana.multiplier = 1.00;
-  this.els.status.textContent = "Pick bananas";
-},
-
-renderBirdsParty() {
-  this.els.gameBox.innerHTML = `
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;padding:16px;" id="birdsGrid">
-      <button class="slot-cell" data-casino-action="birdsPick" data-multi="1.5">🐦</button>
-      <button class="slot-cell" data-casino-action="birdsPick" data-multi="2.0">🦜</button>
-      <button class="slot-cell" data-casino-action="birdsPick" data-multi="3.0">🦅</button>
-    </div>
-  `;
-
-  this.els.dynamicControls.innerHTML = `
-    <div class="game-info-box">
-      <div>Pick a bird and reveal payout.</div>
-    </div>
-  `;
-
-  this.els.status.textContent = "Choose a bird";
-  this.els.multiplier.textContent = "1.00x";
-},
-
-playBirdsParty() {
-  const bet = this.getBet();
-  if (!bet) return;
-
-  this.balanceSubtract(bet);
-  this.state.birds = { active: true, bet };
-  this.els.status.textContent = "Now pick a bird";
-},
-
-renderFruitParty() {
-  this.els.gameBox.innerHTML = `
-    <div id="fruitPartyBoard" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:16px;"></div>
-  `;
-
-  this.els.dynamicControls.innerHTML = `
-    <div class="game-info-box">
-      <div>Match fruits to win.</div>
-    </div>
-  `;
-
-  this.buildFruitParty();
-  this.els.status.textContent = "Press Play";
-  this.els.multiplier.textContent = "1.00x";
-},
-
-buildFruitParty() {
-  const board = document.getElementById("fruitPartyBoard");
-  if (!board) return;
-
-  const fruits = ["🍎","🍌","🍉","🍇","🍒","🍋"];
-  board.innerHTML = "";
-
-  for (let i = 0; i < 12; i++) {
-    const d = document.createElement("div");
-    d.className = "slot-cell";
-    d.style.height = "70px";
-    d.textContent = fruits[Math.floor(Math.random() * fruits.length)];
-    board.appendChild(d);
-  }
-},
-
-playFruitParty() {
-  const bet = this.getBet();
-  if (!bet) return;
-
-  this.balanceSubtract(bet);
-  this.buildFruitParty();
-
-  const cells = [...document.querySelectorAll("#fruitPartyBoard .slot-cell")];
-  const values = cells.map(c => c.textContent);
-
-  const counts = {};
-  values.forEach(v => counts[v] = (counts[v] || 0) + 1);
-
-  const best = Math.max(...Object.values(counts));
-  let multi = 0;
-
-  if (best >= 5) multi = 4;
-  else if (best >= 4) multi = 2.5;
-  else if (best >= 3) multi = 1.5;
-
-  if (multi > 0) {
-    const payout = bet * multi;
-    this.balanceAdd(payout);
-    this.els.status.textContent = "WIN";
-    this.els.multiplier.textContent = multi.toFixed(2) + "x";
-    this.addBigWin(payout, "fruit_party");
-    this.sound("win");
-  } else {
-    this.els.status.textContent = "LOSE";
-    this.els.multiplier.textContent = "0.00x";
-    this.sound("lose");
-  }
-
-  this.state.nonce++;
-  this.updateSeedsUI();
-},
-
-
-/* =========================================================
-       PLAY ROUTER
-========================================================= */
-    
-   play() {
-  switch (this.state.currentGame) {
-    case "crash":
-      this.startCrashRound();
-      break;
-
-    case "dice":
-      this.playDice();
-      break;
-
-    case "plinko":
-      this.playPlinko();
-      break;
-
-    case "slot":
-      this.playSlot();
-      break;
-
-    case "coinflip":
-      this.playCoinflip();
-      break;
-
-    case "limbo":
-      this.playLimbo();
-      break;
-
-    case "hilo":
-      this.playHilo();
-      break;
-
-    case "blackjack_fast":
-      this.playBlackjack();
-      break;
-
-    case "airboss":
-      this.playAirBoss();
-      break;
-
-    case "banana_farm":
-      this.playBananaFarm();
-      break;
-
-    case "birds_party":
-      this.playBirdsParty();
-      break;
-
-    case "fruit_party":
-      this.playFruitParty();
-      break;
-
-    default:
-      this.playGeneric();
-   }
-    },
-
-    playGeneric() {
-      const bet = this.getBet();
-      if (!bet) return;
-
-      this.balanceSubtract(bet);
-
-      const win = Math.random() > 0.52;
-      const payout = win ? bet * (1.2 + Math.random() * 2.8) : 0;
-
-      if (win) {
-        this.balanceAdd(payout);
-        this.els.status.textContent = `Win ${payout.toFixed(2)} BX`;
-        this.els.multiplier.textContent = (payout / bet).toFixed(2) + "x";
-        this.addBigWin(payout, this.state.currentGame || "game");
-        this.sound("win");
-      } else {
-        this.els.status.textContent = "Lost";
-        this.els.multiplier.textContent = "0.00x";
-        this.sound("lose");
-      }
-
-      this.state.nonce++;
-      this.updateSeedsUI();
-    },
-
-    /* =========================================================
-       BET / BALANCE
-    ========================================================= */
-    getBet() {
-      const bet = parseFloat(this.els.betInput?.value || 0);
-
-      if (!bet || bet <= 0) {
-        alert("Enter valid BX bet");
-        return 0;
-      }
-
-      if (bet > this.state.balance) {
-        alert("Insufficient BX balance");
-        return 0;
-      }
-
-      this.state.bet = bet;
-      return bet;
-    },
-
-    handleQuickBet(btn) {
-      const multi = parseFloat(btn.dataset.betMulti || 0);
-      const percent = parseFloat(btn.dataset.betPercent || 0);
-
-      let current = parseFloat(this.els.betInput.value || 0);
-
-      if (multi) {
-        if (!current) current = 1;
-        this.els.betInput.value = (current * multi).toFixed(2);
-      }
-
-      if (percent) {
-        this.els.betInput.value = ((this.state.balance * percent) / 100).toFixed(2);
-      }
-    },
-
-    balanceSubtract(amount) {
-      this.state.balance = Math.max(0, this.state.balance - amount);
-      this.updateBalanceUI();
-    },
-
-    balanceAdd(amount) {
-      this.state.balance += amount;
-      this.updateBalanceUI();
-    },
-
-    updateBalanceUI() {
-      if (this.els.balanceMini) this.els.balanceMini.textContent = this.state.balance.toFixed(2) + " BX";
-      if (this.els.balanceGame) this.els.balanceGame.textContent = this.state.balance.toFixed(2);
-    },
-
-    /* =========================================================
-       PROVABLY FAIR
-    ========================================================= */
-    newSeed() {
-      this.state.clientSeed = "client_" + Math.random().toString(36).slice(2);
-      this.state.serverSeed = "server_" + Math.random().toString(36).slice(2);
-      this.state.nonce = 0;
-      this.updateSeedsUI();
-    },
-
-    updateSeedsUI() {
-      if (this.els.serverSeed) this.els.serverSeed.textContent = this.hash(this.state.serverSeed);
-      if (this.els.clientSeed) this.els.clientSeed.textContent = this.state.clientSeed;
-      if (this.els.nonce) this.els.nonce.textContent = String(this.state.nonce);
-    },
-
-    hash(str) {
-      return btoa(unescape(encodeURIComponent(str))).slice(0, 20);
-    },
-
-    provablyFairNumber(min, max) {
-      // pseudo PF للواجهة — backend لاحقًا
-      const seed = `${this.state.serverSeed}:${this.state.clientSeed}:${this.state.nonce}`;
-      let h = 0;
-      for (let i = 0; i < seed.length; i++) {
-        h = (h << 5) - h + seed.charCodeAt(i);
-        h |= 0;
-      }
-      const normalized = Math.abs(h % 10000) / 10000;
-      return Math.floor(normalized * (max - min + 1)) + min;
-    },
-
-    /* =========================================================
-       BIG WINS
-    ========================================================= */
-    renderBigWins() {
-      if (!this.els.bigWins) return;
-
-      const seedWins = [
-        { user: "@alpha", game: "Crash", amount: 24.50 },
-        { user: "@king", game: "Dice", amount: 41.00 },
-        { user: "@nova", game: "Plinko", amount: 88.75 }
-      ];
-
-      this.els.bigWins.innerHTML = seedWins.map(w => `
-        <div class="big-win-row">
-          <div class="big-win-user">
-            <strong>${w.user}</strong>
-            <small>${w.game}</small>
-          </div>
-          <div class="big-win-amount">+${w.amount.toFixed(2)} BX</div>
+  function renderPlayersTable() {
+    if (!playersTableBody) return;
+
+    const rows = Array.from({ length: 10 }).map(() => {
+      const player = `@${rand(sampleNames)}`;
+      const cashout = Math.random() > 0.45 ? `${(Math.random() * 4 + 1).toFixed(2)}×` : "-";
+      const amount = `${randInt(5, 5000).toLocaleString()} ${rand(currencies)}`;
+
+      return `
+        <div class="player-row">
+          <span class="name">${player}</span>
+          <span class="cashout">${cashout}</span>
+          <span class="amount">${amount}</span>
         </div>
-      `).join("");
-    },
-
-    addBigWin(amount, game = "Game") {
-      if (!this.els.bigWins) return;
-
-      const row = document.createElement("div");
-      row.className = "big-win-row";
-      row.innerHTML = `
-        <div class="big-win-user">
-          <strong>@you</strong>
-          <small>${this.prettyGameName(game)}</small>
-        </div>
-        <div class="big-win-amount">+${amount.toFixed(2)} BX</div>
       `;
+    });
 
-      this.els.bigWins.prepend(row);
+    playersTableBody.innerHTML = rows.join("");
+    playersCountText.textContent = `0/${randInt(120, 1355)} Joueurs`;
+    playersVolumeText.textContent = `${(Math.random() * 9000 + 1000).toFixed(2)} $US`;
+  }
 
-      while (this.els.bigWins.children.length > 10) {
-        this.els.bigWins.removeChild(this.els.bigWins.lastChild);
-      }
-    },
+  function startAmbientLoops() {
+    clearInterval(state.timers.ticker);
+    clearInterval(state.timers.stats);
+    clearInterval(state.timers.players);
 
-    /* =========================================================
-       TICKER
-    ========================================================= */
-    startTicker() {
-      if (!this.els.ticker) return;
+    state.timers.ticker = setInterval(renderTickerPulse, 7000);
+    state.timers.stats = setInterval(() => {
+      updateTopStats();
+      state.recentWins = generateRecentWins(5);
+      renderBigWins();
+    }, 9000);
+    state.timers.players = setInterval(renderPlayersTable, 8000);
+  }
 
-      const lines = [
-        "🔥 Crash just hit 8.42x",
-        "🎲 Dice winner +32 BX",
-        "🟢 Plinko edge hit 5.00x",
-        "🎰 Slot jackpot landed",
-        "⚡ BX Casino Live"
-      ];
+  /* =========================================
+     FAIRNESS / BALANCE
+  ========================================= */
+  function updateBalanceUI() {
+    if (casinoBalanceTop) casinoBalanceTop.textContent = formatBX(state.balance);
+    if (betAmountInput) betAmountInput.value = Number(state.betAmount).toFixed(2);
+  }
 
-      let i = 0;
-      setInterval(() => {
-        i = (i + 1) % lines.length;
-        this.els.ticker.innerHTML = `<span>${lines[i]}</span>`;
-      }, 2800);
-    },
+  function updateFairnessUI() {
+    if (serverSeedText) serverSeedText.textContent = state.serverSeed;
+    if (clientSeedText) clientSeedText.textContent = state.clientSeed;
+    if (nonceText) nonceText.textContent = String(state.nonce);
+  }
 
-    /* =========================================================
-       DYNAMIC ACTIONS
-    ========================================================= */
-    handleDynamicAction(type, el) {
-      switch (type) {
-        case "crashStart":
-          this.startCrashRound();
-          break;
-        case "crashCashout":
-          this.crashCashout();
-          break;
+  function syncInitialBet() {
+    if (betAmountInput) betAmountInput.value = state.betAmount.toFixed(2);
+  }
 
-        case "diceModeOver":
-          this.state.dice.rollOver = true;
-          this.els.status.textContent = "Roll Over selected";
-          this.els.multiplier.textContent = this.getDiceMultiplier().toFixed(2) + "x";
-          this.toggleActiveButton(el, ["diceModeOver", "diceModeUnder"]);
-          break;
+  function spendBet(amount) {
+    state.balance = round(state.balance - amount, 2);
+    state.balance = Math.max(0, state.balance);
+    updateBalanceUI();
+  }
 
-        case "diceModeUnder":
-          this.state.dice.rollOver = false;
-          this.els.status.textContent = "Roll Under selected";
-          this.els.multiplier.textContent = this.getDiceMultiplier().toFixed(2) + "x";
-          this.toggleActiveButton(el, ["diceModeOver", "diceModeUnder"]);
-          break;
+  function addPayout(amount) {
+    state.balance = round(state.balance + amount, 2);
+    updateBalanceUI();
+  }
 
-        case "plinkoRiskLow":
-          this.state.plinko.risk = "low";
-          this.toggleActiveButton(el, ["plinkoRiskLow", "plinkoRiskMedium", "plinkoRiskHigh"]);
-          break;
+  function canAfford(bet) {
+    return bet > 0 && bet <= state.balance;
+  }
 
-        case "plinkoRiskMedium":
-          this.state.plinko.risk = "medium";
-          this.toggleActiveButton(el, ["plinkoRiskLow", "plinkoRiskMedium", "plinkoRiskHigh"]);
-          break;
+  /* =========================================
+     BUTTON / CAPTION / FX
+  ========================================= */
+  function setCaption(text) {
+    if (gameEngineCaption) gameEngineCaption.textContent = text;
+  }
 
-        case "plinkoRiskHigh":
-          this.state.plinko.risk = "high";
-          this.toggleActiveButton(el, ["plinkoRiskLow", "plinkoRiskMedium", "plinkoRiskHigh"]);
-          break;
+  function setMultiplier(v) {
+    if (gameMultiplierDisplay) gameMultiplierDisplay.textContent = `${Number(v).toFixed(2)}×`;
+  }
 
-         case "coinflipHeads":
-          this.state.coinflip.choice = "heads";
-          this.toggleActiveButton(el, ["coinflipHeads", "coinflipTails"]);
-         break;
+  function flashResult(win = true) {
+    if (!gameMultiplierDisplay) return;
+    gameMultiplierDisplay.classList.remove("result-flash-win", "result-flash-loss");
+    void gameMultiplierDisplay.offsetWidth;
+    gameMultiplierDisplay.classList.add(win ? "result-flash-win" : "result-flash-loss");
+  }
 
-         case "coinflipTails":
-          this.state.coinflip.choice = "tails";
-          this.toggleActiveButton(el, ["coinflipHeads", "coinflipTails"]);
-          break;
+  function updatePrimaryButtonState() {
+    if (!casinoPlayBtn || !state.activeGame) return;
 
-         case "hiloHigh":
-          this.state.hilo.choice = "high";
-          this.toggleActiveButton(el, ["hiloHigh", "hiloLow"]);
-         break;
+    casinoPlayBtn.classList.remove("cashout-main-btn");
+    casinoPlayBtn.disabled = false;
 
-         case "hiloLow":
-          this.state.hilo.choice = "low";
-          this.toggleActiveButton(el, ["hiloHigh", "hiloLow"]);
+    if (state.activeGame.id === "crash" && state.crashSession.running && !state.crashSession.cashedOut) {
+      casinoPlayBtn.textContent = `Cashout ${state.crashSession.current.toFixed(2)}×`;
+      casinoPlayBtn.classList.add("cashout-main-btn");
+      return;
+    }
+
+    if (state.activeGame.id === "blackjack" && state.blackjack.inRound) {
+      casinoPlayBtn.textContent = "Round Active";
+      casinoPlayBtn.disabled = true;
+      return;
+    }
+
+    if (state.activeGame.id === "hilo" && state.hilo.inRound) {
+      casinoPlayBtn.textContent = "Next Round";
+      return;
+    }
+
+    casinoPlayBtn.textContent = "Pari";
+  }
+
+  /* =========================================
+     BET ACTIONS
+  ========================================= */
+  function handleBetAction(action) {
+    switch (action) {
+      case "half":
+        state.betAmount = Math.max(0.01, round(state.betAmount / 2, 2));
+        break;
+      case "double":
+        state.betAmount = round(state.betAmount * 2, 2);
+        break;
+      case "up":
+        state.betAmount = round(state.betAmount + 1, 2);
+        break;
+    }
+    updateBalanceUI();
+  }
+
+  /* =========================================
+     GAME CONTROLS
+  ========================================= */
+  function renderDynamicControls(gameId) {
+    if (!dynamicBetControls) return;
+
+    switch (gameId) {
+      case "coinflip":
+        dynamicBetControls.innerHTML = `
+          <div class="dynamic-card card-enter">
+            <div class="dynamic-card-title">Pick Side</div>
+            <div class="segmented-row">
+              <button class="seg-btn ${state.coinSide === "heads" ? "active" : ""}" data-seg="coin" data-value="heads">Heads</button>
+              <button class="seg-btn ${state.coinSide === "tails" ? "active" : ""}" data-seg="coin" data-value="tails">Tails</button>
+            </div>
+          </div>
+        `;
         break;
 
-         case "bjHit":
-          this.blackjackHit();
-          break;
+      case "limbo":
+      case "airboss":
+      case "bananafarm":
+        dynamicBetControls.innerHTML = `
+          <div class="dynamic-card card-enter">
+            <div class="inline-value-row">
+              <span>Target Multiplier</span>
+              <strong>${state.limboTarget.toFixed(2)}×</strong>
+            </div>
+            <input class="mini-input" id="limboTargetInput" type="number" min="1.01" step="0.01" value="${state.limboTarget.toFixed(2)}">
+          </div>
+        `;
+        attachLimboInput();
+        break;
 
-         case "bjStand":
-          this.finishBlackjack();
-          break;
+      case "crash":
+        dynamicBetControls.innerHTML = `
+          <div class="dynamic-card card-enter">
+            <div class="inline-value-row">
+              <span>Auto Cashout</span>
+              <strong>${state.crashAutoCashout.toFixed(2)}×</strong>
+            </div>
+            <input class="mini-input" id="crashAutoInput" type="number" min="1.01" step="0.01" value="${state.crashAutoCashout.toFixed(2)}">
+          </div>
+        `;
+        attachCrashInput();
+        break;
 
-         case "airbossPick":
-           this.handleAirBossPick(Number(el.dataset.index), el);
-           break;
+      case "dice":
+        dynamicBetControls.innerHTML = `
+          <div class="dynamic-card card-enter">
+            <div class="inline-value-row">
+              <span>Target</span>
+              <strong>${state.diceTarget}</strong>
+            </div>
+            <input type="range" id="diceRangeInput" min="2" max="98" step="1" value="${state.diceTarget}">
+            <input class="mini-input" id="diceTargetInput" type="number" min="2" max="98" step="1" value="${state.diceTarget}">
+            <div class="segmented-row" style="margin-top:10px;">
+              <button class="seg-btn ${state.diceMode === "over" ? "active" : ""}" data-seg="dice-mode" data-value="over">Roll Over</button>
+              <button class="seg-btn ${state.diceMode === "under" ? "active" : ""}" data-seg="dice-mode" data-value="under">Roll Under</button>
+            </div>
+          </div>
+        `;
+        attachDiceInputs();
+        break;
 
-         case "bananaPick":
-           this.handleBananaPick(Number(el.dataset.index), el);
-          break;
+      case "slot":
+      case "fruitparty":
+        dynamicBetControls.innerHTML = `
+          <div class="dynamic-card card-enter">
+            <div class="dynamic-card-title">Spin Mode</div>
+            <div class="segmented-row three">
+              <button class="seg-btn ${state.slotMode === "normal" ? "active" : ""}" data-seg="slot" data-value="normal">Normal</button>
+              <button class="seg-btn ${state.slotMode === "turbo" ? "active" : ""}" data-seg="slot" data-value="turbo">Turbo</button>
+              <button class="seg-btn ${state.slotMode === "bonus" ? "active" : ""}" data-seg="slot" data-value="bonus">Bonus</button>
+            </div>
+          </div>
+        `;
+        break;
 
-        case "birdsPick":
-          this.handleBirdPick(Number(el.dataset.multi), el);
-         break;
+      case "birdsparty":
+        dynamicBetControls.innerHTML = `
+          <div class="dynamic-card card-enter">
+            <div class="dynamic-card-title">Difficulty</div>
+            <div class="segmented-row three">
+              <button class="seg-btn ${state.birdsDifficulty === "easy" ? "active" : ""}" data-seg="birds" data-value="easy">Easy</button>
+              <button class="seg-btn ${state.birdsDifficulty === "medium" ? "active" : ""}" data-seg="birds" data-value="medium">Medium</button>
+              <button class="seg-btn ${state.birdsDifficulty === "hard" ? "active" : ""}" data-seg="birds" data-value="hard">Hard</button>
+            </div>
+          </div>
+        `;
+        break;
+
+      case "plinko":
+        dynamicBetControls.innerHTML = `
+          <div class="dynamic-card card-enter">
+            <div class="dynamic-card-title">Risk</div>
+            <div class="segmented-row three">
+              <button class="seg-btn ${state.plinkoRisk === "low" ? "active" : ""}" data-seg="plinko" data-value="low">Low</button>
+              <button class="seg-btn ${state.plinkoRisk === "medium" ? "active" : ""}" data-seg="plinko" data-value="medium">Medium</button>
+              <button class="seg-btn ${state.plinkoRisk === "high" ? "active" : ""}" data-seg="plinko" data-value="high">High</button>
+            </div>
+          </div>
+        `;
+        break;
+
+      case "hilo":
+        dynamicBetControls.innerHTML = `
+          <div class="dynamic-card card-enter">
+            <div class="dynamic-card-title">Prediction</div>
+            <div class="segmented-row">
+              <button class="seg-btn ${state.hiloMode === "higher" ? "active" : ""}" data-seg="hilo" data-value="higher">Higher</button>
+              <button class="seg-btn ${state.hiloMode === "lower" ? "active" : ""}" data-seg="hilo" data-value="lower">Lower</button>
+            </div>
+          </div>
+        `;
+        break;
+
+      case "blackjack":
+        dynamicBetControls.innerHTML = `
+          <div class="dynamic-card card-enter">
+            <div class="dynamic-card-title">Actions</div>
+            <div class="segmented-row three">
+              <button class="seg-btn" data-seg="bj-action" data-value="hit">Hit</button>
+              <button class="seg-btn" data-seg="bj-action" data-value="stand">Stand</button>
+              <button class="seg-btn" data-seg="bj-action" data-value="double">Double</button>
+            </div>
+          </div>
+        `;
+        break;
+
+      default:
+        dynamicBetControls.innerHTML = `
+          <div class="dynamic-card card-enter">
+            <div class="dynamic-card-title">Game Ready</div>
+            <div class="engine-muted">Default Bloxio controls loaded.</div>
+          </div>
+        `;
+    }
+  }
+
+  function handleSegBtn(btn) {
+    const seg = btn.dataset.seg;
+    const value = btn.dataset.value;
+    if (!seg) return;
+
+    if (seg !== "bj-action") {
+      const parent = btn.parentElement;
+      if (parent) parent.querySelectorAll(".seg-btn").forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+    }
+
+    switch (seg) {
+      case "coin":
+        state.coinSide = value;
+        break;
+      case "dice-mode":
+        state.diceMode = value;
+        break;
+      case "slot":
+        state.slotMode = value;
+        break;
+      case "plinko":
+        state.plinkoRisk = value;
+        break;
+      case "hilo":
+        state.hiloMode = value;
+        break;
+      case "birds":
+        state.birdsDifficulty = value;
+        break;
+      case "bj-action":
+        handleBlackjackAction(value);
+        break;
+    }
+  }
+
+  function attachLimboInput() {
+    const input = $("limboTargetInput");
+    if (!input) return;
+    input.addEventListener("input", () => {
+      const v = parseFloat(input.value);
+      if (!isNaN(v) && v >= 1.01) {
+        state.limboTarget = round(v, 2);
+        renderDynamicControls(state.activeGame.id);
       }
-    },
+    });
+  }
 
-    handleDynamicInput(type, value) {
-      switch (type) {
-        case "crashAutoCashout":
-          this.state.crash.autoCashout = Math.max(1.01, parseFloat(value || 2));
-          break;
-
-        case "diceTarget":
-          this.state.dice.target = Math.max(2, Math.min(98, parseInt(value || 50, 10)));
-          const targetEl = document.getElementById("diceTargetValue");
-          if (targetEl) targetEl.textContent = this.state.dice.target;
-          this.els.multiplier.textContent = this.getDiceMultiplier().toFixed(2) + "x";
-          break;
-
-        case "plinkoRows":
-          this.state.plinko.rows = Math.max(8, Math.min(12, parseInt(value || 8, 10)));
-          const rowsEl = document.getElementById("plinkoRowsValue");
-          if (rowsEl) rowsEl.textContent = this.state.plinko.rows;
-          this.drawPlinkoBoard();
-          break;
-
-        case "limboTarget":
-         this.state.limbo = this.state.limbo || {};
-         this.state.limbo.target = Math.max(1.01, parseFloat(value || 2));
-         this.els.multiplier.textContent = this.state.limbo.target.toFixed(2) + "x";
-         break;
+  function attachCrashInput() {
+    const input = $("crashAutoInput");
+    if (!input) return;
+    input.addEventListener("input", () => {
+      const v = parseFloat(input.value);
+      if (!isNaN(v) && v >= 1.01) {
+        state.crashAutoCashout = round(v, 2);
+        renderDynamicControls(state.activeGame.id);
       }
-    },
-     
-    handleAirBossPick(index, el) {
-  if (!this.state.airboss?.active) return;
-  if (this.state.airboss.revealed.includes(index)) return;
-
-  this.state.airboss.revealed.push(index);
-
-  if (this.state.airboss.bombs.includes(index)) {
-    el.textContent = "💣";
-    el.disabled = true;
-    this.els.status.textContent = "BOOM";
-    this.els.multiplier.textContent = "0.00x";
-    this.state.airboss.active = false;
-    this.sound("lose");
-  } else {
-    el.textContent = "🛫";
-    el.disabled = true;
-    this.state.airboss.multiplier += 0.35;
-    this.els.multiplier.textContent = this.state.airboss.multiplier.toFixed(2) + "x";
-    this.els.status.textContent = "Safe";
-    this.sound("click");
-  }
-},
-
-   handleBananaPick(index, el) {
-  if (!this.state.banana?.active) return;
-  if (this.state.banana.found.includes(index)) return;
-
-  this.state.banana.found.push(index);
-
-  if (this.state.banana.traps.includes(index)) {
-    el.textContent = "💀";
-    el.disabled = true;
-    this.els.status.textContent = "Trap hit";
-    this.els.multiplier.textContent = "0.00x";
-    this.state.banana.active = false;
-    this.sound("lose");
-  } else {
-    el.textContent = "🍌";
-    el.disabled = true;
-    this.state.banana.multiplier += 0.30;
-    this.els.multiplier.textContent = this.state.banana.multiplier.toFixed(2) + "x";
-    this.els.status.textContent = "Banana found";
-    this.sound("click");
-  }
-},
-
-   handleBirdPick(multi, el) {
-  if (!this.state.birds?.active) return;
-
-  const win = Math.random() > 0.35;
-
-  if (win) {
-    const payout = this.state.birds.bet * multi;
-    this.balanceAdd(payout);
-    this.els.status.textContent = "WIN";
-    this.els.multiplier.textContent = multi.toFixed(2) + "x";
-    this.addBigWin(payout, "birds_party");
-    this.sound("win");
-  } else {
-    this.els.status.textContent = "LOSE";
-    this.els.multiplier.textContent = "0.00x";
-    this.sound("lose");
+    });
   }
 
-    this.state.birds.active = false;
-},
-     
-    toggleActiveButton(activeEl, actionNames = []) {
-      actionNames.forEach(name => {
-        document.querySelectorAll(`[data-casino-action="${name}"]`).forEach(btn => {
-          btn.classList.remove("active");
-        });
+  function attachDiceInputs() {
+    const range = $("diceRangeInput");
+    const input = $("diceTargetInput");
+    if (!range || !input) return;
+
+    range.addEventListener("input", () => {
+      state.diceTarget = parseInt(range.value, 10);
+      input.value = state.diceTarget;
+      updateDicePreview();
+    });
+
+    input.addEventListener("input", () => {
+      const v = parseInt(input.value, 10);
+      if (!isNaN(v)) {
+        state.diceTarget = clamp(v, 2, 98);
+        range.value = state.diceTarget;
+        input.value = state.diceTarget;
+        updateDicePreview();
+      }
+    });
+
+    updateDicePreview();
+  }
+
+  /* =========================================
+     ENGINE RENDER
+  ========================================= */
+  function renderGameEngine(gameId) {
+    if (!gameEngineBody) return;
+
+    switch (gameId) {
+      case "limbo":
+      case "airboss":
+      case "bananafarm":
+        gameEngineBody.innerHTML = rocketEngineHTML();
+        break;
+      case "crash":
+        gameEngineBody.innerHTML = crashEngineHTML();
+        break;
+      case "coinflip":
+        gameEngineBody.innerHTML = coinflipEngineHTML();
+        break;
+      case "dice":
+        gameEngineBody.innerHTML = diceEngineHTML();
+        break;
+      case "slot":
+      case "fruitparty":
+        gameEngineBody.innerHTML = slotEngineHTML();
+        break;
+      case "birdsparty":
+        gameEngineBody.innerHTML = birdsEngineHTML();
+        break;
+      case "blackjack":
+        gameEngineBody.innerHTML = blackjackEngineHTML();
+        break;
+      case "plinko":
+        gameEngineBody.innerHTML = plinkoEngineHTML();
+        createPlinkoPegs();
+        createPlinkoBuckets();
+        break;
+      case "hilo":
+        gameEngineBody.innerHTML = hiloEngineHTML();
+        break;
+      default:
+        gameEngineBody.innerHTML = `
+          <div class="engine-center">
+            <div class="engine-card">
+              <div class="engine-muted">Game Engine Loaded</div>
+            </div>
+          </div>
+        `;
+    }
+  }
+
+  function rocketEngineHTML() {
+    return `
+      <div class="engine-center">
+        <div class="rocket-scene">
+          <div class="rocket-ship" id="rocketShip">🚀</div>
+          <div class="rocket-smoke">☁️</div>
+          <div class="rocket-ground"></div>
+        </div>
+      </div>
+    `;
+  }
+
+  function crashEngineHTML() {
+    return `
+      <div class="engine-center">
+        <div class="crash-chart-wrap">
+          <svg class="crash-chart-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+            <path id="crashPath" class="crash-line" d="M6,88 C18,86 24,84 30,80 C40,73 52,58 62,40 C68,28 76,18 90,10"></path>
+            <circle id="crashDot" class="crash-dot" cx="6" cy="88" r="3.2"></circle>
+          </svg>
+        </div>
+      </div>
+    `;
+  }
+
+  function coinflipEngineHTML() {
+    return `
+      <div class="engine-column">
+        <div class="engine-muted">Choose your side</div>
+        <div style="font-size:96px;" id="coinFlipVisual">🪙</div>
+      </div>
+    `;
+  }
+
+  function diceEngineHTML() {
+    return `
+      <div class="engine-center">
+        <div class="dice-stage">
+          <div class="dice-number" id="diceNumber">50.00</div>
+          <div class="dice-bar">
+            <div class="dice-fill" id="diceFill"></div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function slotEngineHTML() {
+    return `
+      <div class="engine-center">
+        <div class="slot-reels" id="slotReels">
+          <div class="slot-reel">🍒</div>
+          <div class="slot-reel">7️⃣</div>
+          <div class="slot-reel">💎</div>
+        </div>
+      </div>
+    `;
+  }
+
+  function birdsEngineHTML() {
+    return `
+      <div class="engine-center">
+        <div class="pick-grid" id="birdsPickGrid">
+          <button class="pick-card" type="button" data-pick="0">🐦</button>
+          <button class="pick-card" type="button" data-pick="1">🥚</button>
+          <button class="pick-card" type="button" data-pick="2">🐦</button>
+          <button class="pick-card" type="button" data-pick="3">🥚</button>
+          <button class="pick-card" type="button" data-pick="4">🐦</button>
+          <button class="pick-card" type="button" data-pick="5">🥚</button>
+        </div>
+      </div>
+    `;
+  }
+
+  function blackjackEngineHTML() {
+    return `
+      <div class="engine-center">
+        <div class="blackjack-board">
+          <div class="bj-hand">
+            <div class="bj-label">Dealer</div>
+            <div class="bj-score" id="dealerScore">0</div>
+            <div class="bj-cards" id="dealerCards"></div>
+          </div>
+          <div class="bj-hand">
+            <div class="bj-label">Player</div>
+            <div class="bj-score" id="playerScore">0</div>
+            <div class="bj-cards" id="playerCards"></div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function plinkoEngineHTML() {
+    return `
+      <div class="engine-center">
+        <div class="plinko-board" id="plinkoBoard">
+          <div class="plinko-ball" id="plinkoBall" style="top:12px; left:50%; transform:translateX(-50%);"></div>
+        </div>
+      </div>
+    `;
+  }
+
+  function hiloEngineHTML() {
+    return `
+      <div class="engine-center">
+        <div class="hilo-card-wrap">
+          <div class="engine-muted">Current Card</div>
+          <div class="hilo-card" id="hiloCard">8♣</div>
+        </div>
+      </div>
+    `;
+  }
+
+  /* =========================================
+     PRIMARY ACTION
+  ========================================= */
+  function onPrimaryAction() {
+    if (!state.activeGame || state.isTransitioning) return;
+
+    const gameId = state.activeGame.id;
+
+    if (gameId === "crash" && state.crashSession.running && !state.crashSession.cashedOut) {
+      cashoutCrash();
+      return;
+    }
+
+    if (state.isPlaying) return;
+
+    const bet = parseFloat(betAmountInput?.value || state.betAmount);
+    if (isNaN(bet) || bet <= 0) {
+      setCaption("Invalid bet amount");
+      return;
+    }
+
+    state.betAmount = round(bet, 2);
+
+    if (!canAfford(state.betAmount)) {
+      setCaption("Insufficient balance");
+      return;
+    }
+
+    switch (gameId) {
+      case "coinflip":
+        return playCoinFlip();
+      case "limbo":
+      case "airboss":
+      case "bananafarm":
+        return playLimboLike();
+      case "crash":
+        return startCrashRound();
+      case "dice":
+        return playDice();
+      case "slot":
+      case "fruitparty":
+        return playSlot();
+      case "birdsparty":
+        return playBirds();
+      case "blackjack":
+        return startBlackjackRound();
+      case "plinko":
+        return playPlinko();
+      case "hilo":
+        return playHiLo();
+      default:
+        setCaption("Game not available");
+    }
+  }
+
+  /* =========================================
+     COMMON RESULT FLOW
+  ========================================= */
+  function finalizeRound({ win, payout = 0, multiplier = 1, message = "Result updated" }) {
+    state.nonce += 1;
+    updateFairnessUI();
+
+    if (win && payout > 0) {
+      addPayout(payout);
+      flashResult(true);
+    } else {
+      flashResult(false);
+    }
+
+    setMultiplier(multiplier);
+    setCaption(message);
+    pushPulse(multiplier);
+
+    renderPlayersTable();
+    renderTickerPulse();
+
+    if (win && payout > 0) {
+      state.recentWins.unshift({
+        player: "@you",
+        game: state.activeGame?.title || "Game",
+        amount: `+${payout.toFixed(2)} BX`
       });
-      activeEl.classList.add("active");
-    },
-
-    /* =========================================================
-       SOUND
-    ========================================================= */
-    sound(type) {
-      const audio = document.getElementById(`snd-${type}`);
-      if (!audio) return;
-      try {
-        audio.currentTime = 0;
-        audio.play().catch(() => {});
-      } catch (_) {}
+      state.recentWins = state.recentWins.slice(0, 5);
+      renderBigWins();
     }
-  };
 
-  window.CASINO = CASINO;
+    state.isPlaying = false;
+    updatePrimaryButtonState();
+  }
 
-  document.addEventListener("DOMContentLoaded", () => {
-    if (document.getElementById("casino")) {
-      CASINO.init();
+  /* =========================================
+     GAME: COIN FLIP
+  ========================================= */
+  async function playCoinFlip() {
+    state.isPlaying = true;
+    updatePrimaryButtonState();
+    spendBet(state.betAmount);
+
+    const visual = $("coinFlipVisual");
+    if (visual) {
+      visual.textContent = "🌀";
+      visual.style.transform = "scale(1.06) rotate(360deg)";
+      visual.style.transition = "all 550ms ease";
     }
-  });
+
+    await wait(700);
+
+    const landed = Math.random() > 0.5 ? "heads" : "tails";
+    const win = landed === state.coinSide;
+    const payout = win ? round(state.betAmount * 1.96, 2) : 0;
+
+    if (visual) {
+      visual.textContent = landed === "heads" ? "🪙" : "🥇";
+      visual.style.transform = "scale(1)";
+    }
+
+    finalizeRound({
+      win,
+      payout,
+      multiplier: win ? 1.96 : 0,
+      message: win ? `You won on ${landed}` : `${landed} landed`
+    });
+  }
+
+  /* =========================================
+     GAME: LIMBO / AIRBOSS / BANANAFARM
+  ========================================= */
+  async function playLimboLike() {
+    state.isPlaying = true;
+    updatePrimaryButtonState();
+    spendBet(state.betAmount);
+
+    const rolled = round(Math.max(1.0, Math.random() * 20), 2);
+    animateRocket(rolled);
+
+    let live = 1.0;
+    const interval = setInterval(() => {
+      live += Math.max(0.05, (rolled - 1) / 20);
+      setMultiplier(Math.min(live, rolled));
+      if (live >= rolled) clearInterval(interval);
+    }, 45);
+
+    await wait(900);
+
+    const win = rolled >= state.limboTarget;
+    const payout = win ? round(state.betAmount * state.limboTarget, 2) : 0;
+
+    finalizeRound({
+      win,
+      payout,
+      multiplier: rolled,
+      message: `Result ${rolled.toFixed(2)}×`
+    });
+  }
+
+  /* =========================================
+     GAME: CRASH (REAL LOOP)
+  ========================================= */
+  function startCrashRound() {
+    state.isPlaying = true;
+    spendBet(state.betAmount);
+
+    state.crashSession.running = true;
+    state.crashSession.cashedOut = false;
+    state.crashSession.current = 1.0;
+    state.crashSession.startedBet = state.betAmount;
+    state.crashSession.final = generateCrashPoint();
+
+    updatePrimaryButtonState();
+    setCaption("Crash round started");
+    setMultiplier(1.0);
+
+    animateCrashCurveLive();
+    crashLoop();
+  }
+
+  function generateCrashPoint() {
+    const r = Math.random();
+    if (r < 0.35) return round(1.01 + Math.random() * 0.5, 2);
+    if (r < 0.7) return round(1.5 + Math.random() * 2.5, 2);
+    if (r < 0.92) return round(4 + Math.random() * 6, 2);
+    return round(10 + Math.random() * 15, 2);
+  }
+
+  function crashLoop() {
+    const tick = () => {
+      if (!state.crashSession.running) return;
+
+      state.crashSession.current = round(state.crashSession.current * 1.018 + 0.01, 2);
+      setMultiplier(state.crashSession.current);
+      updatePrimaryButtonState();
+      animateCrashDotLive(state.crashSession.current);
+
+      if (!state.crashSession.cashedOut && state.crashSession.current >= state.crashAutoCashout) {
+        cashoutCrash();
+        return;
+      }
+
+      if (state.crashSession.current >= state.crashSession.final) {
+        endCrashRound();
+        return;
+      }
+
+      state.crashSession.frame = requestAnimationFrame(() => setTimeout(tick, 70));
+    };
+
+    tick();
+  }
+
+  function cashoutCrash() {
+    if (!state.crashSession.running || state.crashSession.cashedOut) return;
+
+    state.crashSession.cashedOut = true;
+    const payout = round(state.crashSession.startedBet * state.crashSession.current, 2);
+
+    addPayout(payout);
+    flashResult(true);
+    setCaption(`Cashed out at ${state.crashSession.current.toFixed(2)}×`);
+    pushPulse(state.crashSession.current);
+
+    state.recentWins.unshift({
+      player: "@you",
+      game: "Crash",
+      amount: `+${payout.toFixed(2)} BX`
+    });
+    state.recentWins = state.recentWins.slice(0, 5);
+    renderBigWins();
+
+    updatePrimaryButtonState();
+  }
+
+  function endCrashRound() {
+    cancelAnimationFrame(state.crashSession.frame);
+
+    const finalMult = state.crashSession.final;
+    const won = state.crashSession.cashedOut;
+
+    if (!won) {
+      flashResult(false);
+      setCaption(`Crashed at ${finalMult.toFixed(2)}×`);
+      pushPulse(finalMult);
+    }
+
+    state.nonce += 1;
+    updateFairnessUI();
+
+    state.crashSession.running = false;
+    state.isPlaying = false;
+    updatePrimaryButtonState();
+    renderPlayersTable();
+    renderTickerPulse();
+  }
+
+  function stopCrashSession(silent = false) {
+    cancelAnimationFrame(state.crashSession.frame);
+    state.crashSession.running = false;
+    state.crashSession.cashedOut = false;
+    state.crashSession.current = 1.0;
+    state.crashSession.final = 1.0;
+    if (!silent && state.activeGame?.id === "crash") {
+      setMultiplier(1.0);
+      setCaption("Crash reset");
+    }
+  }
+
+  /* =========================================
+     GAME: DICE
+  ========================================= */
+  async function playDice() {
+    state.isPlaying = true;
+    updatePrimaryButtonState();
+    spendBet(state.betAmount);
+
+    const diceNumber = $("diceNumber");
+    const diceFill = $("diceFill");
+
+    for (let i = 0; i < 18; i++) {
+      const fake = round(Math.random() * 100, 2);
+      if (diceNumber) diceNumber.textContent = fake.toFixed(2);
+      if (diceFill) diceFill.style.width = `${fake}%`;
+      await wait(35);
+    }
+
+    const rolled = round(Math.random() * 100, 2);
+    const win = state.diceMode === "over"
+      ? rolled > state.diceTarget
+      : rolled < state.diceTarget;
+
+    const chance = state.diceMode === "over"
+      ? (100 - state.diceTarget)
+      : state.diceTarget;
+
+    const payoutMult = round((99 / chance), 2);
+    const payout = win ? round(state.betAmount * payoutMult, 2) : 0;
+
+    if (diceNumber) diceNumber.textContent = rolled.toFixed(2);
+    if (diceFill) diceFill.style.width = `${rolled}%`;
+
+    finalizeRound({
+      win,
+      payout,
+      multiplier: win ? payoutMult : 0,
+      message: `Rolled ${rolled.toFixed(2)}`
+    });
+  }
+
+  /* =========================================
+     GAME: SLOT / FRUIT PARTY
+  ========================================= */
+  async function playSlot() {
+    state.isPlaying = true;
+    updatePrimaryButtonState();
+    spendBet(state.betAmount);
+
+    const icons = ["🍒", "7️⃣", "💎", "🍋", "⭐", "🔔"];
+    const reelsWrap = $("slotReels");
+    if (!reelsWrap) return;
+
+    const reels = [...reelsWrap.children];
+    reels.forEach((r) => r.classList.add("spin"));
+
+    for (let spin = 0; spin < 12; spin++) {
+      reels.forEach((reel) => reel.textContent = rand(icons));
+      await wait(state.slotMode === "turbo" ? 45 : 80);
+    }
+
+    const final = [rand(icons), rand(icons), rand(icons)];
+    reels.forEach((reel, i) => {
+      reel.textContent = final[i];
+      reel.classList.remove("spin");
+    });
+
+    const counts = final.reduce((acc, x) => (acc[x] = (acc[x] || 0) + 1, acc), {});
+    const maxMatch = Math.max(...Object.values(counts));
+
+    let multiplier = 0;
+    if (maxMatch === 3) multiplier = state.slotMode === "bonus" ? 8 : 5;
+    else if (maxMatch === 2) multiplier = 1.5;
+
+    const win = multiplier > 0;
+    const payout = win ? round(state.betAmount * multiplier, 2) : 0;
+
+    finalizeRound({
+      win,
+      payout,
+      multiplier,
+      message: final.join(" ")
+    });
+  }
+
+  /* =========================================
+     GAME: BIRDS PARTY
+  ========================================= */
+  function handleBirdPick(card) {
+    $$(".pick-card").forEach((c) => c.classList.remove("active"));
+    card.classList.add("active");
+    state.birds.selected = Number(card.dataset.pick);
+    setCaption("Selection ready — place your bet");
+  }
+
+  async function playBirds() {
+    if (state.birds.selected === null || state.birds.selected === undefined) {
+      setCaption("Select a card first");
+      return;
+    }
+
+    state.isPlaying = true;
+    updatePrimaryButtonState();
+    spendBet(state.betAmount);
+
+    const cards = $$(".pick-card");
+    cards.forEach((c) => c.disabled = true);
+
+    const safeIndex = randInt(0, cards.length - 1);
+    await wait(500);
+
+    cards.forEach((c, i) => {
+      c.classList.remove("revealed-safe", "revealed-bad");
+      c.textContent = i === safeIndex ? "💎" : "💣";
+      c.classList.add(i === safeIndex ? "revealed-safe" : "revealed-bad");
+    });
+
+    const selected = state.birds.selected;
+    const win = selected === safeIndex;
+
+    let multiplier = 0;
+    if (state.birdsDifficulty === "easy") multiplier = 2.0;
+    if (state.birdsDifficulty === "medium") multiplier = 3.0;
+    if (state.birdsDifficulty === "hard") multiplier = 5.0;
+
+    const payout = win ? round(state.betAmount * multiplier, 2) : 0;
+
+    await wait(900);
+
+    finalizeRound({
+      win,
+      payout,
+      multiplier: win ? multiplier : 0,
+      message: win ? "Safe pick!" : "Wrong pick"
+    });
+
+    await wait(800);
+    renderGameEngine("birdsparty");
+    state.birds.selected = null;
+  }
+
+  /* =========================================
+     GAME: BLACKJACK (REAL SESSION)
+  ========================================= */
+  function drawCard() {
+    return randInt(2, 14);
+  }
+
+  function handValue(hand) {
+    let total = 0;
+    let aces = 0;
+
+    hand.forEach((c) => {
+      if (c >= 11 && c <= 13) total += 10;
+      else if (c === 14) {
+        total += 11;
+        aces += 1;
+      } else total += c;
+    });
+
+    while (total > 21 && aces > 0) {
+      total -= 10;
+      aces--;
+    }
+
+    return total;
+  }
+
+  function renderBlackjackHands(revealDealer = false) {
+    const dealerCards = $("dealerCards");
+    const playerCards = $("playerCards");
+    const dealerScore = $("dealerScore");
+    const playerScore = $("playerScore");
+    if (!dealerCards || !playerCards || !dealerScore || !playerScore) return;
+
+    dealerCards.innerHTML = state.blackjack.dealer.map((c, i) => {
+      if (!revealDealer && i === 1) return `<div class="bj-card">🂠</div>`;
+      return `<div class="bj-card">${cardFace(c)}${cardSuit()}</div>`;
+    }).join("");
+
+    playerCards.innerHTML = state.blackjack.player.map((c) =>
+      `<div class="bj-card">${cardFace(c)}${cardSuit()}</div>`
+    ).join("");
+
+    dealerScore.textContent = revealDealer ? handValue(state.blackjack.dealer) : cardValueVisible(state.blackjack.dealer[0]);
+    playerScore.textContent = handValue(state.blackjack.player);
+  }
+
+  function cardValueVisible(c) {
+    if (c >= 11 && c <= 13) return 10;
+    if (c === 14) return 11;
+    return c;
+  }
+
+  function startBlackjackRound() {
+    if (state.blackjack.inRound) return;
+    if (!canAfford(state.betAmount)) {
+      setCaption("Insufficient balance");
+      return;
+    }
+
+    spendBet(state.betAmount);
+
+    state.blackjack.inRound = true;
+    state.blackjack.bet = state.betAmount;
+    state.blackjack.player = [drawCard(), drawCard()];
+    state.blackjack.dealer = [drawCard(), drawCard()];
+
+    renderBlackjackHands(false);
+    updatePrimaryButtonState();
+
+    const playerVal = handValue(state.blackjack.player);
+    if (playerVal === 21) {
+      finishBlackjackRound();
+    } else {
+      setCaption("Blackjack round started");
+      setMultiplier(1.00);
+    }
+  }
+
+  function handleBlackjackAction(action) {
+    if (!state.activeGame || state.activeGame.id !== "blackjack") return;
+    if (!state.blackjack.inRound) return;
+
+    if (action === "hit") {
+      state.blackjack.player.push(drawCard());
+      renderBlackjackHands(false);
+
+      if (handValue(state.blackjack.player) > 21) {
+        finishBlackjackRound();
+      } else {
+        setCaption("Player hits");
+      }
+    }
+
+    if (action === "stand") {
+      finishBlackjackRound();
+    }
+
+    if (action === "double") {
+      if (state.balance < state.blackjack.bet) {
+        setCaption("Need more balance to double");
+        return;
+      }
+      spendBet(state.blackjack.bet);
+      state.blackjack.bet = round(state.blackjack.bet * 2, 2);
+      state.blackjack.player.push(drawCard());
+      renderBlackjackHands(false);
+      finishBlackjackRound();
+    }
+  }
+
+  function finishBlackjackRound() {
+    while (handValue(state.blackjack.dealer) < 17) {
+      state.blackjack.dealer.push(drawCard());
+    }
+
+    renderBlackjackHands(true);
+
+    const p = handValue(state.blackjack.player);
+    const d = handValue(state.blackjack.dealer);
+
+    let win = false;
+    let multiplier = 0;
+    let payout = 0;
+    let msg = `Player ${p} • Dealer ${d}`;
+
+    if (p > 21) {
+      win = false;
+      msg = `Bust! Player ${p} • Dealer ${d}`;
+    } else if (d > 21 || p > d) {
+      win = true;
+      multiplier = 2;
+      payout = round(state.blackjack.bet * 2, 2);
+      msg = `You win! Player ${p} • Dealer ${d}`;
+    } else if (p === d) {
+      win = true;
+      multiplier = 1;
+      payout = round(state.blackjack.bet, 2);
+      msg = `Push • Player ${p} • Dealer ${d}`;
+    }
+
+    state.blackjack.inRound = false;
+    finalizeRound({
+      win,
+      payout,
+      multiplier,
+      message: msg
+    });
+
+    state.blackjack.bet = 0;
+  }
+
+  /* =========================================
+     GAME: PLINKO
+  ========================================= */
+  async function playPlinko() {
+    if (state.plinko.dropping) return;
+
+    state.isPlaying = true;
+    state.plinko.dropping = true;
+    updatePrimaryButtonState();
+    spendBet(state.betAmount);
+
+    const riskMap = {
+      low:  [0.5, 0.7, 0.9, 1, 1.2, 1.5, 2],
+      medium: [0.2, 0.5, 0.8, 1, 1.5, 2, 3, 5],
+      high: [0.1, 0.3, 0.5, 1, 2, 4, 8, 12]
+    };
+
+    const mults = riskMap[state.plinkoRisk] || riskMap.medium;
+    const rolled = rand(mults);
+    const win = rolled >= 1;
+    const payout = win ? round(state.betAmount * rolled, 2) : 0;
+
+    await animatePlinkoBall(rolled);
+
+    finalizeRound({
+      win,
+      payout,
+      multiplier: rolled,
+      message: `Landed on ${rolled}×`
+    });
+
+    state.plinko.dropping = false;
+  }
+
+  /* =========================================
+     GAME: HILO
+  ========================================= */
+  function playHiLo() {
+    if (!state.hilo.inRound) {
+      if (!canAfford(state.betAmount)) {
+        setCaption("Insufficient balance");
+        return;
+      }
+
+      spendBet(state.betAmount);
+      state.hilo.inRound = true;
+      state.hilo.current = randInt(2, 14);
+
+      const hiloCard = $("hiloCard");
+      if (hiloCard) hiloCard.textContent = `${cardFace(state.hilo.current)}${cardSuit()}`;
+
+      setMultiplier(1.00);
+      setCaption("Round started — choose higher or lower");
+      updatePrimaryButtonState();
+      return;
+    }
+
+    const current = state.hilo.current;
+    const next = randInt(2, 14);
+    const win = state.hiloMode === "higher" ? next > current : next < current;
+    const payout = win ? round(state.betAmount * 1.9, 2) : 0;
+
+    const hiloCard = $("hiloCard");
+    if (hiloCard) hiloCard.textContent = `${cardFace(next)}${cardSuit()}`;
+
+    state.hilo.inRound = false;
+
+    finalizeRound({
+      win,
+      payout,
+      multiplier: win ? 1.9 : 0,
+      message: `Current ${cardFace(current)} → Next ${cardFace(next)}`
+    });
+  }
+
+  /* =========================================
+     ENGINE AMBIENT
+  ========================================= */
+  function startAmbientEngine(gameId) {
+    stopAmbientEngine();
+
+    if (gameId === "limbo" || gameId === "airboss" || gameId === "bananafarm") {
+      const rocket = $("rocketShip");
+      let pos = 80;
+      state.timers.engineAmbient = setInterval(() => {
+        if (!rocket) return;
+        pos = pos > 110 ? 80 : pos + 1.8;
+        rocket.style.bottom = `${pos}px`;
+      }, 90);
+    }
+
+    if (gameId === "plinko") {
+      const ball = $("plinkoBall");
+      let top = 12;
+      state.timers.engineAmbient = setInterval(() => {
+        if (!ball || state.plinko.dropping) return;
+        top = top > 28 ? 12 : top + 1;
+        ball.style.top = `${top}px`;
+      }, 120);
+    }
+  }
+
+  function stopAmbientEngine() {
+    clearInterval(state.timers.engineAmbient);
+    state.timers.engineAmbient = null;
+  }
+
+  function resetGameSessionStates() {
+    state.isPlaying = false;
+    state.crashSession.running = false;
+    state.crashSession.cashedOut = false;
+    state.crashSession.current = 1.0;
+    state.crashSession.final = 1.0;
+
+    state.blackjack.inRound = false;
+    state.blackjack.player = [];
+    state.blackjack.dealer = [];
+    state.blackjack.bet = 0;
+
+    state.hilo.inRound = false;
+    state.hilo.current = 8;
+
+    state.birds.selected = null;
+    state.plinko.dropping = false;
+  }
+
+  /* =========================================
+     ANIMATIONS
+  ========================================= */
+  function animateRocket(multiplier) {
+    const rocket = $("rocketShip");
+    if (!rocket) return;
+
+    const lift = Math.min(190, 70 + multiplier * 18);
+    rocket.style.transition = "bottom 800ms ease, transform 800ms ease";
+    rocket.style.bottom = `${lift}px`;
+    rocket.style.transform = "translateX(-50%) scale(1.06)";
+
+    setTimeout(() => {
+      rocket.style.bottom = "80px";
+      rocket.style.transform = "translateX(-50%) scale(1)";
+    }, 950);
+  }
+
+  function animateCrashCurveLive() {
+    const path = $("crashPath");
+    if (!path) return;
+    path.setAttribute("d", "M6,88 C18,86 24,84 30,80 C40,73 52,58 62,40 C68,28 76,18 90,10");
+  }
+
+  function animateCrashDotLive(multiplier) {
+    const dot = $("crashDot");
+    if (!dot) return;
+
+    const x = Math.min(92, 6 + multiplier * 6.3);
+    const y = Math.max(10, 88 - multiplier * 6.2);
+
+    dot.setAttribute("cx", String(x));
+    dot.setAttribute("cy", String(y));
+  }
+
+  async function animatePlinkoBall(multiplier) {
+    const ball = $("plinkoBall");
+    const board = $("plinkoBoard");
+    if (!ball || !board) return;
+
+    const columns = [14, 24, 34, 44, 50, 56, 66, 76, 86];
+    const targetIndex = Math.min(columns.length - 1, Math.max(0, Math.floor((multiplier / 12) * (columns.length - 1))));
+    const finalLeft = columns[targetIndex];
+
+    ball.style.transition = "none";
+    ball.style.left = "50%";
+    ball.style.top = "12px";
+    ball.style.transform = "translateX(-50%)";
+
+    const steps = [
+      { top: 38, left: rand([44, 50, 56]) },
+      { top: 68, left: rand([38, 46, 54, 62]) },
+      { top: 102, left: rand([32, 42, 52, 62, 72]) },
+      { top: 140, left: rand([28, 40, 52, 64, 76]) },
+      { top: 182, left: rand([24, 36, 48, 60, 72, 84]) },
+      { top: 228, left: rand([20, 32, 44, 56, 68, 80]) },
+      { top: 278, left: finalLeft }
+    ];
+
+    for (const step of steps) {
+      ball.style.transition = "all 180ms ease";
+      ball.style.top = `${step.top}px`;
+      ball.style.left = `${step.left}%`;
+      await wait(190);
+    }
+
+    await wait(300);
+
+    ball.style.transition = "all 200ms ease";
+    ball.style.top = "12px";
+    ball.style.left = "50%";
+  }
+
+  function createPlinkoPegs() {
+    const board = $("plinkoBoard");
+    if (!board) return;
+
+    board.querySelectorAll(".plinko-peg, .plinko-bucket").forEach((el) => el.remove());
+
+    const rows = 7;
+    for (let r = 0; r < rows; r++) {
+      const count = 5 + r;
+      for (let c = 0; c < count; c++) {
+        const peg = document.createElement("div");
+        peg.className = "plinko-peg";
+        peg.style.top = `${38 + r * 28}px`;
+        peg.style.left = `${((c + 1) / (count + 1)) * 100}%`;
+        peg.style.transform = "translateX(-50%)";
+        board.appendChild(peg);
+      }
+    }
+  }
+
+  function createPlinkoBuckets() {
+    const board = $("plinkoBoard");
+    if (!board) return;
+
+    const values = state.plinkoRisk === "high"
+      ? [0.1, 0.3, 0.5, 1, 2, 4, 8]
+      : state.plinkoRisk === "low"
+      ? [0.5, 0.7, 0.9, 1, 1.2, 1.5, 2]
+      : [0.2, 0.5, 0.8, 1, 1.5, 2, 3];
+
+    values.forEach((v, i) => {
+      const bucket = document.createElement("div");
+      bucket.className = "plinko-bucket";
+      bucket.textContent = `${v}×`;
+      bucket.style.position = "absolute";
+      bucket.style.bottom = "8px";
+      bucket.style.left = `${8 + i * 13.2}%`;
+      bucket.style.width = "11%";
+      bucket.style.height = "28px";
+      bucket.style.borderRadius = "10px";
+      bucket.style.display = "grid";
+      bucket.style.placeItems = "center";
+      bucket.style.fontSize = "11px";
+      bucket.style.fontWeight = "900";
+      bucket.style.color = "#fff";
+      bucket.style.background = v >= 2 ? "rgba(46,229,127,.18)" : "rgba(255,255,255,.06)";
+      bucket.style.border = "1px solid rgba(255,255,255,.06)";
+      board.appendChild(bucket);
+    });
+  }
+
+  function updateDicePreview() {
+    const diceFill = $("diceFill");
+    if (diceFill) diceFill.style.width = `${state.diceTarget}%`;
+  }
+
+  /* =========================================
+     LABELS
+  ========================================= */
+  function getGameCaption(gameId) {
+    const captions = {
+      coinflip: "Coin result will appear here",
+      bananafarm: "Rocket payout result will appear here",
+      limbo: "Target result will appear here",
+      fruitparty: "Spin result will appear here",
+      dice: "Dice roll result will appear here",
+      crash: "Crash result will appear here",
+      slot: "Spin result will appear here",
+      birdsparty: "Pick result will appear here",
+      blackjack: "Blackjack result will appear here",
+      airboss: "Flight result will appear here",
+      hilo: "Card result will appear here",
+      plinko: "Plinko result will appear here"
+    };
+    return captions[gameId] || "Game result will appear here";
+  }
 })();
