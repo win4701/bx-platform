@@ -268,44 +268,77 @@
   </div>
 
   <!-- ===== CHART CARD ===== -->
-  <div class="market-chart-card">
+  <section id="marketChartPage" class="market-chart-page">
 
-    <!-- TOOLBAR -->
-    <div class="chart-toolbar">
-      <div class="tf-group">
-        <button class="tf-btn active" data-days="1">1D</button>
-        <button class="tf-btn" data-days="2">2D</button>
-        <button class="tf-btn" data-days="3">3D</button>
-        <button class="tf-btn" data-days="7">7D</button>
-        <button class="tf-btn" data-days="14">14D</button>
-      </div>
+    <!-- =========================
+   BLOXIO MARKET CHART
+========================= -->
+<section class="bx-market-chart-card">
 
-      <div class="chart-controls">
-        <button id="zoomIn" type="button">+</button>
-        <button id="zoomOut" type="button">−</button>
-        <button id="resetView" type="button">Reset</button>
+  <!-- Header -->
+  <div class="bx-market-head">
+    <div class="bx-market-identity">
+      <div class="bx-market-logo">⬢</div>
+      <div class="bx-market-copy">
+        <h2>BX Token</h2>
+        <p>#1 Ecosystem Asset</p>
       </div>
     </div>
 
-    <!-- MAIN CHART -->
-    <div class="chart-wrapper">
-      <div class="chart-main">
-        <canvas id="bxChart"></canvas>
-        <div id="chartTooltip" class="chart-tooltip"></div>
-      </div>
-    </div>
-
-    <!-- VOLUME PANEL -->
-    <div class="chart-volume">
-      <canvas id="volumeChart"></canvas>
-    </div>
-
-    <!-- INDICATORS -->
-    <div class="indicator-legend">
-      <span class="ema">EMA</span>
-      <span class="vwap">VWAP</span>
+    <div class="bx-market-actions">
+      <button class="bx-icon-btn" type="button">🔔</button>
+      <button class="bx-icon-btn" type="button">☆</button>
     </div>
   </div>
+
+  <!-- Price Strip -->
+  <div class="bx-price-strip">
+    <div class="bx-price-main">
+      <div id="bxLivePrice" class="bx-price-value">$0.11495</div>
+      <div id="bxLiveChange" class="bx-price-change negative">▼ 26.35%</div>
+    </div>
+
+    <div class="bx-price-side">
+      <div class="bx-mini-stat">
+        <span>24H Vol</span>
+        <strong>124,980 BX</strong>
+      </div>
+      <div class="bx-mini-stat">
+        <span>Market Cap</span>
+        <strong>$1.28M</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- Time Controls -->
+  <div class="bx-chart-toolbar">
+    <div class="bx-time-tabs">
+      <button class="bx-time-tab active" data-range="1h">1H</button>
+      <button class="bx-time-tab" data-range="24h">24H</button>
+      <button class="bx-time-tab" data-range="7d">7D</button>
+      <button class="bx-time-tab" data-range="30d">30D</button>
+      <button class="bx-time-tab" data-range="90d">90D</button>
+      <button class="bx-time-tab" data-range="1y">1Y</button>
+      <button class="bx-time-tab" data-range="all">ALL</button>
+    </div>
+
+    <div class="bx-chart-tools">
+      <button id="bxToggleChartType" class="bx-tool-btn active" type="button">📈</button>
+      <button class="bx-tool-btn" type="button">⚙</button>
+    </div>
+  </div>
+
+  <!-- Chart -->
+  <div class="bx-chart-wrap">
+    <div id="bloxioMarketChart"></div>
+  </div>
+
+  <!-- Volume -->
+  <div class="bx-volume-wrap">
+    <div id="bloxioVolumeChart"></div>
+  </div>
+
+  </section>
 
   <!-- ===== TRADE BOX ===== -->
   <div class="trade-box buy" id="tradeBox">
