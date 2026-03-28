@@ -267,82 +267,127 @@
   </div>
 
   <!-- ===== CHART CARD ===== -->
-  <div id="marketChartPage" class="market-chart-page">
+  <!-- =========================================
+   BLOXIO MARKET PRO MAX
+========================================= -->
+<div id="marketPage" class="market-page">
 
-    <!-- =========================
-   BLOXIO MARKET CHART
-========================= -->
-<div class="bx-market-chart-card">
+  <!-- ================= HEADER ================= -->
+  <div class="market-hero">
 
-  <!-- Header -->
-  <div class="bx-market-head">
-    <div class="bx-market-identity">
-      <div class="bx-market-logo">⬢</div>
-      <div class="bx-market-copy">
-        <h2>BX Token</h2>
-        <p>#1 Ecosystem Asset</p>
+    <div class="market-identity">
+      <div class="market-logo">⬢</div>
+
+      <div class="market-title">
+        <h2 id="assetName">Bloxio</h2>
+        <span id="assetSymbol">BX</span>
+        <span id="assetRank" class="market-rank">#276</span>
       </div>
     </div>
 
-    <div class="bx-market-actions">
-      <button class="bx-icon-btn" type="button">🔔</button>
-      <button class="bx-icon-btn" type="button">☆</button>
-    </div>
-  </div>
+    <div class="market-price-box">
+      <div id="assetPrice" class="market-price">$0.11495</div>
 
-  <!-- Price Strip -->
-  <div class="bx-price-strip">
-    <div class="bx-price-main">
-      <div id="bxLivePrice" class="bx-price-value">$0.11495</div>
-      <div id="bxLiveChange" class="bx-price-change negative">▼ 26.35%</div>
-    </div>
-
-    <div class="bx-price-side">
-      <div class="bx-mini-stat">
-        <span>24H Vol</span>
-        <strong>124,980 BX</strong>
-      </div>
-      <div class="bx-mini-stat">
-        <span>Market Cap</span>
-        <strong>$1.28M</strong>
+      <div id="assetChangeBadge" class="market-change-badge is-down">
+        ▼ 2.35%
       </div>
     </div>
+
   </div>
 
-  <!-- Time Controls -->
-  <div class="bx-chart-toolbar">
-  <div class="bx-time-tabs">
-    <button class="tf-btn bx-time-tab active" data-days="1">1D</button>
-    <button class="tf-btn bx-time-tab" data-days="3">3D</button>
-    <button class="tf-btn bx-time-tab" data-days="7">7D</button>
-    <button class="tf-btn bx-time-tab" data-days="14">14D</button>
-    <button class="tf-btn bx-time-tab" data-days="30">30D</button>
+  <!-- ================= TOOLBAR ================= -->
+  <div class="market-toolbar">
+
+    <!-- Timeframes -->
+    <div class="market-timeframes">
+      <button data-timeframe="1H">1H</button>
+      <button data-timeframe="24H">24H</button>
+      <button data-timeframe="7D">7D</button>
+      <button data-timeframe="30D">30D</button>
+      <button data-timeframe="90D" class="active">90D</button>
+      <button data-timeframe="1Y">1Y</button>
+      <button data-timeframe="ALL">ALL</button>
+    </div>
+
+    <!-- Chart Mode -->
+    <div class="market-chart-modes">
+      <button data-chart-mode="area" class="active">Area</button>
+      <button data-chart-mode="line">Line</button>
+      <button data-chart-mode="candles">Candles</button>
+    </div>
+
   </div>
 
-  <div class="bx-chart-tools">
-    <button id="zoomIn" class="bx-tool-btn" type="button">＋</button>
-    <button id="zoomOut" class="bx-tool-btn" type="button">－</button>
-    <button id="resetView" class="bx-tool-btn" type="button">⟳</button>
-  </div>
+  <!-- ================= CHART ================= -->
+  <div class="market-chart-card">
+
+    <canvas id="marketChart"></canvas>
+
+    <!-- Tooltip -->
+    <div id="marketTooltip" class="market-tooltip"></div>
+
+    <!-- Crosshair Info -->
+    <div class="market-crosshair">
+      <span id="crosshairPrice">--</span>
+      <span id="crosshairTime">--</span>
+    </div>
+
   </div>
 
-    <div class="bx-chart-tools">
-      <button id="bxToggleChartType" class="bx-tool-btn active" type="button">📈</button>
-      <button class="bx-tool-btn" type="button">⚙</button>
+  <!-- ================= STATS ================= -->
+  <div class="market-stats-grid">
+
+    <div class="stat-card">
+      <span>24H High</span>
+      <strong id="statHigh">$0.00000</strong>
+    </div>
+
+    <div class="stat-card">
+      <span>24H Low</span>
+      <strong id="statLow">$0.00000</strong>
+    </div>
+
+    <div class="stat-card">
+      <span>Volume</span>
+      <strong id="statVolume">0 BX</strong>
+    </div>
+
+    <div class="stat-card">
+      <span>Market Cap</span>
+      <strong id="statMarketCap">$0</strong>
+    </div>
+
+  </div>
+
+  <!-- ================= OHLC PANEL ================= -->
+  <div class="market-ohlc">
+
+    <div class="ohlc-item">
+      <span>Open</span>
+      <strong id="metricOpen">0.00000</strong>
+    </div>
+
+    <div class="ohlc-item">
+      <span>High</span>
+      <strong id="metricHigh">0.00000</strong>
+    </div>
+
+    <div class="ohlc-item">
+      <span>Low</span>
+      <strong id="metricLow">0.00000</strong>
+    </div>
+
+    <div class="ohlc-item">
+      <span>Close</span>
+      <strong id="metricClose">0.00000</strong>
+    </div>
+
+    <div class="ohlc-item">
+      <span>Volume</span>
+      <strong id="metricVol">0</strong>
     </div>
   </div>
-
-  <!-- Chart -->
-  <div class="bx-chart-wrap">
-  <canvas id="bxChart"></canvas>
-  <div id="chartTooltip" class="chart-tooltip"></div>
 </div>
-
-<div class="bx-volume-wrap">
-  <canvas id="volumeChart"></canvas>
-   </div>
-  </div>
-
   <!-- ===== TRADE BOX ===== -->
   <div class="trade-box buy" id="tradeBox">
 
