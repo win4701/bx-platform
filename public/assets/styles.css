@@ -416,7 +416,7 @@ canvas{
 ========================================================= */
 #market{
   width:100%;
-  min-height:100vh;
+  min-height:auto;
 }
 
 /* =========================================================
@@ -452,6 +452,8 @@ canvas{
 .market-top,
 .market-asset-card,
 .market-chart-card{
+  border-radius:18px;
+  padding:12px;
   background:linear-gradient(180deg,#141a20 0%,#10151c 100%);
   border:1px solid var(--mk-stroke);
   border-radius:var(--mk-radius-xl);
@@ -506,7 +508,7 @@ canvas{
 
 .price-main,
 .market-big-price{
-  font-size:24px;
+  font-size:22px;
   font-weight:950;
   letter-spacing:-.03em;
   line-height:1;
@@ -575,7 +577,7 @@ canvas{
 .pair-grid{
   display:grid;
   grid-template-columns:repeat(5, minmax(0,1fr));
-  gap:12px;
+  gap:10px;
   width:100%;
 }
 
@@ -584,7 +586,7 @@ canvas{
   width:100%;
   min-width:0;
   height:88px;
-  border-radius:26px;
+  border-radius:22px;
   border:1px solid rgba(255,255,255,.08);
   background:rgba(255,255,255,.025);
   color:rgba(255,255,255,.78);
@@ -815,7 +817,7 @@ canvas{
 .market-chart-wrap{
   position:relative;
   width:100%;
-  height:360px;
+  height:260px;
   border-radius:30px;
   overflow:hidden;
   background:
@@ -836,7 +838,7 @@ canvas{
 .market-chart-card > canvas#marketChart,
 .market-chart-card > canvas#bxChart{
   width:100%;
-  height:360px;
+  height:260px;
   border-radius:30px;
   background:
     linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01)),
@@ -974,8 +976,8 @@ canvas{
    TRADE BOX
 ========================================================= */
 .trade-box{
-  padding:18px;
-  border-radius:32px;
+  padding:16px;
+  border-radius:28px;
   background:linear-gradient(180deg,#10151b 0%,#0d1218 100%);
   border:1px solid rgba(255,255,255,.06);
   box-shadow:var(--mk-shadow);
@@ -1090,7 +1092,7 @@ canvas{
   border-radius:22px;
   background:#171c23;
   border:1px solid rgba(255,255,255,.06);
-  padding:14px 16px;
+  padding:14px ;
   margin-bottom:16px;
 }
 
@@ -1205,7 +1207,7 @@ canvas{
 
 .ob-header,
 .ob-table.ob-head{
-  min-height:56px;
+  min-height:50px;
   padding:0 14px;
   background:#20252d;
   font-size:13px;
@@ -1236,7 +1238,7 @@ canvas{
 }
 
 .ob-row{
-  min-height:52px;
+  min-height:38px;
   padding:0 14px;
   border-top:1px solid rgba(255,255,255,.04);
   overflow:hidden;
@@ -1384,12 +1386,12 @@ canvas{
   }
 
   .market-chart-wrap{
-    height:320px;
+    height:260px;
   }
 
   .market-chart-card > canvas#marketChart,
   .market-chart-card > canvas#bxChart{
-    height:320px;
+    height:260px;
   }
 
   .market-crosshair .value,
@@ -1409,7 +1411,7 @@ canvas{
   .stat-card strong,
   .market-ohlc .value,
   .ohlc-item strong{
-    font-size:18px;
+    font-size:15px;
   }
 
   .trade-tabs button{
