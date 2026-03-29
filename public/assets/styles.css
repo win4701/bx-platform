@@ -415,13 +415,14 @@ canvas{
    OLD MARKET ROOT (HIDDEN TO PREVENT DOUBLE UI CONFLICT)
 ========================================================= */
 #market{
-  display:none !important;
+  width:100%;
+  min-height:100vh;
 }
 
 /* =========================================================
    MAIN PAGE
 ========================================================= */
-#marketPage.market-page{
+.market-main{
   width:100%;
   min-height:100vh;
   background:
