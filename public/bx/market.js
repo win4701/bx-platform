@@ -32,10 +32,8 @@
 
   function cacheDOM() {
     els.market = $("market");
-    els.marketPage = $("marketPage");
 
-    if (!els.market && !els.marketPage) return false;
-
+   if (!els.market) return false;
     Object.assign(els, {
       // OLD
       marketPrice: $("marketPrice"),
@@ -66,10 +64,12 @@
       zoomIn: $("zoomIn"),
       zoomOut: $("zoomOut"),
       resetView: $("resetView"),
+      pairButtons: $$(".pair-btn", els.market),
+      tfButtons: $$(".tf-btn", els.market),
+      percentButtons: $$(".percent-row button", els.market),
 
-      pairButtons: $$(".pair-btn", els.market || document),
-      tfButtons: $$(".tf-btn", els.market || document),
-      percentButtons: $$(".percent-row button", els.market || document),
+      chartModeButtons: $$("[data-chart-mode]", els.market),
+      tfButtonsNew: $$("[data-timeframe]", els.market),
 
       // NEW PRO MAX
       assetName: $("assetName"),
@@ -93,10 +93,8 @@
       metricHigh: $("metricHigh"),
       metricLow: $("metricLow"),
       metricClose: $("metricClose"),
-      metricVol: $("metricVol"),
+      metricVol: $("metricVol")
 
-      chartModeButtons: $$("[data-chart-mode]", els.marketPage || document),
-      tfButtonsNew: $$("[data-timeframe]", els.marketPage || document)
     });
 
     return true;
