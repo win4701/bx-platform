@@ -1,1058 +1,945 @@
 /* =========================================================
-   BLOXIO MARKET — HYBRID PRO MAX FINAL
-   Stable Core + Pro Max Chart + BX Fixed 45 USDT
+   BLOXIO MARKET — RE-MEASURE FIX FINAL
+   Stable BX=45 / Pro Chart / Clean Orderbook / Safe Hybrid
 ========================================================= */
 
-(() => {
-  "use strict";
+(function () {
+  'use strict';
 
-  /* ================= CONFIG ================= */
-  const BX_USDT_REFERENCE = 45; // ← السعر الثابت الأساسي
-  const DEFAULT_QUOTE = "USDT";
-  const MAX_ORDERBOOK_ROWS = 15;
+  /* =========================================================
+     CONFIG
+  ========================================================= */
+  const CONFIG = {
+    symbol: 'BX',
+    quote: 'USDT',
+    rank: '#276',
 
-  const QUOTE_STREAMS = {
-    USDT: null,
-    USDC: "usdcusdt",
-    BTC: "btcusdt",
-    ETH: "ethusdt",
-    BNB: "bnbusdt",
-    AVAX: "avaxusdt",
-    ZEC: "zecusdt",
-    TON: "tonusdt",
-    SOL: "solusdt",
-    LTC: "ltcusdt"
+    basePrice: 45.0,              // السعر الأساسي الثابت
+    liveNoisePercent: 0.0011,     // تقليل العشوائية
+    trendBiasPercent: 0.00022,    // ميل بسيط جدًا
+    candleNoisePercent: 0.0015,   // تقليل عنف الشموع
+    maxDriftClamp: 0.018,         // ±1.8% أقصى انحراف بصري
+    orderbookLevels: 15,
+    slippagePercent: 0.10,
+
+    chart: {
+      fps: 30,
+      paddingTop: 20,
+      paddingRight: 58,
+      paddingBottom: 28,
+      paddingLeft: 18,
+      gridLines: 5,
+      volumeHeight: 28,
+      crosshairColor: 'rgba(255,255,255,0.18)',
+      font: '12px Inter, system-ui, -apple-system, sans-serif',
+      lineColor: '#7ef8cc',
+      lineGlow: 'rgba(126,248,204,0.25)',
+      areaTop: 'rgba(126,248,204,0.22)',
+      areaBottom: 'rgba(126,248,204,0.00)',
+      candleUp: '#49f2a6',
+      candleDown: '#ff6b85',
+      axisColor: 'rgba(255,255,255,0.40)',
+      gridColor: 'rgba(255,255,255,0.05)',
+      volumeUp: 'rgba(73,242,166,0.35)',
+      volumeDown: 'rgba(255,107,133,0.35)'
+    },
+
+    timeframeMap: {
+      '1H': 60,
+      '24H': 96,
+      '7D': 84,
+      '30D': 90,
+      '90D': 90,
+      '1Y': 120,
+      'ALL': 160
+    }
   };
 
-  /* ================= DOM ================= */
-  const $ = (id) => document.getElementById(id);
-  const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
-
-  const els = {};
-
-  function cacheDOM() {
-    els.market = $("market");
-    els.marketPage = $("marketPage");
-
-    if (!els.market && !els.marketPage) return false;
-
-    Object.assign(els, {
-      // OLD
-      marketPrice: $("marketPrice"),
-      marketApprox: $("marketApprox"),
-      quoteAsset: $("quoteAsset"),
-
-      walletBX: $("walletBX"),
-      walletUSDT: $("walletUSDT"),
-      walletQuoteLabel: $("walletQuoteLabel"),
-
-      buyTab: $("buyTab"),
-      sellTab: $("sellTab"),
-      tradeBox: $("tradeBox"),
-      actionBtn: $("actionBtn"),
-      orderAmount: $("orderAmount"),
-
-      execPrice: $("execPrice"),
-      slippage: $("slippage"),
-      spread: $("spread"),
-
-      orderBookRows: $("orderBookRows"),
-      orderbookQuote: $("orderbookQuote"),
-
-      bxChart: $("bxChart"),
-      volumeChart: $("volumeChart"),
-      chartTooltip: $("chartTooltip"),
-
-      zoomIn: $("zoomIn"),
-      zoomOut: $("zoomOut"),
-      resetView: $("resetView"),
-
-      pairButtons: $$(".pair-btn", els.market || document),
-      tfButtons: $$(".tf-btn", els.market || document),
-      percentButtons: $$(".percent-row button", els.market || document),
-
-      // NEW PRO MAX
-      assetName: $("assetName"),
-      assetSymbol: $("assetSymbol"),
-      assetRank: $("assetRank"),
-      assetPrice: $("assetPrice"),
-      assetChange: $("assetChange"),
-      assetChangeBadge: $("assetChangeBadge"),
-
-      marketChart: $("marketChart"),
-      marketTooltip: $("marketTooltip"),
-      crosshairPrice: $("crosshairPrice"),
-      crosshairTime: $("crosshairTime"),
-
-      statHigh: $("statHigh"),
-      statLow: $("statLow"),
-      statVolume: $("statVolume"),
-      statMarketCap: $("statMarketCap"),
-
-      metricOpen: $("metricOpen"),
-      metricHigh: $("metricHigh"),
-      metricLow: $("metricLow"),
-      metricClose: $("metricClose"),
-      metricVol: $("metricVol"),
-
-      chartModeButtons: $$("[data-chart-mode]", els.marketPage || document),
-      tfButtonsNew: $$("[data-timeframe]", els.marketPage || document)
-    });
-
-    return true;
-  }
-
-  /* ================= HELPERS ================= */
-  const fmt = (n, d = 2) => (isFinite(n) ? Number(n).toFixed(d) : "0.00");
-  const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
-  const rnd = (min, max) => Math.random() * (max - min) + min;
-
-  function compact(n) {
-    if (!isFinite(n)) return "0";
-    if (n >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(2)}B`;
-    if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(2)}M`;
-    if (n >= 1_000) return `${(n / 1_000).toFixed(2)}K`;
-    return fmt(n, 2);
-  }
-
-  async function api(url, opts = {}) {
-    const res = await fetch(url, {
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      ...opts
-    });
-
-    const text = await res.text();
-    let data;
-    try { data = text ? JSON.parse(text) : {}; }
-    catch { data = { ok: false, error: text || "Invalid server response" }; }
-
-    if (!res.ok || data.ok === false) {
-      throw new Error(data.error || `HTTP ${res.status}`);
-    }
-    return data;
-  }
-
-  /* ================= STATE ================= */
+  /* =========================================================
+     STATE
+  ========================================================= */
   const state = {
-    initialized: false,
+    marketPrice: CONFIG.basePrice,
+    marketChangePercent: 0.03,
+    selectedPair: 'BX',
+    selectedTimeframe: 'ALL',
+    selectedChartMode: 'line', // line | area | candles
+    tradeMode: 'buy',          // buy | sell
+    amountBX: 0,
+    lastClose: CONFIG.basePrice,
 
-    currentQuote: DEFAULT_QUOTE,
-    marketPrice: BX_USDT_REFERENCE,
-    quotePriceUSDT: 1,
-
-    tradeSide: "buy",
-    bids: [],
-    asks: [],
-
-    wallet: {
-      BX: 0,
-      USDT: 0,
-      USDC: 0,
-      BTC: 0,
-      ETH: 0,
-      BNB: 0,
-      AVAX: 0,
-      ZEC: 0,
-      TON: 0,
-      SOL: 0,
-      LTC: 0
+    chartData: {
+      '1H': [],
+      '24H': [],
+      '7D': [],
+      '30D': [],
+      '90D': [],
+      '1Y': [],
+      'ALL': []
     },
 
-    lastPrice: BX_USDT_REFERENCE,
-    lastDirection: "flat",
+    chartHoverIndex: null,
+    chartHoverX: null,
+    chartHoverY: null,
 
-    ws: null,
-    wsTimer: null,
+    orderbook: {
+      bids: [],
+      asks: []
+    },
 
-    // Pro chart state
-    chartMode: "area",
-    visualPrice: BX_USDT_REFERENCE
+    stats: {
+      high24h: 45.65,
+      low24h: 44.72,
+      volume24h: 799600,
+      marketCap: 45000000000,
+      open: 44.92812,
+      high: 45.06913,
+      low: 44.88316,
+      close: 45.01182
+    }
   };
 
-  /* ================= WALLET ================= */
-  async function loadWallet() {
-    try {
-      const data = await api("/api/wallet");
-      state.wallet = { ...state.wallet, ...(data.wallet || {}) };
-    } catch (err) {
-      console.warn("[MARKET] wallet load failed:", err.message);
-    }
-    updateWalletUI();
+  /* =========================================================
+     DOM HELPERS
+  ========================================================= */
+  const $ = (id) => document.getElementById(id);
+  const $$ = (selector) => Array.from(document.querySelectorAll(selector));
+
+  function safeText(id, value) {
+    const el = $(id);
+    if (el) el.textContent = value;
   }
 
-  function updateWalletUI() {
-    if (els.walletBX) els.walletBX.textContent = fmt(state.wallet.BX || 0, 4);
-
-    const q = state.currentQuote;
-    const balance = state.wallet[q] || 0;
-
-    if (els.walletUSDT) els.walletUSDT.textContent = fmt(balance, q === "BTC" || q === "ETH" ? 6 : 4);
-    if (els.walletQuoteLabel) els.walletQuoteLabel.textContent = q;
+  function safeHTML(id, value) {
+    const el = $(id);
+    if (el) el.innerHTML = value;
   }
 
-  /* ================= PRICE ENGINE ================= */
-  function computeBXPrice() {
-    const old = state.marketPrice;
-
-    // السعر الحقيقي الأساسي ثابت 45 USDT
-    if (state.currentQuote === "USDT") {
-      state.marketPrice = BX_USDT_REFERENCE;
-    } else if (state.currentQuote === "USDC") {
-      state.marketPrice = BX_USDT_REFERENCE / (state.quotePriceUSDT || 1);
-    } else {
-      state.marketPrice = BX_USDT_REFERENCE / (state.quotePriceUSDT || 1);
-    }
-
-    state.lastDirection =
-      state.marketPrice > old ? "up" :
-      state.marketPrice < old ? "down" : "flat";
-
-    state.lastPrice = old;
-
-    // Visual micro-noise للشارت فقط (بدون كسر السعر الحقيقي)
-    const visualNoise = (Math.random() - 0.5) * (state.marketPrice * 0.0032);
-    state.visualPrice = Math.max(0.000001, state.marketPrice + visualNoise);
-
-    updatePriceUI();
-    generateOrderBook();
-    renderOrderBook();
-
-    if (CHART && typeof CHART.update === "function") {
-      CHART.update(state.visualPrice);
-    }
-
-    syncProMarketUI();
+  function safeVal(id, value) {
+    const el = $(id);
+    if (el) el.value = value;
   }
 
-  function updatePriceUI() {
-    const price = state.marketPrice;
-    const old = state.lastPrice || price;
-    const changePct = old > 0 ? ((price - old) / old) * 100 : 0;
-    const up = changePct >= 0;
-
-    // ===== OLD UI =====
-    if (els.marketPrice) {
-      els.marketPrice.textContent = fmt(price, 6);
-      els.marketPrice.classList.remove("up", "down");
-
-      if (state.lastDirection === "up") els.marketPrice.classList.add("up");
-      if (state.lastDirection === "down") els.marketPrice.classList.add("down");
-    }
-
-    if (els.marketApprox) {
-      els.marketApprox.textContent = `≈ ${fmt(price, 6)} ${state.currentQuote}`;
-    }
-
-    if (els.quoteAsset) els.quoteAsset.textContent = state.currentQuote;
-
-    // ===== NEW UI =====
-    if (els.assetName) els.assetName.textContent = "Bloxio";
-    if (els.assetSymbol) els.assetSymbol.textContent = "BX";
-    if (els.assetRank) els.assetRank.textContent = "#276";
-
-    if (els.assetPrice) {
-      els.assetPrice.textContent = `$${fmt(price, 5)}`;
-    }
-
-    if (els.assetChange) {
-      els.assetChange.textContent = `${up ? "+" : "-"}${Math.abs(changePct).toFixed(2)}%`;
-      els.assetChange.classList.toggle("is-up", up);
-      els.assetChange.classList.toggle("is-down", !up);
-    }
-
-    if (els.assetChangeBadge) {
-      els.assetChangeBadge.textContent = `${up ? "▲" : "▼"} ${Math.abs(changePct).toFixed(2)}%`;
-      els.assetChangeBadge.classList.remove("is-up", "is-down");
-      els.assetChangeBadge.classList.add(up ? "is-up" : "is-down");
-    }
-
-    updateWalletUI();
-    updateTradePreview();
+  function fmtNum(n, digits = 4) {
+    return Number(n).toLocaleString('en-US', {
+      minimumFractionDigits: digits,
+      maximumFractionDigits: digits
+    });
   }
 
-  /* ================= ORDERBOOK ================= */
-  function generateOrderBook() {
-    state.bids = [];
-    state.asks = [];
+  function fmtPrice(n, digits = 5) {
+    return '$' + Number(n).toLocaleString('en-US', {
+      minimumFractionDigits: digits,
+      maximumFractionDigits: digits
+    });
+  }
 
-    const spreadUnit = state.marketPrice * 0.0008;
+  function fmtPairPrice(n, digits = 6) {
+    return Number(n).toLocaleString('en-US', {
+      minimumFractionDigits: digits,
+      maximumFractionDigits: digits
+    });
+  }
 
-    for (let i = 1; i <= MAX_ORDERBOOK_ROWS; i++) {
-      state.bids.unshift({
-        price: state.marketPrice - i * spreadUnit,
-        amount: +(rnd(0.2, 4.8)).toFixed(3)
+  function fmtCompact(n) {
+    const abs = Math.abs(n);
+    if (abs >= 1e9) return (n / 1e9).toFixed(2) + 'B';
+    if (abs >= 1e6) return (n / 1e6).toFixed(2) + 'M';
+    if (abs >= 1e3) return (n / 1e3).toFixed(2) + 'K';
+    return Number(n).toFixed(2);
+  }
+
+  function clamp(v, min, max) {
+    return Math.max(min, Math.min(max, v));
+  }
+
+  function rand(min, max) {
+    return Math.random() * (max - min) + min;
+  }
+
+  function nowTs() {
+    return Date.now();
+  }
+
+  /* =========================================================
+     DATA GENERATION — STABLE / PROFESSIONAL
+  ========================================================= */
+
+  function generateStableSeries(label, count) {
+    const series = [];
+    let p = CONFIG.basePrice;
+    let ts = nowTs() - count * 3600 * 1000;
+
+    // scale حسب الفريم
+    let tfVol = 0.0008;
+    if (label === '1H') tfVol = 0.00035;
+    if (label === '24H') tfVol = 0.00055;
+    if (label === '7D') tfVol = 0.00075;
+    if (label === '30D') tfVol = 0.00095;
+    if (label === '90D') tfVol = 0.0011;
+    if (label === '1Y') tfVol = 0.0012;
+    if (label === 'ALL') tfVol = 0.00135;
+
+    for (let i = 0; i < count; i++) {
+      const open = p;
+
+      // حركة احترافية هادئة
+      const drift = (Math.random() - 0.5) * (p * tfVol);
+      const trend = Math.sin(i / 18) * (p * 0.00018);
+      const closeRaw = open + drift + trend;
+
+      // لا نسمح بخروج السعر عن نطاق منطقي
+      const close = clamp(
+        closeRaw,
+        CONFIG.basePrice * (1 - CONFIG.maxDriftClamp),
+        CONFIG.basePrice * (1 + CONFIG.maxDriftClamp)
+      );
+
+      const wickNoise = p * 0.00065;
+      const highRaw = Math.max(open, close) + rand(0, wickNoise);
+      const lowRaw = Math.min(open, close) - rand(0, wickNoise);
+
+      const high = clamp(
+        highRaw,
+        CONFIG.basePrice * 0.985,
+        CONFIG.basePrice * 1.03
+      );
+
+      const low = clamp(
+        lowRaw,
+        CONFIG.basePrice * 0.97,
+        CONFIG.basePrice * 1.015
+      );
+
+      const volume = rand(120, 900) * (1 + Math.abs(close - open) * 10);
+
+      series.push({
+        t: ts,
+        open,
+        high,
+        low,
+        close,
+        volume
       });
 
-      state.asks.push({
-        price: state.marketPrice + i * spreadUnit,
-        amount: +(rnd(0.2, 4.8)).toFixed(3)
-      });
+      p = close;
+      ts += 3600 * 1000;
     }
+
+    return series;
   }
 
-  function renderOrderBook() {
-    if (!els.orderBookRows) return;
-    els.orderBookRows.innerHTML = "";
-
-    if (!state.bids.length || !state.asks.length) {
-      els.orderBookRows.innerHTML = `<div class="ob-empty">No orderbook data</div>`;
-      return;
-    }
-
-    const maxBid = Math.max(...state.bids.map(x => x.amount), 1);
-    const maxAsk = Math.max(...state.asks.map(x => x.amount), 1);
-
-    state.bids.forEach((b, i) => {
-      const a = state.asks[i];
-      const mid = ((b.price + a.price) / 2);
-
-      const row = document.createElement("div");
-      row.className = "ob-row";
-
-      const bidDepth = Math.min(100, (b.amount / maxBid) * 100);
-      const askDepth = Math.min(100, (a.amount / maxAsk) * 100);
-
-      row.innerHTML = `
-        <div class="depth-bid" style="width:${bidDepth}%"></div>
-        <div class="depth-ask" style="width:${askDepth}%"></div>
-
-        <div class="ob-bid">${fmt(b.amount, 3)}</div>
-        <div class="ob-mid">${fmt(mid, 6)}</div>
-        <div class="ob-ask">${fmt(a.amount, 3)}</div>
-      `;
-
-      els.orderBookRows.appendChild(row);
+  function buildAllSeries() {
+    Object.keys(CONFIG.timeframeMap).forEach((tf) => {
+      state.chartData[tf] = generateStableSeries(tf, CONFIG.timeframeMap[tf]);
     });
 
-    if (els.orderbookQuote) els.orderbookQuote.textContent = state.currentQuote;
-    updateTradePreview();
+    const last = state.chartData.ALL[state.chartData.ALL.length - 1];
+    if (last) {
+      state.marketPrice = last.close;
+      state.lastClose = last.close;
+    }
+
+    recalcStatsFromSeries();
   }
 
-  /* ================= TRADE ================= */
-  function updateTradePreview() {
-    const bestBid = state.bids[state.bids.length - 1]?.price || state.marketPrice;
-    const bestAsk = state.asks[0]?.price || state.marketPrice;
-    const exec = state.tradeSide === "buy" ? bestAsk : bestBid;
-
-    if (els.execPrice) els.execPrice.textContent = fmt(exec, 6);
-    if (els.spread) els.spread.textContent = fmt(bestAsk - bestBid, 6);
-    if (els.slippage) els.slippage.textContent = "0.10%";
-  }
-
-  function setTradeSide(side) {
-    state.tradeSide = side;
-
-    if (els.tradeBox) {
-      els.tradeBox.classList.toggle("buy", side === "buy");
-      els.tradeBox.classList.toggle("sell", side === "sell");
-    }
-
-    if (els.buyTab) els.buyTab.classList.toggle("active", side === "buy");
-    if (els.sellTab) els.sellTab.classList.toggle("active", side === "sell");
-
-    if (els.actionBtn) {
-      els.actionBtn.textContent = side === "buy" ? "Buy BX" : "Sell BX";
-      els.actionBtn.classList.toggle("buy", side === "buy");
-      els.actionBtn.classList.toggle("sell", side === "sell");
-    }
-
-    updateTradePreview();
-  }
-
-  function setPercent(percent) {
-    if (!els.orderAmount) return;
-
-    const q = state.currentQuote;
-    const quoteBal = state.wallet[q] || 0;
-    const bxBal = state.wallet.BX || 0;
-    const bestAsk = state.asks[0]?.price || state.marketPrice;
-
-    if (state.tradeSide === "buy") {
-      const maxBX = bestAsk > 0 ? quoteBal / bestAsk : 0;
-      els.orderAmount.value = ((maxBX * percent) / 100).toFixed(4);
-    } else {
-      els.orderAmount.value = ((bxBal * percent) / 100).toFixed(4);
-    }
-
-    els.percentButtons?.forEach(btn => btn.classList.remove("active"));
-    const active = els.percentButtons?.find(btn => Number(btn.dataset.percent) === percent);
-    if (active) active.classList.add("active");
-  }
-
-  async function executeTrade() {
-    if (!els.orderAmount) return;
-
-    const amount = Number(els.orderAmount.value || 0);
-    if (!amount || amount <= 0) {
-      alert("Enter a valid amount.");
-      return;
-    }
-
-    try {
-      const payload = {
-        side: state.tradeSide,
-        amount,
-        quote: state.currentQuote,
-        price: state.tradeSide === "buy"
-          ? (state.asks[0]?.price || state.marketPrice)
-          : (state.bids[state.bids.length - 1]?.price || state.marketPrice)
-      };
-
-      const data = await api("/api/market/trade", {
-        method: "POST",
-        body: JSON.stringify(payload)
-      });
-
-      if (data.wallet) {
-        state.wallet = { ...state.wallet, ...data.wallet };
-      }
-
-      updateWalletUI();
-      els.orderAmount.value = "";
-      els.percentButtons?.forEach(btn => btn.classList.remove("active"));
-
-      alert(`${state.tradeSide === "buy" ? "Bought" : "Sold"} ${amount} BX successfully.`);
-    } catch (err) {
-      console.error("[MARKET] trade failed:", err);
-      alert(err.message || "Trade failed.");
-    }
-  }
-
-  /* ================= WEBSOCKET QUOTES ================= */
-  function disconnectWS() {
-    if (state.ws) {
-      try { state.ws.close(); } catch {}
-      state.ws = null;
-    }
-    if (state.wsTimer) {
-      clearTimeout(state.wsTimer);
-      state.wsTimer = null;
-    }
-  }
-
-  function scheduleReconnect(symbol) {
-    if (!symbol) return;
-    if (state.wsTimer) clearTimeout(state.wsTimer);
-    state.wsTimer = setTimeout(() => connectQuoteStream(symbol), 2500);
-  }
-
-  function connectQuoteStream(symbol) {
-    disconnectWS();
-
-    if (!symbol) {
-      state.quotePriceUSDT = 1;
-      computeBXPrice();
-      return;
-    }
-
-    const url = `wss://stream.binance.com:9443/ws/${symbol}@trade`;
-
-    try {
-      state.ws = new WebSocket(url);
-
-      state.ws.onmessage = (ev) => {
-        try {
-          const data = JSON.parse(ev.data);
-          const p = Number(data.p);
-          if (isFinite(p) && p > 0) {
-            state.quotePriceUSDT = p;
-            computeBXPrice();
-          }
-        } catch {}
-      };
-
-      state.ws.onopen = () => {
-        // أول حساب بعد الاتصال
-        computeBXPrice();
-      };
-
-      state.ws.onerror = () => {
-        disconnectWS();
-        scheduleReconnect(symbol);
-      };
-
-      state.ws.onclose = () => {
-        scheduleReconnect(symbol);
-      };
-    } catch {
-      scheduleReconnect(symbol);
-    }
-  }
-
-  /* ================= PRO MAX CHART ================= */
-  const CHART = {
-    canvas: null,
-    ctx: null,
-    tooltip: null,
-    candles: [],
-    current: null,
-
-    visibleCount: 90,
-    minVisible: 20,
-    maxVisible: 220,
-
-    timeframeMs: 4500,
-    lastRender: 0,
-
-    hoverIndex: null,
-    mouse: { x: 0, y: 0 },
-
-    init() {
-      this.canvas = els.marketChart || els.bxChart;
-      if (!this.canvas) return;
-
-      this.ctx = this.canvas.getContext("2d");
-      this.tooltip = els.marketTooltip || els.chartTooltip || null;
-
-      this.resize();
-      this.bind();
-
-      this.reset(state.visualPrice || state.marketPrice);
-      this.render();
-    },
-
-    bind() {
-      window.addEventListener("resize", () => this.resize());
-
-      this.canvas.addEventListener("mousemove", (e) => {
-        const rect = this.canvas.getBoundingClientRect();
-        this.mouse.x = e.clientX - rect.left;
-        this.mouse.y = e.clientY - rect.top;
-
-        const visible = this.candles.slice(-this.visibleCount);
-        if (!visible.length) return;
-
-        const candleWidth = this.canvas.clientWidth / visible.length;
-        const idx = clamp(Math.floor(this.mouse.x / candleWidth), 0, visible.length - 1);
-        this.hoverIndex = idx;
-
-        const c = visible[idx];
-        this.updateTooltip(c, this.mouse.x, this.mouse.y);
-        this.render();
-      });
-
-      this.canvas.addEventListener("mouseleave", () => {
-        this.hoverIndex = null;
-        if (this.tooltip) this.tooltip.classList.remove("show");
-        this.render();
-      });
-    },
-
-    resize() {
-      if (!this.canvas) return;
-
-      const wrap = this.canvas.parentElement;
-      if (!wrap) return;
-
-      const dpr = Math.max(window.devicePixelRatio || 1, 1);
-      const w = wrap.clientWidth || 320;
-      const h = wrap.clientHeight || 360;
-
-      this.canvas.width = w * dpr;
-      this.canvas.height = h * dpr;
-      this.canvas.style.width = w + "px";
-      this.canvas.style.height = h + "px";
-
-      this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      this.render();
-    },
-
-    createCandle(price) {
-      return {
-        time: Date.now(),
-        open: price,
-        high: price,
-        low: price,
-        close: price,
-        volume: rnd(1200, 4800)
-      };
-    },
-
-    reset(price) {
-      this.candles = [];
-      let p = price || state.marketPrice;
-
-      // نبني history بصري مع احترام السعر الحالي
-      for (let i = 0; i < 140; i++) {
-        const drift = (Math.random() - 0.5) * (p * 0.0045);
-        const open = p;
-        const close = Math.max(0.000001, p + drift);
-        const high = Math.max(open, close) + rnd(0, p * 0.0024);
-        const low = Math.min(open, close) - rnd(0, p * 0.0022);
-
-        this.candles.push({
-          time: Date.now() - (140 - i) * this.timeframeMs,
-          open,
-          high,
-          low: Math.max(0.000001, low),
-          close,
-          volume: rnd(1500, 7800)
-        });
-
-        p = close;
-      }
-
-      this.current = this.candles[this.candles.length - 1];
-      syncProMarketUI();
-      this.render();
-    },
-
-    update(price) {
-      if (!this.canvas) return;
-
-      const now = Date.now();
-
-      if (!this.current) {
-        this.current = this.createCandle(price);
-        this.candles.push(this.current);
-      }
-
-      if (now - this.current.time >= this.timeframeMs) {
-        this.current = this.createCandle(price);
-        this.candles.push(this.current);
-
-        if (this.candles.length > 320) {
-          this.candles.shift();
-        }
-      }
-
-      this.current.high = Math.max(this.current.high, price);
-      this.current.low = Math.min(this.current.low, price);
-      this.current.close = price;
-      this.current.volume += rnd(80, 320);
-
-      syncProMarketUI();
-      this.render();
-    },
-
-    updateTooltip(c, x, y) {
-      if (!this.tooltip || !c) return;
-
-      const d = new Date(c.time);
-
-      this.tooltip.innerHTML = `
-        <div><strong>${d.toLocaleString()}</strong></div>
-        <div>O: ${fmt(c.open, 5)}</div>
-        <div>H: ${fmt(c.high, 5)}</div>
-        <div>L: ${fmt(c.low, 5)}</div>
-        <div>C: ${fmt(c.close, 5)}</div>
-        <div>V: ${compact(c.volume)}</div>
-      `;
-
-      this.tooltip.style.left = `${Math.min(this.canvas.clientWidth - 150, x + 14)}px`;
-      this.tooltip.style.top = `${Math.max(12, y - 12)}px`;
-      this.tooltip.classList.add("show");
-
-      if (els.crosshairPrice) els.crosshairPrice.textContent = fmt(c.close, 5);
-      if (els.crosshairTime) els.crosshairTime.textContent = d.toLocaleDateString();
-      if (els.metricOpen) els.metricOpen.textContent = fmt(c.open, 5);
-      if (els.metricHigh) els.metricHigh.textContent = fmt(c.high, 5);
-      if (els.metricLow) els.metricLow.textContent = fmt(c.low, 5);
-      if (els.metricClose) els.metricClose.textContent = fmt(c.close, 5);
-      if (els.metricVol) els.metricVol.textContent = compact(c.volume);
-    },
-
-    render() {
-      if (!this.canvas || !this.ctx) return;
-
-      const ctx = this.ctx;
-      const w = this.canvas.clientWidth;
-      const h = this.canvas.clientHeight;
-
-      ctx.clearRect(0, 0, w, h);
-
-      // BG
-      const bg = ctx.createLinearGradient(0, 0, 0, h);
-      bg.addColorStop(0, "#151b1d");
-      bg.addColorStop(1, "#111618");
-      ctx.fillStyle = bg;
-      ctx.fillRect(0, 0, w, h);
-
-      const visible = this.candles.slice(-this.visibleCount);
-      if (!visible.length) return;
-
-      const prices = visible.flatMap(c => [c.high, c.low]);
-      let min = Math.min(...prices);
-      let max = Math.max(...prices);
-      const pad = (max - min) * 0.12 || max * 0.04;
-      min -= pad;
-      max += pad;
-
-      const chartH = h - 46;
-      const scaleY = (p) => chartH - ((p - min) / (max - min)) * (chartH - 20);
-      const candleWidth = w / visible.length;
-
-      // Grid
-      ctx.strokeStyle = "rgba(255,255,255,.05)";
-      ctx.lineWidth = 1;
-      for (let i = 0; i <= 5; i++) {
-        const gy = 12 + (chartH - 20) * (i / 5);
-        ctx.beginPath();
-        ctx.moveTo(0, gy);
-        ctx.lineTo(w, gy);
-        ctx.stroke();
-      }
-
-      // Render mode
-      if (state.chartMode === "line") {
-        ctx.beginPath();
-        ctx.strokeStyle = "#87FFD3";
-        ctx.lineWidth = 3;
-
-        visible.forEach((c, i) => {
-          const x = i * candleWidth + candleWidth / 2;
-          const y = scaleY(c.close);
-          if (i === 0) ctx.moveTo(x, y);
-          else ctx.lineTo(x, y);
-        });
-
-        ctx.shadowColor = "rgba(135,255,211,.28)";
-        ctx.shadowBlur = 16;
-        ctx.stroke();
-        ctx.shadowBlur = 0;
-
-      } else if (state.chartMode === "area") {
-        ctx.beginPath();
-        visible.forEach((c, i) => {
-          const x = i * candleWidth + candleWidth / 2;
-          const y = scaleY(c.close);
-          if (i === 0) ctx.moveTo(x, y);
-          else ctx.lineTo(x, y);
-        });
-
-        const lastX = (visible.length - 1) * candleWidth + candleWidth / 2;
-        const firstX = candleWidth / 2;
-
-        ctx.lineTo(lastX, chartH);
-        ctx.lineTo(firstX, chartH);
-        ctx.closePath();
-
-        const areaGrad = ctx.createLinearGradient(0, 0, 0, chartH);
-        areaGrad.addColorStop(0, "rgba(44,230,125,.28)");
-        areaGrad.addColorStop(1, "rgba(44,230,125,0)");
-        ctx.fillStyle = areaGrad;
-        ctx.fill();
-
-        ctx.beginPath();
-        visible.forEach((c, i) => {
-          const x = i * candleWidth + candleWidth / 2;
-          const y = scaleY(c.close);
-          if (i === 0) ctx.moveTo(x, y);
-          else ctx.lineTo(x, y);
-        });
-
-        ctx.strokeStyle = "#87FFD3";
-        ctx.lineWidth = 3;
-        ctx.shadowColor = "rgba(135,255,211,.24)";
-        ctx.shadowBlur = 14;
-        ctx.stroke();
-        ctx.shadowBlur = 0;
-
-        const lc = visible[visible.length - 1];
-        const lx = (visible.length - 1) * candleWidth + candleWidth / 2;
-        const ly = scaleY(lc.close);
-
-        ctx.fillStyle = "#2ce67d";
-        ctx.beginPath();
-        ctx.arc(lx, ly, 5.5, 0, Math.PI * 2);
-        ctx.fill();
-
-      } else {
-        // Candles
-        visible.forEach((c, i) => {
-          const x = i * candleWidth + candleWidth / 2;
-          const openY = scaleY(c.open);
-          const closeY = scaleY(c.close);
-          const highY = scaleY(c.high);
-          const lowY = scaleY(c.low);
-          const up = c.close >= c.open;
-
-          ctx.strokeStyle = up ? "#2ce67d" : "#ff5c75";
-          ctx.fillStyle = up ? "#2ce67d" : "#ff5c75";
-          ctx.lineWidth = 1.2;
-
-          // wick
-          ctx.beginPath();
-          ctx.moveTo(x, highY);
-          ctx.lineTo(x, lowY);
-          ctx.stroke();
-
-          // body
-          ctx.fillRect(
-            x - candleWidth * 0.28,
-            Math.min(openY, closeY),
-            candleWidth * 0.56,
-            Math.max(2, Math.abs(openY - closeY))
-          );
-        });
-      }
-
-      // Volume
-      const maxVol = Math.max(...visible.map(c => c.volume), 1);
-      visible.forEach((c, i) => {
-        const x = i * candleWidth + candleWidth * 0.18;
-        const vh = (c.volume / maxVol) * 24;
-        const up = c.close >= c.open;
-        ctx.fillStyle = up ? "rgba(44,230,125,.18)" : "rgba(255,92,117,.16)";
-        ctx.fillRect(x, h - vh - 8, candleWidth * 0.64, vh);
-      });
-
-      // Crosshair
-      if (this.hoverIndex !== null && visible[this.hoverIndex]) {
-        const c = visible[this.hoverIndex];
-        const cx = this.hoverIndex * candleWidth + candleWidth / 2;
-        const cy = scaleY(c.close);
-
-        ctx.strokeStyle = "rgba(255,255,255,.14)";
-        ctx.setLineDash([5, 5]);
-
-        ctx.beginPath();
-        ctx.moveTo(cx, 0);
-        ctx.lineTo(cx, chartH);
-        ctx.stroke();
-
-        ctx.beginPath();
-        ctx.moveTo(0, cy);
-        ctx.lineTo(w, cy);
-        ctx.stroke();
-
-        ctx.setLineDash([]);
-
-        ctx.fillStyle = "#fff";
-        ctx.beginPath();
-        ctx.arc(cx, cy, 4, 0, Math.PI * 2);
-        ctx.fill();
-      }
-
-      // Price labels
-      ctx.fillStyle = "rgba(255,255,255,.56)";
-      ctx.font = "12px Inter, sans-serif";
-      ctx.textAlign = "right";
-
-      for (let i = 0; i <= 4; i++) {
-        const p = max - ((max - min) * i / 4);
-        const py = 12 + (chartH - 20) * (i / 4);
-        ctx.fillText(fmt(p, 5), w - 8, py + 4);
-      }
-    }
-  };
-
-  /* ================= PRO UI SYNC ================= */
-  function syncProMarketUI() {
-    if (!CHART || !CHART.candles || !CHART.candles.length) return;
-
-    const visible = CHART.candles.slice(-CHART.visibleCount);
-    if (!visible.length) return;
-
-    const highs = visible.map(c => c.high);
-    const lows = visible.map(c => c.low);
-    const volumes = visible.map(c => c.volume || 0);
-
+  function recalcStatsFromSeries() {
+    const daySeries = state.chartData['24H'] || [];
+    if (!daySeries.length) return;
+
+    const highs = daySeries.map(x => x.high);
+    const lows = daySeries.map(x => x.low);
+    const volumes = daySeries.map(x => x.volume);
+
+    const open = daySeries[0].open;
+    const close = daySeries[daySeries.length - 1].close;
     const high = Math.max(...highs);
     const low = Math.min(...lows);
     const volume = volumes.reduce((a, b) => a + b, 0);
 
-    const first = visible[0]?.open || state.marketPrice;
-    const last = visible[visible.length - 1];
-    const changePct = first > 0 ? ((last.close - first) / first) * 100 : 0;
-    const up = changePct >= 0;
+    state.stats.high24h = high;
+    state.stats.low24h = low;
+    state.stats.volume24h = volume * 18;
+    state.stats.marketCap = state.marketPrice * 1000000000;
 
-    if (els.statHigh) els.statHigh.textContent = `$${fmt(high, 5)}`;
-    if (els.statLow) els.statLow.textContent = `$${fmt(low, 5)}`;
-    if (els.statVolume) els.statVolume.textContent = `${compact(volume)} BX`;
-    if (els.statMarketCap) {
-      const marketCap = state.marketPrice * 1_000_000_000;
-      els.statMarketCap.textContent = `$${compact(marketCap)}`;
+    state.stats.open = open;
+    state.stats.high = high;
+    state.stats.low = low;
+    state.stats.close = close;
+
+    state.marketChangePercent = ((close - open) / open) * 100;
+  }
+
+  /* =========================================================
+     ORDERBOOK
+  ========================================================= */
+  function generateOrderBook() {
+    const mid = state.marketPrice;
+    const bids = [];
+    const asks = [];
+
+    for (let i = 0; i < CONFIG.orderbookLevels; i++) {
+      const priceBid = mid - (i + 1) * 0.036;
+      const priceAsk = mid + (i + 1) * 0.036;
+
+      bids.push({
+        size: rand(0.20, 4.90),
+        price: priceBid
+      });
+
+      asks.push({
+        size: rand(0.20, 4.90),
+        price: priceAsk
+      });
     }
 
-    if (last) {
-      if (els.metricOpen) els.metricOpen.textContent = fmt(last.open, 5);
-      if (els.metricHigh) els.metricHigh.textContent = fmt(last.high, 5);
-      if (els.metricLow) els.metricLow.textContent = fmt(last.low, 5);
-      if (els.metricClose) els.metricClose.textContent = fmt(last.close, 5);
-      if (els.metricVol) els.metricVol.textContent = compact(last.volume || 0);
+    state.orderbook.bids = bids.sort((a, b) => b.price - a.price);
+    state.orderbook.asks = asks.sort((a, b) => a.price - b.price);
+  }
+
+  function renderOrderBook() {
+    const body = $('orderBookBody');
+    if (!body) return;
+
+    const maxBid = Math.max(...state.orderbook.bids.map(x => x.size), 1);
+    const maxAsk = Math.max(...state.orderbook.asks.map(x => x.size), 1);
+
+    const rows = [];
+
+    for (let i = 0; i < CONFIG.orderbookLevels; i++) {
+      const bid = state.orderbook.bids[i];
+      const ask = state.orderbook.asks[i];
+
+      if (!bid || !ask) continue;
+
+      const bidDepth = (bid.size / maxBid) * 100;
+      const askDepth = (ask.size / maxAsk) * 100;
+
+      rows.push(`
+        <div class="ob-row">
+          <div class="depth-bid" style="width:${bidDepth}%"></div>
+          <div class="depth-ask" style="width:${askDepth}%"></div>
+
+          <div class="ob-bid">${fmtPairPrice(bid.size, 3)}</div>
+          <div class="ob-mid">${fmtPairPrice((bid.price + ask.price) / 2, 6)}</div>
+          <div class="ob-ask">${fmtPairPrice(ask.size, 3)}</div>
+        </div>
+      `);
     }
 
-    if (els.assetChange) {
-      els.assetChange.textContent = `${up ? "+" : "-"}${Math.abs(changePct).toFixed(2)}%`;
-      els.assetChange.classList.toggle("is-up", up);
-      els.assetChange.classList.toggle("is-down", !up);
-    }
+    body.innerHTML = rows.join('');
+  }
 
-    if (els.assetChangeBadge) {
-      els.assetChangeBadge.textContent = `${up ? "▲" : "▼"} ${Math.abs(changePct).toFixed(2)}%`;
-      els.assetChangeBadge.classList.remove("is-up", "is-down");
-      els.assetChangeBadge.classList.add(up ? "is-up" : "is-down");
+  /* =========================================================
+     UI RENDER
+  ========================================================= */
+  function renderHeader() {
+    safeText('pairPrice', fmtPairPrice(state.marketPrice, 6));
+    safeText('pairApprox', `≈ ${fmtPairPrice(state.marketPrice, 6)} ${CONFIG.quote}`);
+    safeText('assetPrice', fmtPrice(state.marketPrice, 5));
+
+    const isUp = state.marketChangePercent >= 0;
+    const arrow = isUp ? '▲' : '▼';
+    const pct = `${arrow} ${Math.abs(state.marketChangePercent).toFixed(2)}%`;
+
+    const assetChange = $('assetChange');
+    if (assetChange) {
+      assetChange.textContent = pct;
+      assetChange.classList.toggle('is-down', !isUp);
     }
   }
 
-  /* ================= PAIRS ================= */
-  function setQuote(q) {
-    state.currentQuote = q;
+  function renderStats() {
+    safeText('statsHigh', fmtPrice(state.stats.high24h, 5));
+    safeText('statsLow', fmtPrice(state.stats.low24h, 5));
+    safeText('statsVolume', `${fmtCompact(state.stats.volume24h)} BX`);
+    safeText('statsCap', `$${fmtCompact(state.stats.marketCap)}`);
 
-    els.pairButtons?.forEach(btn => {
-      btn.classList.toggle("active", btn.dataset.quote === q);
-    });
-
-    updateWalletUI();
-    computeBXPrice();
-    connectQuoteStream(QUOTE_STREAMS[q]);
+    safeText('ohlcOpen', fmtPairPrice(state.stats.open, 5));
+    safeText('ohlcHigh', fmtPairPrice(state.stats.high, 5));
+    safeText('ohlcLow', fmtPairPrice(state.stats.low, 5));
+    safeText('ohlcClose', fmtPairPrice(state.stats.close, 5));
   }
 
-  /* ================= EVENTS ================= */
-  function bindEvents() {
-    // pairs
-    els.pairButtons?.forEach(btn => {
-      btn.addEventListener("click", () => {
-        const q = btn.dataset.quote;
-        if (!q || q === state.currentQuote) return;
-        setQuote(q);
-      });
-    });
+  function renderTradeSummary() {
+    const amount = Number(($('tradeAmount')?.value || '0').replace(',', '.')) || 0;
+    state.amountBX = amount;
 
-    // buy / sell
-    if (els.buyTab) els.buyTab.addEventListener("click", () => setTradeSide("buy"));
-    if (els.sellTab) els.sellTab.addEventListener("click", () => setTradeSide("sell"));
+    const price = state.marketPrice;
+    const slippage = CONFIG.slippagePercent;
+    const spread = 0.072;
 
-    // percent
-    els.percentButtons?.forEach(btn => {
-      btn.addEventListener("click", () => {
-        const p = Number(btn.dataset.percent || 0);
-        setPercent(p);
-      });
-    });
+    safeText('tradePrice', fmtPairPrice(price, 6));
+    safeText('tradeSlippage', `${slippage.toFixed(2)}%`);
+    safeText('tradeSpread', fmtPairPrice(spread, 6));
 
-    // action
-    if (els.actionBtn) {
-      els.actionBtn.addEventListener("click", executeTrade);
+    const btn = $('tradeActionBtn');
+    if (btn) {
+      btn.textContent = state.tradeMode === 'buy' ? 'Buy BX' : 'Sell BX';
+      btn.classList.toggle('buy', state.tradeMode === 'buy');
+      btn.classList.toggle('sell', state.tradeMode === 'sell');
     }
 
-    // old tf (if exists)
-    els.tfButtons?.forEach(btn => {
-      btn.addEventListener("click", () => {
-        els.tfButtons.forEach(b => b.classList.remove("active"));
-        btn.classList.add("active");
-
-        const days = Number(btn.dataset.days || 1);
-        const map = { 1: 40, 3: 60, 7: 80, 14: 110, 30: 150 };
-        CHART.visibleCount = clamp(map[days] || 60, CHART.minVisible, CHART.maxVisible);
-        CHART.render();
-        syncProMarketUI();
-      });
-    });
-
-    // new tf
-    els.tfButtonsNew?.forEach(btn => {
-      btn.addEventListener("click", () => {
-        els.tfButtonsNew.forEach(b => b.classList.remove("active"));
-        btn.classList.add("active");
-
-        const tf = btn.dataset.timeframe;
-        const map = {
-          "1H": 24,
-          "24H": 40,
-          "7D": 60,
-          "30D": 90,
-          "90D": 120,
-          "1Y": 160,
-          "ALL": 220
-        };
-
-        CHART.visibleCount = clamp(map[tf] || 90, CHART.minVisible, CHART.maxVisible);
-
-        // سرعة candle لكل فريم
-        const speedMap = {
-          "1H": 1500,
-          "24H": 2200,
-          "7D": 3000,
-          "30D": 4200,
-          "90D": 5000,
-          "1Y": 6000,
-          "ALL": 7000
-        };
-
-        CHART.timeframeMs = speedMap[tf] || 4500;
-        CHART.render();
-        syncProMarketUI();
-      });
-    });
-
-    // chart modes
-    els.chartModeButtons?.forEach(btn => {
-      btn.addEventListener("click", () => {
-        els.chartModeButtons.forEach(b => b.classList.remove("active"));
-        btn.classList.add("active");
-
-        state.chartMode = btn.dataset.chartMode || "candles";
-        CHART.render();
-      });
-    });
-
-    // optional zoom
-    if (els.zoomIn) {
-      els.zoomIn.addEventListener("click", () => {
-        CHART.visibleCount = clamp(CHART.visibleCount - 10, CHART.minVisible, CHART.maxVisible);
-        CHART.render();
-      });
-    }
-
-    if (els.zoomOut) {
-      els.zoomOut.addEventListener("click", () => {
-        CHART.visibleCount = clamp(CHART.visibleCount + 10, CHART.minVisible, CHART.maxVisible);
-        CHART.render();
-      });
-    }
-
-    if (els.resetView) {
-      els.resetView.addEventListener("click", () => {
-        CHART.visibleCount = 90;
-        CHART.render();
-      });
+    const tradeBox = $('tradeBox');
+    if (tradeBox) {
+      tradeBox.classList.toggle('buy', state.tradeMode === 'buy');
+      tradeBox.classList.toggle('sell', state.tradeMode === 'sell');
     }
   }
 
-  /* ================= INIT ================= */
-  async function init() {
-    if (state.initialized) return;
-    if (!cacheDOM()) return;
-
-    bindEvents();
-    setTradeSide("buy");
-
-    await loadWallet();
-
-    generateOrderBook();
+  function renderAll() {
+    renderHeader();
+    renderStats();
+    renderTradeSummary();
     renderOrderBook();
-    updatePriceUI();
-
-    CHART.init();
-
-    state.initialized = true;
-
-    setQuote(DEFAULT_QUOTE);
-
-    // fallback heartbeat
-    setInterval(() => {
-      if (!state.ws || state.ws.readyState !== 1) {
-        computeBXPrice();
-      }
-    }, 2500);
+    drawChart();
   }
 
-  /* ================= DESTROY ================= */
-  function destroy() {
-    disconnectWS();
+  /* =========================================================
+     CHART ENGINE — PRO MAX STABLE
+  ========================================================= */
+  const chartCanvas = $('marketChart') || $('bxChart');
+  let ctx = chartCanvas ? chartCanvas.getContext('2d') : null;
+  let dpr = Math.max(window.devicePixelRatio || 1, 1);
+
+  function getCurrentSeries() {
+    return state.chartData[state.selectedTimeframe] || state.chartData.ALL || [];
   }
 
-  document.addEventListener("DOMContentLoaded", init);
+  function resizeChart() {
+    if (!chartCanvas || !ctx) return;
 
-  /* ================= PUBLIC API ================= */
-  window.MARKET = {
-    init,
-    destroy,
-    setQuote,
-    executeTrade,
-    getState: () => ({ ...state })
-  };
+    const rect = chartCanvas.getBoundingClientRect();
+    const w = Math.max(rect.width, 320);
+    const h = Math.max(rect.height, 260);
+
+    chartCanvas.width = Math.floor(w * dpr);
+    chartCanvas.height = Math.floor(h * dpr);
+
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    drawChart();
+  }
+
+  function getChartBounds(series) {
+    const prices = [];
+    series.forEach(c => {
+      prices.push(c.high, c.low, c.open, c.close);
+    });
+
+    let min = Math.min(...prices);
+    let max = Math.max(...prices);
+
+    // إصلاح scale حتى لا يبالغ
+    const spread = Math.max(max - min, state.marketPrice * 0.01);
+    const pad = spread * 0.18;
+
+    min -= pad;
+    max += pad;
+
+    // clamp آمن
+    min = Math.max(min, CONFIG.basePrice * 0.95);
+    max = Math.min(max, CONFIG.basePrice * 1.06);
+
+    return { min, max };
+  }
+
+  function drawChart() {
+    if (!chartCanvas || !ctx) return;
+    const series = getCurrentSeries();
+    if (!series.length) return;
+
+    const w = chartCanvas.width / dpr;
+    const h = chartCanvas.height / dpr;
+
+    const P = CONFIG.chart;
+    const plotX = P.paddingLeft;
+    const plotY = P.paddingTop;
+    const plotW = w - P.paddingLeft - P.paddingRight;
+    const plotH = h - P.paddingTop - P.paddingBottom - P.volumeHeight;
+
+    ctx.clearRect(0, 0, w, h);
+
+    // background subtle
+    const bg = ctx.createLinearGradient(0, 0, 0, h);
+    bg.addColorStop(0, 'rgba(255,255,255,0.015)');
+    bg.addColorStop(1, 'rgba(255,255,255,0.005)');
+    ctx.fillStyle = bg;
+    roundRect(ctx, 0, 0, w, h, 26);
+    ctx.fill();
+
+    const { min, max } = getChartBounds(series);
+
+    const xAt = (i) => plotX + (i / Math.max(series.length - 1, 1)) * plotW;
+    const yAt = (price) => plotY + (1 - (price - min) / (max - min)) * plotH;
+
+    drawGrid(ctx, plotX, plotY, plotW, plotH, min, max);
+
+    if (state.selectedChartMode === 'candles') {
+      drawCandles(ctx, series, xAt, yAt, plotH);
+    } else {
+      drawLineOrArea(ctx, series, xAt, yAt, state.selectedChartMode === 'area');
+    }
+
+    drawVolumes(ctx, series, xAt, w, h, plotX, plotY + plotH + 8, plotW, P.volumeHeight - 6);
+
+    // crosshair
+    if (state.chartHoverIndex !== null) {
+      drawCrosshair(ctx, series, xAt, yAt, plotX, plotY, plotW, plotH);
+    }
+
+    drawYAxis(ctx, min, max, w, plotY, plotH);
+  }
+
+  function drawGrid(ctx, x, y, w, h, min, max) {
+    ctx.save();
+    ctx.strokeStyle = CONFIG.chart.gridColor;
+    ctx.lineWidth = 1;
+
+    for (let i = 0; i <= CONFIG.chart.gridLines; i++) {
+      const yy = y + (i / CONFIG.chart.gridLines) * h;
+      ctx.beginPath();
+      ctx.moveTo(x, yy);
+      ctx.lineTo(x + w, yy);
+      ctx.stroke();
+    }
+
+    ctx.restore();
+  }
+
+  function drawYAxis(ctx, min, max, canvasW, y, h) {
+    ctx.save();
+    ctx.fillStyle = CONFIG.chart.axisColor;
+    ctx.font = CONFIG.chart.font;
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+
+    for (let i = 0; i <= CONFIG.chart.gridLines; i++) {
+      const yy = y + (i / CONFIG.chart.gridLines) * h;
+      const price = max - ((max - min) * i / CONFIG.chart.gridLines);
+      ctx.fillText(fmtPairPrice(price, 5), canvasW - 10, yy);
+    }
+
+    ctx.restore();
+  }
+
+  function drawLineOrArea(ctx, series, xAt, yAt, fillArea = false) {
+    ctx.save();
+
+    // line glow
+    ctx.shadowColor = CONFIG.chart.lineGlow;
+    ctx.shadowBlur = 12;
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = CONFIG.chart.lineColor;
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+
+    ctx.beginPath();
+    series.forEach((c, i) => {
+      const x = xAt(i);
+      const y = yAt(c.close);
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+
+    ctx.shadowBlur = 0;
+
+    if (fillArea) {
+      const lastX = xAt(series.length - 1);
+      const firstX = xAt(0);
+      const bottom = yAt(Math.min(...series.map(x => x.low)) - 0.2);
+
+      const g = ctx.createLinearGradient(0, 0, 0, bottom);
+      g.addColorStop(0, CONFIG.chart.areaTop);
+      g.addColorStop(1, CONFIG.chart.areaBottom);
+
+      ctx.beginPath();
+      series.forEach((c, i) => {
+        const x = xAt(i);
+        const y = yAt(c.close);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+      ctx.lineTo(lastX, bottom);
+      ctx.lineTo(firstX, bottom);
+      ctx.closePath();
+      ctx.fillStyle = g;
+      ctx.fill();
+    }
+
+    ctx.restore();
+  }
+
+  function drawCandles(ctx, series, xAt, yAt) {
+    ctx.save();
+
+    const candleW = Math.max(4, (chartCanvas.width / dpr) / series.length * 0.45);
+
+    series.forEach((c, i) => {
+      const x = xAt(i);
+      const openY = yAt(c.open);
+      const closeY = yAt(c.close);
+      const highY = yAt(c.high);
+      const lowY = yAt(c.low);
+
+      const up = c.close >= c.open;
+      const color = up ? CONFIG.chart.candleUp : CONFIG.chart.candleDown;
+
+      ctx.strokeStyle = color;
+      ctx.fillStyle = color;
+      ctx.lineWidth = 1.2;
+
+      // wick
+      ctx.beginPath();
+      ctx.moveTo(x, highY);
+      ctx.lineTo(x, lowY);
+      ctx.stroke();
+
+      // body
+      const top = Math.min(openY, closeY);
+      const bodyH = Math.max(Math.abs(closeY - openY), 2.2);
+
+      ctx.fillRect(x - candleW / 2, top, candleW, bodyH);
+    });
+
+    ctx.restore();
+  }
+
+  function drawVolumes(ctx, series, xAt, canvasW, canvasH, x, y, w, h) {
+    ctx.save();
+
+    const maxVol = Math.max(...series.map(s => s.volume), 1);
+    const barW = Math.max(1.6, w / series.length * 0.65);
+
+    series.forEach((c, i) => {
+      const xx = xAt(i);
+      const barH = (c.volume / maxVol) * h;
+      const up = c.close >= c.open;
+
+      ctx.fillStyle = up ? CONFIG.chart.volumeUp : CONFIG.chart.volumeDown;
+      ctx.fillRect(xx - barW / 2, y + h - barH, barW, barH);
+    });
+
+    ctx.restore();
+  }
+
+  function drawCrosshair(ctx, series, xAt, yAt, plotX, plotY, plotW, plotH) {
+    const idx = clamp(state.chartHoverIndex, 0, series.length - 1);
+    const candle = series[idx];
+    if (!candle) return;
+
+    const x = xAt(idx);
+    const y = yAt(candle.close);
+
+    ctx.save();
+    ctx.strokeStyle = CONFIG.chart.crosshairColor;
+    ctx.lineWidth = 1;
+
+    ctx.beginPath();
+    ctx.moveTo(x, plotY);
+    ctx.lineTo(x, plotY + plotH);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(plotX, y);
+    ctx.lineTo(plotX + plotW, y);
+    ctx.stroke();
+
+    // point
+    ctx.beginPath();
+    ctx.fillStyle = '#49f2a6';
+    ctx.shadowColor = 'rgba(73,242,166,0.35)';
+    ctx.shadowBlur = 14;
+    ctx.arc(x, y, 5.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
+
+    safeText('chartCrossValue', fmtPairPrice(candle.close, 5));
+    safeText('chartCrossTime', formatChartDate(candle.t));
+
+    const tooltip = $('chartTooltip');
+    if (tooltip) {
+      tooltip.classList.add('show');
+      tooltip.innerHTML = `
+        <div><strong>${formatChartDate(candle.t)}</strong></div>
+        <div>Open: ${fmtPairPrice(candle.open, 5)}</div>
+        <div>High: ${fmtPairPrice(candle.high, 5)}</div>
+        <div>Low: ${fmtPairPrice(candle.low, 5)}</div>
+        <div>Close: ${fmtPairPrice(candle.close, 5)}</div>
+      `;
+
+      const rect = chartCanvas.getBoundingClientRect();
+      const localX = x;
+      const localY = y;
+
+      tooltip.style.left = `${Math.min(localX + 14, rect.width - 160)}px`;
+      tooltip.style.top = `${Math.max(localY - 84, 12)}px`;
+    }
+  }
+
+  function formatChartDate(ts) {
+    const d = new Date(ts);
+    return d.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric'
+    });
+  }
+
+  function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+
+  /* =========================================================
+     INTERACTION
+  ========================================================= */
+  function bindChartEvents() {
+    if (!chartCanvas) return;
+
+    chartCanvas.addEventListener('mousemove', (e) => {
+      const rect = chartCanvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const series = getCurrentSeries();
+      if (!series.length) return;
+
+      const P = CONFIG.chart;
+      const plotW = rect.width - P.paddingLeft - P.paddingRight;
+      const relative = clamp((x - P.paddingLeft) / plotW, 0, 1);
+      const idx = Math.round(relative * (series.length - 1));
+
+      state.chartHoverIndex = idx;
+      drawChart();
+    });
+
+    chartCanvas.addEventListener('mouseleave', () => {
+      state.chartHoverIndex = null;
+      const tooltip = $('chartTooltip');
+      if (tooltip) tooltip.classList.remove('show');
+      safeText('chartCrossValue', '--');
+      safeText('chartCrossTime', '--');
+      drawChart();
+    });
+
+    window.addEventListener('resize', resizeChart);
+  }
+
+  function bindTimeframes() {
+    $$('[data-timeframe]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const tf = btn.dataset.timeframe;
+        if (!tf) return;
+
+        state.selectedTimeframe = tf;
+
+        $$('[data-timeframe]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        state.chartHoverIndex = null;
+        drawChart();
+      });
+    });
+  }
+
+  function bindChartModes() {
+    $$('[data-chart-mode]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const mode = btn.dataset.chartMode;
+        if (!mode) return;
+
+        state.selectedChartMode = mode;
+
+        $$('[data-chart-mode]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        drawChart();
+      });
+    });
+  }
+
+  function bindPairs() {
+    $$('[data-pair]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        state.selectedPair = btn.dataset.pair || 'BX';
+
+        $$('[data-pair]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+      });
+    });
+  }
+
+  function bindTrade() {
+    const buyTab = $('buyTab');
+    const sellTab = $('sellTab');
+    const tradeAmount = $('tradeAmount');
+    const tradeActionBtn = $('tradeActionBtn');
+
+    if (buyTab) {
+      buyTab.addEventListener('click', () => {
+        state.tradeMode = 'buy';
+        buyTab.classList.add('active');
+        if (sellTab) sellTab.classList.remove('active');
+        renderTradeSummary();
+      });
+    }
+
+    if (sellTab) {
+      sellTab.addEventListener('click', () => {
+        state.tradeMode = 'sell';
+        sellTab.classList.add('active');
+        if (buyTab) buyTab.classList.remove('active');
+        renderTradeSummary();
+      });
+    }
+
+    if (tradeAmount) {
+      tradeAmount.addEventListener('input', () => {
+        renderTradeSummary();
+      });
+    }
+
+    $$('[data-percent]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const pct = Number(btn.dataset.percent || 0);
+        const simulatedBalance = 1000; // balance mock
+        const amount = (simulatedBalance * pct) / 100 / state.marketPrice;
+
+        if (tradeAmount) tradeAmount.value = amount.toFixed(4);
+
+        $$('[data-percent]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        renderTradeSummary();
+      });
+    });
+
+    if (tradeActionBtn) {
+      tradeActionBtn.addEventListener('click', () => {
+        const amount = Number(($('tradeAmount')?.value || '0').replace(',', '.')) || 0;
+        if (amount <= 0) {
+          alert('Enter valid BX amount');
+          return;
+        }
+
+        const total = amount * state.marketPrice;
+        alert(
+          `${state.tradeMode === 'buy' ? 'Buy' : 'Sell'} order placed\n\n` +
+          `Amount: ${fmtPairPrice(amount, 4)} BX\n` +
+          `Price: ${fmtPairPrice(state.marketPrice, 6)} ${CONFIG.quote}\n` +
+          `Total: ${fmtPairPrice(total, 4)} ${CONFIG.quote}`
+        );
+      });
+    }
+  }
+
+  /* =========================================================
+     LIVE ENGINE — SAFE & SMOOTH
+  ========================================================= */
+  function tickLiveMarket() {
+    const p = state.marketPrice;
+
+    const microNoise = (Math.random() - 0.5) * (p * CONFIG.liveNoisePercent);
+    const trend = Math.sin(Date.now() / 8000) * (p * CONFIG.trendBiasPercent);
+
+    let next = p + microNoise + trend;
+
+    // clamp محكم
+    next = clamp(
+      next,
+      CONFIG.basePrice * (1 - CONFIG.maxDriftClamp),
+      CONFIG.basePrice * (1 + CONFIG.maxDriftClamp)
+    );
+
+    state.marketPrice = next;
+    state.lastClose = next;
+
+    injectLiveCandle(next);
+    recalcStatsFromSeries();
+    generateOrderBook();
+    renderAll();
+  }
+
+  function injectLiveCandle(price) {
+    Object.keys(state.chartData).forEach((tf) => {
+      const arr = state.chartData[tf];
+      if (!arr || !arr.length) return;
+
+      const last = arr[arr.length - 1];
+      const open = last.close;
+      const close = price;
+
+      const wickNoise = price * 0.00055;
+
+      const high = clamp(
+        Math.max(open, close) + rand(0, wickNoise),
+        CONFIG.basePrice * 0.985,
+        CONFIG.basePrice * 1.03
+      );
+
+      const low = clamp(
+        Math.min(open, close) - rand(0, wickNoise),
+        CONFIG.basePrice * 0.97,
+        CONFIG.basePrice * 1.015
+      );
+
+      const candle = {
+        t: Date.now(),
+        open,
+        high,
+        low,
+        close,
+        volume: rand(140, 900)
+      };
+
+      arr.push(candle);
+
+      const maxLen = CONFIG.timeframeMap[tf];
+      while (arr.length > maxLen) arr.shift();
+    });
+  }
+
+  /* =========================================================
+     INIT
+  ========================================================= */
+  function initDefaults() {
+    const tfBtn = document.querySelector('[data-timeframe="ALL"]');
+    if (tfBtn) tfBtn.classList.add('active');
+
+    const modeBtn = document.querySelector('[data-chart-mode="line"]');
+    if (modeBtn) modeBtn.classList.add('active');
+
+    const buyTab = $('buyTab');
+    if (buyTab) buyTab.classList.add('active');
+
+    safeVal('tradeAmount', '0.0000');
+  }
+
+  function init() {
+    buildAllSeries();
+    generateOrderBook();
+
+    initDefaults();
+    bindChartEvents();
+    bindTimeframes();
+    bindChartModes();
+    bindPairs();
+    bindTrade();
+
+    renderAll();
+    resizeChart();
+
+    // live market
+    setInterval(tickLiveMarket, 2200);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
 })();
