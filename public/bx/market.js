@@ -64,12 +64,6 @@
       zoomIn: $("zoomIn"),
       zoomOut: $("zoomOut"),
       resetView: $("resetView"),
-      pairButtons: $$(".pair-btn", els.market),
-      tfButtons: $$(".tf-btn", els.market),
-      percentButtons: $$(".percent-row button", els.market),
-
-      chartModeButtons: $$("[data-chart-mode]", els.market),
-      tfButtonsNew: $$("[data-timeframe]", els.market),
 
       // NEW PRO MAX
       assetName: $("assetName"),
@@ -93,8 +87,13 @@
       metricHigh: $("metricHigh"),
       metricLow: $("metricLow"),
       metricClose: $("metricClose"),
-      metricVol: $("metricVol")
-
+      metricVol: $("metricVol"),
+      pairButtons: $$(".pair-btn", els.market),
+      tfButtons: $$(".tf-btn", els.market),
+      percentButtons: $$(".percent-row button", els.market),
+      chartModeButtons: $$("[data-chart-mode]", els.market),
+      tfButtonsNew: $$("[data-timeframe]", els.market)
+     
     });
 
     return true;
