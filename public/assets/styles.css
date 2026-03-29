@@ -334,64 +334,123 @@ h3{
 
 :root{
   --mk-bg:#070b12;
+  --mk-bg-2:#050912;
+
   --mk-surface:#12171d;
-  --mk-surface-2:#1a2027;
-  --mk-surface-3:#20262f;
+  --mk-surface-2:#171c23;
+  --mk-surface-3:#1d232b;
+  --mk-surface-4:#20252d;
+
   --mk-stroke:rgba(255,255,255,.07);
   --mk-stroke-soft:rgba(255,255,255,.04);
 
   --mk-text:#f5f7fb;
   --mk-text-soft:rgba(245,247,251,.66);
-  --mk-text-dim:rgba(245,247,251,.46);
+  --mk-text-dim:rgba(245,247,251,.44);
 
   --mk-green:#49f2a6;
   --mk-green-2:#2ce67d;
   --mk-red:#ff6b85;
-  --mk-red-2:#ff4f73;
+  --mk-red-2:#ff5d7b;
   --mk-yellow:#ffcc4d;
 
-  --mk-radius-xl:28px;
-  --mk-radius-lg:22px;
-  --mk-radius-md:18px;
-  --mk-radius-sm:14px;
+  --mk-radius-xl:30px;
+  --mk-radius-lg:24px;
+  --mk-radius-md:20px;
+  --mk-radius-sm:16px;
 
   --mk-shadow:
-    0 10px 28px rgba(0,0,0,.30),
-    inset 0 1px 0 rgba(255,255,255,.04);
+    0 12px 30px rgba(0,0,0,.28),
+    inset 0 1px 0 rgba(255,255,255,.03);
 
-  --mk-glow-green:0 0 24px rgba(73,242,166,.14);
-  --mk-glow-red:0 0 24px rgba(255,107,133,.12);
+  --mk-glow-green:0 0 24px rgba(73,242,166,.16);
+  --mk-glow-red:0 0 24px rgba(255,107,133,.14);
+  --mk-glow-yellow:0 0 24px rgba(255,204,77,.16);
 
   --mk-page-w:430px;
 }
 
-/* ================= PAGE ================= */
-#market,
-#marketPage{
+/* =========================================================
+   PAGE RESET
+========================================================= */
+*,
+*::before,
+*::after{
+  box-sizing:border-box;
+}
+
+html{
+  -webkit-text-size-adjust:100%;
+  text-size-adjust:100%;
+}
+
+body{
+  margin:0;
+  background:linear-gradient(180deg,var(--mk-bg) 0%,var(--mk-bg-2) 100%);
+  color:var(--mk-text);
+  font-family:Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  overflow-x:hidden;
+}
+
+button,
+input,
+select,
+textarea{
+  font:inherit;
+}
+
+button{
+  cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+}
+
+img,
+svg,
+canvas{
+  display:block;
+  max-width:100%;
+}
+
+/* =========================================================
+   OLD MARKET ROOT (HIDDEN TO PREVENT DOUBLE UI CONFLICT)
+========================================================= */
+#market{
+  display:none !important;
+}
+
+/* =========================================================
+   MAIN PAGE
+========================================================= */
+#marketPage.market-page{
   width:100%;
   min-height:100vh;
   background:
     radial-gradient(circle at 20% 0%, rgba(73,242,166,.08), transparent 28%),
     radial-gradient(circle at 80% 10%, rgba(73,242,166,.05), transparent 22%),
-    linear-gradient(180deg,#070b12 0%,#050912 100%);
+    linear-gradient(180deg,var(--mk-bg) 0%,var(--mk-bg-2) 100%);
   color:var(--mk-text);
   padding:14px 12px 110px;
-  box-sizing:border-box;
   overflow-x:hidden;
 }
 
-#market .market-shell,
-#marketPage .market-shell{
+.market-shell{
   width:100%;
   max-width:var(--mk-page-w);
   margin:0 auto;
   display:flex;
   flex-direction:column;
-  gap:14px; /* ↓ كان كبير */
+  gap:14px;
 }
 
-/* ================= GENERIC CARD ================= */
-.market-card{
+/* =========================================================
+   GENERIC CARD
+========================================================= */
+.market-card,
+.trade-box,
+.orderbook-card,
+.market-top,
+.market-asset-card,
+.market-chart-card{
   background:linear-gradient(180deg,#141a20 0%,#10151c 100%);
   border:1px solid var(--mk-stroke);
   border-radius:var(--mk-radius-xl);
@@ -399,46 +458,96 @@ h3{
   overflow:hidden;
 }
 
-/* ================= TOP SUMMARY ================= */
+/* =========================================================
+   TOP SUMMARY
+========================================================= */
 .market-top{
-  padding:18px 18px 14px;
+  padding:18px 18px 16px;
 }
 
-.market-top h1,
+.market-header{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:14px;
+  margin-bottom:16px;
+}
+
+.pair-title,
 .market-top .pair-title{
-  margin:0;
-  font-size:18px;
-  line-height:1.1;
-  font-weight:900;
+  display:flex;
+  align-items:center;
+  gap:6px;
+  font-size:20px;
+  font-weight:950;
   letter-spacing:-.02em;
+  line-height:1.1;
+  margin:0;
 }
 
-.market-top .pair-title .quote{
-  color:var(--mk-green);
+.pair-title .base{
+  color:var(--mk-yellow);
 }
 
+.pair-title .arrow,
+.pair-title .slash{
+  color:rgba(255,255,255,.42);
+}
+
+.pair-title .quote{
+  color:#b6c0d0;
+}
+
+.price-box{
+  margin-left:auto;
+  text-align:right;
+}
+
+.price-main,
 .market-big-price{
-  margin-top:14px;
   font-size:24px;
-  font-weight:900;
+  font-weight:950;
   letter-spacing:-.03em;
+  line-height:1;
+  margin-top:14px;
 }
 
+.approx,
 .market-approx{
-  margin-top:4px;
+  margin-top:6px;
   font-size:13px;
   color:var(--mk-text-soft);
+  line-height:1.3;
 }
 
-.market-wallet-strip{
+.market-wallet-strip,
+.wallet-box.compact{
   margin-top:16px;
-  background:rgba(255,255,255,.035);
+  width:100%;
+  background:linear-gradient(90deg, rgba(17,27,40,.95), rgba(10,28,58,.95));
   border:1px solid rgba(255,255,255,.05);
-  border-radius:22px;
+  border-radius:24px;
   padding:14px 16px;
   display:grid;
   grid-template-columns:1fr 1fr;
-  gap:12px;
+  gap:14px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.03);
+}
+
+.wallet-box.compact > div{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-size:13px;
+  font-weight:800;
+  color:var(--mk-text-soft);
+}
+
+.wallet-box.compact strong{
+  font-size:17px;
+  line-height:1;
+  font-weight:950;
+  color:#fff;
 }
 
 .market-wallet-strip .wallet-cell{
@@ -449,73 +558,95 @@ h3{
   font-size:12px;
   color:var(--mk-text-soft);
   margin-bottom:4px;
+  font-weight:800;
 }
 
 .market-wallet-strip .wallet-value{
-  font-size:17px;
-  font-weight:900;
+  font-size:18px;
+  font-weight:950;
   line-height:1.1;
 }
 
-/* ================= PAIRS ================= */
-.market-pairs{
-  display:flex;
-  gap:8px; /* ↓ tighter */
-  overflow-x:auto;
-  padding:2px 0 2px;
-  scrollbar-width:none;
-  -webkit-overflow-scrolling:touch;
-  scroll-snap-type:x proximity;
+/* =========================================================
+   PAIRS
+========================================================= */
+.market-pairs,
+.pair-grid{
+  display:grid;
+  grid-template-columns:repeat(5, minmax(0,1fr));
+  gap:12px;
+  width:100%;
 }
 
-.market-pairs::-webkit-scrollbar{
-  display:none;
-}
-
-.market-pairs .pair-btn{
-  flex:0 0 auto;
-  min-width:78px; /* ↓ أصغر */
-  height:44px; /* ↓ */
-  padding:0 14px;
-  border-radius:999px;
+.market-pairs .pair-btn,
+.pair-grid .pair-btn{
+  width:100%;
+  min-width:0;
+  height:88px;
+  border-radius:26px;
   border:1px solid rgba(255,255,255,.08);
-  background:rgba(255,255,255,.03);
-  color:rgba(255,255,255,.82);
-  font-size:12px;
-  font-weight:800;
+  background:rgba(255,255,255,.025);
+  color:rgba(255,255,255,.78);
+  font-size:15px;
+  font-weight:950;
   letter-spacing:.01em;
-  scroll-snap-align:start;
   transition:.18s ease;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.03);
 }
 
-.market-pairs .pair-btn.active{
-  background:linear-gradient(180deg,#1d242b 0%,#181e25 100%);
-  color:#fff;
-  border-color:rgba(73,242,166,.22);
-  box-shadow:0 0 0 1px rgba(73,242,166,.08), var(--mk-glow-green);
+.market-pairs .pair-btn:hover,
+.pair-grid .pair-btn:hover{
+  transform:translateY(-1px);
 }
 
-/* ================= ASSET HEADER ================= */
-.market-asset-card{
-  padding:18px 18px 12px;
+.market-pairs .pair-btn.active,
+.pair-grid .pair-btn.active{
+  background:linear-gradient(180deg, rgba(255,204,77,.18), rgba(255,204,77,.08));
+  color:var(--mk-yellow);
+  border-color:rgba(255,204,77,.34);
+  box-shadow:
+    0 0 0 1px rgba(255,204,77,.10),
+    0 12px 26px rgba(255,204,77,.10);
 }
 
-.market-asset-head{
+/* =========================================================
+   ASSET HEADER / HERO
+========================================================= */
+.market-asset-card,
+.market-hero{
+  padding:18px 18px 14px;
+}
+
+.market-hero{
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+  background:linear-gradient(180deg,#141a20 0%,#10151c 100%);
+  border:1px solid var(--mk-stroke);
+  border-radius:var(--mk-radius-xl);
+  box-shadow:var(--mk-shadow);
+}
+
+.market-asset-head,
+.market-identity{
   display:flex;
   align-items:center;
   gap:14px;
 }
 
-.market-asset-icon{
+.market-asset-icon,
+.market-logo{
   width:76px;
   height:76px;
   border-radius:24px;
   background:linear-gradient(180deg,#7cffc8 0%,#49f2a6 100%);
   display:grid;
   place-items:center;
-  box-shadow:0 10px 24px rgba(73,242,166,.22);
   flex:0 0 auto;
+  box-shadow:0 10px 24px rgba(73,242,166,.22);
+  font-size:34px;
+  color:#08110d;
+  font-weight:900;
 }
 
 .market-asset-icon svg,
@@ -525,58 +656,70 @@ h3{
   object-fit:contain;
 }
 
-.market-asset-meta{
+.market-asset-meta,
+.market-title{
   min-width:0;
   flex:1;
 }
 
-.market-asset-name{
-  font-size:17px;
-  font-weight:900;
+.market-asset-name,
+.market-title h2,
+#assetName{
   margin:0;
+  font-size:18px;
+  font-weight:950;
   line-height:1.1;
+  letter-spacing:-.02em;
 }
 
 .market-asset-sub{
-  margin-top:4px;
+  margin-top:5px;
   display:flex;
   align-items:center;
   gap:10px;
   flex-wrap:wrap;
 }
 
-.market-asset-symbol{
+.market-asset-symbol,
+#assetSymbol{
   font-size:13px;
   color:var(--mk-text-soft);
-  font-weight:700;
+  font-weight:800;
 }
 
-.market-rank{
+.market-rank,
+#assetRank{
   display:inline-flex;
   align-items:center;
   justify-content:center;
-  height:34px;
+  min-height:34px;
   padding:0 12px;
   border-radius:999px;
   background:rgba(255,255,255,.04);
   border:1px solid rgba(255,255,255,.06);
-  font-size:13px;
-  font-weight:900;
   color:#dce2eb;
+  font-size:13px;
+  font-weight:950;
 }
 
+.market-price-box,
 .market-price-block{
-  margin-top:14px; /* ↓ */
+  margin-top:14px;
 }
 
-.market-price-block .price{
-  font-size:27px;
+.market-price,
+.market-price-block .price,
+#assetPrice{
+  font-size:28px;
   line-height:1;
   font-weight:950;
   letter-spacing:-.03em;
+  color:#fff;
 }
 
-.market-change-badge{
+.market-change-badge,
+#assetChange,
+#assetChangeBadge{
   margin-top:12px;
   display:inline-flex;
   align-items:center;
@@ -585,24 +728,36 @@ h3{
   padding:0 16px;
   border-radius:999px;
   font-size:13px;
-  font-weight:900;
+  font-weight:950;
   border:1px solid rgba(73,242,166,.18);
   background:rgba(73,242,166,.10);
   color:var(--mk-green);
 }
 
-.market-change-badge.is-down{
+.market-change-badge.is-up,
+#assetChange.is-up,
+#assetChangeBadge.is-up{
+  color:var(--mk-green);
+  border-color:rgba(73,242,166,.18);
+  background:rgba(73,242,166,.10);
+}
+
+.market-change-badge.is-down,
+#assetChange.is-down,
+#assetChangeBadge.is-down{
   color:var(--mk-red);
   border-color:rgba(255,107,133,.18);
   background:rgba(255,107,133,.08);
 }
 
-/* ================= TIMEFRAMES ================= */
+/* =========================================================
+   TOOLBAR
+========================================================= */
 .market-toolbar{
   margin-top:14px;
   display:flex;
   flex-direction:column;
-  gap:10px; /* ↓ */
+  gap:10px;
 }
 
 .market-timeframes,
@@ -611,6 +766,8 @@ h3{
   gap:10px;
   overflow-x:auto;
   scrollbar-width:none;
+  -webkit-overflow-scrolling:touch;
+  padding-bottom:2px;
 }
 
 .market-timeframes::-webkit-scrollbar,
@@ -619,32 +776,37 @@ h3{
 }
 
 .market-timeframes button,
-.market-chart-modes button{
+.market-chart-modes button,
+.tf-btn{
   flex:0 0 auto;
-  min-width:76px; /* ↓ */
-  height:48px; /* ↓ */
+  min-width:76px;
+  height:48px;
   padding:0 16px;
   border-radius:18px;
   border:1px solid rgba(255,255,255,.08);
   background:rgba(255,255,255,.03);
   color:rgba(255,255,255,.82);
-  font-size:12px;
-  font-weight:900;
+  font-size:13px;
+  font-weight:950;
   transition:.18s ease;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.02);
 }
 
 .market-timeframes button.active,
-.market-chart-modes button.active{
+.market-chart-modes button.active,
+.tf-btn.active{
   background:linear-gradient(180deg,#73ffc1 0%,#49f2a6 100%);
   color:#0a1110;
   border-color:transparent;
   box-shadow:0 10px 22px rgba(73,242,166,.18);
 }
 
-/* ================= CHART CARD ================= */
+/* =========================================================
+   CHART CARD
+========================================================= */
 .market-chart-card{
   position:relative;
-  padding:10px 10px 8px; /* ↓ tighter */
+  padding:12px;
   border-radius:32px;
   min-height:0;
 }
@@ -652,8 +814,8 @@ h3{
 .market-chart-wrap{
   position:relative;
   width:100%;
-  height:300px; /* ↓ كان كبير */
-  border-radius:28px;
+  height:360px;
+  border-radius:30px;
   overflow:hidden;
   background:
     linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01)),
@@ -663,17 +825,29 @@ h3{
 
 #marketChart,
 #bxChart{
-  width:100%;
-  height:100%;
+  width:100% !important;
+  height:100% !important;
   display:block;
-  border-radius:28px;
+  border-radius:30px;
+  background:transparent;
+}
+
+.market-chart-card > canvas#marketChart,
+.market-chart-card > canvas#bxChart{
+  width:100%;
+  height:360px;
+  border-radius:30px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01)),
+    #14191d;
+  border:1px solid rgba(255,255,255,.05);
 }
 
 .market-tooltip{
   position:absolute;
   z-index:6;
   min-width:138px;
-  max-width:170px;
+  max-width:172px;
   padding:10px 12px;
   border-radius:14px;
   background:rgba(12,15,18,.94);
@@ -694,38 +868,44 @@ h3{
 }
 
 .market-crosshair{
-  margin-top:8px; /* ↓ */
+  margin-top:10px;
   display:flex;
   align-items:center;
   justify-content:space-between;
-  gap:10px;
+  gap:12px;
   background:rgba(255,255,255,.03);
   border:1px solid rgba(255,255,255,.05);
   border-radius:999px;
   padding:10px 14px;
 }
 
-.market-crosshair .value{
-  font-size:17px;
-  font-weight:900;
+.market-crosshair .value,
+#crosshairPrice{
+  font-size:20px;
+  font-weight:950;
   line-height:1;
+  color:#fff;
 }
 
-.market-crosshair .time{
-  font-size:12px;
+.market-crosshair .time,
+#crosshairTime{
+  font-size:13px;
+  font-weight:800;
   color:var(--mk-text-soft);
-  font-weight:700;
 }
 
-/* ================= STATS ================= */
+/* =========================================================
+   STATS GRID
+========================================================= */
 .market-stats-grid{
   display:grid;
   grid-template-columns:repeat(2,1fr);
-  gap:12px; /* ↓ */
+  gap:12px;
 }
 
-.market-stat{
-  min-height:96px; /* ↓ */
+.market-stat,
+.stat-card{
+  min-height:96px;
   padding:16px 16px 14px;
   border-radius:24px;
   background:linear-gradient(180deg,#141920 0%,#11161c 100%);
@@ -733,50 +913,69 @@ h3{
   box-shadow:var(--mk-shadow);
 }
 
-.market-stat .label{
+.market-stat .label,
+.stat-card span{
+  display:block;
   font-size:12px;
   color:var(--mk-text-soft);
   margin-bottom:10px;
+  font-weight:800;
 }
 
-.market-stat .value{
-  font-size:19px;
-  font-weight:900;
+.market-stat .value,
+.stat-card strong{
+  display:block;
+  font-size:20px;
+  font-weight:950;
   line-height:1.1;
   letter-spacing:-.02em;
+  color:#fff;
 }
 
-/* ================= OHLC ================= */
+/* =========================================================
+   OHLC
+========================================================= */
 .market-ohlc{
   display:grid;
   grid-template-columns:repeat(2,1fr);
   gap:12px;
 }
 
-.market-ohlc .ohlc-box{
+.market-ohlc .ohlc-box,
+.ohlc-item{
   min-height:92px;
   padding:16px 16px 14px;
   border-radius:24px;
   background:linear-gradient(180deg,#141920 0%,#11161c 100%);
   border:1px solid rgba(255,255,255,.06);
+  box-shadow:var(--mk-shadow);
 }
 
-.market-ohlc .label{
+.market-ohlc .label,
+.ohlc-item span{
+  display:block;
   font-size:12px;
   color:var(--mk-text-soft);
   margin-bottom:10px;
+  font-weight:800;
 }
 
-.market-ohlc .value{
-  font-size:18px;
-  font-weight:900;
+.market-ohlc .value,
+.ohlc-item strong{
+  display:block;
+  font-size:19px;
+  font-weight:950;
+  line-height:1.1;
+  color:#fff;
 }
 
-/* ================= TRADE BOX ================= */
+/* =========================================================
+   TRADE BOX
+========================================================= */
 .trade-box{
   padding:18px;
   border-radius:32px;
-  background:linear-gradient(180deg,#11161c 0%,#0f141a 100%);
+  background:linear-gradient(180deg,#10151b 0%,#0d1218 100%);
   border:1px solid rgba(255,255,255,.06);
   box-shadow:var(--mk-shadow);
 }
@@ -792,54 +991,71 @@ h3{
   height:58px;
   border-radius:20px;
   border:1px solid rgba(255,255,255,.06);
-  background:#20252d; /* ← أسود/رمادي غامق clean */
-  color:#fff;
+  background:#1b2027;
+  color:rgba(255,255,255,.86);
   font-size:16px;
-  font-weight:900;
+  font-weight:950;
   transition:.18s ease;
 }
 
 .trade-tabs button.active{
-  background:#0f141a; /* ← أسود أكثر */
-  border-color:rgba(255,255,255,.12);
-  box-shadow:inset 0 0 0 1px rgba(255,255,255,.04);
+  background:#151a20;
+  border-color:rgba(255,255,255,.11);
+  color:#fff;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.03);
 }
 
-.trade-box.buy .trade-tabs #buyTab.active{
+.trade-box.buy #buyTab.active{
   color:var(--mk-green);
+  box-shadow:inset 0 0 0 1px rgba(73,242,166,.12);
 }
 
-.trade-box.sell .trade-tabs #sellTab.active{
+.trade-box.sell #sellTab.active{
   color:var(--mk-red);
+  box-shadow:inset 0 0 0 1px rgba(255,107,133,.12);
+}
+
+.trade-form{
+  display:flex;
+  flex-direction:column;
 }
 
 .trade-field{
   margin-bottom:14px;
 }
 
+.trade-form label,
 .trade-field label{
   display:block;
   font-size:13px;
-  font-weight:800;
+  font-weight:900;
   color:#dbe2ea;
   margin-bottom:10px;
 }
 
-.trade-input{
+.trade-input,
+#orderAmount{
   width:100%;
   height:68px;
   border-radius:22px;
   border:1px solid rgba(255,255,255,.07);
   background:#171c23;
   color:#fff;
-  font-size:19px;
-  font-weight:900;
+  font-size:20px;
+  font-weight:950;
   padding:0 18px;
   outline:none;
-  box-sizing:border-box;
+  transition:.18s ease;
 }
 
-.trade-input::placeholder{
+.trade-input:focus,
+#orderAmount:focus{
+  border-color:rgba(73,242,166,.22);
+  box-shadow:0 0 0 4px rgba(73,242,166,.06);
+}
+
+.trade-input::placeholder,
+#orderAmount::placeholder{
   color:rgba(255,255,255,.42);
 }
 
@@ -847,6 +1063,7 @@ h3{
   display:grid;
   grid-template-columns:repeat(4,1fr);
   gap:10px;
+  margin-top:14px;
   margin-bottom:14px;
 }
 
@@ -857,7 +1074,7 @@ h3{
   background:#171c23;
   color:#fff;
   font-size:14px;
-  font-weight:900;
+  font-weight:950;
   transition:.18s ease;
 }
 
@@ -867,7 +1084,8 @@ h3{
   color:var(--mk-green);
 }
 
-.trade-summary{
+.trade-summary,
+.trade-stats{
   border-radius:22px;
   background:#171c23;
   border:1px solid rgba(255,255,255,.06);
@@ -890,10 +1108,26 @@ h3{
 
 .trade-summary .row .value{
   color:#fff;
-  font-weight:900;
+  font-weight:950;
 }
 
-.trade-action{
+.trade-stats > div{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:5px 0;
+  font-size:14px;
+  color:var(--mk-text-soft);
+}
+
+.trade-stats span{
+  color:#fff;
+  font-weight:950;
+}
+
+.trade-action,
+.action-btn{
   width:100%;
   height:64px;
   border:none;
@@ -904,22 +1138,29 @@ h3{
   transition:.18s ease;
 }
 
-.trade-action.buy{
+.trade-action.buy,
+.action-btn.buy{
   background:linear-gradient(180deg,#62ffc0 0%,#49f2a6 100%);
   color:#0a1110;
   box-shadow:0 12px 28px rgba(73,242,166,.18);
 }
 
-.trade-action.sell{
+.trade-action.sell,
+.action-btn.sell{
   background:linear-gradient(180deg,#ff7b95 0%,#ff5d7b 100%);
   color:#fff;
   box-shadow:0 12px 28px rgba(255,93,123,.16);
 }
 
-/* ================= ORDER BOOK ================= */
+/* =========================================================
+   ORDER BOOK
+========================================================= */
 .orderbook-card{
   padding:18px;
   border-radius:32px;
+  background:linear-gradient(180deg,#141920 0%,#11161c 100%);
+  border:1px solid rgba(255,255,255,.06);
+  box-shadow:var(--mk-shadow);
 }
 
 .orderbook-head{
@@ -933,16 +1174,19 @@ h3{
 .orderbook-head h3{
   margin:0;
   font-size:17px;
-  font-weight:900;
+  font-weight:950;
+  color:#fff;
 }
 
-.orderbook-head .pair{
+.orderbook-head .pair,
+.orderbook-pair{
   font-size:14px;
   color:var(--mk-text-soft);
-  font-weight:900;
+  font-weight:950;
 }
 
-.orderbook-table{
+.orderbook-table,
+.ob-table-wrap{
   border-radius:24px;
   overflow:hidden;
   background:#171c23;
@@ -950,6 +1194,7 @@ h3{
 }
 
 .ob-header,
+.ob-table.ob-head,
 .ob-row{
   display:grid;
   grid-template-columns:1fr 1.25fr 1fr;
@@ -957,29 +1202,40 @@ h3{
   position:relative;
 }
 
-.ob-header{
-  height:56px;
+.ob-header,
+.ob-table.ob-head{
+  min-height:56px;
   padding:0 14px;
   background:#20252d;
   font-size:13px;
-  font-weight:900;
+  font-weight:950;
 }
 
-.ob-header .bid{
+.ob-header .bid,
+.ob-col.bid{
   color:var(--mk-green);
   text-align:left;
 }
-.ob-header .mid{
+
+.ob-header .mid,
+.ob-col.mid{
   color:var(--mk-text-soft);
   text-align:center;
 }
-.ob-header .ask{
+
+.ob-header .ask,
+.ob-col.ask{
   color:var(--mk-red);
   text-align:right;
 }
 
+#orderBookRows,
+.ob-body{
+  display:block;
+}
+
 .ob-row{
-  height:52px; /* ↓ tighter */
+  min-height:52px;
   padding:0 14px;
   border-top:1px solid rgba(255,255,255,.04);
   overflow:hidden;
@@ -1008,42 +1264,151 @@ h3{
   position:relative;
   z-index:1;
   font-size:13px;
-  font-weight:900;
+  font-weight:950;
 }
 
 .ob-bid{
   color:#c4ffe1;
   text-align:left;
 }
+
 .ob-mid{
   color:#fff;
   text-align:center;
 }
+
 .ob-ask{
   color:#ffd0da;
   text-align:right;
 }
 
-/* ================= RESPONSIVE ================= */
+.ob-empty{
+  padding:22px 16px;
+  text-align:center;
+  color:var(--mk-text-soft);
+  font-size:14px;
+  font-weight:800;
+}
+
+/* =========================================================
+   LEGACY / OPTIONAL HELPERS
+========================================================= */
+.market-cards{
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+
+.stat-card,
+.ohlc-item,
+.trade-box,
+.orderbook-card{
+  margin-top:0;
+}
+
+.up{
+  color:var(--mk-green) !important;
+}
+
+.down{
+  color:var(--mk-red) !important;
+}
+
+/* =========================================================
+   MOBILE RESPONSIVE
+========================================================= */
 @media (max-width:390px){
-  #market,
-  #marketPage{
+  #marketPage.market-page{
     padding-left:10px;
     padding-right:10px;
   }
 
-  .market-asset-icon{
+  .market-shell{
+    gap:12px;
+  }
+
+  .pair-title,
+  .market-top .pair-title{
+    font-size:18px;
+  }
+
+  .price-main,
+  .market-big-price{
+    font-size:22px;
+  }
+
+  .market-wallet-strip,
+  .wallet-box.compact{
+    padding:13px 14px;
+    gap:12px;
+  }
+
+  .wallet-box.compact strong,
+  .market-wallet-strip .wallet-value{
+    font-size:16px;
+  }
+
+  .market-pairs,
+  .pair-grid{
+    gap:10px;
+  }
+
+  .market-pairs .pair-btn,
+  .pair-grid .pair-btn{
+    height:80px;
+    border-radius:22px;
+    font-size:14px;
+  }
+
+  .market-asset-icon,
+  .market-logo{
     width:68px;
     height:68px;
     border-radius:22px;
+    font-size:30px;
   }
 
-  .market-price-block .price{
-    font-size:24px;
+  .market-price,
+  .market-price-block .price,
+  #assetPrice{
+    font-size:25px;
+  }
+
+  .market-timeframes button,
+  .market-chart-modes button,
+  .tf-btn{
+    min-width:72px;
+    height:46px;
+    font-size:12px;
   }
 
   .market-chart-wrap{
-    height:270px;
+    height:320px;
+  }
+
+  .market-chart-card > canvas#marketChart,
+  .market-chart-card > canvas#bxChart{
+    height:320px;
+  }
+
+  .market-crosshair .value,
+  #crosshairPrice{
+    font-size:18px;
+  }
+
+  .market-stat,
+  .stat-card,
+  .market-ohlc .ohlc-box,
+  .ohlc-item{
+    min-height:88px;
+    padding:14px 14px 13px;
+  }
+
+  .market-stat .value,
+  .stat-card strong,
+  .market-ohlc .value,
+  .ohlc-item strong{
+    font-size:18px;
   }
 
   .trade-tabs button{
@@ -1051,14 +1416,57 @@ h3{
     font-size:15px;
   }
 
-  .trade-input{
+  .trade-input,
+  #orderAmount{
     height:62px;
     font-size:18px;
   }
 
-  .trade-action{
+  .percent-row button{
+    height:50px;
+    font-size:13px;
+  }
+
+  .trade-action,
+  .action-btn{
     height:60px;
     font-size:17px;
+  }
+
+  .ob-row{
+    min-height:50px;
+  }
+
+  .ob-row > div:not(.depth-bid):not(.depth-ask){
+    font-size:12px;
+  }
+}
+
+/* =========================================================
+   EXTRA SMALL DEVICES
+========================================================= */
+@media (max-width:350px){
+  .market-pairs,
+  .pair-grid{
+    grid-template-columns:repeat(4, minmax(0,1fr));
+  }
+
+  .market-wallet-strip,
+  .wallet-box.compact{
+    grid-template-columns:1fr;
+  }
+
+  .market-stats-grid,
+  .market-ohlc{
+    grid-template-columns:1fr;
+  }
+
+  .trade-tabs{
+    gap:10px;
+  }
+
+  .percent-row{
+    gap:8px;
   }
 }
 
