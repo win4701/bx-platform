@@ -9,7 +9,7 @@
   /* ================= CONFIG ================= */
   const BX_USDT_REFERENCE = 45; // ← السعر الثابت الأساسي
   const DEFAULT_QUOTE = "USDT";
-  const MAX_ORDERBOOK_ROWS = 15;
+  const MAX_ORDERBOOK_ROWS = 12;
 
   const QUOTE_STREAMS = {
     USDT: null,
