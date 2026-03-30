@@ -437,7 +437,7 @@ h3{
 
 #market .price-box{
   text-align:right;
-  min-width:120px;
+  min-width:110px;
 }
 
 #market .price-main{
@@ -464,7 +464,7 @@ h3{
   background:linear-gradient(180deg,#0f1725,#0d1521);
   border:1px solid var(--mk-border);
   box-shadow:var(--mk-shadow-soft);
-  margin-bottom:12px;
+  margin-bottom:10px;
 }
 
 #market .wallet-box.compact > div{
@@ -487,14 +487,14 @@ h3{
 #market .pair-grid{
   display:grid;
   grid-template-columns:repeat(5,minmax(0,1fr));
-  gap:6px;
-  margin-bottom:12px;
+  gap:5px;
+  margin-bottom:10px;
 }
 
 #market .pair-btn{
-  height:42px;
+  height:38px;
   width:100%;
-  border-radius:18px;
+  border-radius:16px;
   border:1px solid var(--mk-border);
   background:rgba(255,255,255,.018);
   color:rgba(255,255,255,.72);
@@ -540,9 +540,9 @@ h3{
 }
 
 #market .market-logo{
-  width:54px;
-  height:54px;
-  min-width:54px;
+  width:52px;
+  height:52px;
+  min-width:52px;
   border-radius:16px;
   background:linear-gradient(180deg,#7dffc8,#49f2a6);
   display:flex;
@@ -592,7 +592,7 @@ h3{
 }
 
 #market .market-price{
-  font-size:26px;
+  font-size:22px;
   line-height:1;
   font-weight:900;
   color:#fff;
@@ -602,7 +602,7 @@ h3{
   display:inline-flex;
   align-items:center;
   justify-content:center;
-  min-height:40px;
+  min-height:42px;
   padding:0 16px;
   border-radius:999px;
   font-size:13px;
@@ -610,14 +610,14 @@ h3{
   background:var(--mk-green-soft);
   border:1px solid rgba(73,242,166,.16);
   color:var(--mk-green);
-  box-shadow:0 6px 18px rgba(73,242,166,.06);
+  box-shadow:0 6px 16px rgba(73,242,166,.06);
 }
 
 #market .market-change-badge.is-down{
   background:var(--mk-red-soft);
   border-color:rgba(255,92,117,.18);
   color:var(--mk-red);
-  box-shadow:0 6px 18px rgba(255,92,117,.06);
+  box-shadow:0 6px 16px rgba(255,92,117,.06);
 }
 
 /* ================= TOOLBAR ================= */
@@ -648,7 +648,7 @@ h3{
 #market .market-timeframes button,
 #market .market-chart-modes button{
   flex:0 0 auto;
-  min-width:64px;
+  min-width:54px;
   height:38px;
   padding:0 14px;
   border-radius:16px;
@@ -662,7 +662,7 @@ h3{
 }
 
 #market .market-chart-modes button{
-  min-width:88px;
+  min-width:100%;
 }
 
 #market .market-timeframes button.active,
@@ -689,9 +689,8 @@ h3{
 #market .market-chart-shell{
   position:relative;
   width:100%;
-  height:240px;
-  min-height:240px;
-  max-height:240px;
+  height:280px;
+  min-height:280px;
   border-radius:18px;
   overflow:hidden;
   background:
@@ -702,9 +701,8 @@ h3{
 #market #marketChart{
   display:block;
   width:100% !important;
-  height:240px !important;
-  min-height:240px !important;
-  max-height:240px !important;
+  height:280px !important;
+  min-height:280px !important;
   border-radius:18px;
   background:transparent;
 }
