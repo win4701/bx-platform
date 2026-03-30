@@ -330,12 +330,6 @@ h3{
 ‎/* =========================================================
 ‎   BLOXIO MARKET — VIDEO FIX /  PATCH
 ‎========================================================= */
-/* =========================================================
-   BLOXIO MARKET — CLEAN REBUILD FIX
-   Stable / Compact / Mobile Accurate / No Broken Layout
-========================================================= */
-
-/* ================= MARKET ROOT ================= */
 #market.view{
   display:none;
   width:100%;
@@ -454,6 +448,28 @@ h3{
   white-space:nowrap;
 }
 
+/* ===== GLOBAL BUTTON SYSTEM ===== */
+
+.market-btn{
+  height:44px;
+  border-radius:16px;
+  font-size:13px;
+  font-weight:900;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border:1px solid var(--mk-border);
+  background:#171d25;
+  color:#fff;
+  transition:.15s;
+}
+
+.market-btn.active{
+  background:linear-gradient(180deg,#78ffc4,#49f2a6);
+  color:#07100c;
+  border:none;
+}
+
 /* ================= WALLET STRIP ================= */
 #market .wallet-box.compact{
   display:grid;
@@ -487,24 +503,13 @@ h3{
 #market .pair-grid{
   display:grid;
   grid-template-columns:repeat(5, 1fr);
-  gap:10px;
+  gap:8px;
 }
 
 #market .pair-btn{
-  width:100%;
-  height:54px;
-  border-radius:20px;
-  border:1px solid var(--mk-border);
-  background:rgba(255,255,255,.016);
-  color:rgba(255,255,255,.72);
+  height:42px; 
+  border-radius:16px;
   font-size:13px;
-  font-weight:900;
-  letter-spacing:.2px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  transition:.16s ease;
-  box-shadow:inset 0 0 0 1px rgba(255,255,255,.01);
 }
 
 #market .pair-btn:active{
@@ -537,9 +542,9 @@ h3{
 }
 
 #market .market-logo{
-  width:58px;
-  height:58px;
-  min-width:58px;
+  width:100%;
+  height:50px;
+  min-width:50px;
   border-radius:16px;
   background:linear-gradient(180deg,#7dffc8,#49f2a6);
   display:flex;
@@ -620,41 +625,23 @@ h3{
 
 #market .market-timeframes,
 #market .market-chart-modes{
-  display:flex;
+  display:grid;
+  grid-template-columns:repeat(4, 1fr);
   gap:8px;
-  overflow-x:auto;
-  overflow-y:hidden;
-  scrollbar-width:none;
-  -ms-overflow-style:none;
+}
+
+/* كل الأزرار نفس الحجم */
+#market .market-timeframes button,
+#market .market-chart-modes button{
+  height:40px;
+  width:100%;
+  border-radius:16px;
+  font-size:13px;
 }
 
 #market .market-timeframes::-webkit-scrollbar,
 #market .market-chart-modes::-webkit-scrollbar{
   display:none;
-}
-
-#market .market-timeframes{
-  margin-bottom:10px;
-}
-
-#market .market-timeframes button,
-#market .market-chart-modes button{
-  flex:0 0 auto;
-  min-width:72px;
-  height:44px;
-  padding:0 14px;
-  border-radius:18px;
-  border:1px solid var(--mk-border);
-  background:rgba(255,255,255,.016);
-  color:rgba(255,255,255,.82);
-  font-size:13px;
-  font-weight:900;
-  box-shadow:inset 0 0 0 1px rgba(255,255,255,.01);
-  transition:.18s ease;
-}
-
-#market .market-chart-modes button{
-  min-width:92px;
 }
 
 #market .market-timeframes button.active,
@@ -680,7 +667,6 @@ h3{
   width:100%;
   height:260px;
   min-height:260px;
-  max-height:260px;
   overflow:hidden;
   border-radius:18px;
 }
@@ -699,7 +685,7 @@ h3{
   left:12px;
   z-index:5;
   min-width:120px;
-  max-width:170px;
+  max-width:160px;
   padding:10px 12px;
   border-radius:14px;
   background:rgba(8,12,18,.94);
@@ -721,9 +707,9 @@ h3{
 
 /* ================= CROSSHAIR STRIP ================= */
 #market .market-crosshair{
-  margin-top:10px;
-  padding:10px 14px;
-  min-height:44px;
+  margin-top:8px;
+  padding:10px 12px;
+  min-height:40px;
   border-radius:999px;
   background:rgba(255,255,255,.028);
   border:1px solid rgba(255,255,255,.04);
@@ -745,7 +731,7 @@ h3{
 #market .market-stats-grid{
   display:grid;
   grid-template-columns:repeat(2, 1fr);
-  gap:10px;
+  gap:8px;
   margin-top:12px;
 }
 
@@ -755,7 +741,8 @@ h3{
   background:linear-gradient(180deg,#11161d,#0f141b);
   border:1px solid var(--mk-border);
   box-shadow:var(--mk-shadow-soft);
-  min-height:108px;
+  min-height:72px;
+  padding:12px;
   display:flex;
   flex-direction:column;
   justify-content:center;
@@ -792,7 +779,7 @@ h3{
   background:linear-gradient(180deg,#11161d,#0f141b);
   border:1px solid var(--mk-border);
   box-shadow:var(--mk-shadow-soft);
-  min-height:108px;
+  min-height:72px;
   display:flex;
   flex-direction:column;
   justify-content:center;
@@ -801,14 +788,14 @@ h3{
 #market .ohlc-item span{
   display:block;
   margin-bottom:8px;
-  font-size:13px;
+  font-size:12px;
   color:var(--mk-muted);
   font-weight:700;
 }
 
 #market .ohlc-item strong{
   display:block;
-  font-size:16px;
+  font-size:14px;
   line-height:1.15;
   font-weight:900;
   color:#fff;
