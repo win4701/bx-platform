@@ -367,9 +367,9 @@ h3{
 #market.view{
   display:none;
   width:100%;
-  max-width:430px;
+  max-width:460px;
   margin:0 auto;
-  padding:12px 12px 112px;
+  padding:10px 12px 110px;
   min-height:auto;
   overflow:visible;
   background:transparent;
@@ -420,7 +420,7 @@ h3{
   align-items:center;
   gap:8px;
   flex-wrap:wrap;
-  font-size:18px;
+  font-size:16px;
   font-weight:900;
   line-height:1;
   letter-spacing:.2px;
@@ -441,7 +441,7 @@ h3{
 }
 
 #market .price-main{
-  font-size:18px;
+  font-size:16px;
   font-weight:900;
   line-height:1.05;
   color:#fff;
@@ -459,7 +459,7 @@ h3{
   display:grid;
   grid-template-columns:1fr 1fr;
   gap:0;
-  padding:10px 14px;
+  padding:10px;
   border-radius:18px;
   background:linear-gradient(180deg,#0f1725,#0d1521);
   border:1px solid var(--mk-border);
@@ -477,7 +477,7 @@ h3{
 }
 
 #market .wallet-box.compact strong{
-  font-size:17px;
+  font-size:16px;
   line-height:1;
   font-weight:900;
   color:#fff;
@@ -487,13 +487,13 @@ h3{
 #market .pair-grid{
   display:grid;
   grid-template-columns:repeat(5,minmax(0,1fr));
-  gap:8px;
-  margin-bottom:14px;
+  gap:7px;
+  margin-bottom:13px;
 }
 
 #market .pair-btn{
-  height:64px;
-  min-height:64px;
+  height:54px;
+  min-height:54px;
   width:100%;
   border-radius:18px;
   border:1px solid var(--mk-border);
@@ -519,7 +519,7 @@ h3{
   border-color:var(--mk-green-border);
   box-shadow:
     0 0 0 1px rgba(73,242,166,.08),
-    inset 0 0 18px rgba(73,242,166,.05);
+    inset 0 0 16px rgba(73,242,166,.05);
 }
 
 /* ================= HERO ================= */
@@ -541,9 +541,9 @@ h3{
 }
 
 #market .market-logo{
-  width:58px;
-  height:58px;
-  min-width:58px;
+  width:54px;
+  height:54px;
+  min-width:54px;
   border-radius:16px;
   background:linear-gradient(180deg,#7dffc8,#49f2a6);
   display:flex;
