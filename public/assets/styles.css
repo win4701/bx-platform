@@ -333,9 +333,9 @@ h3{
 #market.view{
   display:none;
   width:100%;
-  max-width:430px;
+  max-width:460px;
   margin:0 auto;
-  padding:14px 12px 110px;
+  padding:14px 12px 120px;
   background:transparent;
   overflow:visible;
 }
@@ -413,9 +413,9 @@ h3{
 #market .pair-title{
   display:flex;
   align-items:center;
-  gap:8px;
+  gap:7px;
   flex-wrap:wrap;
-  font-size:19px;
+  font-size:18px;
   font-weight:900;
   line-height:1;
 }
@@ -431,11 +431,11 @@ h3{
 
 #market .price-box{
   text-align:right;
-  min-width:130px;
+  min-width:120px;
 }
 
 #market .price-main{
-  font-size:20px;
+  font-size:22px;
   font-weight:900;
   line-height:1.05;
   color:#fff;
@@ -448,34 +448,12 @@ h3{
   white-space:nowrap;
 }
 
-/* ===== GLOBAL BUTTON SYSTEM ===== */
-
-.market-btn{
-  height:44px;
-  border-radius:16px;
-  font-size:13px;
-  font-weight:900;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  border:1px solid var(--mk-border);
-  background:#171d25;
-  color:#fff;
-  transition:.15s;
-}
-
-.market-btn.active{
-  background:linear-gradient(180deg,#78ffc4,#49f2a6);
-  color:#07100c;
-  border:none;
-}
-
 /* ================= WALLET STRIP ================= */
 #market .wallet-box.compact{
   display:grid;
   grid-template-columns:1fr 1fr;
   gap:0;
-  padding:10px 14px;
+  padding:12px;
   border-radius:22px;
   background:linear-gradient(180deg,#0f1725,#0d1521);
   border:1px solid var(--mk-border);
@@ -507,8 +485,8 @@ h3{
 }
 
 #market .pair-btn{
-  height:38px; 
-  border-radius:16px;
+  height:42px; 
+  border-radius:14px;
   font-size:13px;
 }
 
@@ -526,7 +504,7 @@ h3{
 /* ================= HERO CARD ================= */
 #market .market-hero{
   padding:14px;
-  border-radius:24px;
+  border-radius:242px;
   background:linear-gradient(180deg,#11161d,#0f141b);
   border:1px solid var(--mk-border);
   box-shadow:var(--mk-shadow);
@@ -543,14 +521,14 @@ h3{
 
 #market .market-logo{
   width:100%;
-  height:50px;
-  min-width:50px;
+  height:44px;
+  min-width:44px;
   border-radius:16px;
   background:linear-gradient(180deg,#7dffc8,#49f2a6);
   display:flex;
   align-items:center;
   justify-content:center;
-  font-size:24px;
+  font-size:22px;
   color:#08110d;
   box-shadow:0 10px 24px rgba(73,242,166,.14);
 }
@@ -558,12 +536,12 @@ h3{
 #market .market-title{
   display:flex;
   align-items:center;
-  gap:8px;
+  gap:7px;
   flex-wrap:wrap;
 }
 
 #market .market-title h2{
-  font-size:18px;
+  font-size:16px;
   font-weight:900;
   color:#fff;
 }
@@ -574,21 +552,12 @@ h3{
   font-weight:700;
 }
 
-#market .market-rank{
-  padding:4px 10px;
-  border-radius:999px;
-  background:rgba(255,255,255,.05);
-  border:1px solid var(--mk-border);
-  font-size:12px !important;
-  color:#b9c2cd !important;
-}
-
 #market .market-price-box{
   display:flex;
   flex-direction:column;
   align-items:flex-start;
   gap:10px;
-  margin-bottom:14px;
+  margin-bottom:12px;
 }
 
 #market .market-price{
@@ -627,7 +596,7 @@ h3{
 #market .market-chart-modes{
   display:grid;
   grid-template-columns:repeat(4, 1fr);
-  gap:8px;
+  gap:7px;
 }
 
 /* كل الأزرار نفس الحجم */
@@ -666,7 +635,7 @@ h3{
 /* 👇 هذا أهم عنصر */
 .market-chart-shell{
   width:100%;
-  height:260px;
+  height:300px;
   border-radius:18px;
 }
 
@@ -682,14 +651,14 @@ h3{
   top:12px;
   left:12px;
   z-index:5;
-  min-width:120px;
-  max-width:160px;
+  min-width:100px;
+  max-width:150px;
   padding:10px 12px;
   border-radius:14px;
   background:rgba(8,12,18,.94);
   border:1px solid rgba(255,255,255,.08);
   color:#fff;
-  font-size:11px;
+  font-size:10px;
   line-height:1.45;
   pointer-events:none;
   opacity:0;
@@ -707,7 +676,7 @@ h3{
 #market .market-crosshair{
   margin-top:8px;
   padding:12px;
-  min-height:38px;
+  min-height:42px;
   border-radius:999px;
   background:rgba(255,255,255,.028);
   border:1px solid rgba(255,255,255,.04);
@@ -729,7 +698,7 @@ h3{
 #market .market-stats-grid{
   display:grid;
   grid-template-columns:repeat(2, 1fr);
-  gap:8px;
+  gap:7px;
   margin-top:12px;
 }
 
@@ -739,7 +708,7 @@ h3{
   background:linear-gradient(180deg,#11161d,#0f141b);
   border:1px solid var(--mk-border);
   box-shadow:var(--mk-shadow-soft);
-  min-height:72px;
+  min-height:64px;
   padding:12px;
   display:flex;
   flex-direction:column;
@@ -756,7 +725,7 @@ h3{
 
 #market .stat-card strong{
   display:block;
-  font-size:16px;
+  font-size:14px;
   line-height:1.15;
   font-weight:900;
   color:#fff;
@@ -777,7 +746,7 @@ h3{
   background:linear-gradient(180deg,#11161d,#0f141b);
   border:1px solid var(--mk-border);
   box-shadow:var(--mk-shadow-soft);
-  min-height:72px;
+  min-height:64px;
   display:flex;
   flex-direction:column;
   justify-content:center;
@@ -785,7 +754,7 @@ h3{
 
 #market .ohlc-item span{
   display:block;
-  margin-bottom:8px;
+  margin-bottom:7px;
   font-size:12px;
   color:var(--mk-muted);
   font-weight:700;
@@ -804,7 +773,7 @@ h3{
 #market .trade-box{
   margin-top:12px;
   padding:14px;
-  border-radius:22px;
+  border-radius:20px;
   background:linear-gradient(180deg,#11161d,#0f141b);
   border:1px solid var(--mk-border);
   box-shadow:var(--mk-shadow);
@@ -819,12 +788,12 @@ h3{
 }
 
 #market .trade-tabs button{
-  height:48px;
-  border-radius:18px;
+  height:42px;
+  border-radius:16px;
   border:1px solid var(--mk-border);
   background:#1a2028;
   color:#fff;
-  font-size:14px;
+  font-size:12px;
   font-weight:900;
   transition:.18s ease;
 }
@@ -855,13 +824,13 @@ h3{
 #market .trade-form input,
 #market .trade-input{
   width:100%;
-  height:50px;
-  padding:0 16px;
+  height:42px;
+  padding:0 14px;
   border-radius:18px;
   border:1px solid var(--mk-border);
   background:#1a2028;
   color:#fff;
-  font-size:16px;
+  font-size:14px;
   font-weight:900;
   outline:none;
 }
@@ -874,7 +843,7 @@ h3{
 #market .percent-row{
   display:grid;
   grid-template-columns:repeat(4, 1fr);
-  gap:8px;
+  gap:7px;
   margin-top:12px;
   margin-bottom:12px;
 }
@@ -910,7 +879,7 @@ h3{
   gap:12px;
   font-size:13px;
   color:var(--mk-muted);
-  margin-bottom:8px;
+  margin-bottom:7px;
 }
 
 #market .trade-stats > div:last-child{
@@ -924,11 +893,11 @@ h3{
 
 #market .action-btn{
   width:100%;
-  height:56px;
+  height:42px;
   margin-top:14px;
   border:none;
-  border-radius:18px;
-  font-size:16px;
+  border-radius:16px;
+  font-size:14px;
   font-weight:900;
   letter-spacing:.2px;
 }
@@ -936,13 +905,13 @@ h3{
 #market .trade-box.buy .action-btn{
   background:linear-gradient(180deg,#6effbe,#49f2a6);
   color:#07100c;
-  box-shadow:0 12px 24px rgba(73,242,166,.16);
+  box-shadow:0 12px 22px rgba(73,242,166,.16);
 }
 
 #market .trade-box.sell .action-btn{
   background:linear-gradient(180deg,#ff7f99,#ff5c75);
   color:#fff;
-  box-shadow:0 12px 24px rgba(255,92,117,.16);
+  box-shadow:0 12px 22px rgba(255,92,117,.16);
 }
 
 /* ================= ORDER BOOK ================= */
@@ -952,7 +921,7 @@ h3{
 
 #market .orderbook-card{
   padding:14px;
-  border-radius:24px;
+  border-radius:22px;
   background:linear-gradient(180deg,#11161d,#0f141b);
   border:1px solid var(--mk-border);
   box-shadow:var(--mk-shadow);
