@@ -544,7 +544,7 @@
 
       const dpr = Math.max(window.devicePixelRatio || 1, 1);
       const w = wrap.clientWidth || 320;
-      const h = 260;
+      const h = 300;
 
       this.canvas.width = w * dpr;
       this.canvas.height = h * dpr;
