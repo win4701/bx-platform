@@ -345,17 +345,17 @@ h3{
   --mk-green: #0ecb81;
   --mk-red: #f6465d;
   --mk-blue: #0f1f3c;
-  --mk-shadow: 0 8px 30px rgba(0, 0, 0, 0.28);
-  --mk-radius: 22px;
-  --mk-radius-sm: 18px;
-  --mk-gap: 13px;
+  --mk-shadow: 0 8px 22px rgba(0, 0, 0, 0.28);
+  --mk-radius: 20px;
+  --mk-radius-sm: 16px;
+  --mk-gap: 12px;
 
   background:
     radial-gradient(circle at top center, rgba(18, 54, 112, 0.18), transparent 28%),
     linear-gradient(180deg, #050b12 0%, #070d14 100%);
   color: var(--mk-text);
   min-height: 100%;
-  padding: 10px 8px 90px;
+  padding: 10px 8px 80px;
   box-sizing: border-box;
   overflow-x: hidden;
 }
@@ -375,7 +375,7 @@ h3{
 #market .wallet-box.compact {
   background: linear-gradient(180deg, rgba(15, 22, 35, 0.98), rgba(10, 17, 27, 0.98));
   border: 1px solid var(--mk-border);
-  border-radius: 20px;
+  border-radius: 16px;
   box-shadow: var(--mk-shadow);
 }
 
@@ -384,7 +384,7 @@ h3{
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 14px;
+  gap: 10px;
   margin-bottom: 12px;
 }
 
@@ -393,7 +393,7 @@ h3{
   align-items: center;
   gap: 6px;
   font-weight: 900;
-  font-size: clamp(20px, 5vw, 30px);
+  font-size: 20px;
   letter-spacing: -0.02em;
   line-height: 1;
 }
@@ -439,8 +439,8 @@ h3{
 #market .wallet-box.compact {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
-  padding: 12px 14px;
+  gap: 8px;
+  padding: 10px 14px;
   margin-bottom: 13px;
 }
 
@@ -448,7 +448,7 @@ h3{
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   font-size: 14px;
   color: var(--mk-text-soft);
   font-weight: 700;
@@ -465,7 +465,7 @@ h3{
   grid-auto-flow: column;
   grid-template-rows: repeat(2, auto);
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 7px;
+  gap: 6px;
   margin-bottom: 13px;
   overflow-x: auto;
   overflow-y: hidden;
@@ -512,25 +512,25 @@ h3{
   box-shadow:
     inset 0 0 0 1px rgba(240, 185, 11, 0.18),
     0 0 0 2px rgba(240, 185, 11, 0.05),
-    0 10px 18px rgba(240, 185, 11, 0.10);
+    0 10px 16px rgba(240, 185, 11, 0.10);
 }
 
 /* ================= HERO ================= */
 #market .market-hero {
   padding: 10px;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
 }
 
 #market .market-identity {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   margin-bottom: 14px;
 }
 
 #market .market-logo {
   width: 44px;
-  height: 44px;
+  height: 38px;
   border-radius: 17px;
   display: grid;
   place-items: center;
@@ -538,7 +538,7 @@ h3{
   font-weight: 900;
   color: #0b1015;
   background: linear-gradient(135deg, #f0b90b, #ffd85c);
-  box-shadow: 0 8px 18px rgba(240, 185, 11, 0.20);
+  box-shadow: 0 8px 16px rgba(240, 185, 11, 0.20);
 }
 
 #market .market-title {
@@ -549,7 +549,7 @@ h3{
 
 #market .market-title h2 {
   margin: 0;
-  font-size: 22px;
+  font-size: 20px;
   line-height: 1;
   font-weight: 900;
   color: #fff;
@@ -583,10 +583,10 @@ h3{
 
 #market .market-change-badge {
   flex-shrink: 0;
-  min-width: 110px;
-  height: 34px;
-  padding: 0 16px;
-  border-radius: 777px;
+  min-width: 100px;
+  height: 32px;
+  padding: 0 14px;
+  border-radius: 666px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -611,7 +611,7 @@ h3{
 #market .market-toolbar {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 7px;
   margin-bottom: 13px;
 }
 
@@ -619,13 +619,13 @@ h3{
 #market .market-timeframes {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 8px;
+  gap: 7px;
 }
 
 #market .market-timeframes button {
   width: 100%;
-  height: 38px;
-  border-radius: 20px;
+  height: 40px;
+  border-radius: 18px;
   border: 1px solid rgba(255,255,255,0.06);
   background: linear-gradient(180deg, rgba(15,20,29,0.98), rgba(10,15,23,0.98));
   color: #d2d9e2;
@@ -653,7 +653,7 @@ h3{
 #market .market-chart-modes {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
+  gap: 6px;
 }
 
 #market .market-chart-modes button {
@@ -704,7 +704,7 @@ h3{
 #market .market-chart-shell {
   position: relative;
   width: 100%;
-  height: 300px; /* الشارت أفقي وواضح */
+  height: 280px; /* الشارت أفقي وواضح */
   overflow: hidden;
   border-radius: 22px;
 }
@@ -750,7 +750,7 @@ h3{
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: 6px;
   padding: 10px 15px 13px;
   border-top: 1px solid rgba(255,255,255,0.05);
   background: rgba(8, 12, 18, 0.68);
@@ -771,7 +771,7 @@ h3{
 }
 
 #market .stat-card {
-  min-height: 88px; /* مصغّر */
+  min-height: 72px; /* مصغّر */
   border-radius: 22px;
   padding: 14px 12px 18px;
   border: 1px solid rgba(255,255,255,0.05);
@@ -791,7 +791,7 @@ h3{
 }
 
 #market .stat-card strong {
-  font-size: 22px;
+  font-size: 20px;
   line-height: 1;
   font-weight: 900;
   color: #fff;
@@ -802,7 +802,7 @@ h3{
 #market .market-ohlc {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
+  gap: 6px;
   margin-bottom: 8px;
 }
 
@@ -837,25 +837,25 @@ h3{
 
 /* ================= TRADE BOX ================= */
 #market .trade-box {
-  padding: 14px;
-  margin-bottom: 13px;
+  padding: 12px;
+  margin-bottom: 10px;
 }
 
 #market .trade-tabs {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
 }
 
 #market .trade-tabs button {
   width: 100%;
   height: 44px;
-  border-radius: 20px;
+  border-radius: 18px;
   border: 1px solid rgba(255,255,255,0.06);
   background: linear-gradient(180deg, rgba(15,20,29,0.98), rgba(10,15,23,0.98));
   color: #e6ebf1;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 900;
   box-shadow:
     inset 0 0 0 1px rgba(255,255,255,0.02),
@@ -886,12 +886,12 @@ h3{
 
 #market #orderAmount {
   width: 100%;
-  height: 48px;
-  border-radius: 20px;
+  height: 44px;
+  border-radius: 18px;
   border: 1px solid rgba(255,255,255,0.06);
   background: linear-gradient(90deg, #101a29 0%, #121b27 100%);
   color: #fff;
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 900;
   padding: 0 16px;
   outline: none;
@@ -910,13 +910,13 @@ h3{
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 8px;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 #market .percent-row button {
   width: 100%;
-  height: 48px;
-  border-radius: 20px;
+  height: 44px;
+  border-radius: 18px;
   border: 1px solid rgba(255,255,255,0.06);
   background: linear-gradient(180deg, rgba(15,20,29,0.98), rgba(10,15,23,0.98));
   color: #fff;
@@ -941,8 +941,8 @@ h3{
 
 /* ===== Trade Stats ===== */
 #market .trade-stats {
-  border-radius: 22px;
-  padding: 14px 18px;
+  border-radius: 18px;
+  padding: 12px 16px;
   margin-bottom: 16px;
   border: 1px solid rgba(255,255,255,0.05);
   background: linear-gradient(180deg, rgba(11,18,27,0.98), rgba(9,15,22,0.98));
@@ -974,10 +974,10 @@ h3{
 /* ===== Action Button ===== */
 #market .action-btn {
   width: 100%;
-  height: 48px;
+  height: 44px;
   border: none;
-  border-radius: 20px;
-  font-size: 20px;
+  border-radius: 18px;
+  font-size: 18px;
   font-weight: 900;
   letter-spacing: 0.01em;
   color: #fff;
