@@ -469,13 +469,13 @@ h3{
 
 #market .pair-btn {
   width: 100%;
-  height: 52px;
-  border-radius: 16px;
+  height: 38px;
+  border-radius: 14px;
   border: 1px solid rgba(255,255,255,0.06);
   background:
     linear-gradient(180deg, rgba(15,20,29,0.98), rgba(10,15,23,0.98));
   color: #c7d0db;
-  font-size: 13px;
+  font-size: 10px;
   font-weight: 900;
   letter-spacing: 0.01em;
   display: inline-flex;
@@ -703,7 +703,7 @@ h3{
   display: block;
   width: 100% !important;
   height: 100% !important;
-  border-radius: 22px;
+  border-radius: 20px;
 }
 
 /* tooltip */
@@ -712,7 +712,7 @@ h3{
   z-index: 3;
   top: 14px;
   left: 14px;
-  min-width: 142px;
+  min-width: 112px;
   padding: 10px 12px;
   border-radius: 14px;
   background: rgba(8, 12, 18, 0.92);
@@ -874,12 +874,12 @@ h3{
 
 #market #orderAmount {
   width: 100%;
-  height: 72px;
-  border-radius: 22px;
+  height: 48px;
+  border-radius: 20px;
   border: 1px solid rgba(255,255,255,0.06);
   background: linear-gradient(90deg, #101a29 0%, #121b27 100%);
   color: #fff;
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 900;
   padding: 0 16px;
   outline: none;
@@ -898,13 +898,13 @@ h3{
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 8px;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
 }
 
 #market .percent-row button {
   width: 100%;
-  height: 72px;
-  border-radius: 22px;
+  height: 48px;
+  border-radius: 20px;
   border: 1px solid rgba(255,255,255,0.06);
   background: linear-gradient(180deg, rgba(15,20,29,0.98), rgba(10,15,23,0.98));
   color: #fff;
@@ -962,9 +962,9 @@ h3{
 /* ===== Action Button ===== */
 #market .action-btn {
   width: 100%;
-  height: 72px;
+  height: 48px;
   border: none;
-  border-radius: 22px;
+  border-radius: 20px;
   font-size: 20px;
   font-weight: 900;
   letter-spacing: 0.01em;
