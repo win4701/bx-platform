@@ -543,8 +543,8 @@
       if (!wrap) return;
 
       const dpr = Math.max(window.devicePixelRatio || 1, 1);
-      const w = wrap.clientWidth || 320;
-      const h = 300;
+      const w = wrap.clientWidth || 400;
+      const h = 260;
 
       this.canvas.width = w * dpr;
       this.canvas.height = h * dpr;
@@ -609,7 +609,7 @@
         this.current = this.createCandle(price);
         this.candles.push(this.current);
 
-        if (this.candles.length > 320) {
+        if (this.candles.length > 400) {
           this.candles.shift();
         }
       }
@@ -617,7 +617,7 @@
       this.current.high = Math.max(this.current.high, price);
       this.current.low = Math.min(this.current.low, price);
       this.current.close = price;
-      this.current.volume += rnd(80, 320);
+      this.current.volume += rnd(80, 400);
 
       syncProMarketUI();
       this.render();
