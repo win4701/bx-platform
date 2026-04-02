@@ -462,9 +462,20 @@ h3{
 /* ================= PAIR GRID (5 فوق / 5 تحت) ================= */
 #market .pair-grid {
   display: grid;
+  grid-auto-flow: column;
+  grid-template-rows: repeat(2, auto);
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 7px;
   margin-bottom: 13px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 4px;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+#market .pair-grid::-webkit-scrollbar {
+  display: none;
 }
 
 #market .pair-btn {
