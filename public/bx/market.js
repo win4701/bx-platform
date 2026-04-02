@@ -543,7 +543,7 @@
       if (!wrap) return;
 
       const dpr = Math.max(window.devicePixelRatio || 1, 1);
-      const w = wrap.clientWidth || 400;
+      const w = 360;
       const h = 260;
 
       this.canvas.width = w * dpr;
@@ -609,7 +609,7 @@
         this.current = this.createCandle(price);
         this.candles.push(this.current);
 
-        if (this.candles.length > 400) {
+        if (this.candles.length > 360) {
           this.candles.shift();
         }
       }
@@ -617,7 +617,7 @@
       this.current.high = Math.max(this.current.high, price);
       this.current.low = Math.min(this.current.low, price);
       this.current.close = price;
-      this.current.volume += rnd(80, 400);
+      this.current.volume += rnd(80, 360);
 
       syncProMarketUI();
       this.render();
@@ -676,7 +676,7 @@
       min -= pad;
       max += pad;
 
-      const chartH = h - 46;
+      const chartH = h - 45;
       const scaleY = (p) => chartH - ((p - min) / (max - min)) * (chartH - 20);
       const candleWidth = w / visible.length;
 
@@ -742,7 +742,7 @@
         ctx.strokeStyle = "#87FFD3";
         ctx.lineWidth = 3;
         ctx.shadowColor = "rgba(135,255,211,.24)";
-        ctx.shadowBlur = 14;
+        ctx.shadowBlur = 12;
         ctx.stroke();
         ctx.shadowBlur = 0;
 
@@ -952,8 +952,7 @@
           "7D": 60,
           "30D": 90,
           "90D": 120,
-          "1Y": 160,
-          "ALL": 220
+          "1Y": 180
         };
 
         CHART.visibleCount = clamp(map[tf] || 90, CHART.minVisible, CHART.maxVisible);
@@ -965,8 +964,8 @@
           "7D": 3000,
           "30D": 4200,
           "90D": 5000,
-          "1Y": 6000,
-          "ALL": 7000
+          "1Y": 7800
+          
         };
 
         CHART.timeframeMs = speedMap[tf] || 4500;
