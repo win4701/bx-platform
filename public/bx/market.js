@@ -106,7 +106,7 @@
 
   function compact(n) {
     if (!isFinite(n)) return "0";
-    if (n >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(2)}B`;
+    if (n >= 1_000_000_000) return `${(n / 1_000_000_00).toFixed(2)}±`;
     if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(2)}M`;
     if (n >= 1_000) return `${(n / 1_000).toFixed(2)}K`;
     return fmt(n, 2);
@@ -246,7 +246,7 @@
     // ===== NEW UI =====
     if (els.assetName) els.assetName.textContent = "Bloxio";
     if (els.assetSymbol) els.assetSymbol.textContent = "BX";
-    if (els.assetRank) els.assetRank.textContent = "#276";
+    if (els.assetRank) els.assetRank.textContent = "#seed";
 
     if (els.assetPrice) {
       els.assetPrice.textContent = `$${fmt(price, 5)}`;
@@ -431,7 +431,7 @@
   function scheduleReconnect(symbol) {
     if (!symbol) return;
     if (state.wsTimer) clearTimeout(state.wsTimer);
-    state.wsTimer = setTimeout(() => connectQuoteStream(symbol), 2500);
+    state.wsTimer = setTimeout(() => connectQuoteStream(symbol), 3000);
   }
 
   function connectQuoteStream(symbol) {
@@ -489,7 +489,7 @@
     minVisible: 20,
     maxVisible: 220,
 
-    timeframeMs: 4500,
+    timeframeMs: 6000,
     lastRender: 0,
 
     hoverIndex: null,
@@ -859,7 +859,7 @@
     if (els.statLow) els.statLow.textContent = `$${fmt(low, 5)}`;
     if (els.statVolume) els.statVolume.textContent = `${compact(volume)} BX`;
     if (els.statMarketCap) {
-      const marketCap = state.marketPrice * 1_000_000_000;
+      const marketCap = state.marketPrice * 1_000_000_00;
       els.statMarketCap.textContent = `$${compact(marketCap)}`;
     }
 
@@ -968,7 +968,7 @@
           
         };
 
-        CHART.timeframeMs = speedMap[tf] || 4500;
+        CHART.timeframeMs = speedMap[tf] || 6000;
         CHART.render();
         syncProMarketUI();
       });
@@ -1033,7 +1033,7 @@
       if (!state.ws || state.ws.readyState !== 1) {
         computeBXPrice();
       }
-    }, 2500);
+    }, 3000);
   }
 
   /* ================= DESTROY ================= */
