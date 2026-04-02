@@ -43,7 +43,7 @@
   /* =========================================
      ROOT CHECK
   ========================================= */
-  const casinoPage = $("casinoPage");
+  const casinoPage = $("casino");
   if (!casinoPage) return;
 
   /* =========================================
