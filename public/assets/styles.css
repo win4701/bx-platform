@@ -472,13 +472,13 @@ h3{
 #market .pair-grid{
   display:grid;
   grid-template-columns:repeat(5,minmax(0,1fr));
-  gap:6px;
+  gap:5px;
   margin-bottom:12px;
 }
 
 #market .pair-btn{
   width:100%;
-  height:38px;
+  height:28px;
   border-radius:16px;
   border:1px solid rgba(255,255,255,.06);
   background:linear-gradient(180deg,rgba(15,20,29,.98),rgba(10,15,23,.98));
@@ -530,11 +530,11 @@ h3{
   border-radius:14px;
   display:grid;
   place-items:center;
-  font-size:22px;
+  font-size:20px;
   font-weight:1000;
   color:#0b1015;
   background:linear-gradient(135deg,#f0b90b,#ffd85c);
-  box-shadow:0 8px 18px rgba(240,185,11,.20);
+  box-shadow:0 8px 16px rgba(240,185,11,.20);
   flex-shrink:0;
 }
 
@@ -546,7 +546,7 @@ h3{
 
 #market .market-title h2{
   margin:0;
-  font-size:18px;
+  font-size:16px;
   font-weight:1000;
   line-height:1;
   color:#fff;
@@ -654,9 +654,6 @@ h3{
   box-shadow:0 8px 18px rgba(14,203,129,.20);
 }
 
-/* =========================================================
-   CHART CARD
-========================================================= */
 /* =========================================
    MARKET CHART PRO FULL WIDTH
 ========================================= */
@@ -666,7 +663,7 @@ h3{
   width: 100%;
   margin: 18px 0 22px;
   padding: 14px;
-  border-radius: 26px;
+  border-radius: 24px;
   overflow: hidden;
   border: 1px solid rgba(255,255,255,.06);
   background:
@@ -710,9 +707,9 @@ h3{
   justify-content:center;
   min-height:38px;
   padding:0 14px;
-  border-radius:999px;
+  border-radius:666px;
   font-size:.9rem;
-  font-weight:900;
+  font-weight:1000;
   border:1px solid transparent;
 }
 
@@ -733,10 +730,11 @@ h3{
 /* shell */
 #market .market-chart-shell--full{
   position:relative;
-  width:100%;
-  min-height:320px;
-  height:clamp(320px, 62vw, 520px);
-  border-radius:22px;
+  width:100% !important;
+  max-width:100% !important;
+  min-height:260px;
+  height: clamp(220px, 48vw, 320px);
+  border-radius:20px;
   overflow:hidden;
   background:
     linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01)),
@@ -750,7 +748,7 @@ h3{
   width:100% !important;
   height:100% !important;
   max-width:100% !important;
-  border-radius:22px;
+  border-radius:20px;
   position:relative;
   z-index:2;
 }
