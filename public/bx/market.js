@@ -1,6 +1,6 @@
 /* =========================================================
-   BLOXIO MARKET — FINAL PRO FULL REBUILD
-   Clean / Responsive / Full Width / HTML+CSS Synced
+   BLOXIO MARKET — BINANCE CLONE ENGINE
+   FINAL ENGINE / HTML + CSS SYNCED
 ========================================================= */
 
 (() => {
@@ -111,7 +111,8 @@
     },
 
     ws: null,
-    wsReconnectTimer: null
+    wsReconnectTimer: null,
+    heartbeat: null
   };
 
   /* =========================================================
@@ -124,61 +125,50 @@
     if (!els.market) return false;
 
     Object.assign(els, {
-      // Header
       marketPrice: $("marketPrice"),
       marketApprox: $("marketApprox"),
       quoteAsset: $("quoteAsset"),
 
-      // Wallet mini
       walletBX: $("walletBX"),
       walletUSDT: $("walletUSDT"),
       walletQuoteLabel: $("walletQuoteLabel"),
 
-      // Pair buttons
       pairButtons: $$(".pair-btn", els.market),
 
-      // Hero
       assetName: $("assetName"),
       assetSymbol: $("assetSymbol"),
       assetRank: $("assetRank"),
       assetPrice: $("assetPrice"),
       assetChangeBadge: $("assetChangeBadge"),
 
-      // Chart topbar
       chartQuoteLabel: $("chartQuoteLabel"),
       chartLivePrice: $("chartLivePrice"),
       chartLiveChange: $("chartLiveChange"),
 
-      // Toolbar
       rangeButtons: $$("[data-range]", els.market),
       chartModeButtons: $$("[data-chart-mode]", els.market),
 
-      // Chart
       marketChart: $("marketChart"),
       marketTooltip: $("marketTooltip"),
       crosshairPrice: $("crosshairPrice"),
       crosshairTime: $("crosshairTime"),
 
-      // Stats
       statHigh: $("statHigh"),
       statLow: $("statLow"),
       statVolume: $("statVolume"),
       statMarketCap: $("statMarketCap"),
 
-      // Footer live stats
       metricOpen: $("metricOpen"),
       metricHigh: $("metricHigh"),
       metricLow: $("metricLow"),
       metricClose: $("metricClose"),
 
-      // OHLC panel
       metricOpenPanel: $("metricOpenPanel"),
       metricHighPanel: $("metricHighPanel"),
       metricLowPanel: $("metricLowPanel"),
       metricClosePanel: $("metricClosePanel"),
       metricVol: $("metricVol"),
 
-      // Trade
       tradeBox: $("tradeBox"),
       buyTab: $("buyTab"),
       sellTab: $("sellTab"),
@@ -189,7 +179,6 @@
       slippage: $("slippage"),
       spread: $("spread"),
 
-      // Orderbook
       orderBookRows: $("orderBookRows"),
       orderbookQuote: $("orderbookQuote")
     });
@@ -248,8 +237,7 @@
 
     state.lastPrice = old;
 
-    // visual micro movement for chart only
-    const visualNoise = (Math.random() - 0.5) * (state.marketPrice * 0.004);
+    const visualNoise = (Math.random() - 0.5) * (state.marketPrice * 0.0035);
     state.visualPrice = Math.max(0.000001, state.marketPrice + visualNoise);
 
     updatePriceUI();
@@ -270,7 +258,6 @@
     const changePct = old > 0 ? ((price - old) / old) * 100 : 0;
     const up = changePct >= 0;
 
-    // Header
     if (els.marketPrice) {
       els.marketPrice.textContent = fmt(price, 6);
       els.marketPrice.classList.remove("up", "down");
@@ -286,7 +273,6 @@
       els.quoteAsset.textContent = state.currentQuote;
     }
 
-    // Hero
     if (els.assetName) els.assetName.textContent = "Bloxio";
     if (els.assetSymbol) els.assetSymbol.textContent = "BX";
     if (els.assetRank) els.assetRank.textContent = "#276";
@@ -298,7 +284,6 @@
       els.assetChangeBadge.classList.add(up ? "is-up" : "is-down");
     }
 
-    // Chart topbar
     if (els.chartQuoteLabel) {
       els.chartQuoteLabel.textContent = state.currentQuote;
     }
@@ -363,7 +348,6 @@
       row.innerHTML = `
         <div class="depth-bid" style="width:${bidDepth}%"></div>
         <div class="depth-ask" style="width:${askDepth}%"></div>
-
         <div class="ob-bid">${fmt(b.amount, 3)}</div>
         <div class="ob-mid">${fmt(mid, 6)}</div>
         <div class="ob-ask">${fmt(a.amount, 3)}</div>
@@ -602,6 +586,33 @@
         if (els.crosshairPrice) els.crosshairPrice.textContent = "--";
         if (els.crosshairTime) els.crosshairTime.textContent = "--";
 
+        syncStatsUI();
+        this.render();
+      });
+
+      this.canvas.addEventListener("touchmove", (e) => {
+        const t = e.touches[0];
+        if (!t) return;
+        const rect = this.canvas.getBoundingClientRect();
+        this.mouse.x = t.clientX - rect.left;
+        this.mouse.y = t.clientY - rect.top;
+
+        const visible = this.candles.slice(-this.visibleCount);
+        if (!visible.length) return;
+
+        const candleWidth = this.canvas.clientWidth / visible.length;
+        const idx = clamp(Math.floor(this.mouse.x / candleWidth), 0, visible.length - 1);
+        this.hoverIndex = idx;
+
+        const c = visible[idx];
+        this.updateTooltip(c, this.mouse.x, this.mouse.y);
+        this.render();
+      }, { passive: true });
+
+      this.canvas.addEventListener("touchend", () => {
+        this.hoverIndex = null;
+        if (this.tooltip) this.tooltip.classList.remove("show");
+        syncStatsUI();
         this.render();
       });
     },
@@ -616,7 +627,7 @@
       const rect = wrap.getBoundingClientRect();
 
       const w = Math.max(320, Math.floor(rect.width));
-      const h = Math.max(280, Math.floor(rect.height));
+      const h = Math.max(220, Math.floor(rect.height));
 
       this.canvas.width = w * dpr;
       this.canvas.height = h * dpr;
@@ -727,7 +738,7 @@
 
       ctx.clearRect(0, 0, w, h);
 
-      // Background
+      // background
       const bg = ctx.createLinearGradient(0, 0, 0, h);
       bg.addColorStop(0, "#111820");
       bg.addColorStop(1, "#0b1218");
@@ -745,48 +756,60 @@
       min -= pad;
       max += pad;
 
-      const chartH = h - 58;
-      const scaleY = (p) => chartH - ((p - min) / (max - min)) * (chartH - 20);
+      const chartH = h - 54;
+      const scaleY = (p) => chartH - ((p - min) / (max - min)) * (chartH - 18);
       const candleWidth = w / visible.length;
 
-      // Grid
+      // subtle grid
       ctx.strokeStyle = "rgba(255,255,255,.05)";
       ctx.lineWidth = 1;
 
       for (let i = 0; i <= 5; i++) {
-        const gy = 12 + (chartH - 20) * (i / 5);
+        const gy = 10 + (chartH - 18) * (i / 5);
         ctx.beginPath();
         ctx.moveTo(0, gy);
         ctx.lineTo(w, gy);
         ctx.stroke();
       }
 
-      // Chart Modes
+      for (let i = 0; i <= 4; i++) {
+        const gx = (w / 4) * i;
+        ctx.beginPath();
+        ctx.moveTo(gx, 0);
+        ctx.lineTo(gx, chartH);
+        ctx.stroke();
+      }
+
+      const trendUp = visible[visible.length - 1].close >= visible[0].open;
+      const lineColor = trendUp ? "#0ecb81" : "#f6465d";
+      const fillTop = trendUp ? "rgba(14,203,129,.28)" : "rgba(246,70,93,.24)";
+      const fillBottom = trendUp ? "rgba(14,203,129,0)" : "rgba(246,70,93,0)";
+
+      // render modes
       if (state.chartMode === "line") {
         ctx.beginPath();
-        ctx.strokeStyle = "#87FFD3";
-        ctx.lineWidth = 3;
+        ctx.strokeStyle = lineColor;
+        ctx.lineWidth = 2.8;
 
         visible.forEach((c, i) => {
           const x = i * candleWidth + candleWidth / 2;
           const y = scaleY(c.close);
-
           if (i === 0) ctx.moveTo(x, y);
           else ctx.lineTo(x, y);
         });
 
-        ctx.shadowColor = "rgba(135,255,211,.24)";
+        ctx.shadowColor = lineColor;
         ctx.shadowBlur = 16;
         ctx.stroke();
         ctx.shadowBlur = 0;
+      }
 
-      } else if (state.chartMode === "area") {
+      else if (state.chartMode === "area") {
         ctx.beginPath();
 
         visible.forEach((c, i) => {
           const x = i * candleWidth + candleWidth / 2;
           const y = scaleY(c.close);
-
           if (i === 0) ctx.moveTo(x, y);
           else ctx.lineTo(x, y);
         });
@@ -799,8 +822,8 @@
         ctx.closePath();
 
         const areaGrad = ctx.createLinearGradient(0, 0, 0, chartH);
-        areaGrad.addColorStop(0, "rgba(44,230,125,.28)");
-        areaGrad.addColorStop(1, "rgba(44,230,125,0)");
+        areaGrad.addColorStop(0, fillTop);
+        areaGrad.addColorStop(1, fillBottom);
         ctx.fillStyle = areaGrad;
         ctx.fill();
 
@@ -809,29 +832,36 @@
         visible.forEach((c, i) => {
           const x = i * candleWidth + candleWidth / 2;
           const y = scaleY(c.close);
-
           if (i === 0) ctx.moveTo(x, y);
           else ctx.lineTo(x, y);
         });
 
-        ctx.strokeStyle = "#87FFD3";
-        ctx.lineWidth = 3;
-        ctx.shadowColor = "rgba(135,255,211,.22)";
+        ctx.strokeStyle = lineColor;
+        ctx.lineWidth = 2.8;
+        ctx.shadowColor = lineColor;
         ctx.shadowBlur = 12;
         ctx.stroke();
         ctx.shadowBlur = 0;
 
+        // last point pulse
         const lc = visible[visible.length - 1];
         const lx = (visible.length - 1) * candleWidth + candleWidth / 2;
         const ly = scaleY(lc.close);
 
-        ctx.fillStyle = "#2ce67d";
+        ctx.fillStyle = lineColor;
         ctx.beginPath();
-        ctx.arc(lx, ly, 5, 0, Math.PI * 2);
+        ctx.arc(lx, ly, 4.5, 0, Math.PI * 2);
         ctx.fill();
 
-      } else {
-        // Candles
+        ctx.globalAlpha = 0.18;
+        ctx.beginPath();
+        ctx.arc(lx, ly, 10, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+      }
+
+      else {
+        // candles
         visible.forEach((c, i) => {
           const x = i * candleWidth + candleWidth / 2;
           const openY = scaleY(c.open);
@@ -840,9 +870,9 @@
           const lowY = scaleY(c.low);
           const up = c.close >= c.open;
 
-          ctx.strokeStyle = up ? "#2ce67d" : "#ff5c75";
-          ctx.fillStyle = up ? "#2ce67d" : "#ff5c75";
-          ctx.lineWidth = 1.2;
+          ctx.strokeStyle = up ? "#0ecb81" : "#f6465d";
+          ctx.fillStyle = up ? "#0ecb81" : "#f6465d";
+          ctx.lineWidth = 1.15;
 
           // wick
           ctx.beginPath();
@@ -851,30 +881,32 @@
           ctx.stroke();
 
           // body
+          const bodyW = Math.max(2, candleWidth * 0.54);
+          const bodyH = Math.max(2, Math.abs(openY - closeY));
           ctx.fillRect(
-            x - candleWidth * 0.28,
+            x - bodyW / 2,
             Math.min(openY, closeY),
-            candleWidth * 0.56,
-            Math.max(2, Math.abs(openY - closeY))
+            bodyW,
+            bodyH
           );
         });
       }
 
-      // Volume
+      // volume
       const maxVol = Math.max(...visible.map(c => c.volume), 1);
       visible.forEach((c, i) => {
         const x = i * candleWidth + candleWidth * 0.18;
-        const vh = (c.volume / maxVol) * 34;
+        const vh = (c.volume / maxVol) * 30;
         const up = c.close >= c.open;
 
         ctx.fillStyle = up
-          ? "rgba(98,245,200,.22)"
-          : "rgba(255,106,136,.20)";
+          ? "rgba(14,203,129,.20)"
+          : "rgba(246,70,93,.18)";
 
-        ctx.fillRect(x, h - vh - 10, candleWidth * 0.64, vh);
+        ctx.fillRect(x, h - vh - 8, candleWidth * 0.64, vh);
       });
 
-      // Hover crosshair
+      // hover crosshair
       if (this.hoverIndex !== null && visible[this.hoverIndex]) {
         const c = visible[this.hoverIndex];
         const cx = this.hoverIndex * candleWidth + candleWidth / 2;
@@ -897,18 +929,18 @@
 
         ctx.fillStyle = "#fff";
         ctx.beginPath();
-        ctx.arc(cx, cy, 4, 0, Math.PI * 2);
+        ctx.arc(cx, cy, 3.5, 0, Math.PI * 2);
         ctx.fill();
       }
 
-      // Price labels right
-      ctx.fillStyle = "rgba(255,255,255,.52)";
-      ctx.font = "12px Inter, sans-serif";
+      // right price labels
+      ctx.fillStyle = "rgba(255,255,255,.50)";
+      ctx.font = "11px Inter, sans-serif";
       ctx.textAlign = "right";
 
       for (let i = 0; i <= 4; i++) {
         const p = max - ((max - min) * i / 4);
-        const py = 12 + (chartH - 20) * (i / 4);
+        const py = 10 + (chartH - 18) * (i / 4);
         ctx.fillText(fmt(p, 5), w - 8, py + 4);
       }
     }
@@ -920,13 +952,11 @@
   function updateMetricUI(candle) {
     if (!candle) return;
 
-    // Footer chart live stats
     if (els.metricOpen) els.metricOpen.textContent = fmt(candle.open, 5);
     if (els.metricHigh) els.metricHigh.textContent = fmt(candle.high, 5);
     if (els.metricLow) els.metricLow.textContent = fmt(candle.low, 5);
     if (els.metricClose) els.metricClose.textContent = fmt(candle.close, 5);
 
-    // OHLC panel
     if (els.metricOpenPanel) els.metricOpenPanel.textContent = fmt(candle.open, 5);
     if (els.metricHighPanel) els.metricHighPanel.textContent = fmt(candle.high, 5);
     if (els.metricLowPanel) els.metricLowPanel.textContent = fmt(candle.low, 5);
@@ -996,7 +1026,7 @@
     };
 
     const speedMap = {
-      "1H": 1500,
+      "1H": 1400,
       "24H": 2200,
       "7D": 3200,
       "30D": 4300,
@@ -1039,7 +1069,6 @@
      EVENTS
   ========================================================= */
   function bindEvents() {
-    // Pair buttons
     els.pairButtons?.forEach(btn => {
       btn.addEventListener("click", () => {
         const q = btn.dataset.quote;
@@ -1048,7 +1077,6 @@
       });
     });
 
-    // Range buttons
     els.rangeButtons?.forEach(btn => {
       btn.addEventListener("click", () => {
         const range = btn.dataset.range;
@@ -1057,7 +1085,6 @@
       });
     });
 
-    // Chart mode
     els.chartModeButtons?.forEach(btn => {
       btn.addEventListener("click", () => {
         const mode = btn.dataset.chartMode;
@@ -1066,7 +1093,6 @@
       });
     });
 
-    // Buy / Sell tabs
     if (els.buyTab) {
       els.buyTab.addEventListener("click", () => setTradeSide("buy"));
     }
@@ -1075,7 +1101,6 @@
       els.sellTab.addEventListener("click", () => setTradeSide("sell"));
     }
 
-    // Percent buttons
     els.percentButtons?.forEach(btn => {
       btn.addEventListener("click", () => {
         const percent = Number(btn.dataset.percent || 0);
@@ -1083,7 +1108,6 @@
       });
     });
 
-    // Trade action
     if (els.actionBtn) {
       els.actionBtn.addEventListener("click", executeTrade);
     }
@@ -1113,23 +1137,21 @@
 
     state.initialized = true;
 
-    // fallback heartbeat if ws disconnected
-    setInterval(() => {
+    if (state.heartbeat) clearInterval(state.heartbeat);
+    state.heartbeat = setInterval(() => {
       if (!state.ws || state.ws.readyState !== 1) {
         computeBXPrice();
       }
-    }, 3000);
+    }, 2600);
   }
 
   function destroy() {
     disconnectWS();
+    if (state.heartbeat) clearInterval(state.heartbeat);
   }
 
   document.addEventListener("DOMContentLoaded", init);
 
-  /* =========================================================
-     PUBLIC API
-  ========================================================= */
   window.MARKET = {
     init,
     destroy,
