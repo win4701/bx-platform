@@ -469,14 +469,13 @@
   </div>
 
 </section>
-  <!-- ================= CASINO BOX ================= -->
-  <section id="casino" class="view">
+  <!-- ================= CASINO BOX ======================= -->
+  <section id="casino" class="view" data-casino="ready" data-engine="v2">
 
   <!-- =========================
        CASINO LOBBY
   ========================= -->
-  <div id="casinoLobby">
-
+  <div id="casinoLobby" data-view-mode="lobby">
     <!-- TOP BAR -->
     <div class="casino-topbar">
       <div class="casino-brand-wrap">
@@ -727,10 +726,10 @@
 
   </div>
 
-  <!-- =========================
+  <!-- ========================================
        CASINO GAME VIEW
-  ========================= -->
-  <div id="casinoGameView" class="hidden">
+  ======================================== -->
+  <div id="casinoGameView" class="hidden" data-view-mode="game">
 
     <!-- GAME TOP BAR -->
     <div class="game-shell-topbar">
@@ -787,9 +786,11 @@
       </div>
 
       <!-- Dynamic controls inserted by JS -->
-      <div id="dynamicBetControls"></div>
+      <div id="dynamicBetControls" class="dynamic-bet-controls"></div>
 
-      <button id="casinoPlayBtn" class="play-main-btn" type="button">Pari</button>
+      <button id="casinoPlayBtn" class="play-main-btn" type="button" aria-label="Play current casino game">
+  Pari
+      </button>
     </div>
 
     <!-- FAIRNESS -->
