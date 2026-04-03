@@ -305,18 +305,54 @@
   </div>
 
   <!-- ================= CHART ================= -->
-  <div class="market-chart-card">
-  <div class="market-chart-shell">
+ <div class="market-chart-card market-chart-card--pro">
+  <!-- Top Info -->
+  <div class="market-chart-topbar">
+    <div class="chart-top-left">
+      <span class="chart-mini-label">BX / <span id="chartQuoteLabel">USDT</span></span>
+      <strong id="chartLivePrice">$45.00000</strong>
+    </div>
+
+    <div class="chart-top-right">
+      <span id="chartLiveChange" class="chart-live-change is-up">▲ 0.00%</span>
+    </div>
+  </div>
+
+  <!-- Chart -->
+  <div class="market-chart-shell market-chart-shell--full">
     <canvas id="marketChart"></canvas>
+
+    <div class="chart-glow"></div>
+    <div class="chart-overlay"></div>
+
+    <div id="marketTooltip" class="market-tooltip"></div>
+
+    <div class="market-crosshair">
+      <span id="crosshairPrice">--</span>
+      <span id="crosshairTime">--</span>
+    </div>
   </div>
 
-  <div id="marketTooltip" class="market-tooltip"></div>
-
-  <div class="market-crosshair">
-    <span id="crosshairPrice">--</span>
-    <span id="crosshairTime">--</span>
+  <!-- Bottom Live Stats -->
+  <div class="market-chart-footer">
+    <div class="chart-footer-item">
+      <span>Open</span>
+      <strong id="metricOpen">0.00000</strong>
+    </div>
+    <div class="chart-footer-item">
+      <span>High</span>
+      <strong id="metricHigh">0.00000</strong>
+    </div>
+    <div class="chart-footer-item">
+      <span>Low</span>
+      <strong id="metricLow">0.00000</strong>
+    </div>
+    <div class="chart-footer-item">
+      <span>Close</span>
+      <strong id="metricClose">0.00000</strong>
+    </div>
   </div>
-  </div>
+</div>
 
   <!-- ================= STATS ================= -->
   <div class="market-stats-grid">
