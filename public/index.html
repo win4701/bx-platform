@@ -226,9 +226,9 @@
   </div>
 
 </section>
-    
-<!-- =========== MARKET =========== -->
-<section id="market" class="view market-view active">
+<!-- =============== MARKET =================== -->
+<section id="market" class="view market-view">
+
   <!-- ===== HEADER ===== -->
   <div class="market-header">
     <div class="pair-title">
@@ -239,11 +239,11 @@
 
     <div class="price-box">
       <div id="marketPrice" class="price-main">0.000000</div>
-      <div id="marketApprox" class="approx">≈ 0.00 USDT</div>
+      <div id="marketApprox" class="approx">≈ 0.000000 USDT</div>
     </div>
   </div>
 
-  <!-- ===== WALLET MINI ===== -->
+  <!-- ===== MINI WALLET ===== -->
   <div class="wallet-box compact">
     <div>BX <strong id="walletBX">0.00</strong></div>
     <div><span id="walletQuoteLabel">USDT</span> <strong id="walletUSDT">0.00</strong></div>
@@ -251,19 +251,19 @@
 
   <!-- ===== PAIRS ===== -->
   <div class="pair-grid">
-    <button class="pair-btn active" data-quote="USDT">USDT</button>
-    <button class="pair-btn" data-quote="USDC">USDC</button>
-    <button class="pair-btn" data-quote="BTC">BTC</button>
-    <button class="pair-btn" data-quote="BNB">BNB</button>
-    <button class="pair-btn" data-quote="ETH">ETH</button>
-    <button class="pair-btn" data-quote="AVAX">AVAX</button>
-    <button class="pair-btn" data-quote="ZEC">ZEC</button>
-    <button class="pair-btn" data-quote="TON">TON</button>
-    <button class="pair-btn" data-quote="SOL">SOL</button>
-    <button class="pair-btn" data-quote="LTC">LTC</button>
+    <button class="pair-btn active" data-quote="USDT" type="button">USDT</button>
+    <button class="pair-btn" data-quote="USDC" type="button">USDC</button>
+    <button class="pair-btn" data-quote="BTC" type="button">BTC</button>
+    <button class="pair-btn" data-quote="BNB" type="button">BNB</button>
+    <button class="pair-btn" data-quote="ETH" type="button">ETH</button>
+    <button class="pair-btn" data-quote="AVAX" type="button">AVAX</button>
+    <button class="pair-btn" data-quote="ZEC" type="button">ZEC</button>
+    <button class="pair-btn" data-quote="TON" type="button">TON</button>
+    <button class="pair-btn" data-quote="SOL" type="button">SOL</button>
+    <button class="pair-btn" data-quote="LTC" type="button">LTC</button>
   </div>
 
-  <!-- ===== BLOXIO MARKET PRO ===== -->
+  <!-- ===== HERO ===== -->
   <div class="market-hero">
 
     <div class="market-identity">
@@ -272,141 +272,143 @@
       <div class="market-title">
         <h2 id="assetName">Bloxio</h2>
         <span id="assetSymbol">BX</span>
-        <span id="assetRank" class="market-rank">#seed</span>
+        <span id="assetRank" class="market-rank">#276</span>
       </div>
     </div>
 
     <div class="market-price-box">
-      <div id="assetPrice" class="market-price">$0.11495</div>
+      <div id="assetPrice" class="market-price">$0.00000</div>
+      <div id="assetChangeBadge" class="market-change-badge is-up">▲ 0.00%</div>
+    </div>
 
-      <div id="assetChangeBadge" class="market-change-badge is-down">
-        ▼ 2.35%
+    <!-- ===== TOOLBAR ===== -->
+    <div class="market-toolbar">
+
+      <!-- Timeframes -->
+      <div class="market-timeframes">
+        <button class="active" data-range="1H" type="button">1H</button>
+        <button data-range="24H" type="button">24H</button>
+        <button data-range="7D" type="button">7D</button>
+        <button data-range="30D" type="button">30D</button>
+        <button data-range="90D" type="button">90D</button>
+      </div>
+
+      <!-- Chart Modes -->
+      <div class="market-chart-modes">
+        <button class="active" data-chart-mode="area" type="button">Area</button>
+        <button data-chart-mode="line" type="button">Line</button>
+        <button data-chart-mode="candles" type="button">Candles</button>
+      </div>
+
+    </div>
+
+    <!-- ===== CHART ===== -->
+    <div class="market-chart-card market-chart-card--pro">
+
+      <!-- Top Info -->
+      <div class="market-chart-topbar">
+        <div class="chart-top-left">
+          <span class="chart-mini-label">BX / <span id="chartQuoteLabel">USDT</span></span>
+          <strong id="chartLivePrice">$0.00000</strong>
+        </div>
+
+        <div class="chart-top-right">
+          <span id="chartLiveChange" class="chart-live-change is-up">▲ 0.00%</span>
+        </div>
+      </div>
+
+      <!-- Chart Canvas -->
+      <div class="market-chart-shell market-chart-shell--full">
+        <canvas id="marketChart"></canvas>
+
+        <div class="chart-glow"></div>
+        <div class="chart-overlay"></div>
+
+        <div id="marketTooltip" class="market-tooltip"></div>
+
+        <div class="market-crosshair">
+          <span id="crosshairPrice">--</span>
+          <span id="crosshairTime">--</span>
+        </div>
+      </div>
+
+      <!-- Bottom Live Stats -->
+      <div class="market-chart-footer">
+        <div class="chart-footer-item">
+          <span>Open</span>
+          <strong id="metricOpen">0.00000</strong>
+        </div>
+        <div class="chart-footer-item">
+          <span>High</span>
+          <strong id="metricHigh">0.00000</strong>
+        </div>
+        <div class="chart-footer-item">
+          <span>Low</span>
+          <strong id="metricLow">0.00000</strong>
+        </div>
+        <div class="chart-footer-item">
+          <span>Close</span>
+          <strong id="metricClose">0.00000</strong>
+        </div>
       </div>
     </div>
 
-  <!-- ================= TOOLBAR ================= -->
-  <div class="market-toolbar">
+    <!-- ===== QUICK STATS ===== -->
+    <div class="market-stats-grid">
 
-    <!-- Timeframes -->
-    <div class="market-timeframes">
-  <button class="active" data-range="1H">1H</button>
-  <button data-range="24H">24H</button>
-  <button data-range="7D">7D</button>
-  <button data-range="30D">30D</button>
-  <button data-range="90D">90D</button>
-    </div>
-    <!-- Chart Mode -->
-    <div class="market-chart-modes">
-      <button data-chart-mode="area" class="active">Area</button>
-      <button data-chart-mode="line">Line</button>
-      <button data-chart-mode="candles">Candles</button>
-    </div>
+      <div class="stat-card">
+        <span>24H High</span>
+        <strong id="statHigh">$0.00000</strong>
+      </div>
 
-  </div>
+      <div class="stat-card">
+        <span>24H Low</span>
+        <strong id="statLow">$0.00000</strong>
+      </div>
 
-  <!-- ================= CHART ================= -->
- <div class="market-chart-card market-chart-card--pro">
-  <!-- Top Info -->
-  <div class="market-chart-topbar">
-    <div class="chart-top-left">
-      <span class="chart-mini-label">BX / <span id="chartQuoteLabel">USDT</span></span>
-      <strong id="chartLivePrice">$45.00000</strong>
+      <div class="stat-card">
+        <span>Volume</span>
+        <strong id="statVolume">0 BX</strong>
+      </div>
+
+      <div class="stat-card">
+        <span>Market</span>
+        <strong id="statMarketCap">$0</strong>
+      </div>
+
     </div>
 
-    <div class="chart-top-right">
-      <span id="chartLiveChange" class="chart-live-change is-up">▲ 0.00%</span>
-    </div>
-  </div>
+    <!-- ===== OHLC PANEL ===== -->
+    <div class="market-ohlc">
 
-  <!-- Chart -->
-  <div class="market-chart-shell market-chart-shell--full">
-    <canvas id="marketChart"></canvas>
+      <div class="ohlc-item">
+        <span>Open</span>
+        <strong id="metricOpenPanel">0.00000</strong>
+      </div>
 
-    <div class="chart-glow"></div>
-    <div class="chart-overlay"></div>
+      <div class="ohlc-item">
+        <span>High</span>
+        <strong id="metricHighPanel">0.00000</strong>
+      </div>
 
-    <div id="marketTooltip" class="market-tooltip"></div>
+      <div class="ohlc-item">
+        <span>Low</span>
+        <strong id="metricLowPanel">0.00000</strong>
+      </div>
 
-    <div class="market-crosshair">
-      <span id="crosshairPrice">--</span>
-      <span id="crosshairTime">--</span>
-    </div>
-  </div>
+      <div class="ohlc-item">
+        <span>Close</span>
+        <strong id="metricClosePanel">0.00000</strong>
+      </div>
 
-  <!-- Bottom Live Stats -->
-  <div class="market-chart-footer">
-    <div class="chart-footer-item">
-      <span>Open</span>
-      <strong id="metricOpen">0.00000</strong>
-    </div>
-    <div class="chart-footer-item">
-      <span>High</span>
-      <strong id="metricHigh">0.00000</strong>
-    </div>
-    <div class="chart-footer-item">
-      <span>Low</span>
-      <strong id="metricLow">0.00000</strong>
-    </div>
-    <div class="chart-footer-item">
-      <span>Close</span>
-      <strong id="metricClose">0.00000</strong>
+      <div class="ohlc-item">
+        <span>Volume</span>
+        <strong id="metricVol">0</strong>
+      </div>
+
     </div>
   </div>
-</div>
 
-  <!-- ================= STATS ================= -->
-  <div class="market-stats-grid">
-
-    <div class="stat-card">
-      <span>24H High</span>
-      <strong id="statHigh">$0.00000</strong>
-    </div>
-
-    <div class="stat-card">
-      <span>24H Low</span>
-      <strong id="statLow">$0.00000</strong>
-    </div>
-
-    <div class="stat-card">
-      <span>Volume</span>
-      <strong id="statVolume">0 BX</strong>
-    </div>
-
-    <div class="stat-card">
-      <span>Market</span>
-      <strong id="statMarketCap">$0</strong>
-    </div>
-
-  </div>
-
-  <!-- ================= OHLC PANEL ================= -->
-  <div class="market-ohlc">
-
-  <div class="ohlc-item">
-    <span>Open</span>
-    <strong id="metricOpenPanel">0.00000</strong>
-  </div>
-
-  <div class="ohlc-item">
-    <span>High</span>
-    <strong id="metricHighPanel">0.00000</strong>
-  </div>
-
-  <div class="ohlc-item">
-    <span>Low</span>
-    <strong id="metricLowPanel">0.00000</strong>
-  </div>
-
-  <div class="ohlc-item">
-    <span>Close</span>
-    <strong id="metricClosePanel">0.00000</strong>
-  </div>
-
-  <div class="ohlc-item">
-    <span>Volume</span>
-    <strong id="metricVol">0</strong>
-  </div>
-</div>
   <!-- ===== TRADE BOX ===== -->
   <div class="trade-box buy" id="tradeBox">
 
@@ -434,7 +436,6 @@
         <button type="button" data-percent="100">MAX</button>
       </div>
 
-      <!-- ORDER PREVIEW -->
       <div class="trade-stats">
         <div>Price: <span id="execPrice">—</span></div>
         <div>Slippage: <span id="slippage">—%</span></div>
@@ -447,27 +448,27 @@
     </div>
   </div>
 
-  <!-- ===== MARKET CARDS ===== -->
+  <!-- ===== ORDER BOOK ===== -->
   <div class="market-cards">
-
-    <!-- ===== ORDER BOOK CARD ===== -->
     <div class="orderbook-card">
-  <div class="orderbook-head">
-    <h3>Order Book</h3>
-    <div class="orderbook-pair">BX / <span id="orderbookQuote">USDT</span></div>
+      <div class="orderbook-head">
+        <h3>Order Book</h3>
+        <div class="orderbook-pair">BX / <span id="orderbookQuote">USDT</span></div>
+      </div>
+
+      <div class="ob-table-wrap">
+        <div class="ob-table ob-head">
+          <div class="ob-col bid">Bids</div>
+          <div class="ob-col mid">Price</div>
+          <div class="ob-col ask">Asks</div>
+        </div>
+
+        <div id="orderBookRows" class="ob-body"></div>
+      </div>
+    </div>
   </div>
 
-  <div class="ob-table-wrap">
-    <div class="ob-table ob-head">
-      <div class="ob-col bid">Bids</div>
-      <div class="ob-col mid">Price</div>
-      <div class="ob-col ask">Asks</div>
-    </div>
-
-    <div id="orderBookRows" class="ob-body"></div>
-  </div>
-    </div>
-  </section>
+</section>
   <!-- ================= CASINO BOX ================= -->
   <section id="casino" class="view">
 
