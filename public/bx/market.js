@@ -15,7 +15,7 @@
 
   const QUOTE_STREAMS = {
     USDT: null,
-    USDC: "usdcusdt",
+    USDC: null,
     BTC: "btcusdt",
     ETH: "ethusdt",
     BNB: "bnbusdt",
@@ -137,7 +137,6 @@
 
       assetName: $("assetName"),
       assetSymbol: $("assetSymbol"),
-      assetRank: $("assetRank"),
       assetPrice: $("assetPrice"),
       assetChangeBadge: $("assetChangeBadge"),
 
@@ -275,7 +274,6 @@
 
     if (els.assetName) els.assetName.textContent = "Bloxio";
     if (els.assetSymbol) els.assetSymbol.textContent = "BX";
-    if (els.assetRank) els.assetRank.textContent = "#276";
     if (els.assetPrice) els.assetPrice.textContent = `$${fmt(price, 5)}`;
 
     if (els.assetChangeBadge) {
