@@ -1,782 +1,573 @@
 /* =========================================================
-   BLOXIO CASINO — GENERAL PRO SYSTEM FINAL
-   MATCHED TO CURRENT HTML STRUCTURE
+   BLOXIO CASINO ENGINE — GENERAL PRO SYSTEM FINAL
+   1:1 Compatible with current HTML + CSS
 ========================================================= */
 
 (() => {
   "use strict";
 
   /* =========================================================
-     HELPERS
+     SAFE GUARDS
   ========================================================= */
-  const $ = (id) => document.getElementById(id);
-  const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
-  const rand = (min, max) => Math.random() * (max - min) + min;
-  const randInt = (min, max) => Math.floor(rand(min, max + 1));
-  const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
-
-  const formatBX = (n) => `${Number(n || 0).toFixed(2)} BX`;
-  const formatUSD = (n) => `${Number(n || 0).toFixed(2)} $US`;
-  const formatMult = (n) => `${Number(n || 1).toFixed(2)}×`;
+  const root = document.getElementById("casino");
+  if (!root) return;
 
   /* =========================================================
-     ROOT DOM
+     DOM
   ========================================================= */
   const dom = {
-    root: $("casino"),
-    lobby: $("casinoLobby"),
-    gameView: $("casinoGameView"),
-    grid: $("casinoGamesGrid"),
+    // views
+    lobby: document.getElementById("casinoLobby"),
+    gameView: document.getElementById("casinoGameView"),
 
-    refreshBtn: $("casinoRefreshBtn"),
-    backBtn: $("casinoBackBtn"),
+    // lobby
+    gamesGrid: document.getElementById("casinoGamesGrid"),
+    refreshBtn: document.getElementById("casinoRefreshBtn"),
+    filterTabs: [...document.querySelectorAll(".casino-filter-tab")],
+    tickerPulse: document.getElementById("tickerPulse"),
+    bigWinsList: document.getElementById("bigWinsList"),
 
-    balanceTop: $("casinoBalanceTop"),
-    liveBetsCount: $("casinoLiveBetsCount"),
-    volumeToday: $("casinoVolumeToday"),
+    // top stats
+    balanceTop: document.getElementById("casinoBalanceTop"),
+    liveBetsCount: document.getElementById("casinoLiveBetsCount"),
+    volumeToday: document.getElementById("casinoVolumeToday"),
 
-    ticker: $("tickerPulse"),
-    bigWins: $("bigWinsList"),
+    // game shell
+    backBtn: document.getElementById("casinoBackBtn"),
+    gameCaption: document.getElementById("gameEngineCaption"),
+    multiplier: document.getElementById("gameMultiplierDisplay"),
+    engineBody: document.getElementById("gameEngineBody"),
 
-    gameTitle: document.querySelector(".game-shell-title"),
-    gameCaption: $("gameEngineCaption"),
-    gameModeTabs: $$(".game-header-tab"),
-    pulseStrip: document.querySelector(".game-pulse-strip"),
+    // game tabs
+    modeTabs: [...document.querySelectorAll(".game-header-tab")],
+    settingsTabs: [...document.querySelectorAll(".settings-tab")],
+    toolBtns: [...document.querySelectorAll(".settings-tool-btn")],
 
-    multiplier: $("gameMultiplierDisplay"),
-    engineBody: $("gameEngineBody"),
+    // betting
+    betInput: document.getElementById("betAmountInput"),
+    dynamicBetControls: document.getElementById("dynamicBetControls"),
+    playBtn: document.getElementById("casinoPlayBtn"),
+    betActionBtns: [...document.querySelectorAll("[data-bet-action]")],
 
-    settingsTabs: $$(".settings-tab"),
-    settingsTools: $$(".settings-tool-btn"),
+    // fairness
+    serverSeedText: document.getElementById("serverSeedText"),
+    clientSeedText: document.getElementById("clientSeedText"),
+    nonceText: document.getElementById("nonceText"),
+    newSeedBtn: document.getElementById("newSeedBtn"),
 
-    betInput: $("betAmountInput"),
-    betActionBtns: $$("[data-bet-action]"),
-    dynamicControls: $("dynamicBetControls"),
-    playBtn: $("casinoPlayBtn"),
+    // players
+    playersCountText: document.getElementById("playersCountText"),
+    playersVolumeText: document.getElementById("playersVolumeText"),
+    playersTableBody: document.getElementById("playersTableBody"),
 
-    fairnessServer: $("serverSeedText"),
-    fairnessClient: $("clientSeedText"),
-    fairnessNonce: $("nonceText"),
-    newSeedBtn: $("newSeedBtn"),
-
-    playersCount: $("playersCountText"),
-    playersVolume: $("playersVolumeText"),
-    playersTable: $("playersTableBody"),
-
-    filterTabs: $$(".casino-filter-tab")
+    // sounds
+    sndClick: document.getElementById("snd-click"),
+    sndWin: document.getElementById("snd-win"),
+    sndLose: document.getElementById("snd-lose"),
+    sndSpin: document.getElementById("snd-spin"),
   };
 
-  if (!dom.root) return;
+  /* =========================================================
+     CONFIG
+  ========================================================= */
+  const GAMES = {
+    coinflip:   { name: "Coin Flip", type: "instant",   supportsCashout: false, caption: "Choose side and flip." },
+    limbo:      { name: "Limbo",     type: "provably",  supportsCashout: false, caption: "Target a multiplier and pray." },
+    dice:       { name: "Dice",      type: "provably",  supportsCashout: false, caption: "Roll under / over." },
+    crash:      { name: "Crash",     type: "provably",  supportsCashout: true,  caption: "Cash out before the crash." },
+    plinko:     { name: "Plinko",    type: "provably",  supportsCashout: false, caption: "Drop the ball through risk lanes." },
+    blackjack:  { name: "Blackjack", type: "instant",   supportsCashout: false, caption: "Hit, stand and beat the dealer." },
+    hilo:       { name: "HiLo",      type: "instant",   supportsCashout: false, caption: "Predict higher or lower." },
+    birdsparty: { name: "Birds Party", type: "instant", supportsCashout: false, caption: "Pick the lucky bird." },
+    airboss:    { name: "Air Boss",  type: "provably",  supportsCashout: true,  caption: "Pilot your cashout timing." },
+    slot:       { name: "Seven Classic Slot", type: "slots", supportsCashout: false, caption: "Spin classic slot reels." },
+    fruitparty: { name: "Fruit Party", type: "slots", supportsCashout: false, caption: "Fruit chaos and multipliers." },
+    bananafarm: { name: "Banana Farm", type: "slots", supportsCashout: false, caption: "Banana harvest bonus reels." },
+  };
+
+  const BOT_NAMES = [
+    "Lynx", "Ghost", "Nova", "Ares", "Milo", "Hex", "Kiro", "Blaze",
+    "Orion", "Jett", "Mika", "Rogue", "Pixel", "Bunny", "Mamba", "Vega"
+  ];
 
   /* =========================================================
      STATE
   ========================================================= */
   const state = {
-    balanceBX: 250.0,
+    balanceBX: 250.00,
+    liveBets: 8421,
+    volumeToday: 124980,
+
     currentGame: null,
+    currentFilter: "all",
     currentModeTab: "classic",
     currentSettingsTab: "manual",
-    currentToolMode: "basic",
-    currentFilter: "all",
+    currentTool: "Basic",
 
-    bet: 10,
     playing: false,
     canCashout: false,
-    activeRoundId: null,
 
     autoPlay: false,
-    autoCount: 0,
     autoRemaining: 0,
-    autoStopOnProfit: 0,
-    autoStopOnLoss: 0,
+    autoLoopTimer: null,
+    gameLoopTimer: null,
+    uiPulseTimer: null,
+    feedTimer: null,
+    playersTimer: null,
 
+    nonce: 0,
     serverSeed: "",
     clientSeed: "",
-    nonce: 0,
 
-    tickerTimer: null,
-    statsTimer: null,
-    playersTimer: null,
-    pulseTimer: null,
-    gameLoopTimer: null,
-    autoLoopTimer: null
+    currentMultiplier: 1.00,
+    lastPayout: 0,
+
+    // dynamic values
+    limboTarget: 2.00,
+    diceChance: 49.50,
+    diceMode: "under",
+    plinkoRisk: "medium",
+    blackjackStandOn: 17,
+    hiloGuess: "higher",
+    birdPick: 2,
+    autoRounds: 10,
+    slotVolatility: "normal",
   };
 
   /* =========================================================
-     GAMES CONFIG
+     HELPERS
   ========================================================= */
-  const GAMES = {
-    coinflip: {
-      key: "coinflip",
-      name: "Coin Flip",
-      subtitle: "Instant • 50 / 50",
-      mode: "instant",
-      provider: "Bloxio Originals",
-      baseMultiplier: 1.96
-    },
-    limbo: {
-      key: "limbo",
-      name: "Limbo",
-      subtitle: "Provably Fair • Target Multiplier",
-      mode: "provably",
-      provider: "Bloxio Originals",
-      baseMultiplier: 2.00
-    },
-    dice: {
-      key: "dice",
-      name: "Dice",
-      subtitle: "Provably Fair • Roll Under / Over",
-      mode: "provably",
-      provider: "Bloxio Originals",
-      baseMultiplier: 2.00
-    },
-    crash: {
-      key: "crash",
-      name: "Crash",
-      subtitle: "Provably Fair • Cash Out Before Crash",
-      mode: "provably",
-      provider: "Bloxio Originals",
-      baseMultiplier: 1.00
-    },
-    plinko: {
-      key: "plinko",
-      name: "Plinko",
-      subtitle: "Provably Fair • Bounce & Drop",
-      mode: "provably",
-      provider: "Bloxio Originals",
-      baseMultiplier: 1.00
-    },
-    blackjack: {
-      key: "blackjack",
-      name: "Blackjack",
-      subtitle: "Instant • Beat The Dealer",
-      mode: "instant",
-      provider: "Bloxio Originals",
-      baseMultiplier: 1.50
-    },
-    hilo: {
-      key: "hilo",
-      name: "HiLo",
-      subtitle: "Instant • Higher or Lower",
-      mode: "instant",
-      provider: "Bloxio Originals",
-      baseMultiplier: 2.00
-    },
-    birdsparty: {
-      key: "birdsparty",
-      name: "Birds Party",
-      subtitle: "Instant • Safe Picks",
-      mode: "instant",
-      provider: "Bloxio Originals",
-      baseMultiplier: 1.00
-    },
-    airboss: {
-      key: "airboss",
-      name: "Air Boss",
-      subtitle: "Provably Fair • Flight Cashout",
-      mode: "provably",
-      provider: "Bloxio Originals",
-      baseMultiplier: 1.00
-    },
-    slot: {
-      key: "slot",
-      name: "Seven Classic Slot",
-      subtitle: "Slots • Classic Reels",
-      mode: "slots",
-      provider: "Bloxio Slots",
-      baseMultiplier: 1.00
-    },
-    fruitparty: {
-      key: "fruitparty",
-      name: "Fruit Party",
-      subtitle: "Slots • Fruit Combo",
-      mode: "slots",
-      provider: "Bloxio Slots",
-      baseMultiplier: 1.00
-    },
-    bananafarm: {
-      key: "bananafarm",
-      name: "Banana Farm",
-      subtitle: "Slots • Harvest Combo",
-      mode: "slots",
-      provider: "Bloxio Slots",
-      baseMultiplier: 1.00
-    }
-  };
+  const $ = (sel, parent = document) => parent.querySelector(sel);
 
-  const gameCards = $$(".casino-game-card", dom.grid);
+  function clamp(n, min, max) {
+    return Math.min(max, Math.max(min, n));
+  }
 
-  /* =========================================================
-     AUDIO FX (safe)
-  ========================================================= */
-  const snd = {
-    click: $("snd-click"),
-    win: $("snd-win"),
-    lose: $("snd-lose"),
-    spin: $("snd-spin")
-  };
+  function rnd(min, max, fixed = 2) {
+    return +(Math.random() * (max - min) + min).toFixed(fixed);
+  }
 
-  function playSound(name) {
+  function randInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
+  function shortHash(len = 16) {
+    const chars = "abcdef0123456789";
+    let out = "";
+    for (let i = 0; i < len; i++) out += chars[Math.floor(Math.random() * chars.length)];
+    return out;
+  }
+
+  function fmtBX(n) {
+    return `${Number(n || 0).toFixed(2)} BX`;
+  }
+
+  function fmtUSD(n) {
+    return `${Number(n || 0).toFixed(2)} $US`;
+  }
+
+  function escapeHTML(str = "") {
+    return String(str)
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;");
+  }
+
+  function getBet() {
+    const v = parseFloat(dom.betInput?.value || "0");
+    return isNaN(v) ? 0 : Math.max(0, v);
+  }
+
+  function setBet(v) {
+    if (!dom.betInput) return;
+    dom.betInput.value = Number(v).toFixed(2);
+  }
+
+  function stopTimer(key) {
+    if (!state[key]) return;
+    clearTimeout(state[key]);
+    clearInterval(state[key]);
+    state[key] = null;
+  }
+
+  function stopAllGameTimers() {
+    stopTimer("gameLoopTimer");
+    stopTimer("autoLoopTimer");
+  }
+
+  function playSound(type) {
     try {
-      const el = snd[name];
-      if (!el) return;
-      el.currentTime = 0;
-      el.play().catch(() => {});
+      const map = {
+        click: dom.sndClick,
+        win: dom.sndWin,
+        lose: dom.sndLose,
+        spin: dom.sndSpin
+      };
+      const audio = map[type];
+      if (!audio) return;
+      audio.currentTime = 0;
+      audio.play().catch(() => {});
     } catch (_) {}
   }
 
-  /* =========================================================
-     FX
-  ========================================================= */
-  function pulseMultiplier() {
-    dom.multiplier?.animate(
-      [
-        { transform: "scale(1)" },
-        { transform: "scale(1.12)" },
-        { transform: "scale(1)" }
-      ],
-      { duration: 280, easing: "ease-out" }
-    );
+  function setEngineHTML(html) {
+    if (!dom.engineBody) return;
+    dom.engineBody.innerHTML = html;
+  }
+
+  function setCaption(text) {
+    if (dom.gameCaption) dom.gameCaption.textContent = text || "Le résultat du jeu sera affiché";
+  }
+
+  function setMultiplier(v) {
+    state.currentMultiplier = Number(v || 1);
+    if (dom.multiplier) dom.multiplier.textContent = `${state.currentMultiplier.toFixed(2)}×`;
   }
 
   function flashEngine(type = "win") {
     if (!dom.engineBody) return;
-    const color =
-      type === "win"
-        ? "0 0 36px rgba(34,197,94,.32)"
-        : "0 0 36px rgba(239,68,68,.28)";
-    dom.engineBody.style.boxShadow = color;
-    setTimeout(() => {
-      dom.engineBody.style.boxShadow = "";
-    }, 280);
+    dom.engineBody.classList.remove("win", "lose");
+    void dom.engineBody.offsetWidth;
+    dom.engineBody.classList.add(type === "win" ? "win" : "lose");
+    setTimeout(() => dom.engineBody?.classList.remove("win", "lose"), 700);
   }
 
-  function shakeEngine() {
-    dom.engineBody?.animate(
-      [
-        { transform: "translateX(0)" },
-        { transform: "translateX(-5px)" },
-        { transform: "translateX(5px)" },
-        { transform: "translateX(-3px)" },
-        { transform: "translateX(3px)" },
-        { transform: "translateX(0)" }
-      ],
-      { duration: 280, easing: "ease-out" }
-    );
-  }
-
-  /* =========================================================
-     PROVABLY FAIR
-  ========================================================= */
-  function randomSeed(len = 16) {
-    const chars = "abcdef0123456789";
-    let out = "";
-    for (let i = 0; i < len; i++) out += chars[randInt(0, chars.length - 1)];
-    return out;
-  }
-
-  function regenerateSeeds() {
-    state.serverSeed = randomSeed(32);
-    state.clientSeed = randomSeed(16);
-    state.nonce = 0;
-    syncFairnessUI();
+  function syncTopStats() {
+    if (dom.balanceTop) dom.balanceTop.textContent = fmtBX(state.balanceBX);
+    if (dom.liveBetsCount) dom.liveBetsCount.textContent = state.liveBets.toLocaleString();
+    if (dom.volumeToday) dom.volumeToday.textContent = fmtBX(state.volumeToday);
   }
 
   function syncFairnessUI() {
-    if (dom.fairnessServer) dom.fairnessServer.textContent = state.serverSeed;
-    if (dom.fairnessClient) dom.fairnessClient.textContent = state.clientSeed;
-    if (dom.fairnessNonce) dom.fairnessNonce.textContent = String(state.nonce);
+    if (dom.serverSeedText) dom.serverSeedText.textContent = state.serverSeed;
+    if (dom.clientSeedText) dom.clientSeedText.textContent = state.clientSeed;
+    if (dom.nonceText) dom.nonceText.textContent = String(state.nonce);
   }
 
-  /* =========================================================
-     GENERAL UI
-  ========================================================= */
-  function syncTopStats() {
-    if (dom.balanceTop) dom.balanceTop.textContent = formatBX(state.balanceBX);
-    if (dom.liveBetsCount) dom.liveBetsCount.textContent = randInt(6800, 12890).toLocaleString();
-    if (dom.volumeToday) dom.volumeToday.textContent = `${randInt(85000, 245000).toLocaleString()} BX`;
+  function regenerateSeeds() {
+    state.serverSeed = shortHash(20);
+    state.clientSeed = shortHash(12);
+    syncFairnessUI();
   }
 
   function syncPlayButton(label = "Play", mode = "idle") {
-  if (!dom.playBtn) return;
+    if (!dom.playBtn) return;
 
-  const labelEl = dom.playBtn.querySelector(".play-btn-label");
-  const finalLabel = String(label || "Play");
+    dom.playBtn.dataset.state = mode;
+    dom.playBtn.disabled = false;
 
-  dom.playBtn.dataset.state = mode;
-  dom.playBtn.disabled = false;
+    dom.playBtn.classList.remove("is-idle", "is-stop", "is-cashout");
 
-  dom.playBtn.classList.remove("is-idle", "is-running", "is-stop", "is-cashout");
+    if (mode === "cashout") {
+      dom.playBtn.classList.add("is-cashout");
+    } else if (mode === "stop" || mode === "running") {
+      dom.playBtn.classList.add("is-stop");
+    } else {
+      dom.playBtn.classList.add("is-idle");
+    }
 
-  if (mode === "cashout") {
-    dom.playBtn.classList.add("is-cashout");
-  } else if (mode === "running" || mode === "stop") {
-    dom.playBtn.classList.add("is-stop");
-  } else {
-    dom.playBtn.classList.add("is-idle");
+    dom.playBtn.textContent = label;
   }
 
-  if (labelEl) {
-    labelEl.textContent = finalLabel;
-  } else {
-    dom.playBtn.textContent = finalLabel;
-  }
-}
-   
   function setPlayingUI(on) {
-  state.playing = on;
+    state.playing = !!on;
 
-  if (!dom.playBtn) return;
+    if (!state.currentGame) {
+      syncPlayButton("Play", "idle");
+      return;
+    }
 
-  dom.playBtn.disabled = false;
+    const game = GAMES[state.currentGame];
+    const isAuto = state.currentSettingsTab === "auto";
 
-  if (!state.currentGame) {
+    if (game?.supportsCashout && state.playing && state.canCashout) {
+      syncPlayButton("Cash Out", "cashout");
+      return;
+    }
+
+    if (isAuto && (state.playing || state.autoPlay || state.autoRemaining > 0)) {
+      syncPlayButton("Stop", "stop");
+      return;
+    }
+
+    if (state.playing) {
+      syncPlayButton("Stop", "stop");
+      return;
+    }
+
     syncPlayButton("Play", "idle");
-    return;
-  }
-
-  const g = state.currentGame;
-  const isAuto = state.currentSettingsTab === "auto";
-
-  // CASHOUT GAMES
-  if ((g === "crash" || g === "airboss") && on && state.canCashout) {
-    syncPlayButton("Cash Out", "cashout");
-    return;
-  }
-
-  // AUTO MODE => STOP
-  if (isAuto && (on || state.autoPlay || state.autoRemaining > 0)) {
-    syncPlayButton("Stop", "stop");
-    return;
-  }
-
-  // GENERIC ACTIVE ROUND => STOP
-  if (on) {
-    syncPlayButton("Stop", "stop");
-    return;
-  }
-
-  syncPlayButton("Play", "idle");
-}
-
-    const g = state.currentGame;
-
-    if ((g === "crash" || g === "airboss") && on && state.canCashout) {
-      dom.playBtn.textContent = "Cash Out";
-      return;
-    }
-
-    if (state.currentSettingsTab === "auto") {
-      dom.playBtn.textContent = on ? "Running..." : "Start Auto";
-      return;
-    }
-
-    dom.playBtn.textContent = on ? "Playing..." : "Pari";
   }
 
   function updatePulseStrip() {
-    if (!dom.pulseStrip || !state.currentGame) return;
+    const strip = $(".game-pulse-strip", root);
+    if (!strip) return;
 
-    const items = [
-      { txt: "Live", cls: "green" },
-      { txt: `Mode: ${state.currentModeTab}`, cls: "" },
-      { txt: `Bet: ${state.bet.toFixed(2)} BX`, cls: "" },
-      { txt: `Nonce: ${state.nonce}`, cls: "orange" }
-    ];
-
-    dom.pulseStrip.innerHTML = items
-      .map(
-        (x) =>
-          `<div class="pulse-pill ${x.cls || ""}">${x.txt}</div>`
-      )
-      .join("");
+    const items = [];
+    for (let i = 0; i < 10; i++) {
+      const mult = rnd(1.01, 9.99, 2);
+      const cls = mult >= 2 ? "up" : "down";
+      items.push(`<span class="pulse-pill ${cls}">${mult.toFixed(2)}×</span>`);
+    }
+    strip.innerHTML = items.join("");
   }
 
-  function showLobby() {
-    dom.lobby?.classList.remove("hidden");
-    dom.gameView?.classList.add("hidden");
-    state.currentGame = null;
-    clearActiveGameTimers();
+  /* =========================================================
+     FEEDS
+  ========================================================= */
+  function pushTickerRow() {
+    if (!dom.tickerPulse) return;
+
+    const bot = BOT_NAMES[randInt(0, BOT_NAMES.length - 1)];
+    const gameKeys = Object.keys(GAMES);
+    const g = GAMES[gameKeys[randInt(0, gameKeys.length - 1)]];
+    const bet = rnd(2, 80, 2);
+    const won = Math.random() > 0.45;
+    const mult = won ? rnd(1.20, 8.50, 2) : rnd(0.00, 0.99, 2);
+    const payout = won ? bet * mult : 0;
+
+    const row = document.createElement("div");
+    row.className = `ticker-pulse-item ${won ? "win" : "loss"}`;
+    row.textContent = `${bot} • ${g.name} • ${won ? "+" + payout.toFixed(2) + " BX" : "-" + bet.toFixed(2) + " BX"} • ${mult.toFixed(2)}×`;
+
+    dom.tickerPulse.prepend(row);
+    while (dom.tickerPulse.children.length > 5) {
+      dom.tickerPulse.removeChild(dom.tickerPulse.lastElementChild);
+    }
   }
 
-  function showGameView() {
-    dom.lobby?.classList.add("hidden");
-    dom.gameView?.classList.remove("hidden");
+  function pushBigWinRow(gameName, amount, mult, user = null) {
+    if (!dom.bigWinsList) return;
+    const name = user || BOT_NAMES[randInt(0, BOT_NAMES.length - 1)];
+    const row = document.createElement("div");
+    row.className = "big-win-row";
+    row.innerHTML = `
+      <span class="user">${escapeHTML(name)}</span>
+      <span class="game">${escapeHTML(gameName)}</span>
+      <span class="amount">+${Number(amount).toFixed(2)} BX • ${Number(mult).toFixed(2)}×</span>
+    `;
+    dom.bigWinsList.prepend(row);
+    while (dom.bigWinsList.children.length > 12) {
+      dom.bigWinsList.removeChild(dom.bigWinsList.lastElementChild);
+    }
   }
 
-  function clearActiveGameTimers() {
-    if (state.gameLoopTimer) clearInterval(state.gameLoopTimer);
-    if (state.autoLoopTimer) clearTimeout(state.autoLoopTimer);
-    state.gameLoopTimer = null;
-    state.autoLoopTimer = null;
+  function renderPlayersFeed(rows = []) {
+    if (!dom.playersTableBody) return;
+
+    if (!rows.length) {
+      dom.playersTableBody.innerHTML = `<div class="player-row empty">No live players</div>`;
+      if (dom.playersCountText) dom.playersCountText.textContent = "0/0 Joueurs";
+      if (dom.playersVolumeText) dom.playersVolumeText.textContent = "0.00 $US";
+      return;
+    }
+
+    let total = 0;
+    dom.playersTableBody.innerHTML = rows.map(r => {
+      total += r.amount;
+      return `
+        <div class="player-row">
+          <span>${escapeHTML(r.name)}</span>
+          <span>${r.cashout.toFixed(2)}×</span>
+          <span>${r.amount.toFixed(2)} BX</span>
+        </div>
+      `;
+    }).join("");
+
+    if (dom.playersCountText) dom.playersCountText.textContent = `${rows.length}/${rows.length} Joueurs`;
+    if (dom.playersVolumeText) dom.playersVolumeText.textContent = fmtUSD(total);
+  }
+
+  function seedPlayersFeed() {
+    const rows = Array.from({ length: randInt(4, 9) }, () => ({
+      name: BOT_NAMES[randInt(0, BOT_NAMES.length - 1)],
+      cashout: rnd(1.10, 6.50, 2),
+      amount: rnd(2, 50, 2)
+    }));
+    renderPlayersFeed(rows);
+  }
+
+  function bootstrapFeeds() {
+    for (let i = 0; i < 4; i++) pushTickerRow();
+    for (let i = 0; i < 6; i++) {
+      const gk = Object.keys(GAMES)[randInt(0, Object.keys(GAMES).length - 1)];
+      pushBigWinRow(GAMES[gk].name, rnd(25, 480, 2), rnd(1.4, 12.0, 2));
+    }
+    seedPlayersFeed();
+  }
+
+  function startBackgroundLoops() {
+    stopTimer("feedTimer");
+    stopTimer("playersTimer");
+    stopTimer("uiPulseTimer");
+
+    state.feedTimer = setInterval(() => {
+      pushTickerRow();
+      state.liveBets += randInt(1, 4);
+      state.volumeToday += rnd(5, 45, 2);
+      syncTopStats();
+    }, 2800);
+
+    state.playersTimer = setInterval(() => {
+      seedPlayersFeed();
+    }, 4200);
+
+    state.uiPulseTimer = setInterval(() => {
+      if (!state.currentGame) return;
+      updatePulseStrip();
+    }, 2500);
+  }
+
+  /* =========================================================
+     VIEW CONTROL
+  ========================================================= */
+  function openLobby() {
+    stopAllGameTimers();
     state.playing = false;
     state.canCashout = false;
+    state.autoPlay = false;
+    state.autoRemaining = 0;
+
+    dom.lobby?.classList.remove("hidden");
+    dom.gameView?.classList.add("hidden");
+
     setPlayingUI(false);
+  }
+
+  function openGame(gameKey) {
+    const game = GAMES[gameKey];
+    if (!game) return;
+
+    state.currentGame = gameKey;
+    state.playing = false;
+    state.canCashout = false;
+    state.autoPlay = false;
+    state.autoRemaining = 0;
+    stopAllGameTimers();
+
+    dom.lobby?.classList.add("hidden");
+    dom.gameView?.classList.remove("hidden");
+
+    setCaption(game.caption);
+    setMultiplier(1.00);
+    buildDynamicControls(gameKey);
+    renderGameShell(gameKey);
+    seedPlayersFeed();
+    setPlayingUI(false);
+
+    [...dom.gamesGrid.querySelectorAll(".casino-game-card")].forEach(card => {
+      card.classList.toggle("active", card.dataset.game === gameKey);
+    });
   }
 
   /* =========================================================
      FILTERS
   ========================================================= */
-  function applyFilter(filterKey) {
-    state.currentFilter = filterKey;
+  function applyFilter(filter = "all") {
+    state.currentFilter = filter;
 
-    dom.filterTabs.forEach((btn) => {
-      btn.classList.toggle("active", btn.dataset.filter === filterKey);
+    dom.filterTabs.forEach(btn => {
+      btn.classList.toggle("active", btn.dataset.filter === filter);
     });
 
-    gameCards.forEach((card) => {
-      const mode = (card.dataset.mode || "").toLowerCase();
-      const visible = filterKey === "all" || mode === filterKey;
-      card.style.display = visible ? "" : "none";
+    const cards = [...dom.gamesGrid.querySelectorAll(".casino-game-card")];
+    cards.forEach(card => {
+      const mode = card.dataset.mode || "all";
+      const show = filter === "all" || mode === filter;
+      card.style.display = show ? "" : "none";
     });
-  }
-
-  /* =========================================================
-     TICKER / BIG WINS / PLAYERS
-  ========================================================= */
-  const tickerGames = [
-    "Coin Flip", "Crash", "Dice", "Limbo", "Plinko", "HiLo", "Blackjack", "Air Boss", "Fruit Party"
-  ];
-
-  function pushTickerItem() {
-    if (!dom.ticker) return;
-    const isWin = Math.random() > 0.35;
-    const user = `User${randInt(12, 998)}`;
-    const game = tickerGames[randInt(0, tickerGames.length - 1)];
-    const amount = rand(2, 250).toFixed(2);
-
-    const row = document.createElement("div");
-    row.className = `ticker-item ${isWin ? "win" : "loss"}`;
-    row.textContent = isWin
-      ? `${user} won ${amount} BX on ${game}`
-      : `${user} lost ${amount} BX on ${game}`;
-
-    dom.ticker.prepend(row);
-
-    while (dom.ticker.children.length > 12) {
-      dom.ticker.lastElementChild?.remove();
-    }
-  }
-
-  function pushBigWinRow(gameName = "Crash", amount = rand(40, 800), mult = rand(2, 24)) {
-    if (!dom.bigWins) return;
-
-    const row = document.createElement("div");
-    row.className = "big-win-row";
-    row.innerHTML = `
-      <span class="user">Player${randInt(10, 999)}</span>
-      <span class="game">${gameName}</span>
-      <span class="amount">+${amount.toFixed(2)} BX • ${mult.toFixed(2)}×</span>
-    `;
-
-    row.style.opacity = "0";
-    row.style.transform = "translateY(10px)";
-    dom.bigWins.prepend(row);
-
-    requestAnimationFrame(() => {
-      row.style.transition = "all .28s ease";
-      row.style.opacity = "1";
-      row.style.transform = "translateY(0)";
-    });
-
-    while (dom.bigWins.children.length > 14) {
-      dom.bigWins.lastElementChild?.remove();
-    }
-  }
-
-  function pushPlayerRow(mult = 1.0, amount = 10) {
-    if (!dom.playersTable) return;
-
-    const row = document.createElement("div");
-    row.className = "player-row";
-    row.innerHTML = `
-      <span class="name">Player${randInt(10, 999)}</span>
-      <span class="cashout">${formatMult(mult)}</span>
-      <span class="amount">${amount.toFixed(2)} BX</span>
-    `;
-
-    dom.playersTable.prepend(row);
-
-    while (dom.playersTable.children.length > 16) {
-      dom.playersTable.lastElementChild?.remove();
-    }
-
-    if (dom.playersCount) {
-      dom.playersCount.textContent = `${randInt(62, 148)}/${randInt(180, 420)} Joueurs`;
-    }
-    if (dom.playersVolume) {
-      dom.playersVolume.textContent = formatUSD(rand(1000, 12500));
-    }
-  }
-
-  function bootstrapFeeds() {
-    dom.ticker && (dom.ticker.innerHTML = "");
-    dom.bigWins && (dom.bigWins.innerHTML = "");
-    dom.playersTable && (dom.playersTable.innerHTML = "");
-
-    for (let i = 0; i < 7; i++) pushTickerItem();
-    for (let i = 0; i < 6; i++) pushBigWinRow(tickerGames[randInt(0, tickerGames.length - 1)]);
-    for (let i = 0; i < 8; i++) pushPlayerRow(rand(1.05, 4.5), rand(2, 180));
-  }
-
-  function startBackgroundLoops() {
-    if (state.tickerTimer) clearInterval(state.tickerTimer);
-    if (state.statsTimer) clearInterval(state.statsTimer);
-    if (state.playersTimer) clearInterval(state.playersTimer);
-
-    state.tickerTimer = setInterval(pushTickerItem, 1600);
-    state.statsTimer = setInterval(syncTopStats, 5000);
-    state.playersTimer = setInterval(() => {
-      pushPlayerRow(rand(1.02, 6.8), rand(2, 220));
-      if (Math.random() > 0.62) {
-        pushBigWinRow(tickerGames[randInt(0, tickerGames.length - 1)], rand(30, 920), rand(1.5, 34));
-      }
-    }, 2400);
-  }
-
-  /* =========================================================
-     BET SYSTEM
-  ========================================================= */
-  function getBet() {
-    const v = Number(dom.betInput?.value || state.bet || 0);
-    return clamp(Number.isFinite(v) ? v : 0, 0.01, 999999);
-  }
-
-  function setBet(v) {
-    state.bet = clamp(Number(v || 0), 0.01, 999999);
-    if (dom.betInput) dom.betInput.value = state.bet.toFixed(2);
-    updatePulseStrip();
-  }
-
-  function bindBetActions() {
-    dom.betActionBtns.forEach((btn) => {
-      btn.addEventListener("click", () => {
-        playSound("click");
-        const action = btn.dataset.betAction;
-        const current = getBet();
-
-        if (action === "half") setBet(current / 2);
-        if (action === "double") setBet(current * 2);
-        if (action === "up") setBet(current + 1);
-      });
-    });
-
-    dom.betInput?.addEventListener("input", () => {
-      setBet(getBet());
-    });
-  }
-
-  /* =========================================================
-     GAME MODE / SETTINGS
-  ========================================================= */
-  function bindTabs() {
-    dom.gameModeTabs.forEach((btn) => {
-      btn.addEventListener("click", () => {
-        playSound("click");
-        dom.gameModeTabs.forEach((x) => x.classList.remove("active"));
-        btn.classList.add("active");
-        state.currentModeTab = btn.dataset.modeTab || "classic";
-        updatePulseStrip();
-      });
-    });
-
-    dom.settingsTabs.forEach((btn) => {
-      btn.addEventListener("click", () => {
-        playSound("click");
-        dom.settingsTabs.forEach((x) => x.classList.remove("active"));
-        btn.classList.add("active");
-        state.currentSettingsTab = btn.dataset.settingsTab || "manual";
-        renderDynamicControls(state.currentGame);
-        setPlayingUI(false);
-      });
-    });
-
-    dom.settingsTools.forEach((btn) => {
-      btn.addEventListener("click", () => {
-        playSound("click");
-        dom.settingsTools.forEach((x) => x.classList.remove("active"));
-        btn.classList.add("active");
-        state.currentToolMode = btn.textContent.trim().toLowerCase();
-      });
-    });
-  }
-
-  /* =========================================================
-     OPEN / CLOSE GAME
-  ========================================================= */
-  function openGame(gameKey) {
-    const game = GAMES[gameKey];
-    if (!game) return;
-
-    clearActiveGameTimers();
-    playSound("click");
-
-    state.currentGame = gameKey;
-    state.canCashout = false;
-
-    if (dom.gameTitle) dom.gameTitle.textContent = game.name;
-    if (dom.gameCaption) dom.gameCaption.textContent = game.subtitle;
-
-    dom.multiplier.textContent = "1.00×";
-
-    showGameView();
-    renderDynamicControls(gameKey);
-    renderGame(gameKey);
-    updatePulseStrip();
-    setPlayingUI(false);
-  }
-
-  function closeGame() {
-    playSound("click");
-    showLobby();
   }
 
   /* =========================================================
      DYNAMIC CONTROLS
   ========================================================= */
-  function renderDynamicControls(gameKey) {
-    if (!dom.dynamicControls || !gameKey) return;
-
-    const isAuto = state.currentSettingsTab === "auto";
-
-    const autoCard = isAuto
-      ? `
-      <div class="dynamic-card">
-        <div class="dynamic-card-title">Auto Settings</div>
-
-        <div class="inline-value-row">
-          <span>Rounds</span>
-          <strong id="autoRoundsLabel">10</strong>
-        </div>
-        <input id="autoRoundsInput" type="range" min="5" max="100" step="1" value="10">
-
-        <div class="inline-value-row">
-          <span>Stop Profit</span>
-          <strong id="autoProfitLabel">0 BX</strong>
-        </div>
-        <input id="autoProfitInput" type="number" class="mini-input" value="0" min="0" step="1">
-
-        <div class="inline-value-row">
-          <span>Stop Loss</span>
-          <strong id="autoLossLabel">0 BX</strong>
-        </div>
-        <input id="autoLossInput" type="number" class="mini-input" value="0" min="0" step="1">
-      </div>
-      `
-      : "";
+  function buildDynamicControls(gameKey) {
+    if (!dom.dynamicBetControls) return;
 
     let html = "";
 
     switch (gameKey) {
       case "coinflip":
         html = `
-          <div class="dynamic-card">
-            <div class="dynamic-card-title">Side</div>
-            <div class="segmented-row">
-              <button class="seg-btn active" data-side="heads" type="button">Heads</button>
-              <button class="seg-btn" data-side="tails" type="button">Tails</button>
+          <div class="dyn-row">
+            <label>Pick Side</label>
+            <div class="dyn-pills">
+              <button class="dyn-btn active" data-coin-side="heads" type="button">Heads</button>
+              <button class="dyn-btn" data-coin-side="tails" type="button">Tails</button>
             </div>
           </div>
-          ${autoCard}
         `;
         break;
 
       case "limbo":
         html = `
-          <div class="dynamic-card">
-            <div class="dynamic-card-title">Target Multiplier</div>
-            <input id="limboTarget" type="number" value="2.00" min="1.01" step="0.01">
+          <div class="dyn-row">
+            <label>Target Multiplier</label>
+            <input id="limboTargetInput" type="number" min="1.01" step="0.01" value="${state.limboTarget.toFixed(2)}">
           </div>
-          ${autoCard}
         `;
         break;
 
       case "dice":
         html = `
-          <div class="dynamic-card">
-            <div class="dynamic-card-title">Roll Mode</div>
-            <div class="segmented-row">
-              <button class="seg-btn active" data-rollmode="under" type="button">Roll Under</button>
-              <button class="seg-btn" data-rollmode="over" type="button">Roll Over</button>
+          <div class="dyn-row">
+            <label>Chance %</label>
+            <input id="diceChanceInput" type="number" min="1" max="95" step="0.01" value="${state.diceChance.toFixed(2)}">
+          </div>
+          <div class="dyn-row">
+            <label>Mode</label>
+            <div class="dyn-pills">
+              <button class="dyn-btn ${state.diceMode === "under" ? "active" : ""}" data-dice-mode="under" type="button">Under</button>
+              <button class="dyn-btn ${state.diceMode === "over" ? "active" : ""}" data-dice-mode="over" type="button">Over</button>
             </div>
           </div>
-          <div class="dynamic-card">
-            <div class="inline-value-row">
-              <span>Chance</span>
-              <strong id="diceChanceLabel">50%</strong>
-            </div>
-            <input id="diceChance" type="range" min="5" max="95" value="50">
-          </div>
-          ${autoCard}
-        `;
-        break;
-
-      case "crash":
-      case "airboss":
-        html = `
-          <div class="dynamic-card">
-            <div class="dynamic-card-title">Auto Cashout</div>
-            <input id="autoCashout" type="number" value="2.00" min="1.01" step="0.01">
-          </div>
-          ${autoCard}
         `;
         break;
 
       case "plinko":
         html = `
-          <div class="dynamic-card">
-            <div class="dynamic-card-title">Risk</div>
-            <div class="segmented-row three">
-              <button class="seg-btn" data-risk="low" type="button">Low</button>
-              <button class="seg-btn active" data-risk="medium" type="button">Medium</button>
-              <button class="seg-btn" data-risk="high" type="button">High</button>
+          <div class="dyn-row">
+            <label>Risk</label>
+            <div class="dyn-pills">
+              <button class="dyn-btn ${state.plinkoRisk === "low" ? "active" : ""}" data-plinko-risk="low" type="button">Low</button>
+              <button class="dyn-btn ${state.plinkoRisk === "medium" ? "active" : ""}" data-plinko-risk="medium" type="button">Medium</button>
+              <button class="dyn-btn ${state.plinkoRisk === "high" ? "active" : ""}" data-plinko-risk="high" type="button">High</button>
             </div>
           </div>
-          <div class="dynamic-card">
-            <div class="dynamic-card-title">Rows</div>
-            <input id="plinkoRows" type="number" value="12" min="8" max="16" step="1">
-          </div>
-          ${autoCard}
         `;
         break;
 
       case "blackjack":
         html = `
-          <div class="dynamic-card">
-            <div class="dynamic-card-title">Blackjack Rules</div>
-            <div class="inline-value-row">
-              <span>Payout</span>
-              <strong>1.5×</strong>
-            </div>
+          <div class="dyn-row">
+            <label>Dealer Stand On</label>
+            <input id="blackjackStandInput" type="number" min="16" max="19" step="1" value="${state.blackjackStandOn}">
           </div>
-          ${autoCard}
         `;
         break;
 
       case "hilo":
         html = `
-          <div class="dynamic-card">
-            <div class="dynamic-card-title">Prediction</div>
-            <div class="segmented-row">
-              <button class="seg-btn active" data-hilo="higher" type="button">Higher</button>
-              <button class="seg-btn" data-hilo="lower" type="button">Lower</button>
+          <div class="dyn-row">
+            <label>Guess</label>
+            <div class="dyn-pills">
+              <button class="dyn-btn ${state.hiloGuess === "higher" ? "active" : ""}" data-hilo="higher" type="button">Higher</button>
+              <button class="dyn-btn ${state.hiloGuess === "lower" ? "active" : ""}" data-hilo="lower" type="button">Lower</button>
             </div>
           </div>
-          ${autoCard}
         `;
         break;
 
       case "birdsparty":
         html = `
-          <div class="dynamic-card">
-            <div class="dynamic-card-title">Difficulty</div>
-            <div class="segmented-row three">
-              <button class="seg-btn active" data-birds="easy" type="button">Easy</button>
-              <button class="seg-btn" data-birds="medium" type="button">Medium</button>
-              <button class="seg-btn" data-birds="hard" type="button">Hard</button>
+          <div class="dyn-row">
+            <label>Pick Bird</label>
+            <div class="dyn-pills">
+              <button class="dyn-btn ${state.birdPick === 1 ? "active" : ""}" data-bird="1" type="button">1</button>
+              <button class="dyn-btn ${state.birdPick === 2 ? "active" : ""}" data-bird="2" type="button">2</button>
+              <button class="dyn-btn ${state.birdPick === 3 ? "active" : ""}" data-bird="3" type="button">3</button>
             </div>
           </div>
-          ${autoCard}
         `;
         break;
 
@@ -784,697 +575,614 @@
       case "fruitparty":
       case "bananafarm":
         html = `
-          <div class="dynamic-card">
-            <div class="dynamic-card-title">Spin Mode</div>
-            <div class="segmented-row">
-              <button class="seg-btn active" data-spinmode="normal" type="button">Normal</button>
-              <button class="seg-btn" data-spinmode="turbo" type="button">Turbo</button>
+          <div class="dyn-row">
+            <label>Volatility</label>
+            <div class="dyn-pills">
+              <button class="dyn-btn ${state.slotVolatility === "low" ? "active" : ""}" data-slot-vol="low" type="button">Low</button>
+              <button class="dyn-btn ${state.slotVolatility === "normal" ? "active" : ""}" data-slot-vol="normal" type="button">Normal</button>
+              <button class="dyn-btn ${state.slotVolatility === "high" ? "active" : ""}" data-slot-vol="high" type="button">High</button>
             </div>
           </div>
-          ${autoCard}
         `;
         break;
 
       default:
-        html = autoCard;
+        html = `<div class="dyn-row"><small>Game ready. Default settings applied.</small></div>`;
     }
 
-    dom.dynamicControls.innerHTML = html;
+    if (state.currentSettingsTab === "auto") {
+      html += `
+        <div class="dyn-row">
+          <label>Auto Rounds</label>
+          <input id="autoRoundsInput" type="number" min="1" max="100" step="1" value="${state.autoRounds}">
+        </div>
+      `;
+    }
+
+    dom.dynamicBetControls.innerHTML = html;
     bindDynamicControls();
   }
 
   function bindDynamicControls() {
-    $$(".seg-btn", dom.dynamicControls).forEach((btn) => {
-      btn.addEventListener("click", () => {
-        playSound("click");
-        const group = btn.parentElement;
-        if (!group) return;
-        $$(".seg-btn", group).forEach((x) => x.classList.remove("active"));
+    // Coinflip
+    dom.dynamicBetControls.querySelectorAll("[data-coin-side]").forEach(btn => {
+      btn.onclick = () => {
+        dom.dynamicBetControls.querySelectorAll("[data-coin-side]").forEach(b => b.classList.remove("active"));
         btn.classList.add("active");
-      });
+      };
     });
 
-    const diceChance = $("diceChance");
-    const diceChanceLabel = $("diceChanceLabel");
-    if (diceChance && diceChanceLabel) {
-      const sync = () => (diceChanceLabel.textContent = `${diceChance.value}%`);
-      diceChance.addEventListener("input", sync);
-      sync();
-    }
+    // Dice
+    dom.dynamicBetControls.querySelectorAll("[data-dice-mode]").forEach(btn => {
+      btn.onclick = () => {
+        state.diceMode = btn.dataset.diceMode;
+        dom.dynamicBetControls.querySelectorAll("[data-dice-mode]").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+      };
+    });
 
-    const autoRoundsInput = $("autoRoundsInput");
-    const autoRoundsLabel = $("autoRoundsLabel");
-    if (autoRoundsInput && autoRoundsLabel) {
-      const sync = () => (autoRoundsLabel.textContent = autoRoundsInput.value);
-      autoRoundsInput.addEventListener("input", sync);
-      sync();
-    }
+    // Plinko
+    dom.dynamicBetControls.querySelectorAll("[data-plinko-risk]").forEach(btn => {
+      btn.onclick = () => {
+        state.plinkoRisk = btn.dataset.plinkoRisk;
+        dom.dynamicBetControls.querySelectorAll("[data-plinko-risk]").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+      };
+    });
 
-    const autoProfitInput = $("autoProfitInput");
-    const autoProfitLabel = $("autoProfitLabel");
-    if (autoProfitInput && autoProfitLabel) {
-      const sync = () => (autoProfitLabel.textContent = `${Number(autoProfitInput.value || 0).toFixed(0)} BX`);
-      autoProfitInput.addEventListener("input", sync);
-      sync();
-    }
+    // HiLo
+    dom.dynamicBetControls.querySelectorAll("[data-hilo]").forEach(btn => {
+      btn.onclick = () => {
+        state.hiloGuess = btn.dataset.hilo;
+        dom.dynamicBetControls.querySelectorAll("[data-hilo]").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+      };
+    });
 
-    const autoLossInput = $("autoLossInput");
-    const autoLossLabel = $("autoLossLabel");
-    if (autoLossInput && autoLossLabel) {
-      const sync = () => (autoLossLabel.textContent = `${Number(autoLossInput.value || 0).toFixed(0)} BX`);
-      autoLossInput.addEventListener("input", sync);
-      sync();
-    }
+    // Birds
+    dom.dynamicBetControls.querySelectorAll("[data-bird]").forEach(btn => {
+      btn.onclick = () => {
+        state.birdPick = Number(btn.dataset.bird);
+        dom.dynamicBetControls.querySelectorAll("[data-bird]").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+      };
+    });
+
+    // Slots
+    dom.dynamicBetControls.querySelectorAll("[data-slot-vol]").forEach(btn => {
+      btn.onclick = () => {
+        state.slotVolatility = btn.dataset.slotVol;
+        dom.dynamicBetControls.querySelectorAll("[data-slot-vol]").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+      };
+    });
+
+    $("#limboTargetInput", dom.dynamicBetControls)?.addEventListener("input", (e) => {
+      state.limboTarget = clamp(parseFloat(e.target.value || "2") || 2, 1.01, 1000);
+    });
+
+    $("#diceChanceInput", dom.dynamicBetControls)?.addEventListener("input", (e) => {
+      state.diceChance = clamp(parseFloat(e.target.value || "49.5") || 49.5, 1, 95);
+    });
+
+    $("#blackjackStandInput", dom.dynamicBetControls)?.addEventListener("input", (e) => {
+      state.blackjackStandOn = clamp(parseInt(e.target.value || "17", 10) || 17, 16, 19);
+    });
+
+    $("#autoRoundsInput", dom.dynamicBetControls)?.addEventListener("input", (e) => {
+      state.autoRounds = clamp(parseInt(e.target.value || "10", 10) || 10, 1, 100);
+    });
   }
 
   /* =========================================================
-     ENGINE RENDERERS
+     ENGINE VIEWS
   ========================================================= */
-  function renderGame(gameKey) {
-    if (!dom.engineBody) return;
-    dom.engineBody.innerHTML = "";
-
+  function renderGameShell(gameKey) {
     switch (gameKey) {
       case "coinflip":
-        dom.engineBody.innerHTML = `
-          <div class="game-visual" id="coinFlipVisual" style="font-size:68px;">🪙</div>
-        `;
-        break;
+        return setEngineHTML(`
+          <div class="engine engine-coinflip">
+            <div class="engine-center">🪙</div>
+            <div class="engine-note">Heads or Tails</div>
+          </div>
+        `);
 
       case "limbo":
-        dom.engineBody.innerHTML = `
-          <div class="game-visual">
-            <div style="font-size:20px;font-weight:900;">🎯 LIMBO TARGET</div>
+        return setEngineHTML(`
+          <div class="engine engine-limbo">
+            <div class="engine-center" id="limboResultLabel">Target ${state.limboTarget.toFixed(2)}×</div>
+            <div class="engine-note">Limbo Result Ready</div>
           </div>
-        `;
-        break;
+        `);
 
       case "dice":
-        dom.engineBody.innerHTML = `
-          <div class="game-visual" id="diceVisual" style="font-size:68px;">🎲</div>
-        `;
-        break;
+        return setEngineHTML(`
+          <div class="engine engine-dice">
+            <div class="engine-center" id="diceRollLabel">--</div>
+            <div class="engine-note">Waiting for roll</div>
+          </div>
+        `);
 
       case "crash":
-        dom.engineBody.innerHTML = `
-          <div class="game-visual">
-            <div style="font-size:42px;">📈</div>
-            <div style="font-size:14px;margin-top:8px;">Wait • Climb • Cashout</div>
+        return setEngineHTML(`
+          <div class="engine engine-crash">
+            <div class="engine-center" id="crashStatusLabel">Ready for takeoff</div>
+            <div class="engine-note">Cash out before explosion</div>
           </div>
-        `;
-        break;
+        `);
 
       case "plinko":
-        dom.engineBody.innerHTML = `
-          <div class="game-visual" style="position:relative;">
-            <div id="plinkoBall" style="font-size:34px;">⬤</div>
+        return setEngineHTML(`
+          <div class="engine engine-plinko">
+            <div class="engine-center" id="plinkoResultLabel">Drop Ready</div>
+            <div class="engine-note">Risk: ${state.plinkoRisk}</div>
           </div>
-        `;
-        break;
+        `);
 
       case "blackjack":
-        dom.engineBody.innerHTML = `
-          <div class="game-visual" id="blackjackTable">
-            <div style="font-size:34px;">🂡 🂱</div>
+        return setEngineHTML(`
+          <div class="engine engine-blackjack">
+            <div class="engine-center" id="blackjackScoreLabel">Player 0 • Dealer 0</div>
+            <div class="engine-note">21 wins</div>
           </div>
-        `;
-        break;
+        `);
 
       case "hilo":
-        dom.engineBody.innerHTML = `
-          <div class="game-visual" id="hiloCard" style="font-size:62px;">7️⃣</div>
-        `;
-        break;
+        return setEngineHTML(`
+          <div class="engine engine-hilo">
+            <div class="engine-center" id="hiloCardLabel">?</div>
+            <div class="engine-note">Guess ${state.hiloGuess}</div>
+          </div>
+        `);
 
       case "birdsparty":
-        dom.engineBody.innerHTML = `
-          <div class="pick-grid" id="birdsGrid">
-            ${Array.from({ length: 9 })
-              .map((_, i) => `<div class="pick-card" data-bird-index="${i}">?</div>`)
-              .join("")}
+        return setEngineHTML(`
+          <div class="engine engine-birds">
+            <div class="engine-center" id="birdsLabel">🐦 🐦 🐦</div>
+            <div class="engine-note">Pick a lucky bird</div>
           </div>
-        `;
-        bindBirdsGrid();
-        break;
+        `);
 
       case "airboss":
-        dom.engineBody.innerHTML = `
-          <div class="game-visual">
-            <div style="font-size:42px;">✈️</div>
-            <div style="font-size:14px;margin-top:8px;">Flight • Cashout • Boom</div>
+        return setEngineHTML(`
+          <div class="engine engine-airboss">
+            <div class="engine-center" id="airbossStatusLabel">Runway clear</div>
+            <div class="engine-note">Cash out before drop</div>
           </div>
-        `;
-        break;
+        `);
 
       case "slot":
-        dom.engineBody.innerHTML = `
-          <div class="game-visual" id="slotReels" style="font-size:56px;">🍒 🍋 ⭐</div>
-        `;
-        break;
-
       case "fruitparty":
-        dom.engineBody.innerHTML = `
-          <div class="game-visual" id="fruitReels" style="font-size:56px;">🍓 🍊 🍉</div>
-        `;
-        break;
-
       case "bananafarm":
-        dom.engineBody.innerHTML = `
-          <div class="game-visual" id="bananaFarmCounter" style="font-size:56px;">🍌 0</div>
-        `;
-        break;
+        return setEngineHTML(`
+          <div class="engine engine-slots">
+            <div class="engine-center slot-reels" id="slotReelsLabel">🍒 • 🍋 • ⭐</div>
+            <div class="engine-note">Spin the reels</div>
+          </div>
+        `);
 
       default:
-        dom.engineBody.innerHTML = `<div class="game-visual">Bloxio Game</div>`;
+        return setEngineHTML(`<div class="engine"><div class="engine-center">Game Ready</div></div>`);
     }
   }
 
-  function bindBirdsGrid() {
-    const picks = $$(".pick-card", dom.engineBody);
-    picks.forEach((card) => {
-      card.addEventListener("click", () => {
-        if (state.playing) return;
-        if (card.classList.contains("revealed-safe") || card.classList.contains("revealed-bad")) return;
-
-        playSound("click");
-        const safe = Math.random() > 0.32;
-        card.textContent = safe ? "🐦" : "💣";
-        card.classList.add(safe ? "revealed-safe" : "revealed-bad");
-
-        const current = parseFloat(dom.multiplier.textContent) || 1;
-        const next = safe ? current + 0.35 : 0;
-        dom.multiplier.textContent = safe ? formatMult(next) : "0.00×";
-
-        if (!safe) {
-          flashEngine("lose");
-          shakeEngine();
-          playSound("lose");
-        } else {
-          flashEngine("win");
-          pulseMultiplier();
-          playSound("win");
-        }
-      });
-    });
-  }
-
   /* =========================================================
-     GAME PLAY DISPATCHER
+     PLAY FLOW
   ========================================================= */
-  function handlePlayClick() {
+  function startCurrentGameFlow() {
     if (!state.currentGame) return;
 
-    if ((state.currentGame === "crash" || state.currentGame === "airboss") && state.playing && state.canCashout) {
-      return cashoutCrashLike();
-    }
-
-    if (state.playing) return;
-
-    if (state.currentSettingsTab === "auto") {
-      startAutoMode();
-      return;
-    }
-
-    startSingleRound();
-  }
-
-  function startSingleRound() {
     const bet = getBet();
-    if (bet > state.balanceBX) {
-      flashEngine("lose");
-      shakeEngine();
-      playSound("lose");
-      dom.gameCaption && (dom.gameCaption.textContent = "Insufficient BX balance");
-      return;
-    }
+    if (!bet || bet <= 0) return;
+    if (bet > state.balanceBX) return;
 
     state.balanceBX -= bet;
+    state.liveBets += 1;
+    state.volumeToday += bet;
     state.nonce += 1;
+
+    syncTopStats();
     syncFairnessUI();
-    syncTopStats();
-    setBet(bet);
-
-    state.activeRoundId = Date.now();
-    setPlayingUI(true);
-    playSound("click");
-
-    runGameEngine(state.currentGame, bet);
-  }
-
-  function startAutoMode() {
-    const rounds = Number($("autoRoundsInput")?.value || 10);
-    const stopProfit = Number($("autoProfitInput")?.value || 0);
-    const stopLoss = Number($("autoLossInput")?.value || 0);
-
-    state.autoPlay = true;
-    state.autoCount = rounds;
-    state.autoRemaining = rounds;
-    state.autoStopOnProfit = stopProfit;
-    state.autoStopOnLoss = stopLoss;
-
-    const startBalance = state.balanceBX;
-
-    const loop = () => {
-      if (!state.autoPlay || state.autoRemaining <= 0) {
-        state.autoPlay = false;
-        setPlayingUI(false);
-        return;
-      }
-
-      const pnl = state.balanceBX - startBalance;
-      if (stopProfit > 0 && pnl >= stopProfit) {
-        state.autoPlay = false;
-        setPlayingUI(false);
-        dom.gameCaption && (dom.gameCaption.textContent = "Auto stopped on profit");
-        return;
-      }
-      if (stopLoss > 0 && pnl <= -stopLoss) {
-        state.autoPlay = false;
-        setPlayingUI(false);
-        dom.gameCaption && (dom.gameCaption.textContent = "Auto stopped on loss");
-        return;
-      }
-
-      state.autoRemaining -= 1;
-      startSingleRound();
-
-      state.autoLoopTimer = setTimeout(loop, 1850);
-    };
+    updatePulseStrip();
 
     setPlayingUI(true);
-    loop();
+    runGameByKey(state.currentGame, bet);
   }
 
-  function endRound({ win = false, payout = 0, multiplier = 1, caption = "" } = {}) {
-    const bet = getBet();
-
-    if (win && payout > 0) {
-      state.balanceBX += payout;
-      playSound("win");
-      flashEngine("win");
-      pulseMultiplier();
-      pushBigWinRow(GAMES[state.currentGame]?.name || "Game", payout, multiplier);
-    } else {
-      playSound("lose");
-      flashEngine("lose");
-      shakeEngine();
-    }
-
-    pushPlayerRow(multiplier, bet);
-    syncTopStats();
-
-    if (dom.gameCaption && caption) dom.gameCaption.textContent = caption;
-    dom.multiplier.textContent = formatMult(multiplier);
-
+  function stopCurrentGameFlow() {
+    stopAllGameTimers();
     state.playing = false;
     state.canCashout = false;
+    state.autoPlay = false;
+    state.autoRemaining = 0;
+
+    flashEngine("lose");
     setPlayingUI(false);
+  }
+
+  function handleCashout() {
+    if (!state.currentGame) return;
+    if (!GAMES[state.currentGame]?.supportsCashout) return;
+    if (!state.canCashout) return;
+
+    const bet = getBet();
+    const payout = bet * state.currentMultiplier;
+
+    state.balanceBX += payout;
+    state.lastPayout = payout;
+    state.canCashout = false;
+    state.playing = false;
+
+    syncTopStats();
+    pushBigWinRow(GAMES[state.currentGame].name, payout, state.currentMultiplier, "You");
+    flashEngine("win");
+    playSound("win");
+
+    setCaption(`Cashed out at ${state.currentMultiplier.toFixed(2)}× • +${payout.toFixed(2)} BX`);
+    setPlayingUI(false);
+    maybeContinueAuto();
+  }
+
+  function resolveRound(win, mult, bet, extraText = "") {
+    stopAllGameTimers();
+
+    const payout = win ? bet * mult : 0;
+    state.lastPayout = payout;
+    state.playing = false;
+    state.canCashout = false;
+    setMultiplier(mult);
+
+    if (win) {
+      state.balanceBX += payout;
+      pushBigWinRow(GAMES[state.currentGame].name, payout, mult, "You");
+      flashEngine("win");
+      playSound("win");
+      setCaption(`${extraText || "You won"} • ${mult.toFixed(2)}× • +${payout.toFixed(2)} BX`);
+    } else {
+      flashEngine("lose");
+      playSound("lose");
+      setCaption(`${extraText || "You lost"} • ${mult.toFixed(2)}×`);
+    }
+
+    syncTopStats();
+    setPlayingUI(false);
+    maybeContinueAuto();
+  }
+
+  function maybeContinueAuto() {
+    if (state.currentSettingsTab !== "auto") return;
+    if (state.autoRemaining <= 0) return;
+
+    state.autoRemaining -= 1;
+    if (state.autoRemaining <= 0) {
+      state.autoPlay = false;
+      setPlayingUI(false);
+      return;
+    }
+
+    state.autoPlay = true;
+    state.autoLoopTimer = setTimeout(() => {
+      startCurrentGameFlow();
+    }, 900);
+  }
+
+  function runGameByKey(gameKey, bet) {
+    switch (gameKey) {
+      case "coinflip":   return runCoinflipGame(bet);
+      case "limbo":      return runLimboGame(bet);
+      case "dice":       return runDiceGame(bet);
+      case "crash":      return runCrashGame(bet);
+      case "plinko":     return runPlinkoGame(bet);
+      case "blackjack":  return runBlackjackGame(bet);
+      case "hilo":       return runHiLoGame(bet);
+      case "birdsparty": return runBirdsPartyGame(bet);
+      case "airboss":    return runAirBossGame(bet);
+      case "slot":       return runSlotGame(bet);
+      case "fruitparty": return runFruitPartyGame(bet);
+      case "bananafarm": return runBananaFarmGame(bet);
+      default:
+        state.playing = false;
+        setPlayingUI(false);
+    }
   }
 
   /* =========================================================
-     ENGINES LOGIC
+     GAME ENGINES
   ========================================================= */
-  function runGameEngine(gameKey, bet) {
-    switch (gameKey) {
-      case "coinflip":
-        return runCoinflip(bet);
-      case "limbo":
-        return runLimbo(bet);
-      case "dice":
-        return runDice(bet);
-      case "crash":
-        return runCrashLike(bet, "crash");
-      case "plinko":
-        return runPlinko(bet);
-      case "blackjack":
-        return runBlackjack(bet);
-      case "hilo":
-        return runHiLo(bet);
-      case "birdsparty":
-        return runBirdsParty(bet);
-      case "airboss":
-        return runCrashLike(bet, "airboss");
-      case "slot":
-        return runSlot(bet, "classic");
-      case "fruitparty":
-        return runSlot(bet, "fruit");
-      case "bananafarm":
-        return runSlot(bet, "banana");
-      default:
-        return endRound({ win: false, payout: 0, multiplier: 0, caption: "Unknown game" });
-    }
+  function runCoinflipGame(bet) {
+    playSound("spin");
+    setCaption("Flipping coin...");
+    const coin = $(".engine-center", dom.engineBody);
+    if (coin) coin.textContent = "🪙";
+
+    const sideBtn = $(".dyn-btn.active[data-coin-side]", dom.dynamicBetControls);
+    const pick = sideBtn?.dataset.coinSide || "heads";
+    const result = Math.random() > 0.5 ? "heads" : "tails";
+    const win = pick === result;
+
+    state.gameLoopTimer = setTimeout(() => {
+      if (coin) coin.textContent = result === "heads" ? "🙂 Heads" : "🦅 Tails";
+      resolveRound(win, win ? 1.96 : 0.00, bet, `Coin: ${result}`);
+    }, 1100);
   }
 
-  /* ---------- Coin Flip ---------- */
-  function runCoinflip(bet) {
-    const el = $("coinFlipVisual");
-    const selected = document.querySelector('[data-side].active')?.dataset.side || "heads";
-    const landed = Math.random() > 0.5 ? "heads" : "tails";
-    const win = selected === landed;
-    const mult = win ? 1.96 : 0;
-    const payout = win ? bet * mult : 0;
-
-    el?.animate(
-      [
-        { transform: "rotateY(0deg)" },
-        { transform: "rotateY(360deg)" },
-        { transform: "rotateY(720deg)" }
-      ],
-      { duration: 850, easing: "ease-in-out" }
-    );
-
-    setTimeout(() => {
-      if (el) el.textContent = landed === "heads" ? "🪙" : "🥈";
-      endRound({
-        win,
-        payout,
-        multiplier: mult,
-        caption: win ? `You hit ${landed}` : `Missed — landed ${landed}`
-      });
+  function runLimboGame(bet) {
+    playSound("spin");
+    const target = clamp(state.limboTarget, 1.01, 1000);
+    const result = rnd(1.00, 25.00, 2);
+    $("#limboResultLabel", dom.engineBody)?.replaceChildren(document.createTextNode(`${result.toFixed(2)}×`));
+    state.gameLoopTimer = setTimeout(() => {
+      resolveRound(result >= target, result >= target ? target : result, bet, `Target ${target.toFixed(2)}×`);
     }, 900);
   }
 
-  /* ---------- Limbo ---------- */
-  function runLimbo(bet) {
-    const target = Number($("limboTarget")?.value || 2);
-    const rolled = rand(1.01, 12.5);
-    let current = 1.0;
+  function runDiceGame(bet) {
+    playSound("spin");
+    const roll = rnd(0.00, 99.99, 2);
+    const chance = clamp(state.diceChance, 1, 95);
+    const win = state.diceMode === "under" ? roll < chance : roll > (100 - chance);
+    const mult = +(99 / chance).toFixed(2);
 
-    const loop = setInterval(() => {
-      current += 0.12;
-      dom.multiplier.textContent = formatMult(current);
+    const el = $("#diceRollLabel", dom.engineBody);
+    if (el) el.textContent = roll.toFixed(2);
 
-      if (current >= rolled) {
-        clearInterval(loop);
-        const win = rolled >= target;
-        const payout = win ? bet * target : 0;
-
-        endRound({
-          win,
-          payout,
-          multiplier: win ? target : rolled,
-          caption: win
-            ? `Target hit at ${rolled.toFixed(2)}×`
-            : `Busted at ${rolled.toFixed(2)}×`
-        });
-      }
-    }, 40);
+    state.gameLoopTimer = setTimeout(() => {
+      resolveRound(win, win ? mult : 0.00, bet, `Roll ${roll.toFixed(2)} • ${state.diceMode} ${chance.toFixed(2)}`);
+    }, 1000);
   }
 
-  /* ---------- Dice ---------- */
-  function runDice(bet) {
-    const chance = Number($("diceChance")?.value || 50);
-    const mode = document.querySelector('[data-rollmode].active')?.dataset.rollmode || "under";
-    const roll = rand(0, 100);
-    const win = mode === "under" ? roll < chance : roll > 100 - chance;
-    const mult = Number((99 / chance).toFixed(2));
-    const payout = win ? bet * mult : 0;
-
-    const dice = $("diceVisual");
-    dice?.animate(
-      [
-        { transform: "rotate(0deg) scale(1)" },
-        { transform: "rotate(180deg) scale(1.15)" },
-        { transform: "rotate(360deg) scale(1)" }
-      ],
-      { duration: 720, easing: "ease-in-out" }
-    );
-
-    setTimeout(() => {
-      dom.multiplier.textContent = `${roll.toFixed(2)}`;
-      endRound({
-        win,
-        payout,
-        multiplier: win ? mult : 0,
-        caption: win ? `Roll ${roll.toFixed(2)} • Win` : `Roll ${roll.toFixed(2)} • Lose`
-      });
-    }, 780);
-  }
-
-  /* ---------- Crash / AirBoss ---------- */
-  function runCrashLike(bet, type = "crash") {
-    const autoCashout = Number($("autoCashout")?.value || 2);
-    let current = 1.0;
-    let speed = type === "airboss" ? 0.035 : 0.028;
-    const bustPoint = rand(1.08, type === "airboss" ? 12 : 18);
-
+  function runCrashGame(bet) {
+    playSound("spin");
     state.canCashout = true;
+    state.playing = true;
     setPlayingUI(true);
-    dom.gameCaption && (dom.gameCaption.textContent = "Round live — cash out before crash");
+
+    const status = $("#crashStatusLabel", dom.engineBody);
+    let mult = 1.00;
+    const crashAt = rnd(1.20, 9.50, 2);
+
+    if (status) status.textContent = "Ascending...";
 
     state.gameLoopTimer = setInterval(() => {
-      speed += type === "airboss" ? 0.006 : 0.004;
-      current += speed;
-      dom.multiplier.textContent = formatMult(current);
+      mult += rnd(0.05, 0.18, 2);
+      setMultiplier(mult);
 
-      if (state.currentModeTab === "auto" || state.currentSettingsTab === "auto") {
-        if (current >= autoCashout && state.canCashout) {
-          cashoutCrashLike();
-          return;
-        }
-      }
+      if (status) status.textContent = `Live • Crash at ?`;
 
-      if (current >= bustPoint) {
-        clearInterval(state.gameLoopTimer);
-        state.gameLoopTimer = null;
+      if (mult >= crashAt) {
+        stopAllGameTimers();
         state.canCashout = false;
-        dom.multiplier.textContent = `💥 ${current.toFixed(2)}×`;
-        endRound({
-          win: false,
-          payout: 0,
-          multiplier: current,
-          caption: type === "airboss" ? "Air Boss exploded" : "Crash exploded"
-        });
+        state.playing = false;
+        if (status) status.textContent = `Crashed at ${crashAt.toFixed(2)}×`;
+        resolveRound(false, crashAt, bet, `Crash at ${crashAt.toFixed(2)}×`);
       }
-    }, 70);
+    }, 220);
   }
 
-  function cashoutCrashLike() {
-    if (!state.playing || !state.canCashout) return;
-
-    const current = parseFloat(dom.multiplier.textContent) || 1;
-    const bet = getBet();
-    const payout = bet * current;
-
-    state.canCashout = false;
-    if (state.gameLoopTimer) clearInterval(state.gameLoopTimer);
-    state.gameLoopTimer = null;
-
-    endRound({
-      win: true,
-      payout,
-      multiplier: current,
-      caption: `Cashed out at ${current.toFixed(2)}×`
-    });
-  }
-
-  /* ---------- Plinko ---------- */
-  function runPlinko(bet) {
-    const risk = document.querySelector('[data-risk].active')?.dataset.risk || "medium";
-    const rows = Number($("plinkoRows")?.value || 12);
-    const ball = $("plinkoBall");
-    let y = 0;
-
-    const riskTable = {
-      low: [0.5, 0.8, 1, 1.2, 1.5, 2],
-      medium: [0.2, 0.5, 1, 1.5, 3, 5],
-      high: [0.1, 0.3, 0.7, 2, 8, 16]
-    };
-
-    const possible = riskTable[risk] || riskTable.medium;
-
-    const loop = setInterval(() => {
-      y += rows > 12 ? 12 : 15;
-      const x = Math.random() > 0.5 ? 14 : -14;
-      if (ball) ball.style.transform = `translate(${x}px, ${y}px)`;
-
-      if (y >= 180) {
-        clearInterval(loop);
-        const mult = possible[randInt(0, possible.length - 1)];
-        const win = mult >= 1;
-        const payout = bet * mult;
-
-        endRound({
-          win,
-          payout: win ? payout : 0,
-          multiplier: mult,
-          caption: `Plinko landed at ${mult.toFixed(2)}×`
-        });
-      }
-    }, 65);
-  }
-
-  /* ---------- Blackjack ---------- */
-  function drawCardValue() {
-    const deck = [2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10, 10, 11];
-    return deck[randInt(0, deck.length - 1)];
-  }
-
-  function runBlackjack(bet) {
-    let player = drawCardValue() + drawCardValue();
-    let dealer = drawCardValue() + drawCardValue();
-
-    while (player < 16) player += drawCardValue();
-    while (dealer < 17) dealer += drawCardValue();
-
-    const win = (player <= 21 && dealer > 21) || (player <= 21 && player > dealer);
-    const blackjack = player === 21;
-    const mult = blackjack ? 1.5 : win ? 2 : 0;
-    const payout = win ? bet * mult : 0;
-
-    dom.engineBody.innerHTML = `
-      <div class="game-visual">
-        <div style="font-size:22px;font-weight:900;">You: ${player}</div>
-        <div style="font-size:22px;font-weight:900;margin-top:10px;">Dealer: ${dealer}</div>
-      </div>
-    `;
-
-    setTimeout(() => {
-      endRound({
-        win,
-        payout,
-        multiplier: mult,
-        caption: win ? `You ${blackjack ? "Blackjack" : "win"} (${player} vs ${dealer})` : `Dealer wins (${dealer} vs ${player})`
-      });
-    }, 900);
-  }
-
-  /* ---------- HiLo ---------- */
-  function runHiLo(bet) {
-    const choice = document.querySelector('[data-hilo].active')?.dataset.hilo || "higher";
-    const current = randInt(2, 13);
-    const next = randInt(1, 13);
-    const win = choice === "higher" ? next > current : next < current;
-    const mult = win ? 2 : 0;
-    const payout = win ? bet * mult : 0;
-
-    dom.engineBody.innerHTML = `
-      <div class="game-visual">
-        <div style="font-size:58px;">${current}</div>
-      </div>
-    `;
-
-    setTimeout(() => {
-      dom.engineBody.innerHTML = `
-        <div class="game-visual">
-          <div style="font-size:58px;">${next}</div>
-        </div>
-      `;
-
-      endRound({
-        win,
-        payout,
-        multiplier: mult,
-        caption: win ? `Correct — ${next}` : `Wrong — ${next}`
-      });
-    }, 850);
-  }
-
-  /* ---------- Birds Party ---------- */
-  function runBirdsParty(bet) {
-    dom.gameCaption && (dom.gameCaption.textContent = "Pick safe birds. Avoid bombs.");
-    dom.multiplier.textContent = "1.00×";
-    state.playing = false;
-    setPlayingUI(false);
-    playSound("click");
-  }
-
-  /* ---------- Slots ---------- */
-  function runSlot(bet, kind = "classic") {
-    const reelsMap = {
-      classic: ["🍒", "🍋", "⭐", "7️⃣", "💎"],
-      fruit: ["🍓", "🍊", "🍉", "🍍", "🍇"],
-      banana: ["🍌", "🥭", "🍍", "🌴", "💰"]
-    };
-
-    const reels = reelsMap[kind] || reelsMap.classic;
-    const targetId =
-      kind === "classic" ? "slotReels" : kind === "fruit" ? "fruitReels" : "bananaFarmCounter";
-
-    const el = $(targetId) || dom.engineBody;
-    let spins = 12;
-
+  function runPlinkoGame(bet) {
     playSound("spin");
+    const map = {
+      low: [0.5, 0.7, 1.0, 1.2, 1.6],
+      medium: [0.3, 0.8, 1.0, 1.8, 3.0],
+      high: [0.2, 0.4, 1.0, 3.0, 8.0]
+    };
+    const bag = map[state.plinkoRisk] || map.medium;
+    const mult = bag[randInt(0, bag.length - 1)];
+    const win = mult >= 1;
 
-    const loop = setInterval(() => {
-      const result = Array.from({ length: 3 }).map(
-        () => reels[randInt(0, reels.length - 1)]
-      );
-      if (el) el.textContent = result.join(" ");
-      spins--;
+    $("#plinkoResultLabel", dom.engineBody)?.replaceChildren(document.createTextNode(`Risk: ${state.plinkoRisk}`));
 
-      if (spins <= 0) {
-        clearInterval(loop);
+    state.gameLoopTimer = setTimeout(() => {
+      $("#plinkoResultLabel", dom.engineBody)?.replaceChildren(document.createTextNode(`${mult.toFixed(2)}×`));
+      resolveRound(win, mult, bet, `Plinko ${state.plinkoRisk}`);
+    }, 1200);
+  }
 
-        const same2 = result[0] === result[1] || result[1] === result[2] || result[0] === result[2];
-        const same3 = result[0] === result[1] && result[1] === result[2];
+  function runBlackjackGame(bet) {
+    playSound("spin");
+    const player = randInt(12, 21);
+    const dealer = randInt(14, 23);
+    const el = $("#blackjackScoreLabel", dom.engineBody);
+    if (el) el.textContent = `Player ${player} • Dealer ${dealer}`;
 
-        let mult = 0;
-        if (same3) mult = kind === "banana" ? 6 : kind === "fruit" ? 5 : 7;
-        else if (same2) mult = kind === "banana" ? 1.8 : kind === "fruit" ? 2 : 2.5;
-        else mult = 0;
+    const win = (player <= 21 && (dealer > 21 || player > dealer));
+    const mult = player === 21 ? 2.50 : 2.00;
 
-        const win = mult > 0;
-        const payout = win ? bet * mult : 0;
+    state.gameLoopTimer = setTimeout(() => {
+      resolveRound(win, win ? mult : 0.00, bet, `BJ ${player} vs ${dealer}`);
+    }, 1000);
+  }
 
-        endRound({
-          win,
-          payout,
-          multiplier: mult,
-          caption: win ? `Combo hit • ${mult.toFixed(2)}×` : "No combo"
-        });
+  function runHiLoGame(bet) {
+    playSound("spin");
+    const current = randInt(2, 14);
+    const next = randInt(2, 14);
+    const win = state.hiloGuess === "higher" ? next > current : next < current;
+
+    const el = $("#hiloCardLabel", dom.engineBody);
+    if (el) el.textContent = `${current} → ?`;
+
+    state.gameLoopTimer = setTimeout(() => {
+      if (el) el.textContent = `${current} → ${next}`;
+      resolveRound(win, win ? 1.92 : 0.00, bet, `HiLo ${state.hiloGuess}`);
+    }, 1000);
+  }
+
+  function runBirdsPartyGame(bet) {
+    playSound("spin");
+    const winner = randInt(1, 3);
+    const win = state.birdPick === winner;
+    const el = $("#birdsLabel", dom.engineBody);
+    if (el) el.textContent = "🐦 🐦 🐦";
+
+    state.gameLoopTimer = setTimeout(() => {
+      if (el) el.textContent = `Winner Bird: ${winner}`;
+      resolveRound(win, win ? 3.00 : 0.00, bet, `Bird #${winner}`);
+    }, 1100);
+  }
+
+  function runAirBossGame(bet) {
+    playSound("spin");
+    state.canCashout = true;
+    state.playing = true;
+    setPlayingUI(true);
+
+    const status = $("#airbossStatusLabel", dom.engineBody);
+    let mult = 1.00;
+    const failAt = rnd(1.30, 12.00, 2);
+
+    if (status) status.textContent = "Flight started";
+
+    state.gameLoopTimer = setInterval(() => {
+      mult += rnd(0.04, 0.15, 2);
+      setMultiplier(mult);
+
+      if (status) status.textContent = "In air...";
+
+      if (mult >= failAt) {
+        stopAllGameTimers();
+        state.canCashout = false;
+        state.playing = false;
+        if (status) status.textContent = `Dropped at ${failAt.toFixed(2)}×`;
+        resolveRound(false, failAt, bet, `AirBoss fail ${failAt.toFixed(2)}×`);
       }
-    }, 90);
+    }, 240);
+  }
+
+  function runSlotLikeGame(bet, title = "Slots") {
+    playSound("spin");
+    const symbols = ["🍒", "🍋", "⭐", "7️⃣", "🍌", "🍉"];
+    const pick = () => symbols[randInt(0, symbols.length - 1)];
+    const a = pick(), b = pick(), c = pick();
+    const reels = $("#slotReelsLabel", dom.engineBody);
+    if (reels) reels.textContent = `${a} • ${b} • ${c}`;
+
+    let mult = 0.00;
+    if (a === b && b === c) mult = a === "7️⃣" ? 12.00 : 5.00;
+    else if (a === b || b === c || a === c) mult = 1.80;
+
+    const win = mult >= 1;
+
+    state.gameLoopTimer = setTimeout(() => {
+      resolveRound(win, mult, bet, `${title} spin`);
+    }, 1200);
+  }
+
+  function runSlotGame(bet) {
+    runSlotLikeGame(bet, "Seven Classic Slot");
+  }
+
+  function runFruitPartyGame(bet) {
+    runSlotLikeGame(bet, "Fruit Party");
+  }
+
+  function runBananaFarmGame(bet) {
+    runSlotLikeGame(bet, "Banana Farm");
   }
 
   /* =========================================================
      EVENTS
   ========================================================= */
-  function bindGameGrid() {
-    gameCards.forEach((card) => {
-      card.addEventListener("click", () => {
-        const key = card.dataset.game;
-        openGame(key);
-      });
+  function bindLobby() {
+    dom.gamesGrid?.addEventListener("click", (e) => {
+      const card = e.target.closest(".casino-game-card");
+      if (!card) return;
+      playSound("click");
+      openGame(card.dataset.game);
     });
-  }
 
-  function bindFilters() {
-    dom.filterTabs.forEach((btn) => {
+    dom.filterTabs.forEach(btn => {
       btn.addEventListener("click", () => {
         playSound("click");
         applyFilter(btn.dataset.filter || "all");
       });
     });
+
+    dom.refreshBtn?.addEventListener("click", () => {
+      playSound("click");
+      pushTickerRow();
+      seedPlayersFeed();
+      state.liveBets += randInt(2, 8);
+      state.volumeToday += rnd(10, 60, 2);
+      syncTopStats();
+    });
   }
 
-  function bindPlayButton() {
-  if (!dom.playBtn) return;
+  function bindGameShell() {
+    dom.backBtn?.addEventListener("click", () => {
+      playSound("click");
+      openLobby();
+    });
 
-  dom.playBtn.addEventListener("click", () => {
-    if (!state.currentGame) return;
+    dom.modeTabs.forEach(btn => {
+      btn.addEventListener("click", () => {
+        playSound("click");
+        dom.modeTabs.forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        state.currentModeTab = btn.dataset.modeTab || "classic";
+      });
+    });
 
-    const g = state.currentGame;
-    const btnState = dom.playBtn.dataset.state || "idle";
+    dom.settingsTabs.forEach(btn => {
+      btn.addEventListener("click", () => {
+        playSound("click");
+        dom.settingsTabs.forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        state.currentSettingsTab = btn.dataset.settingsTab || "manual";
+        if (state.currentGame) buildDynamicControls(state.currentGame);
+      });
+    });
 
-    playSound("click");
+    dom.toolBtns.forEach(btn => {
+      btn.addEventListener("click", () => {
+        playSound("click");
+        dom.toolBtns.forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        state.currentTool = btn.textContent.trim();
+      });
+    });
 
-    // CASH OUT MODE
-    if (btnState === "cashout") {
-      handleCashout();
-      return;
-    }
+    dom.betActionBtns.forEach(btn => {
+      btn.addEventListener("click", () => {
+        playSound("click");
+        const act = btn.dataset.betAction;
+        const current = getBet();
 
-    // STOP MODE
-    if (btnState === "stop" || btnState === "running") {
-      stopCurrentGameFlow();
-      return;
-    }
+        if (act === "half") setBet(Math.max(0.01, current / 2));
+        else if (act === "double") setBet(current * 2);
+        else if (act === "up") setBet(current + 1);
+      });
+    });
 
-    // PLAY MODE
-    startCurrentGameFlow();
-  });
-}
+    dom.newSeedBtn?.addEventListener("click", () => {
+      playSound("click");
+      regenerateSeeds();
+    });
+
+    dom.playBtn?.addEventListener("click", () => {
+      if (!state.currentGame) return;
+      playSound("click");
+
+      const btnState = dom.playBtn.dataset.state || "idle";
+
+      if (btnState === "cashout") {
+        handleCashout();
+        return;
+      }
+
+      if (btnState === "stop" || btnState === "running") {
+        stopCurrentGameFlow();
+        return;
+      }
+
+      if (state.currentSettingsTab === "auto") {
+        state.autoRemaining = clamp(parseInt($("#autoRoundsInput", dom.dynamicBetControls)?.value || state.autoRounds, 10) || 10, 1, 100);
+        state.autoPlay = true;
+      }
+
+      startCurrentGameFlow();
+    });
+  }
 
   /* =========================================================
      INIT
@@ -1482,19 +1190,26 @@
   function init() {
     regenerateSeeds();
     syncTopStats();
+    syncFairnessUI();
+    updatePulseStrip();
     bootstrapFeeds();
+
+    setBet(10);
     applyFilter("all");
-
-    bindGameGrid();
-    bindFilters();
-    bindButtons();
-    bindBetActions();
-    bindTabs();
-
-    setBet(state.bet);
+    bindLobby();
+    bindGameShell();
     startBackgroundLoops();
-    showLobby();
+    openLobby();
+
+    // public bridge (optional)
+    window.BLOXIO_CASINO = {
+      openGame,
+      openLobby,
+      state,
+      pushBigWinRow,
+      pushTickerRow
+    };
   }
 
-  document.addEventListener("DOMContentLoaded", init);
+  init();
 })();
