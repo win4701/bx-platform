@@ -57,7 +57,72 @@
     <button class="btn">Withdraw</button>
     <button class="btn">Transfer</button>
   </div>
+  <!-- ================= WALLET PANELS ================= -->
+<div class="wallet-panels">
 
+  <!-- Deposit Panel -->
+  <div class="wallet-panel hidden" id="depositPanel">
+    <div class="wallet-panel-head">
+      <h4>Deposit Crypto</h4>
+      <button type="button" class="wallet-panel-close" data-close-panel="depositPanel">✕</button>
+    </div>
+
+    <div class="wallet-panel-body">
+      <label for="depositAsset">Asset</label>
+      <select id="depositAsset">
+        <option value="USDT">USDT</option>
+        <option value="USDC">USDC</option>
+        <option value="BTC">BTC</option>
+        <option value="BNB">BNB</option>
+        <option value="ETH">ETH</option>
+        <option value="SOL">SOL</option>
+        <option value="LTC">LTC</option>
+      </select>
+
+      <button class="btn primary" id="generateDepositBtn" type="button">
+        Generate Address
+      </button>
+
+      <div class="wallet-address-box" id="depositAddressBox">
+        <span class="wallet-address-label">Deposit Address</span>
+        <code id="depositAddressText">—</code>
+      </div>
+    </div>
+  </div>
+
+  <!-- Withdraw Panel -->
+  <div class="wallet-panel hidden" id="withdrawPanel">
+    <div class="wallet-panel-head">
+      <h4>Withdraw Crypto</h4>
+      <button type="button" class="wallet-panel-close" data-close-panel="withdrawPanel">✕</button>
+    </div>
+
+    <div class="wallet-panel-body">
+      <label for="withdrawAsset">Asset</label>
+      <select id="withdrawAsset">
+        <option value="USDT">USDT</option>
+        <option value="USDC">USDC</option>
+        <option value="BTC">BTC</option>
+        <option value="BNB">BNB</option>
+        <option value="ETH">ETH</option>
+        <option value="SOL">SOL</option>
+        <option value="LTC">LTC</option>
+        <option value="BX">BX</option>
+      </select>
+
+      <label for="withdrawAmount">Amount</label>
+      <input id="withdrawAmount" type="number" min="0" step="0.0001" placeholder="0.00">
+
+      <label for="withdrawAddress">Address</label>
+      <input id="withdrawAddress" type="text" placeholder="Wallet address">
+
+      <button class="btn primary" id="submitWithdrawBtn" type="button">
+        Confirm Withdraw
+      </button>
+    </div>
+  </div>
+
+</div>
   <!-- ================= BALANCES ================= -->
   <div class="wallet-balances">
     <h3>Balances</h3>
@@ -849,6 +914,46 @@
   </div>
   <!-- Display Mining Plans -->
   <div class="mining-plans" id="miningGrid"></div>
+    <!-- ================= MINING SUB PANEL ================= -->
+<div class="mining-sub-panel card hidden" id="miningSubscribePanel">
+  <div class="mining-sub-head">
+    <div>
+      <h3 id="miningSelectedPlanTitle">Mining Plan</h3>
+      <p id="miningSelectedPlanMeta">Select a plan to continue</p>
+    </div>
+    <button type="button" class="wallet-panel-close" id="closeMiningSubscribe">✕</button>
+  </div>
+
+  <div class="mining-sub-body">
+    <div class="mining-balance-info">
+      Available Balance:
+      <strong id="miningAvailableBalance">0.00 BX</strong>
+    </div>
+
+    <label for="miningAmountInput">Subscription Amount</label>
+    <input
+      id="miningAmountInput"
+      type="number"
+      min="0"
+      step="0.0001"
+      placeholder="Enter amount"
+    >
+
+    <div class="mining-quick-row">
+      <button type="button" data-mining-percent="25">25%</button>
+      <button type="button" data-mining-percent="50">50%</button>
+      <button type="button" data-mining-percent="100">MAX</button>
+    </div>
+
+    <div class="mining-sub-summary" id="miningSubSummary">
+      Choose amount to see expected profit.
+    </div>
+
+    <button class="btn primary" id="confirmMiningSubscribeBtn" type="button">
+      Confirm Subscription
+    </button>
+  </div>
+</div> 
    </section>
   <!-- ================= AIRDROP ================= -->
   
