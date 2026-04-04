@@ -549,10 +549,6 @@ h3{
   color:var(--mk-soft);
 }
 
-#market .market-rank{
-  color:var(--mk-yellow)!important;
-}
-
 #market .market-price-box{
   display:flex;
   align-items:center;
