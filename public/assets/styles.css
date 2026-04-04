@@ -115,221 +115,173 @@ h3{
   color:var(--muted);
 }
 
-/* =====================================================
-   WALLET – FULL HORIZONTAL / EXCHANGE STYLE
-===================================================== */
+/* =========================================================
+   WALLET — BLOXIO PRO FINAL
+   Matched 1:1 with current wallet HTML
+========================================================= */
 
 #wallet.view{
-  padding:16px;
-  padding-bottom:120px;
-  background:linear-gradient(180deg,#0b1220 0%,#020617 100%);
-  color:#e5e7eb;
-}
+  --wl-bg:#0a0f17;
+  --wl-bg-2:#0d131d;
+  --wl-card:#101826;
+  --wl-card-2:#121d2b;
+  --wl-card-3:#0f1723;
+  --wl-border:rgba(255,255,255,.06);
+  --wl-border-soft:rgba(255,255,255,.035);
+  --wl-text:#f4f7fb;
+  --wl-soft:#9aa8b8;
+  --wl-dim:#6f7d8d;
+  --wl-green:#22c55e;
+  --wl-green-2:#35e77a;
+  --wl-blue:#3b82f6;
+  --wl-yellow:#facc15;
+  --wl-white:#ffffff;
+  --wl-danger:#ef4444;
+  --wl-radius-xl:24px;
+  --wl-radius-lg:20px;
+  --wl-radius-md:16px;
+  --wl-radius-sm:14px;
+  --wl-shadow:0 14px 34px rgba(0,0,0,.28);
+  --wl-shadow-soft:0 8px 24px rgba(0,0,0,.18);
 
-/* ================= TOP SUMMARY ================= */
-
-.wallet-top{
-  background:#0b1220;
-  border:1px solid #1e293b;
-  border-radius:18px;
-  padding:18px;
-  margin-bottom:16px;
-}
-
-.wallet-top .label{
-  font-size:13px;
-  color:#94a3b8;
-}
-
-.wallet-top h3{
-  margin-top:6px;
-  font-size:34px;
-  font-weight:800;
-}
-
-.wallet-top h1 small{
-  font-size:13px;
-  color:#94a3b8;
-  margin-left:6px;
-}
-
-/* ================= ACTION BUTTONS ================= */
-
-.wallet-actions{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:12px;
-  margin-bottom:16px;
-}
-
-.wallet-actions .btn{
-  height:40px;
-  border-radius:16px;
-  font-size:14px;
-  font-weight:800;
-  border:none;
-}
-
-.wallet-actions .primary{
-  background:#22c55e;
-  color:#022c22;
-}
-
-.wallet-actions .btn:not(.primary){
-  background:#020617;
-  border:1px solid #1e293b;
-  color:#e5e7eb;
-}
-
-/* ================= BALANCES CARD ================= */
-
-.wallet-balances{
-  background:#0b1220;
-  border:1px solid #1e293b;
-  border-radius:18px;
-  padding:6px;
-}
-
-/* ================= BALANCE ROW ================= */
-
-.wallet-row{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding:12px 10px;
-  border-bottom:1px solid #020617;
-}
-
-.wallet-row:last-child{
-  border-bottom:none;
-}
-
-.wallet-row .left{
-  display:flex;
-  align-items:center;
-  gap:12px;
-  flex:1;
-  min-width:0;
-}
-
-.wallet-row img{
-  width:20px;
-  height:20px;
-  flex-shrink:0;
-}
-
-.wallet-row .info{
-  display:flex;
-  flex-direction:row;       
-  align-items:center;        
-  gap:6px;
-  white-space:nowrap;
-  line-height:1;
-}
-
-/* SYMBOL */
-.wallet-row .info strong{
-  font-size:15px;
-  font-weight:800;
-  line-height:1;
-}
-
-/* NAME */
-.wallet-row .info span{
-  font-size:12px;
-  color:#94a3b8;
-  line-height:1;
-}
-
-/* AMOUNT */
-.wallet-row .amount{
-  font-size:15px;
-  font-weight:800;
-  white-space:nowrap;
-}
-
-/* ================= TRANSFER ================= */
-
-.wallet-transfer{
-  background:#0f172a;
-  border:1px solid #1e293b;
-  border-radius:18px;
-  padding:16px;
-  margin-top:16px;
-}
-
-.wallet-transfer h4{
-  font-size:14px;
-  margin-bottom:12px;
-}
-
-.wallet-transfer input{
   width:100%;
-  padding:12px;
-  border-radius:12px;
-  background:#020617;
-  border:1px solid #1e293b;
-  color:#fff;
+  max-width:100%;
+  min-height:100%;
+  padding:14px 0 118px;
+  background:
+    radial-gradient(circle at top center, rgba(34,197,94,.07), transparent 24%),
+    linear-gradient(180deg,#060b12 0%, #09111b 100%);
+  color:var(--wl-text);
+  overflow-x:hidden;
+}
+
+#wallet,
+#wallet *{
+  box-sizing:border-box;
+}
+
+#wallet .wallet-top,
+#wallet .wallet-actions,
+#wallet .wallet-panels,
+#wallet .wallet-balances,
+#wallet .wallet-bottom-actions{
+  width:min(100%, 430px);
+  margin-left:auto;
+  margin-right:auto;
+}
+
+/* =========================================================
+   TOP TOTAL CARD
+========================================================= */
+#wallet .wallet-top{
+  position:relative;
+  overflow:hidden;
+  padding:22px 18px 20px;
+  border-radius:var(--wl-radius-xl);
+  border:1px solid var(--wl-border);
+  background:
+    radial-gradient(circle at top right, rgba(250,204,21,.10), transparent 28%),
+    radial-gradient(circle at left center, rgba(34,197,94,.07), transparent 30%),
+    linear-gradient(180deg,#121b28 0%, #0f1724 100%);
+  box-shadow:var(--wl-shadow);
+  margin-bottom:14px;
+}
+
+#wallet .wallet-top::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:linear-gradient(135deg, rgba(255,255,255,.04), transparent 45%);
+  pointer-events:none;
+}
+
+#wallet .wallet-top .label{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  font-size:12px;
+  font-weight:800;
+  color:var(--wl-soft);
+  letter-spacing:.02em;
   margin-bottom:10px;
 }
 
-.wallet-transfer .confirm{
-  width:100%;
-  height:40px;
-  border-radius:14px;
-  background:#3b82f6;
-  color:white;
-  font-weight:800;
-  border:none;
+#wallet .wallet-top .label::before{
+  content:"●";
+  color:var(--wl-green);
+  font-size:10px;
 }
 
-/* ================= CONNECT / PAY ================= */
+#wallet .wallet-top h1{
+  margin:0;
+  display:flex;
+  align-items:flex-end;
+  gap:8px;
+  flex-wrap:wrap;
+  line-height:1;
+}
 
-.wallet-bottom-actions{
+#wallet #walletTotal{
+  font-size:clamp(30px,7vw,40px);
+  font-weight:1000;
+  color:#fff;
+  letter-spacing:-.04em;
+}
+
+#wallet .wallet-top h1 small{
+  font-size:13px;
+  font-weight:900;
+  color:var(--wl-dim);
+  padding-bottom:4px;
+}
+
+/* =========================================================
+   ACTION BUTTONS
+========================================================= */
+#wallet .wallet-actions{
   display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:12px;
-  margin-top:16px;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:10px;
+  margin-bottom:14px;
 }
 
-
-.wallet-btn{
+#wallet .wallet-actions .btn{
+  position:relative;
+  isolation:isolate;
   height:46px;
-  border-radius:16px;
+  border-radius:18px;
+  border:1px solid var(--wl-border);
+  background:linear-gradient(180deg,#121b28 0%, #0f1724 100%);
+  color:#f1f5f9;
   font-size:14px;
-  font-weight:800;
+  font-weight:1000;
+  letter-spacing:.01em;
   display:flex;
   align-items:center;
   justify-content:center;
-  border:1px dashed #1e293b;
-  background:#020617;
-  color:#94a3b8;
+  box-shadow:var(--wl-shadow-soft);
+  transition:.18s ease;
+  cursor:pointer;
 }
 
-/* Binance Pay */
-.wallet-btn.binance-pay{
-  background:#facc15;
-  color:#000;
-  border:none;
+#wallet .wallet-actions .btn:active{
+  transform:scale(.985);
 }
 
-/* WalletConnect */
-.wallet-btn.walletconnect{
-  background:#ffffff;
-  color:#000;
-  border:none;
+#wallet .wallet-actions .btn.primary{
+  color:#07140c;
+  border-color:rgba(53,231,122,.18);
+  background:linear-gradient(180deg,#46f08c 0%, #22c55e 100%);
+  box-shadow:0 12px 26px rgba(34,197,94,.18);
 }
 
-/* Connected State */
-.wallet-btn.connected{
-  background:linear-gradient(135deg,#22c55e,#16a34a);
-  color:#022c22;
-  border:none;
+#wallet .wallet-actions .btn:not(.primary):hover{
+  border-color:rgba(255,255,255,.10);
 }
+
 /* =========================================================
-   WALLET — NEW INTERNAL PANELS
+   INTERNAL PANELS
 ========================================================= */
-
 #wallet .wallet-hidden{
   display:none !important;
 }
@@ -337,19 +289,33 @@ h3{
 #wallet .wallet-panels{
   display:flex;
   flex-direction:column;
-  gap:14px;
-  margin:16px 0 18px;
+  gap:12px;
+  margin-bottom:14px;
 }
 
 #wallet .wallet-panel{
-  background:#0f172a;
-  border:1px solid #1e293b;
-  border-radius:20px;
+  position:relative;
+  overflow:hidden;
+  border-radius:var(--wl-radius-lg);
+  border:1px solid var(--wl-border);
+  background:
+    radial-gradient(circle at top right, rgba(59,130,246,.06), transparent 28%),
+    linear-gradient(180deg,#121b28 0%, #0f1724 100%);
   padding:16px;
-  box-shadow:0 10px 30px rgba(0,0,0,.18);
+  box-shadow:var(--wl-shadow-soft);
+}
+
+#wallet .wallet-panel::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:linear-gradient(135deg, rgba(255,255,255,.03), transparent 45%);
+  pointer-events:none;
 }
 
 #wallet .wallet-panel-head{
+  position:relative;
+  z-index:2;
   display:flex;
   align-items:center;
   justify-content:space-between;
@@ -359,59 +325,113 @@ h3{
 
 #wallet .wallet-panel-head h4{
   margin:0;
-  font-size:15px;
-  font-weight:800;
+  font-size:16px;
+  font-weight:1000;
   color:#fff;
+  letter-spacing:-.01em;
 }
 
 #wallet .wallet-panel-close{
-  width:36px;
-  height:36px;
+  width:38px;
+  height:38px;
+  flex:0 0 auto;
   border:none;
-  border-radius:12px;
-  background:#020617;
+  border-radius:14px;
+  background:#0b121d;
+  border:1px solid rgba(255,255,255,.06);
   color:#fff;
+  font-size:16px;
+  font-weight:1000;
+  display:grid;
+  place-items:center;
   cursor:pointer;
-  font-size:15px;
-  font-weight:900;
-  border:1px solid #1e293b;
+  transition:.18s ease;
+}
+
+#wallet .wallet-panel-close:active{
+  transform:scale(.96);
 }
 
 #wallet .wallet-panel-body{
+  position:relative;
+  z-index:2;
   display:flex;
   flex-direction:column;
   gap:12px;
 }
 
 #wallet .wallet-panel-body label{
-  font-size:13px;
-  font-weight:800;
-  color:#94a3b8;
+  font-size:12px;
+  font-weight:900;
+  color:var(--wl-soft);
+  margin-bottom:-2px;
 }
 
 #wallet .wallet-panel-body input,
 #wallet .wallet-panel-body select{
   width:100%;
-  min-height:48px;
-  border-radius:14px;
-  border:1px solid #1e293b;
-  background:#020617;
+  min-height:50px;
+  border-radius:16px;
+  border:1px solid rgba(255,255,255,.06);
+  background:linear-gradient(180deg,#0d1521 0%, #0a111b 100%);
   color:#fff;
   padding:0 14px;
-  font-weight:700;
+  font-size:14px;
+  font-weight:900;
   outline:none;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.03);
+  transition:.18s ease;
+}
+
+#wallet .wallet-panel-body input::placeholder{
+  color:#64748b;
+  font-weight:700;
 }
 
 #wallet .wallet-panel-body input:focus,
 #wallet .wallet-panel-body select:focus{
-  border-color:#22c55e;
-  box-shadow:0 0 0 3px rgba(34,197,94,.08);
+  border-color:rgba(34,197,94,.42);
+  box-shadow:
+    0 0 0 3px rgba(34,197,94,.08),
+    inset 0 1px 0 rgba(255,255,255,.03);
+}
+
+#wallet #generateDepositBtn,
+#wallet #submitWithdrawBtn,
+#wallet #submitTransferBtn{
+  width:100%;
+  min-height:48px;
+  border:none;
+  border-radius:16px;
+  font-size:14px;
+  font-weight:1000;
+  cursor:pointer;
+  transition:.18s ease;
+}
+
+#wallet #generateDepositBtn,
+#wallet #submitWithdrawBtn{
+  color:#07140c;
+  background:linear-gradient(180deg,#46f08c 0%, #22c55e 100%);
+  box-shadow:0 10px 22px rgba(34,197,94,.18);
+}
+
+#wallet #submitTransferBtn{
+  color:#fff;
+  background:linear-gradient(180deg,#4f97ff 0%, #2563eb 100%);
+  box-shadow:0 10px 22px rgba(37,99,235,.18);
+}
+
+#wallet #generateDepositBtn:active,
+#wallet #submitWithdrawBtn:active,
+#wallet #submitTransferBtn:active{
+  transform:scale(.985);
 }
 
 #wallet .wallet-address-box{
-  background:#020617;
-  border:1px dashed rgba(34,197,94,.28);
-  border-radius:16px;
+  border-radius:18px;
+  border:1px dashed rgba(34,197,94,.22);
+  background:rgba(6,13,20,.72);
   padding:14px;
   display:flex;
   flex-direction:column;
@@ -419,19 +439,266 @@ h3{
 }
 
 #wallet .wallet-address-label{
-  font-size:12px;
-  color:#94a3b8;
+  font-size:11px;
+  font-weight:900;
+  color:var(--wl-soft);
+  text-transform:uppercase;
+  letter-spacing:.05em;
 }
 
 #wallet .wallet-address-box code{
-  word-break:break-all;
-  color:#22c55e;
-  font-weight:800;
+  display:block;
   font-size:13px;
+  font-weight:1000;
+  color:#4ade80;
+  word-break:break-word;
+  line-height:1.5;
 }
 
-#wallet .wallet-transfer{
-  margin-top:18px;
+/* =========================================================
+   BALANCES CARD
+========================================================= */
+#wallet .wallet-balances{
+  border-radius:var(--wl-radius-xl);
+  border:1px solid var(--wl-border);
+  background:
+    radial-gradient(circle at top left, rgba(250,204,21,.05), transparent 24%),
+    linear-gradient(180deg,#121b28 0%, #0f1724 100%);
+  padding:8px;
+  box-shadow:var(--wl-shadow);
+}
+
+#wallet .wallet-balances h3{
+  margin:6px 8px 10px;
+  font-size:13px;
+  font-weight:1000;
+  color:var(--wl-soft);
+  text-transform:uppercase;
+  letter-spacing:.06em;
+}
+
+/* =========================================================
+   BALANCE ROW
+========================================================= */
+#wallet .wallet-row{
+  position:relative;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  min-height:68px;
+  padding:12px 12px;
+  border-radius:18px;
+  border:1px solid transparent;
+  background:transparent;
+  transition:.18s ease;
+}
+
+#wallet .wallet-row + .wallet-row{
+  margin-top:4px;
+}
+
+#wallet .wallet-row:hover{
+  background:rgba(255,255,255,.02);
+  border-color:rgba(255,255,255,.03);
+}
+
+#wallet .wallet-row.main{
+  background:
+    linear-gradient(90deg, rgba(34,197,94,.07), transparent 60%),
+    rgba(255,255,255,.018);
+  border-color:rgba(34,197,94,.12);
+}
+
+#wallet .wallet-row .left{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  flex:1;
+  min-width:0;
+}
+
+#wallet .wallet-row img{
+  width:40px;
+  height:40px;
+  border-radius:14px;
+  object-fit:contain;
+  background:rgba(255,255,255,.025);
+  padding:7px;
+  border:1px solid rgba(255,255,255,.04);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.03);
+  flex:0 0 auto;
+}
+
+#wallet .wallet-row .info{
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+
+#wallet .wallet-row .info strong{
+  font-size:15px;
+  font-weight:1000;
+  color:#fff;
+  line-height:1.05;
+  letter-spacing:-.01em;
+}
+
+#wallet .wallet-row .info span{
+  font-size:12px;
+  font-weight:800;
+  color:var(--wl-dim);
+  line-height:1.15;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+#wallet .wallet-row .amount{
+  flex:0 0 auto;
+  text-align:right;
+  min-width:88px;
+}
+
+#wallet .wallet-row .amount strong{
+  display:block;
+  font-size:15px;
+  font-weight:1000;
+  color:#fff;
+  line-height:1;
+  letter-spacing:-.02em;
+}
+
+/* =========================================================
+   CONNECT / BINANCE PAY
+========================================================= */
+#wallet .wallet-bottom-actions{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin-top:14px;
+}
+
+#wallet .wallet-btn{
+  min-height:50px;
+  border:none;
+  border-radius:18px;
+  font-size:14px;
+  font-weight:1000;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  padding:0 12px;
+  cursor:pointer;
+  transition:.18s ease;
+  box-shadow:var(--wl-shadow-soft);
+}
+
+#wallet .wallet-btn:active{
+  transform:scale(.985);
+}
+
+#wallet .wallet-btn.walletconnect{
+  color:#111827;
+  background:linear-gradient(180deg,#ffffff 0%, #e9eef5 100%);
+  border:1px solid rgba(255,255,255,.16);
+}
+
+#wallet .wallet-btn.binance-pay{
+  color:#151200;
+  background:linear-gradient(180deg,#fde047 0%, #facc15 100%);
+  border:1px solid rgba(250,204,21,.22);
+}
+
+#wallet .wallet-btn.connected{
+  color:#07140c;
+  background:linear-gradient(180deg,#46f08c 0%, #22c55e 100%);
+  border:1px solid rgba(34,197,94,.18);
+}
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+@media (max-width:640px){
+  #wallet.view{
+    padding:12px 0 112px;
+  }
+
+  #wallet .wallet-top,
+  #wallet .wallet-actions,
+  #wallet .wallet-panels,
+  #wallet .wallet-balances,
+  #wallet .wallet-bottom-actions{
+    width:min(100%, 100%);
+  }
+
+  #wallet .wallet-top{
+    padding:20px 16px 18px;
+  }
+
+  #wallet #walletTotal{
+    font-size:32px;
+  }
+
+  #wallet .wallet-row{
+    min-height:64px;
+    padding:11px 10px;
+  }
+
+  #wallet .wallet-row img{
+    width:38px;
+    height:38px;
+    border-radius:13px;
+  }
+
+  #wallet .wallet-row .info strong,
+  #wallet .wallet-row .amount strong{
+    font-size:14px;
+  }
+}
+
+@media (max-width:430px){
+  #wallet .wallet-actions{
+    gap:8px;
+  }
+
+  #wallet .wallet-actions .btn{
+    height:44px;
+    border-radius:16px;
+    font-size:13px;
+  }
+
+  #wallet .wallet-panel{
+    padding:14px;
+    border-radius:18px;
+  }
+
+  #wallet .wallet-panel-body input,
+  #wallet .wallet-panel-body select{
+    min-height:48px;
+    border-radius:15px;
+    font-size:13px;
+  }
+
+  #wallet .wallet-bottom-actions{
+    gap:8px;
+  }
+
+  #wallet .wallet-btn{
+    min-height:48px;
+    border-radius:16px;
+    font-size:13px;
+  }
+
+  #wallet .wallet-row .left{
+    gap:10px;
+  }
+
+  #wallet .wallet-row .amount{
+    min-width:78px;
+  }
 }
 
 /* =========================================================
