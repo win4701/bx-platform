@@ -2382,11 +2382,6 @@ h3{
 /* =========================================================
    MINING — FULL PRO UI (HTML NEW ARCHITECTURE)
    Compatible with:
-   - .mining-top
-   - .mining-overview-grid
-   - .mining-tabs
-   - .mining-plans
-   - .mining-sub-panel
 ========================================================= */
 
 #mining{
@@ -3215,6 +3210,279 @@ h3{
 
   #mining .mining-stat strong{
     font-size:15px;
+  }
+}
+
+/* =========================================================
+   MINING REBIND PATCH
+   (Active + History + Status + Sync)
+========================================================= */
+
+/* ================= SECTION HEAD ================= */
+#mining .mining-section-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:14px;
+}
+
+#mining .mining-section-head h3{
+  margin:0;
+  font-size:17px;
+  font-weight:1000;
+  color:#fff;
+  line-height:1.1;
+}
+
+/* ================= BADGES ================= */
+#mining .mining-badge{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:30px;
+  padding:0 12px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:1000;
+  color:#d9e8f5;
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.06);
+}
+
+#mining .mining-badge.idle{
+  color:#9fb3c8;
+  background:rgba(255,255,255,.03);
+}
+
+#mining .mining-badge.active{
+  color:#a7f3d0;
+  background:rgba(34,197,94,.10);
+  border-color:rgba(34,197,94,.18);
+}
+
+#mining .mining-badge.done{
+  color:#fde68a;
+  background:rgba(250,204,21,.10);
+  border-color:rgba(250,204,21,.18);
+}
+
+/* ================= ACTIVE WRAP ================= */
+#mining .mining-active-wrap{
+  margin-bottom:18px;
+  padding:18px;
+  border-radius:24px;
+  border:1px solid rgba(255,255,255,.06);
+  background:
+    radial-gradient(circle at top right, rgba(34,197,94,.08), transparent 28%),
+    linear-gradient(180deg,#0f1d28 0%, #0b1620 100%);
+  box-shadow:0 16px 36px rgba(0,0,0,.28);
+}
+
+#mining .mining-active-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;
+  margin-bottom:16px;
+}
+
+#mining .mining-active-box{
+  min-height:88px;
+  padding:14px;
+  border-radius:18px;
+  border:1px solid rgba(255,255,255,.05);
+  background:rgba(255,255,255,.025);
+}
+
+#mining .mining-active-box span{
+  display:block;
+  font-size:12px;
+  font-weight:800;
+  color:#8ea2b8;
+  margin-bottom:8px;
+}
+
+#mining .mining-active-box strong{
+  display:block;
+  font-size:18px;
+  font-weight:1000;
+  color:#fff;
+  line-height:1.15;
+  word-break:break-word;
+}
+
+/* ================= PROGRESS ================= */
+#mining .mining-progress-shell{
+  margin-bottom:16px;
+}
+
+#mining .mining-progress-bar{
+  height:12px;
+  border-radius:999px;
+  background:rgba(255,255,255,.05);
+  overflow:hidden;
+  border:1px solid rgba(255,255,255,.04);
+}
+
+#mining .mining-progress-bar #miningProgressFill{
+  width:0%;
+  height:100%;
+  border-radius:999px;
+  background:linear-gradient(90deg,#22c55e,#4ade80);
+  box-shadow:0 0 18px rgba(34,197,94,.18);
+  transition:width .25s ease;
+}
+
+#mining .mining-progress-meta{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-top:10px;
+  font-size:12px;
+  font-weight:900;
+  color:#9fb3c8;
+}
+
+/* ================= ACTIVE ACTIONS ================= */
+#mining .mining-active-actions{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;
+}
+
+#mining .mining-active-actions .btn{
+  min-height:46px;
+  border-radius:16px;
+}
+
+/* ================= HISTORY ================= */
+#mining .mining-history-wrap{
+  margin-top:18px;
+  padding:18px;
+  border-radius:24px;
+  border:1px solid rgba(255,255,255,.06);
+  background:
+    linear-gradient(180deg,#0f1d28 0%, #0b1620 100%);
+  box-shadow:0 16px 36px rgba(0,0,0,.24);
+}
+
+#mining .mining-history-list{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
+#mining .mining-history-empty{
+  padding:18px;
+  border-radius:18px;
+  border:1px dashed rgba(255,255,255,.08);
+  color:#8ea2b8;
+  font-size:13px;
+  text-align:center;
+  background:rgba(255,255,255,.02);
+}
+
+#mining .mining-history-item{
+  display:grid;
+  grid-template-columns:1.2fr .9fr .8fr;
+  gap:12px;
+  align-items:center;
+  padding:14px;
+  border-radius:18px;
+  border:1px solid rgba(255,255,255,.05);
+  background:rgba(255,255,255,.025);
+}
+
+#mining .mining-history-main{
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+
+#mining .mining-history-main strong{
+  font-size:14px;
+  font-weight:1000;
+  color:#fff;
+}
+
+#mining .mining-history-main span{
+  font-size:12px;
+  color:#8ea2b8;
+}
+
+#mining .mining-history-profit{
+  font-size:14px;
+  font-weight:1000;
+  color:#22c55e;
+  text-align:center;
+}
+
+#mining .mining-history-state{
+  display:flex;
+  justify-content:flex-end;
+}
+
+/* ================= PLAN BUTTONS NORMALIZATION ================= */
+#mining .mining-plan .claim-btn,
+#mining .mining-plan .sub-btn{
+  width:100%;
+  min-height:44px;
+  border:none;
+  border-radius:16px;
+  font-size:13px;
+  font-weight:1000;
+  cursor:pointer;
+}
+
+#mining .mining-plan .claim-btn{
+  background:linear-gradient(135deg,#22c55e,#4ade80);
+  color:#041b0d;
+}
+
+#mining .mining-plan .sub-btn{
+  background:linear-gradient(135deg,#22c55e,#4ade80);
+  color:#041b0d;
+}
+
+/* ================= RESPONSIVE ================= */
+@media (max-width:430px){
+  #mining .mining-active-wrap,
+  #mining .mining-history-wrap{
+    padding:15px;
+    border-radius:20px;
+  }
+
+  #mining .mining-active-grid{
+    gap:10px;
+  }
+
+  #mining .mining-active-box{
+    min-height:82px;
+    padding:12px;
+    border-radius:16px;
+  }
+
+  #mining .mining-active-box strong{
+    font-size:16px;
+  }
+
+  #mining .mining-active-actions{
+    gap:10px;
+  }
+
+  #mining .mining-history-item{
+    grid-template-columns:1fr;
+    gap:8px;
+    text-align:left;
+  }
+
+  #mining .mining-history-profit{
+    text-align:left;
+  }
+
+  #mining .mining-history-state{
+    justify-content:flex-start;
   }
 }
 
