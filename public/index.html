@@ -897,26 +897,91 @@
   </div>
 </section>
   <!-- ================= MINING ================= -->
-   <section id="mining" class="view">
-  <h2 class="page-title">Mining</h2>
-  <div class="mining-tabs">
-    <button class="active" data-coin="BX">
-      <img src="/assets/images/bx.png" alt="BX">
-      <span>BX</span>
-    </button>
-    <button data-coin="BNB">
-      <img src="/assets/images/bnb.png" alt="BNB">
-      <span>BNB</span>
-    </button>
-    <button data-coin="SOL">
-      <img src="/assets/images/sol.png" alt="SOL">
-      <span>SOL</span>
-    </button>
+<section id="mining" class="view">
+
+  <!-- ================= HEADER ================= -->
+  <div class="mining-top card">
+    <div class="mining-top-head">
+      <div>
+        <h2>Mining Center</h2>
+        <p>Activate BX mining plans </p>
+      </div>
+      <button class="btn primary" type="button" data-mining-open="miningSubscribePanel">
+        Subscribe
+      </button>
+    </div>
+
+    <div class="mining-overview-grid">
+      <div class="mining-stat">
+        <span>Active Coin</span>
+        <strong id="miningActiveCoin">BX</strong>
+      </div>
+      <div class="mining-stat">
+        <span>Available</span>
+        <strong id="miningAvailableBalanceTop">0.00 BX</strong>
+      </div>
+      <div class="mining-stat">
+        <span>Daily Yield</span>
+        <strong id="miningDailyYieldTop">+2.5%</strong>
+      </div>
+      <div class="mining-stat">
+        <span>Cycle</span>
+        <strong id="miningCycleTop">30 Days</strong>
+      </div>
+    </div>
   </div>
-  <!-- Display Mining Plans -->
+
+  <!-- ================= TABS ================= -->
+  <div class="mining-tabs">
+    <button class="active" data-coin="BX" type="button">BX</button>
+    <button data-coin="SOL" type="button">SOL</button>
+    <button data-coin="BNB" type="button">BNB</button>
+  </div>
+
+  <!-- ================= PLANS ================= -->
   <div class="mining-plans" id="miningGrid"></div>
-    <!-- ================= MINING SUB PANEL ================= -->
-   </section>
+
+  <!-- ================= INTERNAL SUBSCRIBE PANEL ================= -->
+  <div class="mining-sub-panel mining-hidden" id="miningSubscribePanel">
+    <div class="mining-sub-head">
+      <div>
+        <h3 id="miningSelectedPlanTitle">Mining Subscription</h3>
+        <p id="miningSelectedPlanMeta">Select a plan to continue</p>
+      </div>
+      <button type="button" class="mining-panel-close" data-mining-close="miningSubscribePanel">✕</button>
+    </div>
+
+    <div class="mining-sub-body">
+      <div class="mining-balance-info">
+        Available Balance:
+        <strong id="miningAvailableBalance">0.00 BX</strong>
+      </div>
+
+      <label for="miningAmountInput">Subscription Amount</label>
+      <input
+        id="miningAmountInput"
+        type="number"
+        min="0"
+        step="0.0001"
+        placeholder="Enter amount"
+      >
+
+      <div class="mining-quick-row">
+        <button type="button" data-mining-percent="25">25%</button>
+        <button type="button" data-mining-percent="50">50%</button>
+        <button type="button" data-mining-percent="100">MAX</button>
+      </div>
+
+      <div class="mining-sub-summary" id="miningSubSummary">
+        Choose amount to profit.
+      </div>
+
+      <button class="btn primary" id="confirmMiningSubscribeBtn" type="button">
+        Confirm Subscription
+      </button>
+    </div>
+  </div>
+</section>
   <!-- ================= AIRDROP ================= -->
   
   <section id="airdrop" class="view">
