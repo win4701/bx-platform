@@ -2379,181 +2379,526 @@ h3{
   }
 }
   
-/* ================= MINING ================= */
+/* =========================================================
+   MINING — FULL PRO UI (HTML NEW ARCHITECTURE)
+   Compatible with:
+   - .mining-top
+   - .mining-overview-grid
+   - .mining-tabs
+   - .mining-plans
+   - .mining-sub-panel
+========================================================= */
 
 #mining{
+  --mn-bg:#071018;
+  --mn-bg-2:#0b1620;
+  --mn-panel:#0f1d28;
+  --mn-panel-2:#122431;
+  --mn-panel-3:#0b141d;
+  --mn-border:rgba(255,255,255,.06);
+  --mn-border-soft:rgba(255,255,255,.04);
+  --mn-text:#f3f7fb;
+  --mn-soft:#c9d6e4;
+  --mn-muted:#8ea2b8;
+  --mn-dim:#6b8096;
+  --mn-green:#22c55e;
+  --mn-green-2:#4ade80;
+  --mn-green-glow:rgba(34,197,94,.22);
+  --mn-blue:#38bdf8;
+  --mn-yellow:#facc15;
+  --mn-red:#ef4444;
+  --mn-radius-xl:24px;
+  --mn-radius-lg:20px;
+  --mn-radius-md:16px;
+  --mn-radius-sm:14px;
+  --mn-shadow:0 16px 36px rgba(0,0,0,.35);
+  --mn-shadow-soft:0 10px 24px rgba(0,0,0,.22);
+
   padding:16px;
-  padding-bottom:100px;  
+  padding-bottom:120px;
   min-height:auto;
   overflow:visible;
-}
-
-.mining-tabs{
-  display:flex;
-  gap:12px;
-  margin-bottom: 20px;
-}
-
-.mining-tabs button{
-  flex:1;
-  height:38px;
-  border-radius:18px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:8px;
-  background:#020617;
-  border:1px solid #1e293b;
-  color:#94a3b8;
-  font-weight:800;
-}
-
-.mining-tabs button img{
-  width:22px;
-  height:22px;
-}
-
-.mining-tabs button.active{
-  background:linear-gradient(135deg,#22c55e,#6ee7a8);
-  color:#022c22;
-  border:none;
-}
-
-/* ================= MINING PLANS ================= */
-
-.mining-plans{
-  display:grid;
-  grid-template-columns:repeat(2,minmax(0,1fr));
-  gap:16px;
-  align-items:stretch;
-}
-
-.mining-plan{
-  display:flex;
-  flex-direction:column;
-  justify-content:space-between;
-  min-height:240px;
-  padding:18px 16px;
-  border-radius:16px;
-  background:linear-gradient(180deg,#10252c,#0f1a1f);
-  border:1px solid #12323f;
-  box-shadow:0 16px 36px rgba(0,0,0,.35);
-}
-
-.mining-plan ul{
-  padding-left:18px;
-  margin:10px 0;
-}
-
-.mining-plan li{
-  line-height:1.25;
-  margin-bottom:6px;
-  word-break:break-word;
-}
-
-.mining-plan h4{
-  font-size:14px;
-  font-weight:800;
-  margin-bottom:6px;
-}
-
-.mining-profit{
-  font-size:22px;
-  font-weight:800;
-  color:#22c55e;
-  margin-bottom:12px;
-}
-
-.mining-plan button{
-  width:100%;
-  height:38px;
-  border-radius:14px;
-  background:#22c55e;
-  color:#022c22;
-  font-weight:800;
-  border:none;
-  margin-top:auto;
+  background:
+    radial-gradient(circle at top center, rgba(34,197,94,.08), transparent 28%),
+    linear-gradient(180deg,#061019 0%, #08131c 100%);
+  color:var(--mn-text);
 }
 
 /* =========================================================
-   MINING — SUBSCRIBE PANEL
+   SAFE BOX MODEL
 ========================================================= */
+#mining,
+#mining *,
+#mining *::before,
+#mining *::after{
+  box-sizing:border-box;
+}
 
+/* =========================================================
+   HIDDEN STATE
+========================================================= */
 #mining .mining-hidden{
   display:none !important;
 }
 
-#mining .mining-sub-panel{
-  margin-top:18px;
-  background:linear-gradient(180deg,#10252c,#0f1a1f);
-  border:1px solid #12323f;
-  border-radius:18px;
-  padding:16px;
-  box-shadow:0 16px 36px rgba(0,0,0,.35);
+/* =========================================================
+   TOP HERO CARD
+========================================================= */
+#mining .mining-top{
+  position:relative;
+  overflow:hidden;
+  margin-bottom:18px;
+  padding:18px;
+  border-radius:var(--mn-radius-xl);
+  border:1px solid rgba(34,197,94,.14);
+  background:
+    radial-gradient(circle at top right, rgba(34,197,94,.12), transparent 30%),
+    radial-gradient(circle at top left, rgba(56,189,248,.10), transparent 24%),
+    linear-gradient(180deg,#10252c 0%, #0c1821 100%);
+  box-shadow:var(--mn-shadow);
 }
 
-#mining .mining-sub-head{
+#mining .mining-top::after{
+  content:"";
+  position:absolute;
+  inset:auto -20% -40% auto;
+  width:220px;
+  height:220px;
+  border-radius:50%;
+  background:radial-gradient(circle, rgba(34,197,94,.10), transparent 70%);
+  pointer-events:none;
+  filter:blur(18px);
+}
+
+/* =========================================================
+   TOP HEADER
+========================================================= */
+#mining .mining-top-head{
+  position:relative;
+  z-index:2;
   display:flex;
-  align-items:center;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:14px;
+  margin-bottom:18px;
+}
+
+#mining .mining-top-head h2{
+  margin:0 0 6px;
+  font-size:22px;
+  line-height:1.05;
+  font-weight:1000;
+  letter-spacing:-.02em;
+  color:#fff;
+}
+
+#mining .mining-top-head p{
+  margin:0;
+  max-width:260px;
+  font-size:13px;
+  line-height:1.65;
+  color:var(--mn-muted);
+}
+
+/* زر Subscribe أعلى */
+#mining .mining-top-head .btn,
+#mining .mining-top-head button{
+  flex:0 0 auto;
+  min-width:110px;
+  min-height:42px;
+  padding:0 16px;
+  border:none;
+  border-radius:16px;
+  background:linear-gradient(135deg,var(--mn-green),var(--mn-green-2));
+  color:#062d14;
+  font-size:13px;
+  font-weight:1000;
+  cursor:pointer;
+  box-shadow:0 10px 24px rgba(34,197,94,.18);
+  transition:transform .18s ease, box-shadow .18s ease, opacity .18s ease;
+}
+
+#mining .mining-top-head .btn:hover,
+#mining .mining-top-head button:hover{
+  transform:translateY(-2px);
+  box-shadow:0 14px 30px rgba(34,197,94,.22);
+}
+
+#mining .mining-top-head .btn:active,
+#mining .mining-top-head button:active{
+  transform:scale(.98);
+}
+
+/* =========================================================
+   OVERVIEW GRID
+========================================================= */
+#mining .mining-overview-grid{
+  position:relative;
+  z-index:2;
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;
+}
+
+#mining .mining-stat{
+  position:relative;
+  overflow:hidden;
+  min-height:92px;
+  border-radius:18px;
+  padding:14px;
+  border:1px solid var(--mn-border);
+  background:
+    linear-gradient(180deg,rgba(11,18,32,.95),rgba(8,14,24,.95));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.02);
+}
+
+#mining .mining-stat::before{
+  content:"";
+  position:absolute;
+  top:-40px;
+  right:-40px;
+  width:100px;
+  height:100px;
+  border-radius:50%;
+  background:radial-gradient(circle, rgba(34,197,94,.08), transparent 70%);
+  pointer-events:none;
+}
+
+#mining .mining-stat span{
+  display:block;
+  font-size:12px;
+  font-weight:800;
+  color:var(--mn-muted);
+  margin-bottom:8px;
+}
+
+#mining .mining-stat strong{
+  display:block;
+  font-size:19px;
+  line-height:1.1;
+  font-weight:1000;
+  color:#fff;
+  letter-spacing:-.02em;
+  word-break:break-word;
+}
+
+/* =========================================================
+   COIN TABS
+========================================================= */
+#mining .mining-tabs{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:12px;
+  margin-bottom:18px;
+}
+
+#mining .mining-tabs button{
+  position:relative;
+  overflow:hidden;
+  height:44px;
+  border-radius:18px;
+  border:1px solid rgba(255,255,255,.07);
+  background:linear-gradient(180deg,#0b141d,#09111a);
+  color:#9fb3c8;
+  font-size:13px;
+  font-weight:1000;
+  letter-spacing:.2px;
+  cursor:pointer;
+  transition:all .18s ease;
+}
+
+#mining .mining-tabs button::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:linear-gradient(90deg, transparent, rgba(255,255,255,.04), transparent);
+  transform:translateX(-100%);
+  transition:transform .45s ease;
+}
+
+#mining .mining-tabs button:hover::before{
+  transform:translateX(100%);
+}
+
+#mining .mining-tabs button:hover{
+  border-color:rgba(34,197,94,.18);
+  color:#dff7e8;
+}
+
+#mining .mining-tabs button.active{
+  background:linear-gradient(135deg,#22c55e,#6ee7a8);
+  color:#032214;
+  border:none;
+  box-shadow:0 10px 24px rgba(34,197,94,.18);
+}
+
+/* =========================================================
+   PLANS GRID
+========================================================= */
+#mining .mining-plans{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:14px;
+  align-items:stretch;
+}
+
+/* =========================================================
+   PLAN CARD
+========================================================= */
+#mining .mining-plan{
+  position:relative;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+  min-height:245px;
+  padding:16px;
+  border-radius:22px;
+  border:1px solid rgba(255,255,255,.06);
+  background:
+    radial-gradient(circle at top right, rgba(34,197,94,.08), transparent 28%),
+    linear-gradient(180deg,#101d29 0%, #0d1822 100%);
+  box-shadow:var(--mn-shadow-soft);
+  transition:transform .2s ease, border-color .2s ease, box-shadow .2s ease;
+}
+
+#mining .mining-plan:hover{
+  transform:translateY(-3px);
+  border-color:rgba(34,197,94,.18);
+  box-shadow:0 16px 32px rgba(0,0,0,.28);
+}
+
+#mining .mining-plan::after{
+  content:"";
+  position:absolute;
+  top:-60px;
+  right:-60px;
+  width:140px;
+  height:140px;
+  border-radius:50%;
+  background:radial-gradient(circle, rgba(34,197,94,.10), transparent 70%);
+  filter:blur(8px);
+  pointer-events:none;
+}
+
+/* عنوان الخطة */
+#mining .mining-plan h3{
+  margin:0 0 10px;
+  font-size:17px;
+  font-weight:1000;
+  color:#fff;
+  line-height:1.1;
+  letter-spacing:-.02em;
+}
+
+/* نسبة الربح */
+#mining .mining-profit{
+  font-size:30px;
+  line-height:1;
+  font-weight:1000;
+  color:var(--mn-green);
+  text-shadow:0 0 18px rgba(34,197,94,.12);
+  margin-bottom:12px;
+}
+
+/* تفاصيل الخطة */
+#mining .mining-plan ul{
+  padding-left:18px;
+  margin:0 0 14px;
+  color:var(--mn-soft);
+  font-size:13px;
+  line-height:1.8;
+}
+
+#mining .mining-plan li{
+  margin-bottom:2px;
+  word-break:break-word;
+}
+
+/* زر الاشتراك */
+#mining .mining-plan button{
+  width:100%;
+  min-height:44px;
+  border:none;
+  border-radius:16px;
+  background:linear-gradient(135deg,var(--mn-green),var(--mn-green-2));
+  color:#052110;
+  font-size:13px;
+  font-weight:1000;
+  cursor:pointer;
+  margin-top:auto;
+  box-shadow:0 10px 22px rgba(34,197,94,.16);
+  transition:transform .18s ease, box-shadow .18s ease, opacity .18s ease;
+}
+
+#mining .mining-plan button:hover{
+  transform:translateY(-1px);
+  box-shadow:0 14px 26px rgba(34,197,94,.22);
+}
+
+#mining .mining-plan button:active{
+  transform:scale(.985);
+}
+
+/* =========================================================
+   SUBSCRIBE PANEL
+========================================================= */
+#mining .mining-sub-panel{
+  position:relative;
+  overflow:hidden;
+  margin-top:18px;
+  padding:18px;
+  border-radius:24px;
+  border:1px solid rgba(34,197,94,.14);
+  background:
+    radial-gradient(circle at top right, rgba(34,197,94,.10), transparent 28%),
+    linear-gradient(180deg,#10252c 0%, #0d1821 100%);
+  box-shadow:0 18px 40px rgba(0,0,0,.36);
+  animation:miningPanelFade .22s ease;
+}
+
+#mining .mining-sub-panel::after{
+  content:"";
+  position:absolute;
+  bottom:-80px;
+  right:-80px;
+  width:220px;
+  height:220px;
+  border-radius:50%;
+  background:radial-gradient(circle, rgba(34,197,94,.08), transparent 70%);
+  pointer-events:none;
+  filter:blur(14px);
+}
+
+@keyframes miningPanelFade{
+  from{
+    opacity:0;
+    transform:translateY(8px);
+  }
+  to{
+    opacity:1;
+    transform:translateY(0);
+  }
+}
+
+/* =========================================================
+   SUB PANEL HEAD
+========================================================= */
+#mining .mining-sub-head{
+  position:relative;
+  z-index:2;
+  display:flex;
+  align-items:flex-start;
   justify-content:space-between;
   gap:12px;
-  margin-bottom:14px;
+  margin-bottom:16px;
 }
 
 #mining .mining-sub-head h3{
   margin:0;
-  font-size:17px;
+  font-size:18px;
+  font-weight:1000;
   color:#fff;
+  line-height:1.1;
 }
 
 #mining .mining-sub-head p{
-  margin:4px 0 0;
+  margin:6px 0 0;
   font-size:13px;
-  color:#94a3b8;
+  line-height:1.6;
+  color:var(--mn-muted);
+  max-width:260px;
 }
 
+/* زر الإغلاق */
+#mining .mining-panel-close{
+  flex:0 0 auto;
+  width:38px;
+  height:38px;
+  border:none;
+  border-radius:14px;
+  background:#071018;
+  color:#fff;
+  cursor:pointer;
+  font-size:15px;
+  font-weight:1000;
+  border:1px solid rgba(255,255,255,.08);
+  transition:transform .18s ease, background .18s ease, border-color .18s ease;
+}
+
+#mining .mining-panel-close:hover{
+  background:#0b1520;
+  border-color:rgba(34,197,94,.18);
+}
+
+#mining .mining-panel-close:active{
+  transform:scale(.96);
+}
+
+/* =========================================================
+   SUB BODY
+========================================================= */
 #mining .mining-sub-body{
+  position:relative;
+  z-index:2;
   display:flex;
   flex-direction:column;
   gap:12px;
 }
 
+/* Available balance box */
 #mining .mining-balance-info{
   font-size:14px;
-  color:#c8d4e8;
+  line-height:1.55;
+  color:#d8e6f3;
   background:rgba(255,255,255,.03);
   border:1px solid rgba(255,255,255,.05);
-  padding:12px 14px;
-  border-radius:14px;
+  padding:13px 14px;
+  border-radius:16px;
+  backdrop-filter:blur(6px);
 }
 
 #mining .mining-balance-info strong{
-  color:#22c55e;
+  color:var(--mn-green);
+  font-weight:1000;
 }
 
+/* labels */
 #mining .mining-sub-body label{
   font-size:13px;
-  font-weight:800;
+  font-weight:900;
   color:#aab7cf;
+  margin-top:2px;
 }
 
+/* amount input */
 #mining .mining-sub-body input{
   width:100%;
-  min-height:48px;
-  border-radius:14px;
+  min-height:50px;
+  border-radius:16px;
   border:1px solid rgba(255,255,255,.08);
   background:#0b1220;
   color:#fff;
-  padding:0 14px;
-  font-weight:700;
+  padding:0 16px;
+  font-size:15px;
+  font-weight:900;
   outline:none;
+  transition:border-color .18s ease, box-shadow .18s ease, background .18s ease;
+}
+
+#mining .mining-sub-body input::placeholder{
+  color:rgba(255,255,255,.28);
 }
 
 #mining .mining-sub-body input:focus{
-  border-color:#22c55e;
-  box-shadow:0 0 0 3px rgba(34,197,94,.08);
+  border-color:rgba(34,197,94,.32);
+  box-shadow:0 0 0 4px rgba(34,197,94,.08);
+  background:#0d1524;
 }
 
+/* =========================================================
+   QUICK AMOUNT BUTTONS
+========================================================= */
 #mining .mining-quick-row{
   display:grid;
   grid-template-columns:repeat(3,1fr);
@@ -2561,29 +2906,318 @@ h3{
 }
 
 #mining .mining-quick-row button{
-  min-height:42px;
+  min-height:44px;
   border:none;
-  border-radius:14px;
+  border-radius:15px;
   background:#0b1220;
   color:#fff;
-  font-weight:800;
+  font-size:13px;
+  font-weight:1000;
   cursor:pointer;
   border:1px solid rgba(255,255,255,.06);
+  transition:all .18s ease;
 }
 
 #mining .mining-quick-row button:hover{
-  border-color:rgba(34,197,94,.25);
+  border-color:rgba(34,197,94,.22);
+  color:#dff7e8;
+  transform:translateY(-1px);
 }
 
-#mining .mining-sub-summary{
-  background:rgba(255,255,255,.03);
-  border:1px solid rgba(255,255,255,.05);
-  border-radius:16px;
-  padding:14px;
-  font-size:13px;
-  color:#d6e2f5;
-  line-height:1.65;
+#mining .mining-quick-row button:active{
+  transform:scale(.98);
 }
+
+/* =========================================================
+   SUMMARY BOX
+========================================================= */
+#mining .mining-sub-summary{
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.02));
+  border:1px solid rgba(255,255,255,.05);
+  border-radius:18px;
+  padding:15px;
+  font-size:13px;
+  color:#dce8f6;
+  line-height:1.8;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.02);
+}
+
+#mining .mining-sub-summary strong{
+  color:#fff;
+  font-weight:1000;
+}
+
+/* Confirm button */
+#mining #confirmMiningSubscribeBtn{
+  width:100%;
+  min-height:48px;
+  border:none;
+  border-radius:18px;
+  background:linear-gradient(135deg,var(--mn-green),var(--mn-green-2));
+  color:#041b0d;
+  font-size:15px;
+  font-weight:1000;
+  letter-spacing:.2px;
+  cursor:pointer;
+  box-shadow:0 14px 30px rgba(34,197,94,.18);
+  transition:transform .18s ease, box-shadow .18s ease, opacity .18s ease;
+}
+
+#mining #confirmMiningSubscribeBtn:hover{
+  transform:translateY(-2px);
+  box-shadow:0 18px 36px rgba(34,197,94,.24);
+}
+
+#mining #confirmMiningSubscribeBtn:active{
+  transform:scale(.985);
+}
+
+/* =========================================================
+   GENERIC BUTTON NORMALIZATION INSIDE MINING
+========================================================= */
+#mining button{
+  -webkit-tap-highlight-color:transparent;
+}
+
+/* =========================================================
+   FOCUS ACCESSIBILITY
+========================================================= */
+#mining button:focus-visible,
+#mining input:focus-visible{
+  outline:2px solid rgba(34,197,94,.28);
+  outline-offset:2px;
+}
+
+/* =========================================================
+   SMALL STATUS HELPERS (future-ready)
+========================================================= */
+#mining .mining-status-success{
+  padding:12px 14px;
+  border-radius:14px;
+  background:rgba(34,197,94,.10);
+  border:1px solid rgba(34,197,94,.18);
+  color:#a7f3d0;
+  font-size:13px;
+  font-weight:800;
+}
+
+#mining .mining-status-error{
+  padding:12px 14px;
+  border-radius:14px;
+  background:rgba(239,68,68,.10);
+  border:1px solid rgba(239,68,68,.18);
+  color:#fecaca;
+  font-size:13px;
+  font-weight:800;
+}
+
+/* =========================================================
+   RESPONSIVE — TABLET / MOBILE
+========================================================= */
+@media (max-width:640px){
+
+  #mining{
+    padding:14px;
+    padding-bottom:118px;
+  }
+
+  #mining .mining-top{
+    padding:16px;
+  }
+
+  #mining .mining-top-head{
+    gap:12px;
+  }
+
+  #mining .mining-top-head h2{
+    font-size:20px;
+  }
+
+  #mining .mining-overview-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:10px;
+  }
+
+  #mining .mining-stat{
+    min-height:88px;
+    padding:13px;
+  }
+
+  #mining .mining-stat strong{
+    font-size:17px;
+  }
+
+  #mining .mining-plans{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:12px;
+  }
+
+  #mining .mining-plan{
+    min-height:230px;
+    padding:15px;
+  }
+
+  #mining .mining-profit{
+    font-size:26px;
+  }
+
+  #mining .mining-sub-panel{
+    padding:16px;
+  }
+}
+
+/* =========================================================
+   RESPONSIVE — SMALL PHONES
+========================================================= */
+@media (max-width:430px){
+
+  #mining{
+    padding:12px;
+    padding-bottom:116px;
+  }
+
+  #mining .mining-top-head{
+    flex-direction:column;
+    align-items:stretch;
+  }
+
+  #mining .mining-top-head .btn,
+  #mining .mining-top-head button{
+    width:100%;
+  }
+
+  #mining .mining-overview-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:10px;
+  }
+
+  #mining .mining-stat{
+    min-height:84px;
+    padding:12px;
+    border-radius:16px;
+  }
+
+  #mining .mining-stat span{
+    font-size:11px;
+  }
+
+  #mining .mining-stat strong{
+    font-size:16px;
+  }
+
+  #mining .mining-tabs{
+    gap:10px;
+  }
+
+  #mining .mining-tabs button{
+    height:42px;
+    border-radius:16px;
+    font-size:12px;
+  }
+
+  #mining .mining-plans{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:10px;
+  }
+
+  #mining .mining-plan{
+    min-height:220px;
+    padding:14px;
+    border-radius:18px;
+  }
+
+  #mining .mining-plan h3{
+    font-size:15px;
+  }
+
+  #mining .mining-profit{
+    font-size:24px;
+  }
+
+  #mining .mining-plan ul{
+    font-size:12px;
+    line-height:1.7;
+  }
+
+  #mining .mining-plan button{
+    min-height:42px;
+    border-radius:14px;
+    font-size:12px;
+  }
+
+  #mining .mining-sub-panel{
+    padding:15px;
+    border-radius:20px;
+  }
+
+  #mining .mining-sub-head h3{
+    font-size:16px;
+  }
+
+  #mining .mining-sub-head p{
+    font-size:12px;
+    line-height:1.55;
+  }
+
+  #mining .mining-balance-info{
+    font-size:13px;
+  }
+
+  #mining .mining-sub-body input{
+    min-height:48px;
+    font-size:14px;
+  }
+
+  #mining .mining-quick-row button{
+    min-height:42px;
+    font-size:12px;
+  }
+
+  #mining .mining-sub-summary{
+    font-size:12.5px;
+    line-height:1.75;
+  }
+
+  #mining #confirmMiningSubscribeBtn{
+    min-height:46px;
+    font-size:14px;
+  }
+}
+
+/* =========================================================
+   EXTRA TIGHT DEVICES
+========================================================= */
+@media (max-width:360px){
+
+  #mining .mining-overview-grid,
+  #mining .mining-plans{
+    gap:8px;
+  }
+
+  #mining .mining-plan{
+    min-height:210px;
+    padding:12px;
+  }
+
+  #mining .mining-profit{
+    font-size:22px;
+  }
+
+  #mining .mining-plan ul{
+    padding-left:16px;
+    font-size:11.5px;
+  }
+
+  #mining .mining-tabs button{
+    font-size:11px;
+  }
+
+  #mining .mining-stat strong{
+    font-size:15px;
+  }
+}
+
 /* =========================================================
    BOTTOM NAV
 ========================================================= */
