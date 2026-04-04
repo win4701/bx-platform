@@ -297,21 +297,67 @@
     if (dom.volumeToday) dom.volumeToday.textContent = `${randInt(85000, 245000).toLocaleString()} BX`;
   }
 
-  function syncPlayButton(label = "Pari") {
-    if (!dom.playBtn) return;
-    dom.playBtn.textContent = label;
-    dom.playBtn.disabled = false;
+  function syncPlayButton(label = "Play", mode = "idle") {
+  if (!dom.playBtn) return;
+
+  const labelEl = dom.playBtn.querySelector(".play-btn-label");
+  const finalLabel = String(label || "Play");
+
+  dom.playBtn.dataset.state = mode;
+  dom.playBtn.disabled = false;
+
+  dom.playBtn.classList.remove("is-idle", "is-running", "is-stop", "is-cashout");
+
+  if (mode === "cashout") {
+    dom.playBtn.classList.add("is-cashout");
+  } else if (mode === "running" || mode === "stop") {
+    dom.playBtn.classList.add("is-stop");
+  } else {
+    dom.playBtn.classList.add("is-idle");
   }
 
+  if (labelEl) {
+    labelEl.textContent = finalLabel;
+  } else {
+    dom.playBtn.textContent = finalLabel;
+  }
+}
+   
   function setPlayingUI(on) {
-    state.playing = on;
-    if (!dom.playBtn) return;
-    dom.playBtn.disabled = false;
+  state.playing = on;
 
-    if (!state.currentGame) {
-      dom.playBtn.textContent = "Pari";
-      return;
-    }
+  if (!dom.playBtn) return;
+
+  dom.playBtn.disabled = false;
+
+  if (!state.currentGame) {
+    syncPlayButton("Play", "idle");
+    return;
+  }
+
+  const g = state.currentGame;
+  const isAuto = state.currentSettingsTab === "auto";
+
+  // CASHOUT GAMES
+  if ((g === "crash" || g === "airboss") && on && state.canCashout) {
+    syncPlayButton("Cash Out", "cashout");
+    return;
+  }
+
+  // AUTO MODE => STOP
+  if (isAuto && (on || state.autoPlay || state.autoRemaining > 0)) {
+    syncPlayButton("Stop", "stop");
+    return;
+  }
+
+  // GENERIC ACTIVE ROUND => STOP
+  if (on) {
+    syncPlayButton("Stop", "stop");
+    return;
+  }
+
+  syncPlayButton("Play", "idle");
+}
 
     const g = state.currentGame;
 
@@ -1402,21 +1448,33 @@
     });
   }
 
-  function bindButtons() {
-    dom.refreshBtn?.addEventListener("click", () => {
-      playSound("click");
-      bootstrapFeeds();
-      syncTopStats();
-    });
+  function bindPlayButton() {
+  if (!dom.playBtn) return;
 
-    dom.backBtn?.addEventListener("click", closeGame);
-    dom.playBtn?.addEventListener("click", handlePlayClick);
+  dom.playBtn.addEventListener("click", () => {
+    if (!state.currentGame) return;
 
-    dom.newSeedBtn?.addEventListener("click", () => {
-      playSound("click");
-      regenerateSeeds();
-    });
-  }
+    const g = state.currentGame;
+    const btnState = dom.playBtn.dataset.state || "idle";
+
+    playSound("click");
+
+    // CASH OUT MODE
+    if (btnState === "cashout") {
+      handleCashout();
+      return;
+    }
+
+    // STOP MODE
+    if (btnState === "stop" || btnState === "running") {
+      stopCurrentGameFlow();
+      return;
+    }
+
+    // PLAY MODE
+    startCurrentGameFlow();
+  });
+}
 
   /* =========================================================
      INIT
