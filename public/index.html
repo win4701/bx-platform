@@ -38,8 +38,8 @@
 
 <!-- ================= MAIN ================= -->
 <main class="app-container">
-  
-  <!-- ================= WALLET ================= -->
+
+<!-- ================= WALLET ================= -->
 <section id="wallet" class="view active">
 
   <!-- ================= TOP TOTAL ================= -->
@@ -51,78 +51,100 @@
     </h1>
   </div>
 
-  <!-- ================= MAIN ACTIONS ================= -->
+  <!-- ================= ACTIONS ================= -->
   <div class="wallet-actions">
-    <button class="btn primary">Deposit</button>
-    <button class="btn">Withdraw</button>
-    <button class="btn">Transfer</button>
+    <button class="btn primary" type="button" data-wallet-open="depositPanel">Deposit</button>
+    <button class="btn" type="button" data-wallet-open="withdrawPanel">Withdraw</button>
+    <button class="btn" type="button" data-wallet-open="transferPanel">Transfer</button>
   </div>
-  <!-- ================= WALLET PANELS ================= -->
-<div class="wallet-panels">
 
-  <!-- Deposit Panel -->
-  <div class="wallet-panel hidden" id="depositPanel">
-    <div class="wallet-panel-head">
-      <h4>Deposit Crypto</h4>
-      <button type="button" class="wallet-panel-close" data-close-panel="depositPanel">✕</button>
+  <!-- ================= INTERNAL PANELS ================= -->
+  <div class="wallet-panels">
+
+    <!-- Deposit -->
+    <div class="wallet-panel wallet-hidden" id="depositPanel">
+      <div class="wallet-panel-head">
+        <h4>Deposit Crypto</h4>
+        <button type="button" class="wallet-panel-close" data-wallet-close="depositPanel">✕</button>
+      </div>
+
+      <div class="wallet-panel-body">
+        <label for="depositAsset">Asset</label>
+        <select id="depositAsset">
+          <option value="USDT">USDT</option>
+          <option value="USDC">USDC</option>
+          <option value="BTC">BTC</option>
+          <option value="BNB">BNB</option>
+          <option value="ETH">ETH</option>
+          <option value="SOL">SOL</option>
+          <option value="LTC">LTC</option>
+          <option value="BX">BX</option>
+        </select>
+
+        <button class="btn primary" id="generateDepositBtn" type="button">
+          Generate Address
+        </button>
+
+        <div class="wallet-address-box">
+          <span class="wallet-address-label">Deposit Address</span>
+          <code id="depositAddressText">—</code>
+        </div>
+      </div>
     </div>
 
-    <div class="wallet-panel-body">
-      <label for="depositAsset">Asset</label>
-      <select id="depositAsset">
-        <option value="USDT">USDT</option>
-        <option value="USDC">USDC</option>
-        <option value="BTC">BTC</option>
-        <option value="BNB">BNB</option>
-        <option value="ETH">ETH</option>
-        <option value="SOL">SOL</option>
-        <option value="LTC">LTC</option>
-      </select>
+    <!-- Withdraw -->
+    <div class="wallet-panel wallet-hidden" id="withdrawPanel">
+      <div class="wallet-panel-head">
+        <h4>Withdraw Crypto</h4>
+        <button type="button" class="wallet-panel-close" data-wallet-close="withdrawPanel">✕</button>
+      </div>
 
-      <button class="btn primary" id="generateDepositBtn" type="button">
-        Generate Address
-      </button>
+      <div class="wallet-panel-body">
+        <label for="withdrawAsset">Asset</label>
+        <select id="withdrawAsset">
+          <option value="USDT">USDT</option>
+          <option value="USDC">USDC</option>
+          <option value="BTC">BTC</option>
+          <option value="BNB">BNB</option>
+          <option value="ETH">ETH</option>
+          <option value="SOL">SOL</option>
+          <option value="LTC">LTC</option>
+          <option value="BX">BX</option>
+        </select>
 
-      <div class="wallet-address-box" id="depositAddressBox">
-        <span class="wallet-address-label">Deposit Address</span>
-        <code id="depositAddressText">—</code>
+        <label for="withdrawAmount">Amount</label>
+        <input id="withdrawAmount" type="number" min="0" step="0.0001" placeholder="0.00">
+
+        <label for="withdrawAddress">Wallet Address</label>
+        <input id="withdrawAddress" type="text" placeholder="Enter wallet address">
+
+        <button class="btn primary" id="submitWithdrawBtn" type="button">
+          Confirm Withdraw
+        </button>
+      </div>
+    </div>
+
+    <!-- Transfer -->
+    <div class="wallet-panel wallet-hidden" id="transferPanel">
+      <div class="wallet-panel-head">
+        <h4>Transfer BX</h4>
+        <button type="button" class="wallet-panel-close" data-wallet-close="transferPanel">✕</button>
+      </div>
+
+      <div class="wallet-panel-body">
+        <label for="transferTelegram">Telegram ID</label>
+        <input id="transferTelegram" type="text" placeholder="@username">
+
+        <label for="transferAmount">Amount BX</label>
+        <input id="transferAmount" type="number" min="0" step="0.0001" placeholder="0.00">
+
+        <button class="btn confirm" id="submitTransferBtn" type="button">
+          Confirm Transfer
+        </button>
       </div>
     </div>
   </div>
-
-  <!-- Withdraw Panel -->
-  <div class="wallet-panel hidden" id="withdrawPanel">
-    <div class="wallet-panel-head">
-      <h4>Withdraw Crypto</h4>
-      <button type="button" class="wallet-panel-close" data-close-panel="withdrawPanel">✕</button>
-    </div>
-
-    <div class="wallet-panel-body">
-      <label for="withdrawAsset">Asset</label>
-      <select id="withdrawAsset">
-        <option value="USDT">USDT</option>
-        <option value="USDC">USDC</option>
-        <option value="BTC">BTC</option>
-        <option value="BNB">BNB</option>
-        <option value="ETH">ETH</option>
-        <option value="SOL">SOL</option>
-        <option value="LTC">LTC</option>
-        <option value="BX">BX</option>
-      </select>
-
-      <label for="withdrawAmount">Amount</label>
-      <input id="withdrawAmount" type="number" min="0" step="0.0001" placeholder="0.00">
-
-      <label for="withdrawAddress">Address</label>
-      <input id="withdrawAddress" type="text" placeholder="Wallet address">
-
-      <button class="btn primary" id="submitWithdrawBtn" type="button">
-        Confirm Withdraw
-      </button>
-    </div>
-  </div>
-
-</div>
+      
   <!-- ================= BALANCES ================= -->
   <div class="wallet-balances">
     <h3>Balances</h3>
@@ -258,27 +280,6 @@
     </div>
 
   </div>
-
-  <!-- ================= TRANSFER PANEL ================= -->
-  <div class="wallet-transfer" id="transferPanel">
-    <h4>Transfer BX</h4>
-
-    <input
-      id="transferTelegram"
-      placeholder="Telegram ID ( @username )"
-    />
-
-    <input
-      id="transferAmount"
-      type="number"
-      placeholder="Amount BX"
-    />
-
-    <button class="btn confirm">
-      Confirm Transfer
-    </button>
-  </div>
-
   <!-- ================= BOTTOM ACTIONS ================= -->
   <div class="wallet-bottom-actions">
     <button id="walletConnectBtn" class="wallet-btn walletconnect">
