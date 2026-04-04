@@ -45,23 +45,36 @@
   <!-- ================= TOP TOTAL ================= -->
   <div class="wallet-top">
     <span class="label">Est. Total Value</span>
+
     <h1>
       <span id="walletTotal">$0.00</span>
       <small>USD</small>
     </h1>
+
+    <div id="walletStatus" class="wallet-status hidden">
+      Syncing...
+    </div>
   </div>
 
   <!-- ================= ACTIONS ================= -->
   <div class="wallet-actions">
-    <button class="btn primary" type="button" data-wallet-open="depositPanel">Deposit</button>
-    <button class="btn" type="button" data-wallet-open="withdrawPanel">Withdraw</button>
-    <button class="btn" type="button" data-wallet-open="transferPanel">Transfer</button>
+    <button class="btn primary" type="button" data-wallet-open="depositPanel">
+      Deposit
+    </button>
+
+    <button class="btn" type="button" data-wallet-open="withdrawPanel">
+      Withdraw
+    </button>
+
+    <button class="btn" type="button" data-wallet-open="transferPanel">
+      Transfer
+    </button>
   </div>
 
   <!-- ================= INTERNAL PANELS ================= -->
   <div class="wallet-panels">
 
-    <!-- Deposit -->
+    <!-- ===== Deposit ===== -->
     <div class="wallet-panel wallet-hidden" id="depositPanel">
       <div class="wallet-panel-head">
         <h4>Deposit Crypto</h4>
@@ -76,6 +89,9 @@
           <option value="BTC">BTC</option>
           <option value="BNB">BNB</option>
           <option value="ETH">ETH</option>
+          <option value="AVAX">AVAX</option>
+          <option value="ZEC">ZEC</option>
+          <option value="TON">TON</option>
           <option value="SOL">SOL</option>
           <option value="LTC">LTC</option>
           <option value="BX">BX</option>
@@ -89,10 +105,18 @@
           <span class="wallet-address-label">Deposit Address</span>
           <code id="depositAddressText">—</code>
         </div>
+
+        <div class="wallet-inline-actions">
+          <button id="copyDepositBtn" class="btn secondary" type="button">
+            Copy Address
+          </button>
+        </div>
+
+        <div id="depositStatus" class="wallet-status hidden"></div>
       </div>
     </div>
 
-    <!-- Withdraw -->
+    <!-- ===== Withdraw ===== -->
     <div class="wallet-panel wallet-hidden" id="withdrawPanel">
       <div class="wallet-panel-head">
         <h4>Withdraw Crypto</h4>
@@ -107,6 +131,9 @@
           <option value="BTC">BTC</option>
           <option value="BNB">BNB</option>
           <option value="ETH">ETH</option>
+          <option value="AVAX">AVAX</option>
+          <option value="ZEC">ZEC</option>
+          <option value="TON">TON</option>
           <option value="SOL">SOL</option>
           <option value="LTC">LTC</option>
           <option value="BX">BX</option>
@@ -121,10 +148,12 @@
         <button class="btn primary" id="submitWithdrawBtn" type="button">
           Confirm Withdraw
         </button>
+
+        <div id="withdrawStatus" class="wallet-status hidden"></div>
       </div>
     </div>
 
-    <!-- Transfer -->
+    <!-- ===== Transfer ===== -->
     <div class="wallet-panel wallet-hidden" id="transferPanel">
       <div class="wallet-panel-head">
         <h4>Transfer BX</h4>
@@ -141,16 +170,19 @@
         <button class="btn confirm" id="submitTransferBtn" type="button">
           Confirm Transfer
         </button>
+
+        <div id="transferStatus" class="wallet-status hidden"></div>
       </div>
     </div>
+
   </div>
-      
+
   <!-- ================= BALANCES ================= -->
   <div class="wallet-balances">
     <h3>Balances</h3>
 
     <!-- BX -->
-    <div class="wallet-row main">
+    <div class="wallet-row main" data-asset="BX">
       <div class="left">
         <img src="assets/images/bx.png" alt="BX">
         <div class="info">
@@ -162,7 +194,7 @@
     </div>
 
     <!-- USDT -->
-    <div class="wallet-row">
+    <div class="wallet-row" data-asset="USDT">
       <div class="left">
         <img src="assets/images/usdt.png" alt="USDT">
         <div class="info">
@@ -172,20 +204,21 @@
       </div>
       <div class="amount"><strong id="bal-usdt">0.00</strong></div>
     </div>
+
     <!-- USDC -->
-    <div class="wallet-row">
+    <div class="wallet-row" data-asset="USDC">
       <div class="left">
-        <img src="assets/images/usdc.png" alt="BNB">
+        <img src="assets/images/usdc.png" alt="USDC">
         <div class="info">
           <strong>USDC</strong>
-          <span>USDC</span>
+          <span>USD Coin</span>
         </div>
       </div>
       <div class="amount"><strong id="bal-usdc">0.00</strong></div>
     </div>
 
     <!-- BTC -->
-    <div class="wallet-row">
+    <div class="wallet-row" data-asset="BTC">
       <div class="left">
         <img src="assets/images/btc.png" alt="BTC">
         <div class="info">
@@ -197,7 +230,7 @@
     </div>
 
     <!-- BNB -->
-    <div class="wallet-row">
+    <div class="wallet-row" data-asset="BNB">
       <div class="left">
         <img src="assets/images/bnb.png" alt="BNB">
         <div class="info">
@@ -209,7 +242,7 @@
     </div>
 
     <!-- ETH -->
-    <div class="wallet-row">
+    <div class="wallet-row" data-asset="ETH">
       <div class="left">
         <img src="assets/images/eth.png" alt="ETH">
         <div class="info">
@@ -221,7 +254,7 @@
     </div>
 
     <!-- AVAX -->
-    <div class="wallet-row">
+    <div class="wallet-row" data-asset="AVAX">
       <div class="left">
         <img src="assets/images/avax.png" alt="AVAX">
         <div class="info">
@@ -231,8 +264,9 @@
       </div>
       <div class="amount"><strong id="bal-avax">0.00</strong></div>
     </div>
+
     <!-- ZEC -->
-    <div class="wallet-row">
+    <div class="wallet-row" data-asset="ZEC">
       <div class="left">
         <img src="assets/images/zec.png" alt="ZEC">
         <div class="info">
@@ -244,7 +278,7 @@
     </div>
 
     <!-- TON -->
-    <div class="wallet-row">
+    <div class="wallet-row" data-asset="TON">
       <div class="left">
         <img src="assets/images/ton.png" alt="TON">
         <div class="info">
@@ -256,7 +290,7 @@
     </div>
 
     <!-- SOL -->
-    <div class="wallet-row">
+    <div class="wallet-row" data-asset="SOL">
       <div class="left">
         <img src="assets/images/sol.png" alt="SOL">
         <div class="info">
@@ -268,7 +302,7 @@
     </div>
 
     <!-- LTC -->
-    <div class="wallet-row">
+    <div class="wallet-row" data-asset="LTC">
       <div class="left">
         <img src="assets/images/ltc.png" alt="LTC">
         <div class="info">
@@ -279,19 +313,27 @@
       <div class="amount"><strong id="bal-ltc">0.00</strong></div>
     </div>
 
+    <!-- EMPTY STATE -->
+    <div id="walletEmptyState" class="wallet-empty hidden">
+      No assets yet — deposit to get started
+    </div>
   </div>
+
   <!-- ================= BOTTOM ACTIONS ================= -->
   <div class="wallet-bottom-actions">
-    <button id="walletConnectBtn" class="wallet-btn walletconnect">
+    <button id="walletConnectBtn" class="wallet-btn walletconnect" data-state="idle">
       WalletConnect
     </button>
 
-    <button id="binanceConnectBtn" class="wallet-btn binance-pay">
+    <button id="binanceConnectBtn" class="wallet-btn binance-pay" data-state="idle">
       Binance Pay
     </button>
   </div>
 
 </section>
+
+<!-- ================= WALLET TOAST ================= -->
+<div id="walletToast" class="wallet-toast hidden"></div>
 <!-- =============== MARKET =================== -->
 <section id="market" class="view market-view">
 
