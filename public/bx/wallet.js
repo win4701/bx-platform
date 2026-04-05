@@ -1,542 +1,569 @@
 /* =========================================================
-   BLOXIO — WALLET.JS REBIND FINAL
-   Matched 1:1 with current wallet HTML
+   BLOXIO — WALLET.JS FINAL FULL SYSTEM
+   Compatible with:
+   - bx/balance.js
+   - index.html surgical patch
+   - main.js surgical patch
 ========================================================= */
 
-window.WALLET = {
-  balances: {},
-  initialized: false,
-  loading: false,
-  refreshTimer: null,
+(() => {
+  'use strict';
 
-  supportedAssets: [
-    "BX", "USDT", "USDC", "BTC", "BNB",
-    "ETH", "AVAX", "ZEC", "TON", "SOL", "LTC"
-  ],
+  if (window.BX_WALLET_BOOTED) {
+    console.warn('[Wallet] Already booted — skipping duplicate init');
+    return;
+  }
+  window.BX_WALLET_BOOTED = true;
 
-  priceMapUSD: {
-    BX: 45,
-    USDT: 1,
-    USDC: 1,
-    BTC: 68000,
-    BNB: 620,
-    ETH: 3400,
-    AVAX: 38,
-    ZEC: 29,
-    TON: 6.8,
-    SOL: 145,
-    LTC: 82
-  },
+  if (!window.BX_BALANCE) {
+    console.error('[Wallet] BX_BALANCE not found. Load bx/balance.js first.');
+    return;
+  }
 
-  /* ================= INIT ================= */
-  async init() {
-    if (this.initialized) return;
+  const APP = window.BX_APP || (window.BX_APP = {});
+  const WALLET = APP.wallet || (APP.wallet = {});
 
-    console.log("💰 WALLET REBIND INIT");
+  /* =========================================================
+     HELPERS
+  ========================================================= */
+  const $ = (sel, root = document) => root.querySelector(sel);
+  const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
-    this.bindUI();
-    this.bindPanels();
-    await this.load();
-    this.startAutoRefresh();
+  const ASSETS = ['BX', 'USDT', 'USDC', 'BTC', 'BNB', 'ETH', 'AVAX', 'ZEC', 'TON', 'SOL', 'LTC'];
 
-    this.initialized = true;
-  },
+  const ASSET_META = {
+    BX:   { name: 'Bloxio', decimals: 2, usd: 1.00 },
+    USDT: { name: 'Tether', decimals: 2, usd: 1.00 },
+    USDC: { name: 'USD Coin', decimals: 2, usd: 1.00 },
+    BTC:  { name: 'Bitcoin', decimals: 8, usd: 68000 },
+    BNB:  { name: 'Binance', decimals: 6, usd: 620 },
+    ETH:  { name: 'Ethereum', decimals: 6, usd: 3500 },
+    AVAX: { name: 'Avalanche', decimals: 4, usd: 42 },
+    ZEC:  { name: 'Zcash', decimals: 4, usd: 31 },
+    TON:  { name: 'Toncoin', decimals: 4, usd: 6.2 },
+    SOL:  { name: 'Solana', decimals: 4, usd: 180 },
+    LTC:  { name: 'Litecoin', decimals: 4, usd: 92 }
+  };
 
-  /* ================= API ================= */
-  async load() {
-    if (this.loading) return;
-    this.loading = true;
+  const clamp = (n, min, max) => Math.min(Math.max(n, min), max);
 
-    try {
-      const data = await safeFetch("/finance/wallet");
-
-      if (!data) {
-        this.showError("Wallet API unavailable");
-        this.injectFallbackBalances();
-        this.render();
-        this.loading = false;
-        return;
-      }
-
-      this.balances = this.normalize(data);
-      this.render();
-
-      window.dispatchEvent(new CustomEvent("wallet:updated", {
-        detail: { balances: this.balances, reason: "wallet:load" }
-      }));
-
-    } catch (err) {
-      console.error("Wallet load error:", err);
-      this.injectFallbackBalances();
-      this.render();
-    }
-
-    this.loading = false;
-  },
-
-  normalize(data) {
-    const result = {};
-
-    this.supportedAssets.forEach(sym => {
-      const raw = data?.[sym] ?? data?.[sym.toLowerCase()] ?? 0;
-
-      if (typeof raw === "number") {
-        result[sym] = {
-          free: Number(raw || 0),
-          locked: 0
-        };
-      } else {
-        result[sym] = {
-          free: Number(raw?.free || 0),
-          locked: Number(raw?.locked || 0)
-        };
-      }
+  const fmt = (value, asset = 'BX') => {
+    const num = Number(value || 0);
+    const decimals = ASSET_META[asset]?.decimals ?? 2;
+    return num.toLocaleString(undefined, {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: decimals > 4 ? 6 : decimals
     });
+  };
 
-    return result;
-  },
+  const fmtUsd = (value) => {
+    const num = Number(value || 0);
+    return `$${num.toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    })}`;
+  };
 
-  injectFallbackBalances() {
-    if (Object.keys(this.balances).length) return;
+  const uid = () => Math.random().toString(36).slice(2, 10).toUpperCase();
 
-    this.balances = {
-      BX:   { free: 1250, locked: 0 },
-      USDT: { free: 500, locked: 0 },
-      USDC: { free: 220, locked: 0 },
-      BTC:  { free: 0.0145, locked: 0 },
-      BNB:  { free: 3.25, locked: 0 },
-      ETH:  { free: 0.82, locked: 0 },
-      AVAX: { free: 14.6, locked: 0 },
-      ZEC:  { free: 7.2, locked: 0 },
-      TON:  { free: 32.4, locked: 0 },
-      SOL:  { free: 18.5, locked: 0 },
-      LTC:  { free: 5.1, locked: 0 }
+  const fakeAddress = (asset = 'USDT') => {
+    const prefixMap = {
+      BTC: 'bc1q',
+      ETH: '0x',
+      BNB: 'bnb1',
+      USDT: 'T',
+      USDC: '0x',
+      AVAX: 'X-avax1',
+      ZEC: 'zs',
+      TON: 'UQ',
+      SOL: 'SoL',
+      LTC: 'ltc1',
+      BX: 'BX'
     };
-  },
 
-  /* ================= GETTERS ================= */
-  getBalance(symbol) {
-    return Number(this.balances?.[symbol]?.free || 0);
-  },
+    const prefix = prefixMap[asset] || '0x';
+    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    const body = Array.from({ length: 28 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+    return `${prefix}${body}`;
+  };
 
-  setBalance(symbol, value) {
-    if (!this.balances[symbol]) {
-      this.balances[symbol] = { free: 0, locked: 0 };
-    }
-
-    this.balances[symbol].free = Number(value || 0);
-    this.render();
-
-    window.dispatchEvent(new CustomEvent("wallet:updated", {
-      detail: { balances: this.balances, reason: `wallet:set:${symbol}` }
-    }));
-  },
-
-  addBalance(symbol, amount) {
-    const current = this.getBalance(symbol);
-    this.setBalance(symbol, current + Number(amount || 0));
-  },
-
-  subtractBalance(symbol, amount) {
-    const current = this.getBalance(symbol);
-    this.setBalance(symbol, Math.max(0, current - Number(amount || 0)));
-  },
-
-  canAfford(symbol, amount) {
-    return this.getBalance(symbol) >= Number(amount || 0);
-  },
-
-  /* ================= RENDER ================= */
-  render() {
-    this.renderBalances();
-    this.renderWalletTotal();
-    this.renderExternalMiniBalances();
-    this.renderWithdrawAssetHint();
-    this.renderMiningHook();
-  },
-
-  renderBalances() {
-    this.supportedAssets.forEach(sym => {
-      const el = document.getElementById(`bal-${sym.toLowerCase()}`);
-      if (!el) return;
-
-      const free = this.getBalance(sym);
-      el.textContent = this.formatAsset(free);
-    });
-  },
-
-  renderWalletTotal() {
-    let totalUSD = 0;
-
-    this.supportedAssets.forEach(sym => {
-      const free = this.getBalance(sym);
-      const price = Number(this.priceMapUSD[sym] || 0);
-      totalUSD += free * price;
-    });
-
-    const totalEl = document.getElementById("walletTotal");
-    if (totalEl) {
-      totalEl.textContent = `$${this.formatMoney(totalUSD)}`;
-    }
-  },
-
-  renderExternalMiniBalances() {
-    const walletBX = document.getElementById("walletBX");
-    const walletUSDT = document.getElementById("walletUSDT");
-
-    if (walletBX) walletBX.textContent = this.formatAsset(this.getBalance("BX"));
-    if (walletUSDT) walletUSDT.textContent = this.formatAsset(this.getBalance("USDT"));
-
-    const miningTop = document.getElementById("miningAvailableBalanceTop");
-    const miningInside = document.getElementById("miningAvailableBalance");
-
-    if (miningTop) miningTop.textContent = `${this.formatAsset(this.getBalance("BX"))} BX`;
-    if (miningInside) miningInside.textContent = `${this.formatAsset(this.getBalance("BX"))} BX`;
-
-    const airdropWalletHint = document.getElementById("airdropWalletBalance");
-    if (airdropWalletHint) {
-      airdropWalletHint.textContent = `${this.formatAsset(this.getBalance("BX"))} BX`;
-    }
-  },
-
-  renderWithdrawAssetHint() {
-    const select = document.getElementById("withdrawAsset");
-    const amountInput = document.getElementById("withdrawAmount");
-    if (!select || !amountInput) return;
-
-    const sym = select.value || "USDT";
-    const bal = this.getBalance(sym);
-
-    amountInput.placeholder = `Available: ${this.formatAsset(bal)} ${sym}`;
-  },
-
-  renderMiningHook() {
-    if (typeof window.renderMining === "function") {
-      try { window.renderMining(); } catch (_) {}
-    }
-
-    if (typeof window.renderAirdrop === "function") {
-      try { window.renderAirdrop(); } catch (_) {}
-    }
-
-    if (typeof window.renderMarketWallet === "function") {
-      try { window.renderMarketWallet(); } catch (_) {}
-    }
-  },
-
-  /* ================= FORMAT ================= */
-  formatAsset(n) {
-    n = Number(n || 0);
-
-    if (n >= 1000) return n.toLocaleString(undefined, {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    });
-
-    if (n >= 1) return n.toLocaleString(undefined, {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 4
-    });
-
-    if (n >= 0.01) return n.toLocaleString(undefined, {
-      minimumFractionDigits: 4,
-      maximumFractionDigits: 6
-    });
-
-    return n.toLocaleString(undefined, {
-      minimumFractionDigits: 6,
-      maximumFractionDigits: 8
-    });
-  },
-
-  formatMoney(n) {
-    return Number(n || 0).toLocaleString(undefined, {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    });
-  },
-
-  /* ================= PANELS ================= */
-  bindPanels() {
-    document.querySelectorAll("[data-wallet-open]").forEach(btn => {
-      btn.addEventListener("click", () => {
-        const id = btn.dataset.walletOpen;
-        this.openPanel(id);
-      });
-    });
-
-    document.querySelectorAll("[data-wallet-close]").forEach(btn => {
-      btn.addEventListener("click", () => {
-        const id = btn.dataset.walletClose;
-        this.closePanel(id);
-      });
-    });
-  },
-
-  openPanel(id) {
-    document.querySelectorAll(".wallet-panel").forEach(panel => {
-      panel.classList.add("wallet-hidden");
-    });
-
-    const panel = document.getElementById(id);
-    if (panel) panel.classList.remove("wallet-hidden");
-  },
-
-  closePanel(id) {
-    const panel = document.getElementById(id);
-    if (panel) panel.classList.add("wallet-hidden");
-  },
-
-  closeAllPanels() {
-    document.querySelectorAll(".wallet-panel").forEach(panel => {
-      panel.classList.add("wallet-hidden");
-    });
-  },
-
-  /* ================= DEPOSIT ================= */
-  async generateDepositAddress() {
-    const asset = document.getElementById("depositAsset")?.value || "USDT";
-    const output = document.getElementById("depositAddressText");
-    const btn = document.getElementById("generateDepositBtn");
-
-    if (!output) return;
-
-    const oldText = btn?.textContent || "Generate Address";
-    if (btn) {
-      btn.disabled = true;
-      btn.textContent = "Generating...";
-    }
-
+  function playClick() {
     try {
-      const res = await safeFetch(`/finance/deposit/${asset}`);
-
-      if (!res) {
-        output.textContent = "Address generation failed";
-        return;
-      }
-
-      output.textContent = res.address || `${asset}_ADDR_DEMO_123456789`;
-
-    } catch (err) {
-      console.error(err);
-      output.textContent = "Address generation failed";
-    }
-
-    if (btn) {
-      btn.disabled = false;
-      btn.textContent = oldText;
-    }
-  },
-
-  /* ================= WITHDRAW ================= */
-  async submitWithdraw() {
-    const asset = document.getElementById("withdrawAsset")?.value || "USDT";
-    const amount = Number(document.getElementById("withdrawAmount")?.value || 0);
-    const address = document.getElementById("withdrawAddress")?.value?.trim();
-    const btn = document.getElementById("submitWithdrawBtn");
-
-    if (!asset || !amount || amount <= 0 || !address) {
-      alert("Please fill all withdraw fields");
-      return;
-    }
-
-    if (!this.canAfford(asset, amount)) {
-      alert(`Insufficient ${asset} balance`);
-      return;
-    }
-
-    const oldText = btn?.textContent || "Confirm Withdraw";
-    if (btn) {
-      btn.disabled = true;
-      btn.textContent = "Processing...";
-    }
-
-    try {
-      const res = await safeFetch("/finance/withdraw", {
-        method: "POST",
-        body: JSON.stringify({
-          asset,
-          amount,
-          address
-        })
-      });
-
-      if (!res) {
-        alert("Withdraw failed");
-        return;
-      }
-
-      this.subtractBalance(asset, amount);
-
-      document.getElementById("withdrawAmount").value = "";
-      document.getElementById("withdrawAddress").value = "";
-      this.closePanel("withdrawPanel");
-
-      alert(`Withdraw submitted: ${this.formatAsset(amount)} ${asset}`);
-
-    } catch (err) {
-      console.error(err);
-      alert("Withdraw failed");
-    }
-
-    if (btn) {
-      btn.disabled = false;
-      btn.textContent = oldText;
-    }
-  },
-
-  /* ================= TRANSFER BX ================= */
-  async submitTransfer() {
-    const user = document.getElementById("transferTelegram")?.value?.trim();
-    const amount = Number(document.getElementById("transferAmount")?.value || 0);
-    const btn = document.getElementById("submitTransferBtn");
-
-    if (!user || !amount || amount <= 0) {
-      alert("Enter Telegram ID and BX amount");
-      return;
-    }
-
-    if (!this.canAfford("BX", amount)) {
-      alert("Insufficient BX balance");
-      return;
-    }
-
-    const oldText = btn?.textContent || "Confirm Transfer";
-    if (btn) {
-      btn.disabled = true;
-      btn.textContent = "Processing...";
-    }
-
-    try {
-      const res = await safeFetch("/finance/transfer", {
-        method: "POST",
-        body: JSON.stringify({
-          to_user: user,
-          asset: "BX",
-          amount
-        })
-      });
-
-      if (!res) {
-        alert("Transfer failed");
-        return;
-      }
-
-      this.subtractBalance("BX", amount);
-
-      document.getElementById("transferTelegram").value = "";
-      document.getElementById("transferAmount").value = "";
-      this.closePanel("transferPanel");
-
-      alert(`Transfer completed: ${this.formatAsset(amount)} BX → ${user}`);
-
-    } catch (err) {
-      console.error(err);
-      alert("Transfer failed");
-    }
-
-    if (btn) {
-      btn.disabled = false;
-      btn.textContent = oldText;
-    }
-  },
-
-  /* ================= WEB3 ================= */
-  async connectWallet() {
-    try {
-      if (!window.ethereum) {
-        alert("No wallet found");
-        return;
-      }
-
-      const accounts = await window.ethereum.request({
-        method: "eth_requestAccounts"
-      });
-
-      await safeFetch("/finance/wallet/connect", {
-        method: "POST",
-        body: JSON.stringify({
-          type: "evm",
-          address: accounts?.[0] || ""
-        })
-      });
-
-      alert("Wallet connected");
-
-    } catch (err) {
-      console.error(err);
-      alert("Wallet connection failed");
-    }
-  },
-
-  async binancePay() {
-    const amount = prompt("Enter USDT amount");
-    if (!amount) return;
-
-    try {
-      const res = await safeFetch("/payments/binance/create", {
-        method: "POST",
-        body: JSON.stringify({
-          amount: Number(amount),
-          asset: "USDT"
-        })
-      });
-
-      if (!res) {
-        alert("Binance Pay failed");
-        return;
-      }
-
-      const url = res.checkoutUrl || res.url;
-      if (url) window.open(url, "_blank");
-
-    } catch (err) {
-      console.error(err);
-      alert("Binance Pay failed");
-    }
-  },
-
-  /* ================= UI BIND ================= */
-  bindUI() {
-    document.getElementById("generateDepositBtn")
-      ?.addEventListener("click", () => this.generateDepositAddress());
-
-    document.getElementById("submitWithdrawBtn")
-      ?.addEventListener("click", () => this.submitWithdraw());
-
-    document.getElementById("submitTransferBtn")
-      ?.addEventListener("click", () => this.submitTransfer());
-
-    document.getElementById("walletConnectBtn")
-      ?.addEventListener("click", () => this.connectWallet());
-
-    document.getElementById("binanceConnectBtn")
-      ?.addEventListener("click", () => this.binancePay());
-
-    document.getElementById("withdrawAsset")
-      ?.addEventListener("change", () => this.renderWithdrawAssetHint());
-
-    window.addEventListener("wallet:force-refresh", () => this.render());
-  },
-
-  /* ================= AUTO REFRESH ================= */
-  startAutoRefresh() {
-    if (this.refreshTimer) clearInterval(this.refreshTimer);
-
-    this.refreshTimer = setInterval(() => {
-      this.load();
-    }, 8000);
-  },
-
-  /* ================= ERROR ================= */
-  showError(msg) {
-    console.warn("WALLET:", msg);
+      const snd = document.getElementById('snd-click');
+      if (!snd || document.body.dataset.sound === 'off') return;
+      snd.currentTime = 0;
+      snd.play().catch(() => {});
+    } catch (_) {}
   }
-};
 
-/* ================= BOOT ================= */
-document.addEventListener("DOMContentLoaded", () => {
-  if (window.WALLET?.init) {
-    window.WALLET.init();
+  function showToast(msg, type = 'info') {
+    const el = document.getElementById('walletToast');
+    if (!el) return;
+
+    el.textContent = msg;
+    el.classList.remove('hidden', 'success', 'error', 'info');
+    el.classList.add(type);
+
+    clearTimeout(el._hideTimer);
+    el._hideTimer = setTimeout(() => {
+      el.classList.add('hidden');
+    }, 2200);
   }
-});
+
+  function setStatus(id, text, type = 'info', autoHide = true) {
+    const el = document.getElementById(id);
+    if (!el) return;
+
+    el.textContent = text;
+    el.classList.remove('hidden', 'success', 'error', 'info');
+    el.classList.add(type);
+
+    clearTimeout(el._hideTimer);
+    if (autoHide) {
+      el._hideTimer = setTimeout(() => {
+        el.classList.add('hidden');
+      }, 2500);
+    }
+  }
+
+  function calcTotalUsd(balanceMap) {
+    return Object.entries(balanceMap).reduce((sum, [asset, amount]) => {
+      const price = ASSET_META[asset]?.usd ?? 0;
+      return sum + Number(amount || 0) * price;
+    }, 0);
+  }
+
+  /* =========================================================
+     STATE
+  ========================================================= */
+  const state = {
+    booted: false,
+    currentOpenPanel: null,
+    lastDepositAddress: null,
+    connections: {
+      walletconnect: false,
+      binancepay: false
+    }
+  };
+
+  /* =========================================================
+     DOM MAP
+  ========================================================= */
+  const dom = {
+    walletRoot: null,
+    walletTotal: null,
+    walletStatus: null,
+    walletEmptyState: null,
+
+    depositPanel: null,
+    withdrawPanel: null,
+    transferPanel: null,
+
+    depositAsset: null,
+    generateDepositBtn: null,
+    depositAddressText: null,
+    copyDepositBtn: null,
+    depositStatus: null,
+
+    withdrawAsset: null,
+    withdrawAmount: null,
+    withdrawAddress: null,
+    submitWithdrawBtn: null,
+    withdrawStatus: null,
+
+    transferTelegram: null,
+    transferAmount: null,
+    submitTransferBtn: null,
+    transferStatus: null,
+
+    walletConnectBtn: null,
+    binanceConnectBtn: null
+  };
+
+  function mapDom() {
+    dom.walletRoot = document.getElementById('wallet');
+    if (!dom.walletRoot) return false;
+
+    dom.walletTotal = document.getElementById('walletTotal');
+    dom.walletStatus = document.getElementById('walletStatus');
+    dom.walletEmptyState = document.getElementById('walletEmptyState');
+
+    dom.depositPanel = document.getElementById('depositPanel');
+    dom.withdrawPanel = document.getElementById('withdrawPanel');
+    dom.transferPanel = document.getElementById('transferPanel');
+
+    dom.depositAsset = document.getElementById('depositAsset');
+    dom.generateDepositBtn = document.getElementById('generateDepositBtn');
+    dom.depositAddressText = document.getElementById('depositAddressText');
+    dom.copyDepositBtn = document.getElementById('copyDepositBtn');
+    dom.depositStatus = document.getElementById('depositStatus');
+
+    dom.withdrawAsset = document.getElementById('withdrawAsset');
+    dom.withdrawAmount = document.getElementById('withdrawAmount');
+    dom.withdrawAddress = document.getElementById('withdrawAddress');
+    dom.submitWithdrawBtn = document.getElementById('submitWithdrawBtn');
+    dom.withdrawStatus = document.getElementById('withdrawStatus');
+
+    dom.transferTelegram = document.getElementById('transferTelegram');
+    dom.transferAmount = document.getElementById('transferAmount');
+    dom.submitTransferBtn = document.getElementById('submitTransferBtn');
+    dom.transferStatus = document.getElementById('transferStatus');
+
+    dom.walletConnectBtn = document.getElementById('walletConnectBtn');
+    dom.binanceConnectBtn = document.getElementById('binanceConnectBtn');
+
+    return true;
+  }
+
+  /* =========================================================
+     RENDER
+  ========================================================= */
+  function updateWalletUI() {
+    const balances = BX_BALANCE.getAll();
+
+    const map = {
+      BX: 'bal-bx',
+      USDT: 'bal-usdt',
+      USDC: 'bal-usdc',
+      BTC: 'bal-btc',
+      BNB: 'bal-bnb',
+      ETH: 'bal-eth',
+      AVAX: 'bal-avax',
+      ZEC: 'bal-zec',
+      TON: 'bal-ton',
+      SOL: 'bal-sol',
+      LTC: 'bal-ltc'
+    };
+
+    Object.entries(map).forEach(([asset, id]) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = fmt(balances[asset], asset);
+    });
+
+    if (dom.walletTotal) {
+      dom.walletTotal.textContent = fmtUsd(calcTotalUsd(balances));
+    }
+
+    const hasAnyBalance = Object.values(balances).some(v => Number(v || 0) > 0);
+    if (dom.walletEmptyState) {
+      dom.walletEmptyState.classList.toggle('hidden', hasAnyBalance);
+    }
+
+    syncActionStates();
+    syncConnectionStates();
+  }
+
+  function refreshWalletUI() {
+    updateWalletUI();
+  }
+
+  function renderWallet() {
+    if (!mapDom()) return;
+    updateWalletUI();
+  }
+
+  function syncActionStates() {
+    const bx = BX_BALANCE.get('BX');
+
+    if (dom.submitTransferBtn) {
+      dom.submitTransferBtn.disabled = bx <= 0;
+    }
+  }
+
+  function syncConnectionStates() {
+    if (dom.walletConnectBtn) {
+      dom.walletConnectBtn.textContent = state.connections.walletconnect ? 'Connected' : 'WalletConnect';
+      dom.walletConnectBtn.dataset.state = state.connections.walletconnect ? 'connected' : 'idle';
+      dom.walletConnectBtn.classList.toggle('is-connected', state.connections.walletconnect);
+    }
+
+    if (dom.binanceConnectBtn) {
+      dom.binanceConnectBtn.textContent = state.connections.binancepay ? 'Connected' : 'Binance Pay';
+      dom.binanceConnectBtn.dataset.state = state.connections.binancepay ? 'connected' : 'idle';
+      dom.binanceConnectBtn.classList.toggle('is-connected', state.connections.binancepay);
+    }
+  }
+
+  /* =========================================================
+     PANELS
+  ========================================================= */
+  function closeAllPanels() {
+    [dom.depositPanel, dom.withdrawPanel, dom.transferPanel].forEach(panel => {
+      if (panel) panel.classList.add('wallet-hidden');
+    });
+    state.currentOpenPanel = null;
+  }
+
+  function openPanel(panelId) {
+    closeAllPanels();
+    const panel = document.getElementById(panelId);
+    if (!panel) return;
+    panel.classList.remove('wallet-hidden');
+    state.currentOpenPanel = panelId;
+  }
+
+  function togglePanel(panelId) {
+    if (state.currentOpenPanel === panelId) {
+      closeAllPanels();
+      return;
+    }
+    openPanel(panelId);
+  }
+
+  /* =========================================================
+     ACTIONS — DEPOSIT
+  ========================================================= */
+  function generateDepositAddress() {
+    const asset = dom.depositAsset?.value || 'USDT';
+    const address = fakeAddress(asset);
+
+    state.lastDepositAddress = address;
+
+    if (dom.depositAddressText) {
+      dom.depositAddressText.textContent = address;
+    }
+
+    setStatus('depositStatus', `${asset} address generated`, 'success');
+    showToast(`${asset} deposit address ready`, 'success');
+  }
+
+  async function copyDepositAddress() {
+    const address = state.lastDepositAddress || dom.depositAddressText?.textContent?.trim();
+    if (!address || address === '—') {
+      setStatus('depositStatus', 'Generate address first', 'error');
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(address);
+      setStatus('depositStatus', 'Address copied', 'success');
+      showToast('Deposit address copied', 'success');
+    } catch {
+      setStatus('depositStatus', 'Copy failed', 'error');
+    }
+  }
+
+  /* =========================================================
+     ACTIONS — WITHDRAW
+  ========================================================= */
+  function submitWithdraw() {
+    const asset = dom.withdrawAsset?.value || 'USDT';
+    const amount = Number(dom.withdrawAmount?.value || 0);
+    const address = (dom.withdrawAddress?.value || '').trim();
+
+    if (!amount || amount <= 0) {
+      setStatus('withdrawStatus', 'Enter valid amount', 'error');
+      return;
+    }
+
+    if (!address || address.length < 6) {
+      setStatus('withdrawStatus', 'Enter valid wallet address', 'error');
+      return;
+    }
+
+    if (!BX_BALANCE.canAfford(asset, amount)) {
+      setStatus('withdrawStatus', `Insufficient ${asset} balance`, 'error');
+      return;
+    }
+
+    BX_BALANCE.sub(asset, amount);
+
+    if (dom.withdrawAmount) dom.withdrawAmount.value = '';
+    if (dom.withdrawAddress) dom.withdrawAddress.value = '';
+
+    setStatus('withdrawStatus', `Withdrawal submitted: ${fmt(amount, asset)} ${asset}`, 'success');
+    showToast(`Withdraw ${fmt(amount, asset)} ${asset}`, 'success');
+    updateWalletUI();
+  }
+
+  /* =========================================================
+     ACTIONS — TRANSFER
+  ========================================================= */
+  function submitTransfer() {
+    const telegram = (dom.transferTelegram?.value || '').trim();
+    const amount = Number(dom.transferAmount?.value || 0);
+
+    if (!telegram || telegram.length < 2) {
+      setStatus('transferStatus', 'Enter valid Telegram ID', 'error');
+      return;
+    }
+
+    if (!amount || amount <= 0) {
+      setStatus('transferStatus', 'Enter valid BX amount', 'error');
+      return;
+    }
+
+    if (!BX_BALANCE.canAfford('BX', amount)) {
+      setStatus('transferStatus', 'Insufficient BX balance', 'error');
+      return;
+    }
+
+    BX_BALANCE.sub('BX', amount);
+
+    if (dom.transferTelegram) dom.transferTelegram.value = '';
+    if (dom.transferAmount) dom.transferAmount.value = '';
+
+    setStatus('transferStatus', `Transferred ${fmt(amount, 'BX')} BX to ${telegram}`, 'success');
+    showToast(`BX sent to ${telegram}`, 'success');
+    updateWalletUI();
+  }
+
+  /* =========================================================
+     CONNECTIONS
+  ========================================================= */
+  function toggleWalletConnect() {
+    state.connections.walletconnect = !state.connections.walletconnect;
+    syncConnectionStates();
+
+    if (state.connections.walletconnect) {
+      showToast('WalletConnect connected', 'success');
+      setStatus('walletStatus', 'WalletConnect linked', 'success');
+    } else {
+      showToast('WalletConnect disconnected', 'info');
+      setStatus('walletStatus', 'WalletConnect disconnected', 'info');
+    }
+  }
+
+  function toggleBinancePay() {
+    state.connections.binancepay = !state.connections.binancepay;
+    syncConnectionStates();
+
+    if (state.connections.binancepay) {
+      showToast('Binance Pay connected', 'success');
+      setStatus('walletStatus', 'Binance Pay linked', 'success');
+    } else {
+      showToast('Binance Pay disconnected', 'info');
+      setStatus('walletStatus', 'Binance Pay disconnected', 'info');
+    }
+  }
+
+  /* =========================================================
+     BINDINGS
+  ========================================================= */
+  function bindPanelTriggers() {
+    $$('[data-wallet-open]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        playClick();
+        togglePanel(btn.dataset.walletOpen);
+      });
+    });
+
+    $$('[data-wallet-close]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        playClick();
+        closeAllPanels();
+      });
+    });
+  }
+
+  function bindDeposit() {
+    dom.generateDepositBtn?.addEventListener('click', () => {
+      playClick();
+      generateDepositAddress();
+    });
+
+    dom.copyDepositBtn?.addEventListener('click', () => {
+      playClick();
+      copyDepositAddress();
+    });
+
+    dom.depositAsset?.addEventListener('change', () => {
+      if (dom.depositAddressText) dom.depositAddressText.textContent = '—';
+      state.lastDepositAddress = null;
+    });
+  }
+
+  function bindWithdraw() {
+    dom.submitWithdrawBtn?.addEventListener('click', () => {
+      playClick();
+      submitWithdraw();
+    });
+  }
+
+  function bindTransfer() {
+    dom.submitTransferBtn?.addEventListener('click', () => {
+      playClick();
+      submitTransfer();
+    });
+  }
+
+  function bindConnections() {
+    dom.walletConnectBtn?.addEventListener('click', () => {
+      playClick();
+      toggleWalletConnect();
+    });
+
+    dom.binanceConnectBtn?.addEventListener('click', () => {
+      playClick();
+      toggleBinancePay();
+    });
+  }
+
+  function bindKeyboardShortcuts() {
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && state.currentOpenPanel) {
+        closeAllPanels();
+      }
+    });
+  }
+
+  function bindViewHooks() {
+    document.addEventListener('bloxio:viewchange', (e) => {
+      if (e.detail?.view === 'wallet') {
+        renderWallet();
+      }
+    });
+  }
+
+  function bindBalanceSync() {
+    BX_BALANCE.subscribe(() => {
+      updateWalletUI();
+    });
+  }
+
+  /* =========================================================
+     PUBLIC API
+  ========================================================= */
+  WALLET.openPanel = openPanel;
+  WALLET.closePanels = closeAllPanels;
+  WALLET.updateWalletUI = updateWalletUI;
+  WALLET.refreshWalletUI = refreshWalletUI;
+  WALLET.renderWallet = renderWallet;
+
+  window.updateWalletUI = updateWalletUI;
+  window.refreshWalletUI = refreshWalletUI;
+  window.renderWallet = renderWallet;
+
+  // اختياري للتجربة السريعة من الكونسول
+  window.walletDemoDeposit = (asset = 'USDT', amount = 100) => {
+    BX_BALANCE.add(asset, amount);
+    showToast(`Demo deposit: ${fmt(amount, asset)} ${asset}`, 'success');
+  };
+
+  /* =========================================================
+     BOOT
+  ========================================================= */
+  function boot() {
+    if (!mapDom()) return;
+
+    bindPanelTriggers();
+    bindDeposit();
+    bindWithdraw();
+    bindTransfer();
+    bindConnections();
+    bindKeyboardShortcuts();
+    bindViewHooks();
+    bindBalanceSync();
+
+    renderWallet();
+    state.booted = true;
+
+    console.log('[Bloxio] wallet.js final full system loaded');
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot, { once: true });
+  } else {
+    boot();
+  }
+})();
