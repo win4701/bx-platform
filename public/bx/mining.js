@@ -1,824 +1,845 @@
 /* =========================================================
-   BLOXIO — MINING.JS REBIND FINAL
-   HTML + CSS + Wallet + Airdrop + History Sync
+   BLOXIO — MINING.JS REAL UNIFIED MULTI-COIN FINAL
+   Compatible with current index.html / wallet.js / balance.js
 ========================================================= */
 
-(function () {
-  "use strict";
+(() => {
+  'use strict';
+
+  if (window.BX_MINING_BOOTED) {
+    console.warn('[Mining] Already booted — skipping duplicate init');
+    return;
+  }
+  window.BX_MINING_BOOTED = true;
+
+  if (!window.BX_BALANCE) {
+    console.error('[Mining] BX_BALANCE not found. Load bx/balance.js first.');
+    return;
+  }
+
+  const APP = window.BX_APP || (window.BX_APP = {});
+  const MINING = APP.mining || (APP.mining = {});
 
   /* =========================================================
      HELPERS
   ========================================================= */
-  const $ = (id) => document.getElementById(id);
-  const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
+  const $ = (sel, root = document) => root.querySelector(sel);
+  const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+
+  const STORAGE_KEY = 'bx:mining:multi:v3';
+  const ALLOWED_COINS = ['BX', 'BNB', 'SOL'];
+
   const now = () => Date.now();
+  const clamp = (n, min, max) => Math.min(Math.max(n, min), max);
 
-  const fmt = (n, d = 4) => {
-    const num = Number(n || 0);
-    return num.toLocaleString(undefined, {
+  const ASSET_META = {
+    BX:  { decimals: 2, usd: 1.00,  name: 'Bloxio' },
+    BNB: { decimals: 6, usd: 620,   name: 'BNB' },
+    SOL: { decimals: 6, usd: 180,   name: 'Solana' }
+  };
+
+  const fmt = (value, asset = 'BX') => {
+    const decimals = ASSET_META[asset]?.decimals ?? 4;
+    return Number(value || 0).toLocaleString(undefined, {
       minimumFractionDigits: 0,
-      maximumFractionDigits: d
+      maximumFractionDigits: decimals > 4 ? 6 : decimals
     });
   };
 
-  const money = (n, d = 2) => {
-    const num = Number(n || 0);
-    return num.toLocaleString(undefined, {
-      minimumFractionDigits: d,
-      maximumFractionDigits: d
-    });
-  };
+  const fmtPct = (value) => `${Number(value || 0).toFixed(2)}%`;
 
-  function safePlay(id) {
+  function playClick() {
     try {
-      const el = $(id);
-      if (!el) return;
-      el.currentTime = 0;
-      el.play().catch(() => {});
+      const snd = document.getElementById('snd-click');
+      if (!snd || document.body.dataset.sound === 'off') return;
+      snd.currentTime = 0;
+      snd.play().catch(() => {});
     } catch (_) {}
   }
 
-  function notify(msg) {
-    alert(msg);
+  function showToast(msg, type = 'info') {
+    const el = document.getElementById('miningToast');
+    if (!el) return;
+
+    el.textContent = msg;
+    el.classList.remove('hidden', 'success', 'error', 'info');
+    el.classList.add(type);
+
+    clearTimeout(el._hideTimer);
+    el._hideTimer = setTimeout(() => {
+      el.classList.add('hidden');
+    }, 2400);
   }
 
-  function getWalletBalance(symbol) {
-    if (window.WALLET && typeof window.WALLET === "object") {
-      return Number(window.WALLET[symbol] || 0);
-    }
+  function setStatus(text, type = 'info', autoHide = true) {
+    const el = document.getElementById('miningStatus');
+    if (!el) return;
 
-    const map = {
-      BX: "bal-bx",
-      BNB: "bal-bnb",
-      SOL: "bal-sol"
-    };
+    el.textContent = text;
+    el.classList.remove('hidden', 'success', 'error', 'info');
+    el.classList.add(type);
 
-    const el = $(map[symbol]);
-    if (!el) return 0;
-    return Number(String(el.textContent || "0").replace(/,/g, "")) || 0;
-  }
-
-  function setWalletBalance(symbol, value) {
-    if (!window.WALLET || typeof window.WALLET !== "object") {
-      window.WALLET = {};
-    }
-
-    window.WALLET[symbol] = Number(value || 0);
-
-    if (typeof window.renderWallet === "function") {
-      try { window.renderWallet(); } catch (_) {}
-    }
-
-    if (typeof window.loadWallet === "function") {
-      try { window.loadWallet(); } catch (_) {}
+    clearTimeout(el._hideTimer);
+    if (autoHide) {
+      el._hideTimer = setTimeout(() => {
+        el.classList.add('hidden');
+      }, 2600);
+    } else {
+      el.classList.remove('hidden');
     }
   }
 
-  function isAuthSafe() {
-    if (typeof window.isAuthenticated === "function") {
-      try { return !!window.isAuthenticated(); } catch (_) {}
+  function loadState() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return null;
+      return JSON.parse(raw);
+    } catch {
+      return null;
     }
-    return true;
   }
 
-  async function postSafe(url, body) {
-    if (typeof window.safeFetch === "function") {
-      try {
-        return await window.safeFetch(url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body || {})
-        });
-      } catch (_) {
-        return null;
-      }
-    }
-    return { ok: true, mock: true };
+  function saveState() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   }
+
+  /* =========================================================
+     MINING PLANS
+     السعر هنا = نسبة من العملة المختارة
+  ========================================================= */
+  const PLAN_LIBRARY = [
+    {
+      id: 'starter',
+      name: 'Starter Node',
+      hashRate: '18 GH/s',
+      minAmount: { BX: 100, BNB: 0.05, SOL: 0.15 },
+      dailyRate: 1.20,
+      durationDays: 10,
+      boost: 1.00
+    },
+    {
+      id: 'pro',
+      name: 'Pro Node',
+      hashRate: '90 GH/s',
+      minAmount: { BX: 500, BNB: 0.25, SOL: 0.75 },
+      dailyRate: 1.75,
+      durationDays: 20,
+      boost: 1.12
+    },
+    {
+      id: 'elite',
+      name: 'Elite Node',
+      hashRate: '240 GH/s',
+      minAmount: { BX: 1200, BNB: 0.75, SOL: 2.25 },
+      dailyRate: 2.15,
+      durationDays: 30,
+      boost: 1.28
+    },
+    {
+      id: 'ultra',
+      name: 'Ultra Node',
+      hashRate: '540 GH/s',
+      minAmount: { BX: 3000, BNB: 1.80, SOL: 5.40 },
+      dailyRate: 2.80,
+      durationDays: 45,
+      boost: 1.45
+    }
+  ];
 
   /* =========================================================
      STATE
   ========================================================= */
-  const STORAGE_KEY = "bloxio_mining_rebind_v3";
+  const defaultState = {
+    selectedCoin: 'BX',
+    selectedPlanId: null,
 
-  const MINING = {
-    coin: "BX",
-    selectedPlan: null,
-    subscription: null,
-    history: [],
-    refreshTimer: null
+    activePlanId: null,
+    activeCoin: 'BX',
+    subscriptionAmount: 0,
+
+    activeSince: null,
+    expiresAt: null,
+    lastClaimAt: null,
+
+    pendingReward: 0,
+    totalClaimed: 0,
+    autoCompound: false
   };
 
-  const MINING_PLANS_BY_COIN = {
-    BX: [
-      { id: "p10", name: "Starter",  days: 10, roi: 2.5, min: 5,    max: 60 },
-      { id: "p21", name: "Basic",    days: 21, roi: 5,   min: 50,   max: 250 },
-      { id: "p30", name: "Golden",   days: 30, roi: 8,   min: 200,  max: 800 },
-      { id: "p45", name: "Pro",      days: 45, roi: 12,  min: 400,  max: 2500 },
-      { id: "p60", name: "Platine",  days: 60, roi: 17,  min: 750,  max: 9000 },
-      { id: "p90", name: "Infinity", days: 90, roi: 25,  min: 1000, max: 20000, sub: true }
-    ],
-
-    SOL: [
-      { id: "p10", name: "Starter",  days: 10, roi: 1,   min: 1,    max: 5 },
-      { id: "p21", name: "Basic",    days: 21, roi: 2.8, min: 10,   max: 50 },
-      { id: "p30", name: "Golden",   days: 30, roi: 4,   min: 40,   max: 160 },
-      { id: "p45", name: "Pro",      days: 45, roi: 7,   min: 120,  max: 500 },
-      { id: "p60", name: "Platine",  days: 60, roi: 9,   min: 200,  max: 1000 },
-      { id: "p90", name: "Infinity", days: 90, roi: 14,  min: 500,  max: 2500, sub: true }
-    ],
-
-    BNB: [
-      { id: "p10", name: "Starter",  days: 10, roi: 0.8, min: 0.05, max: 1 },
-      { id: "p21", name: "Basic",    days: 21, roi: 1.8, min: 1,    max: 4 },
-      { id: "p30", name: "Golden",   days: 30, roi: 3,   min: 5,    max: 50 },
-      { id: "p45", name: "Pro",      days: 45, roi: 5,   min: 10,   max: 100 },
-      { id: "p60", name: "Platine",  days: 60, roi: 7,   min: 15,   max: 150 },
-      { id: "p90", name: "Infinity", days: 90, roi: 11,  min: 25,   max: 200, sub: true }
-    ]
+  const state = {
+    ...defaultState,
+    ...loadState()
   };
 
   /* =========================================================
-     STORAGE
+     DOM
   ========================================================= */
-  function saveMiningState() {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({
-        coin: MINING.coin,
-        selectedPlan: MINING.selectedPlan,
-        subscription: MINING.subscription,
-        history: MINING.history
-      }));
-    } catch (_) {}
-  }
+  const dom = {
+    root: null,
+    grid: null,
 
-  function loadMiningState() {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return;
+    topActiveCoin: null,
+    topAvailableBalance: null,
+    topDailyYield: null,
+    topCycle: null,
 
-      const data = JSON.parse(raw);
+    tabs: [],
+    subscribePanel: null,
 
-      if (data?.coin && MINING_PLANS_BY_COIN[data.coin]) MINING.coin = data.coin;
-      if (data?.selectedPlan) MINING.selectedPlan = data.selectedPlan;
-      if (data?.subscription) MINING.subscription = data.subscription;
-      if (Array.isArray(data?.history)) MINING.history = data.history;
-    } catch (_) {}
+    selectedPlanTitle: null,
+    selectedPlanMeta: null,
+    availableBalance: null,
+    amountInput: null,
+    summary: null,
+    confirmBtn: null,
+
+    activePanel: null,
+    activeName: null,
+    activeHash: null,
+    activeDaily: null,
+    progressFill: null,
+    progressText: null,
+    pendingReward: null,
+    totalClaimed: null,
+    claimBtn: null,
+    compoundBtn: null
+  };
+
+  function mapDom() {
+    dom.root = document.getElementById('mining');
+    if (!dom.root) return false;
+
+    dom.grid = document.getElementById('miningGrid');
+
+    dom.topActiveCoin = document.getElementById('miningActiveCoin');
+    dom.topAvailableBalance = document.getElementById('miningAvailableBalanceTop');
+    dom.topDailyYield = document.getElementById('miningDailyYieldTop');
+    dom.topCycle = document.getElementById('miningCycleTop');
+
+    dom.tabs = $$('[data-coin]', dom.root);
+    dom.subscribePanel = document.getElementById('miningSubscribePanel');
+
+    dom.selectedPlanTitle = document.getElementById('miningSelectedPlanTitle');
+    dom.selectedPlanMeta = document.getElementById('miningSelectedPlanMeta');
+    dom.availableBalance = document.getElementById('miningAvailableBalance');
+    dom.amountInput = document.getElementById('miningAmountInput');
+    dom.summary = document.getElementById('miningSubSummary');
+    dom.confirmBtn = document.getElementById('confirmMiningSubscribeBtn');
+
+    dom.activePanel = document.getElementById('miningActivePanel');
+    dom.activeName = document.getElementById('miningActiveName');
+    dom.activeHash = document.getElementById('miningActiveHash');
+    dom.activeDaily = document.getElementById('miningActiveDaily');
+    dom.progressFill = document.getElementById('miningProgressFill');
+    dom.progressText = document.getElementById('miningProgressText');
+    dom.pendingReward = document.getElementById('miningPendingReward');
+    dom.totalClaimed = document.getElementById('miningTotalClaimed');
+    dom.claimBtn = document.getElementById('claimMiningRewardBtn');
+    dom.compoundBtn = document.getElementById('toggleAutoCompoundBtn');
+
+    return true;
   }
 
   /* =========================================================
      CORE
   ========================================================= */
-  function getPlans() {
-    return MINING_PLANS_BY_COIN[MINING.coin] || [];
+  function getSelectedPlan() {
+    return PLAN_LIBRARY.find(p => p.id === state.selectedPlanId) || null;
   }
 
-  function getPlanById(coin, planId) {
-    return (MINING_PLANS_BY_COIN[coin] || []).find(p => p.id === planId) || null;
+  function getActivePlan() {
+    return PLAN_LIBRARY.find(p => p.id === state.activePlanId) || null;
   }
 
-  function getBestPlanMeta() {
-    const plans = getPlans();
-    if (!plans.length) return { roi: 0, days: 0 };
-    const best = [...plans].sort((a, b) => b.roi - a.roi)[0];
-    return { roi: best.roi, days: best.days };
+  function hasActivePlan() {
+    return !!state.activePlanId && !!state.expiresAt && now() < state.expiresAt;
   }
 
-  function calcMining(plan, amount, start) {
-    if (!plan || !amount || !start) {
-      return { earning: 0, progress: 0, left: 0, totalProfit: 0, totalReturn: 0, done: false };
+  function getDurationMs(plan) {
+    return (plan?.durationDays || 0) * 24 * 60 * 60 * 1000;
+  }
+
+  function getProgress(plan) {
+    if (!plan || !state.activeSince || !state.expiresAt) return 0;
+    const total = getDurationMs(plan);
+    const elapsed = Math.max(0, now() - state.activeSince);
+    return clamp((elapsed / total) * 100, 0, 100);
+  }
+
+  function computePendingReward() {
+    const plan = getActivePlan();
+    if (!plan || !hasActivePlan()) return 0;
+
+    const last = state.lastClaimAt || state.activeSince || now();
+    const elapsedHours = Math.max(0, (now() - last) / (1000 * 60 * 60));
+
+    const principal = Number(state.subscriptionAmount || 0);
+    const dailyPct = plan.dailyRate / 100;
+    const dailyReward = principal * dailyPct * plan.boost;
+    const hourlyReward = dailyReward / 24;
+
+    return hourlyReward * elapsedHours;
+  }
+
+  function syncPendingReward() {
+    state.pendingReward = computePendingReward();
+    saveState();
+  }
+
+  function getAvailable(asset = state.selectedCoin) {
+    return Number(BX_BALANCE.get(asset) || 0);
+  }
+
+  function getMinAmountForPlan(plan, coin) {
+    return Number(plan?.minAmount?.[coin] || 0);
+  }
+
+  /* =========================================================
+     RENDER TOP
+  ========================================================= */
+  function renderTopOverview() {
+    const coin = state.selectedCoin;
+    const selectedPlan = getSelectedPlan();
+
+    if (dom.topActiveCoin) {
+      dom.topActiveCoin.textContent = coin;
     }
 
-    const duration = plan.days * 86400000;
-    const elapsed = Math.max(0, now() - start);
-    const progress = Math.min(1, elapsed / duration);
-    const totalProfit = amount * (plan.roi / 100);
-    const earning = totalProfit * progress;
-    const totalReturn = amount + totalProfit;
-    const left = Math.max(0, duration - elapsed);
-    const done = progress >= 1;
+    if (dom.topAvailableBalance) {
+      dom.topAvailableBalance.textContent = `${fmt(getAvailable(coin), coin)} ${coin}`;
+    }
 
-    return { earning, progress, left, totalProfit, totalReturn, done };
+    if (dom.topDailyYield) {
+      dom.topDailyYield.textContent = selectedPlan
+        ? `+${fmtPct(selectedPlan.dailyRate)}`
+        : '+0.00%';
+    }
+
+    if (dom.topCycle) {
+      dom.topCycle.textContent = selectedPlan
+        ? `${selectedPlan.durationDays} Days`
+        : '—';
+    }
   }
 
-  function formatTime(ms) {
-    if (ms <= 0) return "Completed";
-    const s = Math.floor(ms / 1000);
-    const m = Math.floor(s / 60);
-    const h = Math.floor(m / 60);
-    const d = Math.floor(h / 24);
-    return `${d}d ${h % 24}h ${m % 60}m`;
+  /* =========================================================
+     RENDER TABS
+  ========================================================= */
+  function renderCoinTabs() {
+    dom.tabs.forEach(btn => {
+      const active = btn.dataset.coin === state.selectedCoin;
+      btn.classList.toggle('active', active);
+    });
   }
 
-  function validatePlan(plan, amount) {
-    if (!plan) return "Plan not selected";
-    if (!Number.isFinite(amount) || amount <= 0) return "Enter valid amount";
-    if (amount < plan.min) return `Minimum is ${plan.min} ${MINING.coin}`;
-    if (amount > plan.max) return `Maximum is ${plan.max} ${MINING.coin}`;
+  /* =========================================================
+     RENDER PLANS
+  ========================================================= */
+  function renderMiningPlans() {
+    if (!dom.grid) return;
 
-    const balance = getWalletBalance(MINING.coin);
-    if (amount > balance) return `Insufficient ${MINING.coin} balance`;
+    const coin = state.selectedCoin;
 
-    return null;
+    dom.grid.innerHTML = PLAN_LIBRARY.map(plan => {
+      const minAmount = getMinAmountForPlan(plan, coin);
+      const active = hasActivePlan() && state.activePlanId === plan.id && state.activeCoin === coin;
+
+      return `
+        <div class="mining-card ${active ? 'is-active' : ''}">
+          <div class="mining-card-head">
+            <div>
+              <h3>${plan.name}</h3>
+              <p>${plan.hashRate}</p>
+            </div>
+            <span class="mining-badge">${coin}</span>
+          </div>
+
+          <div class="mining-price">${fmt(minAmount, coin)} ${coin}</div>
+
+          <div class="mining-meta-grid">
+            <div><span>Daily</span><strong>${fmtPct(plan.dailyRate)}</strong></div>
+            <div><span>Boost</span><strong>${plan.boost.toFixed(2)}x</strong></div>
+            <div><span>Cycle</span><strong>${plan.durationDays}D</strong></div>
+          </div>
+
+          <button class="btn primary mining-select-btn"
+                  type="button"
+                  data-plan="${plan.id}">
+            ${active ? 'Active' : 'Select Plan'}
+          </button>
+        </div>
+      `;
+    }).join('');
+
+    bindPlanButtons();
   }
 
   /* =========================================================
      PANEL
   ========================================================= */
-  function openMiningPanel() {
-    const panel = $("miningSubscribePanel");
-    if (!panel) return;
-    panel.classList.remove("mining-hidden");
-    updateMiningPanel();
+  function openSubscribePanel() {
+    if (dom.subscribePanel) {
+      dom.subscribePanel.classList.remove('mining-hidden');
+    }
   }
 
-  function closeMiningPanel() {
-    const panel = $("miningSubscribePanel");
-    if (!panel) return;
-    panel.classList.add("mining-hidden");
+  function closeSubscribePanel() {
+    if (dom.subscribePanel) {
+      dom.subscribePanel.classList.add('mining-hidden');
+    }
   }
 
-  function updateMiningPanel() {
-    const titleEl = $("miningSelectedPlanTitle");
-    const metaEl = $("miningSelectedPlanMeta");
-    const availableEl = $("miningAvailableBalance");
-    const inputEl = $("miningAmountInput");
-    const summaryEl = $("miningSubSummary");
+  function renderSubscribePanel() {
+    const plan = getSelectedPlan();
+    const coin = state.selectedCoin;
+    const available = getAvailable(coin);
 
-    const balance = getWalletBalance(MINING.coin);
-    const plan = MINING.selectedPlan;
-
-    if (availableEl) availableEl.textContent = `${money(balance, 4)} ${MINING.coin}`;
+    if (dom.availableBalance) {
+      dom.availableBalance.textContent = `${fmt(available, coin)} ${coin}`;
+    }
 
     if (!plan) {
-      if (titleEl) titleEl.textContent = "Mining Subscription";
-      if (metaEl) metaEl.textContent = "Select a plan to continue";
-      if (summaryEl) summaryEl.innerHTML = `Choose plan first.`;
+      if (dom.selectedPlanTitle) dom.selectedPlanTitle.textContent = 'Mining Subscription';
+      if (dom.selectedPlanMeta) dom.selectedPlanMeta.textContent = 'Select a plan to continue';
+      if (dom.summary) dom.summary.textContent = 'Choose amount to profit.';
       return;
     }
 
-    if (titleEl) titleEl.textContent = `${plan.name} Plan • ${MINING.coin}`;
-    if (metaEl) metaEl.textContent = `${plan.days} days • ROI ${plan.roi}% • Min ${fmt(plan.min)} • Max ${fmt(plan.max)}`;
+    const minAmount = getMinAmountForPlan(plan, coin);
 
-    const amount = Number(inputEl?.value || 0);
-    const estimatedProfit = amount > 0 ? amount * (plan.roi / 100) : 0;
-    const estimatedReturn = amount > 0 ? amount + estimatedProfit : 0;
-    const error = amount > 0 ? validatePlan(plan, amount) : null;
+    if (dom.selectedPlanTitle) {
+      dom.selectedPlanTitle.textContent = `${plan.name} — ${coin}`;
+    }
 
-    if (summaryEl) {
-      summaryEl.innerHTML = `
-        <div><strong>Coin:</strong> ${MINING.coin}</div>
-        <div><strong>Plan:</strong> ${plan.name}</div>
-        <div><strong>Cycle:</strong> ${plan.days} days</div>
-        <div><strong>ROI:</strong> ${plan.roi}%</div>
-        <div><strong>Estimated Profit:</strong> +${fmt(estimatedProfit)} ${MINING.coin}</div>
-        <div><strong>Total Return:</strong> ${fmt(estimatedReturn)} ${MINING.coin}</div>
-        ${error ? `<div style="margin-top:8px;color:#fca5a5;"><strong>Error:</strong> ${error}</div>` : ""}
+    if (dom.selectedPlanMeta) {
+      dom.selectedPlanMeta.textContent =
+        `${plan.hashRate} • ${fmtPct(plan.dailyRate)} daily • ${plan.durationDays} days • Min ${fmt(minAmount, coin)} ${coin}`;
+    }
+
+    updateSubscribeSummary();
+  }
+
+  function updateSubscribeSummary() {
+    const plan = getSelectedPlan();
+    const coin = state.selectedCoin;
+    const amount = Number(dom.amountInput?.value || 0);
+
+    if (!plan) {
+      if (dom.summary) dom.summary.textContent = 'Choose amount to profit.';
+      return;
+    }
+
+    if (!amount || amount <= 0) {
+      if (dom.summary) {
+        dom.summary.textContent =
+          `Min required: ${fmt(getMinAmountForPlan(plan, coin), coin)} ${coin}`;
+      }
+      return;
+    }
+
+    const estimatedDaily = amount * (plan.dailyRate / 100) * plan.boost;
+    const estimatedCycle = estimatedDaily * plan.durationDays;
+
+    if (dom.summary) {
+      dom.summary.innerHTML = `
+        <strong>Estimated Daily:</strong> ${fmt(estimatedDaily, coin)} ${coin}
+        <br>
+        <strong>Estimated Cycle Reward:</strong> ${fmt(estimatedCycle, coin)} ${coin}
       `;
     }
   }
 
   /* =========================================================
-     TOP
+     ACTIVE PANEL
   ========================================================= */
-  function renderMiningTop() {
-    const activeCoinEl = $("miningActiveCoin");
-    const availableTopEl = $("miningAvailableBalanceTop");
-    const dailyYieldEl = $("miningDailyYieldTop");
-    const cycleEl = $("miningCycleTop");
+  function renderActivePanel() {
+    const plan = getActivePlan();
+    const active = hasActivePlan();
 
-    const best = getBestPlanMeta();
-    const balance = getWalletBalance(MINING.coin);
+    if (!dom.activePanel) return;
 
-    if (activeCoinEl) activeCoinEl.textContent = MINING.coin;
-    if (availableTopEl) availableTopEl.textContent = `${money(balance, 4)} ${MINING.coin}`;
-    if (dailyYieldEl) dailyYieldEl.textContent = `+${best.roi}%`;
-    if (cycleEl) cycleEl.textContent = `${best.days} Days`;
-  }
-
-  /* =========================================================
-     ACTIVE CARD
-  ========================================================= */
-  function renderActiveSubscription() {
-    const badge = $("miningActiveStatusBadge");
-    const planName = $("miningActivePlanName");
-    const amountEl = $("miningActiveAmount");
-    const profitEl = $("miningActiveProfit");
-    const timeLeftEl = $("miningActiveTimeLeft");
-    const fill = $("miningProgressFill");
-    const progressText = $("miningProgressText");
-    const cycleHint = $("miningCycleHint");
-    const claimBtn = $("miningClaimBtn");
-    const cancelBtn = $("miningCancelBtn");
-
-    if (!MINING.subscription) {
-      if (badge) {
-        badge.textContent = "No Active Plan";
-        badge.className = "mining-badge idle";
-      }
-      if (planName) planName.textContent = "—";
-      if (amountEl) amountEl.textContent = `0.00 ${MINING.coin}`;
-      if (profitEl) profitEl.textContent = `+0.0000 ${MINING.coin}`;
-      if (timeLeftEl) timeLeftEl.textContent = "—";
-      if (fill) fill.style.width = "0%";
-      if (progressText) progressText.textContent = "0%";
-      if (cycleHint) cycleHint.textContent = "No active cycle";
-      if (claimBtn) claimBtn.disabled = true;
-      if (cancelBtn) cancelBtn.disabled = true;
+    if (!active || !plan) {
+      dom.activePanel.classList.add('mining-hidden');
       return;
     }
 
-    const plan = getPlanById(MINING.subscription.coin, MINING.subscription.planId);
-    if (!plan) return;
+    dom.activePanel.classList.remove('mining-hidden');
 
-    const data = calcMining(plan, MINING.subscription.amount, MINING.subscription.start);
+    const coin = state.activeCoin;
+    const progress = getProgress(plan);
 
-    if (badge) {
-      badge.textContent = data.done ? "Cycle Completed" : "Mining Active";
-      badge.className = `mining-badge ${data.done ? "done" : "active"}`;
+    if (dom.activeName) {
+      dom.activeName.textContent = `${plan.name} (${coin})`;
     }
 
-    if (planName) planName.textContent = `${plan.name} • ${MINING.subscription.coin}`;
-    if (amountEl) amountEl.textContent = `${fmt(MINING.subscription.amount)} ${MINING.subscription.coin}`;
-    if (profitEl) profitEl.textContent = `+${fmt(data.earning)} ${MINING.subscription.coin}`;
-    if (timeLeftEl) timeLeftEl.textContent = formatTime(data.left);
-    if (fill) fill.style.width = `${(data.progress * 100).toFixed(2)}%`;
-    if (progressText) progressText.textContent = `${(data.progress * 100).toFixed(1)}%`;
-    if (cycleHint) cycleHint.textContent = data.done ? "Ready to claim" : `${plan.days} days cycle running`;
-
-    if (claimBtn) claimBtn.disabled = data.earning <= 0;
-    if (cancelBtn) cancelBtn.disabled = false;
-  }
-
-  /* =========================================================
-     HISTORY
-  ========================================================= */
-  function pushMiningHistory(type, payload = {}) {
-    MINING.history.unshift({
-      id: `mh_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-      type,
-      ts: now(),
-      ...payload
-    });
-
-    MINING.history = MINING.history.slice(0, 25);
-    saveMiningState();
-  }
-
-  function renderMiningHistory() {
-    const list = $("miningHistoryList");
-    const count = $("miningHistoryCount");
-    if (!list) return;
-
-    if (count) {
-      count.textContent = `${MINING.history.length} ${MINING.history.length === 1 ? "Record" : "Records"}`;
+    if (dom.activeHash) {
+      dom.activeHash.textContent = `${plan.hashRate} • ${fmt(state.subscriptionAmount, coin)} ${coin}`;
     }
 
-    if (!MINING.history.length) {
-      list.innerHTML = `<div class="mining-history-empty">No mining activity yet.</div>`;
-      return;
+    if (dom.activeDaily) {
+      dom.activeDaily.textContent = `${fmtPct(plan.dailyRate)} / day`;
     }
 
-    list.innerHTML = MINING.history.map(item => {
-      const date = new Date(item.ts).toLocaleString();
-
-      let title = "Mining";
-      let sub = "";
-      let profit = "";
-      let badge = `<span class="mining-badge idle">Info</span>`;
-
-      if (item.type === "subscribe") {
-        title = `${item.planName} • ${item.coin}`;
-        sub = `Subscribed ${fmt(item.amount)} ${item.coin}`;
-        profit = `ROI ${item.roi}%`;
-        badge = `<span class="mining-badge active">Subscribed</span>`;
-      }
-
-      if (item.type === "claim") {
-        title = `${item.planName} • ${item.coin}`;
-        sub = `Claimed profit`;
-        profit = `+${fmt(item.profit)} ${item.coin}`;
-        badge = `<span class="mining-badge active">Claimed</span>`;
-      }
-
-      if (item.type === "close") {
-        title = `${item.planName} • ${item.coin}`;
-        sub = `Closed position`;
-        profit = `${fmt(item.returned)} ${item.coin}`;
-        badge = `<span class="mining-badge done">Closed</span>`;
-      }
-
-      return `
-        <div class="mining-history-item">
-          <div class="mining-history-main">
-            <strong>${title}</strong>
-            <span>${sub}</span>
-            <span>${date}</span>
-          </div>
-          <div class="mining-history-profit">${profit}</div>
-          <div class="mining-history-state">${badge}</div>
-        </div>
-      `;
-    }).join("");
-  }
-
-  /* =========================================================
-     PLANS
-  ========================================================= */
-  function bindMiningTabs() {
-    const buttons = $$(".mining-tabs button");
-
-    buttons.forEach((btn) => {
-      const coin = btn.dataset.coin;
-      btn.classList.toggle("active", coin === MINING.coin);
-
-      btn.onclick = () => {
-        if (!coin || MINING.coin === coin) return;
-        MINING.coin = coin;
-        MINING.selectedPlan = null;
-        saveMiningState();
-        renderMining();
-      };
-    });
-  }
-
-  function buildPlanCard(plan, isActive) {
-    let content = "";
-
-    if (isActive && MINING.subscription) {
-      const data = calcMining(plan, MINING.subscription.amount, MINING.subscription.start);
-
-      content = `
-        <div class="mining-sub-summary" style="margin:10px 0 12px;">
-          <div><strong>Subscribed:</strong> ${fmt(MINING.subscription.amount)} ${MINING.coin}</div>
-          <div><strong>Profit Now:</strong> +${fmt(data.earning)} ${MINING.coin}</div>
-          <div><strong>Time Left:</strong> ${formatTime(data.left)}</div>
-        </div>
-
-        <div style="margin-bottom:12px;">
-          <div style="height:10px;border-radius:999px;background:rgba(255,255,255,.06);overflow:hidden;">
-            <div style="height:100%;width:${(data.progress * 100).toFixed(1)}%;background:linear-gradient(90deg,#22c55e,#4ade80);"></div>
-          </div>
-        </div>
-
-        <div style="display:flex;gap:10px;flex-direction:column;">
-          <button class="claim-btn" type="button">Claim Profit</button>
-          <button type="button" disabled>Active</button>
-        </div>
-      `;
-    } else {
-      content = `<button class="sub-btn" type="button">Subscribe</button>`;
+    if (dom.progressFill) {
+      dom.progressFill.style.width = `${progress}%`;
     }
 
-    return `
-      <h3>
-        ${plan.name}
-        ${plan.sub ? `<span class="sub-tag" style="font-size:11px;padding:4px 8px;border-radius:999px;background:rgba(250,204,21,.14);color:#facc15;border:1px solid rgba(250,204,21,.22);margin-left:8px;">SUB</span>` : ""}
-      </h3>
+    if (dom.progressText) {
+      dom.progressText.textContent = `${progress.toFixed(1)}%`;
+    }
 
-      <div class="mining-profit">${plan.roi}%</div>
+    if (dom.pendingReward) {
+      dom.pendingReward.textContent = `${fmt(state.pendingReward, coin)} ${coin}`;
+    }
 
-      <ul>
-        <li>${plan.days} days cycle</li>
-        <li>Min: ${fmt(plan.min)} ${MINING.coin}</li>
-        <li>Max: ${fmt(plan.max)} ${MINING.coin}</li>
-      </ul>
+    if (dom.totalClaimed) {
+      dom.totalClaimed.textContent = `${fmt(state.totalClaimed, coin)} ${coin}`;
+    }
 
-      ${content}
-    `;
-  }
+    if (dom.claimBtn) {
+      dom.claimBtn.textContent = `Claim ${coin}`;
+      dom.claimBtn.disabled = state.pendingReward <= 0.0000001;
+    }
 
-  function renderMiningPlans() {
-    const grid = $("miningGrid");
-    if (!grid) return;
-
-    const plans = getPlans();
-    grid.innerHTML = "";
-
-    plans.forEach((plan) => {
-      const isActive =
-        !!MINING.subscription &&
-        MINING.subscription.coin === MINING.coin &&
-        MINING.subscription.planId === plan.id;
-
-      const card = document.createElement("div");
-      card.className = "mining-plan";
-      card.innerHTML = buildPlanCard(plan, isActive);
-
-      if (isActive) {
-        const claimBtn = card.querySelector(".claim-btn");
-        if (claimBtn) claimBtn.onclick = () => claimMining(plan);
-      } else {
-        const subBtn = card.querySelector(".sub-btn");
-        if (subBtn) {
-          subBtn.onclick = () => {
-            MINING.selectedPlan = {
-              id: plan.id,
-              name: plan.name,
-              roi: plan.roi,
-              days: plan.days,
-              min: plan.min,
-              max: plan.max
-            };
-            saveMiningState();
-            openMiningPanel();
-          };
-        }
-      }
-
-      grid.appendChild(card);
-    });
+    if (dom.compoundBtn) {
+      dom.compoundBtn.textContent = state.autoCompound ? 'Auto Compound: ON' : 'Auto Compound: OFF';
+      dom.compoundBtn.classList.toggle('is-active', state.autoCompound);
+    }
   }
 
   /* =========================================================
      ACTIONS
   ========================================================= */
-  async function confirmMiningSubscription() {
-    if (!isAuthSafe()) {
-      notify("Please login first");
-      return;
-    }
+  function selectCoin(coin) {
+    if (!ALLOWED_COINS.includes(coin)) return;
+    state.selectedCoin = coin;
+    saveState();
 
-    if (MINING.subscription) {
-      notify("You already have an active mining plan");
-      return;
-    }
+    renderCoinTabs();
+    renderTopOverview();
+    renderMiningPlans();
+    renderSubscribePanel();
+  }
 
-    const inputEl = $("miningAmountInput");
-    const plan = MINING.selectedPlan;
+  function selectPlan(planId) {
+    state.selectedPlanId = planId;
+    saveState();
+
+    renderTopOverview();
+    renderSubscribePanel();
+    openSubscribePanel();
+  }
+
+  function subscribeToPlan() {
+    const plan = getSelectedPlan();
+    const coin = state.selectedCoin;
 
     if (!plan) {
-      notify("Select a plan first");
+      setStatus('Select a mining plan first', 'error');
       return;
     }
 
-    const amount = Number(inputEl?.value || 0);
-    const error = validatePlan(plan, amount);
-
-    if (error) {
-      notify(error);
+    if (hasActivePlan()) {
+      setStatus(`You already have an active ${state.activeCoin} plan`, 'error');
       return;
     }
 
-    const btn = $("confirmMiningSubscribeBtn");
-    const oldText = btn ? btn.textContent : "Confirm Subscription";
+    const amount = Number(dom.amountInput?.value || 0);
+    const minRequired = getMinAmountForPlan(plan, coin);
 
-    if (btn) {
-      btn.disabled = true;
-      btn.textContent = "Processing...";
-    }
-
-    const res = await postSafe("/mining/subscribe", {
-      coin: MINING.coin,
-      plan_id: plan.id,
-      amount
-    });
-
-    if (!res) {
-      if (btn) {
-        btn.disabled = false;
-        btn.textContent = oldText;
-      }
-      notify("Mining subscription failed");
+    if (!amount || amount <= 0) {
+      setStatus('Enter a valid subscription amount', 'error');
       return;
     }
 
-    const currentBalance = getWalletBalance(MINING.coin);
-    setWalletBalance(MINING.coin, Math.max(0, currentBalance - amount));
-
-    MINING.subscription = {
-      coin: MINING.coin,
-      planId: plan.id,
-      amount,
-      start: now()
-    };
-
-    pushMiningHistory("subscribe", {
-      coin: MINING.coin,
-      planName: plan.name,
-      amount,
-      roi: plan.roi
-    });
-
-    saveMiningState();
-    safePlay("snd-click");
-
-    if (inputEl) inputEl.value = "";
-    closeMiningPanel();
-    renderMining();
-    syncMiningToAirdrop();
-
-    if (btn) {
-      btn.disabled = false;
-      btn.textContent = oldText;
-    }
-
-    notify(`Mining started: ${plan.name} • ${fmt(amount)} ${MINING.coin}`);
-  }
-
-  async function claimMining(plan) {
-    const sub = MINING.subscription;
-    if (!sub) return;
-
-    const data = calcMining(plan, sub.amount, sub.start);
-
-    if (data.earning <= 0) {
-      notify("No profit yet");
+    if (amount < minRequired) {
+      setStatus(`Minimum for this plan is ${fmt(minRequired, coin)} ${coin}`, 'error');
       return;
     }
 
-    const res = await postSafe("/mining/claim", {
-      coin: sub.coin,
-      plan_id: sub.planId
-    });
-
-    if (!res) {
-      notify("Claim failed");
+    if (!BX_BALANCE.canAfford(coin, amount)) {
+      setStatus(`Insufficient ${coin} balance`, 'error');
       return;
     }
 
-    const currentBalance = getWalletBalance(sub.coin);
-    setWalletBalance(sub.coin, currentBalance + data.earning);
+    BX_BALANCE.sub(coin, amount);
 
-    pushMiningHistory("claim", {
-      coin: sub.coin,
-      planName: plan.name,
-      profit: data.earning
-    });
+    const start = now();
+    state.activePlanId = plan.id;
+    state.activeCoin = coin;
+    state.subscriptionAmount = amount;
+    state.activeSince = start;
+    state.expiresAt = start + getDurationMs(plan);
+    state.lastClaimAt = start;
+    state.pendingReward = 0;
+    state.totalClaimed = 0;
 
-    MINING.subscription.start = now();
-    saveMiningState();
-    safePlay("snd-win");
-    renderMining();
-    syncMiningToAirdrop();
+    saveState();
 
-    notify(`Claimed +${fmt(data.earning)} ${sub.coin}`);
-  }
+    if (dom.amountInput) dom.amountInput.value = '';
 
-  async function closeMiningPlan() {
-    const sub = MINING.subscription;
-    if (!sub) return;
-
-    const plan = getPlanById(sub.coin, sub.planId);
-    if (!plan) return;
-
-    const data = calcMining(plan, sub.amount, sub.start);
-    const totalReturn = sub.amount + data.earning;
-
-    const res = await postSafe("/mining/close", {
-      coin: sub.coin,
-      plan_id: sub.planId
-    });
-
-    if (!res) {
-      notify("Close plan failed");
-      return;
-    }
-
-    const currentBalance = getWalletBalance(sub.coin);
-    setWalletBalance(sub.coin, currentBalance + totalReturn);
-
-    pushMiningHistory("close", {
-      coin: sub.coin,
-      planName: plan.name,
-      returned: totalReturn
-    });
-
-    MINING.subscription = null;
-    saveMiningState();
-    safePlay("snd-lose");
-    renderMining();
-    syncMiningToAirdrop();
-
-    notify(`Plan closed • Returned ${fmt(totalReturn)} ${sub.coin}`);
-  }
-
-  /* =========================================================
-     AIRDROP SYNC
-  ========================================================= */
-  function syncMiningToAirdrop() {
-    // ربط بسيط فقط، بدون كسر airdrop.js الحالي
-    try {
-      const airdropReward = $("airdropReward");
-      if (!airdropReward) return;
-
-      if (!MINING.subscription) {
-        airdropReward.textContent = "+0.00 BX";
-        return;
-      }
-
-      const plan = getPlanById(MINING.subscription.coin, MINING.subscription.planId);
-      if (!plan) return;
-
-      const data = calcMining(plan, MINING.subscription.amount, MINING.subscription.start);
-
-      // bonus visual فقط
-      const bonus = data.earning * 0.05;
-      airdropReward.textContent = `+${fmt(bonus)} BX`;
-    } catch (_) {}
-  }
-
-  /* =========================================================
-     EVENTS
-  ========================================================= */
-  function bindMiningPanelEvents() {
-    $$("[data-mining-open]").forEach((btn) => {
-      btn.onclick = () => {
-        if (!MINING.selectedPlan) {
-          const firstPlan = getPlans()[0];
-          if (firstPlan) {
-            MINING.selectedPlan = {
-              id: firstPlan.id,
-              name: firstPlan.name,
-              roi: firstPlan.roi,
-              days: firstPlan.days,
-              min: firstPlan.min,
-              max: firstPlan.max
-            };
-          }
-        }
-        saveMiningState();
-        openMiningPanel();
-      };
-    });
-
-    $$("[data-mining-close]").forEach((btn) => {
-      btn.onclick = () => closeMiningPanel();
-    });
-
-    $$("[data-mining-percent]").forEach((btn) => {
-      btn.onclick = () => {
-        const percent = Number(btn.dataset.miningPercent || 0);
-        const input = $("miningAmountInput");
-        const balance = getWalletBalance(MINING.coin);
-        if (!input || !percent) return;
-        input.value = (balance * (percent / 100)).toFixed(4);
-        updateMiningPanel();
-      };
-    });
-
-    const amountInput = $("miningAmountInput");
-    if (amountInput) amountInput.addEventListener("input", updateMiningPanel);
-
-    const confirmBtn = $("confirmMiningSubscribeBtn");
-    if (confirmBtn) confirmBtn.onclick = confirmMiningSubscription;
-
-    const claimBtn = $("miningClaimBtn");
-    if (claimBtn) {
-      claimBtn.onclick = () => {
-        if (!MINING.subscription) return;
-        const plan = getPlanById(MINING.subscription.coin, MINING.subscription.planId);
-        if (plan) claimMining(plan);
-      };
-    }
-
-    const cancelBtn = $("miningCancelBtn");
-    if (cancelBtn) cancelBtn.onclick = closeMiningPlan;
-  }
-
-  /* =========================================================
-     RENDER
-  ========================================================= */
-  function renderMining() {
-    bindMiningTabs();
-    renderMiningTop();
-    renderActiveSubscription();
+    renderTopOverview();
     renderMiningPlans();
-    renderMiningHistory();
-    updateMiningPanel();
+    renderSubscribePanel();
+    renderActivePanel();
+    closeSubscribePanel();
+
+    setStatus(`${plan.name} activated with ${fmt(amount, coin)} ${coin}`, 'success');
+    showToast(`Mining started in ${coin}`, 'success');
+  }
+
+  function claimReward() {
+    const plan = getActivePlan();
+
+    if (!plan || !hasActivePlan()) {
+      setStatus('No active mining plan', 'error');
+      return;
+    }
+
+    syncPendingReward();
+
+    const reward = Number(state.pendingReward || 0);
+    const coin = state.activeCoin;
+
+    if (reward <= 0.0000001) {
+      setStatus('No reward available yet', 'info');
+      return;
+    }
+
+    BX_BALANCE.add(coin, reward);
+
+    state.totalClaimed += reward;
+    state.pendingReward = 0;
+    state.lastClaimAt = now();
+
+    saveState();
+    renderActivePanel();
+    renderTopOverview();
+    renderSubscribePanel();
+
+    setStatus(`Claimed ${fmt(reward, coin)} ${coin}`, 'success');
+    showToast(`Reward added to wallet`, 'success');
+  }
+
+  function toggleAutoCompound() {
+    state.autoCompound = !state.autoCompound;
+    saveState();
+    renderActivePanel();
+
+    showToast(
+      state.autoCompound ? 'Auto Compound enabled' : 'Auto Compound disabled',
+      'info'
+    );
+  }
+
+  function applyQuickPercent(percent) {
+    const coin = state.selectedCoin;
+    const available = getAvailable(coin);
+    const amount = available * (percent / 100);
+
+    if (dom.amountInput) {
+      dom.amountInput.value = amount.toFixed(coin === 'BX' ? 2 : 6);
+    }
+
+    updateSubscribeSummary();
+  }
+
+  function expirePlanIfNeeded() {
+    if (!state.activePlanId || !state.expiresAt) return;
+    if (now() < state.expiresAt) return;
+
+    syncPendingReward();
+
+    const coin = state.activeCoin;
+    const finalReward = Number(state.pendingReward || 0);
+
+    if (finalReward > 0) {
+      BX_BALANCE.add(coin, finalReward);
+      state.totalClaimed += finalReward;
+    }
+
+    const finishedPlan = state.activePlanId;
+
+    state.activePlanId = null;
+    state.subscriptionAmount = 0;
+    state.activeSince = null;
+    state.expiresAt = null;
+    state.lastClaimAt = null;
+    state.pendingReward = 0;
+
+    saveState();
+
+    renderMiningPlans();
+    renderActivePanel();
+    renderTopOverview();
+    renderSubscribePanel();
+
+    setStatus(`Plan ${finishedPlan} completed`, 'success');
+    showToast(`Mining cycle finished`, 'success');
+  }
+
+  function autoCompoundTick() {
+    if (!state.autoCompound || !hasActivePlan()) return;
+
+    syncPendingReward();
+
+    const reward = Number(state.pendingReward || 0);
+    if (reward <= 0.0000001) return;
+
+    state.subscriptionAmount += reward;
+    state.totalClaimed += reward;
+    state.pendingReward = 0;
+    state.lastClaimAt = now();
+
+    saveState();
+    renderActivePanel();
+    renderSubscribePanel();
   }
 
   /* =========================================================
-     AUTO REFRESH
+     BINDINGS
   ========================================================= */
-  function startMiningRefresh() {
-    if (MINING.refreshTimer) clearInterval(MINING.refreshTimer);
+  function bindPlanButtons() {
+    $$('[data-plan]', dom.grid).forEach(btn => {
+      btn.addEventListener('click', () => {
+        playClick();
+        selectPlan(btn.dataset.plan);
+      });
+    });
+  }
 
-    MINING.refreshTimer = setInterval(() => {
-      if (window.APP?.view === "mining" || MINING.subscription) {
-        renderMining();
-        syncMiningToAirdrop();
+  function bindCoinTabs() {
+    dom.tabs.forEach(btn => {
+      btn.addEventListener('click', () => {
+        playClick();
+        selectCoin(btn.dataset.coin);
+      });
+    });
+  }
+
+  function bindOpenClose() {
+    $$('[data-mining-open]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        playClick();
+        openSubscribePanel();
+      });
+    });
+
+    $$('[data-mining-close]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        playClick();
+        closeSubscribePanel();
+      });
+    });
+  }
+
+  function bindQuickPercent() {
+    $$('[data-mining-percent]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        playClick();
+        applyQuickPercent(Number(btn.dataset.miningPercent || 0));
+      });
+    });
+  }
+
+  function bindControls() {
+    dom.amountInput?.addEventListener('input', updateSubscribeSummary);
+
+    dom.confirmBtn?.addEventListener('click', () => {
+      playClick();
+      subscribeToPlan();
+    });
+
+    dom.claimBtn?.addEventListener('click', () => {
+      playClick();
+      claimReward();
+    });
+
+    dom.compoundBtn?.addEventListener('click', () => {
+      playClick();
+      toggleAutoCompound();
+    });
+  }
+
+  function bindBalanceSync() {
+    BX_BALANCE.subscribe(() => {
+      renderTopOverview();
+      renderSubscribePanel();
+      renderActivePanel();
+    });
+  }
+
+  function bindViewHooks() {
+    document.addEventListener('bloxio:viewchange', (e) => {
+      if (e.detail?.view === 'mining') {
+        renderTopOverview();
+        renderCoinTabs();
+        renderMiningPlans();
+        renderSubscribePanel();
+        renderActivePanel();
       }
-    }, 2000);
+    });
   }
 
   /* =========================================================
-     INIT
+     LOOP
   ========================================================= */
-  function initMining() {
-    loadMiningState();
-    bindMiningPanelEvents();
-    renderMining();
-    syncMiningToAirdrop();
-    startMiningRefresh();
+  let loop = null;
+
+  function startLoop() {
+    clearInterval(loop);
+
+    loop = setInterval(() => {
+      expirePlanIfNeeded();
+      syncPendingReward();
+      autoCompoundTick();
+      renderActivePanel();
+      renderTopOverview();
+    }, 4000);
   }
 
   /* =========================================================
-     EXPORT
+     PUBLIC API
   ========================================================= */
-  window.MINING = MINING;
-  window.renderMining = renderMining;
-  window.initMining = initMining;
+  MINING.renderMiningPlans = renderMiningPlans;
+  MINING.renderMiningUI = () => {
+    renderTopOverview();
+    renderCoinTabs();
+    renderMiningPlans();
+    renderSubscribePanel();
+    renderActivePanel();
+  };
 
-  document.addEventListener("DOMContentLoaded", initMining);
+  window.renderMiningPlans = renderMiningPlans;
+  window.renderMiningUI = MINING.renderMiningUI;
+
+  // demo helpers
+  window.miningDemoBNB = () => BX_BALANCE.add('BNB', 1);
+  window.miningDemoSOL = () => BX_BALANCE.add('SOL', 5);
+  window.miningDemoBX = () => BX_BALANCE.add('BX', 1000);
+
+  /* =========================================================
+     BOOT
+  ========================================================= */
+  function boot() {
+    if (!mapDom()) return;
+
+    bindCoinTabs();
+    bindOpenClose();
+    bindQuickPercent();
+    bindControls();
+    bindBalanceSync();
+    bindViewHooks();
+
+    MINING.renderMiningUI();
+    startLoop();
+
+    console.log('[Bloxio] mining.js REAL multi-coin loaded');
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot, { once: true });
+  } else {
+    boot();
+  }
 })();
