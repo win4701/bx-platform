@@ -1,16 +1,6 @@
 /* =========================================================
    CASINO MASTER CONSOLIDATED — FINAL
-   BLOXIO x BC.GAME STYLE ENGINE
-   ---------------------------------------------------------
-   Features:
-   - Lobby / Game Router
-   - Wallet sync
-   - Fairness
-   - Big wins feed
-   - Live players feed
-   - Game mount engine
-   - Unified Play / Stop / Cashout
-   - Supports multi-game architecture
+   BLOXIO x BC.GAME STYLE ENGINE 
 ========================================================= */
 
 (() => {
@@ -120,81 +110,105 @@
     },
 
     games: [
-      {
-        id: "crash",
-        name: "Crash",
-        type: "Popular",
-        icon: "📈",
-        image: "https://images.unsplash.com/photo-1518546305927-5a555bb7020d?q=80&w=800&auto=format&fit=crop",
-        color: "#22c55e"
-      },
-      {
-        id: "dice",
-        name: "Dice",
-        type: "Classic",
-        icon: "🎲",
-        image: "https://images.unsplash.com/photo-1511512578047-dfb367046420?q=80&w=800&auto=format&fit=crop",
-        color: "#3b82f6"
-      },
-      {
-        id: "coinflip",
-        name: "Coinflip",
-        type: "Classic",
-        icon: "🪙",
-        image: "https://images.unsplash.com/photo-1621416894569-0f39ed31d247?q=80&w=800&auto=format&fit=crop",
-        color: "#f59e0b"
-      },
-      {
-        id: "slots",
-        name: "Slots",
-        type: "Slots",
-        icon: "🎰",
-        image: "https://images.unsplash.com/photo-1596838132731-3301c3fd4317?q=80&w=800&auto=format&fit=crop",
-        color: "#ec4899"
-      },
-      {
-        id: "mines",
-        name: "Mines",
-        type: "Strategy",
-        icon: "💣",
-        image: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=800&auto=format&fit=crop",
-        color: "#ef4444"
-      },
-      {
-        id: "plinko",
-        name: "Plinko",
-        type: "Popular",
-        icon: "🔻",
-        image: "https://images.unsplash.com/photo-1511512578047-dfb367046420?q=80&w=800&auto=format&fit=crop",
-        color: "#8b5cf6"
-      },
-      {
-        id: "limbo",
-        name: "Limbo",
-        type: "Instant",
-        icon: "🎯",
-        image: "https://images.unsplash.com/photo-1518546305927-5a555bb7020d?q=80&w=800&auto=format&fit=crop",
-        color: "#14b8a6"
-      },
-      {
-        id: "blackjack",
-        name: "Blackjack",
-        type: "Cards",
-        icon: "🃏",
-        image: "https://images.unsplash.com/photo-1511193311914-0346f16efe90?q=80&w=800&auto=format&fit=crop",
-        color: "#f97316"
-      },
-      {
-        id: "hilo",
-        name: "Hi-Lo",
-        type: "Cards",
-        icon: "⬆️",
-        image: "https://images.unsplash.com/photo-1511193311914-0346f16efe90?q=80&w=800&auto=format&fit=crop",
-        color: "#06b6d4"
-      }
-    ],
+  {
+    id: "coinflip",
+    name: "Coinflip",
+    type: "Classic",
+    icon: "🪙",
+    image: "assets/casino/coinflip.png",
+    color: "#f59e0b"
+  },
+  {
+    id: "limbo",
+    name: "Limbo",
+    type: "Instant",
+    icon: "🎯",
+    image: "assets/casino/limbo.png",
+    color: "#14b8a6"
+  },
+  {
+    id: "dice",
+    name: "Dice",
+    type: "Classic",
+    icon: "🎲",
+    image: "assets/casino/dice.png",
+    color: "#3b82f6"
+  },
+  {
+    id: "crash",
+    name: "Crash",
+    type: "Popular",
+    icon: "📈",
+    image: "assets/casino/crash.png",
+    color: "#22c55e"
+  },
+  {
+    id: "plinko",
+    name: "Plinko",
+    type: "Popular",
+    icon: "🔻",
+    image: "assets/casino/plinko.png",
+    color: "#8b5cf6"
+  },
+  {
+    id: "blackjack",
+    name: "Blackjack",
+    type: "Cards",
+    icon: "🃏",
+    image: "assets/casino/blackjack.png",
+    color: "#f97316"
+  },
+  {
+    id: "hilo",
+    name: "Hi-Lo",
+    type: "Cards",
+    icon: "⬆️",
+    image: "assets/casino/hilo.png",
+    color: "#06b6d4"
+  },
+  {
+    id: "slots",
+    name: "Slots",
+    type: "Slots",
+    icon: "🎰",
+    image: "assets/casino/slot.png",
+    color: "#ec4899"
+  },
+  {
+    id: "mines",
+    name: "Mines",
+    type: "Strategy",
+    icon: "💣",
+    image: "assets/casino/mines.png",
+    color: "#ef4444"
+  },
+  {
+    id: "fruitparty",
+    name: "FruitParty",
+    type: "Slots",
+    icon: "🍉",
+    image: "assets/casino/fruitparty.png",
+    color: "#84cc16"
+  },
+  {
+    id: "bananafarm",
+    name: "BananaFarm",
+    type: "Slots",
+    icon: "🍌",
+    image: "assets/casino/bananafarm.png",
+    color: "#eab308"
+  },
+  {
+    id: "airboss",
+    name: "AirBoss",
+    type: "Popular",
+    icon: "✈️",
+    image: "assets/casino/airboss.png",
+    color: "#0ea5e9"
+  }
+],  
 
-    /* =========================================================
+/* =========================================================
        INIT
     ========================================================= */
     init() {
