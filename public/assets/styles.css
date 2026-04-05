@@ -2915,737 +2915,858 @@ h3{
   }
 }
   
-
 /* =========================================================
-   BLOXIO — MINING CSS CLASSIC ATTRACTIVE MASTER
-   Old style feel + better architecture
+   BLOXIO — MINING MASTER REBUILD FINAL
+   Old first section feel + cleaner + smaller buttons
 ========================================================= */
 
-#mining {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-  padding: 18px 14px 110px;
-  width: 100%;
-  min-height: 100%;
-  box-sizing: border-box;
+#mining{
+  width:100%;
+  max-width:100%;
+  min-height:100%;
+  padding:12px 0 118px;
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+  color:#f4f7fb;
+  overflow-x:hidden;
+  background:
+    radial-gradient(circle at top center, rgba(34,197,94,.05), transparent 24%),
+    linear-gradient(180deg,#060b12 0%, #09111b 100%);
+}
+
+#mining,
+#mining *{
+  box-sizing:border-box;
 }
 
 /* =========================
-   GLOBAL CARDS
+   WIDTH SYSTEM
+========================= */
+#mining .mining-top,
+#mining .mining-tabs,
+#mining .mining-shell{
+  width:min(100%, 430px);
+  margin-left:auto;
+  margin-right:auto;
+}
+
+/* =========================
+   CARD SYSTEM
 ========================= */
 #mining .card,
-.mining-top,
-.mining-active-card,
-.mining-history-card,
-.mining-sub-panel {
-  position: relative;
-  border-radius: 24px;
+#mining .mining-top,
+#mining .mining-active-card,
+#mining .mining-history-card,
+#mining .mining-sub-panel{
+  position:relative;
+  overflow:hidden;
+  border-radius:22px;
+  border:1px solid rgba(255,255,255,.06);
   background:
-    linear-gradient(180deg, rgba(255,255,255,0.028), rgba(255,255,255,0.014)),
-    rgba(14,18,28,0.94);
-  border: 1px solid rgba(255,255,255,0.06);
+    linear-gradient(180deg, rgba(255,255,255,.028), rgba(255,255,255,.014)),
+    rgba(14,18,28,.94);
+  box-shadow:0 14px 34px rgba(0,0,0,.26);
+}
+
+#mining .mining-top::before,
+#mining .mining-active-card::before,
+#mining .mining-history-card::before,
+#mining .mining-sub-panel::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:
+    radial-gradient(circle at top right, rgba(34,197,94,.08), transparent 34%),
+    radial-gradient(circle at bottom left, rgba(59,130,246,.06), transparent 42%);
+  pointer-events:none;
+}
+
+/* =========================================================
+   TOP HERO — رجوع للشكل القديم الأحسن
+========================================================= */
+#mining .mining-top{
+  padding:16px;
+}
+
+#mining .mining-top-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:14px;
+}
+
+#mining .mining-top-head h2{
+  margin:0 0 4px;
+  font-size:1.04rem;
+  font-weight:1000;
+  color:#fff;
+  letter-spacing:-.02em;
+}
+
+#mining .mining-top-head p{
+  margin:0;
+  font-size:.82rem;
+  color:rgba(226,232,240,.66);
+  line-height:1.5;
+  max-width:230px;
+}
+
+#mining .mining-top-head .btn{
+  min-height:38px;
+  padding:0 14px;
+  border:none;
+  border-radius:14px;
+  background:linear-gradient(180deg,#46f08c 0%, #22c55e 100%);
+  color:#07140c;
+  font-size:.82rem;
+  font-weight:1000;
+  box-shadow:0 10px 20px rgba(34,197,94,.16);
+  cursor:pointer;
+}
+
+/* =========================
+   OVERVIEW STATS — أصغر وأنظف
+========================= */
+#mining .mining-overview-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:10px;
+}
+
+#mining .mining-stat{
+  min-height:74px;
+  padding:12px 13px;
+  border-radius:16px;
+  background:rgba(255,255,255,.03);
+  border:1px solid rgba(255,255,255,.05);
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+}
+
+#mining .mining-stat span{
+  font-size:.68rem;
+  font-weight:900;
+  color:rgba(226,232,240,.56);
+  text-transform:uppercase;
+  letter-spacing:.08em;
+}
+
+#mining .mining-stat strong{
+  font-size:.96rem;
+  font-weight:1000;
+  color:#fff;
+  line-height:1;
+}
+
+/* =========================================================
+   COIN TABS — تصغير جذري
+========================================================= */
+#mining .mining-tabs{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:8px;
+}
+
+#mining .mining-tabs button{
+  min-height:50px;
+  border-radius:16px;
+  border:1px solid rgba(255,255,255,.06);
+  background:linear-gradient(180deg,#121b28 0%, #0f1724 100%);
+  color:#f1f5f9;
+  font-size:.84rem;
+  font-weight:1000;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  cursor:pointer;
+  transition:.16s ease;
+}
+
+#mining .mining-tabs button img{
+  width:18px;
+  height:18px;
+  object-fit:contain;
+}
+
+#mining .mining-tabs button:hover{
+  transform:translateY(-1px);
+}
+
+#mining .mining-tabs button.active{
+  color:#fff;
+  border-color:rgba(34,197,94,.26);
+  background:linear-gradient(180deg, rgba(34,197,94,.18), rgba(16,185,129,.10));
+  box-shadow:0 10px 20px rgba(34,197,94,.12);
+}
+
+/* =========================================================
+   MAIN LAYOUT
+========================================================= */
+#mining .mining-shell{
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+
+#mining .mining-main-col,
+#mining .mining-side-col{
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+
+/* =========================================================
+   SECTION HEAD
+========================================================= */
+#mining .mining-plans-head,
+#mining .mining-active-head,
+#mining .mining-history-head,
+#mining .mining-sub-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+}
+
+#mining .mining-plans-head{
+  padding:2px 2px 0;
+}
+
+#mining .mining-section-kicker{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  margin-bottom:5px;
+  font-size:.66rem;
+  font-weight:1000;
+  text-transform:uppercase;
+  letter-spacing:.12em;
+  color:#22c55e;
+}
+
+#mining .mining-section-kicker::before{
+  content:"";
+  width:6px;
+  height:6px;
+  border-radius:50%;
+  background:#22c55e;
+  box-shadow:0 0 10px rgba(34,197,94,.45);
+}
+
+#mining .mining-plans-head h3,
+#mining .mining-active-head h3,
+#mining .mining-history-head h3,
+#mining .mining-sub-head h3{
+  margin:0;
+  font-size:.98rem;
+  font-weight:1000;
+  color:#fff;
+  letter-spacing:-.02em;
+}
+
+#mining .mining-plans-head p{
+  margin:0;
+  font-size:.76rem;
+  color:rgba(226,232,240,.58);
+  text-align:right;
+  max-width:150px;
+}
+
+/* =========================================================
+   PLANS GRID — الشكل القديم الحقيقي
+========================================================= */
+#mining .mining-plans--classic{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:10px;
+}
+
+/* =========================
+   PLAN CARD — هذا هو الإصلاح الحقيقي
+========================= */
+#mining .mining-card{
+  position:relative;
+  min-height:198px;
+  padding:14px 14px 13px;
+  border-radius:20px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.015)),
+    rgba(15,18,28,.96);
+  border:1px solid rgba(255,255,255,.06);
   box-shadow:
-    0 14px 38px rgba(0,0,0,0.28),
-    inset 0 1px 0 rgba(255,255,255,0.04);
-  overflow: hidden;
+    0 12px 30px rgba(0,0,0,.24),
+    inset 0 1px 0 rgba(255,255,255,.03);
+  transition:.16s ease;
+  overflow:hidden;
 }
 
-.mining-top::before,
-.mining-active-card::before,
-.mining-history-card::before,
-.mining-sub-panel::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(circle at top right, rgba(34,197,94,0.08), transparent 38%),
-    radial-gradient(circle at bottom left, rgba(59,130,246,0.06), transparent 42%);
-  pointer-events: none;
-}
-
-/* =========================
-   HERO
-========================= */
-.mining-top {
-  padding: 18px;
-}
-
-.mining-top-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 14px;
-  margin-bottom: 16px;
-}
-
-.mining-top-head h2 {
-  margin: 0 0 4px;
-  font-size: 1.18rem;
-  font-weight: 800;
-  color: #f8fafc;
-}
-
-.mining-top-head p {
-  margin: 0;
-  font-size: 0.93rem;
-  color: rgba(226,232,240,0.72);
-}
-
-.mining-overview-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.mining-stat {
-  min-height: 88px;
-  padding: 14px;
-  border-radius: 18px;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.05);
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-}
-
-.mining-stat span {
-  font-size: 0.77rem;
-  font-weight: 700;
-  color: rgba(226,232,240,0.58);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
-.mining-stat strong {
-  font-size: 1.04rem;
-  font-weight: 800;
-  color: #ffffff;
-}
-
-/* =========================
-   COIN TABS
-========================= */
-.mining-tabs {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-}
-
-.mining-tabs button {
-  min-height: 62px;
-  border-radius: 18px;
-  border: 1px solid rgba(255,255,255,0.07);
-  background: rgba(255,255,255,0.03);
-  color: rgba(241,245,249,0.88);
-  font-size: 0.94rem;
-  font-weight: 800;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  cursor: pointer;
-  transition: 0.18s ease;
-}
-
-.mining-tabs button:hover {
-  transform: translateY(-1px);
-  background: rgba(255,255,255,0.05);
-}
-
-.mining-tabs button.active {
-  background: linear-gradient(135deg, rgba(34,197,94,0.18), rgba(16,185,129,0.12));
-  border-color: rgba(34,197,94,0.3);
-  box-shadow: 0 10px 26px rgba(34,197,94,0.14);
-  color: #fff;
-}
-
-.mining-tabs img {
-  width: 22px;
-  height: 22px;
-  object-fit: contain;
-}
-
-/* =========================
-   MAIN OLD STRUCTURE
-========================= */
-.mining-shell {
-  display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(320px, 1fr);
-  gap: 18px;
-  align-items: start;
-}
-
-.mining-main-col,
-.mining-side-col {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-  min-width: 0;
-}
-
-/* =========================
-   SECTION KICKER
-========================= */
-.mining-section-kicker {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.74rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: #22c55e;
-  margin-bottom: 6px;
-}
-
-.mining-section-kicker::before {
-  content: "";
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: #22c55e;
-  box-shadow: 0 0 10px rgba(34,197,94,0.5);
-}
-
-/* =========================
-   PLANS HEAD
-========================= */
-.mining-plans-head {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 2px 2px 0;
-}
-
-.mining-plans-head h3 {
-  margin: 0;
-  font-size: 1.08rem;
-  font-weight: 800;
-  color: #ffffff;
-}
-
-.mining-plans-head p {
-  margin: 0;
-  font-size: 0.84rem;
-  color: rgba(226,232,240,0.62);
-  text-align: right;
-}
-
-/* =========================
-   CLASSIC PLANS GRID (2 × 3)
-========================= */
-.mining-plans--classic {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
-}
-
-/* mining.js يرندر .mining-card */
-.mining-card {
-  position: relative;
-  min-height: 238px;
-  padding: 18px 18px 16px;
-  border-radius: 24px;
-  background:
-    linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.015)),
-    rgba(15,18,28,0.95);
-  border: 1px solid rgba(255,255,255,0.06);
+#mining .mining-card:hover{
+  transform:translateY(-2px);
+  border-color:rgba(34,197,94,.18);
   box-shadow:
-    0 14px 36px rgba(0,0,0,0.28),
-    inset 0 1px 0 rgba(255,255,255,0.04);
-  overflow: hidden;
-  transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+    0 14px 34px rgba(0,0,0,.28),
+    0 0 0 1px rgba(34,197,94,.05) inset;
 }
 
-.mining-card:hover {
-  transform: translateY(-3px);
-  border-color: rgba(34,197,94,0.22);
-  box-shadow:
-    0 18px 42px rgba(0,0,0,0.34),
-    0 0 0 1px rgba(34,197,94,0.08) inset;
-}
-
-.mining-card::before {
-  content: "";
-  position: absolute;
-  inset: 0;
+#mining .mining-card::before{
+  content:"";
+  position:absolute;
+  inset:0;
   background:
-    radial-gradient(circle at top right, rgba(34,197,94,0.1), transparent 34%),
-    radial-gradient(circle at bottom left, rgba(59,130,246,0.08), transparent 40%);
-  pointer-events: none;
+    radial-gradient(circle at top right, rgba(34,197,94,.08), transparent 34%),
+    radial-gradient(circle at bottom left, rgba(59,130,246,.06), transparent 40%);
+  pointer-events:none;
 }
 
-.mining-card::after {
-  content: "";
-  position: absolute;
-  inset: 0 0 auto 0;
-  height: 3px;
-  background: linear-gradient(90deg, rgba(34,197,94,0.85), rgba(74,222,128,0.35), transparent);
+#mining .mining-card::after{
+  content:"";
+  position:absolute;
+  inset:0 0 auto 0;
+  height:2px;
+  background:linear-gradient(90deg, rgba(34,197,94,.85), rgba(74,222,128,.35), transparent);
 }
 
-.mining-card h3 {
-  margin: 0 0 10px;
-  font-size: 1.04rem;
-  font-weight: 800;
-  color: #ffffff;
-  letter-spacing: -0.02em;
+/* ===== top row ===== */
+#mining .mining-card-top{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  margin-bottom:10px;
 }
 
-.mining-price {
-  font-size: 1.8rem;
-  font-weight: 900;
-  color: #22c55e;
-  line-height: 1;
-  letter-spacing: -0.04em;
-  margin-bottom: 14px;
+#mining .mining-card-badge{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:24px;
+  padding:0 9px;
+  border-radius:999px;
+  font-size:.62rem;
+  font-weight:1000;
+  letter-spacing:.05em;
+  border:1px solid transparent;
+  white-space:nowrap;
 }
 
-.mining-meta-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-  margin-bottom: 16px;
+#mining .mining-card-badge.is-entry{
+  background:rgba(148,163,184,.12);
+  color:#cbd5e1;
+  border-color:rgba(148,163,184,.18);
+}
+#mining .mining-card-badge.is-popular{
+  background:rgba(59,130,246,.14);
+  color:#93c5fd;
+  border-color:rgba(59,130,246,.2);
+}
+#mining .mining-card-badge.is-boost{
+  background:rgba(168,85,247,.14);
+  color:#d8b4fe;
+  border-color:rgba(168,85,247,.2);
+}
+#mining .mining-card-badge.is-pro{
+  background:rgba(34,197,94,.14);
+  color:#86efac;
+  border-color:rgba(34,197,94,.2);
+}
+#mining .mining-card-badge.is-ultra{
+  background:rgba(250,204,21,.14);
+  color:#fde68a;
+  border-color:rgba(250,204,21,.2);
+}
+#mining .mining-card-badge.is-whale{
+  background:rgba(244,63,94,.14);
+  color:#fda4af;
+  border-color:rgba(244,63,94,.2);
 }
 
-.mining-meta-grid > div {
-  min-height: 68px;
-  padding: 11px 10px;
-  border-radius: 16px;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.045);
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  gap: 4px;
+#mining .mining-card-rank{
+  font-size:.72rem;
+  font-weight:1000;
+  color:rgba(226,232,240,.42);
 }
 
-.mining-meta-grid span {
-  font-size: 0.7rem;
-  font-weight: 700;
-  color: rgba(226,232,240,0.56);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+/* ===== head ===== */
+#mining .mining-card-head{
+  display:block;
+  margin-bottom:10px;
 }
 
-.mining-meta-grid strong {
-  font-size: 0.92rem;
-  font-weight: 800;
-  color: #ffffff;
+#mining .mining-card h3{
+  margin:0 0 4px;
+  font-size:.92rem;
+  font-weight:1000;
+  color:#fff;
+  letter-spacing:-.02em;
 }
 
-.mining-card button {
-  width: 100%;
-  min-height: 44px;
-  border: none;
-  border-radius: 16px;
-  background: linear-gradient(135deg, #22c55e, #16a34a);
-  color: #ffffff;
-  font-size: 0.92rem;
-  font-weight: 800;
-  cursor: pointer;
-  box-shadow: 0 12px 26px rgba(34,197,94,0.2);
-  transition: transform .18s ease, filter .18s ease;
+#mining .mining-card-head p{
+  margin:0;
+  font-size:.73rem;
+  color:rgba(226,232,240,.58);
+  font-weight:800;
+  line-height:1.4;
 }
 
-.mining-card button:hover {
-  transform: translateY(-1px);
-  filter: brightness(1.03);
+/* ===== price ===== */
+#mining .mining-price{
+  font-size:1.42rem;
+  font-weight:1000;
+  color:#22c55e;
+  line-height:1;
+  letter-spacing:-.04em;
+  margin-bottom:10px;
 }
 
-.mining-card button:disabled {
-  opacity: .58;
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
+/* ===== highlight ===== */
+#mining .mining-card-highlight{
+  margin-bottom:10px;
+  padding:8px 10px;
+  border-radius:12px;
+  background:rgba(255,255,255,.03);
+  border:1px solid rgba(255,255,255,.05);
+  font-size:.72rem;
+  font-weight:800;
+  color:rgba(241,245,249,.82);
 }
 
-/* =========================
-   ACTIVE CARD
-========================= */
-.mining-active-card {
-  padding: 18px;
+/* ===== stats ===== */
+#mining .mining-meta-grid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:8px;
+  margin-bottom:10px;
 }
 
-.mining-active-head,
-.mining-history-head,
-.mining-sub-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 14px;
-  margin-bottom: 16px;
+#mining .mining-meta-grid > div{
+  min-height:56px;
+  padding:9px 8px;
+  border-radius:14px;
+  background:rgba(255,255,255,.03);
+  border:1px solid rgba(255,255,255,.045);
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+  gap:3px;
 }
 
-.mining-active-head h3,
-.mining-history-head h3,
-.mining-sub-head h3 {
-  margin: 0;
-  font-size: 1.03rem;
-  font-weight: 800;
-  color: #ffffff;
+#mining .mining-meta-grid span{
+  font-size:.60rem;
+  font-weight:900;
+  color:rgba(226,232,240,.5);
+  text-transform:uppercase;
+  letter-spacing:.06em;
 }
 
-.mining-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 34px;
-  padding: 0 12px;
-  border-radius: 999px;
-  font-size: 0.76rem;
-  font-weight: 800;
-  border: 1px solid transparent;
-  white-space: nowrap;
+#mining .mining-meta-grid strong{
+  font-size:.78rem;
+  font-weight:1000;
+  color:#fff;
+  line-height:1.2;
 }
 
-.mining-badge.idle {
-  color: #cbd5e1;
-  background: rgba(148,163,184,0.12);
-  border-color: rgba(148,163,184,0.2);
+/* ===== note ===== */
+#mining .mining-plan-note{
+  margin-bottom:10px;
+  font-size:.68rem;
+  color:rgba(226,232,240,.48);
+  line-height:1.45;
 }
 
-.mining-badge.active {
-  color: #22c55e;
-  background: rgba(34,197,94,0.12);
-  border-color: rgba(34,197,94,0.25);
+/* ===== BUTTON — تصغير جذري ===== */
+#mining .mining-card button,
+#mining .mining-select-btn{
+  width:100%;
+  min-height:36px;
+  border:none;
+  border-radius:13px;
+  background:linear-gradient(180deg,#46f08c 0%, #22c55e 100%);
+  color:#07140c;
+  font-size:.78rem;
+  font-weight:1000;
+  cursor:pointer;
+  box-shadow:0 8px 18px rgba(34,197,94,.14);
+  transition:.16s ease;
 }
 
-.mining-active-main {
-  display: grid;
-  gap: 10px;
-  margin-bottom: 18px;
+#mining .mining-card button:hover,
+#mining .mining-select-btn:hover{
+  transform:translateY(-1px);
 }
 
-.mining-active-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-  padding: 12px 14px;
-  border-radius: 16px;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.05);
+#mining .mining-card button:disabled,
+#mining .mining-select-btn:disabled{
+  opacity:.58;
+  cursor:not-allowed;
+  transform:none;
+  box-shadow:none;
 }
 
-.mining-active-row span {
-  font-size: 0.84rem;
-  font-weight: 600;
-  color: rgba(226,232,240,0.7);
+/* ===== selected / active ===== */
+#mining .mining-card.is-selected{
+  border-color:rgba(59,130,246,.24);
+  box-shadow:
+    0 14px 34px rgba(0,0,0,.28),
+    0 0 0 1px rgba(59,130,246,.08) inset;
 }
 
-.mining-active-row strong {
-  font-size: 0.95rem;
-  font-weight: 800;
-  color: #ffffff;
-  text-align: right;
+#mining .mining-card.is-selected::after{
+  background:linear-gradient(90deg,#3b82f6,#60a5fa,#93c5fd);
 }
 
-/* =========================
-   PROGRESS
-========================= */
-.mining-progress-wrap {
-  margin-bottom: 18px;
+#mining .mining-card.is-active{
+  border-color:rgba(34,197,94,.24);
+  box-shadow:
+    0 14px 34px rgba(0,0,0,.28),
+    0 0 0 1px rgba(34,197,94,.1) inset;
 }
 
-.mining-progress-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 10px;
+#mining .mining-card.is-active::after{
+  background:linear-gradient(90deg,#22c55e,#4ade80,#86efac);
 }
 
-.mining-progress-top span {
-  font-size: 0.82rem;
-  color: rgba(226,232,240,0.72);
-  font-weight: 600;
+/* =========================================================
+   ACTIVE / SUBSCRIBE / HISTORY
+========================================================= */
+#mining .mining-active-card,
+#mining .mining-history-card,
+#mining .mining-sub-panel{
+  padding:15px;
 }
 
-.mining-progress-top strong {
-  font-size: 0.9rem;
-  color: #ffffff;
-  font-weight: 800;
+#mining .mining-badge{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:28px;
+  padding:0 10px;
+  border-radius:999px;
+  font-size:.68rem;
+  font-weight:1000;
+  border:1px solid transparent;
+  white-space:nowrap;
 }
 
-.mining-progress-bar {
-  width: 100%;
-  height: 12px;
-  border-radius: 999px;
-  overflow: hidden;
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.05);
+#mining .mining-badge.idle{
+  color:#cbd5e1;
+  background:rgba(148,163,184,.12);
+  border-color:rgba(148,163,184,.18);
 }
 
-#miningProgressFill {
-  width: 0%;
-  height: 100%;
-  border-radius: inherit;
-  background: linear-gradient(90deg, #22c55e 0%, #4ade80 50%, #86efac 100%);
-  box-shadow: 0 0 18px rgba(34,197,94,0.3);
-  transition: width .35s ease;
+#mining .mining-badge.active{
+  color:#22c55e;
+  background:rgba(34,197,94,.12);
+  border-color:rgba(34,197,94,.22);
 }
 
-.mining-progress-hint {
-  margin-top: 10px;
-  font-size: 0.8rem;
-  color: rgba(226,232,240,0.62);
-  font-weight: 600;
+#mining .mining-active-main{
+  display:grid;
+  gap:8px;
+  margin:14px 0;
 }
 
-.mining-active-actions {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+#mining .mining-active-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:11px 12px;
+  border-radius:14px;
+  background:rgba(255,255,255,.03);
+  border:1px solid rgba(255,255,255,.05);
 }
 
-.mining-active-actions .btn {
-  min-height: 46px;
-  border-radius: 16px;
-  font-size: 0.92rem;
-  font-weight: 800;
+#mining .mining-active-row span{
+  font-size:.76rem;
+  font-weight:800;
+  color:rgba(226,232,240,.68);
 }
 
-/* =========================
-   SUB PANEL
-========================= */
-.mining-sub-panel {
-  padding: 18px;
+#mining .mining-active-row strong{
+  font-size:.84rem;
+  font-weight:1000;
+  color:#fff;
+  text-align:right;
 }
 
-.mining-hidden {
-  display: none !important;
+/* progress */
+#mining .mining-progress-wrap{
+  margin-bottom:14px;
 }
 
-.mining-sub-head p {
-  margin: 0;
-  font-size: 0.86rem;
-  color: rgba(226,232,240,0.66);
+#mining .mining-progress-top{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:8px;
 }
 
-.mining-panel-close {
-  width: 40px;
-  height: 40px;
-  border: 1px solid rgba(255,255,255,0.07);
-  border-radius: 14px;
-  background: rgba(255,255,255,0.04);
-  color: #ffffff;
-  font-size: 1rem;
-  cursor: pointer;
+#mining .mining-progress-top span{
+  font-size:.74rem;
+  color:rgba(226,232,240,.68);
+  font-weight:700;
 }
 
-.mining-sub-body {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
+#mining .mining-progress-top strong{
+  font-size:.82rem;
+  color:#fff;
+  font-weight:1000;
 }
 
-.mining-balance-info {
-  padding: 12px 14px;
-  border-radius: 16px;
-  background: rgba(34,197,94,0.08);
-  border: 1px solid rgba(34,197,94,0.16);
-  font-size: 0.88rem;
-  color: rgba(226,232,240,0.82);
+#mining .mining-progress-bar{
+  width:100%;
+  height:10px;
+  border-radius:999px;
+  overflow:hidden;
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.05);
 }
 
-.mining-balance-info strong {
-  color: #ffffff;
-  font-weight: 800;
+#mining #miningProgressFill{
+  width:0%;
+  height:100%;
+  border-radius:inherit;
+  background:linear-gradient(90deg,#22c55e 0%,#4ade80 50%,#86efac 100%);
+  box-shadow:0 0 16px rgba(34,197,94,.28);
+  transition:width .35s ease;
 }
 
-.mining-sub-body label {
-  font-size: 0.82rem;
-  font-weight: 700;
-  color: rgba(226,232,240,0.82);
+#mining .mining-progress-hint{
+  margin-top:8px;
+  font-size:.72rem;
+  color:rgba(226,232,240,.56);
+  font-weight:700;
 }
 
-#miningAmountInput {
-  width: 100%;
-  min-height: 52px;
-  border-radius: 16px;
-  border: 1px solid rgba(255,255,255,0.08);
-  background: rgba(255,255,255,0.035);
-  color: #ffffff;
-  font-size: 1rem;
-  font-weight: 700;
-  padding: 0 15px;
-  outline: none;
-  box-sizing: border-box;
+#mining .mining-active-actions{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:8px;
 }
 
-#miningAmountInput:focus {
-  border-color: rgba(34,197,94,0.32);
-  box-shadow: 0 0 0 4px rgba(34,197,94,0.08);
+#mining .mining-active-actions .btn,
+#mining #confirmMiningSubscribeBtn,
+#mining .mining-quick-row button,
+#mining .mining-panel-close{
+  min-height:38px;
+  border-radius:13px;
+  font-size:.78rem;
+  font-weight:1000;
 }
 
-.mining-quick-row {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
+#mining .mining-active-actions .btn,
+#mining #confirmMiningSubscribeBtn{
+  border:none;
+  cursor:pointer;
 }
 
-.mining-quick-row button {
-  min-height: 42px;
-  border-radius: 14px;
-  border: 1px solid rgba(255,255,255,0.07);
-  background: rgba(255,255,255,0.04);
-  color: #ffffff;
-  font-size: 0.88rem;
-  font-weight: 800;
-  cursor: pointer;
+#mining .mining-active-actions .btn.primary,
+#mining #confirmMiningSubscribeBtn{
+  background:linear-gradient(180deg,#46f08c 0%, #22c55e 100%);
+  color:#07140c;
 }
 
-.mining-sub-summary {
-  padding: 14px 15px;
-  border-radius: 16px;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.05);
-  color: rgba(226,232,240,0.82);
-  font-size: 0.86rem;
-  line-height: 1.7;
+#mining .mining-active-actions .btn:not(.primary){
+  background:linear-gradient(180deg,#172230 0%, #101a26 100%);
+  color:#fff;
+  border:1px solid rgba(255,255,255,.06);
 }
 
-/* =========================
-   HISTORY
-========================= */
-.mining-history-card {
-  padding: 18px;
+/* subscribe */
+#mining .mining-hidden{
+  display:none !important;
 }
 
-.mining-history-count {
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: rgba(226,232,240,0.62);
-  white-space: nowrap;
+#mining .mining-sub-head p{
+  margin:0;
+  font-size:.76rem;
+  color:rgba(226,232,240,.62);
 }
 
-.mining-history-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  max-height: 430px;
-  overflow-y: auto;
+#mining .mining-panel-close{
+  width:38px;
+  padding:0;
+  border:1px solid rgba(255,255,255,.07);
+  background:rgba(255,255,255,.04);
+  color:#fff;
+  cursor:pointer;
 }
 
-.mining-history-item {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 12px;
-  align-items: center;
-  padding: 14px;
-  border-radius: 18px;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.05);
+#mining .mining-sub-body{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
 }
 
-.mining-history-main {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 0;
+#mining .mining-balance-info{
+  padding:11px 12px;
+  border-radius:14px;
+  background:rgba(34,197,94,.08);
+  border:1px solid rgba(34,197,94,.14);
+  font-size:.8rem;
+  color:rgba(226,232,240,.8);
 }
 
-.mining-history-main strong {
-  font-size: 0.92rem;
-  font-weight: 800;
-  color: #ffffff;
+#mining .mining-balance-info strong{
+  color:#fff;
+  font-weight:1000;
 }
 
-.mining-history-main span {
-  font-size: 0.78rem;
-  color: rgba(226,232,240,0.64);
+#mining .mining-sub-body label{
+  font-size:.74rem;
+  font-weight:900;
+  color:rgba(226,232,240,.78);
 }
 
-.mining-history-profit {
-  font-size: 0.9rem;
-  font-weight: 800;
-  color: #4ade80;
-  white-space: nowrap;
+#mining #miningAmountInput{
+  width:100%;
+  min-height:46px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.08);
+  background:linear-gradient(180deg,#0d1521 0%, #0a111b 100%);
+  color:#fff;
+  font-size:.92rem;
+  font-weight:1000;
+  padding:0 13px;
+  outline:none;
 }
 
-.mining-history-empty {
-  padding: 18px 16px;
-  border-radius: 18px;
-  text-align: center;
-  font-size: 0.88rem;
-  color: rgba(226,232,240,0.6);
-  background: rgba(255,255,255,0.03);
-  border: 1px dashed rgba(255,255,255,0.08);
+#mining #miningAmountInput:focus{
+  border-color:rgba(34,197,94,.28);
+  box-shadow:0 0 0 3px rgba(34,197,94,.08);
 }
 
-/* =========================
+#mining .mining-quick-row{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:8px;
+}
+
+#mining .mining-quick-row button{
+  border:1px solid rgba(255,255,255,.07);
+  background:rgba(255,255,255,.04);
+  color:#fff;
+  cursor:pointer;
+}
+
+#mining .mining-sub-summary{
+  padding:12px 13px;
+  border-radius:14px;
+  background:rgba(255,255,255,.03);
+  border:1px solid rgba(255,255,255,.05);
+  color:rgba(226,232,240,.8);
+  font-size:.78rem;
+  line-height:1.65;
+}
+
+/* history */
+#mining .mining-history-count{
+  font-size:.72rem;
+  font-weight:800;
+  color:rgba(226,232,240,.58);
+  white-space:nowrap;
+}
+
+#mining .mining-history-list{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  max-height:360px;
+  overflow-y:auto;
+}
+
+#mining .mining-history-item{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:10px;
+  align-items:center;
+  padding:12px;
+  border-radius:15px;
+  background:rgba(255,255,255,.03);
+  border:1px solid rgba(255,255,255,.05);
+}
+
+#mining .mining-history-main{
+  display:flex;
+  flex-direction:column;
+  gap:3px;
+  min-width:0;
+}
+
+#mining .mining-history-main strong{
+  font-size:.82rem;
+  font-weight:1000;
+  color:#fff;
+}
+
+#mining .mining-history-main span{
+  font-size:.70rem;
+  color:rgba(226,232,240,.6);
+}
+
+#mining .mining-history-profit{
+  font-size:.8rem;
+  font-weight:1000;
+  color:#4ade80;
+  white-space:nowrap;
+}
+
+#mining .mining-history-empty{
+  padding:16px 14px;
+  border-radius:15px;
+  text-align:center;
+  font-size:.8rem;
+  color:rgba(226,232,240,.56);
+  background:rgba(255,255,255,.03);
+  border:1px dashed rgba(255,255,255,.08);
+}
+
+/* =========================================================
    RESPONSIVE
-========================= */
-@media (max-width: 1180px) {
-  .mining-shell {
-    grid-template-columns: 1fr;
+========================================================= */
+@media (max-width:640px){
+  #mining{
+    padding:12px 0 112px;
   }
 
-  .mining-main-col {
-    order: 1;
-  }
-
-  .mining-side-col {
-    order: 2;
+  #mining .mining-top,
+  #mining .mining-tabs,
+  #mining .mining-shell{
+    width:min(100%, 100%);
   }
 }
 
-@media (max-width: 860px) {
-  .mining-overview-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+@media (max-width:430px){
+  #mining .mining-top,
+  #mining .mining-active-card,
+  #mining .mining-history-card,
+  #mining .mining-sub-panel{
+    border-radius:20px;
   }
 
-  .mining-plans--classic {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 560px) {
-  #mining {
-    padding: 16px 12px 110px;
-    gap: 16px;
+  #mining .mining-card{
+    border-radius:18px;
+    padding:13px;
   }
 
-  .mining-top,
-  .mining-active-card,
-  .mining-history-card,
-  .mining-sub-panel {
-    padding: 16px;
-    border-radius: 20px;
+  #mining .mining-price{
+    font-size:1.32rem;
   }
 
-  .mining-top-head,
-  .mining-active-head,
-  .mining-history-head,
-  .mining-sub-head,
-  .mining-plans-head {
-    flex-direction: column;
-    align-items: flex-start;
+  #mining .mining-meta-grid{
+    gap:7px;
   }
 
-  .mining-active-actions {
-    grid-template-columns: 1fr;
-  }
-
-  .mining-tabs button {
-    min-height: 58px;
-    border-radius: 16px;
-    font-size: 0.9rem;
-  }
-
-  .mining-card {
-    min-height: auto;
-    border-radius: 20px;
-    padding: 16px;
-  }
-
-  .mining-price {
-    font-size: 1.58rem;
+  #mining .mining-meta-grid > div{
+    min-height:54px;
+    border-radius:13px;
   }
 }
-
 
 /* =========================================================
    BOTTOM NAV
