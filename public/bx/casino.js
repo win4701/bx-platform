@@ -1,14 +1,19 @@
 /* =========================================================
-   BLOXIO CASINO — PRO FINAL MASTER
-   ---------------------------------------------------------
+   BLOXIO CASINO — ROUTER SAFE PATCH FINAL
    Compatible with:
-   - casino HTML MASTER
-   - casino CSS MASTER SYSTEM
-   - assets/casino/*.png ONLY
+   - index.html surgical patch
+   - main.js surgical patch
+   - styles.css / casino css master
 ========================================================= */
 
 (() => {
   "use strict";
+
+  if (window.BX_CASINO_BOOTED) {
+    console.warn("[Casino] Already booted — skipping duplicate init");
+    return;
+  }
+  window.BX_CASINO_BOOTED = true;
 
   /* =========================================================
      HELPERS
@@ -173,10 +178,13 @@
      APP
   ========================================================= */
   const CASINO = {
+    booted: false,
     root: null,
     lobby: null,
     gameView: null,
     ambientTimer: null,
+    boundGlobal: false,
+    boundLobbyOnce: false,
 
     state: {
       wallet: 2500,
@@ -205,30 +213,44 @@
     },
 
     games: [
-      { id: "coinflip",  name: "Coinflip",   type: "Classic",  icon: "🪙", image: "assets/casino/coinflip.png",   color: "#f59e0b" },
-      { id: "limbo",     name: "Limbo",      type: "Instant",  icon: "🎯", image: "assets/casino/limbo.png",      color: "#14b8a6" },
-      { id: "dice",      name: "Dice",       type: "Classic",  icon: "🎲", image: "assets/casino/dice.png",       color: "#3b82f6" },
-      { id: "crash",     name: "Crash",      type: "Popular",  icon: "📈", image: "assets/casino/crash.png",      color: "#22c55e" },
-      { id: "plinko",    name: "Plinko",     type: "Popular",  icon: "🔻", image: "assets/casino/plinko.png",     color: "#8b5cf6" },
-      { id: "blackjack", name: "Blackjack",  type: "Cards",    icon: "🃏", image: "assets/casino/blackjack.png",  color: "#f97316" },
-      { id: "hilo",      name: "Hi-Lo",      type: "Cards",    icon: "⬆️", image: "assets/casino/hilo.png",       color: "#06b6d4" },
-      { id: "slots",     name: "Slots",      type: "Slots",    icon: "🎰", image: "assets/casino/slot.png",       color: "#ec4899" },
-      { id: "mines",     name: "Mines",      type: "Strategy", icon: "💣", image: "assets/casino/mines.png",      color: "#ef4444" },
-      { id: "fruitparty",name: "FruitParty", type: "Slots",    icon: "🍉", image: "assets/casino/fruitparty.png", color: "#84cc16" },
-      { id: "bananafarm",name: "BananaFarm", type: "Slots",    icon: "🍌", image: "assets/casino/bananafarm.png", color: "#eab308" },
-      { id: "airboss",   name: "AirBoss",    type: "Popular",  icon: "✈️", image: "assets/casino/airboss.png",    color: "#0ea5e9" }
+      { id: "coinflip",  name: "Coinflip",   type: "Classic",  icon: "🪙", image: "assets/casino/coinflip.png" },
+      { id: "limbo",     name: "Limbo",      type: "Instant",  icon: "🎯", image: "assets/casino/limbo.png" },
+      { id: "dice",      name: "Dice",       type: "Classic",  icon: "🎲", image: "assets/casino/dice.png" },
+      { id: "crash",     name: "Crash",      type: "Popular",  icon: "📈", image: "assets/casino/crash.png" },
+      { id: "plinko",    name: "Plinko",     type: "Popular",  icon: "🔻", image: "assets/casino/plinko.png" },
+      { id: "blackjack", name: "Blackjack",  type: "Cards",    icon: "🃏", image: "assets/casino/blackjack.png" },
+      { id: "hilo",      name: "Hi-Lo",      type: "Cards",    icon: "⬆️", image: "assets/casino/hilo.png" },
+      { id: "slots",     name: "Slots",      type: "Slots",    icon: "🎰", image: "assets/casino/slot.png" },
+      { id: "mines",     name: "Mines",      type: "Strategy", icon: "💣", image: "assets/casino/mines.png" },
+      { id: "fruitparty",name: "FruitParty", type: "Slots",    icon: "🍉", image: "assets/casino/fruitparty.png" },
+      { id: "bananafarm",name: "BananaFarm", type: "Slots",    icon: "🍌", image: "assets/casino/bananafarm.png" },
+      { id: "airboss",   name: "AirBoss",    type: "Popular",  icon: "✈️", image: "assets/casino/airboss.png" }
     ],
 
+    /* =========================================================
+       BOOT / MOUNT
+    ========================================================= */
     init() {
       this.root = document.getElementById("casino");
       if (!this.root) return;
 
       this.ensureShell();
       this.loadState();
-      this.renderLobby();
-      this.bindGlobal();
-      this.startAmbientFeeds();
+
+      if (!this.booted) {
+        this.renderLobby();
+        this.startAmbientFeeds();
+        this.bindRouterHooks();
+        this.bindGlobal();
+        this.booted = true;
+      } else {
+        this.syncWalletUI();
+      }
+
       window.CASINO = this;
+      window.renderCasinoLobby = () => this.onEnterView();
+      window.updateCasinoUI = () => this.syncWalletUI();
+      window.syncCasinoLayout = () => this.syncLayout();
     },
 
     ensureShell() {
@@ -247,6 +269,48 @@
         this.gameView.className = "hidden";
         this.root.appendChild(this.gameView);
       }
+    },
+
+    onEnterView() {
+      if (!this.root) return;
+      this.ensureShell();
+      this.syncWalletUI();
+
+      if (!this.state.currentGame) {
+        this.renderLobby();
+      } else {
+        // لو كان داخل لعبة و رجع للقسم casino، لا نعيد تدمير الجيم
+        this.lobby.classList.add("hidden");
+        this.gameView.classList.remove("hidden");
+      }
+    },
+
+    syncLayout() {
+      const currentGame = this.state.currentGame?.id || null;
+      if (!currentGame) return;
+
+      const stage = $("#casinoGameStage", this.gameView);
+      if (!stage) return;
+
+      // إعادة trigger بسيطة للرسم أو resize إذا احتجت لاحقًا
+      stage.style.willChange = "transform";
+      requestAnimationFrame(() => {
+        stage.style.willChange = "auto";
+      });
+    },
+
+    bindRouterHooks() {
+      document.addEventListener("bloxio:viewchange", (e) => {
+        const next = e.detail?.view;
+        if (next === "casino") {
+          this.onEnterView();
+        } else {
+          // عند مغادرة casino لا نكسر الحالة، فقط نوقف loops الحساسة
+          if (this.state.currentGame?.id === "crash" || this.state.currentGame?.id === "airboss") {
+            // ما نغلقش اللعبة، فقط نوقف التحديثات الحية إذا لزم
+          }
+        }
+      });
     },
 
     loadState() {
@@ -276,15 +340,14 @@
       localStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(this.state.history.slice(0, 80)));
       localStorage.setItem(STORAGE_KEYS.FAIRNESS, JSON.stringify(this.state.fairness));
       localStorage.setItem(STORAGE_KEYS.BIGWINS, JSON.stringify(this.state.bigWins.slice(0, 40)));
-      if (this.state.currentGame) {
-        localStorage.setItem(STORAGE_KEYS.LAST_GAME, this.state.currentGame.id);
-      }
     },
 
     /* =========================================================
        LOBBY
     ========================================================= */
     renderLobby() {
+      if (!this.lobby) return;
+
       const tabs = ["all", "popular", "classic", "slots", "strategy", "cards", "instant"];
       const filtered = this.getFilteredGames();
 
@@ -297,7 +360,7 @@
               <p class="casino-subtitle">Provably fair • Live gameplay</p>
             </div>
           </div>
-          <button class="casino-icon-btn" id="casinoRefreshBtn">⟳</button>
+          <button class="casino-icon-btn" id="casinoRefreshBtn" type="button">⟳</button>
         </div>
 
         <div class="casino-stats-strip">
@@ -322,7 +385,7 @@
 
         <div class="casino-filter-tabs" id="casinoFilterTabs">
           ${tabs.map(tab => `
-            <button class="casino-filter-tab ${this.state.currentTab === tab ? "active" : ""}" data-tab="${tab}">
+            <button class="casino-filter-tab ${this.state.currentTab === tab ? "active" : ""}" data-tab="${tab}" type="button">
               ${tab[0].toUpperCase() + tab.slice(1)}
             </button>
           `).join("")}
@@ -342,11 +405,12 @@
 
       this.bindLobby();
       this.renderTicker();
+      this.syncWalletUI();
     },
 
     renderGameCard(game) {
       return `
-        <button class="casino-game-card" data-game="${game.id}" data-image="${game.image}">
+        <button type="button" class="casino-game-card" data-game="${game.id}" data-image="${game.image}">
           <div class="casino-game-thumb">
             <img src="${game.image}" alt="${game.name}">
           </div>
@@ -423,19 +487,19 @@
       this.gameView.innerHTML = `
         <div class="game-shell-topbar">
           <div class="game-shell-title-wrap">
-            <button class="game-back-btn" id="casinoBackBtn">←</button>
+            <button class="game-back-btn" id="casinoBackBtn" type="button">←</button>
             <div>
               <h2 class="game-shell-title">${game.icon} ${game.name}</h2>
               <p class="game-shell-subtitle">Provably fair • ${game.type} • Instant settle</p>
             </div>
           </div>
-          <button class="casino-icon-btn" id="casinoSeedRefreshBtn">⚙</button>
+          <button class="casino-icon-btn" id="casinoSeedRefreshBtn" type="button">⚙</button>
         </div>
 
         <div class="game-header-tabs">
-          <button class="game-header-tab active" data-headtab="game">Game</button>
-          <button class="game-header-tab" data-headtab="fairness">Fair</button>
-          <button class="game-header-tab" data-headtab="players">Players</button>
+          <button class="game-header-tab active" data-headtab="game" type="button">Game</button>
+          <button class="game-header-tab" data-headtab="fairness" type="button">Fair</button>
+          <button class="game-header-tab" data-headtab="players" type="button">Players</button>
         </div>
 
         <div class="game-pulse-strip" id="gamePulseStrip">
@@ -454,8 +518,8 @@
 
           <div class="bet-panel" data-panel="game">
             <div class="settings-tabs">
-              <button class="settings-tab active" data-mode="manual">Manual</button>
-              <button class="settings-tab" data-mode="auto">Auto</button>
+              <button class="settings-tab active" data-mode="manual" type="button">Manual</button>
+              <button class="settings-tab" data-mode="auto" type="button">Auto</button>
             </div>
 
             <div class="bet-input-group">
@@ -465,18 +529,18 @@
               </div>
 
               <div class="bet-quick-row">
-                <button data-betquick="1">1</button>
-                <button data-betquick="5">5</button>
-                <button data-betquick="25">25</button>
-                <button data-betquick="100">100</button>
+                <button data-betquick="1" type="button">1</button>
+                <button data-betquick="5" type="button">5</button>
+                <button data-betquick="25" type="button">25</button>
+                <button data-betquick="100" type="button">100</button>
               </div>
             </div>
 
             <div id="dynamicBetControls"></div>
 
-            <button id="casinoPlayBtn">Play</button>
-            <button id="casinoStopBtn" class="hidden">Stop</button>
-            <button id="casinoCashoutBtn" class="hidden">Cashout</button>
+            <button id="casinoPlayBtn" type="button">Play</button>
+            <button id="casinoStopBtn" class="hidden" type="button">Stop</button>
+            <button id="casinoCashoutBtn" class="hidden" type="button">Cashout</button>
           </div>
 
           <div class="fairness-card hidden" data-panel="fairness">
@@ -495,7 +559,7 @@
                 <strong id="nonceText">${this.state.fairness.nonce}</strong>
               </div>
             </div>
-            <button id="newSeedBtn">Generate New Seeds</button>
+            <button id="newSeedBtn" type="button">Generate New Seeds</button>
           </div>
 
           <div class="players-card hidden" data-panel="players">
@@ -581,9 +645,6 @@
       if (el) el.textContent = text;
     },
 
-    /* =========================================================
-       FAIRNESS
-    ========================================================= */
     regenerateSeeds() {
       this.state.fairness.serverSeed = shortHash(32);
       this.state.fairness.clientSeed = shortHash(16);
@@ -608,9 +669,6 @@
       if (nonce) nonce.textContent = this.state.fairness.nonce;
     },
 
-    /* =========================================================
-       WALLET
-    ========================================================= */
     canAfford(amount) {
       return this.state.wallet >= amount;
     },
@@ -628,16 +686,13 @@
     },
 
     syncWalletUI() {
-      const walletText = $("#casinoWalletText", this.lobby);
+      const walletText = $("#casinoWalletText", this.root);
       if (walletText) walletText.textContent = `${formatMoney(this.state.wallet)} BX`;
 
       const pulse = $("#gamePulseStrip .pulse-pill.green", this.gameView);
       if (pulse) pulse.textContent = `Wallet: ${formatMoney(this.state.wallet)} BX`;
     },
 
-    /* =========================================================
-       PLAY CORE
-    ========================================================= */
     playCurrentGame() {
       if (!this.state.currentGame || this.state.isPlaying) return;
 
@@ -759,9 +814,6 @@
       if (cashoutBtn) cashoutBtn.classList.toggle("hidden", !cashout);
     },
 
-    /* =========================================================
-       MOUNT ENGINE
-    ========================================================= */
     mountGame(game) {
       const stage = $("#casinoGameStage", this.gameView);
       const body = $("#gameEngineBody", this.gameView);
@@ -809,8 +861,9 @@
     },
 
     /* =========================================================
-       ENGINES
+       ENGINES (مختصرة لكن كاملة)
     ========================================================= */
+
     createCrashEngine() {
       let interval = null;
       let multiplier = 1;
@@ -916,8 +969,8 @@
               </div>
               <input type="range" id="diceTargetInput" min="5" max="95" value="50">
               <div class="segmented-row">
-                <button class="seg-btn active" data-dice-side="under">Roll Under</button>
-                <button class="seg-btn" data-dice-side="over">Roll Over</button>
+                <button class="seg-btn active" data-dice-side="under" type="button">Roll Under</button>
+                <button class="seg-btn" data-dice-side="over" type="button">Roll Over</button>
               </div>
             </div>
           `;
@@ -1004,8 +1057,8 @@
             <div class="dynamic-card">
               <div class="dynamic-card-title">Choose Side</div>
               <div class="segmented-row">
-                <button class="seg-btn active" data-coin="heads">Heads</button>
-                <button class="seg-btn" data-coin="tails">Tails</button>
+                <button class="seg-btn active" data-coin="heads" type="button">Heads</button>
+                <button class="seg-btn" data-coin="tails" type="button">Tails</button>
               </div>
             </div>
           `;
@@ -1069,9 +1122,9 @@
             <div class="dynamic-card">
               <div class="dynamic-card-title">Slot Mode</div>
               <div class="segmented-row three">
-                <button class="seg-btn active">Classic</button>
-                <button class="seg-btn">Turbo</button>
-                <button class="seg-btn">Max</button>
+                <button class="seg-btn active" type="button">Classic</button>
+                <button class="seg-btn" type="button">Turbo</button>
+                <button class="seg-btn" type="button">Max</button>
               </div>
             </div>
           `;
@@ -1147,6 +1200,7 @@
           btn.className = "pick-card";
           btn.textContent = "❔";
           btn.dataset.index = i;
+          btn.type = "button";
           btn.onclick = () => {
             if (!CASINO.state.isPlaying || selected.has(i)) return;
 
@@ -1259,9 +1313,9 @@
             <div class="dynamic-card">
               <div class="dynamic-card-title">Risk</div>
               <div class="segmented-row three">
-                <button class="seg-btn" data-risk="low">Low</button>
-                <button class="seg-btn active" data-risk="medium">Medium</button>
-                <button class="seg-btn" data-risk="high">High</button>
+                <button class="seg-btn" data-risk="low" type="button">Low</button>
+                <button class="seg-btn active" data-risk="medium" type="button">Medium</button>
+                <button class="seg-btn" data-risk="high" type="button">High</button>
               </div>
             </div>
           `;
@@ -1409,10 +1463,6 @@
             $("#bjDealerCards", bodyRef).innerHTML = dealer.map(v => `<div class="bj-card">${v}</div>`).join("");
             $("#bjPlayerScore", bodyRef).textContent = sum(player);
             $("#bjDealerScore", bodyRef).textContent = sum(dealer);
-
-            [...$$(".bj-card", bodyRef)].forEach((c, i) => {
-              setTimeout(() => pulseEl(c), i * 100);
-            });
           };
 
           render();
@@ -1470,8 +1520,8 @@
             <div class="dynamic-card">
               <div class="dynamic-card-title">Choose</div>
               <div class="segmented-row">
-                <button class="seg-btn active" data-hilo="higher">Higher</button>
-                <button class="seg-btn" data-hilo="lower">Lower</button>
+                <button class="seg-btn active" data-hilo="higher" type="button">Higher</button>
+                <button class="seg-btn" data-hilo="lower" type="button">Lower</button>
               </div>
             </div>
           `;
@@ -1491,17 +1541,6 @@
 
         play(amount) {
           const next = randInt(2, 14);
-
-          if (cardEl.animate) {
-            cardEl.animate(
-              [
-                { transform: "translateY(0) rotate(0deg)", opacity: 1 },
-                { transform: "translateY(-16px) rotate(6deg)", opacity: .15 },
-                { transform: "translateY(0) rotate(0deg)", opacity: 1 }
-              ],
-              { duration: 500, easing: "ease-out" }
-            );
-          }
 
           setTimeout(() => {
             const win = guess === "higher" ? next > current : next < current;
@@ -1608,16 +1647,6 @@
 
               if (statusEl) statusEl.textContent = `Engine failure at ${crashAt.toFixed(2)}x`;
 
-              if (planeEl && planeEl.animate) {
-                planeEl.animate(
-                  [
-                    { transform: planeEl.style.transform || "translate(0,0)" },
-                    { transform: "translate(180px, 60px) rotate(38deg)" }
-                  ],
-                  { duration: 650, easing: "ease-in" }
-                );
-              }
-
               if (!cashed) {
                 CASINO.finishRound({ win: false, payout: 0, multiplier: crashAt });
               }
@@ -1669,9 +1698,9 @@
             <div class="dynamic-card">
               <div class="dynamic-card-title">Party Mode</div>
               <div class="segmented-row three">
-                <button class="seg-btn active" data-fruit-risk="normal">Normal</button>
-                <button class="seg-btn" data-fruit-risk="wild">Wild</button>
-                <button class="seg-btn" data-fruit-risk="chaos">Chaos</button>
+                <button class="seg-btn active" data-fruit-risk="normal" type="button">Normal</button>
+                <button class="seg-btn" data-fruit-risk="wild" type="button">Wild</button>
+                <button class="seg-btn" data-fruit-risk="chaos" type="button">Chaos</button>
               </div>
             </div>
           `;
@@ -1688,16 +1717,6 @@
           const fx = setInterval(() => {
             cells.forEach((c) => {
               c.textContent = randomFruit();
-              if (c.animate) {
-                c.animate(
-                  [
-                    { transform: "scale(.88) rotate(-4deg)" },
-                    { transform: "scale(1.05) rotate(2deg)" },
-                    { transform: "scale(1) rotate(0deg)" }
-                  ],
-                  { duration: 180, easing: "ease-out" }
-                );
-              }
             });
 
             ticks++;
@@ -1790,16 +1809,6 @@
           const fx = setInterval(() => {
             cells.forEach((c) => {
               c.textContent = icons[randInt(0, icons.length - 1)];
-              if (c.animate) {
-                c.animate(
-                  [
-                    { transform: "translateY(4px) scale(.92)" },
-                    { transform: "translateY(-3px) scale(1.04)" },
-                    { transform: "translateY(0) scale(1)" }
-                  ],
-                  { duration: 170, easing: "ease-out" }
-                );
-              }
             });
 
             ticks++;
@@ -1847,9 +1856,6 @@
       };
     },
 
-    /* =========================================================
-       FEEDS
-    ========================================================= */
     seedBigWins() {
       const sampleGames = this.games.map(g => g.name);
       for (let i = 0; i < 10; i++) {
@@ -1941,7 +1947,7 @@
 
         if (chance(.65)) this.pushRandomBigWin();
 
-        if (this.lobby && !this.lobby.classList.contains("hidden")) {
+        if (this.lobby && !this.lobby.classList.contains("hidden") && document.getElementById("casino")?.classList.contains("active")) {
           this.renderLobby();
         } else {
           this.renderPlayers();
@@ -1951,6 +1957,9 @@
     },
 
     bindGlobal() {
+      if (this.boundGlobal) return;
+      this.boundGlobal = true;
+
       document.addEventListener("visibilitychange", () => {
         if (document.hidden && this.state.activeEngine?.stop && this.state.currentGame?.id === "crash") {
           // optional pause
@@ -1959,7 +1968,13 @@
     }
   };
 
-  document.addEventListener("DOMContentLoaded", () => {
+  function bootCasino() {
     CASINO.init();
-  });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", bootCasino, { once: true });
+  } else {
+    bootCasino();
+  }
 })();
