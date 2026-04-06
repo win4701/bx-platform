@@ -1,7 +1,7 @@
 /* =========================================================
-   BLOXIO — MARKET.JS MASTER PRO TERMINAL FINAL
-   Global Trading Surface / Binance-Speed Stream / Pro Terminal
-   Chart + Depth + Tape + TP/SL + Signals + Wallet Sync
+   BLOXIO — MARKET.JS MASTER FINAL
+   Global Trading Surface / Fast Binance Stream / Pro Chart
+   HTML-safe with current index.html
 ========================================================= */
 
 (() => {
@@ -10,18 +10,12 @@
   /* =========================================================
      CONFIG
   ========================================================= */
-  const BX_USDT_REFERENCE = 45;
+  const BX_USDT_REFERENCE = 45; // BX base anchor in USDT
   const ORDERBOOK_ROWS = 14;
-  const STREAM_THROTTLE_MS = 35;
+  const STREAM_THROTTLE_MS = 45;
   const RENDER_FPS = 60;
-  const MAX_TRADE_HISTORY = 140;
-  const MAX_CANDLES_BUFFER = 520;
-
-  const INDICATORS_CONFIG = {
-    EMA_FAST: 9,
-    EMA_SLOW: 21,
-    RSI_PERIOD: 14
-  };
+  const MAX_TRADE_HISTORY = 120;
+  const MAX_CANDLES_BUFFER = 420;
 
   const QUOTES = {
     USDT: { symbol: null, label: 'USDT' },
@@ -37,11 +31,11 @@
   };
 
   const RANGE_CONFIG = {
-    '1H':  { candles: 60, candleMs: 60 * 1000, volatility: 0.0035 },
-    '24H': { candles: 96, candleMs: 15 * 60 * 1000, volatility: 0.0085 },
-    '7D':  { candles: 84, candleMs: 2 * 60 * 60 * 1000, volatility: 0.0130 },
-    '30D': { candles: 90, candleMs: 8 * 60 * 60 * 1000, volatility: 0.0180 },
-    '90D': { candles: 90, candleMs: 24 * 60 * 60 * 1000, volatility: 0.0280 }
+    '1H':  { candles: 60,  candleMs: 60 * 1000,         volatility: 0.0035 },
+    '24H': { candles: 96,  candleMs: 15 * 60 * 1000,    volatility: 0.0085 },
+    '7D':  { candles: 84,  candleMs: 2 * 60 * 60 * 1000, volatility: 0.0130 },
+    '30D': { candles: 90,  candleMs: 8 * 60 * 60 * 1000, volatility: 0.0180 },
+    '90D': { candles: 90,  candleMs: 24 * 60 * 60 * 1000, volatility: 0.0280 }
   };
 
   const PRICE_DECIMALS = {
@@ -63,27 +57,16 @@
     tradeSide: 'buy',
     activeRange: '1H',
     chartMode: 'area',
-    orderType: 'market',
 
     bids: [],
     asks: [],
     trades: [],
-    tape: [],
-    signal: 'Neutral',
-    pressure: 'Balanced',
-    sessionMood: 'Normal',
-
-    risk: {
-      tpPercent: 4.0,
-      slPercent: 2.0
-    },
 
     stream: {
       ws: null,
       reconnectTimer: null,
       heartbeatTimer: null,
       fallbackTimer: null,
-      tapeTimer: null,
       lastStreamTs: 0,
       lastUpdateTs: 0,
       reconnectAttempts: 0,
@@ -106,6 +89,7 @@
 
   function cacheDOM() {
     Object.assign(els, {
+      // Header / Pair
       marketPrice: document.getElementById('marketPrice'),
       marketApprox: document.getElementById('marketApprox'),
       quoteAsset: document.getElementById('quoteAsset'),
@@ -128,11 +112,13 @@
       rangeBtns: document.querySelectorAll('#market [data-range]'),
       chartModeBtns: document.querySelectorAll('#market [data-chart-mode]'),
 
+      // Chart
       chartCanvas: document.getElementById('marketChart'),
       chartTooltip: document.getElementById('marketTooltip'),
       crosshairPrice: document.getElementById('crosshairPrice'),
       crosshairTime: document.getElementById('crosshairTime'),
 
+      // Metrics
       metricOpen: document.getElementById('metricOpen'),
       metricHigh: document.getElementById('metricHigh'),
       metricLow: document.getElementById('metricLow'),
@@ -149,6 +135,7 @@
       statVolume: document.getElementById('statVolume'),
       statMarketCap: document.getElementById('statMarketCap'),
 
+      // Trade
       buyTab: document.getElementById('buyTab'),
       sellTab: document.getElementById('sellTab'),
       tradeBox: document.getElementById('tradeBox'),
@@ -161,6 +148,7 @@
       slippage: document.getElementById('slippage'),
       spread: document.getElementById('spread'),
 
+      // Orderbook
       orderBookRows: document.getElementById('orderBookRows'),
       orderbookQuote: document.getElementById('orderbookQuote')
     });
@@ -234,108 +222,6 @@
     window.dispatchEvent(new CustomEvent('bx:balances:updated'));
   }
 
-  function ensureTerminalNodes() {
-    const marketRoot = document.getElementById('market');
-    if (!marketRoot) return;
-
-    if (!document.getElementById('marketTerminalBar')) {
-      const bar = document.createElement('div');
-      bar.id = 'marketTerminalBar';
-      bar.className = 'market-terminal-bar';
-      bar.innerHTML = `
-        <div class="market-terminal-chip">
-          <span>Signal</span>
-          <strong id="terminalSignal">Neutral</strong>
-        </div>
-        <div class="market-terminal-chip">
-          <span>Pressure</span>
-          <strong id="terminalPressure">Balanced</strong>
-        </div>
-        <div class="market-terminal-chip">
-          <span>Mood</span>
-          <strong id="terminalMood">Normal</strong>
-        </div>
-      `;
-      const firstCard = marketRoot.querySelector('.market-chart-card--pro, .market-chart-card, .market-hero, .market-card');
-      if (firstCard?.parentNode) {
-        firstCard.parentNode.insertBefore(bar, firstCard.nextSibling);
-      } else {
-        marketRoot.appendChild(bar);
-      }
-    }
-
-    if (!document.getElementById('marketTapePanel')) {
-      const panel = document.createElement('div');
-      panel.id = 'marketTapePanel';
-      panel.className = 'market-tape-panel';
-      panel.innerHTML = `
-        <div class="market-panel-head">
-          <h4>Live Trades</h4>
-          <span class="market-live-dot">LIVE</span>
-        </div>
-        <div id="marketTapeRows" class="market-tape-rows"></div>
-      `;
-      const orderbook = document.getElementById('orderBookRows')?.closest('.market-card, .market-orderbook-card, .market-box') || marketRoot.lastElementChild;
-      if (orderbook?.parentNode) {
-        orderbook.parentNode.insertBefore(panel, orderbook.nextSibling);
-      } else {
-        marketRoot.appendChild(panel);
-      }
-    }
-
-    if (!document.getElementById('marketRiskPanel')) {
-      const panel = document.createElement('div');
-      panel.id = 'marketRiskPanel';
-      panel.className = 'market-risk-panel';
-      panel.innerHTML = `
-        <div class="market-panel-head">
-          <h4>Risk Controls</h4>
-          <span class="market-panel-mini">PRO</span>
-        </div>
-        <div class="market-risk-grid">
-          <label class="market-risk-field">
-            <span>Take Profit %</span>
-            <input id="tpPercentInput" type="number" min="0.1" step="0.1" value="4.0">
-          </label>
-          <label class="market-risk-field">
-            <span>Stop Loss %</span>
-            <input id="slPercentInput" type="number" min="0.1" step="0.1" value="2.0">
-          </label>
-        </div>
-        <div class="market-risk-preview">
-          <div><span>TP Price</span><strong id="tpPreview">--</strong></div>
-          <div><span>SL Price</span><strong id="slPreview">--</strong></div>
-        </div>
-      `;
-      const tradeBox = document.getElementById('tradeBox')?.parentNode || marketRoot;
-      tradeBox.appendChild(panel);
-    }
-
-    if (!document.getElementById('orderTypeTabs')) {
-      const tradeBox = document.getElementById('tradeBox');
-      if (tradeBox) {
-        const wrap = document.createElement('div');
-        wrap.id = 'orderTypeTabs';
-        wrap.className = 'market-order-type-tabs';
-        wrap.innerHTML = `
-          <button class="market-order-type-btn active" data-order-type="market" type="button">Market</button>
-          <button class="market-order-type-btn" data-order-type="limit" type="button">Limit</button>
-        `;
-        tradeBox.insertBefore(wrap, tradeBox.firstChild);
-      }
-    }
-
-    els.terminalSignal = document.getElementById('terminalSignal');
-    els.terminalPressure = document.getElementById('terminalPressure');
-    els.terminalMood = document.getElementById('terminalMood');
-    els.marketTapeRows = document.getElementById('marketTapeRows');
-    els.tpPercentInput = document.getElementById('tpPercentInput');
-    els.slPercentInput = document.getElementById('slPercentInput');
-    els.tpPreview = document.getElementById('tpPreview');
-    els.slPreview = document.getElementById('slPreview');
-    els.orderTypeBtns = document.querySelectorAll('#orderTypeTabs [data-order-type]');
-  }
-
   /* =========================================================
      PRICE ENGINE
   ========================================================= */
@@ -349,44 +235,17 @@
       state.marketPrice = BX_USDT_REFERENCE / Math.max(0.00000001, state.quotePriceUSDT || 1);
     }
 
-    const microNoise = (Math.random() - 0.5) * state.marketPrice * 0.0010;
+    const microNoise = (Math.random() - 0.5) * state.marketPrice * 0.0012;
     state.visualPrice = Math.max(0.00000001, state.marketPrice + microNoise);
 
-    updateSignalEngine();
     updatePriceUI();
     updateTradeStats();
     generateOrderBook();
     renderOrderBook();
-    pushTapeTrade();
 
     if (CHART.initialized) {
       CHART.update(state.visualPrice);
     }
-  }
-
-  /* =========================================================
-     SIGNAL ENGINE
-  ========================================================= */
-  function updateSignalEngine() {
-    const delta = pctChange(state.visualPrice, state.prevVisualPrice);
-    const pressureScore = state.bids.reduce((a, b) => a + b.amount, 0) - state.asks.reduce((a, b) => a + b.amount, 0);
-
-    if (delta > 0.22) state.signal = 'Momentum Long';
-    else if (delta < -0.22) state.signal = 'Momentum Short';
-    else state.signal = 'Neutral';
-
-    if (pressureScore > 120) state.pressure = 'Buy Pressure';
-    else if (pressureScore < -120) state.pressure = 'Sell Pressure';
-    else state.pressure = 'Balanced';
-
-    const volMood = Math.abs(delta);
-    if (volMood > 0.45) state.sessionMood = 'Volatile';
-    else if (volMood > 0.15) state.sessionMood = 'Active';
-    else state.sessionMood = 'Calm';
-
-    if (els.terminalSignal) els.terminalSignal.textContent = state.signal;
-    if (els.terminalPressure) els.terminalPressure.textContent = state.pressure;
-    if (els.terminalMood) els.terminalMood.textContent = state.sessionMood;
   }
 
   /* =========================================================
@@ -428,8 +287,6 @@
       liveBadge.classList.toggle('is-up', change >= 0);
       liveBadge.classList.toggle('is-down', change < 0);
     }
-
-    updateRiskPreview();
   }
 
   function updateTradeSideUI() {
@@ -446,8 +303,6 @@
       els.actionBtn.classList.toggle('buy', isBuy);
       els.actionBtn.classList.toggle('sell', !isBuy);
     }
-
-    updateRiskPreview();
   }
 
   function updateTradeStats() {
@@ -459,33 +314,10 @@
     if (els.execPrice) els.execPrice.textContent = `${fmt(exec)} ${state.currentQuote}`;
     if (els.slippage) els.slippage.textContent = `${slip.toFixed(2)}%`;
     if (els.spread) els.spread.textContent = fmt(spreadVal);
-
-    updateRiskPreview();
-  }
-
-  function updateRiskPreview() {
-    if (!els.tpPreview || !els.slPreview) return;
-
-    const price = state.visualPrice;
-    const tpP = safeNum(state.risk.tpPercent, 4);
-    const slP = safeNum(state.risk.slPercent, 2);
-
-    const isBuy = state.tradeSide === 'buy';
-
-    const tp = isBuy
-      ? price * (1 + tpP / 100)
-      : price * (1 - tpP / 100);
-
-    const sl = isBuy
-      ? price * (1 - slP / 100)
-      : price * (1 + slP / 100);
-
-    els.tpPreview.textContent = fmt(tp);
-    els.slPreview.textContent = fmt(sl);
   }
 
   /* =========================================================
-     ORDERBOOK + DEPTH
+     ORDERBOOK
   ========================================================= */
   function generateOrderBook() {
     state.bids = [];
@@ -496,28 +328,20 @@
     let bidBase = center - spread;
     let askBase = center + spread;
 
-    const whaleChance = Math.random();
-
     for (let i = 0; i < ORDERBOOK_ROWS; i++) {
-      let bidAmt = rnd(8, 140);
-      let askAmt = rnd(8, 140);
-
-      if (whaleChance > 0.88 && i < 3) bidAmt *= rnd(2.2, 4.2);
-      if (whaleChance < 0.12 && i < 3) askAmt *= rnd(2.2, 4.2);
-
       const bidPrice = bidBase - (i * spread * rnd(0.8, 1.25));
       const askPrice = askBase + (i * spread * rnd(0.8, 1.25));
 
       state.bids.push({
         price: bidPrice,
-        amount: bidAmt,
-        total: bidAmt * bidPrice
+        amount: rnd(8, 140),
+        total: rnd(100, 900)
       });
 
       state.asks.push({
         price: askPrice,
-        amount: askAmt,
-        total: askAmt * askPrice
+        amount: rnd(8, 140),
+        total: rnd(100, 900)
       });
     }
 
@@ -558,50 +382,6 @@
   }
 
   /* =========================================================
-     LIVE TAPE
-  ========================================================= */
-  function pushTapeTrade() {
-    const size = rnd(0.15, 6.8);
-    const side = Math.random() > 0.5 ? 'buy' : 'sell';
-
-    state.tape.unshift({
-      side,
-      price: state.visualPrice,
-      size,
-      time: Date.now()
-    });
-
-    if (state.tape.length > 22) state.tape.pop();
-    renderTape();
-  }
-
-  function renderTape() {
-    if (!els.marketTapeRows) return;
-
-    els.marketTapeRows.innerHTML = '';
-
-    state.tape.forEach(t => {
-      const row = document.createElement('div');
-      row.className = `market-tape-row ${t.side}`;
-
-      row.innerHTML = `
-        <span>${new Date(t.time).toLocaleTimeString()}</span>
-        <strong>${fmt(t.price)}</strong>
-        <em>${t.size.toFixed(3)} BX</em>
-      `;
-
-      els.marketTapeRows.appendChild(row);
-    });
-  }
-
-  function startTapePulse() {
-    clearInterval(state.stream.tapeTimer);
-    state.stream.tapeTimer = setInterval(() => {
-      pushTapeTrade();
-    }, 900);
-  }
-
-  /* =========================================================
      TRADE ENGINE
   ========================================================= */
   function executeTrade() {
@@ -639,12 +419,9 @@
 
     state.trades.unshift({
       side: state.tradeSide,
-      type: state.orderType,
       bxAmount,
       quoteAmount: quoteNeeded,
       price: state.visualPrice,
-      tp: els.tpPreview?.textContent || '--',
-      sl: els.slPreview?.textContent || '--',
       time: Date.now()
     });
 
@@ -653,18 +430,20 @@
     emitBalancesUpdated();
     updatePriceUI();
     updateTradeStats();
-    pushTapeTrade();
   }
 
   function flashAction(text) {
     if (!els.actionBtn) return;
-    const original = `${state.tradeSide === 'buy' ? 'Buy' : 'Sell'} BX`;
+    const original = els.actionBtn.textContent;
     els.actionBtn.textContent = text;
     els.actionBtn.disabled = true;
 
     setTimeout(() => {
       els.actionBtn.disabled = false;
-      els.actionBtn.textContent = original;
+      updateTradeSideUI();
+      els.actionBtn.textContent = original.includes('Buy') || original.includes('Sell')
+        ? `${state.tradeSide === 'buy' ? 'Buy' : 'Sell'} BX`
+        : original;
     }, 1100);
   }
 
@@ -753,8 +532,13 @@
       } catch {}
     };
 
-    ws.onerror = () => scheduleReconnect();
-    ws.onclose = () => scheduleReconnect();
+    ws.onerror = () => {
+      scheduleReconnect();
+    };
+
+    ws.onclose = () => {
+      scheduleReconnect();
+    };
   }
 
   function scheduleReconnect() {
@@ -774,7 +558,9 @@
 
     state.stream.heartbeatTimer = setInterval(() => {
       const stale = Date.now() - state.stream.lastStreamTs > 8000;
-      if (stale) scheduleReconnect();
+      if (stale) {
+        scheduleReconnect();
+      }
     }, 2500);
   }
 
@@ -790,7 +576,6 @@
         state.marketPrice = BX_USDT_REFERENCE;
         state.prevVisualPrice = state.visualPrice;
         state.visualPrice = Math.max(0.00000001, BX_USDT_REFERENCE + drift);
-        updateSignalEngine();
         updatePriceUI();
         updateTradeStats();
         generateOrderBook();
@@ -804,7 +589,7 @@
         state.quotePriceUSDT = Math.max(0.00000001, state.quotePriceUSDT + fallbackMove);
         computeMarketPrice();
       }
-    }, 220);
+    }, 260);
   }
 
   /* =========================================================
@@ -817,13 +602,6 @@
     candles: [],
     current: null,
     dpr: window.devicePixelRatio || 1,
-
-    indicators: {
-      emaFast: [],
-      emaSlow: [],
-      vwap: [],
-      rsi: []
-    },
 
     init() {
       this.canvas = els.chartCanvas;
@@ -874,7 +652,7 @@
       this.dpr = dpr;
 
       const width = Math.max(320, rect.width);
-      const height = Math.max(360, rect.height);
+      const height = Math.max(320, rect.height);
 
       this.canvas.width = width * dpr;
       this.canvas.height = height * dpr;
@@ -913,7 +691,6 @@
       }
 
       this.current = this.candles[this.candles.length - 1];
-      this.recalculateIndicators();
       this.syncMetrics(this.current);
     },
 
@@ -955,88 +732,12 @@
         this.current.volume += rnd(2, 18);
       }
 
-      this.recalculateIndicators();
       this.syncMetrics(this.current);
     },
 
     getVisibleCandles() {
       const conf = RANGE_CONFIG[state.activeRange];
       return this.candles.slice(-conf.candles);
-    },
-
-    calcEMA(data, period) {
-      if (!data.length) return [];
-      const k = 2 / (period + 1);
-      const ema = [];
-      let prev = data[0];
-
-      data.forEach((price, i) => {
-        if (i === 0) ema.push(price);
-        else {
-          const val = price * k + prev * (1 - k);
-          ema.push(val);
-          prev = val;
-        }
-      });
-
-      return ema;
-    },
-
-    calcVWAP(candles) {
-      let cumVol = 0;
-      let cumPV = 0;
-      const out = [];
-
-      candles.forEach(c => {
-        const tp = (c.high + c.low + c.close) / 3;
-        cumVol += c.volume;
-        cumPV += tp * c.volume;
-        out.push(cumPV / Math.max(1, cumVol));
-      });
-
-      return out;
-    },
-
-    calcRSI(data, period = 14) {
-      if (data.length < 2) return [];
-      const rsi = new Array(data.length).fill(50);
-      let gains = 0;
-      let losses = 0;
-
-      for (let i = 1; i <= period && i < data.length; i++) {
-        const diff = data[i] - data[i - 1];
-        if (diff >= 0) gains += diff;
-        else losses -= diff;
-      }
-
-      let avgGain = gains / period;
-      let avgLoss = losses / period;
-
-      for (let i = period + 1; i < data.length; i++) {
-        const diff = data[i] - data[i - 1];
-        const gain = diff > 0 ? diff : 0;
-        const loss = diff < 0 ? -diff : 0;
-
-        avgGain = ((avgGain * (period - 1)) + gain) / period;
-        avgLoss = ((avgLoss * (period - 1)) + loss) / period;
-
-        const rs = avgGain / Math.max(0.0000001, avgLoss);
-        rsi[i] = 100 - (100 / (1 + rs));
-      }
-
-      return rsi;
-    },
-
-    recalculateIndicators() {
-      const visible = this.getVisibleCandles();
-      if (visible.length < 10) return;
-
-      const closes = visible.map(c => c.close);
-
-      this.indicators.emaFast = this.calcEMA(closes, INDICATORS_CONFIG.EMA_FAST);
-      this.indicators.emaSlow = this.calcEMA(closes, INDICATORS_CONFIG.EMA_SLOW);
-      this.indicators.vwap = this.calcVWAP(visible);
-      this.indicators.rsi = this.calcRSI(closes, INDICATORS_CONFIG.RSI_PERIOD);
     },
 
     getBounds(visible) {
@@ -1159,22 +860,6 @@
       }
     },
 
-    renderIndicatorLine(ctx, arr, color, min, range, topPad, chartHeight, step) {
-      if (!arr.length) return;
-
-      ctx.beginPath();
-      arr.forEach((v, i) => {
-        const x = i * step + step / 2;
-        const y = this.priceToY(v, min, range, topPad, chartHeight);
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-      });
-
-      ctx.strokeStyle = color;
-      ctx.lineWidth = 1.6;
-      ctx.stroke();
-    },
-
     render() {
       if (!this.canvas || !this.ctx) return;
 
@@ -1188,7 +873,7 @@
       if (visible.length < 2) return;
 
       const topPad = 16;
-      const bottomPad = 96;
+      const bottomPad = 76;
       const chartHeight = h - bottomPad - topPad;
       const volumeHeight = 48;
 
@@ -1198,25 +883,17 @@
 
       this.renderGrid(ctx, w, topPad, chartHeight);
 
-      // Depth heat background
-      visible.forEach((c, i) => {
-        const x = i * step + (step - candleW) / 2;
-        const intensity = c.volume / maxVol;
-        ctx.fillStyle = `rgba(14,203,129,${0.04 + intensity * 0.12})`;
-        ctx.fillRect(x, topPad, candleW, chartHeight);
-      });
-
-      // Volume
+      // Volume bars
       visible.forEach((c, i) => {
         const x = i * step + (step - candleW) / 2;
         const vh = (c.volume / maxVol) * volumeHeight;
-        const y = h - vh - 38;
+        const y = h - vh - 12;
 
         ctx.fillStyle = c.close >= c.open ? 'rgba(14,203,129,.24)' : 'rgba(246,70,93,.22)';
         ctx.fillRect(x, y, candleW, vh);
       });
 
-      // Price draw
+      // Area / Line / Candles
       if (state.chartMode === 'candles') {
         visible.forEach((c, i) => {
           const x = i * step + step / 2;
@@ -1260,51 +937,23 @@
           ctx.fill();
         }
 
-        const trendUp = visible[visible.length - 1].close >= visible[0].close;
         ctx.beginPath();
         ctx.moveTo(points[0].x, points[0].y);
         points.forEach(p => ctx.lineTo(p.x, p.y));
-        ctx.strokeStyle = trendUp ? '#0ecb81' : '#f6465d';
+        ctx.strokeStyle = '#0ecb81';
         ctx.lineWidth = 2.5;
         ctx.stroke();
 
         const lp = points[points.length - 1];
         ctx.beginPath();
         ctx.arc(lp.x, lp.y, 4, 0, Math.PI * 2);
-        ctx.fillStyle = trendUp ? '#0ecb81' : '#f6465d';
+        ctx.fillStyle = '#0ecb81';
         ctx.fill();
 
         ctx.beginPath();
         ctx.arc(lp.x, lp.y, 10, 0, Math.PI * 2);
-        ctx.fillStyle = trendUp ? 'rgba(14,203,129,.15)' : 'rgba(246,70,93,.14)';
+        ctx.fillStyle = 'rgba(14,203,129,.15)';
         ctx.fill();
-      }
-
-      // Indicators
-      this.renderIndicatorLine(ctx, this.indicators.emaFast, '#facc15', min, range, topPad, chartHeight, step);
-      this.renderIndicatorLine(ctx, this.indicators.emaSlow, '#60a5fa', min, range, topPad, chartHeight, step);
-      this.renderIndicatorLine(ctx, this.indicators.vwap, '#a78bfa', min, range, topPad, chartHeight, step);
-
-      // RSI panel
-      const rsi = this.indicators.rsi;
-      if (rsi.length > 10) {
-        const rsiTop = h - 30;
-        const rsiHeight = 22;
-
-        ctx.strokeStyle = 'rgba(255,255,255,.08)';
-        ctx.strokeRect(0, rsiTop, w, rsiHeight);
-
-        ctx.beginPath();
-        rsi.forEach((val, i) => {
-          const x = i * step + step / 2;
-          const y = rsiTop + (1 - val / 100) * rsiHeight;
-          if (i === 0) ctx.moveTo(x, y);
-          else ctx.lineTo(x, y);
-        });
-
-        ctx.strokeStyle = '#f59e0b';
-        ctx.lineWidth = 1.3;
-        ctx.stroke();
       }
 
       // Crosshair
@@ -1409,24 +1058,6 @@
         applyPercent(btn.dataset.percent);
       });
     });
-
-    els.tpPercentInput?.addEventListener('input', () => {
-      state.risk.tpPercent = safeNum(els.tpPercentInput.value, 4);
-      updateRiskPreview();
-    });
-
-    els.slPercentInput?.addEventListener('input', () => {
-      state.risk.slPercent = safeNum(els.slPercentInput.value, 2);
-      updateRiskPreview();
-    });
-
-    els.orderTypeBtns?.forEach(btn => {
-      btn.addEventListener('click', () => {
-        els.orderTypeBtns.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        state.orderType = btn.dataset.orderType || 'market';
-      });
-    });
   }
 
   function bindWalletSync() {
@@ -1441,9 +1072,8 @@
   ========================================================= */
   function initMarket() {
     cacheDOM();
-    if (!els.chartCanvas) return;
 
-    ensureTerminalNodes();
+    if (!els.chartCanvas) return;
 
     updateTradeSideUI();
     updatePriceUI();
@@ -1457,18 +1087,16 @@
 
     generateOrderBook();
     renderOrderBook();
-    renderTape();
 
     CHART.init();
     connectQuoteStream();
-    startTapePulse();
 
+    // expose
     window.BX_MARKET = {
       state,
       refresh: computeMarketPrice,
       reconnect: connectQuoteStream,
-      resetChart: () => CHART.reset(state.visualPrice || BX_USDT_REFERENCE),
-      executeTrade
+      resetChart: () => CHART.reset(state.visualPrice || BX_USDT_REFERENCE)
     };
   }
 
