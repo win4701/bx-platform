@@ -1,846 +1,774 @@
 /* =========================================================
-   BLOXIO — MARKET.JS MASTER FINAL
-   Global Trading Surface / Fast Binance Stream / Pro Chart
-   HTML-safe with current index.html
+   BLOXIO MARKET — FINAL PRO ENGINE
+   HTML-safe • CSS-safe • Mobile-safe
+   Works with current index.html + styles.css
 ========================================================= */
 
 (() => {
-  'use strict';
+  "use strict";
 
   /* =========================================================
      CONFIG
   ========================================================= */
-  const BX_USDT_REFERENCE = 45; // BX base anchor in USDT
-  const ORDERBOOK_ROWS = 14;
-  const STREAM_THROTTLE_MS = 45;
-  const RENDER_FPS = 60;
-  const MAX_TRADE_HISTORY = 120;
-  const MAX_CANDLES_BUFFER = 420;
+  const ROWS = 15;
+  const BX_USDT_REFERENCE = 45;
+  const PRICE_DECIMALS = 6;
+  const AMOUNT_DECIMALS = 4;
 
-  const QUOTES = {
-    USDT: { symbol: null, label: 'USDT' },
-    USDC: { symbol: null, label: 'USDC' },
-    BTC:  { symbol: 'btcusdt', label: 'BTC'  },
-    BNB:  { symbol: 'bnbusdt', label: 'BNB'  },
-    ETH:  { symbol: 'ethusdt', label: 'ETH'  },
-    AVAX: { symbol: 'avaxusdt', label: 'AVAX' },
-    ZEC:  { symbol: 'zecusdt', label: 'ZEC'  },
-    TON:  { symbol: 'tonusdt', label: 'TON'  },
-    SOL:  { symbol: 'solusdt', label: 'SOL'  },
-    LTC:  { symbol: 'ltcusdt', label: 'LTC'  }
+  const quoteMap = {
+    USDT: null,
+    USDC: null,
+    BTC: "btcusdt",
+    ETH: "ethusdt",
+    BNB: "bnbusdt",
+    SOL: "solusdt",
+    AVAX: "avaxusdt",
+    LTC: "ltcusdt",
+    ZEC: "zecusdt",
+    TON: "tonusdt"
   };
 
-  const RANGE_CONFIG = {
-    '1H':  { candles: 60,  candleMs: 60 * 1000,         volatility: 0.0035 },
-    '24H': { candles: 96,  candleMs: 15 * 60 * 1000,    volatility: 0.0085 },
-    '7D':  { candles: 84,  candleMs: 2 * 60 * 60 * 1000, volatility: 0.0130 },
-    '30D': { candles: 90,  candleMs: 8 * 60 * 60 * 1000, volatility: 0.0180 },
-    '90D': { candles: 90,  candleMs: 24 * 60 * 60 * 1000, volatility: 0.0280 }
-  };
-
-  const PRICE_DECIMALS = {
-    USDT: 6, USDC: 6, BTC: 8, BNB: 8, ETH: 8,
-    AVAX: 8, ZEC: 8, TON: 8, SOL: 8, LTC: 8
+  const quoteUsdFallback = {
+    USDT: 1,
+    USDC: 1,
+    BTC: 65000,
+    ETH: 3200,
+    BNB: 600,
+    SOL: 140,
+    AVAX: 38,
+    LTC: 90,
+    ZEC: 28,
+    TON: 5.4
   };
 
   /* =========================================================
      STATE
   ========================================================= */
-  const state = {
-    currentQuote: 'USDT',
+  let currentQuote = "USDT";
+  let marketPrice = BX_USDT_REFERENCE;
+  let previousPrice = BX_USDT_REFERENCE;
+  let quotePriceUSDT = 1;
+  let tradeSide = "buy";
 
-    quotePriceUSDT: 1,
-    marketPrice: BX_USDT_REFERENCE,
-    visualPrice: BX_USDT_REFERENCE,
-    prevVisualPrice: BX_USDT_REFERENCE,
+  let bids = [];
+  let asks = [];
 
-    tradeSide: 'buy',
-    activeRange: '1H',
-    chartMode: 'area',
+  let ws = null;
+  let marketStarted = false;
+  let pulseTimeout = null;
 
-    bids: [],
-    asks: [],
-    trades: [],
-
-    stream: {
-      ws: null,
-      reconnectTimer: null,
-      heartbeatTimer: null,
-      fallbackTimer: null,
-      lastStreamTs: 0,
-      lastUpdateTs: 0,
-      reconnectAttempts: 0,
-      streamSymbol: null
-    },
-
-    chart: {
-      hoveredIndex: null,
-      hoveredCandle: null,
-      mouse: { x: 0, y: 0, inside: false },
-      raf: null,
-      lastFrame: 0
-    }
+  const wallet = window.WALLET || {
+    BX: 0,
+    USDT: 0,
+    USDC: 0,
+    BTC: 0,
+    ETH: 0,
+    BNB: 0,
+    SOL: 0,
+    AVAX: 0,
+    LTC: 0,
+    ZEC: 0,
+    TON: 0
   };
 
   /* =========================================================
      DOM
   ========================================================= */
-  const els = {};
+  const $ = (s, p = document) => p.querySelector(s);
+  const $$ = (s, p = document) => [...p.querySelectorAll(s)];
 
-  function cacheDOM() {
-    Object.assign(els, {
-      // Header / Pair
-      marketPrice: document.getElementById('marketPrice'),
-      marketApprox: document.getElementById('marketApprox'),
-      quoteAsset: document.getElementById('quoteAsset'),
+  const marketRoot = $("#market");
+  if (!marketRoot) return;
 
-      walletBX: document.getElementById('walletBX'),
-      walletUSDT: document.getElementById('walletUSDT'),
-      walletQuoteLabel: document.getElementById('walletQuoteLabel'),
+  const quoteAssetEl = $("#quoteAsset");
+  const marketPriceEl = $("#marketPrice");
+  const marketApproxEl = $("#marketApprox");
 
-      pairBtns: document.querySelectorAll('#market .pair-btn'),
+  const assetNameEl = $("#assetName");
+  const assetSymbolEl = $("#assetSymbol");
+  const assetPriceEl = $("#assetPrice");
+  const assetChangeBadgeEl = $("#assetChangeBadge");
 
-      assetName: document.getElementById('assetName'),
-      assetSymbol: document.getElementById('assetSymbol'),
-      assetPrice: document.getElementById('assetPrice'),
-      assetChangeBadge: document.getElementById('assetChangeBadge'),
+  const chartQuoteLabelEl = $("#chartQuoteLabel");
+  const chartLivePriceEl = $("#chartLivePrice");
+  const chartLiveChangeEl = $("#chartLiveChange");
 
-      chartQuoteLabel: document.getElementById('chartQuoteLabel'),
-      chartLivePrice: document.getElementById('chartLivePrice'),
-      chartLiveChange: document.getElementById('chartLiveChange'),
+  const walletBXEl = $("#walletBX");
+  const walletQuoteEl = $("#walletUSDT");
+  const walletQuoteLabelEl = $("#walletQuoteLabel");
 
-      rangeBtns: document.querySelectorAll('#market [data-range]'),
-      chartModeBtns: document.querySelectorAll('#market [data-chart-mode]'),
+  const buyTab = $("#buyTab");
+  const sellTab = $("#sellTab");
+  const tradeBox = $("#tradeBox");
+  const actionBtn = $("#actionBtn");
 
-      // Chart
-      chartCanvas: document.getElementById('marketChart'),
-      chartTooltip: document.getElementById('marketTooltip'),
-      crosshairPrice: document.getElementById('crosshairPrice'),
-      crosshairTime: document.getElementById('crosshairTime'),
+  const orderAmount = $("#orderAmount");
+  const execPriceEl = $("#execPrice");
+  const slippageEl = $("#slippage");
+  const spreadEl = $("#spread");
 
-      // Metrics
-      metricOpen: document.getElementById('metricOpen'),
-      metricHigh: document.getElementById('metricHigh'),
-      metricLow: document.getElementById('metricLow'),
-      metricClose: document.getElementById('metricClose'),
+  const bidsEl = $("#bids");
+  const asksEl = $("#asks");
+  const priceLadderEl = $("#priceLadder");
 
-      metricOpenPanel: document.getElementById('metricOpenPanel'),
-      metricHighPanel: document.getElementById('metricHighPanel'),
-      metricLowPanel: document.getElementById('metricLowPanel'),
-      metricClosePanel: document.getElementById('metricClosePanel'),
-      metricVol: document.getElementById('metricVol'),
+  const pairButtons = $$("#market .pair-btn");
+  const timeframeButtons = $$("#market .market-timeframes button");
+  const chartModeButtons = $$("#market .market-chart-modes button");
+  const percentButtons = $$("#market .percent-row button");
 
-      statHigh: document.getElementById('statHigh'),
-      statLow: document.getElementById('statLow'),
-      statVolume: document.getElementById('statVolume'),
-      statMarketCap: document.getElementById('statMarketCap'),
-
-      // Trade
-      buyTab: document.getElementById('buyTab'),
-      sellTab: document.getElementById('sellTab'),
-      tradeBox: document.getElementById('tradeBox'),
-      orderAmount: document.getElementById('orderAmount'),
-      actionBtn: document.getElementById('actionBtn'),
-
-      percentBtns: document.querySelectorAll('#market [data-percent]'),
-
-      execPrice: document.getElementById('execPrice'),
-      slippage: document.getElementById('slippage'),
-      spread: document.getElementById('spread'),
-
-      // Orderbook
-      orderBookRows: document.getElementById('orderBookRows'),
-      orderbookQuote: document.getElementById('orderbookQuote')
-    });
-  }
+  const chartCanvas = $("#marketChart") || $("#bxChart");
+  const tooltipEl = $("#marketTooltip") || $("#chartTooltip");
 
   /* =========================================================
      HELPERS
   ========================================================= */
-  const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
-  const rnd = (min, max) => Math.random() * (max - min) + min;
-
-  function safeNum(v, fallback = 0) {
-    const n = Number(v);
-    return Number.isFinite(n) ? n : fallback;
+  function fmtPrice(v, d = PRICE_DECIMALS) {
+    return Number(v || 0).toFixed(d);
   }
 
-  function decimalsForQuote() {
-    return PRICE_DECIMALS[state.currentQuote] || 6;
+  function fmtAmount(v, d = AMOUNT_DECIMALS) {
+    return Number(v || 0).toFixed(d);
   }
 
-  function fmt(n, digits = decimalsForQuote()) {
-    return safeNum(n).toLocaleString(undefined, {
-      minimumFractionDigits: Math.min(digits, 2),
-      maximumFractionDigits: digits
-    });
+  function clamp(n, min, max) {
+    return Math.max(min, Math.min(max, n));
   }
 
-  function compact(n) {
-    const value = safeNum(n);
-    if (value >= 1_000_000_000) return `${(value / 1_000_000_000).toFixed(2)}B`;
-    if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(2)}M`;
-    if (value >= 1_000) return `${(value / 1_000).toFixed(2)}K`;
-    return value.toFixed(2);
+  function rand(min, max) {
+    return Math.random() * (max - min) + min;
   }
 
-  function pctChange(current, previous) {
-    if (!previous || previous === 0) return 0;
-    return ((current - previous) / previous) * 100;
+  function safeText(el, value) {
+    if (el) el.textContent = value;
   }
 
-  function getWalletBalance(asset) {
+  function safeHtml(el, value) {
+    if (el) el.innerHTML = value;
+  }
+
+  async function safeFetch(url, options = {}) {
     try {
-      if (window.BX_BALANCE?.get) return safeNum(window.BX_BALANCE.get(asset));
-      if (window.BX_STATE?.balances?.[asset] != null) return safeNum(window.BX_STATE.balances[asset]);
-      if (window.bxState?.balances?.[asset] != null) return safeNum(window.bxState.balances[asset]);
-      return 0;
-    } catch {
-      return 0;
+      const res = await fetch(url, options);
+      const contentType = res.headers.get("content-type") || "";
+      if (contentType.includes("application/json")) {
+        return await res.json();
+      }
+      return await res.text();
+    } catch (e) {
+      console.warn("safeFetch error:", e);
+      return null;
     }
   }
 
-  function addWalletBalance(asset, amount) {
-    try {
-      if (window.BX_BALANCE?.add) return window.BX_BALANCE.add(asset, amount);
-      if (window.BX_STATE?.balances) {
-        window.BX_STATE.balances[asset] = safeNum(window.BX_STATE.balances[asset]) + safeNum(amount);
-      }
-    } catch {}
+  function getWalletQuoteBalance() {
+    return Number(wallet[currentQuote] || 0);
   }
 
-  function subWalletBalance(asset, amount) {
-    try {
-      if (window.BX_BALANCE?.subtract) return window.BX_BALANCE.subtract(asset, amount);
-      if (window.BX_STATE?.balances) {
-        window.BX_STATE.balances[asset] = Math.max(0, safeNum(window.BX_STATE.balances[asset]) - safeNum(amount));
-      }
-    } catch {}
+  function triggerPricePulse(direction = "up") {
+    if (!marketPriceEl) return;
+
+    marketPriceEl.classList.remove("up", "down");
+    assetPriceEl?.classList.remove("up", "down");
+
+    marketPriceEl.classList.add(direction);
+    assetPriceEl?.classList.add(direction);
+
+    clearTimeout(pulseTimeout);
+    pulseTimeout = setTimeout(() => {
+      marketPriceEl.classList.remove("up", "down");
+      assetPriceEl?.classList.remove("up", "down");
+    }, 700);
   }
 
-  function emitBalancesUpdated() {
-    window.dispatchEvent(new CustomEvent('bx:balances:updated'));
+  /* =========================================================
+     WALLET
+  ========================================================= */
+  async function loadMarketWallet() {
+    try {
+      const r = await fetch("https://api.bloxio.online/finance/wallet", {
+        headers: {
+          Authorization: "Bearer " + localStorage.getItem("jwt")
+        }
+      });
+
+      const w = await r.json();
+
+      wallet.BX = Number(w.bx_balance || 0);
+      wallet.USDT = Number(w.usdt_balance || 0);
+      wallet.USDC = Number(w.usdc_balance || 0);
+      wallet.BTC = Number(w.btc_balance || 0);
+      wallet.ETH = Number(w.eth_balance || 0);
+      wallet.BNB = Number(w.bnb_balance || 0);
+      wallet.SOL = Number(w.sol_balance || 0);
+      wallet.AVAX = Number(w.avax_balance || 0);
+      wallet.LTC = Number(w.ltc_balance || 0);
+      wallet.ZEC = Number(w.zec_balance || 0);
+      wallet.TON = Number(w.ton_balance || 0);
+
+      updateWalletUI();
+    } catch (e) {
+      console.warn("Wallet fetch failed, using fallback balances.", e);
+      updateWalletUI();
+    }
+  }
+
+  function updateWalletUI() {
+    safeText(walletBXEl, fmtAmount(wallet.BX));
+    safeText(walletQuoteEl, fmtAmount(getWalletQuoteBalance()));
+    safeText(walletQuoteLabelEl, currentQuote);
   }
 
   /* =========================================================
      PRICE ENGINE
   ========================================================= */
-  function computeMarketPrice() {
-    const prev = state.visualPrice || BX_USDT_REFERENCE;
-    state.prevVisualPrice = prev;
+  function computeBXPrice() {
+    if (!quotePriceUSDT || quotePriceUSDT <= 0) return;
 
-    if (state.currentQuote === 'USDT' || state.currentQuote === 'USDC') {
-      state.marketPrice = BX_USDT_REFERENCE;
-    } else {
-      state.marketPrice = BX_USDT_REFERENCE / Math.max(0.00000001, state.quotePriceUSDT || 1);
+    previousPrice = marketPrice;
+
+    // BX reference in USDT, convert to selected quote
+    marketPrice = BX_USDT_REFERENCE / quotePriceUSDT;
+
+    if (!isFinite(marketPrice) || marketPrice <= 0) {
+      marketPrice = BX_USDT_REFERENCE;
     }
-
-    const microNoise = (Math.random() - 0.5) * state.marketPrice * 0.0012;
-    state.visualPrice = Math.max(0.00000001, state.marketPrice + microNoise);
 
     updatePriceUI();
-    updateTradeStats();
     generateOrderBook();
     renderOrderBook();
+    updateTradeInfo();
+    PRO_CHART.update(marketPrice);
+  }
 
-    if (CHART.initialized) {
-      CHART.update(state.visualPrice);
+  function updatePriceUI() {
+    const direction = marketPrice >= previousPrice ? "up" : "down";
+    const pct = previousPrice
+      ? ((marketPrice - previousPrice) / previousPrice) * 100
+      : 0;
+
+    safeText(marketPriceEl, fmtPrice(marketPrice));
+    safeText(marketApproxEl, `≈ ${fmtPrice(marketPrice, 2)} ${currentQuote}`);
+
+    safeText(assetNameEl, "Bloxio");
+    safeText(assetSymbolEl, "BX");
+    safeText(assetPriceEl, `$${fmtPrice(marketPrice, 5)}`);
+
+    safeText(chartQuoteLabelEl, currentQuote);
+    safeText(chartLivePriceEl, `$${fmtPrice(marketPrice, 5)}`);
+
+    safeText(quoteAssetEl, currentQuote);
+
+    if (assetChangeBadgeEl) {
+      assetChangeBadgeEl.classList.remove("is-up", "is-down");
+      assetChangeBadgeEl.classList.add(direction === "up" ? "is-up" : "is-down");
+      assetChangeBadgeEl.textContent = `${direction === "up" ? "▲" : "▼"} ${Math.abs(pct).toFixed(2)}%`;
     }
+
+    if (chartLiveChangeEl) {
+      chartLiveChangeEl.classList.remove("is-up", "is-down");
+      chartLiveChangeEl.classList.add(direction === "up" ? "is-up" : "is-down");
+      chartLiveChangeEl.textContent = `${direction === "up" ? "▲" : "▼"} ${Math.abs(pct).toFixed(2)}%`;
+    }
+
+    triggerPricePulse(direction);
   }
 
   /* =========================================================
-     UI RENDER
+     BINANCE WS
   ========================================================= */
-  function updatePriceUI() {
-    const d = decimalsForQuote();
-    const price = state.visualPrice;
-    const change = pctChange(price, state.prevVisualPrice);
-
-    if (els.marketPrice) els.marketPrice.textContent = fmt(price, d);
-    if (els.marketApprox) els.marketApprox.textContent = `≈ ${fmt(price, d)} ${state.currentQuote}`;
-    if (els.quoteAsset) els.quoteAsset.textContent = state.currentQuote;
-
-    if (els.assetName) els.assetName.textContent = 'Bloxio';
-    if (els.assetSymbol) els.assetSymbol.textContent = `BX / ${state.currentQuote}`;
-    if (els.assetPrice) els.assetPrice.textContent = `${state.currentQuote === 'USDT' || state.currentQuote === 'USDC' ? '$' : ''}${fmt(price, d)}`;
-
-    if (els.chartQuoteLabel) els.chartQuoteLabel.textContent = state.currentQuote;
-    if (els.chartLivePrice) els.chartLivePrice.textContent = `${state.currentQuote === 'USDT' || state.currentQuote === 'USDC' ? '$' : ''}${fmt(price, d)}`;
-
-    if (els.walletQuoteLabel) els.walletQuoteLabel.textContent = state.currentQuote;
-    if (els.walletBX) els.walletBX.textContent = fmt(getWalletBalance('BX'), 4);
-    if (els.walletUSDT) els.walletUSDT.textContent = fmt(getWalletBalance(state.currentQuote), 4);
-    if (els.orderbookQuote) els.orderbookQuote.textContent = state.currentQuote;
-
-    const badge = els.assetChangeBadge;
-    const liveBadge = els.chartLiveChange;
-    const label = `${change >= 0 ? '▲' : '▼'} ${Math.abs(change).toFixed(2)}%`;
-
-    if (badge) {
-      badge.textContent = label;
-      badge.classList.toggle('is-up', change >= 0);
-      badge.classList.toggle('is-down', change < 0);
+  function connectBinance(symbol = quoteMap[currentQuote]) {
+    if (!symbol) {
+      quotePriceUSDT = quoteUsdFallback[currentQuote] || 1;
+      computeBXPrice();
+      return;
     }
 
-    if (liveBadge) {
-      liveBadge.textContent = label;
-      liveBadge.classList.toggle('is-up', change >= 0);
-      liveBadge.classList.toggle('is-down', change < 0);
+    if (ws) {
+      ws.onmessage = null;
+      ws.onerror = null;
+      ws.onclose = null;
+      ws.close();
+      ws = null;
     }
-  }
 
-  function updateTradeSideUI() {
-    const isBuy = state.tradeSide === 'buy';
+    try {
+      ws = new WebSocket(`wss://stream.binance.com:9443/ws/${symbol}@miniTicker`);
+      window.marketWS = ws;
 
-    els.buyTab?.classList.toggle('active', isBuy);
-    els.sellTab?.classList.toggle('active', !isBuy);
+      ws.onmessage = (event) => {
+        const msg = JSON.parse(event.data);
+        const price = parseFloat(msg.c);
+        if (!price) return;
 
-    els.tradeBox?.classList.toggle('buy', isBuy);
-    els.tradeBox?.classList.toggle('sell', !isBuy);
+        quotePriceUSDT = price;
+        computeBXPrice();
+      };
 
-    if (els.actionBtn) {
-      els.actionBtn.textContent = `${isBuy ? 'Buy' : 'Sell'} BX`;
-      els.actionBtn.classList.toggle('buy', isBuy);
-      els.actionBtn.classList.toggle('sell', !isBuy);
+      ws.onerror = () => {
+        console.warn("Binance WS error. Falling back to static quote.");
+        quotePriceUSDT = quoteUsdFallback[currentQuote] || 1;
+        computeBXPrice();
+      };
+
+      ws.onclose = () => {
+        // silent
+      };
+    } catch (e) {
+      console.warn("WS init failed", e);
+      quotePriceUSDT = quoteUsdFallback[currentQuote] || 1;
+      computeBXPrice();
     }
-  }
-
-  function updateTradeStats() {
-    const amount = safeNum(els.orderAmount?.value);
-    const exec = state.visualPrice;
-    const spreadVal = state.marketPrice * 0.0009;
-    const slip = amount > 0 ? clamp((amount / 1000) * 0.22, 0.02, 1.2) : 0.05;
-
-    if (els.execPrice) els.execPrice.textContent = `${fmt(exec)} ${state.currentQuote}`;
-    if (els.slippage) els.slippage.textContent = `${slip.toFixed(2)}%`;
-    if (els.spread) els.spread.textContent = fmt(spreadVal);
   }
 
   /* =========================================================
      ORDERBOOK
   ========================================================= */
   function generateOrderBook() {
-    state.bids = [];
-    state.asks = [];
+    bids = [];
+    asks = [];
 
-    const center = state.visualPrice;
-    const spread = center * 0.00085;
-    let bidBase = center - spread;
-    let askBase = center + spread;
+    const spreadBase = marketPrice * 0.0009;
 
-    for (let i = 0; i < ORDERBOOK_ROWS; i++) {
-      const bidPrice = bidBase - (i * spread * rnd(0.8, 1.25));
-      const askPrice = askBase + (i * spread * rnd(0.8, 1.25));
-
-      state.bids.push({
-        price: bidPrice,
-        amount: rnd(8, 140),
-        total: rnd(100, 900)
-      });
-
-      state.asks.push({
-        price: askPrice,
-        amount: rnd(8, 140),
-        total: rnd(100, 900)
+    for (let i = ROWS; i > 0; i--) {
+      bids.push({
+        price: marketPrice - spreadBase - i * marketPrice * 0.00045,
+        amount: rand(0.35, 8.5)
       });
     }
 
-    state.bids.sort((a, b) => b.price - a.price);
-    state.asks.sort((a, b) => a.price - b.price);
+    for (let i = 1; i <= ROWS; i++) {
+      asks.push({
+        price: marketPrice + spreadBase + i * marketPrice * 0.00045,
+        amount: rand(0.35, 8.5)
+      });
+    }
   }
 
   function renderOrderBook() {
-    if (!els.orderBookRows) return;
+    if (!bidsEl || !asksEl || !priceLadderEl) return;
 
-    const maxAmount = Math.max(
-      ...state.bids.map(x => x.amount),
-      ...state.asks.map(x => x.amount),
-      1
-    );
+    bidsEl.innerHTML = "";
+    asksEl.innerHTML = "";
+    priceLadderEl.innerHTML = "";
 
-    els.orderBookRows.innerHTML = '';
+    const maxBidAmount = Math.max(...bids.map(o => o.amount), 1);
+    const maxAskAmount = Math.max(...asks.map(o => o.amount), 1);
 
-    for (let i = 0; i < ORDERBOOK_ROWS; i++) {
-      const bid = state.bids[i];
-      const ask = state.asks[i];
-      if (!bid || !ask) continue;
-
-      const row = document.createElement('div');
-      row.className = 'ob-row';
-
-      const bidDepth = (bid.amount / maxAmount) * 100;
-      const askDepth = (ask.amount / maxAmount) * 100;
-
+    bids.forEach((o) => {
+      const row = document.createElement("div");
+      row.className = "ob-row bid ob-side bid";
+      row.style.setProperty("--depth", `${(o.amount / maxBidAmount) * 100}%`);
       row.innerHTML = `
-        <div class="ob-side bid" style="--depth:${bidDepth}%">${bid.amount.toFixed(3)}</div>
-        <div class="ob-mid">${fmt((bid.price + ask.price) / 2)}</div>
-        <div class="ob-side ask" style="--depth:${askDepth}%">${ask.amount.toFixed(3)}</div>
+        <span>${fmtAmount(o.amount, 2)}</span>
+        <span>${fmtPrice(o.price)}</span>
       `;
-
-      els.orderBookRows.appendChild(row);
-    }
-  }
-
-  /* =========================================================
-     TRADE ENGINE
-  ========================================================= */
-  function executeTrade() {
-    const bxAmount = safeNum(els.orderAmount?.value);
-    if (!bxAmount || bxAmount <= 0) {
-      flashAction('Enter valid BX amount');
-      return;
-    }
-
-    const quoteNeeded = bxAmount * state.visualPrice;
-    const quoteAsset = state.currentQuote;
-    const isBuy = state.tradeSide === 'buy';
-
-    if (isBuy) {
-      const quoteBal = getWalletBalance(quoteAsset);
-      if (quoteBal < quoteNeeded) {
-        flashAction(`Insufficient ${quoteAsset}`);
-        return;
-      }
-
-      subWalletBalance(quoteAsset, quoteNeeded);
-      addWalletBalance('BX', bxAmount);
-      flashAction(`Bought ${bxAmount.toFixed(4)} BX`);
-    } else {
-      const bxBal = getWalletBalance('BX');
-      if (bxBal < bxAmount) {
-        flashAction('Insufficient BX');
-        return;
-      }
-
-      subWalletBalance('BX', bxAmount);
-      addWalletBalance(quoteAsset, quoteNeeded);
-      flashAction(`Sold ${bxAmount.toFixed(4)} BX`);
-    }
-
-    state.trades.unshift({
-      side: state.tradeSide,
-      bxAmount,
-      quoteAmount: quoteNeeded,
-      price: state.visualPrice,
-      time: Date.now()
+      bidsEl.appendChild(row);
     });
 
-    if (state.trades.length > MAX_TRADE_HISTORY) state.trades.pop();
+    const mid = document.createElement("div");
+    mid.className = "ob-row mid ob-mid";
+    mid.textContent = fmtPrice(marketPrice);
+    priceLadderEl.appendChild(mid);
 
-    emitBalancesUpdated();
-    updatePriceUI();
-    updateTradeStats();
+    asks.forEach((o) => {
+      const row = document.createElement("div");
+      row.className = "ob-row ask ob-side ask";
+      row.style.setProperty("--depth", `${(o.amount / maxAskAmount) * 100}%`);
+      row.innerHTML = `
+        <span>${fmtPrice(o.price)}</span>
+        <span>${fmtAmount(o.amount, 2)}</span>
+      `;
+      asksEl.appendChild(row);
+    });
+
+    updateSpread();
   }
 
-  function flashAction(text) {
-    if (!els.actionBtn) return;
-    const original = els.actionBtn.textContent;
-    els.actionBtn.textContent = text;
-    els.actionBtn.disabled = true;
-
-    setTimeout(() => {
-      els.actionBtn.disabled = false;
-      updateTradeSideUI();
-      els.actionBtn.textContent = original.includes('Buy') || original.includes('Sell')
-        ? `${state.tradeSide === 'buy' ? 'Buy' : 'Sell'} BX`
-        : original;
-    }, 1100);
-  }
-
-  function applyPercent(percent) {
-    const p = safeNum(percent);
-    const isBuy = state.tradeSide === 'buy';
-
-    if (isBuy) {
-      const quoteBal = getWalletBalance(state.currentQuote);
-      const quoteToUse = quoteBal * (p / 100);
-      const bx = quoteToUse / Math.max(0.00000001, state.visualPrice);
-      if (els.orderAmount) els.orderAmount.value = bx.toFixed(4);
-    } else {
-      const bxBal = getWalletBalance('BX');
-      const bx = bxBal * (p / 100);
-      if (els.orderAmount) els.orderAmount.value = bx.toFixed(4);
-    }
-
-    updateTradeStats();
+  function updateSpread() {
+    if (!asks.length || !bids.length || !spreadEl) return;
+    const spread = asks[0].price - bids[bids.length - 1].price;
+    spreadEl.textContent = fmtPrice(spread);
   }
 
   /* =========================================================
-     FAST BINANCE STREAM
+     TRADE
   ========================================================= */
-  function cleanupSocket() {
+  function setTradeSide(side) {
+    tradeSide = side;
+
+    tradeBox?.classList.toggle("buy", side === "buy");
+    tradeBox?.classList.toggle("sell", side === "sell");
+
+    buyTab?.classList.toggle("active", side === "buy");
+    sellTab?.classList.toggle("active", side === "sell");
+
+    actionBtn?.classList.remove("buy", "sell");
+    actionBtn?.classList.add(side === "buy" ? "buy" : "sell");
+
+    if (actionBtn) {
+      actionBtn.textContent = side === "buy" ? "Buy BX" : "Sell BX";
+    }
+
+    updateTradeInfo();
+  }
+
+  function updateTradeInfo() {
+    const price = tradeSide === "buy"
+      ? (asks[0]?.price || marketPrice)
+      : (bids[bids.length - 1]?.price || marketPrice);
+
+    const spread = asks.length && bids.length
+      ? Math.abs(asks[0].price - bids[bids.length - 1].price)
+      : 0;
+
+    const slippage = marketPrice ? (spread / marketPrice) * 100 : 0;
+
+    safeText(execPriceEl, fmtPrice(price));
+    safeText(spreadEl, fmtPrice(spread));
+    safeText(slippageEl, `${slippage.toFixed(3)}%`);
+  }
+
+  async function executeTrade() {
     try {
-      if (state.stream.ws) {
-        state.stream.ws.onopen = null;
-        state.stream.ws.onmessage = null;
-        state.stream.ws.onerror = null;
-        state.stream.ws.onclose = null;
-        state.stream.ws.close();
-      }
-    } catch {}
-    state.stream.ws = null;
-  }
+      const amount = parseFloat(orderAmount?.value || "0");
+      if (!amount || amount <= 0) return;
 
-  function clearStreamTimers() {
-    clearTimeout(state.stream.reconnectTimer);
-    clearInterval(state.stream.heartbeatTimer);
-    clearInterval(state.stream.fallbackTimer);
-    state.stream.reconnectTimer = null;
-    state.stream.heartbeatTimer = null;
-    state.stream.fallbackTimer = null;
-  }
+      const pair = `BX/${currentQuote}`;
+      const price = tradeSide === "buy"
+        ? (asks[0]?.price || marketPrice)
+        : (bids[bids.length - 1]?.price || marketPrice);
 
-  function connectQuoteStream() {
-    cleanupSocket();
-    clearStreamTimers();
+      const payload = {
+        uid: window.USER_ID,
+        pair,
+        side: tradeSide,
+        price,
+        amount
+      };
 
-    const streamSymbol = QUOTES[state.currentQuote]?.symbol || null;
-    state.stream.streamSymbol = streamSymbol;
-    state.stream.lastStreamTs = Date.now();
+      const data = await safeFetch("/exchange/order", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+      });
 
-    if (!streamSymbol) {
-      state.quotePriceUSDT = 1;
-      computeMarketPrice();
-      startFallbackPulse();
-      return;
-    }
-
-    const url = `wss://stream.binance.com:9443/ws/${streamSymbol}@trade`;
-    const ws = new WebSocket(url);
-    state.stream.ws = ws;
-
-    ws.onopen = () => {
-      state.stream.reconnectAttempts = 0;
-      state.stream.lastStreamTs = Date.now();
-      startHeartbeatWatch();
-      startFallbackPulse();
-    };
-
-    ws.onmessage = (event) => {
-      const now = performance.now();
-      if (now - state.stream.lastUpdateTs < STREAM_THROTTLE_MS) return;
-      state.stream.lastUpdateTs = now;
-      state.stream.lastStreamTs = Date.now();
-
-      try {
-        const data = JSON.parse(event.data);
-        const p = safeNum(data.p || data.c || data.price);
-        if (p > 0) {
-          state.quotePriceUSDT = p;
-          computeMarketPrice();
+      // optimistic fallback
+      if (tradeSide === "buy") {
+        const cost = amount * price;
+        if ((wallet[currentQuote] || 0) >= cost) {
+          wallet[currentQuote] = Number(wallet[currentQuote] || 0) - cost;
+          wallet.BX = Number(wallet.BX || 0) + amount;
         }
-      } catch {}
-    };
-
-    ws.onerror = () => {
-      scheduleReconnect();
-    };
-
-    ws.onclose = () => {
-      scheduleReconnect();
-    };
-  }
-
-  function scheduleReconnect() {
-    cleanupSocket();
-    clearTimeout(state.stream.reconnectTimer);
-
-    state.stream.reconnectAttempts += 1;
-    const delay = clamp(700 * state.stream.reconnectAttempts, 700, 6000);
-
-    state.stream.reconnectTimer = setTimeout(() => {
-      connectQuoteStream();
-    }, delay);
-  }
-
-  function startHeartbeatWatch() {
-    clearInterval(state.stream.heartbeatTimer);
-
-    state.stream.heartbeatTimer = setInterval(() => {
-      const stale = Date.now() - state.stream.lastStreamTs > 8000;
-      if (stale) {
-        scheduleReconnect();
-      }
-    }, 2500);
-  }
-
-  function startFallbackPulse() {
-    clearInterval(state.stream.fallbackTimer);
-
-    state.stream.fallbackTimer = setInterval(() => {
-      const stale = Date.now() - state.stream.lastStreamTs > 2000;
-
-      if (state.currentQuote === 'USDT' || state.currentQuote === 'USDC') {
-        const drift = (Math.random() - 0.5) * BX_USDT_REFERENCE * 0.0008;
-        state.quotePriceUSDT = 1;
-        state.marketPrice = BX_USDT_REFERENCE;
-        state.prevVisualPrice = state.visualPrice;
-        state.visualPrice = Math.max(0.00000001, BX_USDT_REFERENCE + drift);
-        updatePriceUI();
-        updateTradeStats();
-        generateOrderBook();
-        renderOrderBook();
-        if (CHART.initialized) CHART.update(state.visualPrice);
-        return;
+      } else {
+        if ((wallet.BX || 0) >= amount) {
+          wallet.BX = Number(wallet.BX || 0) - amount;
+          wallet[currentQuote] = Number(wallet[currentQuote] || 0) + (amount * price);
+        }
       }
 
-      if (stale) {
-        const fallbackMove = (Math.random() - 0.5) * state.quotePriceUSDT * 0.0025;
-        state.quotePriceUSDT = Math.max(0.00000001, state.quotePriceUSDT + fallbackMove);
-        computeMarketPrice();
+      updateWalletUI();
+      generateOrderBook();
+      renderOrderBook();
+      updateTradeInfo();
+      PRO_CHART.update(price);
+
+      if (data?.status) {
+        await loadMarketWallet();
       }
-    }, 260);
+    } catch (e) {
+      console.error("Trade error", e);
+    }
   }
 
   /* =========================================================
-     CHART ENGINE
+     EVENTS
   ========================================================= */
-  const CHART = {
-    initialized: false,
+  function bindEvents() {
+    pairButtons.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        pairButtons.forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+
+        currentQuote = btn.dataset.quote || "USDT";
+        quotePriceUSDT = quoteUsdFallback[currentQuote] || 1;
+
+        updateWalletUI();
+        connectBinance(quoteMap[currentQuote]);
+        updatePriceUI();
+        updateTradeInfo();
+        PRO_CHART.reset(marketPrice);
+      });
+    });
+
+    buyTab?.addEventListener("click", () => setTradeSide("buy"));
+    sellTab?.addEventListener("click", () => setTradeSide("sell"));
+    actionBtn?.addEventListener("click", executeTrade);
+
+    percentButtons.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        percentButtons.forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+
+        const percent = parseInt(btn.dataset.percent || "0", 10);
+        const maxBuy = getWalletQuoteBalance() / marketPrice;
+        const maxSell = wallet.BX || 0;
+        const max = tradeSide === "buy" ? maxBuy : maxSell;
+
+        if (orderAmount) {
+          orderAmount.value = fmtAmount((max * percent) / 100);
+        }
+      });
+    });
+  }
+
+  /* =========================================================
+     PRO CHART ENGINE
+  ========================================================= */
+  const PRO_CHART = {
     canvas: null,
     ctx: null,
+    tooltip: null,
+
     candles: [],
+    ema: [],
+    vwap: [],
+
+    timeframe: 60 * 1000,
+    visibleCount: 60,
+    minVisible: 20,
+    maxVisible: 150,
+    maxCandles: 220,
+
+    mode: "area",
     current: null,
-    dpr: window.devicePixelRatio || 1,
+    hoverIndex: -1,
+    mouseX: 0,
+    mouseY: 0,
+    isHovering: false,
+    raf: null,
 
     init() {
-      this.canvas = els.chartCanvas;
+      this.canvas = chartCanvas;
       if (!this.canvas) return;
 
-      this.ctx = this.canvas.getContext('2d');
-      this.bind();
-      this.resize();
-      this.seed(state.visualPrice || BX_USDT_REFERENCE);
-      this.initialized = true;
-      this.startLoop();
-    },
+      this.ctx = this.canvas.getContext("2d");
+      this.tooltip = tooltipEl;
 
-    bind() {
-      window.addEventListener('resize', () => {
+      this.resize();
+      this.bindTimeframes();
+      this.bindModes();
+      this.bindMouse();
+
+      window.addEventListener("resize", () => {
         requestAnimationFrame(() => this.resize());
       });
 
-      this.canvas.addEventListener('mousemove', (e) => {
-        const rect = this.canvas.getBoundingClientRect();
-        state.chart.mouse.x = e.clientX - rect.left;
-        state.chart.mouse.y = e.clientY - rect.top;
-        state.chart.mouse.inside = true;
-        this.resolveHover();
-      });
-
-      this.canvas.addEventListener('mouseleave', () => {
-        state.chart.mouse.inside = false;
-        state.chart.hoveredIndex = null;
-        state.chart.hoveredCandle = null;
-        this.hideTooltip();
-      });
-
-      this.canvas.addEventListener('wheel', (e) => {
-        e.preventDefault();
-        const conf = RANGE_CONFIG[state.activeRange];
-        const delta = e.deltaY > 0 ? 6 : -6;
-        conf.candles = clamp(conf.candles + delta, 20, 180);
-        this.render();
-      }, { passive: false });
+      this.reset(marketPrice);
+      this.render();
     },
 
     resize() {
-      if (!this.canvas || !this.canvas.parentElement) return;
+      if (!this.canvas) return;
+      const p = this.canvas.parentElement;
+      if (!p) return;
 
-      const rect = this.canvas.parentElement.getBoundingClientRect();
-      const dpr = window.devicePixelRatio || 1;
-      this.dpr = dpr;
+      const dpr = Math.max(1, window.devicePixelRatio || 1);
+      const w = p.clientWidth;
+      const h = p.clientHeight;
 
-      const width = Math.max(320, rect.width);
-      const height = Math.max(320, rect.height);
-
-      this.canvas.width = width * dpr;
-      this.canvas.height = height * dpr;
-      this.canvas.style.width = `${width}px`;
-      this.canvas.style.height = `${height}px`;
+      this.canvas.width = Math.floor(w * dpr);
+      this.canvas.height = Math.floor(h * dpr);
+      this.canvas.style.width = `${w}px`;
+      this.canvas.style.height = `${h}px`;
 
       this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      this.render();
-    },
-
-    seed(price) {
-      const conf = RANGE_CONFIG[state.activeRange];
-      this.candles = [];
-
-      let last = price;
-      const now = Date.now();
-
-      for (let i = conf.candles; i > 0; i--) {
-        const open = last;
-        const drift = (Math.random() - 0.5) * price * conf.volatility;
-        const close = Math.max(0.00000001, open + drift);
-        const high = Math.max(open, close) + rnd(0, price * conf.volatility * 0.45);
-        const low = Math.min(open, close) - rnd(0, price * conf.volatility * 0.45);
-        const volume = rnd(90, 1200);
-
-        this.candles.push({
-          open,
-          high,
-          low,
-          close,
-          volume,
-          time: now - (i * conf.candleMs)
-        });
-
-        last = close;
-      }
-
-      this.current = this.candles[this.candles.length - 1];
-      this.syncMetrics(this.current);
     },
 
     reset(price) {
-      this.seed(price);
-      this.render();
+      this.candles = [];
+      this.ema = [];
+      this.vwap = [];
+      this.current = null;
+      this.bootstrap(price);
+      this.seedHistory(price);
+    },
+
+    bootstrap(price) {
+      this.current = {
+        open: price,
+        high: price,
+        low: price,
+        close: price,
+        volume: rand(2, 8),
+        time: Date.now()
+      };
+      this.candles.push(this.current);
+    },
+
+    seedHistory(price) {
+      let p = price;
+      for (let i = 0; i < 45; i++) {
+        const drift = rand(-0.22, 0.22) * (price * 0.0014);
+        const next = Math.max(0.000001, p + drift);
+
+        this.current = {
+          open: p,
+          high: Math.max(p, next) + rand(0, price * 0.0007),
+          low: Math.min(p, next) - rand(0, price * 0.0007),
+          close: next,
+          volume: rand(2, 16),
+          time: Date.now() - (45 - i) * this.timeframe
+        };
+
+        this.candles.push(this.current);
+        p = next;
+      }
+
+      this.current = this.candles[this.candles.length - 1];
+      this.calcEMA(14);
+      this.calcVWAP();
     },
 
     update(price) {
       if (!price || price <= 0) return;
 
-      const conf = RANGE_CONFIG[state.activeRange];
-      const now = Date.now();
-
       if (!this.current) {
-        this.seed(price);
+        this.bootstrap(price);
         return;
       }
 
-      if (now - this.current.time >= conf.candleMs) {
+      const now = Date.now();
+
+      if (now - this.current.time > this.timeframe) {
         this.current = {
           open: this.current.close,
           high: price,
           low: price,
           close: price,
-          volume: rnd(90, 360),
+          volume: rand(1, 4),
           time: now
         };
 
         this.candles.push(this.current);
 
-        if (this.candles.length > MAX_CANDLES_BUFFER) {
+        if (this.candles.length > this.maxCandles) {
           this.candles.shift();
         }
       } else {
         this.current.high = Math.max(this.current.high, price);
         this.current.low = Math.min(this.current.low, price);
         this.current.close = price;
-        this.current.volume += rnd(2, 18);
+        this.current.volume += rand(0.3, 1.2);
       }
 
-      this.syncMetrics(this.current);
+      this.calcEMA(14);
+      this.calcVWAP();
     },
 
-    getVisibleCandles() {
-      const conf = RANGE_CONFIG[state.activeRange];
-      return this.candles.slice(-conf.candles);
-    },
+    calcEMA(period) {
+      if (this.candles.length < 2) return;
+      const k = 2 / (period + 1);
+      this.ema = [];
 
-    getBounds(visible) {
-      const highs = visible.map(c => c.high);
-      const lows = visible.map(c => c.low);
-      const vols = visible.map(c => c.volume);
-
-      let max = Math.max(...highs);
-      let min = Math.min(...lows);
-      let maxVol = Math.max(...vols, 1);
-
-      if (Math.abs(max - min) < 0.00000001) {
-        max += 0.0001;
-        min -= 0.0001;
+      let emaPrev = this.candles[0].close;
+      for (let i = 0; i < this.candles.length; i++) {
+        if (i === 0) {
+          this.ema.push(emaPrev);
+        } else {
+          const val = this.candles[i].close * k + emaPrev * (1 - k);
+          this.ema.push(val);
+          emaPrev = val;
+        }
       }
-
-      return { max, min, range: max - min, maxVol };
     },
 
-    priceToY(price, min, range, chartTop, chartHeight) {
-      return chartTop + (1 - ((price - min) / range)) * chartHeight;
-    },
+    calcVWAP() {
+      let pv = 0;
+      let vol = 0;
+      this.vwap = [];
 
-    resolveHover() {
-      if (!state.chart.mouse.inside) return;
-
-      const visible = this.getVisibleCandles();
-      if (!visible.length) return;
-
-      const w = this.canvas.clientWidth;
-      const step = w / visible.length;
-      const idx = clamp(Math.floor(state.chart.mouse.x / step), 0, visible.length - 1);
-
-      state.chart.hoveredIndex = idx;
-      state.chart.hoveredCandle = visible[idx];
-      this.showTooltip(visible[idx], idx, visible.length, step);
-    },
-
-    showTooltip(candle, idx, count, step) {
-      if (!els.chartTooltip || !candle) return;
-
-      const x = idx * step + step * 0.5;
-      const date = new Date(candle.time);
-
-      els.chartTooltip.innerHTML = `
-        <div><strong>O</strong> ${fmt(candle.open)}</div>
-        <div><strong>H</strong> ${fmt(candle.high)}</div>
-        <div><strong>L</strong> ${fmt(candle.low)}</div>
-        <div><strong>C</strong> ${fmt(candle.close)}</div>
-        <div><strong>V</strong> ${compact(candle.volume)}</div>
-        <div>${date.toLocaleString()}</div>
-      `;
-
-      els.chartTooltip.style.opacity = '1';
-      els.chartTooltip.style.transform = 'translateY(0)';
-      els.chartTooltip.style.left = `${Math.min(this.canvas.clientWidth - 160, Math.max(10, x - 65))}px`;
-      els.chartTooltip.style.top = '14px';
-
-      if (els.crosshairPrice) els.crosshairPrice.textContent = fmt(candle.close);
-      if (els.crosshairTime) els.crosshairTime.textContent = date.toLocaleTimeString();
-    },
-
-    hideTooltip() {
-      if (els.chartTooltip) {
-        els.chartTooltip.style.opacity = '0';
-        els.chartTooltip.style.transform = 'translateY(6px)';
+      for (const c of this.candles) {
+        const typical = (c.high + c.low + c.close) / 3;
+        pv += typical * c.volume;
+        vol += c.volume;
+        this.vwap.push(vol ? pv / vol : typical);
       }
-
-      if (els.crosshairPrice) els.crosshairPrice.textContent = '--';
-      if (els.crosshairTime) els.crosshairTime.textContent = '--';
     },
 
-    syncMetrics(c) {
-      if (!c) return;
+    bindTimeframes() {
+      timeframeButtons.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          timeframeButtons.forEach(b => b.classList.remove("active"));
+          btn.classList.add("active");
 
-      const set = (el, val) => { if (el) el.textContent = val; };
+          const range = btn.dataset.range || "1H";
 
-      set(els.metricOpen, fmt(c.open));
-      set(els.metricHigh, fmt(c.high));
-      set(els.metricLow, fmt(c.low));
-      set(els.metricClose, fmt(c.close));
+          if (range === "1H") {
+            this.timeframe = 60 * 1000;
+            this.visibleCount = 60;
+          } else if (range === "24H") {
+            this.timeframe = 5 * 60 * 1000;
+            this.visibleCount = 70;
+          } else if (range === "7D") {
+            this.timeframe = 30 * 60 * 1000;
+            this.visibleCount = 80;
+          } else if (range === "30D") {
+            this.timeframe = 2 * 60 * 60 * 1000;
+            this.visibleCount = 90;
+          } else if (range === "90D") {
+            this.timeframe = 6 * 60 * 60 * 1000;
+            this.visibleCount = 100;
+          }
 
-      set(els.metricOpenPanel, fmt(c.open));
-      set(els.metricHighPanel, fmt(c.high));
-      set(els.metricLowPanel, fmt(c.low));
-      set(els.metricClosePanel, fmt(c.close));
-      set(els.metricVol, compact(c.volume));
+          this.reset(marketPrice);
+        });
+      });
+    },
 
-      const visible = this.getVisibleCandles();
-      if (visible.length) {
-        const highs = visible.map(x => x.high);
-        const lows = visible.map(x => x.low);
-        const vol = visible.reduce((a, b) => a + b.volume, 0);
+    bindModes() {
+      chartModeButtons.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          chartModeButtons.forEach(b => b.classList.remove("active"));
+          btn.classList.add("active");
+          this.mode = btn.dataset.chartMode || "area";
+        });
+      });
+    },
 
-        set(els.statHigh, `${state.currentQuote === 'USDT' || state.currentQuote === 'USDC' ? '$' : ''}${fmt(Math.max(...highs))}`);
-        set(els.statLow, `${state.currentQuote === 'USDT' || state.currentQuote === 'USDC' ? '$' : ''}${fmt(Math.min(...lows))}`);
-        set(els.statVolume, `${compact(vol)} BX`);
-        set(els.statMarketCap, `$${compact((state.visualPrice || BX_USDT_REFERENCE) * 1_000_000)}`);
-      }
+    bindMouse() {
+      if (!this.canvas) return;
+
+      this.canvas.addEventListener("mousemove", (e) => {
+        const rect = this.canvas.getBoundingClientRect();
+        this.mouseX = e.clientX - rect.left;
+        this.mouseY = e.clientY - rect.top;
+        this.isHovering = true;
+      });
+
+      this.canvas.addEventListener("mouseleave", () => {
+        this.isHovering = false;
+        this.hoverIndex = -1;
+        if (this.tooltip) {
+          this.tooltip.classList.remove("show");
+        }
+      });
+
+      this.canvas.addEventListener("wheel", (e) => {
+        e.preventDefault();
+        const delta = e.deltaY > 0 ? 4 : -4;
+        this.visibleCount = clamp(this.visibleCount + delta, this.minVisible, this.maxVisible);
+      }, { passive: false });
+    },
+
+    priceToY(price, min, max, chartTop, chartHeight) {
+      return chartTop + ((max - price) / (max - min)) * chartHeight;
     },
 
     renderGrid(ctx, w, chartTop, chartHeight) {
-      ctx.strokeStyle = 'rgba(255,255,255,.05)';
+      ctx.save();
+      ctx.strokeStyle = "rgba(255,255,255,0.05)";
       ctx.lineWidth = 1;
 
       for (let i = 0; i < 5; i++) {
@@ -858,6 +786,220 @@
         ctx.lineTo(x, chartTop + chartHeight);
         ctx.stroke();
       }
+      ctx.restore();
+    },
+
+    renderEMA(ctx, visible, min, max, chartTop, chartHeight, candleWidth) {
+      if (this.ema.length < 2) return;
+
+      const emaVisible = this.ema.slice(-visible.length);
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = "rgba(240,185,11,.95)";
+
+      emaVisible.forEach((val, i) => {
+        const x = i * candleWidth + candleWidth / 2;
+        const y = this.priceToY(val, min, max, chartTop, chartHeight);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+
+      ctx.stroke();
+      ctx.restore();
+    },
+
+    renderVWAP(ctx, visible, min, max, chartTop, chartHeight, candleWidth) {
+      if (this.vwap.length < 2) return;
+
+      const vwapVisible = this.vwap.slice(-visible.length);
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = "rgba(168,85,247,.92)";
+
+      vwapVisible.forEach((val, i) => {
+        const x = i * candleWidth + candleWidth / 2;
+        const y = this.priceToY(val, min, max, chartTop, chartHeight);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+
+      ctx.stroke();
+      ctx.restore();
+    },
+
+    renderArea(ctx, visible, min, max, chartTop, chartHeight, candleWidth, w) {
+      const closes = visible.map(c => c.close);
+
+      ctx.save();
+      ctx.beginPath();
+
+      closes.forEach((price, i) => {
+        const x = i * candleWidth + candleWidth / 2;
+        const y = this.priceToY(price, min, max, chartTop, chartHeight);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+
+      const grad = ctx.createLinearGradient(0, chartTop, 0, chartTop + chartHeight);
+      grad.addColorStop(0, "rgba(14,203,129,.34)");
+      grad.addColorStop(.65, "rgba(14,203,129,.08)");
+      grad.addColorStop(1, "rgba(14,203,129,0)");
+
+      const lineGrad = ctx.createLinearGradient(0, chartTop, w, chartTop);
+      lineGrad.addColorStop(0, "rgba(116,255,208,.95)");
+      lineGrad.addColorStop(1, "rgba(56,217,154,.95)");
+
+      const lastX = (closes.length - 1) * candleWidth + candleWidth / 2;
+      ctx.lineTo(lastX, chartTop + chartHeight);
+      ctx.lineTo(candleWidth / 2, chartTop + chartHeight);
+      ctx.closePath();
+      ctx.fillStyle = grad;
+      ctx.fill();
+
+      ctx.beginPath();
+      closes.forEach((price, i) => {
+        const x = i * candleWidth + candleWidth / 2;
+        const y = this.priceToY(price, min, max, chartTop, chartHeight);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+
+      ctx.strokeStyle = lineGrad;
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+      ctx.restore();
+    },
+
+    renderLine(ctx, visible, min, max, chartTop, chartHeight, candleWidth) {
+      ctx.save();
+      ctx.beginPath();
+
+      visible.forEach((c, i) => {
+        const x = i * candleWidth + candleWidth / 2;
+        const y = this.priceToY(c.close, min, max, chartTop, chartHeight);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+
+      ctx.strokeStyle = "rgba(116,255,208,.95)";
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+      ctx.restore();
+    },
+
+    renderCandles(ctx, visible, min, max, chartTop, chartHeight, candleWidth) {
+      ctx.save();
+
+      visible.forEach((c, i) => {
+        const x = i * candleWidth + candleWidth / 2;
+        const openY = this.priceToY(c.open, min, max, chartTop, chartHeight);
+        const closeY = this.priceToY(c.close, min, max, chartTop, chartHeight);
+        const highY = this.priceToY(c.high, min, max, chartTop, chartHeight);
+        const lowY = this.priceToY(c.low, min, max, chartTop, chartHeight);
+
+        const up = c.close >= c.open;
+        const color = up ? "#0ecb81" : "#f6465d";
+
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(x, highY);
+        ctx.lineTo(x, lowY);
+        ctx.stroke();
+
+        const bodyY = Math.min(openY, closeY);
+        const bodyH = Math.max(2, Math.abs(closeY - openY));
+        const bodyW = Math.max(4, candleWidth * 0.56);
+
+        ctx.fillStyle = color;
+        ctx.fillRect(x - bodyW / 2, bodyY, bodyW, bodyH);
+      });
+
+      ctx.restore();
+    },
+
+    renderVolume(ctx, visible, chartTop, chartHeight, w, h, candleWidth) {
+      const volumeTop = chartTop + chartHeight + 8;
+      const volumeHeight = h - volumeTop - 10;
+      const maxVol = Math.max(...visible.map(c => c.volume), 1);
+
+      ctx.save();
+      visible.forEach((c, i) => {
+        const x = i * candleWidth + candleWidth * 0.18;
+        const barW = candleWidth * 0.64;
+        const barH = (c.volume / maxVol) * volumeHeight;
+        const y = volumeTop + (volumeHeight - barH);
+        const up = c.close >= c.open;
+
+        ctx.fillStyle = up
+          ? "rgba(14,203,129,.28)"
+          : "rgba(246,70,93,.26)";
+
+        ctx.fillRect(x, y, barW, barH);
+      });
+      ctx.restore();
+    },
+
+    renderCrosshair(ctx, visible, min, max, chartTop, chartHeight, candleWidth, w) {
+      if (!this.isHovering) return;
+
+      const idx = clamp(Math.floor(this.mouseX / candleWidth), 0, visible.length - 1);
+      this.hoverIndex = idx;
+
+      const candle = visible[idx];
+      if (!candle) return;
+
+      const x = idx * candleWidth + candleWidth / 2;
+      const y = this.priceToY(candle.close, min, max, chartTop, chartHeight);
+
+      ctx.save();
+      ctx.strokeStyle = "rgba(255,255,255,.12)";
+      ctx.lineWidth = 1;
+      ctx.setLineDash([4, 4]);
+
+      ctx.beginPath();
+      ctx.moveTo(x, chartTop);
+      ctx.lineTo(x, chartTop + chartHeight);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(w, y);
+      ctx.stroke();
+
+      ctx.setLineDash([]);
+      ctx.fillStyle = "rgba(116,255,208,.95)";
+      ctx.beginPath();
+      ctx.arc(x, y, 3.2, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
+
+      this.showTooltip(candle, x, y);
+    },
+
+    showTooltip(candle, x, y) {
+      if (!this.tooltip || !this.canvas) return;
+
+      const rect = this.canvas.getBoundingClientRect();
+      const left = clamp(x + 18, 10, rect.width - 190);
+      const top = clamp(y + 18, 10, rect.height - 120);
+
+      this.tooltip.style.left = `${left}px`;
+      this.tooltip.style.top = `${top}px`;
+
+      this.tooltip.innerHTML = `
+        <div><strong>Open:</strong> ${fmtPrice(candle.open)}</div>
+        <div><strong>High:</strong> ${fmtPrice(candle.high)}</div>
+        <div><strong>Low:</strong> ${fmtPrice(candle.low)}</div>
+        <div><strong>Close:</strong> ${fmtPrice(candle.close)}</div>
+        <div><strong>Vol:</strong> ${fmtAmount(candle.volume, 2)}</div>
+      `;
+      this.tooltip.classList.add("show");
     },
 
     render() {
@@ -869,239 +1011,83 @@
 
       ctx.clearRect(0, 0, w, h);
 
-      const visible = this.getVisibleCandles();
-      if (visible.length < 2) return;
+      const visible = this.candles.slice(-this.visibleCount);
+      if (visible.length < 2) {
+        this.raf = requestAnimationFrame(() => this.render());
+        return;
+      }
 
-      const topPad = 16;
-      const bottomPad = 76;
-      const chartHeight = h - bottomPad - topPad;
-      const volumeHeight = 48;
+      const chartTop = 12;
+      const chartHeight = h - 110;
+      const candleWidth = w / visible.length;
 
-      const { max, min, range, maxVol } = this.getBounds(visible);
-      const step = w / visible.length;
-      const candleW = Math.max(4, step * 0.62);
+      const highs = visible.map(c => c.high);
+      const lows = visible.map(c => c.low);
 
-      this.renderGrid(ctx, w, topPad, chartHeight);
+      let max = Math.max(...highs);
+      let min = Math.min(...lows);
 
-      // Volume bars
-      visible.forEach((c, i) => {
-        const x = i * step + (step - candleW) / 2;
-        const vh = (c.volume / maxVol) * volumeHeight;
-        const y = h - vh - 12;
+      if (Math.abs(max - min) < 0.0000001) {
+        max += 0.0001;
+        min -= 0.0001;
+      }
 
-        ctx.fillStyle = c.close >= c.open ? 'rgba(14,203,129,.24)' : 'rgba(246,70,93,.22)';
-        ctx.fillRect(x, y, candleW, vh);
-      });
+      const padding = (max - min) * 0.12;
+      max += padding;
+      min -= padding;
 
-      // Area / Line / Candles
-      if (state.chartMode === 'candles') {
-        visible.forEach((c, i) => {
-          const x = i * step + step / 2;
-          const openY = this.priceToY(c.open, min, range, topPad, chartHeight);
-          const closeY = this.priceToY(c.close, min, range, topPad, chartHeight);
-          const highY = this.priceToY(c.high, min, range, topPad, chartHeight);
-          const lowY = this.priceToY(c.low, min, range, topPad, chartHeight);
+      this.renderGrid(ctx, w, chartTop, chartHeight);
 
-          const up = c.close >= c.open;
-          ctx.strokeStyle = up ? '#0ecb81' : '#f6465d';
-          ctx.fillStyle = up ? '#0ecb81' : '#f6465d';
-
-          ctx.lineWidth = 1.5;
-          ctx.beginPath();
-          ctx.moveTo(x, highY);
-          ctx.lineTo(x, lowY);
-          ctx.stroke();
-
-          const bodyY = Math.min(openY, closeY);
-          const bodyH = Math.max(2, Math.abs(closeY - openY));
-          ctx.fillRect(x - candleW / 2, bodyY, candleW, bodyH);
-        });
+      if (this.mode === "candles") {
+        this.renderCandles(ctx, visible, min, max, chartTop, chartHeight, candleWidth);
+      } else if (this.mode === "line") {
+        this.renderLine(ctx, visible, min, max, chartTop, chartHeight, candleWidth);
       } else {
-        const points = visible.map((c, i) => ({
-          x: i * step + step / 2,
-          y: this.priceToY(c.close, min, range, topPad, chartHeight),
-          price: c.close
-        }));
-
-        if (state.chartMode === 'area') {
-          ctx.beginPath();
-          ctx.moveTo(points[0].x, chartHeight + topPad);
-          points.forEach(p => ctx.lineTo(p.x, p.y));
-          ctx.lineTo(points[points.length - 1].x, chartHeight + topPad);
-          ctx.closePath();
-
-          const grad = ctx.createLinearGradient(0, topPad, 0, chartHeight + topPad);
-          grad.addColorStop(0, 'rgba(14,203,129,.26)');
-          grad.addColorStop(1, 'rgba(14,203,129,0)');
-          ctx.fillStyle = grad;
-          ctx.fill();
-        }
-
-        ctx.beginPath();
-        ctx.moveTo(points[0].x, points[0].y);
-        points.forEach(p => ctx.lineTo(p.x, p.y));
-        ctx.strokeStyle = '#0ecb81';
-        ctx.lineWidth = 2.5;
-        ctx.stroke();
-
-        const lp = points[points.length - 1];
-        ctx.beginPath();
-        ctx.arc(lp.x, lp.y, 4, 0, Math.PI * 2);
-        ctx.fillStyle = '#0ecb81';
-        ctx.fill();
-
-        ctx.beginPath();
-        ctx.arc(lp.x, lp.y, 10, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(14,203,129,.15)';
-        ctx.fill();
+        this.renderArea(ctx, visible, min, max, chartTop, chartHeight, candleWidth, w);
       }
 
-      // Crosshair
-      if (state.chart.mouse.inside && state.chart.hoveredIndex !== null && visible[state.chart.hoveredIndex]) {
-        const c = visible[state.chart.hoveredIndex];
-        const x = state.chart.hoveredIndex * step + step / 2;
-        const y = this.priceToY(c.close, min, range, topPad, chartHeight);
+      this.renderEMA(ctx, visible, min, max, chartTop, chartHeight, candleWidth);
+      this.renderVWAP(ctx, visible, min, max, chartTop, chartHeight, candleWidth);
+      this.renderVolume(ctx, visible, chartTop, chartHeight, w, h, candleWidth);
+      this.renderCrosshair(ctx, visible, min, max, chartTop, chartHeight, candleWidth, w);
 
-        ctx.strokeStyle = 'rgba(255,255,255,.18)';
-        ctx.lineWidth = 1;
-
-        ctx.beginPath();
-        ctx.moveTo(x, topPad);
-        ctx.lineTo(x, chartHeight + topPad);
-        ctx.stroke();
-
-        ctx.beginPath();
-        ctx.moveTo(0, y);
-        ctx.lineTo(w, y);
-        ctx.stroke();
-
-        ctx.beginPath();
-        ctx.arc(x, y, 4, 0, Math.PI * 2);
-        ctx.fillStyle = '#ffffff';
-        ctx.fill();
-      }
-    },
-
-    startLoop() {
-      const frame = (ts) => {
-        const interval = 1000 / RENDER_FPS;
-        if (ts - state.chart.lastFrame >= interval) {
-          state.chart.lastFrame = ts;
-          this.render();
-        }
-        state.chart.raf = requestAnimationFrame(frame);
-      };
-
-      cancelAnimationFrame(state.chart.raf);
-      state.chart.raf = requestAnimationFrame(frame);
+      this.raf = requestAnimationFrame(() => this.render());
     }
   };
-
-  /* =========================================================
-     EVENTS
-  ========================================================= */
-  function bindPairButtons() {
-    els.pairBtns.forEach(btn => {
-      btn.addEventListener('click', () => {
-        els.pairBtns.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-
-        state.currentQuote = btn.dataset.quote || 'USDT';
-        state.quotePriceUSDT = 1;
-        updatePriceUI();
-        connectQuoteStream();
-        CHART.reset(state.visualPrice || BX_USDT_REFERENCE);
-      });
-    });
-  }
-
-  function bindRangeButtons() {
-    els.rangeBtns.forEach(btn => {
-      btn.addEventListener('click', () => {
-        els.rangeBtns.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-
-        state.activeRange = btn.dataset.range || '1H';
-        CHART.reset(state.visualPrice || BX_USDT_REFERENCE);
-      });
-    });
-  }
-
-  function bindChartModes() {
-    els.chartModeBtns.forEach(btn => {
-      btn.addEventListener('click', () => {
-        els.chartModeBtns.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-
-        state.chartMode = btn.dataset.chartMode || 'area';
-        CHART.render();
-      });
-    });
-  }
-
-  function bindTrade() {
-    els.buyTab?.addEventListener('click', () => {
-      state.tradeSide = 'buy';
-      updateTradeSideUI();
-    });
-
-    els.sellTab?.addEventListener('click', () => {
-      state.tradeSide = 'sell';
-      updateTradeSideUI();
-    });
-
-    els.orderAmount?.addEventListener('input', updateTradeStats);
-    els.actionBtn?.addEventListener('click', executeTrade);
-
-    els.percentBtns.forEach(btn => {
-      btn.addEventListener('click', () => {
-        applyPercent(btn.dataset.percent);
-      });
-    });
-  }
-
-  function bindWalletSync() {
-    window.addEventListener('bx:balances:updated', () => {
-      updatePriceUI();
-      updateTradeStats();
-    });
-  }
 
   /* =========================================================
      INIT
   ========================================================= */
   function initMarket() {
-    cacheDOM();
+    if (marketStarted) return;
+    marketStarted = true;
 
-    if (!els.chartCanvas) return;
+    updateWalletUI();
+    loadMarketWallet();
+    bindEvents();
 
-    updateTradeSideUI();
-    updatePriceUI();
-    updateTradeStats();
+    quotePriceUSDT = quoteUsdFallback[currentQuote] || 1;
+    connectBinance(quoteMap[currentQuote]);
 
-    bindPairButtons();
-    bindRangeButtons();
-    bindChartModes();
-    bindTrade();
-    bindWalletSync();
+    marketPrice = BX_USDT_REFERENCE;
+    previousPrice = marketPrice;
 
     generateOrderBook();
     renderOrderBook();
+    setTradeSide("buy");
+    updateTradeInfo();
+    updatePriceUI();
 
-    CHART.init();
-    connectQuoteStream();
-
-    // expose
-    window.BX_MARKET = {
-      state,
-      refresh: computeMarketPrice,
-      reconnect: connectQuoteStream,
-      resetChart: () => CHART.reset(state.visualPrice || BX_USDT_REFERENCE)
-    };
+    PRO_CHART.init();
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initMarket);
+  /* expose if needed */
+  window.initMarket = initMarket;
+  window.PRO_CHART = PRO_CHART;
+
+  /* auto-init */
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initMarket);
   } else {
     initMarket();
   }
