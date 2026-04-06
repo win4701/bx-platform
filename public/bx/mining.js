@@ -151,27 +151,27 @@
       id: 'elite',
       name: 'Elite ',
       hash: '240 GH/s',
-      daily: 2.00,
+      daily: 1.75,
       days: 45,
-      boost: 1.08,
+      boost: 1.05,
       min: { BX: 1200, BNB: 5, SOL: 12 }
     },
     {
       id: 'ultra',
       name: 'Ultra ',
       hash: '540 GH/s',
-      daily: 2.15,
+      daily: 2.05,
       days: 60,
-      boost: 1.09,
+      boost: 1.08,
       min: { BX: 2500, BNB: 15, SOL: 30 }
     },
     {
       id: 'legend',
       name: 'Legend ',
       hash: '1200 GH/s',
-      daily: 2.45,
+      daily: 2.25,
       days: 90,
-      boost: 1.12,
+      boost: 1.10,
       min: { BX: 4500, BNB: 50, SOL: 100 }
     }
   ];
