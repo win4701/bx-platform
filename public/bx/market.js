@@ -11,7 +11,7 @@
      CONFIG
   ========================================================= */
   const BX_USDT_REFERENCE = 45; // BX base anchor in USDT
-  const ORDERBOOK_ROWS = 14;
+  const ORDERBOOK_ROWS = 12;
   const STREAM_THROTTLE_MS = 45;
   const RENDER_FPS = 60;
   const MAX_TRADE_HISTORY = 120;
