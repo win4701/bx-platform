@@ -122,57 +122,57 @@
   const PLANS = [
     {
       id: 'starter',
-      name: 'Starter Node',
+      name: 'Starter ',
       hash: '18 GH/s',
       daily: 1.20,
       days: 10,
       boost: 1.00,
-      min: { BX: 75,  BNB: 0.08, SOL: 0.3 }
+      min: { BX: 75,  BNB: 0.1, SOL: 0.3 }
     },
     {
       id: 'basic',
-      name: 'Basic Node',
+      name: 'Basic ',
       hash: '42 GH/s',
       daily: 1.38,
-      days: 14,
+      days: 21,
       boost: 1.05,
       min: { BX: 200,  BNB: 0.3, SOL: 0.7 }
     },
     {
       id: 'pro',
-      name: 'Pro Node',
+      name: 'Pro ',
       hash: '90 GH/s',
       daily: 1.75,
-      days: 20,
+      days: 30,
       boost: 1.12,
-      min: { BX: 500,  BNB: 0.6, SOL: 2 }
+      min: { BX: 500,  BNB: 1, SOL: 3 }
     },
     {
       id: 'elite',
-      name: 'Elite Node',
+      name: 'Elite ',
       hash: '240 GH/s',
       daily: 2.15,
-      days: 30,
+      days: 45,
       boost: 1.28,
-      min: { BX: 1200, BNB: 2, SOL: 10 }
+      min: { BX: 1200, BNB: 5, SOL: 12 }
     },
     {
       id: 'ultra',
-      name: 'Ultra Node',
+      name: 'Ultra ',
       hash: '540 GH/s',
       daily: 2.80,
-      days: 45,
+      days: 60,
       boost: 1.45,
-      min: { BX: 2500, BNB: 10, SOL: 20 }
+      min: { BX: 2500, BNB: 15, SOL: 30 }
     },
     {
       id: 'legend',
-      name: 'Legend Node',
+      name: 'Legend ',
       hash: '1200 GH/s',
       daily: 3.45,
-      days: 60,
+      days: 90,
       boost: 1.72,
-      min: { BX: 4500, BNB: 20, SOL: 40 }
+      min: { BX: 4500, BNB: 50, SOL: 100 }
     }
   ];
 
