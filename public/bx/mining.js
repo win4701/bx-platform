@@ -124,7 +124,7 @@
       id: 'starter',
       name: 'Starter ',
       hash: '18 GH/s',
-      daily: 1.20,
+      daily: 1.15,
       days: 10,
       boost: 1.00,
       min: { BX: 75,  BNB: 0.1, SOL: 0.3 }
@@ -133,9 +133,9 @@
       id: 'basic',
       name: 'Basic ',
       hash: '42 GH/s',
-      daily: 1.18,
+      daily: 1.21,
       days: 21,
-      boost: 1.00,
+      boost: 1.01,
       min: { BX: 200,  BNB: 0.3, SOL: 0.7 }
     },
     {
@@ -144,7 +144,7 @@
       hash: '90 GH/s',
       daily: 1.55,
       days: 30,
-      boost: 1.02,
+      boost: 1.03,
       min: { BX: 500,  BNB: 1, SOL: 3 }
     },
     {
