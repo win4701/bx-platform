@@ -320,75 +320,155 @@
     }
   }
 
+
   /* =========================================================
-     ORDERBOOK
-  ========================================================= */
-  function generateOrderBook() {
-    bids = [];
-    asks = [];
+   ORDER BOOK ENGINE — FIXED FINAL
+========================================================= */
 
-    const spreadBase = marketPrice * 0.0009;
+function generateOrderBook() {
+  bids = [];
+  asks = [];
 
-    for (let i = ROWS; i > 0; i--) {
-      bids.push({
-        price: marketPrice - spreadBase - i * marketPrice * 0.00045,
-        amount: rand(0.35, 8.5)
-      });
-    }
+  const mid = Number(marketPrice || BX_USDT_REFERENCE);
+  const step = Math.max(mid * 0.00045, 0.000001);
+  const baseSpread = Math.max(mid * 0.0009, 0.000002);
 
-    for (let i = 1; i <= ROWS; i++) {
-      asks.push({
-        price: marketPrice + spreadBase + i * marketPrice * 0.00045,
-        amount: rand(0.35, 8.5)
-      });
-    }
+  // BIDS (descending visually near market)
+  for (let i = 0; i < ROWS; i++) {
+    const price = mid - baseSpread / 2 - i * step;
+    const amount = rand(0.35, 8.5);
+    const total = amount * price;
+
+    bids.push({
+      price,
+      amount,
+      total
+    });
   }
 
-  function renderOrderBook() {
-    if (!bidsEl || !asksEl || !priceLadderEl) return;
+  // ASKS (ascending visually near market)
+  for (let i = 0; i < ROWS; i++) {
+    const price = mid + baseSpread / 2 + i * step;
+    const amount = rand(0.35, 8.5);
+    const total = amount * price;
 
-    bidsEl.innerHTML = "";
-    asksEl.innerHTML = "";
-    priceLadderEl.innerHTML = "";
-
-    const maxBidAmount = Math.max(...bids.map(o => o.amount), 1);
-    const maxAskAmount = Math.max(...asks.map(o => o.amount), 1);
-
-    bids.forEach((o) => {
-      const row = document.createElement("div");
-      row.className = "ob-row bid ob-side bid";
-      row.style.setProperty("--depth", `${(o.amount / maxBidAmount) * 100}%`);
-      row.innerHTML = `
-        <span>${fmtAmount(o.amount, 2)}</span>
-        <span>${fmtPrice(o.price)}</span>
-      `;
-      bidsEl.appendChild(row);
+    asks.push({
+      price,
+      amount,
+      total
     });
+  }
 
-    const mid = document.createElement("div");
-    mid.className = "ob-row mid ob-mid";
-    mid.textContent = fmtPrice(marketPrice);
-    priceLadderEl.appendChild(mid);
+  // IMPORTANT:
+  // bids closest price first
+  bids.sort((a, b) => b.price - a.price);
 
-    asks.forEach((o) => {
+  // asks closest price first
+  asks.sort((a, b) => a.price - b.price);
+}
+
+function renderOrderBook() {
+  if (!bidsEl || !asksEl) return;
+
+  bidsEl.innerHTML = "";
+  asksEl.innerHTML = "";
+  if (priceLadderEl) priceLadderEl.innerHTML = "";
+
+  const topBids = bids.slice(0, ROWS);
+  const topAsks = asks.slice(0, ROWS);
+
+  const maxBidTotal = Math.max(...topBids.map(x => x.total), 1);
+  const maxAskTotal = Math.max(...topAsks.map(x => x.total), 1);
+
+  // ===== ASKS =====
+  topAsks
+    .slice()
+    .reverse() // بعيد فوق، الأقرب تحت
+    .forEach((o) => {
       const row = document.createElement("div");
-      row.className = "ob-row ask ob-side ask";
-      row.style.setProperty("--depth", `${(o.amount / maxAskAmount) * 100}%`);
+      row.className = "ob-row ask-row";
+      row.style.position = "relative";
+      row.style.overflow = "hidden";
+
+      const depth = document.createElement("div");
+      depth.style.position = "absolute";
+      depth.style.inset = "0";
+      depth.style.left = "auto";
+      depth.style.right = "0";
+      depth.style.width = `${(o.total / maxAskTotal) * 100}%`;
+      depth.style.background = "linear-gradient(90deg, transparent, rgba(246,70,93,.18))";
+      depth.style.pointerEvents = "none";
+      depth.style.borderRadius = "10px";
+
       row.innerHTML = `
-        <span>${fmtPrice(o.price)}</span>
-        <span>${fmtAmount(o.amount, 2)}</span>
+        <span style="position:relative;z-index:2">${fmtPrice(o.price)}</span>
+        <span style="position:relative;z-index:2">${fmtAmount(o.amount, 3)}</span>
       `;
+
+      row.appendChild(depth);
       asksEl.appendChild(row);
     });
 
-    updateSpread();
+  // ===== MID PRICE =====
+  if (priceLadderEl) {
+    const midRow = document.createElement("div");
+    midRow.className = "mid-price";
+    midRow.textContent = fmtPrice(marketPrice);
+    priceLadderEl.appendChild(midRow);
   }
 
-  function updateSpread() {
-    if (!asks.length || !bids.length || !spreadEl) return;
-    const spread = asks[0].price - bids[bids.length - 1].price;
-    spreadEl.textContent = fmtPrice(spread);
+  // fallback if no ladder element موجود
+  if (!priceLadderEl && asksEl.parentElement) {
+    let oldMid = asksEl.parentElement.querySelector(".mid-price-inline");
+    if (oldMid) oldMid.remove();
+
+    const midRow = document.createElement("div");
+    midRow.className = "mid-price mid-price-inline";
+    midRow.textContent = fmtPrice(marketPrice);
+
+    asksEl.insertAdjacentElement("afterend", midRow);
   }
+
+  // ===== BIDS =====
+  topBids.forEach((o) => {
+    const row = document.createElement("div");
+    row.className = "ob-row bid-row";
+    row.style.position = "relative";
+    row.style.overflow = "hidden";
+
+    const depth = document.createElement("div");
+    depth.style.position = "absolute";
+    depth.style.inset = "0";
+    depth.style.left = "0";
+    depth.style.width = `${(o.total / maxBidTotal) * 100}%`;
+    depth.style.background = "linear-gradient(90deg, rgba(14,203,129,.18), transparent)";
+    depth.style.pointerEvents = "none";
+    depth.style.borderRadius = "10px";
+
+    row.innerHTML = `
+      <span style="position:relative;z-index:2">${fmtPrice(o.price)}</span>
+      <span style="position:relative;z-index:2">${fmtAmount(o.amount, 3)}</span>
+    `;
+
+    row.appendChild(depth);
+    bidsEl.appendChild(row);
+  });
+
+  updateSpread();
+}
+
+function updateTradeInfo() {
+  const bestAsk = asks[0]?.price || marketPrice;
+  const bestBid = bids[0]?.price || marketPrice;
+
+  const price = tradeSide === "buy" ? bestAsk : bestBid;
+  const spread = Math.abs(bestAsk - bestBid);
+  const slippage = marketPrice ? (spread / marketPrice) * 100 : 0;
+
+  safeText(execPriceEl, fmtPrice(price));
+  safeText(spreadEl, fmtPrice(spread));
+  safeText(slippageEl, `${slippage.toFixed(3)}%`);
+}
 
   /* =========================================================
      TRADE
