@@ -36,7 +36,7 @@
   const ALLOWED_COINS = ['BX', 'BNB', 'SOL'];
 
   const ASSET_META = {
-    BX:  { decimals: 2,  usd: 1.00,  name: 'Bloxio' },
+    BX:  { decimals: 2,  usd: 45,  name: 'Bloxio' },
     BNB: { decimals: 6,  usd: 620,   name: 'BNB' },
     SOL: { decimals: 6,  usd: 180,   name: 'Solana' }
   };
@@ -127,7 +127,7 @@
       daily: 1.20,
       days: 10,
       boost: 1.00,
-      min: { BX: 100,  BNB: 0.05, SOL: 0.15 }
+      min: { BX: 75,  BNB: 0.08, SOL: 0.3 }
     },
     {
       id: 'basic',
@@ -136,7 +136,7 @@
       daily: 1.38,
       days: 14,
       boost: 1.05,
-      min: { BX: 250,  BNB: 0.12, SOL: 0.35 }
+      min: { BX: 200,  BNB: 0.3, SOL: 0.7 }
     },
     {
       id: 'pro',
@@ -145,7 +145,7 @@
       daily: 1.75,
       days: 20,
       boost: 1.12,
-      min: { BX: 500,  BNB: 0.25, SOL: 0.75 }
+      min: { BX: 500,  BNB: 0.6, SOL: 2 }
     },
     {
       id: 'elite',
@@ -154,7 +154,7 @@
       daily: 2.15,
       days: 30,
       boost: 1.28,
-      min: { BX: 1200, BNB: 0.75, SOL: 2.25 }
+      min: { BX: 1200, BNB: 2, SOL: 10 }
     },
     {
       id: 'ultra',
@@ -163,7 +163,7 @@
       daily: 2.80,
       days: 45,
       boost: 1.45,
-      min: { BX: 3000, BNB: 1.80, SOL: 5.40 }
+      min: { BX: 2500, BNB: 10, SOL: 20 }
     },
     {
       id: 'legend',
@@ -172,7 +172,7 @@
       daily: 3.45,
       days: 60,
       boost: 1.72,
-      min: { BX: 7500, BNB: 4.20, SOL: 12.00 }
+      min: { BX: 4500, BNB: 20, SOL: 40 }
     }
   ];
 
