@@ -484,9 +484,9 @@ function updateTradeInfo() {
 
   function updateTradeInfo() {
     const price = tradeSide === "buy"
-      ? (asks[0]?.price || marketPrice)
-      : (bids[bids.length - 1]?.price || marketPrice);
-
+  ? (asks[0]?.price || marketPrice)
+  : (bids[0]?.price || marketPrice);
+     
     const spread = asks.length && bids.length
       ? Math.abs(asks[0].price - bids[bids.length - 1].price)
       : 0;
