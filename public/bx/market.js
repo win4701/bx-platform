@@ -412,7 +412,7 @@
             <div style="position:absolute;inset:0 auto 0 0;width:${bidDepth}%;background:linear-gradient(90deg,rgba(14,203,129,.18),transparent);pointer-events:none;"></div>
             <div style="position:relative;z-index:2;display:flex;justify-content:space-between;gap:8px;">
               <span class="bid-row">${fmtPrice(bid.price)}</span>
-<span class="bid-amount">${fmtAmount(bid.amount)}</span>
+              <span class="bid-amount">${fmtAmount(bid.amount)}</span>
             </div>
           ` : `<span style="opacity:.2">—</span>`}
         </div>
@@ -420,11 +420,13 @@
         <div class="ob-cell mid-cell" style="text-align:center;font-weight:900;color:#d7dee8;">
           ${i === Math.floor(maxRows / 2) ? fmtPrice(marketPrice) : "•"}
         </div>
-
+        <span class="ask-row">${fmtPrice(ask.price)}</span>
+        <span class="ask-amount">${fmtAmount(ask.amount)}</span>
         <div class="ob-cell ask-cell" style="position:relative;padding:7px 10px;border-radius:10px;overflow:hidden;">
           ${ask ? `
             <div style="position:absolute;inset:0 0 0 auto;width:${askDepth}%;background:linear-gradient(90deg,transparent,rgba(246,70,93,.18));pointer-events:none;"></div>
             <div style="position:relative;z-index:2;display:flex;justify-content:space-between;gap:8px;">
+            
             </div>
           ` : `<span style="opacity:.2">—</span>`}
         </div>
