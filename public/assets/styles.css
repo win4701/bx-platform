@@ -2091,20 +2091,58 @@ h3{
 }
 
 /* =========================================================
-   ORDER BOOK — PRO CLEAN ONLY
+   ORDER BOOK — REAL EXCHANGE FULL SYSTEM
 ========================================================= */
 
 #market .orderbook-card{
-  border-radius:20px;
-  padding:12px;
+  position:relative;
+  overflow:hidden;
+  border-radius:24px;
+  padding:14px;
+  background:
+    radial-gradient(circle at top right, rgba(14,203,129,.06), transparent 22%),
+    radial-gradient(circle at top left, rgba(246,70,93,.05), transparent 20%),
+    linear-gradient(180deg, rgba(255,255,255,.025), rgba(255,255,255,.010)),
+    linear-gradient(180deg, #0d1622 0%, #0b121c 100%);
+  border:1px solid var(--obx-border);
+  box-shadow:
+    0 18px 40px rgba(0,0,0,.22),
+    inset 0 1px 0 rgba(255,255,255,.03);
 }
+
+#market .orderbook-card::before{
+  content:"";
+  position:absolute;
+  inset:-1px;
+  border-radius:inherit;
+  padding:1px;
+  background:linear-gradient(
+    135deg,
+    rgba(14,203,129,.12),
+    rgba(246,70,93,.10),
+    rgba(255,255,255,.02)
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;
+          mask-composite:exclude;
+  pointer-events:none;
+  opacity:.95;
+}
+
+/* =========================================================
+   HEADER
+========================================================= */
 
 #market .orderbook-head{
   display:flex;
   align-items:flex-end;
   justify-content:space-between;
-  gap:10px;
-  margin-bottom:10px;
+  gap:12px;
+  margin-bottom:12px;
+  padding-bottom:10px;
+  border-bottom:1px solid rgba(255,255,255,.04);
 }
 
 #market .orderbook-head h3{
@@ -2113,37 +2151,87 @@ h3{
   font-weight:1000;
   color:#fff;
   letter-spacing:-.03em;
+  line-height:1;
 }
 
 #market .orderbook-pair{
-  font-size:13px;
-  font-weight:900;
-  color:#a8b6c8;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:32px;
+  padding:0 12px;
+  border-radius:999px;
+  background:rgba(255,255,255,.03);
+  border:1px solid rgba(255,255,255,.05);
+  color:#d8e2ef;
+  font-size:11px;
+  font-weight:1000;
+  letter-spacing:.05em;
+  text-transform:uppercase;
+  backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
+  box-shadow:0 8px 18px rgba(0,0,0,.14);
 }
+
+/* =========================================================
+   TABLE WRAP
+========================================================= */
 
 #market .ob-table-wrap{
-  border-radius:16px;
+  position:relative;
   overflow:hidden;
-  background:rgba(255,255,255,.015);
-  border:1px solid rgba(255,255,255,.04);
+  border-radius:18px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.008)),
+    rgba(255,255,255,.012);
+  border:1px solid var(--obx-border-soft);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.02),
+    0 10px 24px rgba(0,0,0,.12);
 }
 
+/* subtle ambient glow */
+#market .ob-table-wrap::after{
+  content:"";
+  position:absolute;
+  inset:auto -40px -60px auto;
+  width:180px;
+  height:160px;
+  border-radius:50%;
+  background:radial-gradient(circle, rgba(14,203,129,.05), transparent 68%);
+  filter:blur(18px);
+  pointer-events:none;
+}
+
+/* =========================================================
+   HEADER ROW
+========================================================= */
+
 #market .ob-head{
+  position:sticky;
+  top:0;
+  z-index:6;
   display:grid;
-  grid-template-columns:1fr .7fr 1fr;
+  grid-template-columns:1fr .58fr 1fr;
   align-items:center;
   gap:8px;
+  min-height:42px;
   padding:10px 12px;
-  background:rgba(255,255,255,.02);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.015)),
+    rgba(10,14,20,.96);
   border-bottom:1px solid rgba(255,255,255,.04);
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
 }
 
 #market .ob-col{
-  font-size:11px;
+  font-size:10px;
   font-weight:1000;
   text-transform:uppercase;
   letter-spacing:.08em;
-  color:#7f91a8;
+  color:rgba(220,231,247,.56);
+  user-select:none;
 }
 
 #market .ob-col.bid{
@@ -2158,6 +2246,10 @@ h3{
   text-align:right;
 }
 
+/* =========================================================
+   BODY
+========================================================= */
+
 #market .ob-body{
   display:flex;
   flex-direction:column;
@@ -2165,108 +2257,379 @@ h3{
   padding:8px;
 }
 
-#market .ob-row{
+/* =========================================================
+   NEW ENGINE ROWS (latest JS)
+========================================================= */
+
+#market .obx-row{
+  position:relative;
   display:grid;
-  grid-template-columns:1fr .7fr 1fr;
+  grid-template-columns:1fr .58fr 1fr;
   align-items:center;
   gap:8px;
-  min-height:42px;
-  border-radius:12px;
+  min-height:var(--obx-row-h);
+  border-radius:14px;
   overflow:hidden;
-  transition:transform .14s ease, background .14s ease;
+  transition:
+    transform .14s ease,
+    background .14s ease,
+    box-shadow .16s ease;
+  will-change:transform;
 }
 
-#market .ob-row:hover{
-  background:rgba(255,255,255,.018);
+#market .obx-row:hover{
+  background:var(--obx-bg-hover);
   transform:translateY(-1px);
+  box-shadow:0 10px 18px rgba(0,0,0,.12);
 }
 
-#market .ob-cell{
+/* =========================================================
+   CELLS
+========================================================= */
+
+#market .obx-cell{
   position:relative;
-  min-height:42px;
+  min-height:var(--obx-row-h);
   display:flex;
   align-items:center;
   overflow:hidden;
+  border-radius:14px;
+  background:rgba(255,255,255,.012);
+  border:1px solid rgba(255,255,255,.02);
 }
 
-#market .ob-inner{
+#market .obx-bid{
+  justify-content:flex-start;
+}
+
+#market .obx-mid{
+  justify-content:center;
+  background:transparent;
+  border:none;
+}
+
+#market .obx-ask{
+  justify-content:flex-end;
+}
+
+/* =========================================================
+   INNER CONTENT
+========================================================= */
+
+#market .obx-inner{
   position:relative;
   z-index:2;
   width:100%;
+  display:grid;
+  grid-template-columns:1.15fr .82fr .86fr;
+  align-items:center;
+  gap:8px;
+  padding:0 12px;
+  font-variant-numeric:tabular-nums;
+}
+
+#market .obx-price{
+  font-size:13px;
+  font-weight:1000;
+  letter-spacing:-.02em;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+#market .obx-amt,
+#market .obx-tot{
+  font-size:11px;
+  font-weight:900;
+  color:#dce5f1;
+  opacity:.86;
+  text-align:right;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+#market .obx-empty{
+  margin:auto;
+  font-size:12px;
+  font-weight:1000;
+  color:rgba(255,255,255,.24);
+}
+
+/* =========================================================
+   MID MARK
+========================================================= */
+
+#market .obx-mid-mark{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:100%;
+  font-size:11px;
+  font-weight:1000;
+  color:var(--obx-mid);
+  opacity:.92;
+  text-align:center;
+  font-variant-numeric:tabular-nums;
+  letter-spacing:-.01em;
+  text-shadow:0 6px 14px rgba(0,0,0,.18);
+}
+
+/* =========================================================
+   DEPTH BACKGROUNDS
+========================================================= */
+
+#market .obx-depth{
+  position:absolute;
+  top:0;
+  bottom:0;
+  z-index:1;
+  pointer-events:none;
+  border-radius:14px;
+  transition:width .18s ease;
+}
+
+#market .obx-depth-bid{
+  left:0;
+  background:linear-gradient(
+    90deg,
+    rgba(14,203,129,.22),
+    rgba(14,203,129,.06)
+  );
+  box-shadow:inset 0 0 20px rgba(14,203,129,.04);
+}
+
+#market .obx-depth-ask{
+  right:0;
+  background:linear-gradient(
+    90deg,
+    rgba(246,70,93,.04),
+    rgba(246,70,93,.22)
+  );
+  box-shadow:inset 0 0 20px rgba(246,70,93,.04);
+}
+
+/* =========================================================
+   PRICE COLORS
+========================================================= */
+
+#market .obx-bid .obx-price,
+#market .bid-row{
+  color:var(--obx-bid);
+  text-shadow:0 0 10px rgba(14,203,129,.06);
+}
+
+#market .obx-ask .obx-price,
+#market .ask-row{
+  color:var(--obx-ask);
+  text-shadow:0 0 10px rgba(246,70,93,.06);
+}
+
+/* =========================================================
+   BEST LEVEL EMPHASIS
+========================================================= */
+
+#market .obx-row:first-child .obx-bid,
+#market .obx-row:first-child .obx-ask{
+  border-color:rgba(255,255,255,.04);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.02),
+    0 10px 18px rgba(0,0,0,.10);
+}
+
+#market .obx-row:first-child .obx-bid .obx-price,
+#market .obx-row:first-child .obx-ask .obx-price{
+  font-size:13.5px;
+  filter:brightness(1.05);
+}
+
+/* =========================================================
+   FLASH ANIMATION
+========================================================= */
+
+#market .obx-inner.flash{
+  animation:obxFlashPulse .55s ease;
+}
+
+@keyframes obxFlashPulse{
+  0%{
+    filter:brightness(1.45);
+    transform:scale(1.01);
+  }
+  100%{
+    filter:brightness(1);
+    transform:scale(1);
+  }
+}
+
+/* =========================================================
+   LIQUIDITY WALL
+========================================================= */
+
+#market .obx-inner.wall .obx-price{
+  position:relative;
+}
+
+#market .obx-inner.wall .obx-price::after{
+  content:"";
+  display:inline-block;
+  width:6px;
+  height:6px;
+  margin-left:6px;
+  border-radius:999px;
+  background:currentColor;
+  opacity:.92;
+  box-shadow:0 0 10px currentColor;
+  vertical-align:middle;
+}
+
+/* =========================================================
+   SEPARATOR LINES / MICRO VISUALS
+========================================================= */
+
+#market .obx-row::after{
+  content:"";
+  position:absolute;
+  left:12px;
+  right:12px;
+  bottom:0;
+  height:1px;
+  background:linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255,255,255,.025) 18%,
+    rgba(255,255,255,.025) 82%,
+    transparent 100%
+  );
+  pointer-events:none;
+  opacity:.6;
+}
+
+/* =========================================================
+   SPREAD STRIP (if present in HTML)
+========================================================= */
+
+#market .spread-box,
+#market .orderbook-spread,
+#market .ob-spread{
+  margin-top:10px;
   display:flex;
   align-items:center;
   justify-content:space-between;
   gap:10px;
+  min-height:42px;
   padding:0 12px;
+  border-radius:14px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01)),
+    rgba(255,255,255,.012);
+  border:1px solid rgba(255,255,255,.04);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.02),
+    0 8px 18px rgba(0,0,0,.12);
 }
 
-#market .ob-depth{
-  position:absolute;
-  top:0;
-  bottom:0;
-  border-radius:12px;
-  z-index:1;
-  pointer-events:none;
-}
-
-#market .bid-depth{
-  left:0;
-  background:linear-gradient(90deg, rgba(14,203,129,.18), rgba(14,203,129,.04));
-}
-
-#market .ask-depth{
-  right:0;
-  background:linear-gradient(90deg, rgba(246,70,93,.04), rgba(246,70,93,.18));
-}
-
-#market .ob-price{
-  font-size:14px;
+#market .spread-box span,
+#market .orderbook-spread span,
+#market .ob-spread span{
+  font-size:11px;
   font-weight:1000;
+  color:rgba(220,231,247,.62);
+  text-transform:uppercase;
+  letter-spacing:.06em;
+}
+
+#market .spread-box strong,
+#market .orderbook-spread strong,
+#market .ob-spread strong{
+  font-size:13px;
+  font-weight:1000;
+  color:#fff;
+  font-variant-numeric:tabular-nums;
   letter-spacing:-.02em;
-  font-variant-numeric:tabular-nums;
 }
 
-#market .bid-row{
-  color:#0ecb81;
+/* =========================================================
+   SCROLL AREA (safe if you later add fixed height)
+========================================================= */
+
+#market .ob-scroll{
+  max-height:unset;
+  overflow:auto;
+  -webkit-overflow-scrolling:touch;
 }
 
-#market .ask-row{
-  color:#f6465d;
+#market .ob-scroll::-webkit-scrollbar{
+  width:6px;
+  height:6px;
 }
 
-#market .ob-amount{
-  font-size:12px;
-  font-weight:900;
-  color:#d7e1ee;
-  opacity:.78;
-  font-variant-numeric:tabular-nums;
+#market .ob-scroll::-webkit-scrollbar-thumb{
+  background:rgba(255,255,255,.08);
+  border-radius:999px;
 }
 
-#market .mid-cell{
-  justify-content:center;
+#market .ob-scroll::-webkit-scrollbar-track{
+  background:transparent;
 }
 
-#market .ob-mid-dot{
-  font-size:12px;
-  font-weight:1000;
-  color:#d7e1ee;
-  letter-spacing:-.01em;
-  text-align:center;
-  font-variant-numeric:tabular-nums;
-}
+/* =========================================================
+   TABLET
+========================================================= */
 
-#market .ob-empty{
-  font-size:12px;
-  font-weight:900;
-  color:rgba(255,255,255,.22);
-  margin:auto;
-}
+@media (max-width:768px){
+  #market .orderbook-card{
+    padding:12px;
+    border-radius:22px;
+  }
 
-/* Mobile polish */
-@media (max-width:420px){
   #market .ob-head{
+    grid-template-columns:1fr .56fr 1fr;
+  }
+
+  #market .obx-row{
+    grid-template-columns:1fr .56fr 1fr;
+  }
+}
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width:520px){
+  #market .orderbook-card{
+    padding:10px;
+    border-radius:20px;
+  }
+
+  #market .orderbook-head{
+    margin-bottom:10px;
+    padding-bottom:9px;
+  }
+
+  #market .orderbook-head h3{
+    font-size:16px;
+  }
+
+  #market .orderbook-pair{
+    min-height:30px;
+    padding:0 10px;
+    font-size:10px;
+  }
+
+  #market .ob-table-wrap{
+    border-radius:16px;
+  }
+
+  #market .ob-head{
+    grid-template-columns:1fr .54fr 1fr;
+    min-height:38px;
     padding:9px 10px;
     gap:6px;
+  }
+
+  #market .ob-col{
+    font-size:9.5px;
   }
 
   #market .ob-body{
@@ -2274,130 +2637,105 @@ h3{
     gap:5px;
   }
 
-  #market .ob-row{
-    min-height:38px;
+  #market .obx-row{
+    grid-template-columns:1fr .54fr 1fr;
+    min-height:40px;
     gap:6px;
   }
 
-  #market .ob-cell{
-    min-height:38px;
+  #market .obx-cell{
+    min-height:40px;
+    border-radius:12px;
   }
 
-  #market .ob-inner{
+  #market .obx-inner{
+    grid-template-columns:1.1fr .76fr .78fr;
+    gap:6px;
     padding:0 10px;
-    gap:8px;
   }
 
-  #market .ob-price{
-    font-size:13px;
+  #market .obx-price{
+    font-size:12px;
   }
 
-  #market .ob-amount{
-    font-size:11px;
+  #market .obx-amt,
+  #market .obx-tot,
+  #market .obx-mid-mark{
+    font-size:10px;
   }
 
-  #market .ob-mid-dot{
-    font-size:11px;
+  #market .obx-inner.wall .obx-price::after{
+    width:5px;
+    height:5px;
+    margin-left:5px;
+  }
+
+  #market .spread-box,
+  #market .orderbook-spread,
+  #market .ob-spread{
+    min-height:40px;
+    padding:0 10px;
+    border-radius:12px;
+  }
+
+  #market .spread-box span,
+  #market .orderbook-spread span,
+  #market .ob-spread span{
+    font-size:10px;
+  }
+
+  #market .spread-box strong,
+  #market .orderbook-spread strong,
+  #market .ob-spread strong{
+    font-size:12px;
   }
 }
 
-/* ===============================
-   ORDER BOOK PRO UI
-=============================== */
+/* =========================================================
+   SMALL MOBILE
+========================================================= */
 
-#market .orderbook-card{
-  border-radius:20px;
-  padding:12px;
+@media (max-width:390px){
+  #market .ob-head{
+    grid-template-columns:1fr .50fr 1fr;
+  }
+
+  #market .obx-row{
+    grid-template-columns:1fr .50fr 1fr;
+  }
+
+  #market .obx-inner{
+    grid-template-columns:1.06fr .72fr .76fr;
+    gap:5px;
+    padding:0 8px;
+  }
+
+  #market .obx-price{
+    font-size:11.5px;
+  }
+
+  #market .obx-amt,
+  #market .obx-tot{
+    font-size:9.6px;
+  }
+
+  #market .obx-mid-mark{
+    font-size:9.8px;
+  }
 }
 
-/* Header */
-#market .ob-head{
-  display:grid;
-  grid-template-columns:1fr .8fr 1fr;
-  padding:6px 10px;
-  font-size:11px;
-  color:#8fa2b6;
-  text-transform:uppercase;
-  letter-spacing:.06em;
-}
+/* =========================================================
+   REDUCED MOTION
+========================================================= */
 
-/* Rows container */
-#market .ob-body{
-  display:flex;
-  flex-direction:column;
-  gap:6px;
-  margin-top:6px;
-}
-
-/* Row */
-#market .ob-row{
-  display:grid;
-  grid-template-columns:1fr .8fr 1fr;
-  align-items:center;
-  border-radius:10px;
-  font-size:12px;
-  font-weight:900;
-  overflow:hidden;
-}
-
-/* Cells */
-#market .ob-cell{
-  position:relative;
-  padding:8px 10px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  z-index:2;
-}
-
-/* BID */
-#market .bid-cell{
-  color:#0ecb81;
-}
-
-/* ASK */
-#market .ask-cell{
-  color:#f6465d;
-}
-
-/* MID */
-#market .mid-cell{
-  text-align:center;
-  font-size:11px;
-  color:#cbd5e1;
-  font-weight:800;
-}
-
-/* Depth background */
-#market .bid-cell::before{
-  content:"";
-  position:absolute;
-  inset:0;
-  background:linear-gradient(90deg, rgba(14,203,129,.15), transparent);
-  opacity:.6;
-}
-
-#market .ask-cell::before{
-  content:"";
-  position:absolute;
-  inset:0;
-  background:linear-gradient(90deg, transparent, rgba(246,70,93,.15));
-  opacity:.6;
-}
-
-/* Hover effect */
-#market .ob-row:hover{
-  background:rgba(255,255,255,.03);
-  transform:scale(1.01);
-}
-
-/* Price highlight */
-#market .bid-row{
-  font-weight:1000;
-}
-
-#market .ask-row{
-  font-weight:1000;
+@media (prefers-reduced-motion:reduce){
+  #market .obx-row,
+  #market .obx-cell,
+  #market .obx-inner,
+  #market .obx-depth{
+    transition:none !important;
+    animation:none !important;
+  }
 }
 
 /* =========================================================
