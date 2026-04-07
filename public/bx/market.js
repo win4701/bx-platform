@@ -1,7 +1,6 @@
 /* =========================================================
-   BLOXIO MARKET — FINAL PRO ENGINE
-   HTML-safe • CSS-safe • Mobile-safe
-   Works with current index.html + styles.css
+   BLOXIO MARKET — MASTER FINAL
+   HTML-safe • CSS-safe • Mobile-safe • OrderBook FIXED
 ========================================================= */
 
 (() => {
@@ -107,17 +106,32 @@
   const slippageEl = $("#slippage");
   const spreadEl = $("#spread");
 
-  const bidsEl = $("#bids");
-  const asksEl = $("#asks");
-  const priceLadderEl = $("#priceLadder");
+  const orderBookRowsEl = $("#orderBookRows");
+  const orderbookQuoteEl = $("#orderbookQuote");
+
+  const metricOpen = $("#metricOpen");
+  const metricHigh = $("#metricHigh");
+  const metricLow = $("#metricLow");
+  const metricClose = $("#metricClose");
+
+  const metricOpenPanel = $("#metricOpenPanel");
+  const metricHighPanel = $("#metricHighPanel");
+  const metricLowPanel = $("#metricLowPanel");
+  const metricClosePanel = $("#metricClosePanel");
+  const metricVol = $("#metricVol");
+
+  const statHigh = $("#statHigh");
+  const statLow = $("#statLow");
+  const statVolume = $("#statVolume");
+  const statMarketCap = $("#statMarketCap");
 
   const pairButtons = $$("#market .pair-btn");
   const timeframeButtons = $$("#market .market-timeframes button");
   const chartModeButtons = $$("#market .market-chart-modes button");
   const percentButtons = $$("#market .percent-row button");
 
-  const chartCanvas = $("#marketChart") || $("#bxChart");
-  const tooltipEl = $("#marketTooltip") || $("#chartTooltip");
+  const chartCanvas = $("#marketChart");
+  const tooltipEl = $("#marketTooltip");
 
   /* =========================================================
      HELPERS
@@ -130,6 +144,13 @@
     return Number(v || 0).toFixed(d);
   }
 
+  function fmtUsd(v) {
+    return `$${Number(v || 0).toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    })}`;
+  }
+
   function clamp(n, min, max) {
     return Math.max(min, Math.min(max, n));
   }
@@ -140,10 +161,6 @@
 
   function safeText(el, value) {
     if (el) el.textContent = value;
-  }
-
-  function safeHtml(el, value) {
-    if (el) el.innerHTML = value;
   }
 
   async function safeFetch(url, options = {}) {
@@ -177,7 +194,7 @@
     pulseTimeout = setTimeout(() => {
       marketPriceEl.classList.remove("up", "down");
       assetPriceEl?.classList.remove("up", "down");
-    }, 700);
+    }, 650);
   }
 
   /* =========================================================
@@ -207,7 +224,7 @@
 
       updateWalletUI();
     } catch (e) {
-      console.warn("Wallet fetch failed, using fallback balances.", e);
+      console.warn("Wallet fetch failed, fallback wallet used.", e);
       updateWalletUI();
     }
   }
@@ -222,12 +239,17 @@
      PRICE ENGINE
   ========================================================= */
   function computeBXPrice() {
-    if (!quotePriceUSDT || quotePriceUSDT <= 0) return;
-
     previousPrice = marketPrice;
 
-    // BX reference in USDT, convert to selected quote
+    if (!quotePriceUSDT || quotePriceUSDT <= 0) {
+      quotePriceUSDT = quoteUsdFallback[currentQuote] || 1;
+    }
+
     marketPrice = BX_USDT_REFERENCE / quotePriceUSDT;
+
+    if (currentQuote === "USDT" || currentQuote === "USDC") {
+      marketPrice = BX_USDT_REFERENCE;
+    }
 
     if (!isFinite(marketPrice) || marketPrice <= 0) {
       marketPrice = BX_USDT_REFERENCE;
@@ -238,6 +260,7 @@
     renderOrderBook();
     updateTradeInfo();
     PRO_CHART.update(marketPrice);
+    updateMetrics();
   }
 
   function updatePriceUI() {
@@ -255,8 +278,8 @@
 
     safeText(chartQuoteLabelEl, currentQuote);
     safeText(chartLivePriceEl, `$${fmtPrice(marketPrice, 5)}`);
-
     safeText(quoteAssetEl, currentQuote);
+    safeText(orderbookQuoteEl, currentQuote);
 
     if (assetChangeBadgeEl) {
       assetChangeBadgeEl.classList.remove("is-up", "is-down");
@@ -274,7 +297,7 @@
   }
 
   /* =========================================================
-     BINANCE WS
+     BINANCE STREAM
   ========================================================= */
   function connectBinance(symbol = quoteMap[currentQuote]) {
     if (!symbol) {
@@ -305,7 +328,7 @@
       };
 
       ws.onerror = () => {
-        console.warn("Binance WS error. Falling back to static quote.");
+        console.warn("Binance WS error. Fallback active.");
         quotePriceUSDT = quoteUsdFallback[currentQuote] || 1;
         computeBXPrice();
       };
@@ -320,147 +343,112 @@
     }
   }
 
+  /* =========================================================
+     ORDER BOOK ENGINE — HTML CURRENT SAFE
+  ========================================================= */
+  function generateOrderBook() {
+    bids = [];
+    asks = [];
+
+    const mid = Number(marketPrice || BX_USDT_REFERENCE);
+    const step = Math.max(mid * 0.00045, 0.000001);
+    const baseSpread = Math.max(mid * 0.0009, 0.000002);
+
+    for (let i = 0; i < ROWS; i++) {
+      const price = mid - baseSpread / 2 - i * step;
+      const amount = rand(0.35, 8.5);
+      const total = amount * price;
+      bids.push({ price, amount, total });
+    }
+
+    for (let i = 0; i < ROWS; i++) {
+      const price = mid + baseSpread / 2 + i * step;
+      const amount = rand(0.35, 8.5);
+      const total = amount * price;
+      asks.push({ price, amount, total });
+    }
+
+    bids.sort((a, b) => b.price - a.price); // best bid first
+    asks.sort((a, b) => a.price - b.price); // best ask first
+  }
+
+  function renderOrderBook() {
+    if (!orderBookRowsEl) return;
+
+    orderBookRowsEl.innerHTML = "";
+
+    const topBids = bids.slice(0, ROWS);
+    const topAsks = asks.slice(0, ROWS);
+
+    const maxBidTotal = Math.max(...topBids.map(x => x.total), 1);
+    const maxAskTotal = Math.max(...topAsks.map(x => x.total), 1);
+
+    // asks shown from far -> near
+    const asksForRender = topAsks.slice().reverse();
+
+    const maxRows = Math.max(asksForRender.length, topBids.length);
+
+    for (let i = 0; i < maxRows; i++) {
+      const ask = asksForRender[i];
+      const bid = topBids[i];
+
+      const row = document.createElement("div");
+      row.className = "ob-row";
+      row.style.display = "grid";
+      row.style.gridTemplateColumns = "1fr .85fr 1fr";
+      row.style.alignItems = "center";
+      row.style.gap = "8px";
+      row.style.position = "relative";
+      row.style.minHeight = "34px";
+      row.style.borderRadius = "10px";
+      row.style.overflow = "hidden";
+
+      const askDepth = ask ? (ask.total / maxAskTotal) * 100 : 0;
+      const bidDepth = bid ? (bid.total / maxBidTotal) * 100 : 0;
+
+      row.innerHTML = `
+        <div class="ob-cell bid-cell" style="position:relative;padding:7px 10px;border-radius:10px;overflow:hidden;">
+          ${bid ? `
+            <div style="position:absolute;inset:0 auto 0 0;width:${bidDepth}%;background:linear-gradient(90deg,rgba(14,203,129,.18),transparent);pointer-events:none;"></div>
+            <div style="position:relative;z-index:2;display:flex;justify-content:space-between;gap:8px;">
+              <span class="bid-row">${fmtPrice(bid.price)}</span>
+              <span>${fmtAmount(bid.amount, 3)}</span>
+            </div>
+          ` : `<span style="opacity:.2">—</span>`}
+        </div>
+
+        <div class="ob-cell mid-cell" style="text-align:center;font-weight:900;color:#d7dee8;">
+          ${i === Math.floor(maxRows / 2) ? fmtPrice(marketPrice) : "•"}
+        </div>
+
+        <div class="ob-cell ask-cell" style="position:relative;padding:7px 10px;border-radius:10px;overflow:hidden;">
+          ${ask ? `
+            <div style="position:absolute;inset:0 0 0 auto;width:${askDepth}%;background:linear-gradient(90deg,transparent,rgba(246,70,93,.18));pointer-events:none;"></div>
+            <div style="position:relative;z-index:2;display:flex;justify-content:space-between;gap:8px;">
+              <span class="ask-row">${fmtPrice(ask.price)}</span>
+              <span>${fmtAmount(ask.amount, 3)}</span>
+            </div>
+          ` : `<span style="opacity:.2">—</span>`}
+        </div>
+      `;
+
+      orderBookRowsEl.appendChild(row);
+    }
+
+    updateSpread();
+  }
+
+  function updateSpread() {
+    if (!asks.length || !bids.length) return;
+
+    const bestAsk = asks[0].price;
+    const bestBid = bids[0].price;
+    const spread = Math.abs(bestAsk - bestBid);
+
+    safeText(spreadEl, fmtPrice(spread));
+  }
 
   /* =========================================================
-   ORDER BOOK ENGINE — FIXED FINAL
-========================================================= */
-function generateOrderBook() {
-  bids = [];
-  asks = [];
-
-  const mid = Number(marketPrice || BX_USDT_REFERENCE);
-  const step = Math.max(mid * 0.00045, 0.000001);
-  const baseSpread = Math.max(mid * 0.0009, 0.000002);
-
-  for (let i = 0; i < ROWS; i++) {
-    const price = mid - baseSpread / 2 - i * step;
-    const amount = rand(0.35, 8.5);
-    const total = amount * price;
-
-    bids.push({ price, amount, total });
-  }
-
-  for (let i = 0; i < ROWS; i++) {
-    const price = mid + baseSpread / 2 + i * step;
-    const amount = rand(0.35, 8.5);
-    const total = amount * price;
-
-    asks.push({ price, amount, total });
-  }
-
-  bids.sort((a, b) => b.price - a.price); // best bid first
-  asks.sort((a, b) => a.price - b.price); // best ask first
-}
-
-function renderOrderBook() {
-  if (!bidsEl || !asksEl) return;
-
-  bidsEl.innerHTML = "";
-  asksEl.innerHTML = "";
-  if (priceLadderEl) priceLadderEl.innerHTML = "";
-
-  const topBids = bids.slice(0, ROWS);
-  const topAsks = asks.slice(0, ROWS);
-
-  const maxBidTotal = Math.max(...topBids.map(x => x.total), 1);
-  const maxAskTotal = Math.max(...topAsks.map(x => x.total), 1);
-
-  // ASKS
-  topAsks.slice().reverse().forEach((o) => {
-    const row = document.createElement("div");
-    row.className = "ob-row ask-row";
-    row.style.position = "relative";
-    row.style.overflow = "hidden";
-
-    const depth = document.createElement("div");
-    depth.style.position = "absolute";
-    depth.style.inset = "0";
-    depth.style.left = "auto";
-    depth.style.right = "0";
-    depth.style.width = `${(o.total / maxAskTotal) * 100}%`;
-    depth.style.background = "linear-gradient(90deg, transparent, rgba(246,70,93,.18))";
-    depth.style.pointerEvents = "none";
-    depth.style.borderRadius = "10px";
-
-    row.innerHTML = `
-      <span style="position:relative;z-index:2">${fmtPrice(o.price)}</span>
-      <span style="position:relative;z-index:2">${fmtAmount(o.amount, 3)}</span>
-    `;
-
-    row.appendChild(depth);
-    asksEl.appendChild(row);
-  });
-
-  // MID
-  if (priceLadderEl) {
-    const midRow = document.createElement("div");
-    midRow.className = "mid-price";
-    midRow.textContent = fmtPrice(marketPrice);
-    priceLadderEl.appendChild(midRow);
-  } else if (asksEl.parentElement) {
-    let oldMid = asksEl.parentElement.querySelector(".mid-price-inline");
-    if (oldMid) oldMid.remove();
-
-    const midRow = document.createElement("div");
-    midRow.className = "mid-price mid-price-inline";
-    midRow.textContent = fmtPrice(marketPrice);
-    asksEl.insertAdjacentElement("afterend", midRow);
-  }
-
-  // BIDS
-  topBids.forEach((o) => {
-    const row = document.createElement("div");
-    row.className = "ob-row bid-row";
-    row.style.position = "relative";
-    row.style.overflow = "hidden";
-
-    const depth = document.createElement("div");
-    depth.style.position = "absolute";
-    depth.style.inset = "0";
-    depth.style.left = "0";
-    depth.style.width = `${(o.total / maxBidTotal) * 100}%`;
-    depth.style.background = "linear-gradient(90deg, rgba(14,203,129,.18), transparent)";
-    depth.style.pointerEvents = "none";
-    depth.style.borderRadius = "10px";
-
-    row.innerHTML = `
-      <span style="position:relative;z-index:2">${fmtPrice(o.price)}</span>
-      <span style="position:relative;z-index:2">${fmtAmount(o.amount, 3)}</span>
-    `;
-
-    row.appendChild(depth);
-    bidsEl.appendChild(row);
-  });
-
-  updateSpread();
-}
-
-function updateSpread() {
-  if (!asks.length || !bids.length) return;
-
-  const bestAsk = asks[0].price;
-  const bestBid = bids[0].price;
-  const spread = Math.abs(bestAsk - bestBid);
-
-  if (spreadEl) {
-    spreadEl.textContent = fmtPrice(spread);
-  }
-}
-
-function updateTradeInfo() {
-  const bestAsk = asks[0]?.price || marketPrice;
-  const bestBid = bids[0]?.price || marketPrice;
-
-  const price = tradeSide === "buy" ? bestAsk : bestBid;
-  const spread = Math.abs(bestAsk - bestBid);
-  const slippage = marketPrice ? (spread / marketPrice) * 100 : 0;
-
-  safeText(execPriceEl, fmtPrice(price));
-  safeText(spreadEl, fmtPrice(spread));
-  safeText(slippageEl, `${slippage.toFixed(3)}%`);
-}
-
-/* =========================================================
      TRADE
   ========================================================= */
   function setTradeSide(side) {
@@ -483,14 +471,11 @@ function updateTradeInfo() {
   }
 
   function updateTradeInfo() {
-    const price = tradeSide === "buy"
-  ? (asks[0]?.price || marketPrice)
-  : (bids[0]?.price || marketPrice);
-     
-    const spread = asks.length && bids.length
-      ? Math.abs(asks[0].price - bids[bids.length - 1].price)
-      : 0;
+    const bestAsk = asks[0]?.price || marketPrice;
+    const bestBid = bids[0]?.price || marketPrice;
 
+    const price = tradeSide === "buy" ? bestAsk : bestBid;
+    const spread = Math.abs(bestAsk - bestBid);
     const slippage = marketPrice ? (spread / marketPrice) * 100 : 0;
 
     safeText(execPriceEl, fmtPrice(price));
@@ -506,7 +491,7 @@ function updateTradeInfo() {
       const pair = `BX/${currentQuote}`;
       const price = tradeSide === "buy"
         ? (asks[0]?.price || marketPrice)
-        : (bids[bids.length - 1]?.price || marketPrice);
+        : (bids[0]?.price || marketPrice);
 
       const payload = {
         uid: window.USER_ID,
@@ -524,7 +509,7 @@ function updateTradeInfo() {
         body: JSON.stringify(payload)
       });
 
-      // optimistic fallback
+      // optimistic local wallet update
       if (tradeSide === "buy") {
         const cost = amount * price;
         if ((wallet[currentQuote] || 0) >= cost) {
@@ -591,6 +576,38 @@ function updateTradeInfo() {
         }
       });
     });
+  }
+
+  /* =========================================================
+     METRICS
+  ========================================================= */
+  function updateMetrics() {
+    const candles = PRO_CHART.candles || [];
+    const visible = candles.slice(-24);
+
+    if (!visible.length) return;
+
+    const open = visible[0]?.open || marketPrice;
+    const high = Math.max(...visible.map(c => c.high || 0), marketPrice);
+    const low = Math.min(...visible.map(c => c.low || marketPrice), marketPrice);
+    const close = visible[visible.length - 1]?.close || marketPrice;
+    const vol = visible.reduce((a, c) => a + (c.volume || 0), 0);
+
+    safeText(metricOpen, fmtPrice(open));
+    safeText(metricHigh, fmtPrice(high));
+    safeText(metricLow, fmtPrice(low));
+    safeText(metricClose, fmtPrice(close));
+
+    safeText(metricOpenPanel, fmtPrice(open));
+    safeText(metricHighPanel, fmtPrice(high));
+    safeText(metricLowPanel, fmtPrice(low));
+    safeText(metricClosePanel, fmtPrice(close));
+    safeText(metricVol, fmtAmount(vol, 2));
+
+    safeText(statHigh, fmtUsd(high));
+    safeText(statLow, fmtUsd(low));
+    safeText(statVolume, `${fmtAmount(vol, 2)} BX`);
+    safeText(statMarketCap, fmtUsd((marketPrice || 0) * 1000000));
   }
 
   /* =========================================================
@@ -663,6 +680,7 @@ function updateTradeInfo() {
       this.current = null;
       this.bootstrap(price);
       this.seedHistory(price);
+      updateMetrics();
     },
 
     bootstrap(price) {
@@ -735,6 +753,7 @@ function updateTradeInfo() {
 
       this.calcEMA(14);
       this.calcVWAP();
+      updateMetrics();
     },
 
     calcEMA(period) {
@@ -1151,11 +1170,9 @@ function updateTradeInfo() {
     PRO_CHART.init();
   }
 
-  /* expose if needed */
   window.initMarket = initMarket;
   window.PRO_CHART = PRO_CHART;
 
-  /* auto-init */
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", initMarket);
   } else {
