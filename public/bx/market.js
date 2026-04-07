@@ -343,46 +343,120 @@
     }
   }
 
-  /* =========================================================
-   ORDER BOOK ENGINE — CLEAN PRO ONLY
+/* =========================================================
+   ORDER BOOK — REAL EXCHANGE ENGINE
+   Clean • Cumulative Depth • Walls • Flash • Mobile Safe
 ========================================================= */
+
+const ORDERBOOK_ENGINE = {
+  rows: ROWS || 15,
+  flashRows: new Set(),
+  lastBestBid: null,
+  lastBestAsk: null,
+  seq: 0
+};
+
+function getOrderBookTick(mid) {
+  if (mid >= 1000) return 0.1;
+  if (mid >= 100) return 0.05;
+  if (mid >= 10) return 0.01;
+  if (mid >= 1) return 0.001;
+  if (mid >= 0.1) return 0.0001;
+  if (mid >= 0.01) return 0.00001;
+  return 0.000001;
+}
+
+function formatOBPrice(v) {
+  return Number(v || 0).toFixed(6);
+}
+
+function formatOBAmount(v) {
+  return Number(v || 0).toFixed(3);
+}
+
+function formatOBTotal(v) {
+  return Number(v || 0).toFixed(3);
+}
+
+function markFlash(type, price) {
+  ORDERBOOK_ENGINE.flashRows.add(`${type}:${price}`);
+  setTimeout(() => {
+    ORDERBOOK_ENGINE.flashRows.delete(`${type}:${price}`);
+  }, 550);
+}
 
 function generateOrderBook() {
   bids = [];
   asks = [];
 
   const mid = Number(marketPrice || BX_USDT_REFERENCE);
+  const tick = getOrderBookTick(mid);
 
-  // dynamic tick حسب السعر
-  let tick;
-  if (mid >= 100) tick = 0.05;
-  else if (mid >= 10) tick = 0.01;
-  else if (mid >= 1) tick = 0.001;
-  else if (mid >= 0.1) tick = 0.0005;
-  else if (mid >= 0.01) tick = 0.00005;
-  else tick = 0.000001;
+  // spread طبيعي حول السعر
+  const spreadTicks = 2;
+  const bestBid = +(mid - tick * spreadTicks).toFixed(6);
+  const bestAsk = +(mid + tick * spreadTicks).toFixed(6);
 
-  const spreadBase = tick * 2;
+  let bidCum = 0;
+  let askCum = 0;
 
-  // توليد BIDS
-  for (let i = 0; i < ROWS; i++) {
-    const price = +(mid - spreadBase - i * tick).toFixed(6);
-    const amount = +(rand(1.25, 95).toFixed(3));
-    const total = +(price * amount).toFixed(6);
-    bids.push({ price, amount, total });
+  // سيولة عادية + walls أحيانًا
+  const wallBidIndex = Math.floor(Math.random() * Math.max(6, ORDERBOOK_ENGINE.rows - 3));
+  const wallAskIndex = Math.floor(Math.random() * Math.max(6, ORDERBOOK_ENGINE.rows - 3));
+
+  for (let i = 0; i < ORDERBOOK_ENGINE.rows; i++) {
+    const price = +(bestBid - i * tick).toFixed(6);
+
+    // حجم طبيعي + تذبذب
+    let amount = +(rand(0.8, 18).toFixed(3));
+
+    // wall سيولة
+    if (i === wallBidIndex) amount = +(rand(30, 90).toFixed(3));
+
+    bidCum += amount;
+
+    bids.push({
+      id: `b-${ORDERBOOK_ENGINE.seq++}`,
+      price,
+      amount,
+      total: +(price * amount).toFixed(6),
+      cum: +bidCum.toFixed(3),
+      isWall: amount >= 30
+    });
   }
 
-  // توليد ASKS
-  for (let i = 0; i < ROWS; i++) {
-    const price = +(mid + spreadBase + i * tick).toFixed(6);
-    const amount = +(rand(1.25, 95).toFixed(3));
-    const total = +(price * amount).toFixed(6);
-    asks.push({ price, amount, total });
+  for (let i = 0; i < ORDERBOOK_ENGINE.rows; i++) {
+    const price = +(bestAsk + i * tick).toFixed(6);
+
+    let amount = +(rand(0.8, 18).toFixed(3));
+    if (i === wallAskIndex) amount = +(rand(30, 90).toFixed(3));
+
+    askCum += amount;
+
+    asks.push({
+      id: `a-${ORDERBOOK_ENGINE.seq++}`,
+      price,
+      amount,
+      total: +(price * amount).toFixed(6),
+      cum: +askCum.toFixed(3),
+      isWall: amount >= 30
+    });
   }
 
-  // ترتيب صحيح
-  bids.sort((a, b) => b.price - a.price); // أعلى bid أولًا
-  asks.sort((a, b) => a.price - b.price); // أقل ask أولًا
+  // تأكيد الترتيب الصحيح
+  bids.sort((a, b) => b.price - a.price); // best bid first
+  asks.sort((a, b) => a.price - b.price); // best ask first
+
+  // flash عند تغير أفضل سعر
+  if (ORDERBOOK_ENGINE.lastBestBid !== null && bids[0] && bids[0].price !== ORDERBOOK_ENGINE.lastBestBid) {
+    markFlash("bid", bids[0].price);
+  }
+  if (ORDERBOOK_ENGINE.lastBestAsk !== null && asks[0] && asks[0].price !== ORDERBOOK_ENGINE.lastBestAsk) {
+    markFlash("ask", asks[0].price);
+  }
+
+  ORDERBOOK_ENGINE.lastBestBid = bids[0]?.price ?? null;
+  ORDERBOOK_ENGINE.lastBestAsk = asks[0]?.price ?? null;
 }
 
 function renderOrderBook() {
@@ -390,73 +464,76 @@ function renderOrderBook() {
 
   orderBookRowsEl.innerHTML = "";
 
-  const bestBids = bids.slice(0, ROWS);
-  const bestAsks = asks.slice(0, ROWS);
+  const bestBids = bids.slice(0, ORDERBOOK_ENGINE.rows);
+  const bestAsks = asks.slice(0, ORDERBOOK_ENGINE.rows);
 
-  const maxBidTotal = Math.max(...bestBids.map(x => x.total), 1);
-  const maxAskTotal = Math.max(...bestAsks.map(x => x.total), 1);
+  const maxBidCum = Math.max(...bestBids.map(x => x.cum || 0), 1);
+  const maxAskCum = Math.max(...bestAsks.map(x => x.cum || 0), 1);
 
-  const totalRows = Math.max(bestBids.length, bestAsks.length);
+  const rowCount = Math.max(bestBids.length, bestAsks.length);
+  const bestBid = bestBids[0]?.price || marketPrice;
+  const bestAsk = bestAsks[0]?.price || marketPrice;
+  const mid = ((bestBid + bestAsk) / 2);
 
-  for (let i = 0; i < totalRows; i++) {
+  for (let i = 0; i < rowCount; i++) {
     const bid = bestBids[i];
     const ask = bestAsks[i];
 
     const row = document.createElement("div");
-    row.className = "ob-row";
+    row.className = "obx-row";
 
-    // ===== BID CELL =====
+    // ===== BID =====
     const bidCell = document.createElement("div");
-    bidCell.className = "ob-cell bid-cell";
+    bidCell.className = "obx-cell obx-bid";
 
     if (bid) {
-      const bidDepth = (bid.total / maxBidTotal) * 100;
+      const bidDepth = (bid.cum / maxBidCum) * 100;
+      const bidFlash = ORDERBOOK_ENGINE.flashRows.has(`bid:${bid.price}`) ? " flash" : "";
+      const bidWall = bid.isWall ? " wall" : "";
 
       bidCell.innerHTML = `
-        <div class="ob-depth bid-depth" style="width:${bidDepth}%"></div>
-        <div class="ob-inner">
-          <span class="ob-price bid-row">${fmtPrice(bid.price)}</span>
-          <span class="ob-amount">${fmtAmount(bid.amount, 3)}</span>
+        <div class="obx-depth obx-depth-bid" style="width:${bidDepth}%"></div>
+        <div class="obx-inner${bidFlash}${bidWall}">
+          <span class="obx-price bid-row">${formatOBPrice(bid.price)}</span>
+          <span class="obx-amt">${formatOBAmount(bid.amount)}</span>
+          <span class="obx-tot">${formatOBTotal(bid.cum)}</span>
         </div>
       `;
     } else {
-      bidCell.innerHTML = `<div class="ob-inner"><span class="ob-empty">—</span></div>`;
+      bidCell.innerHTML = `<div class="obx-inner"><span class="obx-empty">—</span></div>`;
     }
 
-    // ===== MID CELL =====
+    // ===== MID =====
     const midCell = document.createElement("div");
-    midCell.className = "ob-cell mid-cell";
-
-    const bestBid = bids[0]?.price || marketPrice;
-    const bestAsk = asks[0]?.price || marketPrice;
-    const midPrice = ((bestBid + bestAsk) / 2);
-
+    midCell.className = "obx-cell obx-mid";
     midCell.innerHTML = `
-      <span class="ob-mid-dot">${i === Math.floor(totalRows / 2) ? fmtPrice(midPrice) : "•"}</span>
+      <span class="obx-mid-mark">${i === Math.floor(rowCount / 2) ? formatOBPrice(mid) : "•"}</span>
     `;
 
-    // ===== ASK CELL =====
+    // ===== ASK =====
     const askCell = document.createElement("div");
-    askCell.className = "ob-cell ask-cell";
+    askCell.className = "obx-cell obx-ask";
 
     if (ask) {
-      const askDepth = (ask.total / maxAskTotal) * 100;
+      const askDepth = (ask.cum / maxAskCum) * 100;
+      const askFlash = ORDERBOOK_ENGINE.flashRows.has(`ask:${ask.price}`) ? " flash" : "";
+      const askWall = ask.isWall ? " wall" : "";
 
       askCell.innerHTML = `
-        <div class="ob-depth ask-depth" style="width:${askDepth}%"></div>
-        <div class="ob-inner">
-          <span class="ob-price ask-row">${fmtPrice(ask.price)}</span>
-          <span class="ob-amount">${fmtAmount(ask.amount, 3)}</span>
+        <div class="obx-depth obx-depth-ask" style="width:${askDepth}%"></div>
+        <div class="obx-inner${askFlash}${askWall}">
+          <span class="obx-price ask-row">${formatOBPrice(ask.price)}</span>
+          <span class="obx-amt">${formatOBAmount(ask.amount)}</span>
+          <span class="obx-tot">${formatOBTotal(ask.cum)}</span>
         </div>
       `;
     } else {
-      askCell.innerHTML = `<div class="ob-inner"><span class="ob-empty">—</span></div>`;
+      askCell.innerHTML = `<div class="obx-inner"><span class="obx-empty">—</span></div>`;
     }
 
     row.appendChild(bidCell);
     row.appendChild(midCell);
     row.appendChild(askCell);
-
     orderBookRowsEl.appendChild(row);
   }
 
@@ -468,11 +545,12 @@ function updateSpread() {
 
   const bestAsk = asks[0].price;
   const bestBid = bids[0].price;
-
   const spread = Math.abs(bestAsk - bestBid);
-  safeText(spreadEl, fmtPrice(spread));
+
+  if (spreadEl) {
+    spreadEl.textContent = formatOBPrice(spread);
+  }
 }
-      
 /* =========================================================
      TRADE
   ========================================================= */
