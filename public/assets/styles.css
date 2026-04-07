@@ -1641,7 +1641,7 @@ h3{
 
 #market .chart-mini-label{
   font-size:11px;
-  font-weight:900;
+  font-weight:1000;
   color:rgba(220,231,247,.62);
   letter-spacing:.04em;
   text-transform:uppercase;
@@ -1658,7 +1658,7 @@ h3{
 #market .chart-live-change{
   min-height:38px;
   padding:0 12px;
-  border-radius:999px;
+  border-radius:666px;
   display:inline-flex;
   align-items:center;
   justify-content:center;
@@ -1688,8 +1688,8 @@ h3{
   position:relative;
   width:100%;
   max-width:100%;
-  min-height:320px;
-  height:clamp(320px, 58vw, 460px);
+  min-height:280px;
+  height:clamp(280px, 58vw, 400px);
   border-radius:20px;
   overflow:hidden;
   background:
@@ -1762,7 +1762,7 @@ h3{
   left:0;
   right:0;
   bottom:0;
-  height:86px;
+  height:76px;
   z-index:2;
   background:
     linear-gradient(to top, rgba(98,245,200,.035), transparent 72%),
@@ -1833,7 +1833,7 @@ h3{
 #market .market-crosshair span{
   min-height:34px;
   padding:0 12px;
-  border-radius:999px;
+  border-radius:666px;
   display:inline-flex;
   align-items:center;
   justify-content:center;
@@ -1866,7 +1866,7 @@ h3{
 #market .chart-footer-item,
 #market .ohlc-item,
 #market .stat-card{
-  min-height:58px;
+  min-height:52px;
   padding:10px 12px;
   border-radius:16px;
   background:
@@ -2091,125 +2091,214 @@ h3{
 }
 
 /* =========================================================
-   ORDERBOOK
+   ORDER BOOK — PRO CLEAN ONLY
 ========================================================= */
+
 #market .orderbook-card{
-  border-radius:22px;
+  border-radius:20px;
   padding:12px;
-  margin-bottom:12px;
-  background:
-    radial-gradient(circle at top left, rgba(240,185,11,.05), transparent 24%),
-    linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01)),
-    linear-gradient(180deg,#0a1119 0%,#091018 100%);
 }
 
-#market .orderbook-header{
+#market .orderbook-head{
   display:flex;
-  align-items:center;
+  align-items:flex-end;
   justify-content:space-between;
   gap:10px;
   margin-bottom:10px;
-  font-size:12px;
-  font-weight:1000;
-  color:#dbe7f3;
 }
 
-#market .orderbook-grid,
-#market .orderbook-body{
-  display:grid;
-  grid-template-columns:1fr;
-  gap:10px;
+#market .orderbook-head h3{
+  margin:0;
+  font-size:18px;
+  font-weight:1000;
+  color:#fff;
+  letter-spacing:-.03em;
+}
+
+#market .orderbook-pair{
+  font-size:13px;
+  font-weight:900;
+  color:#a8b6c8;
+}
+
+#market .ob-table-wrap{
+  border-radius:16px;
+  overflow:hidden;
+  background:rgba(255,255,255,.015);
+  border:1px solid rgba(255,255,255,.04);
 }
 
 #market .ob-head{
+  display:grid;
+  grid-template-columns:1fr .7fr 1fr;
+  align-items:center;
+  gap:8px;
+  padding:10px 12px;
+  background:rgba(255,255,255,.02);
+  border-bottom:1px solid rgba(255,255,255,.04);
+}
+
+#market .ob-col{
   font-size:11px;
   font-weight:1000;
   text-transform:uppercase;
-  letter-spacing:.06em;
-  opacity:.72;
-  margin-bottom:8px;
+  letter-spacing:.08em;
+  color:#7f91a8;
 }
 
-#market .ob-head.buy,
-#market .bids-title{
-  color:#35d49a;
+#market .ob-col.bid{
+  text-align:left;
 }
 
-#market .ob-head.sell,
-#market .asks-title{
-  color:#ff6b6b;
+#market .ob-col.mid{
+  text-align:center;
 }
 
-#market .ob-list,
-#market .price-ladder,
-#market .ob-column{
+#market .ob-col.ask{
+  text-align:right;
+}
+
+#market .ob-body{
   display:flex;
   flex-direction:column;
   gap:6px;
+  padding:8px;
 }
 
 #market .ob-row{
-  min-height:38px;
-  padding:8px 10px;
+  display:grid;
+  grid-template-columns:1fr .7fr 1fr;
+  align-items:center;
+  gap:8px;
+  min-height:42px;
   border-radius:12px;
-  font-size:12px;
-  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
-  font-weight:900;
+  overflow:hidden;
+  transition:transform .14s ease, background .14s ease;
+}
+
+#market .ob-row:hover{
+  background:rgba(255,255,255,.018);
+  transform:translateY(-1px);
+}
+
+#market .ob-cell{
+  position:relative;
+  min-height:42px;
   display:flex;
   align-items:center;
-  justify-content:space-between;
-  gap:8px;
-  position:relative;
   overflow:hidden;
 }
 
-#market .bids .ob-row,
-#market .ob-row.bid{
-  background:rgba(53,212,154,.08);
-  color:#35d49a;
-  border:1px solid rgba(53,212,154,.10);
-}
-
-#market .asks .ob-row,
-#market .ob-row.ask{
-  background:rgba(255,107,107,.08);
-  color:#ff6b6b;
-  border:1px solid rgba(255,107,107,.10);
-}
-
-#market .price-ladder .ob-row,
-#market .ob-row.mid,
-#market .ob-mid{
-  background:rgba(255,255,255,.04);
-  color:#cfd6e4;
-  border:1px solid rgba(255,255,255,.05);
-  text-align:center;
-  justify-content:center;
-  font-weight:1000;
-}
-
-#market .ob-side{
+#market .ob-inner{
   position:relative;
-  z-index:1;
+  z-index:2;
   width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:0 12px;
 }
 
-#market .ob-side::before{
-  content:"";
+#market .ob-depth{
   position:absolute;
-  inset:0;
-  width:var(--depth,0%);
-  z-index:-1;
-  opacity:.20;
-  border-radius:inherit;
+  top:0;
+  bottom:0;
+  border-radius:12px;
+  z-index:1;
+  pointer-events:none;
 }
 
-#market .ob-side.bid::before{
-  background:linear-gradient(90deg, rgba(53,212,154,.42), transparent);
+#market .bid-depth{
+  left:0;
+  background:linear-gradient(90deg, rgba(14,203,129,.18), rgba(14,203,129,.04));
 }
 
-#market .ob-side.ask::before{
-  background:linear-gradient(90deg, rgba(255,107,107,.42), transparent);
+#market .ask-depth{
+  right:0;
+  background:linear-gradient(90deg, rgba(246,70,93,.04), rgba(246,70,93,.18));
+}
+
+#market .ob-price{
+  font-size:14px;
+  font-weight:1000;
+  letter-spacing:-.02em;
+  font-variant-numeric:tabular-nums;
+}
+
+#market .bid-row{
+  color:#0ecb81;
+}
+
+#market .ask-row{
+  color:#f6465d;
+}
+
+#market .ob-amount{
+  font-size:12px;
+  font-weight:900;
+  color:#d7e1ee;
+  opacity:.78;
+  font-variant-numeric:tabular-nums;
+}
+
+#market .mid-cell{
+  justify-content:center;
+}
+
+#market .ob-mid-dot{
+  font-size:12px;
+  font-weight:1000;
+  color:#d7e1ee;
+  letter-spacing:-.01em;
+  text-align:center;
+  font-variant-numeric:tabular-nums;
+}
+
+#market .ob-empty{
+  font-size:12px;
+  font-weight:900;
+  color:rgba(255,255,255,.22);
+  margin:auto;
+}
+
+/* Mobile polish */
+@media (max-width:420px){
+  #market .ob-head{
+    padding:9px 10px;
+    gap:6px;
+  }
+
+  #market .ob-body{
+    padding:6px;
+    gap:5px;
+  }
+
+  #market .ob-row{
+    min-height:38px;
+    gap:6px;
+  }
+
+  #market .ob-cell{
+    min-height:38px;
+  }
+
+  #market .ob-inner{
+    padding:0 10px;
+    gap:8px;
+  }
+
+  #market .ob-price{
+    font-size:13px;
+  }
+
+  #market .ob-amount{
+    font-size:11px;
+  }
+
+  #market .ob-mid-dot{
+    font-size:11px;
+  }
 }
 
 /* ===============================
