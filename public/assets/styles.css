@@ -2212,6 +2212,105 @@ h3{
   background:linear-gradient(90deg, rgba(255,107,107,.42), transparent);
 }
 
+/* ===============================
+   ORDER BOOK PRO UI
+=============================== */
+
+#market .orderbook-card{
+  border-radius:20px;
+  padding:12px;
+}
+
+/* Header */
+#market .ob-head{
+  display:grid;
+  grid-template-columns:1fr .8fr 1fr;
+  padding:6px 10px;
+  font-size:11px;
+  color:#8fa2b6;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+}
+
+/* Rows container */
+#market .ob-body{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  margin-top:6px;
+}
+
+/* Row */
+#market .ob-row{
+  display:grid;
+  grid-template-columns:1fr .8fr 1fr;
+  align-items:center;
+  border-radius:10px;
+  font-size:12px;
+  font-weight:900;
+  overflow:hidden;
+}
+
+/* Cells */
+#market .ob-cell{
+  position:relative;
+  padding:8px 10px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  z-index:2;
+}
+
+/* BID */
+#market .bid-cell{
+  color:#0ecb81;
+}
+
+/* ASK */
+#market .ask-cell{
+  color:#f6465d;
+}
+
+/* MID */
+#market .mid-cell{
+  text-align:center;
+  font-size:11px;
+  color:#cbd5e1;
+  font-weight:800;
+}
+
+/* Depth background */
+#market .bid-cell::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:linear-gradient(90deg, rgba(14,203,129,.15), transparent);
+  opacity:.6;
+}
+
+#market .ask-cell::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:linear-gradient(90deg, transparent, rgba(246,70,93,.15));
+  opacity:.6;
+}
+
+/* Hover effect */
+#market .ob-row:hover{
+  background:rgba(255,255,255,.03);
+  transform:scale(1.01);
+}
+
+/* Price highlight */
+#market .bid-row{
+  font-weight:1000;
+}
+
+#market .ask-row{
+  font-weight:1000;
+}
+
 /* =========================================================
    LAYOUT HELPERS
 ========================================================= */
