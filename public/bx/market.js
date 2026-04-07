@@ -412,7 +412,7 @@
             <div style="position:absolute;inset:0 auto 0 0;width:${bidDepth}%;background:linear-gradient(90deg,rgba(14,203,129,.18),transparent);pointer-events:none;"></div>
             <div style="position:relative;z-index:2;display:flex;justify-content:space-between;gap:8px;">
               <span class="bid-row">${fmtPrice(bid.price)}</span>
-              <span>${fmtAmount(bid.amount, 3)}</span>
+<span class="bid-amount">${fmtAmount(bid.amount)}</span>
             </div>
           ` : `<span style="opacity:.2">—</span>`}
         </div>
@@ -425,8 +425,6 @@
           ${ask ? `
             <div style="position:absolute;inset:0 0 0 auto;width:${askDepth}%;background:linear-gradient(90deg,transparent,rgba(246,70,93,.18));pointer-events:none;"></div>
             <div style="position:relative;z-index:2;display:flex;justify-content:space-between;gap:8px;">
-              <span class="ask-row">${fmtPrice(ask.price)}</span>
-              <span>${fmtAmount(ask.amount, 3)}</span>
             </div>
           ` : `<span style="opacity:.2">—</span>`}
         </div>
