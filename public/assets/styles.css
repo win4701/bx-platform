@@ -1688,8 +1688,8 @@ h3{
   position:relative;
   width:100%;
   max-width:100%;
-  min-height:320px;
-  height:clamp(320px, 58vw, 460px);
+  min-height:280px;
+  height:clamp(280px, 50vw, 400px);
   border-radius:20px;
   overflow:hidden;
   background:
@@ -1762,7 +1762,7 @@ h3{
   left:0;
   right:0;
   bottom:0;
-  height:86px;
+  height:72px;
   z-index:2;
   background:
     linear-gradient(to top, rgba(98,245,200,.035), transparent 72%),
@@ -1778,7 +1778,7 @@ h3{
 #market #chartTooltip{
   position:absolute;
   z-index:12;
-  min-width:168px;
+  min-width:188px;
   padding:10px 12px;
   border-radius:16px;
   background:
@@ -2212,85 +2212,217 @@ h3{
   background:linear-gradient(90deg, rgba(255,107,107,.42), transparent);
 }
 
-/* =========================
-   MARKET V2 EXCHANGE PATCH
-========================= */
+/* =========================================================
+   MARKET ORDER BOOK PRO CLEAN
+   Replace ugly mixed layout only
+========================================================= */
 
-.market-trades-tape{
+#market .orderbook-card{
+  padding:14px;
+  border-radius:22px;
+  overflow:hidden;
+}
+
+#market .orderbook-head{
   display:flex;
-  flex-direction:column;
-  gap:8px;
-  margin-top:12px;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:12px;
 }
 
-.trade-tape-row{
-  display:grid;
-  grid-template-columns: 62px 1fr 1fr 70px;
-  align-items:center;
-  gap:10px;
-  padding:10px 12px;
-  border-radius:14px;
-  background:rgba(255,255,255,.03);
-  border:1px solid rgba(255,255,255,.05);
-  font-weight:900;
-  font-size:12px;
-}
-
-.trade-tape-row.buy{
-  color:#64f0b0;
-}
-
-.trade-tape-row.sell{
-  color:#ff8899;
-}
-
-.trade-tape-side{
-  font-size:11px;
+#market .orderbook-title{
+  font-size:15px;
   font-weight:1000;
+  color:#ffffff;
+  letter-spacing:-.02em;
+}
+
+#market .orderbook-pair{
+  font-size:11px;
+  font-weight:900;
+  color:#8fa2b6;
+  text-transform:uppercase;
   letter-spacing:.06em;
 }
 
-.trade-tape-price,
-.trade-tape-amount,
-.trade-tape-time{
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  white-space:nowrap;
+#market .orderbook-table-head{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 72px minmax(0,1fr);
+  align-items:center;
+  gap:8px;
+  padding:0 2px 8px;
+  margin-bottom:4px;
+  border-bottom:1px solid rgba(255,255,255,.05);
+}
+
+#market .orderbook-table-head span{
+  font-size:10px;
+  font-weight:1000;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+  color:#8fa2b6;
+}
+
+#market .orderbook-table-head span:first-child{
+  text-align:left;
+}
+
+#market .orderbook-table-head span:nth-child(2){
+  text-align:center;
+}
+
+#market .orderbook-table-head span:last-child{
+  text-align:right;
+}
+
+#market #orderBookRows{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+
+#market .ob-row{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 72px minmax(0,1fr);
+  align-items:center;
+  gap:8px;
+  min-height:38px;
+}
+
+#market .ob-cell{
+  position:relative;
+  min-width:0;
+  min-height:38px;
+  overflow:hidden;
+  border-radius:12px;
+}
+
+#market .bid-cell,
+#market .ask-cell{
+  background:rgba(255,255,255,.02);
+  border:1px solid rgba(255,255,255,.04);
+}
+
+#market .mid-cell{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:transparent;
 }
 
 #market .ob-inner{
   position:relative;
   z-index:2;
+  width:100%;
+  height:100%;
+  min-height:38px;
   display:flex;
   align-items:center;
   justify-content:space-between;
   gap:8px;
-  width:100%;
+  padding:0 10px;
+}
+
+#market .ob-depth{
+  position:absolute;
+  top:0;
+  bottom:0;
+  z-index:1;
+  opacity:.95;
+  border-radius:inherit;
+}
+
+#market .bid-depth{
+  left:0;
+  background:linear-gradient(90deg, rgba(14,203,129,.22), rgba(14,203,129,.04));
+}
+
+#market .ask-depth{
+  right:0;
+  background:linear-gradient(270deg, rgba(246,70,93,.22), rgba(246,70,93,.04));
 }
 
 #market .ob-price{
+  font-family:ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size:13px;
   font-weight:1000;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+#market .bid-row{
+  color:#65f0b2;
+}
+
+#market .ask-row{
+  color:#ff8d9b;
 }
 
 #market .ob-amount{
-  font-size:12px;
+  font-family:ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size:11px;
   font-weight:900;
-  opacity:.9;
+  color:#dbe7f3;
+  opacity:.92;
   white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
 }
 
 #market .ob-mid-dot{
+  font-family:ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size:12px;
   font-weight:1000;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  color:#dce7f7;
+  color:#f5f7fb;
+  text-align:center;
+  white-space:nowrap;
 }
 
 #market .ob-empty{
-  opacity:.35;
-  font-weight:900;
+  font-size:12px;
+  font-weight:1000;
+  color:rgba(255,255,255,.25);
+  width:100%;
+  text-align:center;
 }
 
+@media (max-width:640px){
+  #market .orderbook-table-head{
+    grid-template-columns:minmax(0,1fr) 60px minmax(0,1fr);
+    gap:6px;
+  }
+
+  #market .ob-row{
+    grid-template-columns:minmax(0,1fr) 60px minmax(0,1fr);
+    gap:6px;
+    min-height:34px;
+  }
+
+  #market .ob-cell{
+    min-height:34px;
+    border-radius:10px;
+  }
+
+  #market .ob-inner{
+    min-height:34px;
+    padding:0 8px;
+    gap:6px;
+  }
+
+  #market .ob-price{
+    font-size:12px;
+  }
+
+  #market .ob-amount{
+    font-size:10px;
+  }
+
+  #market .ob-mid-dot{
+    font-size:11px;
+  }
+}
 /* =========================================================
    LAYOUT HELPERS
 ========================================================= */
