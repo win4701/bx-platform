@@ -1,7 +1,6 @@
 /* =========================================================
-   BLOXIO MARKET — V2 EXCHANGE ENGINE FINAL
-   BX FIXED 45 USDT • REALTIME ORDERBOOK • MATCH ENGINE
-   HTML-safe • CSS-safe • Mobile-safe
+   BLOXIO MARKET — MASTER FINAL CLEAN
+   HTML-safe • CSS-safe • Mobile-safe • NO LAST TRADES
 ========================================================= */
 
 (() => {
@@ -10,8 +9,9 @@
   /* =========================================================
      CONFIG
   ========================================================= */
-  const ROWS = 14;
+  const ROWS = 12;
   const BX_USDT_REFERENCE = 45;
+  const PRICE_DECIMALS = 6;
   const AMOUNT_DECIMALS = 4;
 
   const quoteMap = {
@@ -40,16 +40,6 @@
     TON: 5.4
   };
 
-  const ENGINE = {
-    bookRows: 14,
-    tradeTapeMax: 18,
-    maxBookQty: 1800,
-    minBookQty: 18,
-    wallChance: 0.18,
-    updateMs: 1100,
-    fee: 0.001
-  };
-
   /* =========================================================
      STATE
   ========================================================= */
@@ -61,8 +51,6 @@
 
   let bids = [];
   let asks = [];
-  let lastTrades = [];
-  let orderId = 1;
 
   let ws = null;
   let marketStarted = false;
@@ -146,25 +134,15 @@
   const chartCanvas = $("#marketChart");
   const tooltipEl = $("#marketTooltip");
 
-  // optional tape container
-  let tradesTapeEl = $("#marketTradesTape");
-
   /* =========================================================
      HELPERS
   ========================================================= */
-  function smartPrice(v) {
-    v = Number(v || 0);
-    if (v >= 100) return v.toFixed(2);
-    if (v >= 1) return v.toFixed(4);
-    if (v >= 0.01) return v.toFixed(6);
-    return v.toFixed(8);
+  function fmtPrice(v, d = PRICE_DECIMALS) {
+    return Number(v || 0).toFixed(d);
   }
 
   function fmtAmount(v, d = AMOUNT_DECIMALS) {
-    return Number(v || 0).toLocaleString(undefined, {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: d
-    });
+    return Number(v || 0).toFixed(d);
   }
 
   function fmtUsd(v) {
@@ -220,27 +198,6 @@
     }, 650);
   }
 
-  function uid() {
-    return `ob_${Date.now()}_${orderId++}`;
-  }
-
-  function ensureTradesTape() {
-    if (tradesTapeEl) return;
-
-    const card = document.createElement("div");
-    card.className = "market-card trades-tape-card";
-    card.innerHTML = `
-      <div class="section-title">Last Trades</div>
-      <div id="marketTradesTape" class="market-trades-tape"></div>
-    `;
-
-    const obCard = orderBookRowsEl?.closest(".market-card, .orderbook-card, .card");
-    if (obCard && obCard.parentNode) {
-      obCard.parentNode.insertBefore(card, obCard.nextSibling);
-      tradesTapeEl = card.querySelector("#marketTradesTape");
-    }
-  }
-
   /* =========================================================
      WALLET
   ========================================================= */
@@ -280,7 +237,7 @@
   }
 
   /* =========================================================
-     PRICE ENGINE — BX FIXED TO 45 USDT
+     PRICE ENGINE
   ========================================================= */
   function computeBXPrice() {
     previousPrice = marketPrice;
@@ -289,11 +246,10 @@
       quotePriceUSDT = quoteUsdFallback[currentQuote] || 1;
     }
 
-    // BX ثابت على 45 USDT
+    marketPrice = BX_USDT_REFERENCE / quotePriceUSDT;
+
     if (currentQuote === "USDT" || currentQuote === "USDC") {
       marketPrice = BX_USDT_REFERENCE;
-    } else {
-      marketPrice = BX_USDT_REFERENCE / quotePriceUSDT;
     }
 
     if (!isFinite(marketPrice) || marketPrice <= 0) {
@@ -314,15 +270,15 @@
       ? ((marketPrice - previousPrice) / previousPrice) * 100
       : 0;
 
-    safeText(marketPriceEl, smartPrice(marketPrice));
-    safeText(marketApproxEl, `≈ ${smartPrice(marketPrice)} ${currentQuote}`);
+    safeText(marketPriceEl, fmtPrice(marketPrice));
+    safeText(marketApproxEl, `≈ ${fmtPrice(marketPrice, 2)} ${currentQuote}`);
 
     safeText(assetNameEl, "Bloxio");
     safeText(assetSymbolEl, "BX");
-    safeText(assetPriceEl, `$${smartPrice(marketPrice)}`);
+    safeText(assetPriceEl, `$${fmtPrice(marketPrice, 5)}`);
 
     safeText(chartQuoteLabelEl, currentQuote);
-    safeText(chartLivePriceEl, `$${smartPrice(marketPrice)}`);
+    safeText(chartLivePriceEl, `$${fmtPrice(marketPrice, 5)}`);
     safeText(quoteAssetEl, currentQuote);
     safeText(orderbookQuoteEl, currentQuote);
 
@@ -342,7 +298,7 @@
   }
 
   /* =========================================================
-     BINANCE STREAM — FOR QUOTE CONVERSION ONLY
+     BINANCE STREAM
   ========================================================= */
   function connectBinance(symbol = quoteMap[currentQuote]) {
     if (!symbol) {
@@ -378,9 +334,7 @@
         computeBXPrice();
       };
 
-      ws.onclose = () => {
-        // silent
-      };
+      ws.onclose = () => {};
     } catch (e) {
       console.warn("WS init failed", e);
       quotePriceUSDT = quoteUsdFallback[currentQuote] || 1;
@@ -389,7 +343,7 @@
   }
 
   /* =========================================================
-     ORDER BOOK ENGINE V2
+     ORDER BOOK ENGINE
   ========================================================= */
   function generateOrderBook() {
     bids = [];
@@ -397,45 +351,28 @@
 
     const mid = Number(marketPrice || BX_USDT_REFERENCE);
 
-    const spread = mid * 0.002;     // 0.2%
-    const tick = mid * 0.0005;      // granular
-    let bidCum = 0;
-    let askCum = 0;
+    let tick;
+    if (mid >= 100) tick = 0.05;
+    else if (mid >= 10) tick = 0.01;
+    else if (mid >= 1) tick = 0.001;
+    else if (mid >= 0.1) tick = 0.0005;
+    else if (mid >= 0.01) tick = 0.00005;
+    else tick = 0.000001;
 
-    for (let i = 0; i < ENGINE.bookRows; i++) {
-      const bidPrice = +(mid - spread - i * tick).toFixed(8);
-      let bidAmount = +(rand(ENGINE.minBookQty, ENGINE.maxBookQty).toFixed(2));
+    const spreadBase = tick * 2;
 
-      if (Math.random() < ENGINE.wallChance) {
-        bidAmount *= rand(1.8, 3.8);
-      }
+    for (let i = 0; i < ROWS; i++) {
+      const price = +(mid - spreadBase - i * tick).toFixed(6);
+      const amount = +(rand(1.25, 95).toFixed(3));
+      const total = +(price * amount).toFixed(6);
+      bids.push({ price, amount, total });
+    }
 
-      bidCum += bidAmount;
-
-      bids.push({
-        id: uid(),
-        side: "bid",
-        price: bidPrice,
-        amount: +bidAmount.toFixed(2),
-        total: +bidCum.toFixed(2)
-      });
-
-      const askPrice = +(mid + spread + i * tick).toFixed(8);
-      let askAmount = +(rand(ENGINE.minBookQty, ENGINE.maxBookQty).toFixed(2));
-
-      if (Math.random() < ENGINE.wallChance) {
-        askAmount *= rand(1.8, 3.8);
-      }
-
-      askCum += askAmount;
-
-      asks.push({
-        id: uid(),
-        side: "ask",
-        price: askPrice,
-        amount: +askAmount.toFixed(2),
-        total: +askCum.toFixed(2)
-      });
+    for (let i = 0; i < ROWS; i++) {
+      const price = +(mid + spreadBase + i * tick).toFixed(6);
+      const amount = +(rand(1.25, 95).toFixed(3));
+      const total = +(price * amount).toFixed(6);
+      asks.push({ price, amount, total });
     }
 
     bids.sort((a, b) => b.price - a.price);
@@ -447,16 +384,13 @@
 
     orderBookRowsEl.innerHTML = "";
 
-    const bestBids = bids.slice(0, ENGINE.bookRows);
-    const bestAsks = asks.slice(0, ENGINE.bookRows);
+    const bestBids = bids.slice(0, ROWS);
+    const bestAsks = asks.slice(0, ROWS);
 
     const maxBidTotal = Math.max(...bestBids.map(x => x.total), 1);
     const maxAskTotal = Math.max(...bestAsks.map(x => x.total), 1);
-    const totalRows = Math.max(bestBids.length, bestAsks.length);
 
-    const bestBid = bids[0]?.price || marketPrice;
-    const bestAsk = asks[0]?.price || marketPrice;
-    const midPrice = (bestBid + bestAsk) / 2;
+    const totalRows = Math.max(bestBids.length, bestAsks.length);
 
     for (let i = 0; i < totalRows; i++) {
       const bid = bestBids[i];
@@ -465,7 +399,6 @@
       const row = document.createElement("div");
       row.className = "ob-row";
 
-      // BID
       const bidCell = document.createElement("div");
       bidCell.className = "ob-cell bid-cell";
 
@@ -475,22 +408,25 @@
         bidCell.innerHTML = `
           <div class="ob-depth bid-depth" style="width:${bidDepth}%"></div>
           <div class="ob-inner">
-            <span class="ob-price bid-row">${smartPrice(bid.price)}</span>
-            <span class="ob-amount">${fmtAmount(bid.amount, 2)}</span>
+            <span class="ob-price bid-row ob-click" data-price="${bid.price}">${fmtPrice(bid.price)}</span>
+            <span class="ob-amount">${fmtAmount(bid.amount, 3)}</span>
           </div>
         `;
       } else {
         bidCell.innerHTML = `<div class="ob-inner"><span class="ob-empty">—</span></div>`;
       }
 
-      // MID
       const midCell = document.createElement("div");
       midCell.className = "ob-cell mid-cell";
+
+      const bestBid = bids[0]?.price || marketPrice;
+      const bestAsk = asks[0]?.price || marketPrice;
+      const midPrice = ((bestBid + bestAsk) / 2);
+
       midCell.innerHTML = `
-        <span class="ob-mid-dot">${i === Math.floor(totalRows / 2) ? smartPrice(midPrice) : ""}</span>
+        <span class="ob-mid-dot">${i === Math.floor(totalRows / 2) ? fmtPrice(midPrice) : "•"}</span>
       `;
 
-      // ASK
       const askCell = document.createElement("div");
       askCell.className = "ob-cell ask-cell";
 
@@ -500,8 +436,8 @@
         askCell.innerHTML = `
           <div class="ob-depth ask-depth" style="width:${askDepth}%"></div>
           <div class="ob-inner">
-            <span class="ob-price ask-row">${smartPrice(ask.price)}</span>
-            <span class="ob-amount">${fmtAmount(ask.amount, 2)}</span>
+            <span class="ob-price ask-row ob-click" data-price="${ask.price}">${fmtPrice(ask.price)}</span>
+            <span class="ob-amount">${fmtAmount(ask.amount, 3)}</span>
           </div>
         `;
       } else {
@@ -523,14 +459,11 @@
 
     const bestAsk = asks[0].price;
     const bestBid = bids[0].price;
-    const spreadPct = ((bestAsk - bestBid) / bestAsk) * 100;
 
-    safeText(spreadEl, `${spreadPct.toFixed(2)}%`);
+    const spread = Math.abs(bestAsk - bestBid);
+    safeText(spreadEl, fmtPrice(spread));
   }
 
-  /* =========================================================
-     MARKET MAKER + LAST TRADES
-  ========================================================= */
   function engineTick() {
     if (!bids.length || !asks.length) {
       generateOrderBook();
@@ -555,7 +488,6 @@
     }
 
     generateOrderBook();
-    simulateTapeTrade();
     updatePriceUI();
     renderOrderBook();
     updateTradeInfo();
@@ -563,60 +495,16 @@
     updateMetrics();
   }
 
-  function simulateTapeTrade() {
-    const side = Math.random() > 0.5 ? "buy" : "sell";
-    const px = side === "buy"
-      ? (asks[0]?.price || marketPrice)
-      : (bids[0]?.price || marketPrice);
-
-    const amount = +(rand(2, 180).toFixed(2));
-
-    lastTrades.unshift({
-      id: uid(),
-      side,
-      price: px,
-      amount,
-      time: Date.now()
-    });
-
-    if (lastTrades.length > ENGINE.tradeTapeMax) {
-      lastTrades.length = ENGINE.tradeTapeMax;
-    }
-
-    renderTradesTape();
-  }
-
-  function renderTradesTape() {
-    ensureTradesTape();
-    if (!tradesTapeEl) return;
-
-    tradesTapeEl.innerHTML = lastTrades.map(t => {
-      const time = new Date(t.time);
-      const hh = String(time.getHours()).padStart(2, "0");
-      const mm = String(time.getMinutes()).padStart(2, "0");
-      const ss = String(time.getSeconds()).padStart(2, "0");
-
-      return `
-        <div class="trade-tape-row ${t.side}">
-          <span class="trade-tape-side">${t.side === "buy" ? "BUY" : "SELL"}</span>
-          <span class="trade-tape-price">${smartPrice(t.price)}</span>
-          <span class="trade-tape-amount">${fmtAmount(t.amount, 2)}</span>
-          <span class="trade-tape-time">${hh}:${mm}:${ss}</span>
-        </div>
-      `;
-    }).join("");
-  }
-
   function startEngine() {
     clearInterval(engineInterval);
     engineInterval = setInterval(() => {
       if (document.hidden) return;
       engineTick();
-    }, ENGINE.updateMs);
+    }, 1100);
   }
 
   /* =========================================================
-     TRADE + MATCHING ENGINE
+     TRADE
   ========================================================= */
   function setTradeSide(side) {
     tradeSide = side;
@@ -645,45 +533,9 @@
     const spread = Math.abs(bestAsk - bestBid);
     const slippage = marketPrice ? (spread / marketPrice) * 100 : 0;
 
-    safeText(execPriceEl, smartPrice(price));
+    safeText(execPriceEl, fmtPrice(price));
+    safeText(spreadEl, fmtPrice(spread));
     safeText(slippageEl, `${slippage.toFixed(3)}%`);
-    updateSpread();
-  }
-
-  function matchMarketOrder(side, amount) {
-    let remaining = Number(amount || 0);
-    let totalCost = 0;
-    let totalFilled = 0;
-
-    const book = side === "buy" ? asks : bids;
-
-    for (let i = 0; i < book.length && remaining > 0; i++) {
-      const level = book[i];
-      const fill = Math.min(level.amount, remaining);
-
-      totalCost += fill * level.price;
-      totalFilled += fill;
-      remaining -= fill;
-
-      level.amount -= fill;
-      level.amount = Math.max(0, +level.amount.toFixed(2));
-    }
-
-    // clean depleted levels
-    if (side === "buy") {
-      asks = asks.filter(x => x.amount > 0);
-    } else {
-      bids = bids.filter(x => x.amount > 0);
-    }
-
-    const avgPrice = totalFilled ? totalCost / totalFilled : marketPrice;
-
-    return {
-      filled: totalFilled,
-      avgPrice,
-      cost: totalCost,
-      unfilled: remaining
-    };
   }
 
   async function executeTrade() {
@@ -692,121 +544,51 @@
       if (!amount || amount <= 0) return;
 
       const pair = `BX/${currentQuote}`;
-      const feeRate = ENGINE.fee;
-
-      if (tradeSide === "buy") {
-        const bestAsk = asks[0]?.price || marketPrice;
-        const estimated = amount * bestAsk * (1 + feeRate);
-
-        if ((wallet[currentQuote] || 0) < estimated) {
-          toast(`Insufficient ${currentQuote}`);
-          return;
-        }
-
-        const result = matchMarketOrder("buy", amount);
-        const grossCost = result.cost;
-        const fee = grossCost * feeRate;
-        const finalCost = grossCost + fee;
-
-        if ((wallet[currentQuote] || 0) < finalCost) {
-          toast(`Insufficient ${currentQuote}`);
-          return;
-        }
-
-        wallet[currentQuote] = Number(wallet[currentQuote] || 0) - finalCost;
-        wallet.BX = Number(wallet.BX || 0) + result.filled;
-
-        lastTrades.unshift({
-          id: uid(),
-          side: "buy",
-          price: result.avgPrice,
-          amount: result.filled,
-          time: Date.now()
-        });
-
-        toast(`Bought ${fmtAmount(result.filled, 4)} BX @ ${smartPrice(result.avgPrice)}`);
-      } else {
-        if ((wallet.BX || 0) < amount) {
-          toast("Insufficient BX");
-          return;
-        }
-
-        const result = matchMarketOrder("sell", amount);
-        const gross = result.cost;
-        const fee = gross * feeRate;
-        const net = gross - fee;
-
-        wallet.BX = Number(wallet.BX || 0) - result.filled;
-        wallet[currentQuote] = Number(wallet[currentQuote] || 0) + net;
-
-        lastTrades.unshift({
-          id: uid(),
-          side: "sell",
-          price: result.avgPrice,
-          amount: result.filled,
-          time: Date.now()
-        });
-
-        toast(`Sold ${fmtAmount(result.filled, 4)} BX @ ${smartPrice(result.avgPrice)}`);
-      }
-
-      renderTradesTape();
-      updateWalletUI();
-      generateOrderBook();
-      renderOrderBook();
-      updateTradeInfo();
-      PRO_CHART.update(marketPrice);
+      const price = tradeSide === "buy"
+        ? (asks[0]?.price || marketPrice)
+        : (bids[0]?.price || marketPrice);
 
       const payload = {
         uid: window.USER_ID,
         pair,
         side: tradeSide,
-        price: tradeSide === "buy" ? asks[0]?.price || marketPrice : bids[0]?.price || marketPrice,
+        price,
         amount
       };
 
-      await safeFetch("/exchange/order", {
+      const data = await safeFetch("/exchange/order", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json"
+        },
         body: JSON.stringify(payload)
       });
 
-      orderAmount && (orderAmount.value = "");
+      if (tradeSide === "buy") {
+        const cost = amount * price;
+        if ((wallet[currentQuote] || 0) >= cost) {
+          wallet[currentQuote] = Number(wallet[currentQuote] || 0) - cost;
+          wallet.BX = Number(wallet.BX || 0) + amount;
+        }
+      } else {
+        if ((wallet.BX || 0) >= amount) {
+          wallet.BX = Number(wallet.BX || 0) - amount;
+          wallet[currentQuote] = Number(wallet[currentQuote] || 0) + (amount * price);
+        }
+      }
+
+      updateWalletUI();
+      generateOrderBook();
+      renderOrderBook();
+      updateTradeInfo();
+      PRO_CHART.update(price);
+
+      if (data?.status) {
+        await loadMarketWallet();
+      }
     } catch (e) {
       console.error("Trade error", e);
-      toast("Trade failed");
     }
-  }
-
-  /* =========================================================
-     TOAST
-  ========================================================= */
-  let toastTimer = null;
-  function toast(msg) {
-    let el = document.getElementById("marketToast");
-    if (!el) {
-      el = document.createElement("div");
-      el.id = "marketToast";
-      el.style.position = "fixed";
-      el.style.left = "50%";
-      el.style.bottom = "88px";
-      el.style.transform = "translateX(-50%)";
-      el.style.zIndex = "9999";
-      el.style.padding = "12px 14px";
-      el.style.borderRadius = "14px";
-      el.style.background = "rgba(9,14,22,.96)";
-      el.style.border = "1px solid rgba(255,255,255,.08)";
-      el.style.color = "#fff";
-      el.style.fontSize = "13px";
-      el.style.fontWeight = "900";
-      el.style.boxShadow = "0 14px 26px rgba(0,0,0,.28)";
-      document.body.appendChild(el);
-    }
-
-    el.textContent = msg;
-    el.style.display = "block";
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => el.style.display = "none", 1800);
   }
 
   /* =========================================================
@@ -839,14 +621,25 @@
         btn.classList.add("active");
 
         const percent = parseInt(btn.dataset.percent || "0", 10);
-        const maxBuy = getWalletQuoteBalance() / (asks[0]?.price || marketPrice);
+        const maxBuy = getWalletQuoteBalance() / marketPrice;
         const maxSell = wallet.BX || 0;
         const max = tradeSide === "buy" ? maxBuy : maxSell;
 
         if (orderAmount) {
-          orderAmount.value = ((max * percent) / 100).toFixed(4);
+          orderAmount.value = fmtAmount((max * percent) / 100);
         }
       });
+    });
+
+    document.addEventListener("click", (e) => {
+      const el = e.target.closest(".ob-click");
+      if (!el) return;
+
+      const p = parseFloat(el.dataset.price);
+      if (!p) return;
+
+      if (execPriceEl) execPriceEl.textContent = p.toFixed(6);
+      if (orderAmount) orderAmount.placeholder = `@ ${p.toFixed(6)}`;
     });
   }
 
@@ -865,15 +658,15 @@
     const close = visible[visible.length - 1]?.close || marketPrice;
     const vol = visible.reduce((a, c) => a + (c.volume || 0), 0);
 
-    safeText(metricOpen, smartPrice(open));
-    safeText(metricHigh, smartPrice(high));
-    safeText(metricLow, smartPrice(low));
-    safeText(metricClose, smartPrice(close));
+    safeText(metricOpen, fmtPrice(open));
+    safeText(metricHigh, fmtPrice(high));
+    safeText(metricLow, fmtPrice(low));
+    safeText(metricClose, fmtPrice(close));
 
-    safeText(metricOpenPanel, smartPrice(open));
-    safeText(metricHighPanel, smartPrice(high));
-    safeText(metricLowPanel, smartPrice(low));
-    safeText(metricClosePanel, smartPrice(close));
+    safeText(metricOpenPanel, fmtPrice(open));
+    safeText(metricHighPanel, fmtPrice(high));
+    safeText(metricLowPanel, fmtPrice(low));
+    safeText(metricClosePanel, fmtPrice(close));
     safeText(metricVol, fmtAmount(vol, 2));
 
     safeText(statHigh, fmtUsd(high));
@@ -1030,6 +823,7 @@
 
     calcEMA(period) {
       if (this.candles.length < 2) return;
+
       const k = 2 / (period + 1);
       this.ema = [];
 
@@ -1111,7 +905,9 @@
       this.canvas.addEventListener("mouseleave", () => {
         this.isHovering = false;
         this.hoverIndex = -1;
-        if (this.tooltip) this.tooltip.classList.remove("show");
+        if (this.tooltip) {
+          this.tooltip.classList.remove("show");
+        }
       });
 
       this.canvas.addEventListener("wheel", (e) => {
@@ -1150,6 +946,7 @@
 
     renderEMA(ctx, visible, min, max, chartTop, chartHeight, candleWidth) {
       if (this.ema.length < 2) return;
+
       const emaVisible = this.ema.slice(-visible.length);
 
       ctx.save();
@@ -1170,6 +967,7 @@
 
     renderVWAP(ctx, visible, min, max, chartTop, chartHeight, candleWidth) {
       if (this.vwap.length < 2) return;
+
       const vwapVisible = this.vwap.slice(-visible.length);
 
       ctx.save();
@@ -1350,10 +1148,10 @@
       this.tooltip.style.top = `${top}px`;
 
       this.tooltip.innerHTML = `
-        <div><strong>Open:</strong> ${smartPrice(candle.open)}</div>
-        <div><strong>High:</strong> ${smartPrice(candle.high)}</div>
-        <div><strong>Low:</strong> ${smartPrice(candle.low)}</div>
-        <div><strong>Close:</strong> ${smartPrice(candle.close)}</div>
+        <div><strong>Open:</strong> ${fmtPrice(candle.open)}</div>
+        <div><strong>High:</strong> ${fmtPrice(candle.high)}</div>
+        <div><strong>Low:</strong> ${fmtPrice(candle.low)}</div>
+        <div><strong>Close:</strong> ${fmtPrice(candle.close)}</div>
         <div><strong>Vol:</strong> ${fmtAmount(candle.volume, 2)}</div>
       `;
       this.tooltip.classList.add("show");
@@ -1422,7 +1220,6 @@
     updateWalletUI();
     loadMarketWallet();
     bindEvents();
-    ensureTradesTape();
 
     quotePriceUSDT = quoteUsdFallback[currentQuote] || 1;
     connectBinance(quoteMap[currentQuote]);
@@ -1432,7 +1229,6 @@
 
     generateOrderBook();
     renderOrderBook();
-    renderTradesTape();
     setTradeSide("buy");
     updateTradeInfo();
     updatePriceUI();
