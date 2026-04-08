@@ -2094,6 +2094,34 @@ h3{
    ORDER BOOK — REAL EXCHANGE FULL SYSTEM
 ========================================================= */
 
+#market{
+  --obx-bg: rgba(255,255,255,.018);
+  --obx-bg-soft: rgba(255,255,255,.012);
+  --obx-bg-hover: rgba(255,255,255,.028);
+  --obx-border: rgba(255,255,255,.05);
+  --obx-border-soft: rgba(255,255,255,.03);
+  --obx-text: #f4f7fb;
+  --obx-soft: #a6b4c7;
+  --obx-dim: #7d8b9c;
+  --obx-bid: #0ecb81;
+  --obx-bid-soft: rgba(14,203,129,.16);
+  --obx-bid-soft-2: rgba(14,203,129,.04);
+  --obx-ask: #f6465d;
+  --obx-ask-soft: rgba(246,70,93,.16);
+  --obx-ask-soft-2: rgba(246,70,93,.04);
+  --obx-mid: #d9e2ee;
+  --obx-glass: rgba(255,255,255,.02);
+  --obx-shadow: 0 14px 30px rgba(0,0,0,.18);
+  --obx-shadow-soft: 0 10px 20px rgba(0,0,0,.14);
+  --obx-radius-xl: 22px;
+  --obx-radius-lg: 18px;
+  --obx-radius-md: 14px;
+  --obx-radius-sm: 12px;
+  --obx-row-h: 46px;
+  --obx-font: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+/* =====================================================*/
 #market .orderbook-card{
   position:relative;
   overflow:hidden;
@@ -2190,7 +2218,6 @@ h3{
     0 10px 24px rgba(0,0,0,.12);
 }
 
-/* subtle ambient glow */
 #market .ob-table-wrap::after{
   content:"";
   position:absolute;
