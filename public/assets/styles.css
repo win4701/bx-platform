@@ -2212,6 +2212,85 @@ h3{
   background:linear-gradient(90deg, rgba(255,107,107,.42), transparent);
 }
 
+/* =========================
+   MARKET V2 EXCHANGE PATCH
+========================= */
+
+.market-trades-tape{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  margin-top:12px;
+}
+
+.trade-tape-row{
+  display:grid;
+  grid-template-columns: 62px 1fr 1fr 70px;
+  align-items:center;
+  gap:10px;
+  padding:10px 12px;
+  border-radius:14px;
+  background:rgba(255,255,255,.03);
+  border:1px solid rgba(255,255,255,.05);
+  font-weight:900;
+  font-size:12px;
+}
+
+.trade-tape-row.buy{
+  color:#64f0b0;
+}
+
+.trade-tape-row.sell{
+  color:#ff8899;
+}
+
+.trade-tape-side{
+  font-size:11px;
+  font-weight:1000;
+  letter-spacing:.06em;
+}
+
+.trade-tape-price,
+.trade-tape-amount,
+.trade-tape-time{
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  white-space:nowrap;
+}
+
+#market .ob-inner{
+  position:relative;
+  z-index:2;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  width:100%;
+}
+
+#market .ob-price{
+  font-weight:1000;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  white-space:nowrap;
+}
+
+#market .ob-amount{
+  font-size:12px;
+  font-weight:900;
+  opacity:.9;
+  white-space:nowrap;
+}
+
+#market .ob-mid-dot{
+  font-weight:1000;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color:#dce7f7;
+}
+
+#market .ob-empty{
+  opacity:.35;
+  font-weight:900;
+}
+
 /* =========================================================
    LAYOUT HELPERS
 ========================================================= */
