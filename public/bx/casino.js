@@ -446,17 +446,24 @@
 
     switch (gameId) {
       case "crash": {
-        const bust = +(1 + Math.pow(roll * 8, 1.2)).toFixed(2);
-        const target = Number(opts.targetPayout || 1.96);
+  const target = Math.max(1.01, Number(opts.targetPayout || 1.96));
 
-        result.multiplier = bust;
-        result.won = bust >= target;
-        result.payout = result.won ? +(betAmount * target).toFixed(8) : 0;
-        result.profit = +(result.payout - betAmount).toFixed(8);
-        result.meta = { bust, target };
-        break;
-      }
+  // realistic-ish crash distribution
+  const r = Math.random();
+  let bust;
 
+  if (r < 0.33) bust = +(1 + Math.random() * 0.5).toFixed(2);        // low crash
+  else if (r < 0.70) bust = +(1.5 + Math.random() * 2.5).toFixed(2); // mid
+  else if (r < 0.93) bust = +(4 + Math.random() * 6).toFixed(2);      // high
+  else bust = +(10 + Math.random() * 40).toFixed(2);                  // moon
+
+  result.multiplier = bust;
+  result.won = bust >= target;
+  result.payout = result.won ? +(betAmount * target).toFixed(8) : 0;
+  result.profit = +(result.payout - betAmount).toFixed(8);
+  result.meta = { bust, target };
+  break;
+}
       case "dice": {
         const chance = clamp(Number(opts.chance || 50), 1, 95);
         const payout = +(99 / chance).toFixed(2);
@@ -1016,13 +1023,37 @@
   function renderGameVisual(gameId) {
     switch (gameId) {
       case "crash":
-        return `
-          <div class="default-stage-placeholder">
-            <div class="hero-multiplier" id="gameMultiplierDisplay">1.00×</div>
-            <div class="hero-sub">Rocket ready for launch</div>
-            <div class="hero-rocket">🚀</div>
-          </div>
-        `;
+  return `
+    <div class="crash-pro-stage" id="crashStage">
+      <div class="crash-grid-bg"></div>
+
+      <div class="crash-top-overlay">
+        <div class="crash-round-status" id="crashRoundStatus">Waiting for next round</div>
+        <div class="crash-countdown" id="crashCountdown">3.0s</div>
+      </div>
+
+      <div class="crash-chart-zone">
+        <div class="crash-chart-line" id="crashChartLine"></div>
+        <div class="crash-rocket" id="crashRocket">🚀</div>
+      </div>
+
+      <div class="crash-center-readout">
+        <div class="crash-multiplier-display" id="gameMultiplierDisplay">1.00×</div>
+        <div class="crash-subline" id="crashSubline">Prepare for launch</div>
+      </div>
+
+      <div class="crash-bottom-overlay">
+        <div class="crash-pill">
+          <span>Auto Cashout</span>
+          <strong id="crashAutoCashoutView">1.96×</strong>
+        </div>
+        <div class="crash-pill">
+          <span>State</span>
+          <strong id="crashStateView">Ready</strong>
+        </div>
+      </div>
+    </div>
+  `;
 
       case "dice":
         return `
@@ -1080,7 +1111,25 @@
   }
 
   function renderExtraControls(gameId) {
-    if (gameId === "hilo") {
+    if (gameId === "crash") {
+  return `
+    <label>Auto Cashout</label>
+    <div class="casino-input-row single">
+      <div class="casino-amount-box">
+        <input type="number" id="crashAutoCashoutInput" value="1.96" step="0.01" min="1.01">
+      </div>
+    </div>
+
+    <div class="casino-choice-row">
+      <button class="casino-quick-payout-btn" data-payout="1.20">1.20×</button>
+      <button class="casino-quick-payout-btn active" data-payout="1.96">1.96×</button>
+      <button class="casino-quick-payout-btn" data-payout="2.50">2.50×</button>
+      <button class="casino-quick-payout-btn" data-payout="5.00">5.00×</button>
+    </div>
+  `;
+}
+     
+     if (gameId === "hilo") {
       return `
         <div class="casino-choice-row">
           <button class="casino-choice-btn active" data-pick="higher">Higher</button>
@@ -1175,7 +1224,17 @@
   }
 
   function getSecondaryDefault(gameId) {
-    if (gameId === "crash" || gameId === "limbo") return "1.96";
+    if (gameId === "crash") {
+  return {
+    targetPayout: parseFloat($("crashAutoCashoutInput")?.value || "1.96")
+  };
+}
+
+if (gameId === "limbo") {
+  return {
+    targetPayout: parseFloat($("casinoTargetInput")?.value || "1.96")
+  };
+}
     if (gameId === "dice") return "50";
     if (gameId === "mines") return "3";
     return "1.00";
