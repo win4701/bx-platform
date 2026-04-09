@@ -2,7 +2,7 @@
    BLOXIO CASINO — BX MASTER CORE FINAL
    BC.GAME STYLE FOUNDATION
    BX ONLY • TRIAL SYSTEM • AUTO PLAY • SHARED SHELL
-========================================================= */
+.========================================================= */
 
 (function () {
   "use strict";
