@@ -697,7 +697,10 @@
       if (!this.state.currentGame || this.state.isPlaying) return;
 
       const amount = clamp(Number(this.state.betAmount || 0), 0, 1e9);
-      if (!amount || amount <= 0) return toast("Enter valid bet amount");
+      const MIN_BET = 0.1;
+
+      if (!amount || amount < MIN_BET) {
+      return toast(`Minimum bet is ${MIN_BET} BX`);}
       if (!this.canAfford(amount)) return toast("Insufficient balance");
 
       this.debit(amount);
@@ -1212,40 +1215,101 @@
               if (statusEl) statusEl.textContent = "Mine exploded";
               revealAll();
 
-              CASINO.finishRound({
-  win: false,
-  payout: 0,
-  multiplier: 0
-});
-} else {
-  safeCount++;
+              finishRound({ win, payout = 0, multiplier = 1, meta = {} }) {
+  const game = this.state.currentGame;
+  const bet = Number(this.state.betAmount || 0);
+  const stage = $("#casinoGameStage", this.gameView);
+  const multiEl = $("#gameMultiplierDisplay", this.gameView);
+
+  const HOUSE_EDGE = 0.23;
+  const MIN_BET = 0.1;
+  const MAX_MULTIPLIER = 50;
+
+  // ================= VALIDATION =================
+  if (bet < MIN_BET) {
+    this.state.isPlaying = false;
+    return toast(`Minimum bet is ${MIN_BET} BX`);
+  }
+
+  // ================= STATE =================
+  this.state.isPlaying = false;
+  this.state.isCashedOut = true;
+
+  this.toggleActionButtons({
+    play: true,
+    stop: false,
+    cashout: false
+  });
 
   // ================= ECONOMY =================
-  const HOUSE_EDGE = 0.03;
 
-  // multiplier scaling (controlled growth)
-  const base = 1 + safeCount * (mineCount * 0.32);
+  // cap multiplier (anti exploit)
+  if (multiplier > MAX_MULTIPLIER) {
+    multiplier = MAX_MULTIPLIER;
+    payout = bet * multiplier;
+  }
 
   // apply house edge
-  currentMultiplier = +(base * (1 - HOUSE_EDGE)).toFixed(2);
-
-  // hard cap (anti exploit)
-  if (currentMultiplier > 25) {
-    currentMultiplier = 25;
+  if (payout > 0) {
+    payout = payout * (1 - HOUSE_EDGE);
+    this.credit(payout);
   }
+
+  this.updateLiveState(win ? "Win" : "Loss");
+
+  // ================= HISTORY =================
+  const entry = {
+    id: uid(),
+    game: game?.name || "Unknown",
+    gameId: game?.id || "unknown",
+    bet,
+    payout,
+    profit: payout - bet,
+    multiplier,
+    ts: Date.now(),
+    ...meta
+  };
+
+  this.state.history.unshift(entry);
+
+  if (entry.profit >= bet * 1.5) {
+    this.state.bigWins.unshift({
+      user: this.fakeName(),
+      game: game?.name || "Game",
+      amount: entry.profit,
+      multi: multiplier
+    });
+  }
+
+  this.state.bigWins = this.state.bigWins.slice(0, 30);
+  this.saveState();
+  this.syncWalletUI();
 
   // ================= UI =================
-  btn.textContent = "💎";
-  btn.classList.add("revealed-safe");
-
-  if (multiEl) {
-    multiEl.textContent = `${currentMultiplier.toFixed(2)}x`;
+  if (multiEl && multiplier && multiplier > 0) {
+    animateNumber({
+      from: 1,
+      to: multiplier,
+      duration: 480,
+      onUpdate: (v) => {
+        multiEl.textContent = `${v.toFixed(2)}x`;
+      }
+    });
   }
 
-  if (statusEl) {
-    statusEl.textContent = `${safeCount} safe picks • ${currentMultiplier.toFixed(2)}x`;
+  if (win) {
+    flashStage(stage, "win");
+    createFloatingText(stage, `+${formatMoney(entry.profit)} BX`, "win");
+    toast(`Won ${formatMoney(entry.profit)} BX`);
+  } else {
+    flashStage(stage, "loss");
+    createFloatingText(stage, `-${formatMoney(bet)} BX`, "loss");
+    shakeEl(stage);
+    toast(`Lost ${formatMoney(bet)} BX`);
   }
- }
+
+  this.renderPlayers();
+}
 
       return {
         mount({ body, controls, multi }) {
