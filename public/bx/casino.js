@@ -2956,3 +2956,249 @@ document.addEventListener("DOMContentLoaded", boot);
   document.addEventListener("DOMContentLoaded", bootstrapCasino);
 
 })();
+/* =========================================================
+CASINO FIX PATCH — PRODUCTION SAFE
+========================================================= */
+
+(function(){
+
+/* =========================
+FIX 1: GAME CARD CLICK
+========================= */
+
+document.addEventListener("click", function(e){
+
+  const card = e.target.closest(".casino-game-card");
+  if(!card) return;
+
+  const gameId = card.dataset.game;
+  if(!gameId) return;
+
+  // مهم: ربط مع engine
+  if(!window.CASINO) return console.warn("CASINO not loaded");
+
+  openCasinoGame(gameId);
+
+});
+
+
+function openCasinoGame(gameId){
+
+  if(!CASINO || !CASINO.state) return;
+
+  CASINO.state.currentGame = gameId;
+
+  const lobby = document.getElementById("casinoGamesGrid");
+  const box   = document.getElementById("casinoGameBox");
+
+  if(lobby) lobby.style.display = "none";
+  if(box)   box.style.display = "block";
+
+  renderGameShell(gameId);
+
+}
+
+
+/* =========================
+FIX 2: BACK BUTTON
+========================= */
+
+document.addEventListener("click", function(e){
+
+  if(e.target.id === "casinoBackBtn"){
+
+    const lobby = document.getElementById("casinoGamesGrid");
+    const box   = document.getElementById("casinoGameBox");
+
+    if(lobby) lobby.style.display = "grid";
+    if(box)   box.style.display = "none";
+
+    CASINO.state.currentGame = null;
+  }
+
+});
+
+
+/* =========================
+FIX 3: PLAY BUTTON
+========================= */
+
+document.addEventListener("click", function(e){
+
+  if(e.target.id === "casinoPlayBtn"){
+
+    if(!CASINO.state.currentGame){
+      return toast("Select a game","error");
+    }
+
+    if(CASINO.state.mode === "auto"){
+
+      if(CASINO.state.auto.running){
+        stopAutoPlay("Stopped");
+      }else{
+        startAutoPlay();
+      }
+
+      return;
+    }
+
+    playOnce();
+  }
+
+});
+
+
+/* =========================
+FIX 4: BET BUTTONS
+========================= */
+
+document.addEventListener("click", function(e){
+
+  if(e.target.id === "halfBetBtn"){
+    setBetInput(getCurrentBet()/2);
+  }
+
+  if(e.target.id === "doubleBetBtn"){
+    setBetInput(getCurrentBet()*2);
+  }
+
+  if(e.target.classList.contains("casino-quick-bet")){
+    setBetInput(e.target.dataset.bet);
+  }
+
+});
+
+
+/* =========================
+FIX 5: CRASH INPUT SYNC
+========================= */
+
+function getGameOptions(){
+
+  const gameId = CASINO.state.currentGame;
+
+  if(gameId === "crash"){
+    return {
+      targetPayout: parseFloat(
+        document.getElementById("crashAutoCashoutInput")?.value || "1.96"
+      )
+    };
+  }
+
+  if(gameId === "limbo"){
+    return {
+      targetPayout: parseFloat(
+        document.getElementById("casinoTargetInput")?.value || "1.96"
+      )
+    };
+  }
+
+  if(gameId === "dice"){
+    return {
+      chance: parseFloat(
+        document.getElementById("casinoTargetInput")?.value || "50"
+      )
+    };
+  }
+
+  return {};
+}
+
+window.getGameOptions = getGameOptions;
+
+
+/* =========================
+FIX 6: SAFE PLAY ENGINE
+========================= */
+
+function playOnceSafe(){
+
+  const game = CASINO.state.currentGame;
+  if(!game) return;
+
+  const bet = getCurrentBet();
+
+  if(!canBet(bet)) return;
+
+  const source = getStakeSource(bet);
+
+  if(!debitBX(bet)){
+    return toast("Balance error","error");
+  }
+
+  const result = runGameRound(game, bet, getGameOptions());
+
+  applyResult(result, source);
+}
+
+window.playOnce = playOnceSafe;
+
+
+/* =========================
+FIX 7: AUTO PLAY STABILITY
+========================= */
+
+function startAutoSafe(){
+
+  if(CASINO.state.auto.running) return;
+
+  CASINO.state.auto.running = true;
+  CASINO.state.auto.roundsLeft = CASINO.state.auto.rounds;
+
+  autoLoop();
+}
+
+function autoLoop(){
+
+  if(!CASINO.state.auto.running) return;
+
+  if(CASINO.state.auto.roundsLeft <= 0){
+    return stopAutoPlay("Done");
+  }
+
+  playOnceSafe();
+
+  CASINO.state.auto.roundsLeft--;
+
+  setTimeout(autoLoop, getAutoDelay());
+}
+
+window.startAutoPlay = startAutoSafe;
+
+
+/* =========================
+FIX 8: DOUBLE CLICK GUARD
+========================= */
+
+let playingLock = false;
+
+function playOnceGuard(){
+
+  if(playingLock) return;
+
+  playingLock = true;
+
+  playOnceSafe();
+
+  setTimeout(()=>{
+    playingLock = false;
+  },300);
+}
+
+window.playOnce = playOnceGuard;
+
+
+/* =========================
+FIX 9: UI SYNC AFTER LOAD
+========================= */
+
+window.addEventListener("load", function(){
+
+  if(!window.CASINO) return;
+
+  updateCasinoUI();
+
+});
+
+
+})();
