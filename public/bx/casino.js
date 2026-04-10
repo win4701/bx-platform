@@ -1213,22 +1213,39 @@
               revealAll();
 
               CASINO.finishRound({
-                win: false,
-                payout: 0,
-                multiplier: 0
-              });
-            } else {
-              safeCount++;
-              currentMultiplier = +(1 + safeCount * (mineCount * 0.35)).toFixed(2);
-              btn.textContent = "💎";
-              btn.classList.add("revealed-safe");
-              if (multiEl) multiEl.textContent = `${currentMultiplier.toFixed(2)}x`;
-              if (statusEl) statusEl.textContent = `${safeCount} safe picks`;
-            }
-          };
-          boardEl.appendChild(btn);
-        }
-      };
+  win: false,
+  payout: 0,
+  multiplier: 0
+});
+} else {
+  safeCount++;
+
+  // ================= ECONOMY =================
+  const HOUSE_EDGE = 0.03;
+
+  // multiplier scaling (controlled growth)
+  const base = 1 + safeCount * (mineCount * 0.32);
+
+  // apply house edge
+  currentMultiplier = +(base * (1 - HOUSE_EDGE)).toFixed(2);
+
+  // hard cap (anti exploit)
+  if (currentMultiplier > 25) {
+    currentMultiplier = 25;
+  }
+
+  // ================= UI =================
+  btn.textContent = "💎";
+  btn.classList.add("revealed-safe");
+
+  if (multiEl) {
+    multiEl.textContent = `${currentMultiplier.toFixed(2)}x`;
+  }
+
+  if (statusEl) {
+    statusEl.textContent = `${safeCount} safe picks • ${currentMultiplier.toFixed(2)}x`;
+  }
+ }
 
       return {
         mount({ body, controls, multi }) {
