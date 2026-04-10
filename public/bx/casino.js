@@ -1215,23 +1215,17 @@
               if (statusEl) statusEl.textContent = "Mine exploded";
               revealAll();
 
-              finishRound({ win, payout = 0, multiplier = 1, meta = {} }) {
+        finishRound({ win, payout = 0, multiplier = 1, meta = {} }) {
   const game = this.state.currentGame;
   const bet = Number(this.state.betAmount || 0);
   const stage = $("#casinoGameStage", this.gameView);
   const multiEl = $("#gameMultiplierDisplay", this.gameView);
 
-  const HOUSE_EDGE = 0.23;
+  const HOUSE_EDGE = 0.03;
   const MIN_BET = 0.1;
   const MAX_MULTIPLIER = 50;
 
-  // ================= VALIDATION =================
-  if (bet < MIN_BET) {
-    this.state.isPlaying = false;
-    return toast(`Minimum bet is ${MIN_BET} BX`);
-  }
-
-  // ================= STATE =================
+  // ================= SAFETY =================
   this.state.isPlaying = false;
   this.state.isCashedOut = true;
 
@@ -1241,11 +1235,21 @@
     cashout: false
   });
 
+  // ================= VALIDATION =================
+  if (!bet || bet < MIN_BET) {
+    this.updateLiveState("Invalid Bet");
+    return toast(`Minimum bet is ${MIN_BET} BX`);
+  }
+
   // ================= ECONOMY =================
 
   // cap multiplier (anti exploit)
   if (multiplier > MAX_MULTIPLIER) {
     multiplier = MAX_MULTIPLIER;
+  }
+
+  // normalize payout
+  if (win && payout <= 0) {
     payout = bet * multiplier;
   }
 
@@ -1255,16 +1259,18 @@
     this.credit(payout);
   }
 
+  // ================= STATE =================
   this.updateLiveState(win ? "Win" : "Loss");
 
-  // ================= HISTORY =================
+  const profit = payout - bet;
+
   const entry = {
     id: uid(),
     game: game?.name || "Unknown",
     gameId: game?.id || "unknown",
     bet,
     payout,
-    profit: payout - bet,
+    profit,
     multiplier,
     ts: Date.now(),
     ...meta
@@ -1272,25 +1278,27 @@
 
   this.state.history.unshift(entry);
 
-  if (entry.profit >= bet * 1.5) {
+  // big wins
+  if (profit >= bet * 1.5) {
     this.state.bigWins.unshift({
       user: this.fakeName(),
       game: game?.name || "Game",
-      amount: entry.profit,
+      amount: profit,
       multi: multiplier
     });
   }
 
   this.state.bigWins = this.state.bigWins.slice(0, 30);
+
   this.saveState();
   this.syncWalletUI();
 
   // ================= UI =================
-  if (multiEl && multiplier && multiplier > 0) {
+  if (multiEl && multiplier > 0) {
     animateNumber({
       from: 1,
       to: multiplier,
-      duration: 480,
+      duration: 400,
       onUpdate: (v) => {
         multiEl.textContent = `${v.toFixed(2)}x`;
       }
@@ -1299,8 +1307,8 @@
 
   if (win) {
     flashStage(stage, "win");
-    createFloatingText(stage, `+${formatMoney(entry.profit)} BX`, "win");
-    toast(`Won ${formatMoney(entry.profit)} BX`);
+    createFloatingText(stage, `+${formatMoney(profit)} BX`, "win");
+    toast(`Won ${formatMoney(profit)} BX`);
   } else {
     flashStage(stage, "loss");
     createFloatingText(stage, `-${formatMoney(bet)} BX`, "loss");
@@ -1309,8 +1317,8 @@
   }
 
   this.renderPlayers();
-}
-
+}      
+    
       return {
         mount({ body, controls, multi }) {
           multiEl = multi;
