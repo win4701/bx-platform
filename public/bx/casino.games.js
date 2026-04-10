@@ -1,1121 +1,701 @@
 /* =========================================================
-   BLOXIO — CASINO.GAMES.JS MASTER
-   12 Game Engines (Mounted inside Casino Shell)
+   CASINO PRO CORE V3 — PART 1 (UPGRADED SAFE)
+   BX ONLY • STABLE • NO BREAK
 ========================================================= */
 
 (function () {
-  "use strict";
+"use strict";
 
-  const $ = (id) => document.getElementById(id);
+/* =========================================================
+CONFIG
+========================================================= */
 
-  const rand = (min, max) => Math.random() * (max - min) + min;
-  const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
-  const clamp = (n, min, max) => Math.min(max, Math.max(min, n));
+const BX = {
+  SYMBOL: "BX",
+  RATE: 45,
+  MIN_BET: 0.01,
+  MAX_BET: 1000,
+  MAX_BET_PERCENT: 0.35,
+  TRIAL_START: 1
+};
 
-  /* =========================================================
-     ENGINE REGISTRY
-  ========================================================= */
-  const CasinoGames = {
-    currentEngine: null,
+/* =========================================================
+STATE
+========================================================= */
 
-    engines: {},
+const STATE = {
+  wallet: {
+    real: 0,
+    trial: 0,
+    total: 0
+  },
 
-    mount(gameKey) {
-      const engine = this.engines[gameKey];
-      if (!engine) return false;
+  bet: 0.1,
+  currentGame: null,
 
-      this.destroyCurrent();
+  stats: {
+    played: 0,
+    won: 0,
+    lost: 0,
+    profit: 0,
+    wagered: 0
+  }
+};
 
-      this.currentEngine = engine;
-      engine.mount?.();
+/* =========================================================
+INIT
+========================================================= */
 
-      return true;
-    },
+function initWallet() {
+  if (!localStorage.getItem("bx_trial_given")) {
+    STATE.wallet.trial = BX.TRIAL_START;
+    localStorage.setItem("bx_trial_given", "1");
+  }
+  recalc();
+}
 
-    destroyCurrent() {
-      try {
-        this.currentEngine?.destroy?.();
-      } catch (err) {
-        console.warn("Destroy engine failed:", err);
-      }
-      this.currentEngine = null;
-    },
+/* =========================================================
+UTILS
+========================================================= */
 
-    play() {
-      return this.currentEngine?.play?.();
-    },
+function clamp(v, min, max) {
+  return Math.max(min, Math.min(max, v));
+}
 
-    stop() {
-      return this.currentEngine?.stop?.();
-    },
+function toNum(v) {
+  return Number(v || 0);
+}
 
-    cashout() {
-      return this.currentEngine?.cashout?.();
-    }
+function round(n) {
+  return +Number(n).toFixed(8);
+}
+
+/* =========================================================
+WALLET ENGINE
+========================================================= */
+
+function recalc() {
+  STATE.wallet.real = Math.max(0, toNum(STATE.wallet.real));
+  STATE.wallet.trial = Math.max(0, toNum(STATE.wallet.trial));
+  STATE.wallet.total = round(STATE.wallet.real + STATE.wallet.trial);
+}
+
+function getBalance() {
+  recalc();
+  return STATE.wallet.total;
+}
+
+function hasEnough(amount) {
+  return getBalance() >= amount;
+}
+
+function canBet(amount) {
+  amount = toNum(amount);
+
+  if (amount <= 0) return false;
+  if (amount < BX.MIN_BET) return false;
+  if (amount > BX.MAX_BET) return false;
+
+  if (!hasEnough(amount)) return false;
+
+  const maxAllowed = getBalance() * BX.MAX_BET_PERCENT;
+  if (amount > maxAllowed && getBalance() > 2) return false;
+
+  return true;
+}
+
+function getStakeType(amount) {
+  return STATE.wallet.trial >= amount ? "trial" : "real";
+}
+
+function debit(amount) {
+  amount = toNum(amount);
+  if (!hasEnough(amount)) return false;
+
+  if (STATE.wallet.trial >= amount) {
+    STATE.wallet.trial -= amount;
+  } else {
+    const rest = amount - STATE.wallet.trial;
+    STATE.wallet.trial = 0;
+    STATE.wallet.real -= rest;
+  }
+
+  recalc();
+  save();
+  return true;
+}
+
+function credit(amount, type = "real") {
+  amount = toNum(amount);
+  if (amount <= 0) return;
+
+  if (type === "trial") {
+    STATE.wallet.trial += amount;
+  } else {
+    STATE.wallet.real += amount;
+  }
+
+  recalc();
+  save();
+}
+
+/* =========================================================
+STATS ENGINE
+========================================================= */
+
+function updateStats(result) {
+  STATE.stats.played++;
+
+  STATE.stats.wagered += result.bet || 0;
+  STATE.stats.profit += result.profit || 0;
+
+  if (result.won) STATE.stats.won++;
+  else STATE.stats.lost++;
+}
+
+/* =========================================================
+PERSISTENCE
+========================================================= */
+
+function save() {
+  try {
+    localStorage.setItem("casino_v3_state", JSON.stringify(STATE));
+  } catch (e) {}
+}
+
+function load() {
+  try {
+    const raw = localStorage.getItem("casino_v3_state");
+    if (!raw) return;
+
+    const parsed = JSON.parse(raw);
+
+    Object.assign(STATE, parsed);
+    recalc();
+  } catch (e) {}
+}
+
+/* =========================================================
+PUBLIC API
+========================================================= */
+
+window.CASINO_CORE = {
+
+  init() {
+    load();
+    initWallet();
+    recalc();
+  },
+
+  getState: () => STATE,
+
+  getBalance,
+
+  canBet,
+
+  debit,
+
+  credit,
+
+  getStakeType,
+
+  updateStats
+};
+
+})();
+/* =========================================================
+   CASINO PRO V3 — PART 2 FINAL ENGINE
+   12 GAMES • RTP • HOUSE EDGE • PRO READY
+========================================================= */
+
+(function () {
+"use strict";
+
+/* =========================================================
+RTP SYSTEM
+========================================================= */
+
+const RTP = {
+  crash: 0.96,
+  dice: 0.98,
+  limbo: 0.96,
+  hilo: 0.95,
+  plinko: 0.94,
+  mines: 0.93,
+  coinflip: 0.97,
+  wheel: 0.95,
+  keno: 0.92,
+  tower: 0.94,
+  blackjack: 0.97,
+  slots: 0.91
+};
+
+/* =========================================================
+HELPERS
+========================================================= */
+
+function rand() {
+  return Math.random();
+}
+
+function clamp(v, min, max) {
+  return Math.max(min, Math.min(max, v));
+}
+
+function round(n) {
+  return +Number(n).toFixed(8);
+}
+
+function edge(m, game) {
+  return m * (RTP[game] || 0.95);
+}
+
+/* =========================================================
+ALGORITHMS (12 GAMES)
+========================================================= */
+
+/* CRASH */
+function crash(target) {
+  let r = rand();
+  let m;
+
+  if (r < 0.5) m = 1 + rand() * 0.5;
+  else if (r < 0.8) m = 1.5 + rand() * 2;
+  else if (r < 0.95) m = 3 + rand() * 5;
+  else m = 10 + rand() * 40;
+
+  m = edge(m, "crash");
+
+  return {
+    multiplier: round(m),
+    won: m >= target
+  };
+}
+
+/* DICE */
+function dice(chance) {
+  chance = clamp(chance, 1, 95);
+  let roll = rand() * 100;
+  let payout = edge(99 / chance, "dice");
+
+  return {
+    rolled: round(roll),
+    multiplier: round(payout),
+    won: roll <= chance
+  };
+}
+
+/* LIMBO */
+function limbo(target) {
+  let m = 1 + Math.pow(rand() * 10, 1.2);
+  m = edge(m, "limbo");
+
+  return {
+    multiplier: round(m),
+    won: m >= target
+  };
+}
+
+/* HILO */
+function hilo(pick) {
+  let a = Math.floor(rand() * 13) + 1;
+  let b = Math.floor(rand() * 13) + 1;
+
+  let win =
+    (pick === "higher" && b > a) ||
+    (pick === "lower" && b < a);
+
+  let m = edge(1.7, "hilo");
+
+  return {
+    current: a,
+    next: b,
+    multiplier: round(m),
+    won: win
+  };
+}
+
+/* PLINKO */
+function plinko(risk) {
+  const map = {
+    low: [0.5, 0.8, 1, 1.2, 1.5],
+    medium: [0.3, 0.6, 1, 2, 3],
+    high: [0.2, 0.5, 1, 3, 6]
   };
 
-  /* =========================================================
-     SHARED HELPERS
-  ========================================================= */
-  const Shared = {
-    stage(html) {
-      const el = $("casinoGameStage");
-      if (el) el.innerHTML = html;
-    },
+  let pool = map[risk] || map.medium;
+  let m = pool[Math.floor(rand() * pool.length)];
 
-    controls(html) {
-      const el = $("casinoGameControls");
-      if (el) el.innerHTML = html;
-    },
+  m = edge(m, "plinko");
 
-    setStatus(title, meta = "") {
-      window.CasinoUI?.setRoundStatus?.(title, meta);
-      window.CasinoUI?.syncControls?.();
-    },
-
-    toast(msg, type = "info") {
-      window.CasinoUI?.showToast?.(msg, type);
-    },
-
-    getBet() {
-      return Number($("casinoBetAmount")?.value || 0);
-    },
-
-    finish(game, bet, payout, won, result) {
-      window.CasinoCore?.finishRound?.({
-        game,
-        bet,
-        payout,
-        won,
-        result
-      });
-
-      window.CasinoUI?.fullSync?.();
-    },
-
-    payout(amount, reason) {
-      return window.CasinoCore?.payout?.(amount, reason);
-    },
-
-    setCashout(enabled) {
-      if (!window.CasinoState) return;
-      window.CasinoState.canCashout = !!enabled;
-      window.CasinoUI?.syncControls?.();
-    },
-
-    setPlaying(enabled) {
-      if (!window.CasinoState) return;
-      window.CasinoState.isPlaying = !!enabled;
-      window.CasinoUI?.syncControls?.();
-    },
-
-    clearTimers(engine) {
-      if (!engine) return;
-      if (engine._timer) clearTimeout(engine._timer);
-      if (engine._interval) clearInterval(engine._interval);
-      engine._timer = null;
-      engine._interval = null;
-    }
+  return {
+    multiplier: round(m),
+    won: m >= 1
   };
+}
 
-  /* =========================================================
-     1) COINFLIP
-  ========================================================= */
-  CasinoGames.engines.coinflip = {
-    choice: "heads",
+/* MINES */
+function mines(count) {
+  count = clamp(count, 1, 10);
 
-    mount() {
-      Shared.stage(`
-        <div class="engine engine-coinflip">
-          <div class="coinflip-coin" id="coinflipCoin">🪙</div>
-          <div class="coinflip-result" id="coinflipResult">Choose your side</div>
-        </div>
-      `);
+  let safeChance = 1 - (count / 25);
+  let safe = rand() < safeChance;
 
-      Shared.controls(`
-        <div class="casino-dynamic-control">
-          <label>Pick Side</label>
-          <div class="choice-row">
-            <button type="button" class="choice-btn active" data-cf="heads">Heads</button>
-            <button type="button" class="choice-btn" data-cf="tails">Tails</button>
-          </div>
-        </div>
-      `);
+  let m = edge(1 + count * 0.2, "mines");
 
-      document.querySelectorAll("[data-cf]").forEach(btn => {
-        btn.onclick = () => {
-          this.choice = btn.dataset.cf;
-          document.querySelectorAll("[data-cf]").forEach(b => b.classList.remove("active"));
-          btn.classList.add("active");
-        };
-      });
-
-      Shared.setStatus("Ready", "Coinflip ready");
-    },
-
-    play() {
-      const bet = Shared.getBet();
-      const coin = $("coinflipCoin");
-      const resultEl = $("coinflipResult");
-
-      if (!coin || !resultEl) return;
-
-      Shared.setPlaying(true);
-      resultEl.textContent = "Flipping...";
-      coin.classList.add("spinning");
-
-      this._timer = setTimeout(() => {
-        const result = Math.random() > 0.5 ? "heads" : "tails";
-        const won = result === this.choice;
-        const payout = won ? bet * 1.96 : 0;
-
-        coin.classList.remove("spinning");
-        resultEl.textContent = `Result: ${result.toUpperCase()}`;
-
-        if (won) Shared.payout(payout, "casino:coinflip:win");
-        Shared.finish("coinflip", bet, payout, won, result);
-        Shared.setStatus(won ? "Win" : "Loss", won ? `+${payout.toFixed(2)} BX` : "Better luck next flip");
-      }, window.CasinoState?.isTurbo ? 450 : 1200);
-    },
-
-    stop() {
-      Shared.clearTimers(this);
-      Shared.setPlaying(false);
-      Shared.setStatus("Stopped", "Coinflip interrupted");
-    },
-
-    destroy() {
-      Shared.clearTimers(this);
-    }
+  return {
+    multiplier: safe ? round(m) : 0,
+    won: safe
   };
+}
 
-  /* =========================================================
-     2) LIMBO
-  ========================================================= */
-  CasinoGames.engines.limbo = {
-    target: 2.00,
+/* COINFLIP */
+function coinflip(pick) {
+  let flip = rand() > 0.5 ? "heads" : "tails";
+  let win = flip === pick;
 
-    mount() {
-      Shared.stage(`
-        <div class="engine engine-limbo">
-          <div class="limbo-target-display" id="limboRoll">1.00×</div>
-          <div class="limbo-sub">Hit above your target multiplier</div>
-        </div>
-      `);
+  let m = edge(2, "coinflip");
 
-      Shared.controls(`
-        <div class="casino-dynamic-control">
-          <label for="limboTarget">Target Multiplier</label>
-          <input id="limboTarget" type="number" min="1.01" step="0.01" value="2.00">
-        </div>
-      `);
-
-      $("limboTarget")?.addEventListener("input", (e) => {
-        this.target = Math.max(1.01, Number(e.target.value || 2));
-      });
-
-      Shared.setStatus("Ready", "Set your limbo target");
-    },
-
-    play() {
-      const bet = Shared.getBet();
-      const display = $("limboRoll");
-      if (!display) return;
-
-      this.target = Math.max(1.01, Number($("limboTarget")?.value || 2));
-
-      Shared.setPlaying(true);
-      display.textContent = "Rolling...";
-
-      this._timer = setTimeout(() => {
-        const roll = Number(rand(1.00, 10.00).toFixed(2));
-        const won = roll >= this.target;
-        const payout = won ? bet * this.target * 0.99 : 0;
-
-        display.textContent = `${roll.toFixed(2)}×`;
-
-        if (won) Shared.payout(payout, "casino:limbo:win");
-        Shared.finish("limbo", bet, payout, won, roll);
-        Shared.setStatus(won ? "Win" : "Loss", won ? `Hit ${roll.toFixed(2)}×` : `Missed target ${this.target.toFixed(2)}×`);
-      }, window.CasinoState?.isTurbo ? 350 : 950);
-    },
-
-    stop() {
-      Shared.clearTimers(this);
-      Shared.setPlaying(false);
-      Shared.setStatus("Stopped", "Limbo interrupted");
-    },
-
-    destroy() {
-      Shared.clearTimers(this);
-    }
+  return {
+    flip,
+    multiplier: round(m),
+    won: win
   };
+}
 
-  /* =========================================================
-     3) DICE
-  ========================================================= */
-  CasinoGames.engines.dice = {
-    mode: "under",
-    target: 50,
+/* WHEEL */
+function wheel(choice) {
+  const sectors = [2, 3, 5, 10];
+  let spin = sectors[Math.floor(rand() * sectors.length)];
+  let win = spin === choice;
 
-    mount() {
-      Shared.stage(`
-        <div class="engine engine-dice">
-          <div class="dice-roll-display" id="diceRollValue">00.00</div>
-          <div class="dice-bar">
-            <div class="dice-hit-zone" id="diceHitZone"></div>
-          </div>
-        </div>
-      `);
+  let m = edge(choice, "wheel");
 
-      Shared.controls(`
-        <div class="casino-dynamic-control">
-          <label for="diceTarget">Target</label>
-          <input id="diceTarget" type="range" min="2" max="98" step="1" value="50">
-          <div class="dice-config-row">
-            <span id="diceTargetLabel">50</span>
-            <div class="choice-row">
-              <button type="button" class="choice-btn active" data-dice-mode="under">Under</button>
-              <button type="button" class="choice-btn" data-dice-mode="over">Over</button>
-            </div>
-          </div>
-        </div>
-      `);
-
-      const syncTarget = () => {
-        this.target = Number($("diceTarget")?.value || 50);
-        $("diceTargetLabel") && ($("diceTargetLabel").textContent = this.target);
-        const zone = $("diceHitZone");
-        if (zone) zone.style.width = `${this.target}%`;
-      };
-
-      $("diceTarget")?.addEventListener("input", syncTarget);
-      syncTarget();
-
-      document.querySelectorAll("[data-dice-mode]").forEach(btn => {
-        btn.onclick = () => {
-          this.mode = btn.dataset.diceMode;
-          document.querySelectorAll("[data-dice-mode]").forEach(b => b.classList.remove("active"));
-          btn.classList.add("active");
-        };
-      });
-
-      Shared.setStatus("Ready", "Dice configured");
-    },
-
-    play() {
-      const bet = Shared.getBet();
-      const valueEl = $("diceRollValue");
-      if (!valueEl) return;
-
-      Shared.setPlaying(true);
-      valueEl.textContent = "??.??";
-
-      this._timer = setTimeout(() => {
-        const roll = Number(rand(0, 100).toFixed(2));
-        const chance = this.mode === "under" ? this.target : (100 - this.target);
-        const payoutMulti = clamp(99 / Math.max(1, chance), 1.01, 49.5);
-        const won = this.mode === "under" ? roll < this.target : roll > this.target;
-        const payout = won ? bet * payoutMulti : 0;
-
-        valueEl.textContent = roll.toFixed(2);
-
-        if (won) Shared.payout(payout, "casino:dice:win");
-        Shared.finish("dice", bet, payout, won, roll);
-        Shared.setStatus(won ? "Win" : "Loss", won ? `Rolled ${roll}` : `Rolled ${roll}`);
-      }, window.CasinoState?.isTurbo ? 300 : 900);
-    },
-
-    stop() {
-      Shared.clearTimers(this);
-      Shared.setPlaying(false);
-      Shared.setStatus("Stopped", "Dice interrupted");
-    },
-
-    destroy() {
-      Shared.clearTimers(this);
-    }
+  return {
+    result: spin,
+    multiplier: round(m),
+    won: win
   };
-
-  /* =========================================================
-     4) CRASH
-  ========================================================= */
-  CasinoGames.engines.crash = {
-    multiplier: 1.00,
-    crashPoint: 2.50,
-    cashedOut: false,
-
-    mount() {
-      Shared.stage(`
-        <div class="engine engine-crash">
-          <div class="crash-multiplier" id="crashMultiplier">1.00×</div>
-          <div class="crash-graph">
-            <div class="crash-line" id="crashLine"></div>
-          </div>
-        </div>
-      `);
-
-      Shared.controls(`
-        <div class="casino-dynamic-control">
-          <label for="crashAutoCashout">Auto Cashout</label>
-          <input id="crashAutoCashout" type="number" min="1.01" step="0.01" value="2.00">
-        </div>
-      `);
-
-      Shared.setStatus("Ready", "Crash ready");
-    },
-
-    play() {
-      const bet = Shared.getBet();
-      const display = $("crashMultiplier");
-      const line = $("crashLine");
-      if (!display || !line) return;
-
-      this.multiplier = 1.00;
-      this.crashPoint = Number(rand(1.20, 8.00).toFixed(2));
-      this.cashedOut = false;
-
-      Shared.setPlaying(true);
-      Shared.setCashout(true);
-      Shared.setStatus("Flying", "Cash out before the crash");
-
-      const autoCash = Math.max(1.01, Number($("crashAutoCashout")?.value || 2));
-
-      this._interval = setInterval(() => {
-        this.multiplier = Number((this.multiplier + (window.CasinoState?.isTurbo ? 0.14 : 0.07)).toFixed(2));
-        display.textContent = `${this.multiplier.toFixed(2)}×`;
-        line.style.width = `${Math.min(100, this.multiplier * 10)}%`;
-
-        if (!this.cashedOut && this.multiplier >= autoCash && window.CasinoState?.isAuto) {
-          this.cashout();
-          return;
-        }
-
-        if (this.multiplier >= this.crashPoint) {
-          clearInterval(this._interval);
-          Shared.setCashout(false);
-          Shared.setPlaying(false);
-
-          if (!this.cashedOut) {
-            Shared.finish("crash", bet, 0, false, this.crashPoint);
-            Shared.setStatus("Crashed", `Crashed at ${this.crashPoint.toFixed(2)}×`);
-          }
-        }
-      }, window.CasinoState?.isTurbo ? 90 : 180);
-    },
-
-    cashout() {
-      if (this.cashedOut || !window.CasinoState?.isPlaying) return;
-
-      const bet = Shared.getBet();
-      const payout = bet * this.multiplier;
-
-      this.cashedOut = true;
-      Shared.payout(payout, "casino:crash:cashout");
-      Shared.finish("crash", bet, payout, true, this.multiplier);
-      Shared.setCashout(false);
-      Shared.setPlaying(false);
-      Shared.setStatus("Cashed Out", `${this.multiplier.toFixed(2)}×`);
-      Shared.toast(`Crash cashout at ${this.multiplier.toFixed(2)}×`, "success");
-
-      clearInterval(this._interval);
-    },
-
-    stop() {
-      Shared.clearTimers(this);
-      Shared.setCashout(false);
-      Shared.setPlaying(false);
-      Shared.setStatus("Stopped", "Crash stopped");
-    },
-
-    destroy() {
-      Shared.clearTimers(this);
-    }
-  };
-
-  /* =========================================================
-     5) PLINKO
-  ========================================================= */
-  CasinoGames.engines.plinko = {
-    risk: "medium",
-
-    mount() {
-      Shared.stage(`
-        <div class="engine engine-plinko">
-          <div class="plinko-board" id="plinkoBoard">
-            ${Array.from({ length: 42 }).map(() => `<span class="plinko-peg"></span>`).join("")}
-          </div>
-          <div class="plinko-slot-result" id="plinkoSlotResult">Drop the ball</div>
-        </div>
-      `);
-
-      Shared.controls(`
-        <div class="casino-dynamic-control">
-          <label>Risk</label>
-          <div class="choice-row">
-            <button type="button" class="choice-btn" data-plinko-risk="low">Low</button>
-            <button type="button" class="choice-btn active" data-plinko-risk="medium">Medium</button>
-            <button type="button" class="choice-btn" data-plinko-risk="high">High</button>
-          </div>
-        </div>
-      `);
-
-      document.querySelectorAll("[data-plinko-risk]").forEach(btn => {
-        btn.onclick = () => {
-          this.risk = btn.dataset.plinkoRisk;
-          document.querySelectorAll("[data-plinko-risk]").forEach(b => b.classList.remove("active"));
-          btn.classList.add("active");
-        };
-      });
-
-      Shared.setStatus("Ready", "Plinko board loaded");
-    },
-
-    play() {
-      const bet = Shared.getBet();
-      const out = $("plinkoSlotResult");
-      if (!out) return;
-
-      Shared.setPlaying(true);
-      out.textContent = "Dropping...";
-
-      this._timer = setTimeout(() => {
-        const map = {
-          low: [0.5, 0.8, 1.0, 1.2, 1.5],
-          medium: [0.3, 0.6, 1.0, 1.8, 3.0],
-          high: [0.2, 0.5, 1.0, 2.5, 5.0]
-        };
-
-        const multi = pick(map[this.risk] || map.medium);
-        const won = multi >= 1;
-        const payout = bet * multi;
-
-        out.textContent = `${multi.toFixed(2)}×`;
-
-        if (payout > 0) Shared.payout(payout, "casino:plinko:win");
-        Shared.finish("plinko", bet, payout, won, multi);
-        Shared.setStatus(won ? "Win" : "Loss", `${multi.toFixed(2)}×`);
-      }, window.CasinoState?.isTurbo ? 500 : 1300);
-    },
-
-    stop() {
-      Shared.clearTimers(this);
-      Shared.setPlaying(false);
-      Shared.setStatus("Stopped", "Plinko interrupted");
-    },
-
-    destroy() {
-      Shared.clearTimers(this);
-    }
-  };
-
-  /* =========================================================
-     6) BLACKJACK
-  ========================================================= */
-  CasinoGames.engines.blackjack = {
-    deck: [],
-    player: [],
-    dealer: [],
-    bet: 0,
-
-    mount() {
-      Shared.stage(`
-        <div class="engine engine-blackjack">
-          <div class="bj-row">
-            <div class="bj-hand">
-              <label>Dealer</label>
-              <div class="bj-cards" id="bjDealer"></div>
-              <div class="bj-score" id="bjDealerScore">0</div>
-            </div>
-          </div>
-          <div class="bj-row">
-            <div class="bj-hand">
-              <label>Player</label>
-              <div class="bj-cards" id="bjPlayer"></div>
-              <div class="bj-score" id="bjPlayerScore">0</div>
-            </div>
-          </div>
-        </div>
-      `);
-
-      Shared.controls(`
-        <div class="casino-dynamic-control">
-          <label>Blackjack Actions</label>
-          <div class="choice-row">
-            <button type="button" class="choice-btn" id="bjHitBtn">Hit</button>
-            <button type="button" class="choice-btn" id="bjStandBtn">Stand</button>
-          </div>
-        </div>
-      `);
-
-      $("bjHitBtn")?.addEventListener("click", () => this.hit());
-      $("bjStandBtn")?.addEventListener("click", () => this.stand());
-
-      Shared.setStatus("Ready", "Start a blackjack hand");
-    },
-
-    buildDeck() {
-      const vals = ["A","2","3","4","5","6","7","8","9","10","J","Q","K"];
-      this.deck = [];
-      for (let i = 0; i < 4; i++) this.deck.push(...vals);
-      this.deck.sort(() => Math.random() - 0.5);
-    },
-
-    draw() {
-      return this.deck.pop();
-    },
-
-    score(hand) {
-      let total = 0;
-      let aces = 0;
-
-      hand.forEach(c => {
-        if (["J","Q","K"].includes(c)) total += 10;
-        else if (c === "A") {
-          total += 11;
-          aces += 1;
-        } else {
-          total += Number(c);
-        }
-      });
-
-      while (total > 21 && aces > 0) {
-        total -= 10;
-        aces--;
-      }
-
-      return total;
-    },
-
-    renderHands(revealDealer = false) {
-      const dealerEl = $("bjDealer");
-      const playerEl = $("bjPlayer");
-      const dealerScore = $("bjDealerScore");
-      const playerScore = $("bjPlayerScore");
-
-      if (dealerEl) {
-        dealerEl.innerHTML = this.dealer.map((c, i) => `
-          <span class="bj-card">${!revealDealer && i === 1 ? "?" : c}</span>
-        `).join("");
-      }
-
-      if (playerEl) {
-        playerEl.innerHTML = this.player.map(c => `<span class="bj-card">${c}</span>`).join("");
-      }
-
-      if (dealerScore) dealerScore.textContent = revealDealer ? this.score(this.dealer) : "?";
-      if (playerScore) playerScore.textContent = this.score(this.player);
-    },
-
-    play() {
-      this.bet = Shared.getBet();
-      this.buildDeck();
-      this.player = [this.draw(), this.draw()];
-      this.dealer = [this.draw(), this.draw()];
-
-      Shared.setPlaying(true);
-      this.renderHands(false);
-      Shared.setStatus("Your Turn", "Hit or Stand");
-
-      if (this.score(this.player) === 21) {
-        this.stand();
-      }
-    },
-
-    hit() {
-      if (!window.CasinoState?.isPlaying) return;
-
-      this.player.push(this.draw());
-      this.renderHands(false);
-
-      if (this.score(this.player) > 21) {
-        Shared.setPlaying(false);
-        Shared.finish("blackjack", this.bet, 0, false, "bust");
-        Shared.setStatus("Bust", "Player busted");
-      }
-    },
-
-    stand() {
-      if (!window.CasinoState?.isPlaying) return;
-
-      while (this.score(this.dealer) < 17) {
-        this.dealer.push(this.draw());
-      }
-
-      this.renderHands(true);
-
-      const p = this.score(this.player);
-      const d = this.score(this.dealer);
-
-      let payout = 0;
-      let won = false;
-      let result = "lose";
-
-      if (d > 21 || p > d) {
-        payout = this.bet * 2;
-        won = true;
-        result = "win";
-      } else if (p === d) {
-        payout = this.bet;
-        won = true;
-        result = "push";
-      }
-
-      if (payout > 0) Shared.payout(payout, "casino:blackjack:win");
-
-      Shared.setPlaying(false);
-      Shared.finish("blackjack", this.bet, payout, won, result);
-      Shared.setStatus(won ? "Win" : "Loss", result.toUpperCase());
-    },
-
-    stop() {
-      Shared.clearTimers(this);
-      Shared.setPlaying(false);
-      Shared.setStatus("Stopped", "Blackjack ended");
-    },
-
-    destroy() {
-      Shared.clearTimers(this);
-    }
-  };
-
-  /* =========================================================
-     7) HILO
-  ========================================================= */
-  CasinoGames.engines.hilo = {
-    current: null,
-    bet: 0,
-
-    mount() {
-      Shared.stage(`
-        <div class="engine engine-hilo">
-          <div class="hilo-card" id="hiloCard">?</div>
-          <div class="hilo-multi" id="hiloMulti">1.00×</div>
-        </div>
-      `);
-
-      Shared.controls(`
-        <div class="casino-dynamic-control">
-          <label>Guess Next Card</label>
-          <div class="choice-row">
-            <button type="button" class="choice-btn" id="hiloHighBtn">Higher</button>
-            <button type="button" class="choice-btn" id="hiloLowBtn">Lower</button>
-          </div>
-        </div>
-      `);
-
-      $("hiloHighBtn")?.addEventListener("click", () => this.guess("high"));
-      $("hiloLowBtn")?.addEventListener("click", () => this.guess("low"));
-
-      Shared.setStatus("Ready", "Start HiLo");
-    },
-
-    play() {
-      this.bet = Shared.getBet();
-      this.current = Math.floor(rand(2, 14));
-      $("hiloCard") && ($("hiloCard").textContent = this.current);
-      $("hiloMulti") && ($("hiloMulti").textContent = "1.50×");
-      Shared.setPlaying(true);
-      Shared.setStatus("Guess", "Higher or Lower");
-    },
-
-    guess(side) {
-      if (!window.CasinoState?.isPlaying) return;
-
-      const next = Math.floor(rand(2, 14));
-      const won = side === "high" ? next > this.current : next < this.current;
-      const payout = won ? this.bet * 1.5 : 0;
-
-      $("hiloCard") && ($("hiloCard").textContent = next);
-
-      if (won) Shared.payout(payout, "casino:hilo:win");
-
-      Shared.setPlaying(false);
-      Shared.finish("hilo", this.bet, payout, won, next);
-      Shared.setStatus(won ? "Win" : "Loss", `Next card: ${next}`);
-    },
-
-    stop() {
-      Shared.clearTimers(this);
-      Shared.setPlaying(false);
-      Shared.setStatus("Stopped", "HiLo ended");
-    },
-
-    destroy() {
-      Shared.clearTimers(this);
-    }
-  };
-
-  /* =========================================================
-     8) BIRDSPARTY
-  ========================================================= */
-  CasinoGames.engines.birdsparty = {
-    mountedBirds: 0,
-
-    mount() {
-      Shared.stage(`
-        <div class="engine engine-birdsparty">
-          <div class="birds-sky" id="birdsSky">
-            ${Array.from({ length: 8 }).map((_, i) => `<span class="bird bird-${i + 1}">🐦</span>`).join("")}
-          </div>
-          <div class="birds-score" id="birdsScore">Waiting for birds...</div>
-        </div>
-      `);
-
-      Shared.controls(`
-        <div class="casino-dynamic-control">
-          <label>Party Mode</label>
-          <select id="birdsMode">
-            <option value="normal">Normal</option>
-            <option value="wild">Wild</option>
-          </select>
-        </div>
-      `);
-
-      Shared.setStatus("Ready", "BirdsParty loaded");
-    },
-
-    play() {
-      const bet = Shared.getBet();
-      const out = $("birdsScore");
-      Shared.setPlaying(true);
-
-      this._timer = setTimeout(() => {
-        const mode = $("birdsMode")?.value || "normal";
-        const multi = mode === "wild" ? pick([0, 0.5, 2, 4, 8]) : pick([0.2, 0.8, 1.2, 2.5, 5]);
-        const payout = bet * multi;
-        const won = multi >= 1;
-
-        if (payout > 0) Shared.payout(payout, "casino:birdsparty:win");
-        if (out) out.textContent = `${multi.toFixed(2)}× flock bonus`;
-
-        Shared.finish("birdsparty", bet, payout, won, multi);
-        Shared.setStatus(won ? "Win" : "Loss", `${multi.toFixed(2)}×`);
-      }, window.CasinoState?.isTurbo ? 500 : 1200);
-    },
-
-    stop() {
-      Shared.clearTimers(this);
-      Shared.setPlaying(false);
-      Shared.setStatus("Stopped", "BirdsParty interrupted");
-    },
-
-    destroy() {
-      Shared.clearTimers(this);
-    }
-  };
-
-  /* =========================================================
-     9) AIRBOSS
-  ========================================================= */
-  CasinoGames.engines.airboss = {
-    altitude: 1,
-    escapePoint: 4,
-    escaped: false,
-
-    mount() {
-      Shared.stage(`
-        <div class="engine engine-airboss">
-          <div class="airboss-plane" id="airbossPlane">✈️</div>
-          <div class="airboss-altitude" id="airbossAltitude">1.00×</div>
-        </div>
-      `);
-
-      Shared.controls(`
-        <div class="casino-dynamic-control">
-          <label for="airbossEscape">Auto Escape</label>
-          <input id="airbossEscape" type="number" min="1.01" step="0.01" value="2.00">
-        </div>
-      `);
-
-      Shared.setStatus("Ready", "AirBoss runway ready");
-    },
-
-    play() {
-      const bet = Shared.getBet();
-      const display = $("airbossAltitude");
-      this.altitude = 1;
-      this.escapePoint = Number(rand(1.2, 7).toFixed(2));
-      this.escaped = false;
-
-      Shared.setPlaying(true);
-      Shared.setCashout(true);
-      Shared.setStatus("Takeoff", "Escape before engine failure");
-
-      const autoEscape = Number($("airbossEscape")?.value || 2);
-
-      this._interval = setInterval(() => {
-        this.altitude = Number((this.altitude + 0.08).toFixed(2));
-        if (display) display.textContent = `${this.altitude.toFixed(2)}×`;
-
-        if (!this.escaped && window.CasinoState?.isAuto && this.altitude >= autoEscape) {
-          this.cashout();
-          return;
-        }
-
-        if (this.altitude >= this.escapePoint) {
-          clearInterval(this._interval);
-          Shared.setCashout(false);
-          Shared.setPlaying(false);
-
-          if (!this.escaped) {
-            Shared.finish("airboss", bet, 0, false, this.escapePoint);
-            Shared.setStatus("Crashed", `Failed at ${this.escapePoint.toFixed(2)}×`);
-          }
-        }
-      }, window.CasinoState?.isTurbo ? 80 : 170);
-    },
-
-    cashout() {
-      if (this.escaped || !window.CasinoState?.isPlaying) return;
-
-      const bet = Shared.getBet();
-      const payout = bet * this.altitude;
-
-      this.escaped = true;
-      Shared.payout(payout, "casino:airboss:cashout");
-      Shared.finish("airboss", bet, payout, true, this.altitude);
-      Shared.setCashout(false);
-      Shared.setPlaying(false);
-      Shared.setStatus("Escaped", `${this.altitude.toFixed(2)}×`);
-
-      clearInterval(this._interval);
-    },
-
-    stop() {
-      Shared.clearTimers(this);
-      Shared.setCashout(false);
-      Shared.setPlaying(false);
-      Shared.setStatus("Stopped", "AirBoss stopped");
-    },
-
-    destroy() {
-      Shared.clearTimers(this);
-    }
-  };
-
-  /* =========================================================
-     10) SLOT
-  ========================================================= */
-  CasinoGames.engines.slot = {
-    reels: ["🍒","🍋","⭐","7","💎","🍉"],
-
-    mount() {
-      Shared.stage(`
-        <div class="engine engine-slot">
-          <div class="slot-reels" id="slotReels">
-            <span class="slot-cell">?</span>
-            <span class="slot-cell">?</span>
-            <span class="slot-cell">?</span>
-          </div>
-          <div class="slot-status" id="slotStatus">Spin the reels</div>
-        </div>
-      `);
-
-      Shared.controls(`
-        <div class="casino-dynamic-control">
-          <label>Slot Mode</label>
-          <select id="slotMode">
-            <option value="normal">Normal</option>
-            <option value="boost">Boost</option>
-          </select>
-        </div>
-      `);
-
-      Shared.setStatus("Ready", "Slot ready");
-    },
-
-    play() {
-      const bet = Shared.getBet();
-      const wrap = $("slotReels");
-      const status = $("slotStatus");
-      if (!wrap || !status) return;
-
-      Shared.setPlaying(true);
-      status.textContent = "Spinning...";
-
-      this._timer = setTimeout(() => {
-        const mode = $("slotMode")?.value || "normal";
-        const r = [pick(this.reels), pick(this.reels), pick(this.reels)];
-
-        wrap.innerHTML = r.map(x => `<span class="slot-cell">${x}</span>`).join("");
-
-        let multi = 0;
-        if (r[0] === r[1] && r[1] === r[2]) multi = mode === "boost" ? 8 : 5;
-        else if (r[0] === r[1] || r[1] === r[2] || r[0] === r[2]) multi = 2;
-        else multi = 0;
-
-        const payout = bet * multi;
-        const won = multi > 0;
-
-        if (payout > 0) Shared.payout(payout, "casino:slot:win");
-        status.textContent = won ? `${multi.toFixed(2)}× WIN` : "No match";
-
-        Shared.finish("slot", bet, payout, won, r.join("-"));
-        Shared.setStatus(won ? "Win" : "Loss", won ? `${multi.toFixed(2)}× combo` : "No combo");
-      }, window.CasinoState?.isTurbo ? 450 : 1200);
-    },
-
-    stop() {
-      Shared.clearTimers(this);
-      Shared.setPlaying(false);
-      Shared.setStatus("Stopped", "Slot interrupted");
-    },
-
-    destroy() {
-      Shared.clearTimers(this);
-    }
-  };
-
-  /* =========================================================
-     11) FRUITPARTY
-  ========================================================= */
-  CasinoGames.engines.fruitparty = {
-    fruits: ["🍓","🍍","🍇","🍉","🍋","🥝"],
-
-    mount() {
-      Shared.stage(`
-        <div class="engine engine-fruitparty">
-          <div class="fruit-grid" id="fruitGrid">
-            ${Array.from({ length: 9 }).map(() => `<span class="fruit-cell">🍓</span>`).join("")}
-          </div>
-          <div class="fruit-result" id="fruitResult">Ready to party</div>
-        </div>
-      `);
-
-      Shared.controls(`
-        <div class="casino-dynamic-control">
-          <label>Cluster Bonus</label>
-          <select id="fruitMode">
-            <option value="normal">Normal</option>
-            <option value="party">Party</option>
-          </select>
-        </div>
-      `);
-
-      Shared.setStatus("Ready", "FruitParty ready");
-    },
-
-    play() {
-      const bet = Shared.getBet();
-      const grid = $("fruitGrid");
-      const result = $("fruitResult");
-      if (!grid || !result) return;
-
-      Shared.setPlaying(true);
-
-      this._timer = setTimeout(() => {
-        const mode = $("fruitMode")?.value || "normal";
-        const cells = Array.from({ length: 9 }).map(() => pick(this.fruits));
-        const counts = {};
-        cells.forEach(f => counts[f] = (counts[f] || 0) + 1);
-
-        const maxCluster = Math.max(...Object.values(counts));
-        let multi = maxCluster >= 5 ? (mode === "party" ? 6 : 4) : maxCluster >= 3 ? 1.8 : 0.2;
-
-        const payout = bet * multi;
-        const won = multi >= 1;
-
-        grid.innerHTML = cells.map(c => `<span class="fruit-cell">${c}</span>`).join("");
-        result.textContent = `Cluster: ${maxCluster}`;
-
-        if (payout > 0) Shared.payout(payout, "casino:fruitparty:win");
-        Shared.finish("fruitparty", bet, payout, won, maxCluster);
-        Shared.setStatus(won ? "Win" : "Loss", `${multi.toFixed(2)}×`);
-      }, window.CasinoState?.isTurbo ? 450 : 1100);
-    },
-
-    stop() {
-      Shared.clearTimers(this);
-      Shared.setPlaying(false);
-      Shared.setStatus("Stopped", "FruitParty interrupted");
-    },
-
-    destroy() {
-      Shared.clearTimers(this);
-    }
-  };
-
-  /* =========================================================
-     12) BANANAFARM
-  ========================================================= */
-  CasinoGames.engines.bananafarm = {
-    rows: 3,
-    cols: 3,
-
-    mount() {
-      Shared.stage(`
-        <div class="engine engine-bananafarm">
-          <div class="banana-grid" id="bananaGrid">
-            ${Array.from({ length: 9 }).map(() => `<span class="banana-cell">🌱</span>`).join("")}
-          </div>
-          <div class="banana-status" id="bananaStatus">Plant and harvest</div>
-        </div>
-      `);
-
-      Shared.controls(`
-        <div class="casino-dynamic-control">
-          <label>Farm Mode</label>
-          <select id="bananaMode">
-            <option value="safe">Safe</option>
-            <option value="wild">Wild</option>
-          </select>
-        </div>
-      `);
-
-      Shared.setStatus("Ready", "BananaFarm loaded");
-    },
-
-    play() {
-      const bet = Shared.getBet();
-      const grid = $("bananaGrid");
-      const status = $("bananaStatus");
-      if (!grid || !status) return;
-
-      Shared.setPlaying(true);
-      status.textContent = "Growing...";
-
-      this._timer = setTimeout(() => {
-        const mode = $("bananaMode")?.value || "safe";
-        const cells = Array.from({ length: 9 }).map(() => Math.random() > 0.5 ? "🍌" : "🌱");
-        const bananas = cells.filter(x => x === "🍌").length;
-
-        let multi = mode === "wild"
-          ? (bananas >= 6 ? 5 : bananas >= 4 ? 2 : 0.2)
-          : (bananas >= 5 ? 3 : bananas >= 3 ? 1.4 : 0.4);
-
-        const payout = bet * multi;
-        const won = multi >= 1;
-
-        grid.innerHTML = cells.map(c => `<span class="banana-cell">${c}</span>`).join("");
-        status.textContent = `${bananas} bananas harvested`;
-
-        if (payout > 0) Shared.payout(payout, "casino:bananafarm:win");
-        Shared.finish("bananafarm", bet, payout, won, bananas);
-        Shared.setStatus(won ? "Harvest Win" : "Weak Harvest", `${multi.toFixed(2)}×`);
-      }, window.CasinoState?.isTurbo ? 450 : 1200);
-    },
-
-    stop() {
-      Shared.clearTimers(this);
-      Shared.setPlaying(false);
-      Shared.setStatus("Stopped", "Farm interrupted");
-    },
-
-    destroy() {
-      Shared.clearTimers(this);
-    }
-  };
-
-  /* =========================================================
-     GLOBAL BIND
-  ========================================================= */
-  window.CasinoGames = CasinoGames;
-
-  window.addEventListener("casino:game:mounted", (e) => {
-    const game = e.detail?.game;
-    if (!game) return;
-    CasinoGames.mount(game);
+}
+
+/* KENO */
+function keno(picks) {
+  let hits = 0;
+  let draw = [];
+
+  for (let i = 0; i < 10; i++) {
+    draw.push(Math.floor(rand() * 40) + 1);
+  }
+
+  picks.forEach(p => {
+    if (draw.includes(p)) hits++;
   });
+
+  let m = edge(1 + hits * 0.5, "keno");
+
+  return {
+    hits,
+    multiplier: round(m),
+    won: hits > 0
+  };
+}
+
+/* TOWER */
+function tower(levels) {
+  levels = clamp(levels, 1, 8);
+  let success = rand() > 0.4;
+
+  let m = edge(1 + levels * 0.3, "tower");
+
+  return {
+    multiplier: success ? round(m) : 0,
+    won: success
+  };
+}
+
+/* BLACKJACK (SIMPLIFIED) */
+function blackjack() {
+  let player = Math.floor(rand() * 21) + 1;
+  let dealer = Math.floor(rand() * 21) + 1;
+
+  let win = player > dealer && player <= 21;
+
+  let m = edge(2, "blackjack");
+
+  return {
+    player,
+    dealer,
+    multiplier: round(m),
+    won: win
+  };
+}
+
+/* SLOTS */
+function slots() {
+  const symbols = ["7", "BAR", "🍒"];
+  let a = symbols[Math.floor(rand() * 3)];
+  let b = symbols[Math.floor(rand() * 3)];
+  let c = symbols[Math.floor(rand() * 3)];
+
+  let win = a === b && b === c;
+
+  let m = edge(5, "slots");
+
+  return {
+    reels: [a, b, c],
+    multiplier: round(m),
+    won: win
+  };
+}
+
+/* =========================================================
+MAIN PLAY
+========================================================= */
+
+function play(game, bet, opts = {}) {
+
+  let r;
+
+  switch (game) {
+    case "crash": r = crash(opts.target || 1.96); break;
+    case "dice": r = dice(opts.chance || 50); break;
+    case "limbo": r = limbo(opts.target || 1.96); break;
+    case "hilo": r = hilo(opts.pick || "higher"); break;
+    case "plinko": r = plinko(opts.risk || "medium"); break;
+    case "mines": r = mines(opts.mines || 3); break;
+    case "coinflip": r = coinflip(opts.pick || "heads"); break;
+    case "wheel": r = wheel(opts.choice || 2); break;
+    case "keno": r = keno(opts.picks || [1,2,3]); break;
+    case "tower": r = tower(opts.levels || 3); break;
+    case "blackjack": r = blackjack(); break;
+    case "slots": r = slots(); break;
+    default:
+      return { ok:false };
+  }
+
+  let payout = r.won ? bet * r.multiplier : 0;
+
+  return {
+    ok: true,
+    game,
+    bet,
+    payout: round(payout),
+    profit: round(payout - bet),
+    multiplier: r.multiplier,
+    won: r.won,
+    meta: r
+  };
+}
+
+/* =========================================================
+EXPORT
+========================================================= */
+
+window.CASINO_GAMES = { play };
+
+})();
+/* =========================================================
+   CASINO PRO V3 — PART 3 FINAL UI
+   FULL UI • EVENTS • RENDER • AUTO • 12 GAMES
+========================================================= */
+
+(function () {
+"use strict";
+
+if (!window.CASINO_CORE || !window.CASINO_GAMES) {
+  console.error("Missing PART 1 or PART 2");
+  return;
+}
+
+/* =========================================================
+STATE
+========================================================= */
+
+const UI = {
+  game: null,
+  mode: "manual",
+  autoRunning: false,
+  autoTimer: null
+};
+
+window.CASINO_UI = UI;
+
+/* =========================================================
+HELPERS
+========================================================= */
+
+const $ = id => document.getElementById(id);
+
+function fmt(n) {
+  return Number(n || 0).toFixed(2);
+}
+
+/* =========================================================
+INIT
+========================================================= */
+
+function init() {
+  renderLobby();
+  bindGlobal();
+  window.CASINO_CORE.init();
+}
+
+document.addEventListener("DOMContentLoaded", init);
+
+/* =========================================================
+LOBBY
+========================================================= */
+
+const GAME_LIST = [
+  "crash","dice","limbo","hilo","plinko","mines",
+  "coinflip","wheel","keno","tower","blackjack","slots"
+];
+
+function renderLobby() {
+  const root = document.getElementById("casino");
+  if (!root) return;
+
+  root.innerHTML = `
+    <div class="casino-grid">
+      ${GAME_LIST.map(g => `
+        <button class="game" data-game="${g}">
+          <div class="game-name">${g.toUpperCase()}</div>
+        </button>
+      `).join("")}
+    </div>
+    <div id="gameBox" style="display:none;"></div>
+  `;
+}
+
+/* =========================================================
+OPEN GAME
+========================================================= */
+
+function openGame(game) {
+  UI.game = game;
+
+  const box = $("gameBox");
+  const grid = document.querySelector(".casino-grid");
+
+  grid.style.display = "none";
+  box.style.display = "block";
+
+  box.innerHTML = `
+    <div class="game-ui">
+
+      <button id="backBtn">←</button>
+
+      <h2>${game.toUpperCase()}</h2>
+
+      <div id="resultDisplay">1.00x</div>
+
+      <input id="betInput" type="number" value="0.10" step="0.01">
+
+      <input id="targetInput" type="number" value="1.96" step="0.01">
+
+      <button id="playBtn">PLAY</button>
+      <button id="autoBtn">AUTO</button>
+
+      <div id="log"></div>
+
+    </div>
+  `;
+
+  bindGame();
+}
+
+/* =========================================================
+PLAY
+========================================================= */
+
+function play() {
+  const bet = parseFloat($("betInput").value);
+
+  if (!window.CASINO_CORE.canBet(bet)) return;
+
+  const stake = window.CASINO_CORE.getStakeType(bet);
+  window.CASINO_CORE.debit(bet);
+
+  const result = window.CASINO_GAMES.play(UI.game, bet, {
+    target: parseFloat($("targetInput").value)
+  });
+
+  if (result.payout > 0) {
+    window.CASINO_CORE.credit(result.payout, stake === "real");
+  }
+
+  updateUI(result);
+}
+
+/* =========================================================
+AUTO PLAY
+========================================================= */
+
+function startAuto() {
+  UI.autoRunning = true;
+
+  UI.autoTimer = setInterval(() => {
+    if (!UI.autoRunning) return;
+
+    play();
+  }, 800);
+}
+
+function stopAuto() {
+  UI.autoRunning = false;
+  clearInterval(UI.autoTimer);
+}
+
+/* =========================================================
+UI UPDATE
+========================================================= */
+
+function updateUI(res) {
+  $("resultDisplay").textContent = res.multiplier + "x";
+
+  const log = $("log");
+  const el = document.createElement("div");
+  el.textContent = res.won
+    ? "WIN +" + fmt(res.profit)
+    : "LOSE -" + fmt(res.bet);
+
+  el.style.color = res.won ? "lime" : "red";
+
+  log.prepend(el);
+
+  if (log.children.length > 10) {
+    log.removeChild(log.lastChild);
+  }
+}
+
+/* =========================================================
+EVENTS
+========================================================= */
+
+function bindGlobal() {
+  document.addEventListener("click", e => {
+    const g = e.target.closest(".game");
+    if (g) openGame(g.dataset.game);
+  });
+}
+
+function bindGame() {
+  $("backBtn").onclick = () => {
+    stopAuto();
+    renderLobby();
+  };
+
+  $("playBtn").onclick = play;
+
+  $("autoBtn").onclick = () => {
+    if (UI.autoRunning) {
+      stopAuto();
+      $("autoBtn").textContent = "AUTO";
+    } else {
+      startAuto();
+      $("autoBtn").textContent = "STOP";
+    }
+  };
+}
 
 })();
