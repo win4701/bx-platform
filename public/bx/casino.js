@@ -147,7 +147,7 @@
         borderRadius: "14px",
         fontSize: "13px",
         fontWeight: "800",
-        zIndex: 999999,
+        zIndex: 999,
         boxShadow: "0 10px 30px rgba(0,0,0,.35)",
         opacity: "0",
         transition: ".25s"
@@ -206,9 +206,9 @@
       activeEngine: null,
       mountedGameId: null,
       stats: {
-        online: 1284,
-        payout: 97.4,
-        volume: 348921
+        online: 386,
+        payout: 17.4,
+        volume: 14921
       }
     },
 
@@ -221,7 +221,7 @@
       { id: "blackjack", name: "Blackjack",  type: "Cards",    icon: "🃏", image: "assets/casino/blackjack.png" },
       { id: "hilo",      name: "Hi-Lo",      type: "Cards",    icon: "⬆️", image: "assets/casino/hilo.png" },
       { id: "slots",     name: "Slots",      type: "Slots",    icon: "🎰", image: "assets/casino/slot.png" },
-      { id: "mines",     name: "Mines",      type: "Strategy", icon: "💣", image: "assets/casino/mines.png" },
+      { id: "mines",     name: "Mines",      type: "Strategy", icon: "🪎", image: "assets/casino/birdsparty.png" },
       { id: "fruitparty",name: "FruitParty", type: "Slots",    icon: "🍉", image: "assets/casino/fruitparty.png" },
       { id: "bananafarm",name: "BananaFarm", type: "Slots",    icon: "🍌", image: "assets/casino/bananafarm.png" },
       { id: "airboss",   name: "AirBoss",    type: "Popular",  icon: "✈️", image: "assets/casino/airboss.png" }
