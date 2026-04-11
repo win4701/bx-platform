@@ -271,7 +271,37 @@
   /* ================= START ================= */
 
   document.addEventListener("DOMContentLoaded", () => {
-    CASINO.init();
+
+  console.log("CASINO READY");
+
+  // 🎮 فتح الألعاب
+  document.querySelectorAll(".bx-game-card").forEach(el => {
+    el.addEventListener("click", () => {
+      const game = el.dataset.game;
+
+      console.log("OPEN GAME:", game);
+
+      const view = document.getElementById("casinoGameView");
+      view.classList.remove("hidden");
+
+      document.getElementById("gameTitle").textContent = game;
+
+      document.getElementById("casinoGameStage").innerHTML =
+        "<div style='color:white'>Playing " + game + "</div>";
+    });
   });
 
-})();
+  // ▶️ زر Play
+  document.getElementById("playBtn")?.addEventListener("click", () => {
+    console.log("PLAY CLICK");
+
+    const stage = document.getElementById("casinoGameStage");
+    stage.innerHTML = "<div style='color:lime'>Result: " + (Math.random() > 0.5 ? "WIN" : "LOSE") + "</div>";
+  });
+
+  // 🔙 رجوع
+  document.getElementById("casinoBackBtn")?.addEventListener("click", () => {
+    document.getElementById("casinoGameView").classList.add("hidden");
+  });
+
+});
