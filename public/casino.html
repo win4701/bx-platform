@@ -1,0 +1,162 @@
+<section id="casino" class="view bx-casino-view">
+
+  <!-- 🔝 TOP BAR -->
+  <div class="bx-casino-header">
+
+    <div class="bx-casino-brand">
+      <div class="bx-badge">🎰</div>
+      <div>
+        <h2>Bloxio Casino</h2>
+        <span>Provably Fair • BX Only</span>
+      </div>
+    </div>
+
+    <div class="bx-casino-wallet">
+      <span>Balance</span>
+      <strong id="casinoWalletText">0 BX</strong>
+      <small id="casinoWalletUSD">~$0</small>
+    </div>
+
+  </div>
+
+  <!-- 📊 STATS -->
+  <div class="bx-casino-stats">
+    <div class="stat">
+      <span>Players</span>
+      <strong id="casinoOnlineText">0</strong>
+    </div>
+    <div class="stat">
+      <span>Volume</span>
+      <strong id="casinoVolumeText">0 BX</strong>
+    </div>
+    <div class="stat">
+      <span>Status</span>
+      <strong>Live</strong>
+    </div>
+  </div>
+
+  <!-- 🎮 FILTER -->
+  <div class="bx-casino-tabs" id="casinoFilterTabs">
+    <button class="active" data-tab="all">All</button>
+    <button data-tab="popular">Popular</button>
+    <button data-tab="classic">Classic</button>
+    <button data-tab="slots">Slots</button>
+    <button data-tab="strategy">Strategy</button>
+    <button data-tab="cards">Cards</button>
+    <button data-tab="instant">Instant</button>
+  </div>
+
+  <!-- 🎮 GAMES GRID -->
+  <div class="bx-casino-grid" id="casinoGamesGrid">
+
+    <!-- 🔥 12 GAME CARDS -->
+    
+    <div class="bx-game-card" data-game="crash">
+      <img src="assets/casino/crash.png">
+      <div>🚀 Crash</div>
+      <span>Popular</span>
+    </div>
+
+    <div class="bx-game-card" data-game="dice">
+      <img src="assets/casino/dice.png">
+      <div>🎲 Dice</div>
+      <span>Classic</span>
+    </div>
+
+    <div class="bx-game-card" data-game="limbo">
+      <img src="assets/casino/limbo.png">
+      <div>🎯 Limbo</div>
+      <span>Instant</span>
+    </div>
+
+    <div class="bx-game-card" data-game="plinko">
+      <img src="assets/casino/plinko.png">
+      <div>🔻 Plinko</div>
+      <span>Popular</span>
+    </div>
+
+    <div class="bx-game-card" data-game="birds">
+      <img src="assets/casino/birdsparty.png">
+      <div>💣 Birds</div>
+      <span>Strategy</span>
+    </div>
+
+    <div class="bx-game-card" data-game="coinflip">
+      <img src="assets/casino/coinflip.png">
+      <div>🪙 Coinflip</div>
+      <span>Classic</span>
+    </div>
+
+    <div class="bx-game-card" data-game="hilo">
+      <img src="assets/casino/hilo.png">
+      <div>⬆️ Hi-Lo</div>
+      <span>Cards</span>
+    </div>
+
+    <div class="bx-game-card" data-game="blackjack">
+      <img src="assets/casino/blackjack.png">
+      <div>🃏 Blackjack</div>
+      <span>Cards</span>
+    </div>
+
+    <div class="bx-game-card" data-game="slots">
+      <img src="assets/casino/slot.png">
+      <div>🎰 Slots</div>
+      <span>Slots</span>
+    </div>
+
+    <div class="bx-game-card" data-game="wheel">
+      <img src="assets/casino/fruitparty.png">
+      <div>🎡 Wheel</div>
+      <span>Random</span>
+    </div>
+
+    <div class="bx-game-card" data-game="keno">
+      <img src="assets/casino/bananafarm.png">
+      <div>🔢 Keno</div>
+      <span>Strategy</span>
+    </div>
+
+    <div class="bx-game-card" data-game="airboss">
+      <img src="assets/casino/airboss.png">
+      <div>✈️ AirBoss</div>
+      <span>Popular</span>
+    </div>
+
+  </div>
+
+  <!-- 🎯 GAME VIEW -->
+  <div id="casinoGameView" class="bx-game-view hidden">
+
+    <!-- HEADER -->
+    <div class="bx-game-header">
+      <button id="casinoBackBtn">←</button>
+      <h3 id="gameTitle">Game</h3>
+    </div>
+
+    <!-- STAGE -->
+    <div class="bx-game-stage" id="casinoGameStage"></div>
+
+    <!-- CONTROLS -->
+    <div class="bx-game-controls">
+
+      <div class="bet-box">
+        <label>Bet (BX)</label>
+        <input id="betAmountInput" type="number" value="1">
+        <div>
+          <button data-mult="0.5">½</button>
+          <button data-mult="2">2×</button>
+        </div>
+        <div id="betUSD">≈ $45</div>
+      </div>
+
+      <button id="playBtn" class="play-btn">▶ Play</button>
+
+    </div>
+
+  </div>
+
+  <!-- 📊 LIVE FEED -->
+  <div class="bx-live-feed" id="casinoTickerTrack"></div>
+
+</section>
