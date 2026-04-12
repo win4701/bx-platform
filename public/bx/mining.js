@@ -127,7 +127,7 @@
       daily: 1.15,
       days: 10,
       boost: 1.00,
-      min: { BX: 75,  BNB: 0.1, SOL: 0.3 }
+      min: { BX: 50,  BNB: 0.1, SOL: 0.3 }
     },
     {
       id: 'basic',
@@ -136,7 +136,7 @@
       daily: 1.21,
       days: 21,
       boost: 1.01,
-      min: { BX: 200,  BNB: 0.3, SOL: 0.7 }
+      min: { BX: 200,  BNB: 0.5, SOL: 1.5 }
     },
     {
       id: 'pro',
@@ -144,8 +144,8 @@
       hash: '90 GH/s',
       daily: 1.55,
       days: 30,
-      boost: 1.03,
-      min: { BX: 500,  BNB: 1, SOL: 3 }
+      boost: 1.01,
+      min: { BX: 500,  BNB: 2, SOL: 5 }
     },
     {
       id: 'elite',
@@ -153,8 +153,8 @@
       hash: '240 GH/s',
       daily: 1.75,
       days: 45,
-      boost: 1.05,
-      min: { BX: 1200, BNB: 5, SOL: 12 }
+      boost: 1.01,
+      min: { BX: 1200, BNB: 5, SOL: 20 }
     },
     {
       id: 'ultra',
@@ -162,8 +162,8 @@
       hash: '540 GH/s',
       daily: 2.05,
       days: 60,
-      boost: 1.08,
-      min: { BX: 2500, BNB: 15, SOL: 30 }
+      boost: 1.02,
+      min: { BX: 2500, BNB: 15, SOL: 40 }
     },
     {
       id: 'legend',
@@ -171,7 +171,7 @@
       hash: '1200 GH/s',
       daily: 2.25,
       days: 90,
-      boost: 1.10,
+      boost: 1.03,
       min: { BX: 4500, BNB: 50, SOL: 100 }
     }
   ];
