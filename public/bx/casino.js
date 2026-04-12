@@ -187,7 +187,7 @@
     boundLobbyOnce: false,
 
     state: {
-      wallet: 2500,
+      wallet: 0,
       currentGame: null,
       currentTab: "all",
       autoMode: false,
@@ -815,28 +815,47 @@
     },
 
     mountGame(game) {
-      const stage = $("#casinoGameStage", this.gameView);
-      const body = $("#gameEngineBody", this.gameView);
-      const controls = $("#dynamicBetControls", this.gameView);
-      const multi = $("#gameMultiplierDisplay", this.gameView);
+  const stage = $("#casinoGameStage", this.gameView);
+  const body = $("#gameEngineBody", this.gameView);
+  const controls = $("#dynamicBetControls", this.gameView);
+  const multi = $("#gameMultiplierDisplay", this.gameView);
 
-      if (!stage || !body || !controls || !multi) return;
+  if (!stage || !body || !controls || !multi) return;
 
-      const engines = {
-        crash: this.createCrashEngine(),
-        dice: this.createDiceEngine(),
-        coinflip: this.createCoinflipEngine(),
-        slots: this.createSlotsEngine(),
-        mines: this.createMinesEngine(),
-        plinko: this.createPlinkoEngine(),
-        limbo: this.createLimboEngine(),
-        blackjack: this.createBlackjackEngine(),
-        hilo: this.createHiLoEngine(),
-        airboss: this.createAirBossEngine(),
-        fruitparty: this.createFruitPartyEngine(),
-        bananafarm: this.createBananaFarmEngine()
-      };
+  if (!this._engineCache) {
+    this._engineCache = {
+      crash: this.createCrashEngine(),
+      dice: this.createDiceEngine(),
+      coinflip: this.createCoinflipEngine(),
+      slots: this.createSlotsEngine(),
+      mines: this.createMinesEngine(),
+      plinko: this.createPlinkoEngine(),
+      limbo: this.createLimboEngine(),
+      blackjack: this.createBlackjackEngine(),
+      hilo: this.createHiLoEngine(),
+      airboss: this.createAirBossEngine(),
+      fruitparty: this.createFruitPartyEngine(),
+      bananafarm: this.createBananaFarmEngine()
+    };
+  }
+  if (this.state.activeEngine?.destroy) {
+    this.state.activeEngine.destroy();
+  }
 
+  const engine = this._engineCache[game.id] || this.createFallbackEngine();
+  this.state.activeEngine = engine;
+
+  body.innerHTML = "";
+  controls.innerHTML = "";
+  multi.textContent = "1.00x";
+
+  engine.mount({
+    body,
+    controls,
+    multi,
+    stage,
+    app: this });
+    }
       const engine = engines[game.id] || this.createFallbackEngine();
       this.state.activeEngine = engine;
 
@@ -936,7 +955,7 @@
           const bet = Number(CASINO.state.betAmount || 0);
           const payout = bet * multiplier;
           if (hintEl) hintEl.textContent = `Cashed out at ${multiplier.toFixed(2)}x`;
-          CASINO.finishRound({ win: true, payout, multiplier });
+          app.finishRound({ win: true, payout, multiplier });
         },
 
         stop() { clearInterval(interval); },
