@@ -187,7 +187,7 @@
     boundLobbyOnce: false,
 
     state: {
-      wallet: 2500,
+      wallet: 0,
       currentGame: null,
       currentTab: "all",
       autoMode: false,
