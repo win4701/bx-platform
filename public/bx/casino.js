@@ -1,9 +1,5 @@
 /* =========================================================
    BLOXIO CASINO — ROUTER SAFE PATCH FINAL
-   Compatible with:
-   - index.html surgical patch
-   - main.js surgical patch
-   - styles.css / casino css master
 ========================================================= */
 
 (() => {
@@ -206,9 +202,9 @@
       activeEngine: null,
       mountedGameId: null,
       stats: {
-        online: 1284,
+        online: 384,
         payout: 97.4,
-        volume: 348921
+        volume: 24821
       }
     },
 
@@ -1983,14 +1979,24 @@
 
   function bootCasino() {
 
-  if (!window.CASINO) {
-    window.CASINO = CASINO;
-    CASINO.init();
-  } else {
-    window.CASINO.init();
-  }
+  const tryInit = () => {
+    const root = document.getElementById("casino");
 
-}
+    if (!root) {
+      console.warn("[Casino] waiting for #casino...");
+      setTimeout(tryInit, 100);
+      return;
+    }
+
+    if (!window.CASINO) {
+      window.CASINO = CASINO;
+    }
+
+    window.CASINO.init();
+  };
+
+  tryInit();
+   }
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", bootCasino, { once: true });
