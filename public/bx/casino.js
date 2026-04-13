@@ -1982,7 +1982,7 @@
   };
 
   function bootCasino() {
-    CASINO.init();
+    app.init();
   }
 
   if (document.readyState === "loading") {
