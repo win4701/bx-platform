@@ -943,7 +943,7 @@
           if (cashed) return;
           cashed = true;
           clearInterval(interval);
-          const bet = Number(CASINO.state.betAmount || 0);
+          const bet = Number(app.state.betAmount || 0);
           const payout = bet * multiplier;
           if (hintEl) hintEl.textContent = `Cashed out at ${multiplier.toFixed(2)}x`;
           app.finishRound({ win: true, payout, multiplier });
@@ -1222,7 +1222,7 @@
               if (statusEl) statusEl.textContent = "Mine exploded";
               revealAll();
 
-              CASINO.finishRound({
+              app.finishRound({
                 win: false,
                 payout: 0,
                 multiplier: 0
@@ -1241,7 +1241,7 @@
       };
 
       return {
-        mount({ body, controls, multi }) {
+         mount({ body, controls, multi, stage, app }) {
           multiEl = multi;
 
           body.innerHTML = `
@@ -1371,7 +1371,7 @@
       let displayEl, hintEl;
 
       return {
-        mount({ body, controls, multi }) {
+         mount({ body, controls, multi, stage, app }) {
           body.innerHTML = `
             <div class="engine">
               <div class="limbo-target-display" id="limboDisplay">${target.toFixed(2)}x</div>
