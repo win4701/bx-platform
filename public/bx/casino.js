@@ -1977,30 +1977,75 @@
     }
   };
 
-  function bootCasino() {
+  /* =========================================================
+   CASINO BOOT — PRO V2 (STABLE + SPA SAFE)
+========================================================= */
 
-  const tryInit = () => {
+(function(){
+
+  let booted = false;
+  let observer = null;
+
+  function initCasino(){
+
     const root = document.getElementById("casino");
 
-    if (!root) {
-      console.warn("[Casino] waiting for #casino...");
-      setTimeout(tryInit, 100);
-      return;
-    }
+    if (!root) return false;
 
+    // 🔥 inject global instance
     if (!window.CASINO) {
       window.CASINO = CASINO;
     }
 
-    window.CASINO.init();
-  };
+    // 🔥 init مرة واحدة فقط
+    if (!booted) {
+      window.CASINO.init();
+      booted = true;
+      console.log("[Casino] Initialized");
+    } else {
+      // 🔥 رجوع للصفحة
+      window.CASINO.onEnterView?.();
+      console.log("[Casino] Re-enter view");
+    }
 
-  tryInit();
-   }
+    return true;
+  }
+
+  /* =========================================================
+     DOM READY
+  ========================================================= */
+
+  function onReady(){
+    if (initCasino()) return;
+
+    // 🔥 fallback: observe DOM (SPA)
+    observer = new MutationObserver(() => {
+      if (initCasino()) {
+        observer.disconnect();
+        observer = null;
+      }
+    });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
+  }
 
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", bootCasino, { once: true });
+    document.addEventListener("DOMContentLoaded", onReady, { once:true });
   } else {
-    bootCasino();
+    onReady();
   }
+
+  /* =========================================================
+     ROUTER HOOK (CRITICAL)
+  ========================================================= */
+
+  document.addEventListener("bloxio:viewchange", (e)=>{
+    if (e.detail?.view === "casino") {
+      initCasino();
+    }
+  });
+
 })();
