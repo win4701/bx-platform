@@ -814,7 +814,7 @@
       if (cashoutBtn) cashoutBtn.classList.toggle("hidden", !cashout);
     },
 
-    mountGame(game) {
+     mountGame(game) {
   const stage = $("#casinoGameStage", this.gameView);
   const body = $("#gameEngineBody", this.gameView);
   const controls = $("#dynamicBetControls", this.gameView);
@@ -822,6 +822,7 @@
 
   if (!stage || !body || !controls || !multi) return;
 
+  // 🔥 cache engines
   if (!this._engineCache) {
     this._engineCache = {
       crash: this.createCrashEngine(),
@@ -838,6 +839,8 @@
       bananafarm: this.createBananaFarmEngine()
     };
   }
+
+  // 🧹 destroy previous
   if (this.state.activeEngine?.destroy) {
     this.state.activeEngine.destroy();
   }
@@ -849,35 +852,23 @@
   controls.innerHTML = "";
   multi.textContent = "1.00x";
 
-  engine.mount({
-    body,
-    controls,
-    multi,
-    stage,
-    app: this });
-    }
-      const engine = engines[game.id] || this.createFallbackEngine();
-      this.state.activeEngine = engine;
-
-      body.innerHTML = "";
-      controls.innerHTML = "";
-      multi.textContent = "1.00x";
-
-      engine.mount({ body, controls, multi, stage, app: this });
-    },
+  engine.mount({ body, controls, multi, stage, app: this });}
+  
 
     cleanupCurrentGame() {
-      clearInterval(this.state.gameLoop);
-      this.state.gameLoop = null;
+  clearInterval(this.state.gameLoop);
+  this.state.gameLoop = null;
 
-      if (this.state.activeEngine?.destroy) {
-        this.state.activeEngine.destroy();
-      }
+  if (this.state.activeEngine?.destroy) {
+    this.state.activeEngine.destroy();
+  }
 
-      this.state.activeEngine = null;
-      this.state.isPlaying = false;
-      this.state.isCashedOut = false;
-    },
+  this.state.activeEngine = null;
+  this.state.isPlaying = false;
+  this.state.isCashedOut = false;
+
+  this.state.mountedGameId = null;
+  }
 
     /* =========================================================
        ENGINES (مختصرة لكن كاملة)
@@ -893,7 +884,7 @@
       let hintEl = null;
 
       return {
-        mount({ body, controls, multi }) {
+        mount({ body, controls, multi, stage, app }) {
           multiEl = multi;
 
           body.innerHTML = `
@@ -942,7 +933,7 @@
               if (hintEl) hintEl.textContent = `Crashed at ${crashedAt.toFixed(2)}x`;
 
               if (!cashed) {
-                CASINO.finishRound({ win: false, payout: 0, multiplier: crashedAt });
+                app.finishRound({ win: false, payout: 0, multiplier: crashedAt });
               }
             }
           }, 120);
@@ -1049,7 +1040,7 @@
                   : `Missed at ${finalRoll.toFixed(2)}`;
               }
 
-              CASINO.finishRound({ win, payout, multiplier });
+              app.finishRound({ win, payout, multiplier });
             }
           });
         },
@@ -1064,7 +1055,7 @@
       let coinEl, resultText;
 
       return {
-        mount({ body, controls, multi }) {
+        mount({ body, controls, multi, stage, app }) {
           body.innerHTML = `
             <div class="engine">
               <div class="coinflip-coin" id="coinflipCoin">🪙</div>
@@ -1109,7 +1100,7 @@
             const payout = win ? amount * multiplier : 0;
 
             resultText.textContent = win ? `You hit ${result}` : `Landed on ${result}`;
-            CASINO.finishRound({ win, payout, multiplier });
+            app.finishRound({ win, payout, multiplier });
           }, 1000);
         },
 
@@ -1181,7 +1172,7 @@
               const win = multiplier > 0;
 
               statusEl.textContent = win ? `Combo hit • ${multiplier.toFixed(2)}x` : "No combo";
-              CASINO.finishRound({ win, payout, multiplier });
+              app.finishRound({ win, payout, multiplier });
             }
           }, 95);
         },
@@ -1221,7 +1212,7 @@
           btn.dataset.index = i;
           btn.type = "button";
           btn.onclick = () => {
-            if (!CASINO.state.isPlaying || selected.has(i)) return;
+            if (!app.state.isPlaying || selected.has(i)) return;
 
             selected.add(i);
 
@@ -1298,11 +1289,11 @@
         },
 
         cashout() {
-          if (!CASINO.state.isPlaying) return;
-          const bet = Number(CASINO.state.betAmount || 0);
+          if (!app.state.isPlaying) return;
+          const bet = Number(app.state.betAmount || 0);
           const payout = bet * currentMultiplier;
 
-          CASINO.finishRound({
+          app.finishRound({
             win: currentMultiplier > 1,
             payout,
             multiplier: currentMultiplier
@@ -1318,7 +1309,7 @@
       let resultText;
 
       return {
-        mount({ body, controls, multi }) {
+        mount({ body, controls, multi, stage, app }) {
           body.innerHTML = `
             <div class="engine">
               <div class="plinko-board">
@@ -1367,7 +1358,7 @@
             const win = payout > amount;
 
             resultText.textContent = `Landed at ${multiplier.toFixed(2)}x`;
-            CASINO.finishRound({ win, payout, multiplier });
+            app.finishRound({ win, payout, multiplier });
           }, 900);
         },
 
@@ -1428,7 +1419,7 @@
                 ? `Hit ${finalRoll.toFixed(2)}x`
                 : `Missed at ${finalRoll.toFixed(2)}x`;
 
-              CASINO.finishRound({ win, payout, multiplier });
+              app.finishRound({ win, payout, multiplier });
             }
           });
         },
@@ -1445,7 +1436,7 @@
       const sum = (arr) => arr.reduce((a, b) => a + b, 0);
 
       return {
-        mount({ body, controls, multi }) {
+        mount({ body, controls, multi, stage, app }) {
           bodyRef = body;
 
           body.innerHTML = `
@@ -1508,7 +1499,7 @@
           }
 
           setTimeout(() => {
-            CASINO.finishRound({ win: payout > amount, payout, multiplier });
+            app.finishRound({ win: payout > amount, payout, multiplier });
           }, 950);
         },
 
@@ -1527,7 +1518,7 @@
       };
 
       return {
-        mount({ body, controls, multi }) {
+         mount({ body, controls, multi, stage, app }) {
           body.innerHTML = `
             <div class="engine">
               <div class="hilo-card" id="hiloCurrentCard">${cardLabel(current)}</div>
@@ -1570,7 +1561,7 @@
             const payout = win ? amount * multiplier : 0;
             multiHint.textContent = win ? "Correct pick" : "Wrong pick";
 
-            CASINO.finishRound({ win, payout, multiplier });
+            app.finishRound({ win, payout, multiplier });
           }, 520);
         },
 
@@ -1587,7 +1578,7 @@
       let altitudeEl, planeEl, statusEl, trailEl;
 
       return {
-        mount({ body, controls, multi }) {
+        mount({ body, controls, multi, stage, app }) {
           body.innerHTML = `
             <div class="engine">
               <div class="airboss-altitude" id="airbossAltitude">1.00x</div>
@@ -1667,7 +1658,7 @@
               if (statusEl) statusEl.textContent = `Engine failure at ${crashAt.toFixed(2)}x`;
 
               if (!cashed) {
-                CASINO.finishRound({ win: false, payout: 0, multiplier: crashAt });
+                app.finishRound({ win: false, payout: 0, multiplier: crashAt });
               }
             }
           }, 120);
@@ -1678,12 +1669,12 @@
           cashed = true;
           clearInterval(interval);
 
-          const bet = Number(CASINO.state.betAmount || 0);
+          const bet = Number(app.state.betAmount || 0);
           const payout = bet * altitude;
 
           if (statusEl) statusEl.textContent = `Pilot ejected at ${altitude.toFixed(2)}x`;
 
-          CASINO.finishRound({
+          app.finishRound({
             win: true,
             payout,
             multiplier: altitude
@@ -1691,7 +1682,10 @@
         },
 
         stop() { clearInterval(interval); },
-        destroy() { clearInterval(interval); }
+        destroy() {
+        clearInterval(interval);
+        interval = null;
+        }
       };
     },
 
@@ -1703,7 +1697,7 @@
       const randomFruit = () => fruits[randInt(0, fruits.length - 1)];
 
       return {
-        mount({ body, controls, multi }) {
+         mount({ body, controls, multi, stage, app }) {
           body.innerHTML = `
             <div class="engine">
               <div class="fruit-grid" id="fruitPartyGrid">
@@ -1764,7 +1758,7 @@
                 ? `Cluster hit • ${bestCluster} match • ${multiplier.toFixed(2)}x`
                 : "No fruit cluster";
 
-              CASINO.finishRound({ win, payout, multiplier });
+              app.finishRound({ win, payout, multiplier });
             }
           }, 95);
         },
@@ -1782,7 +1776,7 @@
       const shuffle = (arr) => [...arr].sort(() => Math.random() - 0.5);
 
       return {
-        mount({ body, controls, multi }) {
+         mount({ body, controls, multi, stage, app }) {
           body.innerHTML = `
             <div class="engine">
               <div class="banana-grid" id="bananaFarmGrid">
@@ -1851,7 +1845,7 @@
                 ? `Harvest success • ${bananas} bananas • ${multiplier.toFixed(2)}x`
                 : `Only ${bananas} bananas collected`;
 
-              CASINO.finishRound({ win, payout, multiplier });
+              app.finishRound({ win, payout, multiplier });
             }
           }, 90);
         },
@@ -1869,7 +1863,7 @@
           const win = chance(.5);
           const multiplier = win ? 2 : 0;
           const payout = win ? amount * multiplier : 0;
-          CASINO.finishRound({ win, payout, multiplier });
+          app.finishRound({ win, payout, multiplier });
         },
         destroy() {}
       };
