@@ -9,11 +9,11 @@
 (() => {
   "use strict";
 
-  if (window.BX_CASINO_BOOTED) {
-    console.warn("[Casino] Already booted — skipping duplicate init");
-    return;
+  if (!window.BX_CASINO_INSTANCE) {
+  window.BX_CASINO_INSTANCE = true;
+} else {
+  console.log("[Casino] Re-entering view (safe)");
   }
-  window.BX_CASINO_BOOTED = true;
 
   /* =========================================================
      HELPERS
@@ -1982,8 +1982,15 @@
   };
 
   function bootCasino() {
-    app.init();
+
+  if (!window.CASINO) {
+    window.CASINO = CASINO;
+    CASINO.init();
+  } else {
+    window.CASINO.init();
   }
+
+}
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", bootCasino, { once: true });
