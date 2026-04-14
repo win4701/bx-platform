@@ -243,6 +243,141 @@ function renderResult(res){
   }
 }
 
+   /* =========================================================
+   BLOXIO CASINO — ALL 12 ENGINES (SINGLE SCRIPT)
+========================================================= */
+
+function playEngine(game, bet, options = {}){
+
+  let res = { payout:0 };
+
+  // 🎲 DICE
+  if(game === "dice"){
+    const chance = options.chance || 50;
+    const roll = Math.random() * 100;
+    const win = roll < chance;
+    res = {
+      roll,
+      payout: win ? bet * (100/chance) * 0.97 : 0
+    };
+  }
+
+  // 🎯 LIMBO
+  else if(game === "limbo"){
+    const target = options.target || 2;
+    const m = Math.random() * 10;
+    const win = m >= target;
+    res = {
+      multiplier: m,
+      payout: win ? bet * target * 0.96 : 0
+    };
+  }
+
+  // 📈 CRASH
+  else if(game === "crash"){
+    let m = 1;
+    while(true){
+      m += Math.random() * 0.2;
+      if(Math.random() < 0.02) break;
+    }
+    res = {
+      multiplier: m,
+      payout: bet * m * 0.95
+    };
+  }
+
+  // 🪙 COINFLIP
+  else if(game === "coinflip"){
+    const win = Math.random() > 0.5;
+    res = {
+      result: win ? "WIN" : "LOSE",
+      payout: win ? bet * 2 * 0.98 : 0
+    };
+  }
+
+  // 🔻 PLINKO
+  else if(game === "plinko"){
+    const levels = [0, 0.5, 1, 2, 5];
+    const m = levels[Math.floor(Math.random()*levels.length)];
+    res = {
+      multiplier: m,
+      payout: bet * m
+    };
+  }
+
+  // 🃏 BLACKJACK
+  else if(game === "blackjack"){
+    const player = Math.floor(Math.random()*21);
+    const dealer = Math.floor(Math.random()*21);
+    const win = player > dealer && player <= 21;
+    res = {
+      result: `${player} vs ${dealer}`,
+      payout: win ? bet * 2 : 0
+    };
+  }
+
+  // ⬆️ HILO
+  else if(game === "hilo"){
+    const win = Math.random() > 0.5;
+    res = {
+      result: win ? "HIGH" : "LOW",
+      payout: win ? bet * 1.9 : 0
+    };
+  }
+
+  // 🎰 SLOTS
+  else if(game === "slots"){
+    const s = ["🍒","🍋","🍉","⭐"];
+    const r = [
+      s[Math.random()*4|0],
+      s[Math.random()*4|0],
+      s[Math.random()*4|0]
+    ];
+    const win = r[0] === r[1] && r[1] === r[2];
+    res = {
+      symbols: r,
+      payout: win ? bet * 5 : 0
+    };
+  }
+
+  // 💣 MINES
+  else if(game === "mines"){
+    const safe = Math.random() > 0.3;
+    res = {
+      result: safe ? "SAFE" : "BOOM",
+      payout: safe ? bet * 1.5 : 0
+    };
+  }
+
+  // 🍉 FRUIT PARTY
+  else if(game === "fruitparty"){
+    const m = Math.random() * 5;
+    res = {
+      multiplier: m,
+      payout: bet * m * 0.95
+    };
+  }
+
+  // 🍌 BANANA FARM
+  else if(game === "bananafarm"){
+    const win = Math.random() > 0.4;
+    res = {
+      multiplier: win ? 2 : 0,
+      payout: win ? bet * 2 : 0
+    };
+  }
+
+  // ✈️ AIRBOSS
+  else if(game === "airboss"){
+    const m = Math.random() * 8;
+    res = {
+      multiplier: m,
+      payout: bet * m * 0.9
+    };
+  }
+
+  return res;
+}
 /* ================= CRASH ================= */
 
 function runCrashGraph(target){
