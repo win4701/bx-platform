@@ -1,228 +1,742 @@
-/* =========================================================
-   BLOXIO CASINO — FULL REAL SYSTEM (NO FAKE)
-========================================================= */
+// =====================================================
+// BLOXIO CASINO CORE — PART 1
+// 1. CONFIG
+// =====================================================
 
-(() => {
-"use strict";
+const BLOXIO = (() => {
 
-/* ================= STATE ================= */
+const CONFIG = {
+  VERSION: "1.0.0",
 
-const state = {
-  game:null,
-  wallet:100,
-  mines:[],
-  revealed:0,
-  multiplier:1
+  ECONOMY: {
+    BX_TO_USDT: 45,
+    MIN_DEPOSIT: 10,
+    AIRDROP_BX: 1
+  },
+
+  GAME: {
+    HOUSE_EDGE: 0.02,
+    MAX_BET: 1000,
+    MIN_BET: 0.01
+  },
+
+  SECURITY: {
+    SEED_LENGTH: 32
+  },
+
+  API: {
+    BASE: "/api"
+  }
+};
+  
+// =====================================================
+// BLOXIO CASINO CORE — PART 2
+// 2. STATE MANAGER
+// =====================================================
+
+const STATE = {
+
+  user: {
+    id: null,
+    username: null
+  },
+
+  wallet: {
+    BX: 0,
+    USDT: 0
+  },
+
+  casino: {
+    balance: 0
+  },
+
+  fairness: {
+    clientSeed: null,
+    serverSeed: null,
+    nonce: 0
+  },
+
+  session: {
+    isLogged: false,
+    token: null
+  }
+
+};
+// =====================================================
+// BLOXIO CASINO CORE — PART 3
+// 3. API LAYER
+// =====================================================
+
+const API = {
+
+  async request(endpoint, data = {}) {
+    try {
+      const res = await fetch(`${CONFIG.API.BASE}/${endpoint}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": STATE.session.token ? `Bearer ${STATE.session.token}` : ""
+        },
+        body: JSON.stringify(data)
+      });
+
+      return await res.json();
+    } catch (err) {
+      console.error("API ERROR", err);
+      return null;
+    }
+  },
+
+  async bet(game, payload) {
+    return await this.request("bet", {
+      game,
+      ...payload
+    });
+  },
+
+  async getBalance() {
+    return await this.request("balance");
+  },
+
+  async syncUser() {
+    const res = await this.request("me");
+
+    if (!res) return;
+
+    STATE.user.id = res.id;
+    STATE.user.username = res.username;
+
+    STATE.wallet.BX = res.walletBX;
+    STATE.wallet.USDT = res.walletUSDT;
+    STATE.casino.balance = res.casinoBalance;
+
+    STATE.session.isLogged = true;
+  }
+
 };
 
-const $ = (s)=>document.querySelector(s);
+// =====================================================
+// BLOXIO CASINO CORE — PART 4
+// 4. WALLET ENGINE
+// =====================================================
 
-/* ================= ENGINE ================= */
+const Wallet = {
 
-function engine(game, bet){
+  depositUSDT(amount) {
+    if (amount < CONFIG.ECONOMY.MIN_DEPOSIT) {
+      UI.toast(`Minimum deposit is ${CONFIG.ECONOMY.MIN_DEPOSIT} USDT`);
+      return false;
+    }
 
-  let r = Math.random();
-  let res = { payout:0 };
+    STATE.wallet.USDT += amount;
+    UI.updateWallet();
+    return true;
+  },
 
-  if(game==="dice"){
-    const roll = r*100;
-    const win = roll < 50;
-    res = { roll, payout: win ? bet*2 : 0 };
+  convertToBX(usdtAmount) {
+    if (STATE.wallet.USDT < usdtAmount) {
+      UI.toast("Insufficient USDT");
+      return false;
+    }
+
+    const bx = usdtAmount / CONFIG.ECONOMY.BX_TO_USDT;
+
+    STATE.wallet.USDT -= usdtAmount;
+    STATE.wallet.BX += bx;
+
+    UI.updateWallet();
+    return true;
+  },
+
+  transferToCasino(amount) {
+    if (STATE.wallet.BX < amount) {
+      UI.toast("Not enough BX");
+      return false;
+    }
+
+    STATE.wallet.BX -= amount;
+    STATE.casino.balance += amount;
+
+    UI.updateWallet();
+    UI.updateCasino();
+    return true;
+  },
+
+  airdrop() {
+    STATE.wallet.BX += CONFIG.ECONOMY.AIRDROP_BX;
+    this.transferToCasino(CONFIG.ECONOMY.AIRDROP_BX);
+  },
+
+  async sync() {
+    const res = await API.getBalance();
+    if (!res) return;
+
+    STATE.wallet.BX = res.walletBX;
+    STATE.wallet.USDT = res.walletUSDT;
+    STATE.casino.balance = res.casinoBalance;
+
+    UI.updateWallet();
+    UI.updateCasino();
   }
 
-  else if(game==="slots"){
-    const s=["🍒","🍋","🍉","⭐"];
-    const arr=[s[r*4|0],s[Math.random()*4|0],s[Math.random()*4|0]];
-    const win = arr[0]===arr[1] && arr[1]===arr[2];
-    res = { symbols:arr, payout: win?bet*5:0 };
+};
+// =====================================================
+// BLOXIO CASINO CORE — PART 5
+// 5. FAIRNESS ENGINE
+// =====================================================
+
+const Fairness = {
+
+  init() {
+    STATE.fairness.clientSeed = this.generateSeed();
+    STATE.fairness.serverSeed = this.generateSeed();
+    STATE.fairness.nonce = 0;
+  },
+
+  generateSeed() {
+    const chars = "abcdef0123456789";
+    let seed = "";
+    for (let i = 0; i < CONFIG.SECURITY.SEED_LENGTH; i++) {
+      seed += chars[Math.floor(Math.random() * chars.length)];
+    }
+    return seed;
+  },
+
+  hash(input) {
+    let hash = 0;
+    for (let i = 0; i < input.length; i++) {
+      hash = (hash << 5) - hash + input.charCodeAt(i);
+      hash |= 0;
+    }
+    return Math.abs(hash);
+  },
+
+  roll() {
+    const { clientSeed, serverSeed, nonce } = STATE.fairness;
+
+    const combined = `${clientSeed}:${serverSeed}:${nonce}`;
+    const hashed = this.hash(combined);
+
+    STATE.fairness.nonce++;
+
+    return (hashed % 10000) / 100; // 0 - 100
   }
 
-  else if(game==="limbo"){
-    const m = 1/(r||0.01);
-    res = { multiplier:m, payout: m>2?bet*2:0 };
-  }
+};
+// =====================================================
+// BLOXIO CASINO CORE — PART 6
+// 6. GAME ENGINE
+// =====================================================
 
-  else if(game==="coinflip"){
-    const win = r>0.5;
-    res = { result:win?"WIN":"LOSE", payout: win?bet*2:0 };
-  }
+const GameEngine = {
 
-  else if(game==="plinko"){
-    const mult=[0,0.5,1,2,5][r*5|0];
-    res = { multiplier:mult, payout:bet*mult };
-  }
+  placeBet({ game, amount, data }) {
 
-  else if(game==="blackjack"){
-    const p=r*21|0;
-    const d=Math.random()*21|0;
-    res = { result:`${p} vs ${d}`, payout: p>d?bet*2:0 };
-  }
+    if (amount < CONFIG.GAME.MIN_BET) {
+      return UI.toast("Minimum bet too low");
+    }
 
-  else if(game==="hilo"){
-    const win=r>0.5;
-    res = { result:win?"HIGH":"LOW", payout: win?bet*1.8:0 };
-  }
+    if (amount > STATE.casino.balance) {
+      return UI.toast("Not enough balance");
+    }
 
-  else if(game==="fruitparty"){
-    const m=r*5;
-    res = { multiplier:m, payout:bet*m };
-  }
+    // deduct immediately
+    STATE.casino.balance -= amount;
+    UI.updateCasino();
 
-  else if(game==="bananafarm"){
-    const win=r>0.4;
-    res = { multiplier:win?2:0, payout: win?bet*2:0 };
-  }
+    API.bet(game, {
+      amount,
+      data
+    }).then(result => {
 
-  else if(game==="airboss"){
-    const m=r*8;
-    res = { multiplier:m, payout:bet*m };
-  }
-
-  return res;
-}
-
-/* ================= UI ================= */
-
-function openGame(id){
-
-  state.game=id;
-
-  $("#casinoGamesGrid").style.display="none";
-
-  const root=$("#casinoLobby");
-
-  root.innerHTML = `
-    <button id="back">← Back</button>
-    <h2>${id.toUpperCase()}</h2>
-
-    <div id="gameStage"></div>
-
-    <input id="bet" value="1">
-    <button id="playBtn">PLAY</button>
-
-    ${id==="mines" ? `<button id="cashout">CASHOUT</button>` : ""}
-  `;
-
-  if(id==="mines") initMines();
-}
-
-/* ================= MINES ================= */
-
-function initMines(){
-
-  const stage=$("#gameStage");
-
-  stage.innerHTML="";
-
-  state.multiplier=1;
-  state.revealed=0;
-
-  for(let i=0;i<25;i++){
-
-    const cell=document.createElement("div");
-    cell.className="mine";
-
-    cell.onclick=()=>{
-
-      if(cell.clicked) return;
-      cell.clicked=true;
-
-      if(Math.random()<0.2){
-        cell.textContent="💣";
-        cell.style.background="red";
-      }else{
-        cell.textContent="💎";
-        cell.style.background="green";
-
-        state.revealed++;
-        state.multiplier*=1.2;
-
-        $("#gameStage").dataset.multi = state.multiplier;
+      if (!result) {
+        UI.toast("Server error");
+        return;
       }
-    };
 
-    stage.appendChild(cell);
+      this.resolveBet(result);
+
+    });
+
+  },
+
+  resolveBet(result) {
+
+    const { win, payout, newBalance } = result;
+
+    if (win) {
+      STATE.casino.balance = newBalance;
+      UI.toast(`Win +${payout} BX`);
+    } else {
+      UI.toast("Lost");
+    }
+
+    UI.updateCasino();
   }
 
-  stage.style.display="grid";
-  stage.style.gridTemplateColumns="repeat(5,1fr)";
-  stage.style.gap="6px";
-}
+};          
+// =====================================================
+// BLOXIO CASINO CORE — PART 7
+// 7. UI ENGINE
+// =====================================================
 
-/* ================= PLAY ================= */
+const UI = {
 
-function play(){
+  updateWallet() {
+    const bxEl = document.getElementById("bal-bx");
+    const usdtEl = document.getElementById("bal-usdt");
 
-  const bet = Number($("#bet").value||0);
+    if (bxEl) bxEl.innerText = this.format(STATE.wallet.BX);
+    if (usdtEl) usdtEl.innerText = this.format(STATE.wallet.USDT);
+  },
 
-  if(bet<=0) return;
+  updateCasino() {
+    const el = document.getElementById("casinoWalletText");
+    if (el) {
+      el.innerText = this.format(STATE.casino.balance) + " BX";
+    }
+  },
 
-  if(state.game==="mines") return;
+  toast(message) {
+    console.log("[BLOXIO]", message);
+  },
 
-  const res = engine(state.game, bet);
+  format(num, dec = 4) {
+    return Number(num || 0).toFixed(dec);
+  },
 
-  state.wallet += res.payout;
+  bindWallet() {
 
-  render(res);
-}
+    const depositBtn = document.getElementById("openDepositBtn");
+    const withdrawBtn = document.getElementById("openWithdrawBtn");
+    const transferBtn = document.getElementById("openTransferBtn");
 
-/* ================= RENDER ================= */
+    if (depositBtn) {
+      depositBtn.onclick = () => {
+        const amount = parseFloat(prompt("Deposit USDT"));
+        if (!isNaN(amount)) Wallet.depositUSDT(amount);
+      };
+    }
 
-function render(res){
+    if (transferBtn) {
+      transferBtn.onclick = () => {
+        const amount = parseFloat(prompt("Transfer BX to Casino"));
+        if (!isNaN(amount)) Wallet.transferToCasino(amount);
+      };
+    }
 
-  const stage=$("#gameStage");
-
-  if(res.symbols){
-    stage.textContent = res.symbols.join(" ");
   }
 
-  else if(res.roll!==undefined){
-    stage.textContent = "Roll: "+res.roll.toFixed(2);
+};
+// =====================================================
+// BLOXIO CASINO CORE — PART 8 (REFINED)
+// 8. GAMES — HTML ALIGNED + PRO STRUCTURE
+// =====================================================
+
+const Games = {
+
+  registry: {},
+
+  register(name, config) {
+    this.registry[name] = config;
+  },
+
+  play(name, amount, data = {}) {
+    const game = this.registry[name];
+    if (!game) return UI.toast("Game not found");
+
+    game.play(amount, data);
   }
 
-  else if(res.multiplier){
-    stage.textContent = res.multiplier.toFixed(2)+"x";
-  }
+};
 
-  else if(res.result){
-    stage.textContent = res.result;
-  }
-}
 
-/* ================= EVENTS ================= */
+// ===============================
+// DICE (data-game="dice")
+// ===============================
+Games.register("dice", {
 
-document.addEventListener("click",(e)=>{
+  rollOver: true,
+  target: 50,
 
-  const card = e.target.closest(".casino-game-card");
+  getMultiplier(target, over) {
+    const edge = CONFIG.GAME.HOUSE_EDGE;
+    const chance = over ? (100 - target) : target;
+    return (100 / chance) * (1 - edge);
+  },
 
-  if(card){
-    openGame(card.dataset.game);
-  }
+  play(amount, data = {}) {
 
-  if(e.target.id==="back"){
-    location.reload();
-  }
+    const target = data.target ?? this.target;
+    const rollOver = data.rollOver ?? this.rollOver;
 
-  if(e.target.id==="playBtn"){
-    play();
-  }
+    const multiplier = this.getMultiplier(target, rollOver);
 
-  if(e.target.id==="cashout"){
-
-    const bet = Number($("#bet").value);
-
-    const win = bet * state.multiplier;
-
-    state.wallet += win;
-
-    alert("WIN: "+win.toFixed(2));
+    GameEngine.placeBet({
+      game: "dice",
+      amount,
+      data: { target, rollOver, multiplier }
+    });
 
   }
 
 });
 
-/* ================= BOOT ================= */
 
-console.log("💀 CASINO FULL READY");
+// ===============================
+// CRASH (data-game="crash")
+// ===============================
+Games.register("crash", {
 
-})();
+  play(amount, data = {}) {
+
+    const cashoutAt = data.cashoutAt || 2;
+
+    GameEngine.placeBet({
+      game: "crash",
+      amount,
+      data: { cashoutAt }
+    });
+
+  }
+
+});
+
+
+// ===============================
+// PLINKO (data-game="plinko")
+// ===============================
+Games.register("plinko", {
+
+  play(amount, data = {}) {
+
+    const risk = data.risk || "medium";
+
+    GameEngine.placeBet({
+      game: "plinko",
+      amount,
+      data: { risk }
+    });
+
+  }
+
+});
+
+
+// ===============================
+// BLACKJACK (data-game="blackjack")
+// ===============================
+Games.register("blackjack", {
+
+  play(amount) {
+    GameEngine.placeBet({
+      game: "blackjack",
+      amount,
+      data: {}
+    });
+  }
+
+});
+
+
+// ===============================
+// HILO (data-game="hilo")
+// ===============================
+Games.register("hilo", {
+
+  play(amount) {
+    GameEngine.placeBet({
+      game: "hilo",
+      amount,
+      data: {}
+    });
+  }
+
+});
+
+
+// ===============================
+// COINFLIP (data-game="coinflip")
+// ===============================
+Games.register("coinflip", {
+
+  play(amount, data = {}) {
+
+    const side = data.side || "heads";
+
+    GameEngine.placeBet({
+      game: "coinflip",
+      amount,
+      data: { side }
+    });
+
+  }
+
+});
+
+
+// ===============================
+// LIMBO (data-game="limbo")
+// ===============================
+Games.register("limbo", {
+
+  play(amount, data = {}) {
+
+    const target = data.target || 2;
+
+    GameEngine.placeBet({
+      game: "limbo",
+      amount,
+      data: { target }
+    });
+
+  }
+
+});
+
+
+// ===============================
+// SLOTS (data-game="slots")
+// ===============================
+Games.register("slots", {
+
+  play(amount) {
+    GameEngine.placeBet({
+      game: "slots",
+      amount,
+      data: {}
+    });
+  }
+
+});
+
+
+// ===============================
+// BRIDS / MINES (data-game="brids")
+// ===============================
+Games.register("brids", {
+
+  play(amount, data = {}) {
+
+    const mines = data.mines || 3;
+
+    GameEngine.placeBet({
+      game: "brids",
+      amount,
+      data: { mines }
+    });
+
+  }
+
+});
+
+
+// ===============================
+// FRUIT PARTY (data-game="fruitparty")
+// ===============================
+Games.register("fruitparty", {
+
+  play(amount) {
+    GameEngine.placeBet({
+      game: "fruitparty",
+      amount,
+      data: {}
+    });
+  }
+
+});
+
+
+// ===============================
+// BANANA FARM (data-game="bananafarm")
+// ===============================
+Games.register("bananafarm", {
+
+  play(amount) {
+    GameEngine.placeBet({
+      game: "bananafarm",
+      amount,
+      data: {}
+    });
+  }
+
+});
+
+
+// ===============================
+// AIRBOSS (data-game="airboss")
+// ===============================
+Games.register("airboss", {
+
+  play(amount, data = {}) {
+
+    const cashoutAt = data.cashoutAt || 2;
+
+    GameEngine.placeBet({
+      game: "airboss",
+      amount,
+      data: { cashoutAt }
+    });
+
+  }
+
+});
+
+
+// ===============================
+// UI BINDING (AUTO FROM HTML)
+// ===============================
+UI.bindCasino = function () {
+
+  const buttons = document.querySelectorAll(".casino-game-card");
+
+  buttons.forEach(btn => {
+
+    btn.onclick = () => {
+
+      const game = btn.dataset.game;
+
+      const amount = parseFloat(prompt(`Play ${game} - Enter BX amount`));
+
+      if (!amount || amount <= 0) return;
+
+      Games.play(game, amount);
+
+    };
+
+  });
+
+};
+
+
+// ===============================
+// INIT EXTEND
+// ===============================
+const __initOld = typeof Init !== "undefined" ? Init.start : null;
+
+if (typeof Init !== "undefined") {
+  Init.start = function () {
+
+    if (__initOld) __initOld();
+
+    UI.bindCasino();
+
+  };
+}
+// =====================================================
+// BLOXIO CASINO CORE — PART 9
+// 9. TELEGRAM INTEGRATION
+// =====================================================
+
+const Telegram = {
+
+  init() {
+    if (window.Telegram && window.Telegram.WebApp) {
+      const tg = window.Telegram.WebApp;
+
+      tg.ready();
+      tg.expand();
+
+      const user = tg.initDataUnsafe?.user;
+
+      if (user) {
+        STATE.user.id = user.id;
+        STATE.user.username = user.username || user.first_name;
+
+        STATE.session.isLogged = true;
+
+        // optional: send to backend for auth
+        API.request("telegram-auth", {
+          id: user.id,
+          username: STATE.user.username
+        }).then(res => {
+          if (res && res.token) {
+            STATE.session.token = res.token;
+          }
+        });
+      }
+    }
+  },
+
+  sendEvent(event, data = {}) {
+    if (window.Telegram && window.Telegram.WebApp) {
+      window.Telegram.WebApp.sendData(JSON.stringify({
+        event,
+        data
+      }));
+    }
+  }
+
+};
+// =====================================================
+// BLOXIO CASINO CORE — PART 10
+// 10. INIT SYSTEM
+// =====================================================
+
+const Init = {
+
+  async start() {
+
+    console.log("BLOXIO INIT START");
+
+    // ===============================
+    // TELEGRAM
+    // ===============================
+    if (typeof Telegram !== "undefined") {
+      Telegram.init();
+    }
+
+    // ===============================
+    // USER SYNC
+    // ===============================
+    if (API && API.syncUser) {
+      await API.syncUser();
+    }
+
+    // ===============================
+    // FAIRNESS
+    // ===============================
+    if (typeof Fairness !== "undefined") {
+      Fairness.init();
+    }
+
+    // ===============================
+    // WALLET SYNC
+    // ===============================
+    if (Wallet && Wallet.sync) {
+      await Wallet.sync();
+    }
+
+    // ===============================
+    // AIRDROP AUTO
+    // ===============================
+    const claimed = localStorage.getItem("bloxio_airdrop");
+
+    if (!claimed) {
+      Wallet.airdrop();
+      localStorage.setItem("bloxio_airdrop", "1");
+    }
+
+    // ===============================
+    // UI BINDINGS
+    // ===============================
+    if (UI) {
+      UI.updateWallet();
+      UI.updateCasino();
+
+      if (UI.bindWallet) UI.bindWallet();
+      if (UI.bindCasino) UI.bindCasino();
+    }
+
+    console.log("BLOXIO READY");
+  }
+
+};
+
+
+// ===============================
+// AUTO START
+// ===============================
+document.addEventListener("DOMContentLoaded", () => {
+  Init.start();
+});  
