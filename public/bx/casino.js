@@ -188,17 +188,14 @@ async function play(){
 
   sendBet(bet);
 
-  const res = await API.play(state.game,{ bet });
+  const res = playEngine(state.game, bet, {
+  chance: 50,
+  target: 2
+});
 
-  if(res.error){
-    alert("Error");
-    return unlock();
-  }
+state.wallet += res.payout;
 
-  state.wallet = res.balance;
-  updateWallet();
-
-  renderResult(res);
+renderResult(res);
 
   unlock();
 }
