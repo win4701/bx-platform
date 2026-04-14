@@ -187,7 +187,7 @@
     boundLobbyOnce: false,
 
     state: {
-      wallet: 2500,
+      wallet: 0.1,
       currentGame: null,
       currentTab: "all",
       autoMode: false,
@@ -1977,4 +1977,216 @@
   } else {
     bootCasino();
   }
+})();
+// =====================================================
+// BLOXIO CASINO — REAL ENGINE LAYER (PRO)
+// Replace Local RNG → API + WS RESULTS
+// =====================================================
+
+(() => {
+
+if (!window.CASINO) return;
+
+// ===============================
+// ENGINE BRIDGE
+// ===============================
+const REAL = {
+
+  pending: null,
+
+  async play(game, amount, meta = {}) {
+
+    if (amount <= 0) return;
+    if (amount > CASINO.state.wallet) {
+      return toast("Insufficient balance");
+    }
+
+    // optimistic
+    CASINO.state.wallet -= amount;
+    CASINO.syncWalletUI();
+
+    CASINO.updateLiveState("Connecting...");
+
+    this.pending = {
+      game,
+      amount,
+      meta,
+      ts: Date.now()
+    };
+
+    try {
+
+      const res = await fetch("/api/casino/bet", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          game,
+          amount,
+          meta
+        })
+      });
+
+      const data = await res.json();
+
+      // fallback if no WS
+      if (data && data.instant) {
+        this.resolve(data.result);
+      }
+
+    } catch (e) {
+      console.error("BET ERROR", e);
+      toast("Connection error");
+    }
+
+  },
+
+  resolve(result) {
+
+    if (!this.pending) return;
+
+    const { win, payout, multiplier, balance } = result;
+
+    if (balance !== undefined) {
+      CASINO.state.wallet = balance;
+    } else {
+      CASINO.state.wallet += payout;
+    }
+
+    CASINO.finishRound({
+      win,
+      payout,
+      multiplier
+    });
+
+    this.pending = null;
+
+  }
+
+};
+
+
+// ===============================
+// WS LISTENER (REAL TIME)
+// ===============================
+if (!window.__CASINO_WS_PATCHED) {
+
+  window.__CASINO_WS_PATCHED = true;
+
+  const connectWS = () => {
+
+    try {
+
+      const ws = new WebSocket(`wss://${location.host}/ws`);
+
+      ws.onmessage = (msg) => {
+        try {
+          const data = JSON.parse(msg.data);
+
+          if (data.type === "casino_result") {
+            REAL.resolve(data.payload);
+          }
+
+          if (data.type === "casino_stats") {
+            CASINO.state.stats.online = data.online;
+            CASINO.state.stats.volume = data.volume;
+            CASINO.syncWalletUI();
+          }
+
+        } catch (e) {}
+      };
+
+      ws.onclose = () => {
+        setTimeout(connectWS, 3000);
+      };
+
+    } catch (e) {}
+
+  };
+
+  connectWS();
+}
+
+
+// ===============================
+// OVERRIDE PLAY SYSTEM
+// ===============================
+const OLD_PLAY = CASINO.playCurrentGame.bind(CASINO);
+
+CASINO.playCurrentGame = function() {
+
+  if (!this.state.currentGame || this.state.isPlaying) return;
+
+  const amount = Number(this.state.betAmount || 0);
+
+  this.state.isPlaying = true;
+  this.state.isCashedOut = false;
+
+  this.toggleActionButtons({
+    play: false,
+    stop: true,
+    cashout: ["crash","mines","airboss"].includes(this.state.currentGame.id)
+  });
+
+  REAL.play(this.state.currentGame.id, amount, {
+    auto: this.state.autoMode
+  });
+
+};
+
+
+// ===============================
+// ENGINE OVERRIDE (STOP LOCAL RNG)
+// ===============================
+CASINO.mountGame = function(game) {
+
+  const stage = document.getElementById("casinoGameStage");
+  const body = document.getElementById("gameEngineBody");
+  const controls = document.getElementById("dynamicBetControls");
+
+  body.innerHTML = `
+    <div style="padding:20px;text-align:center">
+      <h3>${game.name}</h3>
+      <p>Connected to server...</p>
+    </div>
+  `;
+
+  controls.innerHTML = `
+    <div class="dynamic-card">
+      <div class="dynamic-card-title">Game Settings</div>
+      <p>All logic handled by server</p>
+    </div>
+  `;
+
+  this.state.activeEngine = {
+    play: ()=>{},
+    stop: ()=>{},
+    cashout: ()=>{
+      fetch("/api/casino/cashout",{method:"POST"});
+    }
+  };
+
+};
+
+
+// ===============================
+// IMPROVE RESULT FX
+// ===============================
+const OLD_FINISH = CASINO.finishRound.bind(CASINO);
+
+CASINO.finishRound = function(data) {
+
+  const stage = document.getElementById("casinoGameStage");
+
+  if (stage) {
+    stage.style.transform = "scale(1.05)";
+    setTimeout(()=>stage.style.transform="scale(1)",200);
+  }
+
+  OLD_FINISH(data);
+
+};
+
+
 })();
