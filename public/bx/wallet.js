@@ -1,34 +1,21 @@
 /* =========================================================
-   BLOXIO — WALLET FINAL REAL SYSTEM
-   (NowPayments + Binance Pay + Sync + Safe UI)
+   BLOXIO WALLET — FULL WORKING SYSTEM (HTML MATCHED)
 ========================================================= */
 
-(function () {
+(function(){
 'use strict';
 
-/* ================= CONFIG ================= */
-
-const API = {
-  WALLET: "/api/wallet",
-  DEPOSIT: "/api/nowpayments/deposit",
-  WITHDRAW: "/api/nowpayments/withdraw",
-  TRANSFER: "/api/wallet/transfer",
-  BINANCE: "/api/binance/create-order"
-};
-
-const ASSETS = ['BX','USDT','USDC','BTC','BNB','ETH','AVAX','ZEC','TON','SOL','LTC'];
+const $ = id => document.getElementById(id);
+const safe = n => Number(n)||0;
 
 /* ================= STATE ================= */
 
 const state = {
   balances:{},
-  depositAddress:''
+  activePanel:null
 };
 
-const $ = id => document.getElementById(id);
-const safe = n => Number(n)||0;
-
-/* ================= CORE ================= */
+/* ================= API ================= */
 
 async function api(url, body){
   const res = await fetch(url,{
@@ -42,29 +29,29 @@ async function api(url, body){
 async function syncWallet(){
 
   try{
-    const res = await fetch(API.WALLET);
+    const res = await fetch("/api/wallet");
     const data = await res.json();
 
     if(data.balances){
       state.balances = data.balances;
-      render();
+      renderBalances();
     }
 
-  }catch{
-    console.error("sync error");
+  }catch(e){
+    console.error("sync error",e);
   }
 }
 
 /* ================= RENDER ================= */
 
-function render(){
+function renderBalances(){
 
   let total = 0;
 
-  ASSETS.forEach(a=>{
-    const el = $(`bal-${a.toLowerCase()}`);
-    const val = safe(state.balances[a]);
+  Object.keys(state.balances).forEach(asset=>{
+    const val = safe(state.balances[asset]);
 
+    const el = $(`bal-${asset.toLowerCase()}`);
     if(el) el.textContent = val.toFixed(4);
 
     total += val;
@@ -75,9 +62,31 @@ function render(){
   }
 }
 
+/* ================= PANELS ================= */
+
+function openPanel(id){
+
+  document.querySelectorAll(".wallet-panel")
+    .forEach(p=>p.classList.add("wallet-hidden"));
+
+  const panel = $(id);
+  if(panel){
+    panel.classList.remove("wallet-hidden");
+    state.activePanel = id;
+  }
+}
+
+function closePanel(id){
+  const panel = $(id);
+  if(panel){
+    panel.classList.add("wallet-hidden");
+    state.activePanel = null;
+  }
+}
+
 /* ================= DEPOSIT ================= */
 
-async function deposit(){
+async function handleDeposit(){
 
   const asset = $("depositAsset").value;
 
@@ -85,11 +94,9 @@ async function deposit(){
 
   try{
 
-    const data = await api(API.DEPOSIT,{ asset });
+    const data = await api("/api/nowpayments/deposit",{ asset });
 
     if(data.error) return toast(data.error,"error");
-
-    state.depositAddress = data.address;
 
     $("depositAddressText").textContent = data.address;
 
@@ -100,9 +107,19 @@ async function deposit(){
   }
 }
 
+/* ================= COPY ================= */
+
+function copyDeposit(){
+
+  const text = $("depositAddressText").textContent;
+
+  navigator.clipboard.writeText(text);
+  toast("Copied","success");
+}
+
 /* ================= WITHDRAW ================= */
 
-async function withdraw(){
+async function handleWithdraw(){
 
   const asset = $("withdrawAsset").value;
   const amount = safe($("withdrawAmount").value);
@@ -115,7 +132,7 @@ async function withdraw(){
 
   try{
 
-    const data = await api(API.WITHDRAW,{
+    const data = await api("/api/nowpayments/withdraw",{
       asset, amount, address
     });
 
@@ -132,10 +149,11 @@ async function withdraw(){
 
 /* ================= TRANSFER ================= */
 
-async function transfer(){
+async function handleTransfer(){
 
   const asset = $("transferAsset").value;
   const amount = safe($("transferAmount").value);
+
   const to =
     $("transferTelegram").value ||
     $("transferTo").value;
@@ -145,7 +163,7 @@ async function transfer(){
 
   try{
 
-    const data = await api(API.TRANSFER,{
+    const data = await api("/api/wallet/transfer",{
       asset, amount, to
     });
 
@@ -160,13 +178,36 @@ async function transfer(){
   }
 }
 
-/* ================= BINANCE PAY ================= */
+/* ================= WALLETCONNECT ================= */
+
+async function connectWallet(){
+
+  try{
+
+    const provider = new WalletConnectProvider.default({
+      rpc:{1:"https://mainnet.infura.io/v3/"}
+    });
+
+    await provider.enable();
+
+    const web3 = new Web3(provider);
+    const acc = await web3.eth.getAccounts();
+
+    $("walletConnectBtn").textContent = "Connected";
+    toast(acc[0].slice(0,6),"success");
+
+  }catch{
+    toast("WalletConnect failed","error");
+  }
+}
+
+/* ================= BINANCE ================= */
 
 async function binancePay(){
 
   try{
 
-    const res = await fetch(API.BINANCE,{ method:"POST" });
+    const res = await fetch("/api/binance/create-order",{method:"POST"});
     const data = await res.json();
 
     if(data.error) return toast(data.error,"error");
@@ -178,33 +219,77 @@ async function binancePay(){
   }
 }
 
-/* ================= WALLETCONNECT ================= */
+/* ================= SEARCH ================= */
 
-async function connectWallet(){
+function bindSearch(){
 
-  try{
+  const input = $("walletAssetSearch");
+  if(!input) return;
 
-    const provider = new WalletConnectProvider.default({
-      rpc: {1:"https://mainnet.infura.io/v3/"}
+  input.addEventListener("input",()=>{
+
+    const val = input.value.toLowerCase();
+
+    document.querySelectorAll(".wallet-row").forEach(row=>{
+      const asset = row.dataset.asset.toLowerCase();
+
+      row.style.display = asset.includes(val) ? "" : "none";
     });
 
-    await provider.enable();
+  });
 
-    const web3 = new Web3(provider);
-    const acc = await web3.eth.getAccounts();
+}
 
-    toast("Connected: "+acc[0].slice(0,6),"success");
+/* ================= INTELLIGENCE ================= */
 
-  }catch{
-    toast("WalletConnect failed","error");
-  }
+function bindIntelligence(){
+
+  $("walletIntelPrimary")?.addEventListener("click",()=>{
+    openPanel("depositPanel");
+  });
+
+  $("walletIntelSecondary")?.addEventListener("click",()=>{
+    document.querySelector('[data-view="market"]').click();
+  });
+
+}
+
+/* ================= EVENTS ================= */
+
+function bind(){
+
+  document.addEventListener("click",(e)=>{
+
+    // open panels
+    if(e.target.dataset.walletOpen){
+      openPanel(e.target.dataset.walletOpen);
+    }
+
+    // close panels
+    if(e.target.dataset.walletClose){
+      closePanel(e.target.dataset.walletClose);
+    }
+
+    // actions
+    if(e.target.id==="generateDepositBtn") handleDeposit();
+    if(e.target.id==="copyDepositBtn") copyDeposit();
+    if(e.target.id==="submitWithdrawBtn") handleWithdraw();
+    if(e.target.id==="submitTransferBtn") handleTransfer();
+
+    if(e.target.id==="walletConnectBtn") connectWallet();
+    if(e.target.id==="binanceConnectBtn") binancePay();
+
+  });
+
 }
 
 /* ================= UI ================= */
 
 function toast(msg,type){
 
-  const el = $("walletToast");
+  console.log(msg);
+
+  const el = $("walletStatus");
   if(!el) return;
 
   el.textContent = msg;
@@ -215,19 +300,10 @@ function toast(msg,type){
 
 function setStatus(id,msg){
   const el = $(id);
-  if(el) el.textContent = msg;
-}
-
-/* ================= EVENTS ================= */
-
-function bind(){
-
-  $("generateDepositBtn")?.addEventListener("click",deposit);
-  $("submitWithdrawBtn")?.addEventListener("click",withdraw);
-  $("submitTransferBtn")?.addEventListener("click",transfer);
-
-  $("walletConnectBtn")?.addEventListener("click",connectWallet);
-  $("binanceConnectBtn")?.addEventListener("click",binancePay);
+  if(el){
+    el.textContent = msg;
+    el.classList.remove("hidden");
+  }
 }
 
 /* ================= INIT ================= */
@@ -235,13 +311,14 @@ function bind(){
 function init(){
 
   bind();
+  bindSearch();
+  bindIntelligence();
 
   syncWallet();
   setInterval(syncWallet,5000);
 
-  window.addEventListener("bx:balances:updated", syncWallet);
+  console.log("💀 WALLET FULL READY");
 
-  console.log("💀 WALLET FINAL READY");
 }
 
 if(document.readyState==="loading"){
