@@ -676,166 +676,164 @@
   }
 
   /* =========================================================
-   PRO CHART ENGINE — ULTRA (Telegram Ready)
+   PRO CHART ENGINE — TELEGRAM OPTIMIZED
 ========================================================= */
 
 const PRO_CHART = {
-  chart: null,
-  candleSeries: null,
-  emaSeries: null,
-  vwapSeries: null,
+  canvas: null,
+  ctx: null,
 
   candles: [],
-  ema: [],
-  vwap: [],
+  current: null,
 
-  lastCandle: null,
-  timeframe: 60,
+  timeframe: 60000,
+  maxCandles: 120,
+
+  width: 0,
+  height: 0,
 
   init() {
-    const container = document.getElementById("marketChart");
-    if (!container) return;
+    this.canvas = document.getElementById("marketChart");
+    if (!this.canvas) return;
 
-    this.chart = LightweightCharts.createChart(container, {
-      layout: {
-        background: { color: "#0f172a" },
-        textColor: "#cbd5f5"
-      },
-      grid: {
-        vertLines: { color: "rgba(255,255,255,0.03)" },
-        horzLines: { color: "rgba(255,255,255,0.03)" }
-      },
-      crosshair: {
-        mode: LightweightCharts.CrosshairMode.Normal
-      },
-      rightPriceScale: {
-        borderColor: "#1f2937"
-      },
-      timeScale: {
-        borderColor: "#1f2937",
-        timeVisible: true,
-        secondsVisible: false
-      }
-    });
+    this.ctx = this.canvas.getContext("2d", { alpha: false });
 
-    this.candleSeries = this.chart.addCandlestickSeries({
-      upColor: "#0ecb81",
-      downColor: "#f6465d",
-      borderVisible: false,
-      wickUpColor: "#0ecb81",
-      wickDownColor: "#f6465d"
-    });
+    this.resize();
+    window.addEventListener("resize", () => this.resize());
 
-    this.emaSeries = this.chart.addLineSeries({
-      color: "#f0b90b",
-      lineWidth: 2
-    });
+    this.reset(marketPrice);
+    this.loop();
+  },
 
-    this.vwapSeries = this.chart.addLineSeries({
-      color: "#a855f7",
-      lineWidth: 2
-    });
+  resize() {
+    const parent = this.canvas.parentElement;
+    if (!parent) return;
+
+    this.width = parent.clientWidth;
+    this.height = parent.clientHeight;
+
+    const dpr = window.devicePixelRatio || 1;
+
+    this.canvas.width = this.width * dpr;
+    this.canvas.height = this.height * dpr;
+
+    this.canvas.style.width = this.width + "px";
+    this.canvas.style.height = this.height + "px";
+
+    this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  },
+
+  reset(price) {
+    this.candles = [];
+    this.current = null;
+    this.bootstrap(price);
+  },
+
+  bootstrap(price) {
+    this.current = {
+      open: price,
+      high: price,
+      low: price,
+      close: price,
+      volume: 1,
+      time: Date.now()
+    };
+
+    this.candles.push(this.current);
   },
 
   update(price) {
     if (!price) return;
 
-    const time = Math.floor(Date.now() / 1000);
+    const now = Date.now();
 
-    if (!this.lastCandle || time - this.lastCandle.time >= this.timeframe) {
-      this.lastCandle = {
-        time,
-        open: price,
+    if (!this.current || now - this.current.time > this.timeframe) {
+      this.current = {
+        open: this.current?.close || price,
         high: price,
         low: price,
         close: price,
-        volume: Math.random() * 5
+        volume: Math.random() * 5,
+        time: now
       };
 
-      this.candles.push(this.lastCandle);
+      this.candles.push(this.current);
 
-      if (this.candles.length > 200) this.candles.shift();
+      if (this.candles.length > this.maxCandles) {
+        this.candles.shift();
+      }
 
     } else {
-      this.lastCandle.high = Math.max(this.lastCandle.high, price);
-      this.lastCandle.low = Math.min(this.lastCandle.low, price);
-      this.lastCandle.close = price;
-      this.lastCandle.volume += Math.random();
+      this.current.high = Math.max(this.current.high, price);
+      this.current.low = Math.min(this.current.low, price);
+      this.current.close = price;
+      this.current.volume += Math.random();
     }
-
-    this.candleSeries.setData(this.candles);
-
-    this.calculateEMA(14);
-    this.calculateVWAP();
-
-    this.emaSeries.setData(this.ema);
-    this.vwapSeries.setData(this.vwap);
-
-    this.updateMetrics();
   },
 
-  calculateEMA(period) {
-    const k = 2 / (period + 1);
-    let ema = [];
+  draw() {
+    const ctx = this.ctx;
+    const w = this.width;
+    const h = this.height;
 
-    let prev = this.candles[0]?.close || 0;
+    ctx.clearRect(0, 0, w, h);
 
-    this.candles.forEach((c, i) => {
-      if (i === 0) {
-        ema.push({ time: c.time, value: prev });
-      } else {
-        const val = c.close * k + prev * (1 - k);
-        ema.push({ time: c.time, value: val });
-        prev = val;
-      }
+    if (this.candles.length < 2) return;
+
+    const visible = this.candles;
+
+    const highs = visible.map(c => c.high);
+    const lows = visible.map(c => c.low);
+
+    let max = Math.max(...highs);
+    let min = Math.min(...lows);
+
+    const padding = (max - min) * 0.1;
+    max += padding;
+    min -= padding;
+
+    const candleWidth = w / visible.length;
+
+    visible.forEach((c, i) => {
+      const x = i * candleWidth + candleWidth / 2;
+
+      const openY = this.priceToY(c.open, min, max, h);
+      const closeY = this.priceToY(c.close, min, max, h);
+      const highY = this.priceToY(c.high, min, max, h);
+      const lowY = this.priceToY(c.low, min, max, h);
+
+      const up = c.close >= c.open;
+
+      ctx.strokeStyle = up ? "#0ecb81" : "#f6465d";
+      ctx.beginPath();
+      ctx.moveTo(x, highY);
+      ctx.lineTo(x, lowY);
+      ctx.stroke();
+
+      ctx.fillStyle = up ? "#0ecb81" : "#f6465d";
+
+      const bodyHeight = Math.max(2, Math.abs(closeY - openY));
+      const bodyWidth = candleWidth * 0.6;
+
+      ctx.fillRect(
+        x - bodyWidth / 2,
+        Math.min(openY, closeY),
+        bodyWidth,
+        bodyHeight
+      );
     });
-
-    this.ema = ema;
   },
 
-  calculateVWAP() {
-    let pv = 0;
-    let vol = 0;
-    let vwap = [];
-
-    this.candles.forEach(c => {
-      const typical = (c.high + c.low + c.close) / 3;
-      pv += typical * c.volume;
-      vol += c.volume;
-
-      vwap.push({
-        time: c.time,
-        value: vol ? pv / vol : typical
-      });
-    });
-
-    this.vwap = vwap;
+  priceToY(price, min, max, height) {
+    return ((max - price) / (max - min)) * height;
   },
 
-  updateMetrics() {
-    if (!this.candles.length) return;
-
-    const visible = this.candles.slice(-24);
-
-    const open = visible[0].open;
-    const close = visible[visible.length - 1].close;
-    const high = Math.max(...visible.map(c => c.high));
-    const low = Math.min(...visible.map(c => c.low));
-    const vol = visible.reduce((a, c) => a + c.volume, 0);
-
-    document.getElementById("metricOpen").textContent = open.toFixed(6);
-    document.getElementById("metricHigh").textContent = high.toFixed(6);
-    document.getElementById("metricLow").textContent = low.toFixed(6);
-    document.getElementById("metricClose").textContent = close.toFixed(6);
-
-    document.getElementById("metricOpenPanel").textContent = open.toFixed(6);
-    document.getElementById("metricHighPanel").textContent = high.toFixed(6);
-    document.getElementById("metricLowPanel").textContent = low.toFixed(6);
-    document.getElementById("metricClosePanel").textContent = close.toFixed(6);
-    document.getElementById("metricVol").textContent = vol.toFixed(2);
+  loop() {
+    this.draw();
+    setTimeout(() => this.loop(), 60); // بدل requestAnimationFrame (أفضل لتليجرام)
   }
 };
-
+   
   /* =========================================================
      INIT
   ========================================================= */
