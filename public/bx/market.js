@@ -676,539 +676,165 @@
   }
 
   /* =========================================================
-     PRO CHART ENGINE
-  ========================================================= */
-  const PRO_CHART = {
-    canvas: null,
-    ctx: null,
-    tooltip: null,
+   PRO CHART ENGINE — ULTRA (Telegram Ready)
+========================================================= */
 
-    candles: [],
-    ema: [],
-    vwap: [],
+const PRO_CHART = {
+  chart: null,
+  candleSeries: null,
+  emaSeries: null,
+  vwapSeries: null,
 
-    timeframe: 60 * 1000,
-    visibleCount: 60,
-    minVisible: 20,
-    maxVisible: 150,
-    maxCandles: 220,
+  candles: [],
+  ema: [],
+  vwap: [],
 
-    mode: "area",
-    current: null,
-    hoverIndex: -1,
-    mouseX: 0,
-    mouseY: 0,
-    isHovering: false,
-    raf: null,
+  lastCandle: null,
+  timeframe: 60,
 
-    init() {
-      this.canvas = chartCanvas;
-      if (!this.canvas) return;
+  init() {
+    const container = document.getElementById("marketChart");
+    if (!container) return;
 
-      this.ctx = this.canvas.getContext("2d");
-      this.tooltip = tooltipEl;
+    this.chart = LightweightCharts.createChart(container, {
+      layout: {
+        background: { color: "#0f172a" },
+        textColor: "#cbd5f5"
+      },
+      grid: {
+        vertLines: { color: "rgba(255,255,255,0.03)" },
+        horzLines: { color: "rgba(255,255,255,0.03)" }
+      },
+      crosshair: {
+        mode: LightweightCharts.CrosshairMode.Normal
+      },
+      rightPriceScale: {
+        borderColor: "#1f2937"
+      },
+      timeScale: {
+        borderColor: "#1f2937",
+        timeVisible: true,
+        secondsVisible: false
+      }
+    });
 
-      this.resize();
-      this.bindTimeframes();
-      this.bindModes();
-      this.bindMouse();
+    this.candleSeries = this.chart.addCandlestickSeries({
+      upColor: "#0ecb81",
+      downColor: "#f6465d",
+      borderVisible: false,
+      wickUpColor: "#0ecb81",
+      wickDownColor: "#f6465d"
+    });
 
-      window.addEventListener("resize", () => {
-        requestAnimationFrame(() => this.resize());
-      });
+    this.emaSeries = this.chart.addLineSeries({
+      color: "#f0b90b",
+      lineWidth: 2
+    });
 
-      this.reset(marketPrice);
-      this.render();
-    },
+    this.vwapSeries = this.chart.addLineSeries({
+      color: "#a855f7",
+      lineWidth: 2
+    });
+  },
 
-    resize() {
-      if (!this.canvas) return;
-      const p = this.canvas.parentElement;
-      if (!p) return;
+  update(price) {
+    if (!price) return;
 
-      const dpr = Math.max(1, window.devicePixelRatio || 1);
-      const w = p.clientWidth;
-      const h = p.clientHeight;
+    const time = Math.floor(Date.now() / 1000);
 
-      this.canvas.width = Math.floor(w * dpr);
-      this.canvas.height = Math.floor(h * dpr);
-      this.canvas.style.width = `${w}px`;
-      this.canvas.style.height = `${h}px`;
-
-      this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    },
-
-    reset(price) {
-      this.candles = [];
-      this.ema = [];
-      this.vwap = [];
-      this.current = null;
-      this.bootstrap(price);
-      this.seedHistory(price);
-      updateMetrics();
-    },
-
-    bootstrap(price) {
-      this.current = {
+    if (!this.lastCandle || time - this.lastCandle.time >= this.timeframe) {
+      this.lastCandle = {
+        time,
         open: price,
         high: price,
         low: price,
         close: price,
-        volume: rand(2, 8),
-        time: Date.now()
+        volume: Math.random() * 5
       };
-      this.candles.push(this.current);
-    },
 
-    seedHistory(price) {
-      let p = price;
-      for (let i = 0; i < 45; i++) {
-        const drift = rand(-0.22, 0.22) * (price * 0.0014);
-        const next = Math.max(0.000001, p + drift);
+      this.candles.push(this.lastCandle);
 
-        this.current = {
-          open: p,
-          high: Math.max(p, next) + rand(0, price * 0.0007),
-          low: Math.min(p, next) - rand(0, price * 0.0007),
-          close: next,
-          volume: rand(2, 16),
-          time: Date.now() - (45 - i) * this.timeframe
-        };
+      if (this.candles.length > 200) this.candles.shift();
 
-        this.candles.push(this.current);
-        p = next;
-      }
-
-      this.current = this.candles[this.candles.length - 1];
-      this.calcEMA(14);
-      this.calcVWAP();
-    },
-
-    update(price) {
-      if (!price || price <= 0) return;
-
-      if (!this.current) {
-        this.bootstrap(price);
-        return;
-      }
-
-      const now = Date.now();
-
-      if (now - this.current.time > this.timeframe) {
-        this.current = {
-          open: this.current.close,
-          high: price,
-          low: price,
-          close: price,
-          volume: rand(1, 4),
-          time: now
-        };
-
-        this.candles.push(this.current);
-
-        if (this.candles.length > this.maxCandles) {
-          this.candles.shift();
-        }
-      } else {
-        this.current.high = Math.max(this.current.high, price);
-        this.current.low = Math.min(this.current.low, price);
-        this.current.close = price;
-        this.current.volume += rand(0.3, 1.2);
-      }
-
-      this.calcEMA(14);
-      this.calcVWAP();
-      updateMetrics();
-    },
-
-    calcEMA(period) {
-      if (this.candles.length < 2) return;
-
-      const k = 2 / (period + 1);
-      this.ema = [];
-
-      let emaPrev = this.candles[0].close;
-      for (let i = 0; i < this.candles.length; i++) {
-        if (i === 0) {
-          this.ema.push(emaPrev);
-        } else {
-          const val = this.candles[i].close * k + emaPrev * (1 - k);
-          this.ema.push(val);
-          emaPrev = val;
-        }
-      }
-    },
-
-    calcVWAP() {
-      let pv = 0;
-      let vol = 0;
-      this.vwap = [];
-
-      for (const c of this.candles) {
-        const typical = (c.high + c.low + c.close) / 3;
-        pv += typical * c.volume;
-        vol += c.volume;
-        this.vwap.push(vol ? pv / vol : typical);
-      }
-    },
-
-    bindTimeframes() {
-      timeframeButtons.forEach((btn) => {
-        btn.addEventListener("click", () => {
-          timeframeButtons.forEach(b => b.classList.remove("active"));
-          btn.classList.add("active");
-
-          const range = btn.dataset.range || "1H";
-
-          if (range === "1H") {
-            this.timeframe = 60 * 1000;
-            this.visibleCount = 60;
-          } else if (range === "24H") {
-            this.timeframe = 5 * 60 * 1000;
-            this.visibleCount = 70;
-          } else if (range === "7D") {
-            this.timeframe = 30 * 60 * 1000;
-            this.visibleCount = 80;
-          } else if (range === "30D") {
-            this.timeframe = 2 * 60 * 60 * 1000;
-            this.visibleCount = 90;
-          } else if (range === "90D") {
-            this.timeframe = 6 * 60 * 60 * 1000;
-            this.visibleCount = 100;
-          }
-
-          this.reset(marketPrice);
-        });
-      });
-    },
-
-    bindModes() {
-      chartModeButtons.forEach((btn) => {
-        btn.addEventListener("click", () => {
-          chartModeButtons.forEach(b => b.classList.remove("active"));
-          btn.classList.add("active");
-          this.mode = btn.dataset.chartMode || "area";
-        });
-      });
-    },
-
-    bindMouse() {
-      if (!this.canvas) return;
-
-      this.canvas.addEventListener("mousemove", (e) => {
-        const rect = this.canvas.getBoundingClientRect();
-        this.mouseX = e.clientX - rect.left;
-        this.mouseY = e.clientY - rect.top;
-        this.isHovering = true;
-      });
-
-      this.canvas.addEventListener("mouseleave", () => {
-        this.isHovering = false;
-        this.hoverIndex = -1;
-        if (this.tooltip) {
-          this.tooltip.classList.remove("show");
-        }
-      });
-
-      this.canvas.addEventListener("wheel", (e) => {
-        e.preventDefault();
-        const delta = e.deltaY > 0 ? 4 : -4;
-        this.visibleCount = clamp(this.visibleCount + delta, this.minVisible, this.maxVisible);
-      }, { passive: false });
-    },
-
-    priceToY(price, min, max, chartTop, chartHeight) {
-      return chartTop + ((max - price) / (max - min)) * chartHeight;
-    },
-
-    renderGrid(ctx, w, chartTop, chartHeight) {
-      ctx.save();
-      ctx.strokeStyle = "rgba(255,255,255,0.05)";
-      ctx.lineWidth = 1;
-
-      for (let i = 0; i < 5; i++) {
-        const y = chartTop + (chartHeight / 4) * i;
-        ctx.beginPath();
-        ctx.moveTo(0, y);
-        ctx.lineTo(w, y);
-        ctx.stroke();
-      }
-
-      for (let i = 0; i < 6; i++) {
-        const x = (w / 5) * i;
-        ctx.beginPath();
-        ctx.moveTo(x, chartTop);
-        ctx.lineTo(x, chartTop + chartHeight);
-        ctx.stroke();
-      }
-      ctx.restore();
-    },
-
-    renderEMA(ctx, visible, min, max, chartTop, chartHeight, candleWidth) {
-      if (this.ema.length < 2) return;
-
-      const emaVisible = this.ema.slice(-visible.length);
-
-      ctx.save();
-      ctx.beginPath();
-      ctx.lineWidth = 2;
-      ctx.strokeStyle = "rgba(240,185,11,.95)";
-
-      emaVisible.forEach((val, i) => {
-        const x = i * candleWidth + candleWidth / 2;
-        const y = this.priceToY(val, min, max, chartTop, chartHeight);
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-      });
-
-      ctx.stroke();
-      ctx.restore();
-    },
-
-    renderVWAP(ctx, visible, min, max, chartTop, chartHeight, candleWidth) {
-      if (this.vwap.length < 2) return;
-
-      const vwapVisible = this.vwap.slice(-visible.length);
-
-      ctx.save();
-      ctx.beginPath();
-      ctx.lineWidth = 2;
-      ctx.strokeStyle = "rgba(168,85,247,.92)";
-
-      vwapVisible.forEach((val, i) => {
-        const x = i * candleWidth + candleWidth / 2;
-        const y = this.priceToY(val, min, max, chartTop, chartHeight);
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-      });
-
-      ctx.stroke();
-      ctx.restore();
-    },
-
-    renderArea(ctx, visible, min, max, chartTop, chartHeight, candleWidth, w) {
-      const closes = visible.map(c => c.close);
-
-      ctx.save();
-      ctx.beginPath();
-
-      closes.forEach((price, i) => {
-        const x = i * candleWidth + candleWidth / 2;
-        const y = this.priceToY(price, min, max, chartTop, chartHeight);
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-      });
-
-      const grad = ctx.createLinearGradient(0, chartTop, 0, chartTop + chartHeight);
-      grad.addColorStop(0, "rgba(14,203,129,.34)");
-      grad.addColorStop(.65, "rgba(14,203,129,.08)");
-      grad.addColorStop(1, "rgba(14,203,129,0)");
-
-      const lineGrad = ctx.createLinearGradient(0, chartTop, w, chartTop);
-      lineGrad.addColorStop(0, "rgba(116,255,208,.95)");
-      lineGrad.addColorStop(1, "rgba(56,217,154,.95)");
-
-      const lastX = (closes.length - 1) * candleWidth + candleWidth / 2;
-      ctx.lineTo(lastX, chartTop + chartHeight);
-      ctx.lineTo(candleWidth / 2, chartTop + chartHeight);
-      ctx.closePath();
-      ctx.fillStyle = grad;
-      ctx.fill();
-
-      ctx.beginPath();
-      closes.forEach((price, i) => {
-        const x = i * candleWidth + candleWidth / 2;
-        const y = this.priceToY(price, min, max, chartTop, chartHeight);
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-      });
-
-      ctx.strokeStyle = lineGrad;
-      ctx.lineWidth = 2.5;
-      ctx.stroke();
-      ctx.restore();
-    },
-
-    renderLine(ctx, visible, min, max, chartTop, chartHeight, candleWidth) {
-      ctx.save();
-      ctx.beginPath();
-
-      visible.forEach((c, i) => {
-        const x = i * candleWidth + candleWidth / 2;
-        const y = this.priceToY(c.close, min, max, chartTop, chartHeight);
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-      });
-
-      ctx.strokeStyle = "rgba(116,255,208,.95)";
-      ctx.lineWidth = 2.5;
-      ctx.stroke();
-      ctx.restore();
-    },
-
-    renderCandles(ctx, visible, min, max, chartTop, chartHeight, candleWidth) {
-      ctx.save();
-
-      visible.forEach((c, i) => {
-        const x = i * candleWidth + candleWidth / 2;
-        const openY = this.priceToY(c.open, min, max, chartTop, chartHeight);
-        const closeY = this.priceToY(c.close, min, max, chartTop, chartHeight);
-        const highY = this.priceToY(c.high, min, max, chartTop, chartHeight);
-        const lowY = this.priceToY(c.low, min, max, chartTop, chartHeight);
-
-        const up = c.close >= c.open;
-        const color = up ? "#0ecb81" : "#f6465d";
-
-        ctx.strokeStyle = color;
-        ctx.lineWidth = 1.2;
-        ctx.beginPath();
-        ctx.moveTo(x, highY);
-        ctx.lineTo(x, lowY);
-        ctx.stroke();
-
-        const bodyY = Math.min(openY, closeY);
-        const bodyH = Math.max(2, Math.abs(closeY - openY));
-        const bodyW = Math.max(4, candleWidth * 0.56);
-
-        ctx.fillStyle = color;
-        ctx.fillRect(x - bodyW / 2, bodyY, bodyW, bodyH);
-      });
-
-      ctx.restore();
-    },
-
-    renderVolume(ctx, visible, chartTop, chartHeight, w, h, candleWidth) {
-      const volumeTop = chartTop + chartHeight + 8;
-      const volumeHeight = h - volumeTop - 10;
-      const maxVol = Math.max(...visible.map(c => c.volume), 1);
-
-      ctx.save();
-      visible.forEach((c, i) => {
-        const x = i * candleWidth + candleWidth * 0.18;
-        const barW = candleWidth * 0.64;
-        const barH = (c.volume / maxVol) * volumeHeight;
-        const y = volumeTop + (volumeHeight - barH);
-        const up = c.close >= c.open;
-
-        ctx.fillStyle = up
-          ? "rgba(14,203,129,.28)"
-          : "rgba(246,70,93,.26)";
-
-        ctx.fillRect(x, y, barW, barH);
-      });
-      ctx.restore();
-    },
-
-    renderCrosshair(ctx, visible, min, max, chartTop, chartHeight, candleWidth, w) {
-      if (!this.isHovering) return;
-
-      const idx = clamp(Math.floor(this.mouseX / candleWidth), 0, visible.length - 1);
-      this.hoverIndex = idx;
-
-      const candle = visible[idx];
-      if (!candle) return;
-
-      const x = idx * candleWidth + candleWidth / 2;
-      const y = this.priceToY(candle.close, min, max, chartTop, chartHeight);
-
-      ctx.save();
-      ctx.strokeStyle = "rgba(255,255,255,.12)";
-      ctx.lineWidth = 1;
-      ctx.setLineDash([4, 4]);
-
-      ctx.beginPath();
-      ctx.moveTo(x, chartTop);
-      ctx.lineTo(x, chartTop + chartHeight);
-      ctx.stroke();
-
-      ctx.beginPath();
-      ctx.moveTo(0, y);
-      ctx.lineTo(w, y);
-      ctx.stroke();
-
-      ctx.setLineDash([]);
-      ctx.fillStyle = "rgba(116,255,208,.95)";
-      ctx.beginPath();
-      ctx.arc(x, y, 3.2, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.restore();
-
-      this.showTooltip(candle, x, y);
-    },
-
-    showTooltip(candle, x, y) {
-      if (!this.tooltip || !this.canvas) return;
-
-      const rect = this.canvas.getBoundingClientRect();
-      const left = clamp(x + 18, 10, rect.width - 190);
-      const top = clamp(y + 18, 10, rect.height - 120);
-
-      this.tooltip.style.left = `${left}px`;
-      this.tooltip.style.top = `${top}px`;
-
-      this.tooltip.innerHTML = `
-        <div><strong>Open:</strong> ${fmtPrice(candle.open)}</div>
-        <div><strong>High:</strong> ${fmtPrice(candle.high)}</div>
-        <div><strong>Low:</strong> ${fmtPrice(candle.low)}</div>
-        <div><strong>Close:</strong> ${fmtPrice(candle.close)}</div>
-        <div><strong>Vol:</strong> ${fmtAmount(candle.volume, 2)}</div>
-      `;
-      this.tooltip.classList.add("show");
-    },
-
-    render() {
-      if (!this.canvas || !this.ctx) return;
-
-      const ctx = this.ctx;
-      const w = this.canvas.clientWidth;
-      const h = this.canvas.clientHeight;
-
-      ctx.clearRect(0, 0, w, h);
-
-      const visible = this.candles.slice(-this.visibleCount);
-      if (visible.length < 2) {
-        this.raf = requestAnimationFrame(() => this.render());
-        return;
-      }
-
-      const chartTop = 12;
-      const chartHeight = h - 110;
-      const candleWidth = w / visible.length;
-
-      const highs = visible.map(c => c.high);
-      const lows = visible.map(c => c.low);
-
-      let max = Math.max(...highs);
-      let min = Math.min(...lows);
-
-      if (Math.abs(max - min) < 0.0000001) {
-        max += 0.0001;
-        min -= 0.0001;
-      }
-
-      const padding = (max - min) * 0.12;
-      max += padding;
-      min -= padding;
-
-      this.renderGrid(ctx, w, chartTop, chartHeight);
-
-      if (this.mode === "candles") {
-        this.renderCandles(ctx, visible, min, max, chartTop, chartHeight, candleWidth);
-      } else if (this.mode === "line") {
-        this.renderLine(ctx, visible, min, max, chartTop, chartHeight, candleWidth);
-      } else {
-        this.renderArea(ctx, visible, min, max, chartTop, chartHeight, candleWidth, w);
-      }
-
-      this.renderEMA(ctx, visible, min, max, chartTop, chartHeight, candleWidth);
-      this.renderVWAP(ctx, visible, min, max, chartTop, chartHeight, candleWidth);
-      this.renderVolume(ctx, visible, chartTop, chartHeight, w, h, candleWidth);
-      this.renderCrosshair(ctx, visible, min, max, chartTop, chartHeight, candleWidth, w);
-
-      this.raf = requestAnimationFrame(() => this.render());
+    } else {
+      this.lastCandle.high = Math.max(this.lastCandle.high, price);
+      this.lastCandle.low = Math.min(this.lastCandle.low, price);
+      this.lastCandle.close = price;
+      this.lastCandle.volume += Math.random();
     }
-  };
+
+    this.candleSeries.setData(this.candles);
+
+    this.calculateEMA(14);
+    this.calculateVWAP();
+
+    this.emaSeries.setData(this.ema);
+    this.vwapSeries.setData(this.vwap);
+
+    this.updateMetrics();
+  },
+
+  calculateEMA(period) {
+    const k = 2 / (period + 1);
+    let ema = [];
+
+    let prev = this.candles[0]?.close || 0;
+
+    this.candles.forEach((c, i) => {
+      if (i === 0) {
+        ema.push({ time: c.time, value: prev });
+      } else {
+        const val = c.close * k + prev * (1 - k);
+        ema.push({ time: c.time, value: val });
+        prev = val;
+      }
+    });
+
+    this.ema = ema;
+  },
+
+  calculateVWAP() {
+    let pv = 0;
+    let vol = 0;
+    let vwap = [];
+
+    this.candles.forEach(c => {
+      const typical = (c.high + c.low + c.close) / 3;
+      pv += typical * c.volume;
+      vol += c.volume;
+
+      vwap.push({
+        time: c.time,
+        value: vol ? pv / vol : typical
+      });
+    });
+
+    this.vwap = vwap;
+  },
+
+  updateMetrics() {
+    if (!this.candles.length) return;
+
+    const visible = this.candles.slice(-24);
+
+    const open = visible[0].open;
+    const close = visible[visible.length - 1].close;
+    const high = Math.max(...visible.map(c => c.high));
+    const low = Math.min(...visible.map(c => c.low));
+    const vol = visible.reduce((a, c) => a + c.volume, 0);
+
+    document.getElementById("metricOpen").textContent = open.toFixed(6);
+    document.getElementById("metricHigh").textContent = high.toFixed(6);
+    document.getElementById("metricLow").textContent = low.toFixed(6);
+    document.getElementById("metricClose").textContent = close.toFixed(6);
+
+    document.getElementById("metricOpenPanel").textContent = open.toFixed(6);
+    document.getElementById("metricHighPanel").textContent = high.toFixed(6);
+    document.getElementById("metricLowPanel").textContent = low.toFixed(6);
+    document.getElementById("metricClosePanel").textContent = close.toFixed(6);
+    document.getElementById("metricVol").textContent = vol.toFixed(2);
+  }
+};
 
   /* =========================================================
      INIT
@@ -1233,7 +859,7 @@
     updateTradeInfo();
     updatePriceUI();
 
-    PRO_CHART.init();
+    PRO_CHART.update(marketPrice);
     startEngine();
   }
 
