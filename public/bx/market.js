@@ -859,6 +859,7 @@ const PRO_CHART = {
     updateTradeInfo();
     updatePriceUI();
 
+    PRO_CHART.init();
     PRO_CHART.update(marketPrice);
     startEngine();
   }
