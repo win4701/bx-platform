@@ -143,7 +143,7 @@
         borderRadius: "14px",
         fontSize: "13px",
         fontWeight: "800",
-        zIndex: 999999,
+        zIndex: 999,
         boxShadow: "0 10px 30px rgba(0,0,0,.35)",
         opacity: "0",
         transition: ".25s"
@@ -183,7 +183,7 @@
     boundLobbyOnce: false,
 
     state: {
-      wallet: 0.1,
+      wallet: null,
       currentGame: null,
       currentTab: "all",
       autoMode: false,
@@ -202,9 +202,9 @@
       activeEngine: null,
       mountedGameId: null,
       stats: {
-        online: 1284,
+        online: 487,
         payout: 97.4,
-        volume: 348921
+        volume: 38921
       }
     },
 
@@ -897,7 +897,7 @@
         play(amount) {
           cashed = false;
           multiplier = 1;
-          crashedAt = Number(rand(1.05, 8.5).toFixed(2));
+          crashedAt = Number(rand(1.05, 4.5).toFixed(2));
           multiEl.textContent = "1.00x";
           if (hintEl) hintEl.textContent = "Flying... cash out before crash";
 
@@ -1015,7 +1015,7 @@
             },
             onDone: () => {
               const win = overUnderSelect === "under" ? finalRoll < target : finalRoll > target;
-              const edge = 0.99;
+              const edge = 0.73;
               const chancePct = overUnderSelect === "under" ? target : (100 - target);
               const multiplier = +(100 / chancePct * edge).toFixed(2);
               const payout = win ? amount * multiplier : 0;
@@ -1171,7 +1171,7 @@
       let selected = new Set();
       let mines = new Set();
       let boardEl;
-      let mineCount = 3;
+      let mineCount = 13;
       let safeCount = 0;
       let currentMultiplier = 1;
       let statusEl;
@@ -1240,10 +1240,10 @@
           controls.innerHTML = `
             <div class="dynamic-card">
               <div class="dynamic-card-title">Mines Count</div>
-              <input type="range" id="minesCountInput" min="1" max="5" value="3">
+              <input type="range" id="minesCountInput" min="1" max="5" value="13">
               <div class="inline-value-row">
                 <span>Selected Mines</span>
-                <strong id="minesCountText">3</strong>
+                <strong id="minesCountText">13</strong>
               </div>
             </div>
           `;
@@ -1379,10 +1379,10 @@
           input.oninput = () => {
             target = Math.max(1.01, Number(input.value || 2));
             displayEl.textContent = `${target.toFixed(2)}x`;
-            multi.textContent = `${(target * 0.99).toFixed(2)}x`;
+            multi.textContent = `${(target * 0.79).toFixed(2)}x`;
           };
 
-          multi.textContent = `${(target * 0.99).toFixed(2)}x`;
+          multi.textContent = `${(target * 0.79).toFixed(2)}x`;
         },
 
         play(amount) {
@@ -1398,7 +1398,7 @@
             },
             onDone: () => {
               const win = finalRoll >= target;
-              const multiplier = +(target * 0.99).toFixed(2);
+              const multiplier = +(target * 0.79).toFixed(2);
               const payout = win ? amount * multiplier : 0;
 
               hintEl.textContent = win
@@ -1481,7 +1481,7 @@
             multiplier = 1;
           } else if (win) {
             payout = amount * 2;
-            multiplier = 2;
+            multiplier = 3;
           }
 
           setTimeout(() => {
@@ -1524,7 +1524,7 @@
 
           cardEl = $("#hiloCurrentCard", body);
           multiHint = $("#hiloMultiText", body);
-          multi.textContent = "1.70x";
+          multi.textContent = "1.69x";
 
           $$("[data-hilo]", controls).forEach(btn => {
             btn.onclick = () => {
@@ -1543,7 +1543,7 @@
             current = next;
             cardEl.textContent = cardLabel(current);
 
-            const multiplier = 1.7;
+            const multiplier = 1.69;
             const payout = win ? amount * multiplier : 0;
             multiHint.textContent = win ? "Correct pick" : "Wrong pick";
 
@@ -1614,12 +1614,12 @@
 
           altitude = 1.00;
           cashed = false;
-          crashAt = +(rand(1.15, 9.2).toFixed(2));
+          crashAt = +(rand(1.15, 7.2).toFixed(2));
 
           altitudeEl.textContent = "1.00x";
           if (statusEl) statusEl.textContent = "Aircraft climbing...";
           if (planeEl) planeEl.style.transform = "translate(0px,0px) rotate(-6deg)";
-          if (trailEl) trailEl.style.width = "18%";
+          if (trailEl) trailEl.style.width = "27%";
 
           interval = setInterval(() => {
             altitude = +(altitude + rand(0.03, 0.11)).toFixed(2);
@@ -1743,7 +1743,7 @@
 
               CASINO.finishRound({ win, payout, multiplier });
             }
-          }, 95);
+          }, 93);
         },
 
         destroy() {}
@@ -1858,7 +1858,7 @@
         this.state.bigWins.push({
           user: this.fakeName(),
           game: sampleGames[randInt(0, sampleGames.length - 1)],
-          amount: randInt(40, 1200),
+          amount: randInt(40, 780),
           multi: +(rand(1.5, 8).toFixed(2))
         });
       }
@@ -1869,7 +1869,7 @@
       this.state.bigWins.unshift({
         user: this.fakeName(),
         game: sampleGames[randInt(0, sampleGames.length - 1)],
-        amount: randInt(30, 1800),
+        amount: randInt(30, 970),
         multi: +(rand(1.2, 12).toFixed(2))
       });
       this.state.bigWins = this.state.bigWins.slice(0, 20);
@@ -1974,6 +1974,7 @@
     bootCasino();
   }
 })();
+
 // =====================================================
 // BLOXIO CASINO — REAL ENGINE LAYER (PRO)
 // Replace Local RNG → API + WS RESULTS
