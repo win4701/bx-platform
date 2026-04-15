@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+  <title>Bloxio</title>
+
+  <!-- Main Styles -->
+  <link rel="stylesheet" href="assets/styles.css"/>
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <!-- Sounds -->
+  <audio id="snd-click" src="assets/sounds/click.mp3" preload="auto"></audio>
+  <audio id="snd-win"   src="assets/sounds/win.mp3"   preload="auto"></audio>
+  <audio id="snd-lose"  src="assets/sounds/lose.mp3"  preload="auto"></audio>
+  <audio id="snd-spin"  src="assets/sounds/spin.mp3"  preload="auto"></audio>
+</head>
+
+<body
+  data-3d="on"
+  data-3d-level="medium"
+  data-motion="on"
+  data-sound="on"
+  data-performance="auto"
+  data-theme="dark"
+  data-ui="pro"
+  data-version="1.0.0"
+>
+
+  <!-- ================= HEADER ================= -->
+  <header class="app-header">
+    <div class="logo">
+      <img src="assets/images/logo.svg" alt="Bloxio Logo"/>
+      <span>Bloxio</span>
+    </div>
+  </header>
+
+  <!-- ================= MAIN ================= -->
+  <main class="app-container">
+
+    <!-- ================= WALLET ================= -->
+   
+      <section id="wallet" class="view active">
+
+  <!-- ================= HERO ================= -->
+  <div class="wallet-top">
+    <span class="label">Est. Total Value</span>
+    <h1>
+      <span id="walletTotal">$0.00</span>
+      <small>USD</small>
+    </h1>
+    <div id="walletStatus" class="wallet-status hidden">Portfolio syncing</div>
+  </div>
+
+  <!-- ================= INTELLIGENCE ================= -->
+  <div class="wallet-intelligence" id="walletIntelligence">
+    <div class="wallet-intelligence-head">
+      <div>
+        <span class="wallet-kicker">Smart Wallet</span>
+        <h3 id="walletIntelTitle">Ready to fund your wallet</h3>
+      </div>
+      <span id="walletIntelBadge" class="wallet-intel-badge">START</span>
+    </div>
+
+    <p id="walletIntelText">
+      Deposit crypto to activate trading, mining and casino features.
+    </p>
+
+    <div class="wallet-intel-actions" id="walletIntelActions">
+      <button id="walletIntelPrimary" class="wallet-intel-btn primary" type="button">
+        Deposit Now
+      </button>
+      <button id="walletIntelSecondary" class="wallet-intel-btn" type="button">
+        Explore Market
+      </button>
+    </div>
+  </div>
+
+  <!-- ================= MAIN ACTIONS ================= -->
+  <div class="wallet-actions">
+    <!-- أبقينا data-wallet-open حتى لا ينكسر wallet.js -->
+    <button class="btn primary" id="openDepositBtn" type="button" data-wallet-open="depositPanel">Deposit</button>
+    <button class="btn" id="openWithdrawBtn" type="button" data-wallet-open="withdrawPanel">Withdraw</button>
+    <button class="btn" id="openTransferBtn" type="button" data-wallet-open="transferPanel">Transfer</button>
+  </div>
+
+  <!-- ================= PANELS ================= -->
+  <div class="wallet-panels">
+
+    <!-- ===== DEPOSIT ===== -->
+    <div class="wallet-panel wallet-hidden" id="depositPanel">
+      <div class="wallet-panel-head">
+        <h4>Deposit Crypto</h4>
+        <button type="button" class="wallet-panel-close" id="closeDepositPanel" data-wallet-close="depositPanel">✕</button>
+      </div>
+
+      <div class="wallet-panel-body">
+        <label for="depositAsset">Asset</label>
+        <select id="depositAsset">
+          <option value="USDT">USDT</option>
+          <option value="USDC">USDC</option>
+          <option value="BTC">BTC</option>
+          <option value="BNB">BNB</option>
+          <option value="ETH">ETH</option>
+          <option value="AVAX">AVAX</option>
+          <option value="ZEC">ZEC</option>
+          <option value="TON">TON</option>
+          <option value="SOL">SOL</option>
+          <option value="LTC">LTC</option>
+        </select>
+
+        <button class="btn primary" id="generateDepositBtn" type="button">Generate Address</button>
+
+        <div class="wallet-address-box">
+          <span class="wallet-address-label">Deposit Address</span>
+          <!-- مهم: دعم الاسمين حتى لا ينكسر JS -->
+          <code id="depositAddressText">—</code>
+        </div>
+
+        <div class="wallet-inline-actions">
+          <button id="copyDepositBtn" class="btn secondary" type="button">Copy Address</button>
+        </div>
+
+        <div id="depositStatus" class="wallet-status hidden"></div>
+      </div>
+    </div>
+
+    <!-- ===== WITHDRAW ===== -->
+    <div class="wallet-panel wallet-hidden" id="withdrawPanel">
+      <div class="wallet-panel-head">
+        <h4>Withdraw Crypto</h4>
+        <button type="button" class="wallet-panel-close" id="closeWithdrawPanel" data-wallet-close="withdrawPanel">✕</button>
+      </div>
+
+      <div class="wallet-panel-body">
+        <label for="withdrawAsset">Asset</label>
+        <select id="withdrawAsset">
+          <option value="USDT">USDT</option>
+          <option value="USDC">USDC</option>
+          <option value="BTC">BTC</option>
+          <option value="BNB">BNB</option>
+          <option value="ETH">ETH</option>
+          <option value="AVAX">AVAX</option>
+          <option value="ZEC">ZEC</option>
+          <option value="TON">TON</option>
+          <option value="SOL">SOL</option>
+          <option value="LTC">LTC</option>
+        </select>
+
+        <label for="withdrawAmount">Amount</label>
+        <input id="withdrawAmount" type="number" min="0" step="0.0001" placeholder="0.00">
+
+        <label for="withdrawAddress">Wallet Address</label>
+        <input id="withdrawAddress" type="text" placeholder="Enter wallet address">
+
+        <button class="btn primary" id="submitWithdrawBtn" type="button">Confirm Withdraw</button>
+
+        <div id="withdrawStatus" class="wallet-status hidden"></div>
+      </div>
+    </div>
+
+    <!-- ===== TRANSFER ===== -->
+    <div class="wallet-panel wallet-hidden" id="transferPanel">
+      <div class="wallet-panel-head">
+        <h4>Transfer BX</h4>
+        <button type="button" class="wallet-panel-close" id="closeTransferPanel" data-wallet-close="transferPanel">✕</button>
+      </div>
+
+      <div class="wallet-panel-body">
+        <!-- مهم جدًا: أضفنا transferAsset ليتوافق مع intelligence الجديد -->
+        <label for="transferAsset">Asset</label>
+        <select id="transferAsset">
+          <option value="BX">BX</option>
+          <option value="USDT">USDT</option>
+          <option value="USDC">USDC</option>
+          <option value="BNB">BNB</option>
+          <option value="SOL">SOL</option>
+        </select>
+
+        <!-- دعم القديم + الجديد -->
+        <label for="transferTelegram">Telegram ID / Recipient</label>
+        <input id="transferTelegram" type="text" placeholder="@username">
+
+        <!-- دعم fallback لبعض الأكواد -->
+        <input id="transferTo" type="hidden" value="">
+
+        <label for="transferAmount">Amount</label>
+        <input id="transferAmount" type="number" min="0" step="0.0001" placeholder="0.00">
+
+        <button class="btn confirm" id="submitTransferBtn" type="button">Confirm Transfer</button>
+
+        <div id="transferStatus" class="wallet-status hidden"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ================= BALANCES ================= -->
+  <div class="wallet-balances">
+    <h3>Asset Balances</h3>
+
+    <!-- Search -->
+    <div class="wallet-assets-toolbar">
+      <input id="walletAssetSearch" type="text" placeholder="Search asset...">
+    </div>
+
+    <!-- Empty State -->
+    <div id="walletEmptyState" class="wallet-empty hidden">
+      No assets found
+    </div>
+
+    <!-- ===== ASSET ROWS ===== -->
+
+    <div class="wallet-row main" data-asset="BX">
+      <div class="left">
+        <img src="assets/images/bx.png" alt="BX">
+        <div class="info"><strong>BX</strong><span>Bloxio</span></div>
+      </div>
+      <div class="amount"><strong id="bal-bx">0.00</strong></div>
+    </div>
+
+    <div class="wallet-row" data-asset="USDT">
+      <div class="left">
+        <img src="assets/images/usdt.png" alt="USDT">
+        <div class="info"><strong>USDT</strong><span>Tether</span></div>
+      </div>
+      <div class="amount"><strong id="bal-usdt">0.00</strong></div>
+    </div>
+
+    <div class="wallet-row" data-asset="USDC">
+      <div class="left">
+        <img src="assets/images/usdc.png" alt="USDC">
+        <div class="info"><strong>USDC</strong><span>USD Coin</span></div>
+      </div>
+      <div class="amount"><strong id="bal-usdc">0.00</strong></div>
+    </div>
+
+    <div class="wallet-row" data-asset="BTC">
+      <div class="left">
+        <img src="assets/images/btc.png" alt="BTC">
+        <div class="info"><strong>BTC</strong><span>Bitcoin</span></div>
+      </div>
+      <div class="amount"><strong id="bal-btc">0.00</strong></div>
+    </div>
+
+    <div class="wallet-row" data-asset="BNB">
+      <div class="left">
+        <img src="assets/images/bnb.png" alt="BNB">
+        <div class="info"><strong>BNB</strong><span>Binance</span></div>
+      </div>
+      <div class="amount"><strong id="bal-bnb">0.00</strong></div>
+    </div>
+
+    <div class="wallet-row" data-asset="ETH">
+      <div class="left">
+        <img src="assets/images/eth.png" alt="ETH">
+        <div class="info"><strong>ETH</strong><span>Ethereum</span></div>
+      </div>
+      <div class="amount"><strong id="bal-eth">0.00</strong></div>
+    </div>
+
+    <div class="wallet-row" data-asset="AVAX">
+      <div class="left">
+        <img src="assets/images/avax.png" alt="AVAX">
+        <div class="info"><strong>AVAX</strong><span>Avalanche</span></div>
+      </div>
+      <div class="amount"><strong id="bal-avax">0.00</strong></div>
+    </div>
+
+    <div class="wallet-row" data-asset="ZEC">
+      <div class="left">
+        <img src="assets/images/zec.png" alt="ZEC">
+        <div class="info"><strong>ZEC</strong><span>Zcash</span></div>
+      </div>
+      <div class="amount"><strong id="bal-zec">0.00</strong></div>
+    </div>
+
+    <div class="wallet-row" data-asset="TON">
+      <div class="left">
+        <img src="assets/images/ton.png" alt="TON">
+        <div class="info"><strong>TON</strong><span>Toncoin</span></div>
+      </div>
+      <div class="amount"><strong id="bal-ton">0.00</strong></div>
+    </div>
+
+    <div class="wallet-row" data-asset="SOL">
+      <div class="left">
+        <img src="assets/images/sol.png" alt="SOL">
+        <div class="info"><strong>SOL</strong><span>Solana</span></div>
+      </div>
+      <div class="amount"><strong id="bal-sol">0.00</strong></div>
+    </div>
+
+    <div class="wallet-row" data-asset="LTC">
+      <div class="left">
+        <img src="assets/images/ltc.png" alt="LTC">
+        <div class="info"><strong>LTC</strong><span>Litecoin</span></div>
+      </div>
+      <div class="amount"><strong id="bal-ltc">0.00</strong></div>
+    </div>
+  </div>
+
+  <!-- ================= BOTTOM ACTIONS ================= -->
+  <div class="wallet-bottom-actions">
+    <button id="walletConnectBtn" class="wallet-btn walletconnect" data-state="idle" type="button">
+      WalletConnect
+    </button>
+    <button id="binanceConnectBtn" class="wallet-btn binance-pay" data-state="idle" type="button">
+      Binance Pay
+    </button>
+  </div>
+  <!-- ================= QUICK ASSET SHEET ================= -->
+  <div id="walletQuickSheet" class="wallet-quick-sheet wallet-hidden">
+    <div class="wallet-quick-backdrop" id="walletQuickBackdrop"></div>
+
+    <div class="wallet-quick-card">
+      <div class="wallet-quick-head">
+        <div>
+          <span class="wallet-kicker">Quick Actions</span>
+          <h4 id="walletQuickAssetName">Asset</h4>
+        </div>
+        <button id="walletQuickClose" class="wallet-panel-close" type="button">✕</button>
+      </div>
+
+      <div class="wallet-quick-body">
+        <button id="walletQuickDeposit" class="wallet-intel-btn primary" type="button">Deposit</button>
+        <button id="walletQuickWithdraw" class="wallet-intel-btn" type="button">Withdraw</button>
+        <button id="walletQuickTransfer" class="wallet-intel-btn" type="button">Transfer</button>
+      </div>
+    </div>
+  </div>
+
+  </section>
+    <!-- ================= MARKET ================= -->
+    <section id="market" class="view market-view">
+      <!-- خليت market كما هو لأن بنيته سليمة مع js الحالي -->
+      <!-- (أبقيت نفس DOM IDs حتى لا نكسر market.js) -->
+
+      <div class="market-header">
+        <div class="pair-title">
+          <span class="base">BX</span>
+          <span class="arrow">/</span>
+          <span class="quote" id="quoteAsset">USDT</span>
+        </div>
+
+        <div class="price-box">
+          <div id="marketPrice" class="price-main">0.000000</div>
+          <div id="marketApprox" class="approx">≈ 0.000000 USDT</div>
+        </div>
+      </div>
+
+      <div class="wallet-box compact">
+        <div>BX <strong id="walletBX">0.00</strong></div>
+        <div><span id="walletQuoteLabel">USDT</span> <strong id="walletUSDT">0.00</strong></div>
+      </div>
+
+      <div class="pair-grid">
+        <button class="pair-btn active" data-quote="USDT" type="button">USDT</button>
+        <button class="pair-btn" data-quote="USDC" type="button">USDC</button>
+        <button class="pair-btn" data-quote="BTC" type="button">BTC</button>
+        <button class="pair-btn" data-quote="BNB" type="button">BNB</button>
+        <button class="pair-btn" data-quote="ETH" type="button">ETH</button>
+        <button class="pair-btn" data-quote="AVAX" type="button">AVAX</button>
+        <button class="pair-btn" data-quote="ZEC" type="button">ZEC</button>
+        <button class="pair-btn" data-quote="TON" type="button">TON</button>
+        <button class="pair-btn" data-quote="SOL" type="button">SOL</button>
+        <button class="pair-btn" data-quote="LTC" type="button">LTC</button>
+      </div>
+
+      <div class="market-hero">
+        <div class="market-identity">
+          <div class="market-logo">™</div>
+          <div class="market-title">
+            <h2 id="assetName">Bloxio</h2>
+            <span id="assetSymbol">BX</span>
+          </div>
+        </div>
+
+        <div class="market-price-box">
+          <div id="assetPrice" class="market-price">$0.00000</div>
+          <div id="assetChangeBadge" class="market-change-badge is-up">▲ 0.00%</div>
+        </div>
+
+        <div class="market-toolbar">
+          <div class="market-timeframes">
+            <button class="active" data-range="1H" type="button">1H</button>
+            <button data-range="24H" type="button">24H</button>
+            <button data-range="7D" type="button">7D</button>
+            <button data-range="30D" type="button">30D</button>
+            <button data-range="90D" type="button">90D</button>
+          </div>
+
+          <div class="market-chart-modes">
+            <button class="active" data-chart-mode="area" type="button">Area</button>
+            <button data-chart-mode="line" type="button">Line</button>
+            <button data-chart-mode="candles" type="button">Candles</button>
+          </div>
+        </div>
+
+        <div class="market-chart-card market-chart-card--pro">
+          <div class="market-chart-topbar">
+            <div class="chart-top-left">
+              <span class="chart-mini-label">BX / <span id="chartQuoteLabel">USDT</span></span>
+              <strong id="chartLivePrice">$0.00000</strong>
+            </div>
+            <div class="chart-top-right">
+              <span id="chartLiveChange" class="chart-live-change is-up">▲ 0.00%</span>
+            </div>
+          </div>
+
+          <div class="market-chart-shell market-chart-shell--full">
+            <canvas id="marketChart"></canvas>
+            <div class="chart-glow"></div>
+            <div class="chart-overlay"></div>
+            <div id="marketTooltip" class="market-tooltip"></div>
+            <div class="market-crosshair">
+              <span id="crosshairPrice">--</span>
+              <span id="crosshairTime">--</span>
+            </div>
+          </div>
+
+          <div class="market-chart-footer">
+            <div class="chart-footer-item"><span>Open</span><strong id="metricOpen">0.00000</strong></div>
+            <div class="chart-footer-item"><span>High</span><strong id="metricHigh">0.00000</strong></div>
+            <div class="chart-footer-item"><span>Low</span><strong id="metricLow">0.00000</strong></div>
+            <div class="chart-footer-item"><span>Close</span><strong id="metricClose">0.00000</strong></div>
+          </div>
+        </div>
+
+        <div class="market-stats-grid">
+          <div class="stat-card"><span>24H High</span><strong id="statHigh">$0.00000</strong></div>
+          <div class="stat-card"><span>24H Low</span><strong id="statLow">$0.00000</strong></div>
+          <div class="stat-card"><span>Volume</span><strong id="statVolume">0 BX</strong></div>
+          <div class="stat-card"><span>Market</span><strong id="statMarketCap">$0</strong></div>
+        </div>
+
+        <div class="market-ohlc">
+          <div class="ohlc-item"><span>Open</span><strong id="metricOpenPanel">0.00000</strong></div>
+          <div class="ohlc-item"><span>High</span><strong id="metricHighPanel">0.00000</strong></div>
+          <div class="ohlc-item"><span>Low</span><strong id="metricLowPanel">0.00000</strong></div>
+          <div class="ohlc-item"><span>Close</span><strong id="metricClosePanel">0.00000</strong></div>
+          <div class="ohlc-item"><span>Volume</span><strong id="metricVol">0</strong></div>
+        </div>
+      </div>
+
+      <div class="trade-box buy" id="tradeBox">
+        <div class="trade-tabs">
+          <button id="buyTab" class="active" type="button">Buy</button>
+          <button id="sellTab" type="button">Sell</button>
+        </div>
+
+        <div class="trade-form">
+          <label for="orderAmount">Amount BX</label>
+          <input id="orderAmount" type="number" placeholder="0.00" inputmode="decimal" step="0.0001" min="0">
+
+          <div class="percent-row">
+            <button type="button" data-percent="10">10%</button>
+            <button type="button" data-percent="25">25%</button>
+            <button type="button" data-percent="50">50%</button>
+            <button type="button" data-percent="100">MAX</button>
+          </div>
+
+          <div class="trade-stats">
+            <div>Price: <span id="execPrice">—</span></div>
+            <div>Slippage: <span id="slippage">—%</span></div>
+            <div>Spread: <span id="spread">—</span></div>
+          </div>
+
+          <button class="action-btn buy" id="actionBtn" type="button">Buy BX</button>
+        </div>
+      </div>
+
+      <div class="market-cards">
+        <div class="orderbook-card">
+          <div class="orderbook-head">
+            <h3>Order Book</h3>
+            <div class="orderbook-pair">BX / <span id="orderbookQuote">USDT</span></div>
+          </div>
+
+          <div class="ob-table-wrap ob-table-wrap--pro">
+  <div class="ob-table ob-head ob-head-pro">
+    <div class="ob-col bid">
+      <span>Bids</span>
+      <small>Amount</small>
+    </div>
+
+    <div class="ob-col mid">
+      <span>Prix</span>
+      <small>Mid</small>
+    </div>
+
+    <div class="ob-col ask">
+      <span>Asks</span>
+      <small>Amount</small>
+    </div>
+  </div>
+  <div id="orderBookRows" class="ob-body ob-body-pro"></div>
+         </div>
+        </div>
+    </section>
+
+    <!-- ================= CASINO ================= -->
+    <section id="casino" class="view">
+
+      <div id="casinoLobby">
+        <div class="casino-topbar">
+          <div class="casino-brand-wrap">
+            <div class="casino-brand-badge">🎰</div>
+            <div>
+              <h2 class="casino-title">Bloxio Casino</h2>
+              <p class="casino-subtitle">Provably fair • Live gameplay</p>
+            </div>
+          </div>
+          <button class="casino-icon-btn" id="casinoRefreshBtn" type="button">⟳</button>
+        </div>
+
+        <div class="casino-stats-strip">
+          <div class="casino-stat-card">
+            <span class="casino-stat-label">Wallet</span>
+            <strong id="casinoWalletText">0 BX</strong>
+          </div>
+          <div class="casino-stat-card">
+            <span class="casino-stat-label">Players</span>
+            <strong id="casinoOnlineText">0</strong>
+          </div>
+          <div class="casino-stat-card">
+            <span class="casino-stat-label">Volume</span>
+            <strong id="casinoVolumeText">0 BX</strong>
+          </div>
+        </div>
+
+        <div class="ticker-pulse-wrap">
+          <div class="ticker-pulse-label">LIVE FEED</div>
+          <div class="ticker-pulse-track" id="casinoTickerTrack"></div>
+        </div>
+
+        <div class="casino-filter-tabs" id="casinoFilterTabs">
+          <button class="casino-filter-tab active" data-tab="all" type="button">All</button>
+          <button class="casino-filter-tab" data-tab="popular" type="button">Popular</button>
+          <button class="casino-filter-tab" data-tab="classic" type="button">Classic</button>
+          <button class="casino-filter-tab" data-tab="slots" type="button">Slots</button>
+          <button class="casino-filter-tab" data-tab="strategy" type="button">Strategy</button>
+          <button class="casino-filter-tab" data-tab="cards" type="button">Cards</button>
+          <button class="casino-filter-tab" data-tab="instant" type="button">Instant</button>
+        </div>
+
+        <div id="casinoGamesGrid">
+
+          <button type="button" class="casino-game-card" data-game="coinflip" data-image="assets/casino/coinflip.png">
+            <div class="casino-game-thumb"><img src="assets/casino/coinflip.png" alt="Coinflip"></div>
+            <div class="casino-game-meta">
+              <div class="casino-game-name">🪙 Coinflip</div>
+              <div class="casino-game-type">Classic</div>
+            </div>
+          </button>
+
+          <button type="button" class="casino-game-card" data-game="limbo" data-image="assets/casino/limbo.png">
+            <div class="casino-game-thumb"><img src="assets/casino/limbo.png" alt="Limbo"></div>
+            <div class="casino-game-meta">
+              <div class="casino-game-name">🎯 Limbo</div>
+              <div class="casino-game-type">Instant</div>
+            </div>
+          </button>
+
+          <button type="button" class="casino-game-card" data-game="dice" data-image="assets/casino/dice.png">
+            <div class="casino-game-thumb"><img src="assets/casino/dice.png" alt="Dice"></div>
+            <div class="casino-game-meta">
+              <div class="casino-game-name">🎲 Dice</div>
+              <div class="casino-game-type">Classic</div>
+            </div>
+          </button>
+
+          <button type="button" class="casino-game-card" data-game="crash" data-image="assets/casino/crash.png">
+            <div class="casino-game-thumb"><img src="assets/casino/crash.png" alt="Crash"></div>
+            <div class="casino-game-meta">
+              <div class="casino-game-name">📈 Crash</div>
+              <div class="casino-game-type">Popular</div>
+            </div>
+          </button>
+
+          <button type="button" class="casino-game-card" data-game="plinko" data-image="assets/casino/plinko.png">
+            <div class="casino-game-thumb"><img src="assets/casino/plinko.png" alt="Plinko"></div>
+            <div class="casino-game-meta">
+              <div class="casino-game-name">🔻 Plinko</div>
+              <div class="casino-game-type">Popular</div>
+            </div>
+          </button>
+
+          <button type="button" class="casino-game-card" data-game="blackjack" data-image="assets/casino/blackjack.png">
+            <div class="casino-game-thumb"><img src="assets/casino/blackjack.png" alt="Blackjack"></div>
+            <div class="casino-game-meta">
+              <div class="casino-game-name">🃏 Blackjack</div>
+              <div class="casino-game-type">Cards</div>
+            </div>
+          </button>
+
+          <button type="button" class="casino-game-card" data-game="hilo" data-image="assets/casino/hilo.png">
+            <div class="casino-game-thumb"><img src="assets/casino/hilo.png" alt="Hi-Lo"></div>
+            <div class="casino-game-meta">
+              <div class="casino-game-name">⬆️ Hi-Lo</div>
+              <div class="casino-game-type">Cards</div>
+            </div>
+          </button>
+
+          <button type="button" class="casino-game-card" data-game="slots" data-image="assets/casino/slot.png">
+            <div class="casino-game-thumb"><img src="assets/casino/slot.png" alt="Slots"></div>
+            <div class="casino-game-meta">
+              <div class="casino-game-name">🎰 Slots</div>
+              <div class="casino-game-type">Slots</div>
+            </div>
+          </button>
+
+          <button type="button" class="casino-game-card" data-game="brids" data-image="assets/casino/birdsparty.png">
+            <div class="casino-game-thumb"><img src="assets/casino/birdsparty.png" alt="Brids"></div>
+            <div class="casino-game-meta">
+              <div class="casino-game-name">💣 Brids</div>
+              <div class="casino-game-type">Strategy</div>
+            </div>
+          </button>
+
+          <button type="button" class="casino-game-card" data-game="fruitparty" data-image="assets/casino/fruitparty.png">
+            <div class="casino-game-thumb"><img src="assets/casino/fruitparty.png" alt="FruitParty"></div>
+            <div class="casino-game-meta">
+              <div class="casino-game-name">🍉 FruitParty</div>
+              <div class="casino-game-type">Slots</div>
+            </div>
+          </button>
+
+          <button type="button" class="casino-game-card" data-game="bananafarm" data-image="assets/casino/bananafarm.png">
+            <div class="casino-game-thumb"><img src="assets/casino/bananafarm.png" alt="BananaFarm"></div>
+            <div class="casino-game-meta">
+              <div class="casino-game-name">🍌 BananaFarm</div>
+              <div class="casino-game-type">Slots</div>
+            </div>
+          </button>
+
+          <button type="button" class="casino-game-card" data-game="airboss" data-image="assets/casino/airboss.png">
+            <div class="casino-game-thumb"><img src="assets/casino/airboss.png" alt="AirBoss"></div>
+            <div class="casino-game-meta">
+              <div class="casino-game-name">✈️ AirBoss</div>
+              <div class="casino-game-type">Popular</div>
+            </div>
+          </button>
+
+        </div>
+
+        <div class="big-wins">
+          <div class="big-wins-title">Big Wins</div>
+          <div class="big-wins-track" id="bigWinsTrack"></div>
+        </div>
+      </div>
+
+      <div id="casinoGameView" class="hidden"></div>
+    </section>
+    <!-- ================= MINING ================= -->
+   <section id="mining" class="view">
+
+  <!-- ===== HERO ===== -->
+  <div class="mining-top card">
+    <div class="mining-top-head">
+      <div>
+        <h2>Mining Center</h2>
+        <p>Earn passive rewards with BX / BNB / SOL mining plans</p>
+      </div>
+      <button class="btn primary" type="button" data-mining-open="miningSubscribePanel">Subscribe</button>
+    </div>
+
+    <div class="mining-overview-grid">
+      <div class="mining-stat">
+        <span>Active Coin</span>
+        <strong id="miningActiveCoin">BX</strong>
+      </div>
+
+      <div class="mining-stat">
+        <span>Available</span>
+        <strong id="miningAvailableBalanceTop">0.00 BX</strong>
+      </div>
+
+      <div class="mining-stat">
+        <span>Best Yield</span>
+        <strong id="miningDailyYieldTop">+0.00%</strong>
+      </div>
+
+      <div class="mining-stat">
+        <span>Best Cycle</span>
+        <strong id="miningCycleTop">—</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== COIN TABS ===== -->
+  <div class="mining-tabs">
+    <button class="active" data-coin="BX" type="button">
+      <img src="assets/images/bx.png" alt="BX">
+      <span>BX</span>
+    </button>
+
+    <button data-coin="BNB" type="button">
+      <img src="assets/images/bnb.png" alt="BNB">
+      <span>BNB</span>
+    </button>
+
+    <button data-coin="SOL" type="button">
+      <img src="assets/images/sol.png" alt="SOL">
+      <span>SOL</span>
+    </button>
+  </div>
+
+  <!-- ===== OLD STYLE MAIN GRID ===== -->
+  <div class="mining-shell">
+
+    <!-- ===== LEFT : 2/3 ===== -->
+    <div class="mining-main-col">
+
+      <div class="mining-plans-head">
+        <div>
+          <span class="mining-section-kicker">Available Plans</span>
+          <h3>Choose Your Mining Plan</h3>
+        </div>
+        <p>Flexible mining plans for every wallet size.</p>
+      </div>
+
+      <div class="mining-plans mining-plans--classic" id="miningGrid"></div>
+    </div>
+
+    <!-- ===== RIGHT : 1/3 ===== -->
+    <div class="mining-side-col">
+
+      <!-- ACTIVE -->
+      <div class="mining-active-card card" id="miningActivePanel">
+        <div class="mining-active-head">
+          <div>
+            <span class="mining-section-kicker">Current Position</span>
+            <h3>Active Mining</h3>
+          </div>
+
+          <span id="miningActiveStatusBadge" class="mining-badge idle">No Active Plan</span>
+        </div>
+
+        <div class="mining-active-main">
+          <div class="mining-active-row">
+            <span>Plan</span>
+            <strong id="miningActivePlanName">—</strong>
+          </div>
+
+          <div class="mining-active-row">
+            <span>Amount</span>
+            <strong id="miningActiveAmount">0.00 BX</strong>
+          </div>
+
+          <div class="mining-active-row">
+            <span>Profit Now</span>
+            <strong id="miningActiveProfit">+0.0000 BX</strong>
+          </div>
+
+          <div class="mining-active-row">
+            <span>Time Left</span>
+            <strong id="miningActiveTimeLeft">—</strong>
+          </div>
+        </div>
+
+        <div class="mining-progress-wrap">
+          <div class="mining-progress-top">
+            <span>Cycle Progress</span>
+            <strong id="miningProgressText">0%</strong>
+          </div>
+
+          <div class="mining-progress-bar">
+            <div id="miningProgressFill"></div>
+          </div>
+
+          <div class="mining-progress-hint" id="miningCycleHint">No active cycle</div>
+        </div>
+
+        <div class="mining-active-actions">
+          <button class="btn primary" id="miningClaimBtn" type="button" disabled>Claim Profit</button>
+          <button class="btn" id="miningCancelBtn" type="button" disabled>Close Plan</button>
+        </div>
+      </div>
+
+      <!-- SUBSCRIBE -->
+      <div class="mining-sub-panel mining-hidden" id="miningSubscribePanel">
+        <div class="mining-sub-head">
+          <div>
+            <h3 id="miningSelectedPlanTitle">Mining Subscription</h3>
+            <p id="miningSelectedPlanMeta">Select a plan to continue</p>
+          </div>
+          <button type="button" class="mining-panel-close" data-mining-close="miningSubscribePanel">✕</button>
+        </div>
+
+        <div class="mining-sub-body">
+          <div class="mining-balance-info">
+            Available Balance:
+            <strong id="miningAvailableBalance">0.00 BX</strong>
+          </div>
+
+          <label for="miningAmountInput">Subscription Amount</label>
+          <input id="miningAmountInput" type="number" min="0" step="0.0001" placeholder="Enter amount">
+
+          <div class="mining-quick-row">
+            <button type="button" data-mining-percent="25">25%</button>
+            <button type="button" data-mining-percent="50">50%</button>
+            <button type="button" data-mining-percent="100">MAX</button>
+          </div>
+
+          <div class="mining-sub-summary" id="miningSubSummary">
+            Choose plan first.
+          </div>
+
+          <button class="btn primary" id="confirmMiningSubscribeBtn" type="button">
+            Confirm Subscription
+          </button>
+        </div>
+      </div>
+
+      <!-- HISTORY -->
+      <div class="mining-history-card card">
+        <div class="mining-history-head">
+          <div>
+            <span class="mining-section-kicker">Activity</span>
+            <h3>Mining History</h3>
+          </div>
+          <span class="mining-history-count" id="miningHistoryCount">0 Records</span>
+        </div>
+
+        <div class="mining-history-list" id="miningHistoryList">
+          <div class="mining-history-empty">No mining activity yet.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ===== STATUS + TOAST ===== -->
+  <div id="miningStatus" class="wallet-status hidden"></div>
+  <div id="miningToast" class="wallet-toast hidden"></div>
+
+</section>
+    <!-- ================= AIRDROP ================= -->
+    <section id="airdrop" class="view">
+      <div class="airdrop-container">
+
+        <div class="airdrop-box">
+          <img src="assets/images/bx.png" alt="BX">
+          <div class="airdrop-reward" id="airdropReward">+0.00 BX</div>
+          <button id="claimAirdropBtn" class="airdrop-action" type="button">Claim Airdrop</button>
+          <div class="airdrop-status" id="airdrop-ref-stats">Loading...</div>
+        </div>
+
+        <div class="airdrop-referral">
+          <h3>Referral</h3>
+          <div class="referral-box">
+            <span class="ref-link" id="ref-link-airdrop">Loading...</span>
+            <button id="copyRefBtn" type="button">Copy</button>
+          </div>
+        </div>
+
+        <div class="airdrop-whitepaper">
+          <a class="whitepaper-btn" href="assets/bloxio.pdf" target="_blank" rel="noopener">Read Whitepaper</a>
+        </div>
+      </div>
+
+      <div class="airdrop-partners">
+        <h3 class="section-title">Partners</h3>
+        <div class="partners-grid">
+          <div class="partner-item"><img src="assets/images/aliexpress.png" alt="AliExpress"></div>
+          <div class="partner-item"><img src="assets/images/xiaomi.png" alt="Xiaomi"></div>
+          <div class="partner-item"><img src="assets/images/nike.png" alt="Nike"></div>
+          <div class="partner-item"><img src="assets/images/samsung.png" alt="Samsung"></div>
+        </div>
+      </div>
+
+      <div class="min-card">
+        <img src="assets/images/min.jpg" alt="Mining">
+        <h3>Start Mining</h3>
+        <p>Sub Mining and earn extra (BX-BNB-SOL) rewards.</p>
+        <button class="btn secondary" data-action="go-mining" type="button">Start Mining</button>
+      </div>
+
+      <div class="topup-card">
+        <div class="topup-header">
+          <h3>Mobile Top-Up</h3>
+          <span>Min 5 USDT • Number + country code</span>
+        </div>
+        <div class="topup-body">
+          <div class="input-group"><input type="text" id="topup-country" placeholder="Country"></div>
+          <div class="input-group"><input type="tel" id="topup-phone" placeholder="+33"></div>
+          <div class="input-group"><input type="number" id="topup-amount" min="5" placeholder="Amount USDT"></div>
+          <button id="topup-confirm" class="btn-confirm" type="button">Confirm Payment</button>
+          <div id="topup-message" class="topup-message"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= SETTINGS ================= -->
+    <section id="settings" class="view">
+      <h2 class="page-title">Settings</h2>
+
+      <div class="card">
+        <h3>🔗 Referral</h3>
+        <p>Your referral link:</p>
+        <span class="ref-link" id="ref-link">Loading...</span>
+        <button class="btn" onclick="copyReferral()" type="button">Copy</button>
+      </div>
+
+      <div class="card">
+        <h3>Airdrop</h3>
+        <p id="airdrop-status">Loading...</p>
+        <button id="claim-airdrop" class="btn primary hidden" onclick="claimAirdrop()" type="button">
+          Claim Airdrop
+        </button>
+      </div>
+
+      <div class="card">
+        <h3>Badges</h3>
+        <ul id="badges-list"></ul>
+      </div>
+
+      <div class="card">
+        <h3>Referral Leaderboard</h3>
+        <ol id="ref-leaderboard"></ol>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ================= BOTTOM NAV ================= -->
+  <nav class="bottom-nav">
+    <button data-view="wallet" type="button">
+      <img src="assets/images/wallet.svg" alt="Wallet"/>
+      <span>Wallet</span>
+    </button>
+
+    <button data-view="market" type="button">
+      <img src="assets/images/market.svg" alt="Market"/>
+      <span>Market</span>
+    </button>
+
+    <button data-view="casino" type="button">
+      <img src="assets/images/casino.svg" alt="Casino"/>
+      <span>Casino</span>
+    </button>
+
+    <button data-view="mining" type="button">
+      <img src="assets/images/mining.svg" alt="Mining"/>
+      <span>Mining</span>
+    </button>
+
+    <button data-view="airdrop" type="button">
+      <img src="assets/images/airdrop.svg" alt="Airdrop"/>
+      <span>Airdrop</span>
+    </button>
+  </nav>
+
+  <!-- ================= LIBS ================= -->
+  <script src="https://unpkg.com/web3@1.10.0/dist/web3.min.js"></script>
+  <script src="https://unpkg.com/@walletconnect/web3-provider@1.8.0/dist/umd/index.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- ================= BX SYSTEM ================= -->
+  <script src="bx/core.js"></script>
+  <script src="bx/state.js"></script>
+  <script src="bx/services/api.js"></script>
+  <script src="bx/services/ws.js"></script>
+  <script src="bx/balance.js"></script>
+  <script src="bx/wallet.js"></script>
+  <script src="bx/market.js"></script>
+  <script src="bx/casino.js"></script>
+  <script src="bx/mining.js"></script>
+  <script src="bx/airdrop.js"></script>
+  <script src="bx/main.js"></script>
+
+</body>
+</html>
