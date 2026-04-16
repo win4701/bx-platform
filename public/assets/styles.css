@@ -2091,15 +2091,14 @@ h3{
 }
 
 /* =========================================================
-   ORDER BOOK — PRO BYBIT STYLE (REBUILT)
+   ORDER BOOK — PRO GRID ENGINE (BIDS | PRICE | ASKS)
 ========================================================= */
 
 /* ===== CARD ===== */
 #market .orderbook-card{
   border-radius:20px;
   padding:10px;
-  background:
-    linear-gradient(180deg,#0b121b 0%,#091019 100%);
+  background:linear-gradient(180deg,#0b121b 0%,#091019 100%);
   border:1px solid rgba(255,255,255,.06);
 }
 
@@ -2121,20 +2120,60 @@ h3{
   color:#aaa;
 }
 
+/* ===== TABLE HEAD ===== */
+#market .ob-grid-head{
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  font-size:11px;
+  opacity:.5;
+  padding:4px 6px;
+}
+
 /* ===== BODY ===== */
 #market .ob-body-pro{
   display:flex;
   flex-direction:column;
   gap:2px;
-  font-size:12px;
 }
 
 /* ===== ROW ===== */
-#market .ob-row{
-  position:relative;
-  height:22px;
-  display:flex;
+#market .ob-grid-row{
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
   align-items:center;
+  height:22px;
+  position:relative;
+  font-size:12px;
+}
+
+/* ===== CELLS ===== */
+#market .ob-cell{
+  position:relative;
+  padding:0 6px;
+  overflow:hidden;
+}
+
+#market .ob-cell.center{
+  text-align:center;
+}
+
+/* ===== TEXT ===== */
+#market .price{
+  font-weight:900;
+  cursor:pointer;
+  color:#fff;
+}
+
+#market .ob-bid{
+  color:#0ecb81;
+  font-weight:600;
+  cursor:pointer;
+}
+
+#market .ob-ask{
+  color:#f6465d;
+  font-weight:600;
+  cursor:pointer;
 }
 
 /* ===== DEPTH ===== */
@@ -2142,7 +2181,13 @@ h3{
   position:absolute;
   top:0;
   bottom:0;
-  opacity:.15;
+  opacity:.12;
+  z-index:0;
+}
+
+#market .ob-depth.bid{
+  left:0;
+  background:#0ecb81;
 }
 
 #market .ob-depth.ask{
@@ -2150,76 +2195,56 @@ h3{
   background:#f6465d;
 }
 
-#market .ob-depth.bid{
-  right:0;
-  background:#0ecb81;
-}
-
-/* ===== LINE ===== */
-#market .ob-line{
-  display:flex;
-  justify-content:space-between;
-  width:100%;
-  padding:0 6px;
-  z-index:2;
-}
-
-/* ===== TEXT ===== */
-#market .price{
-  font-weight:900;
-  cursor:pointer;
-}
-
-#market .price.red{
-  color:#f6465d;
-}
-
-#market .price.green{
-  color:#0ecb81;
-}
-
-#market .amount{
-  color:#cfd6e4;
-}
-
-/* ===== MID PRICE ===== */
-#market .ob-mid-price{
-  text-align:center;
-  padding:4px 0;
-  font-size:13px;
-  font-weight:1000;
-  color:#fff;
-  border-top:1px solid rgba(255,255,255,.08);
-  border-bottom:1px solid rgba(255,255,255,.08);
-}
-
 /* ===== HOVER ===== */
-#market .ob-row:hover{
+#market .ob-grid-row:hover{
   background:rgba(255,255,255,.03);
 }
 
-#market .price:hover{
-  opacity:.85;
+#market .price:hover,
+#market .ob-bid:hover,
+#market .ob-ask:hover{
+  opacity:.8;
+}
+
+/* ===== FOOTER ===== */
+#market .orderbook-footer{
+  margin-top:8px;
+  border-top:1px solid rgba(255,255,255,.06);
+  padding-top:6px;
+  font-size:11px;
+}
+
+#market .ob-footer-row{
+  display:flex;
+  justify-content:space-between;
+  padding:2px 0;
+  color:#aaa;
+}
+
+#market .ob-footer-row strong{
+  color:#fff;
 }
 
 /* ===== MOBILE ===== */
 @media (max-width:480px){
 
-  #market .ob-row{
+  #market .ob-grid-row{
     height:20px;
-  }
-
-  #market .ob-mid-price{
-    font-size:12px;
   }
 
   #market .price{
     font-size:11px;
   }
 
-  #market .amount{
+  #market .ob-bid,
+  #market .ob-ask{
     font-size:11px;
   }
+
+  #market .ob-grid-head{
+    font-size:10px;
+  }
+
 }
 
 /* =========================================================
