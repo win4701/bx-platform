@@ -379,25 +379,26 @@
     asks.sort((a, b) => a.price - b.price);
   }
   
-    function renderOrderBook(){
+    // =====================================================
+// ORDER BOOK — BYBIT STYLE
+// =====================================================
 
-  const asksEl = document.getElementById("asksCol");
-  const bidsEl = document.getElementById("bidsCol");
-  const midEl  = document.getElementById("midPrice");
+function renderOrderBook() {
 
-  if(!asksEl || !bidsEl || !midEl) return;
+  if (!orderBookRowsEl) return;
 
-  asksEl.innerHTML = "";
-  bidsEl.innerHTML = "";
+  orderBookRowsEl.innerHTML = "";
 
   const bestBids = bids.slice(0, ROWS);
   const bestAsks = asks.slice(0, ROWS);
 
-  const maxBid = Math.max(...bestBids.map(x=>x.total),1);
-  const maxAsk = Math.max(...bestAsks.map(x=>x.total),1);
+  const maxBid = Math.max(...bestBids.map(x => x.total), 1);
+  const maxAsk = Math.max(...bestAsks.map(x => x.total), 1);
 
-  /* ================= ASKS ================= */
-  bestAsks.reverse().forEach(ask => {
+  // ===============================
+  // 🔴 ASKS (TOP)
+  // ===============================
+  bestAsks.slice().reverse().forEach(ask => {
 
     const depth = (ask.total / maxAsk) * 100;
 
@@ -405,19 +406,41 @@
     row.className = "ob-row ask";
 
     row.innerHTML = `
-      <div class="ob-bar ask-bar" style="width:${depth}%"></div>
-      <span class="price ob-click" data-price="${ask.price}">
-        ${fmtPrice(ask.price)}
-      </span>
-      <span class="amount">
-        ${fmtAmount(ask.amount)}
-      </span>
+      <div class="ob-depth ask" style="width:${depth}%"></div>
+
+      <div class="ob-line">
+        <span class="price red ob-click" data-price="${ask.price}">
+          ${fmtPrice(ask.price)}
+        </span>
+
+        <span class="amount">
+          ${fmtAmount(ask.amount)}
+        </span>
+      </div>
     `;
 
-    asksEl.appendChild(row);
+    orderBookRowsEl.appendChild(row);
   });
 
-  /* ================= BIDS ================= */
+  // ===============================
+  // ⚪ MID PRICE
+  // ===============================
+  const bestBid = bids[0]?.price || marketPrice;
+  const bestAsk = asks[0]?.price || marketPrice;
+  const mid = (bestBid + bestAsk) / 2;
+
+  const midRow = document.createElement("div");
+  midRow.className = "ob-mid-price";
+
+  midRow.innerHTML = `
+    <span>${fmtPrice(mid)}</span>
+  `;
+
+  orderBookRowsEl.appendChild(midRow);
+
+  // ===============================
+  // 🟢 BIDS (BOTTOM)
+  // ===============================
   bestBids.forEach(bid => {
 
     const depth = (bid.total / maxBid) * 100;
@@ -426,29 +449,25 @@
     row.className = "ob-row bid";
 
     row.innerHTML = `
-      <div class="ob-bar bid-bar" style="width:${depth}%"></div>
-      <span class="price ob-click" data-price="${bid.price}">
-        ${fmtPrice(bid.price)}
-      </span>
-      <span class="amount">
-        ${fmtAmount(bid.amount)}
-      </span>
+      <div class="ob-depth bid" style="width:${depth}%"></div>
+
+      <div class="ob-line">
+        <span class="price green ob-click" data-price="${bid.price}">
+          ${fmtPrice(bid.price)}
+        </span>
+
+        <span class="amount">
+          ${fmtAmount(bid.amount)}
+        </span>
+      </div>
     `;
 
-    bidsEl.appendChild(row);
+    orderBookRowsEl.appendChild(row);
   });
 
-  /* ================= MID PRICE ================= */
-  const bestBid = bestBids[0]?.price || marketPrice;
-  const bestAsk = bestAsks[0]?.price || marketPrice;
-
-  const mid = (bestBid + bestAsk) / 2;
-
-  midEl.textContent = fmtPrice(mid);
-
-  /* ================= SPREAD ================= */
   updateSpread();
- }
+}
+
   function updateSpread() {
     if (!asks.length || !bids.length) return;
 
