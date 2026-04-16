@@ -474,29 +474,28 @@
     <div class="market-cards">
   <div class="orderbook-card">
 
-    <!-- HEADER -->
-    <div class="orderbook-head">
-      <h3>Order Book</h3>
-      <div class="orderbook-pair">
-        BX / <span id="orderbookQuote">USDT</span>
-      </div>
-    </div>
-
-    <!-- ORDERBOOK BODY -->
-    <div class="ob-table-wrap ob-table-wrap--pro">
-
-      <!-- OPTIONAL HEADER (UI ONLY) -->
-      <div class="ob-head-lite">
-        <span class="left">Price</span>
-        <span class="right">Amount</span>
-      </div>
-
-      <!-- REAL ENGINE -->
-      <div id="orderBookRows" class="ob-body"></div>
-
+  <div class="orderbook-head">
+    <h3>Order Book</h3>
+    <div class="orderbook-pair">
+      BX / <span id="orderbookQuote">USDT</span>
     </div>
   </div>
+
+  <div class="ob-grid">
+
+    <!-- ASKS -->
+    <div class="ob-col ob-asks" id="asksCol"></div>
+
+    <!-- MID -->
+    <div class="ob-col ob-mid" id="midCol">
+      <div class="ob-mid-price" id="midPrice">0.00</div>
     </div>
+
+    <!-- BIDS -->
+    <div class="ob-col ob-bids" id="bidsCol"></div>
+
+   </div>
+  </div>
     </section>
 
     <!-- ================= CASINO ================= -->
