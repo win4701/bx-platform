@@ -472,44 +472,29 @@
         </div>
       </div>
     <div class="market-cards">
-  <!-- ================= ORDER BOOK (PRO) ================= -->
+    <!-- ================= ORDER BOOK GRID ================= -->
 <div class="orderbook-card">
 
   <!-- HEADER -->
   <div class="orderbook-head">
     <h3>Order Book</h3>
-
     <div class="orderbook-pair">
-      <span class="base">BX</span>
-      <span>/</span>
-      <span id="orderbookQuote">USDT</span>
+      BX / <span id="orderbookQuote">USDT</span>
     </div>
   </div>
 
-  <!-- BODY (JS WILL RENDER HERE) -->
-  <div id="orderBookRows" class="ob-body-pro"></div>
-
-  <!-- FOOTER (SPREAD INFO) -->
-  <div class="orderbook-footer">
-
-    <div class="ob-footer-row">
-      <span>Spread</span>
-      <strong id="obSpread">0.00</strong>
-    </div>
-
-    <div class="ob-footer-row">
-      <span>Best Bid</span>
-      <strong id="obBestBid">0.00</strong>
-    </div>
-
-    <div class="ob-footer-row">
-      <span>Best Ask</span>
-      <strong id="obBestAsk">0.00</strong>
-    </div>
-
+  <!-- TABLE HEADER -->
+  <div class="ob-grid-head">
+    <span>Amount</span>
+    <span>Price</span>
+    <span>Amount</span>
   </div>
 
-</div>
+  <!-- BODY -->
+  <div id="orderBookGrid" class="ob-grid-body"></div>
+      </div>
+     </div>
+   </div>
     </section>
 
     <!-- ================= CASINO ================= -->
