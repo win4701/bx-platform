@@ -378,69 +378,77 @@
     bids.sort((a, b) => b.price - a.price);
     asks.sort((a, b) => a.price - b.price);
   }
-
   
-  function renderOrderBook() {
-  if (!orderBookRowsEl) return;
+    function renderOrderBook(){
 
-  orderBookRowsEl.innerHTML = "";
+  const asksEl = document.getElementById("asksCol");
+  const bidsEl = document.getElementById("bidsCol");
+  const midEl  = document.getElementById("midPrice");
+
+  if(!asksEl || !bidsEl || !midEl) return;
+
+  asksEl.innerHTML = "";
+  bidsEl.innerHTML = "";
 
   const bestBids = bids.slice(0, ROWS);
   const bestAsks = asks.slice(0, ROWS);
 
-  const maxBid = Math.max(...bestBids.map(x => x.amount), 1);
-  const maxAsk = Math.max(...bestAsks.map(x => x.amount), 1);
+  const maxBid = Math.max(...bestBids.map(x=>x.total),1);
+  const maxAsk = Math.max(...bestAsks.map(x=>x.total),1);
 
-  // ===== ASKS (TOP) =====
+  /* ================= ASKS ================= */
   bestAsks.reverse().forEach(ask => {
+
+    const depth = (ask.total / maxAsk) * 100;
+
     const row = document.createElement("div");
     row.className = "ob-row ask";
 
-    const depth = (ask.amount / maxAsk) * 100;
-
     row.innerHTML = `
       <div class="ob-bar ask-bar" style="width:${depth}%"></div>
-      <span class="price red ob-click" data-price="${ask.price}">
+      <span class="price ob-click" data-price="${ask.price}">
         ${fmtPrice(ask.price)}
       </span>
-      <span class="amount">${fmtAmount(ask.amount)}</span>
+      <span class="amount">
+        ${fmtAmount(ask.amount)}
+      </span>
     `;
 
-    orderBookRowsEl.appendChild(row);
+    asksEl.appendChild(row);
   });
 
-  // ===== MID PRICE =====
-  const mid = document.createElement("div");
-  mid.className = "ob-mid-price";
-
-  const bestBid = bids[0]?.price || marketPrice;
-  const bestAsk = asks[0]?.price || marketPrice;
-
-  mid.textContent = fmtPrice((bestBid + bestAsk)/2);
-
-  orderBookRowsEl.appendChild(mid);
-
-  // ===== BIDS (BOTTOM) =====
+  /* ================= BIDS ================= */
   bestBids.forEach(bid => {
+
+    const depth = (bid.total / maxBid) * 100;
+
     const row = document.createElement("div");
     row.className = "ob-row bid";
 
-    const depth = (bid.amount / maxBid) * 100;
-
     row.innerHTML = `
       <div class="ob-bar bid-bar" style="width:${depth}%"></div>
-      <span class="price green ob-click" data-price="${bid.price}">
+      <span class="price ob-click" data-price="${bid.price}">
         ${fmtPrice(bid.price)}
       </span>
-      <span class="amount">${fmtAmount(bid.amount)}</span>
+      <span class="amount">
+        ${fmtAmount(bid.amount)}
+      </span>
     `;
 
-    orderBookRowsEl.appendChild(row);
+    bidsEl.appendChild(row);
   });
 
-  updateSpread();
-}
+  /* ================= MID PRICE ================= */
+  const bestBid = bestBids[0]?.price || marketPrice;
+  const bestAsk = bestAsks[0]?.price || marketPrice;
 
+  const mid = (bestBid + bestAsk) / 2;
+
+  midEl.textContent = fmtPrice(mid);
+
+  /* ================= SPREAD ================= */
+  updateSpread();
+ }
   function updateSpread() {
     if (!asks.length || !bids.length) return;
 
