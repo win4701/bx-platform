@@ -107,7 +107,7 @@
   const slippageEl = $("#slippage");
   const spreadEl = $("#spread");
 
-  const orderBookRowsEl = $("#orderBookGrid");
+  const orderBookRowsEl = document.getElementById("orderBookGrid");
   const orderbookQuoteEl = $("#orderbookQuote");
 
   const metricOpen = $("#metricOpen");
@@ -379,8 +379,8 @@
     asks.sort((a, b) => a.price - b.price);
   }
    
-   // =====================================================
-// ORDER BOOK — GRID (BIDS | PRICE | ASKS)
+// =====================================================
+// ORDER BOOK — GRID (MATCH HTML CURRENT)
 // =====================================================
 
 function renderOrderBook() {
@@ -402,10 +402,8 @@ function renderOrderBook() {
     const row = document.createElement("div");
     row.className = "ob-grid-row";
 
-    // ===============================
-    // 🟢 BID (LEFT)
-    // ===============================
-    let bidCell = `<span></span>`;
+    // 🟢 BID
+    let bidCell = `<div class="ob-cell"></div>`;
     if (bid) {
       const depth = (bid.total / maxBid) * 100;
 
@@ -419,9 +417,7 @@ function renderOrderBook() {
       `;
     }
 
-    // ===============================
-    // ⚪ PRICE (CENTER)
-    // ===============================
+    // ⚪ PRICE
     const price = bid?.price || ask?.price || marketPrice;
 
     const priceCell = `
@@ -432,10 +428,8 @@ function renderOrderBook() {
       </div>
     `;
 
-    // ===============================
-    // 🔴 ASK (RIGHT)
-    // ===============================
-    let askCell = `<span></span>`;
+    // 🔴 ASK
+    let askCell = `<div class="ob-cell"></div>`;
     if (ask) {
       const depth = (ask.total / maxAsk) * 100;
 
