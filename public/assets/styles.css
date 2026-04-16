@@ -2091,158 +2091,135 @@ h3{
 }
 
 /* =========================================================
-   ORDER BOOK — NEW ENGINE (3 COLS REAL)
+   ORDER BOOK — PRO BYBIT STYLE (REBUILT)
 ========================================================= */
 
+/* ===== CARD ===== */
 #market .orderbook-card{
   border-radius:20px;
-  padding:12px;
-  margin-top:6px;
+  padding:10px;
   background:
-    radial-gradient(circle at top left, rgba(14,203,129,.05), transparent 24%),
-    radial-gradient(circle at top right, rgba(246,70,93,.05), transparent 24%),
-    linear-gradient(180deg,#0b121b,#091019);
+    linear-gradient(180deg,#0b121b 0%,#091019 100%);
   border:1px solid rgba(255,255,255,.06);
-  box-shadow:0 14px 34px rgba(0,0,0,.28);
 }
 
-/* HEADER */
+/* ===== HEADER ===== */
 #market .orderbook-head{
   display:flex;
   justify-content:space-between;
   align-items:center;
-  margin-bottom:10px;
+  margin-bottom:8px;
 }
 
 #market .orderbook-head h3{
-  font-size:15px;
+  font-size:14px;
   font-weight:1000;
 }
 
 #market .orderbook-pair{
   font-size:11px;
-  padding:6px 10px;
-  border-radius:999px;
-  background:rgba(255,255,255,.04);
+  color:#aaa;
 }
 
-/* GRID 3 COLS */
-#market .ob-grid{
-  display:grid;
-  grid-template-columns:1fr 80px 1fr;
-  gap:6px;
-}
-
-/* COLUMN */
-#market .ob-col{
+/* ===== BODY ===== */
+#market .ob-body-pro{
   display:flex;
   flex-direction:column;
-  gap:4px;
-  max-height:300px;
-  overflow-y:auto;
+  gap:2px;
+  font-size:12px;
 }
 
-/* SCROLL */
-#market .ob-col::-webkit-scrollbar{
-  width:4px;
-}
-#market .ob-col::-webkit-scrollbar-thumb{
-  background:rgba(255,255,255,.1);
-  border-radius:10px;
-}
-
-/* ROW */
+/* ===== ROW ===== */
 #market .ob-row{
   position:relative;
+  height:22px;
   display:flex;
-  justify-content:space-between;
   align-items:center;
-  padding:6px 8px;
-  font-size:12px;
-  border-radius:8px;
-  cursor:pointer;
-  overflow:hidden;
-  transition:.15s;
 }
 
-#market .ob-row:hover{
-  background:rgba(255,255,255,.04);
-}
-
-/* COLORS */
-#market .ob-row.ask{
-  color:#ff6b81;
-}
-
-#market .ob-row.bid{
-  color:#22c55e;
-}
-
-/* DEPTH BAR */
-#market .ob-bar{
+/* ===== DEPTH ===== */
+#market .ob-depth{
   position:absolute;
   top:0;
   bottom:0;
-  right:0;
   opacity:.15;
 }
 
-#market .ask-bar{
-  background:linear-gradient(90deg,transparent,#ff4d6d);
+#market .ob-depth.ask{
+  right:0;
+  background:#f6465d;
 }
 
-#market .bid-bar{
-  background:linear-gradient(90deg,transparent,#22c55e);
+#market .ob-depth.bid{
+  right:0;
+  background:#0ecb81;
 }
 
-/* TEXT */
-#market .price{
-  font-weight:1000;
-  letter-spacing:.3px;
+/* ===== LINE ===== */
+#market .ob-line{
+  display:flex;
+  justify-content:space-between;
+  width:100%;
+  padding:0 6px;
   z-index:2;
+}
+
+/* ===== TEXT ===== */
+#market .price{
+  font-weight:900;
+  cursor:pointer;
+}
+
+#market .price.red{
+  color:#f6465d;
+}
+
+#market .price.green{
+  color:#0ecb81;
 }
 
 #market .amount{
-  font-size:11px;
-  color:#9fb3c8;
-  z-index:2;
+  color:#cfd6e4;
 }
 
-/* MID COLUMN */
-#market .ob-mid{
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-
+/* ===== MID PRICE ===== */
 #market .ob-mid-price{
-  width:100%;
   text-align:center;
-  padding:10px;
-  border-radius:12px;
+  padding:4px 0;
   font-size:13px;
   font-weight:1000;
-  background:rgba(255,255,255,.04);
-  border:1px solid rgba(255,255,255,.06);
+  color:#fff;
+  border-top:1px solid rgba(255,255,255,.08);
+  border-bottom:1px solid rgba(255,255,255,.08);
 }
 
-/* MOBILE */
-@media(max-width:480px){
+/* ===== HOVER ===== */
+#market .ob-row:hover{
+  background:rgba(255,255,255,.03);
+}
 
-  #market .ob-grid{
-    grid-template-columns:1fr 70px 1fr;
-  }
+#market .price:hover{
+  opacity:.85;
+}
+
+/* ===== MOBILE ===== */
+@media (max-width:480px){
 
   #market .ob-row{
-    font-size:11px;
-    padding:5px 6px;
+    height:20px;
   }
 
   #market .ob-mid-price{
     font-size:12px;
-    padding:8px;
   }
 
+  #market .price{
+    font-size:11px;
+  }
+
+  #market .amount{
+    font-size:11px;
+  }
 }
 
 /* =========================================================
