@@ -378,9 +378,9 @@
     bids.sort((a, b) => b.price - a.price);
     asks.sort((a, b) => a.price - b.price);
   }
-  
-    // =====================================================
-// ORDER BOOK — BYBIT STYLE
+   
+   // =====================================================
+// ORDER BOOK — GRID (BIDS | PRICE | ASKS)
 // =====================================================
 
 function renderOrderBook() {
@@ -389,85 +389,78 @@ function renderOrderBook() {
 
   orderBookRowsEl.innerHTML = "";
 
-  const bestBids = bids.slice(0, ROWS);
-  const bestAsks = asks.slice(0, ROWS);
+  const rows = Math.max(bids.length, asks.length, ROWS);
 
-  const maxBid = Math.max(...bestBids.map(x => x.total), 1);
-  const maxAsk = Math.max(...bestAsks.map(x => x.total), 1);
+  const maxBid = Math.max(...bids.map(x => x.total), 1);
+  const maxAsk = Math.max(...asks.map(x => x.total), 1);
 
-  // ===============================
-  // 🔴 ASKS (TOP)
-  // ===============================
-  bestAsks.slice().reverse().forEach(ask => {
+  for (let i = 0; i < rows; i++) {
 
-    const depth = (ask.total / maxAsk) * 100;
+    const bid = bids[i];
+    const ask = asks[i];
 
     const row = document.createElement("div");
-    row.className = "ob-row ask";
+    row.className = "ob-grid-row";
 
-    row.innerHTML = `
-      <div class="ob-depth ask" style="width:${depth}%"></div>
+    // ===============================
+    // 🟢 BID (LEFT)
+    // ===============================
+    let bidCell = `<span></span>`;
+    if (bid) {
+      const depth = (bid.total / maxBid) * 100;
 
-      <div class="ob-line">
-        <span class="price red ob-click" data-price="${ask.price}">
-          ${fmtPrice(ask.price)}
-        </span>
+      bidCell = `
+        <div class="ob-cell bid">
+          <div class="ob-depth bid" style="width:${depth}%"></div>
+          <span class="ob-bid ob-click" data-price="${bid.price}">
+            ${fmtAmount(bid.amount)}
+          </span>
+        </div>
+      `;
+    }
 
-        <span class="amount">
-          ${fmtAmount(ask.amount)}
+    // ===============================
+    // ⚪ PRICE (CENTER)
+    // ===============================
+    const price = bid?.price || ask?.price || marketPrice;
+
+    const priceCell = `
+      <div class="ob-cell center">
+        <span class="price ob-click" data-price="${price}">
+          ${fmtPrice(price)}
         </span>
       </div>
     `;
 
-    orderBookRowsEl.appendChild(row);
-  });
+    // ===============================
+    // 🔴 ASK (RIGHT)
+    // ===============================
+    let askCell = `<span></span>`;
+    if (ask) {
+      const depth = (ask.total / maxAsk) * 100;
 
-  // ===============================
-  // ⚪ MID PRICE
-  // ===============================
-  const bestBid = bids[0]?.price || marketPrice;
-  const bestAsk = asks[0]?.price || marketPrice;
-  const mid = (bestBid + bestAsk) / 2;
-
-  const midRow = document.createElement("div");
-  midRow.className = "ob-mid-price";
-
-  midRow.innerHTML = `
-    <span>${fmtPrice(mid)}</span>
-  `;
-
-  orderBookRowsEl.appendChild(midRow);
-
-  // ===============================
-  // 🟢 BIDS (BOTTOM)
-  // ===============================
-  bestBids.forEach(bid => {
-
-    const depth = (bid.total / maxBid) * 100;
-
-    const row = document.createElement("div");
-    row.className = "ob-row bid";
+      askCell = `
+        <div class="ob-cell ask">
+          <div class="ob-depth ask" style="width:${depth}%"></div>
+          <span class="ob-ask ob-click" data-price="${ask.price}">
+            ${fmtAmount(ask.amount)}
+          </span>
+        </div>
+      `;
+    }
 
     row.innerHTML = `
-      <div class="ob-depth bid" style="width:${depth}%"></div>
-
-      <div class="ob-line">
-        <span class="price green ob-click" data-price="${bid.price}">
-          ${fmtPrice(bid.price)}
-        </span>
-
-        <span class="amount">
-          ${fmtAmount(bid.amount)}
-        </span>
-      </div>
+      ${bidCell}
+      ${priceCell}
+      ${askCell}
     `;
 
     orderBookRowsEl.appendChild(row);
-  });
+  }
 
   updateSpread();
 }
-
+     
   function updateSpread() {
     if (!asks.length || !bids.length) return;
 
