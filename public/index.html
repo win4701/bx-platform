@@ -471,34 +471,32 @@
           <button class="action-btn buy" id="actionBtn" type="button">Buy BX</button>
         </div>
       </div>
+    <div class="market-cards">
+  <div class="orderbook-card">
 
-      <div class="market-cards">
-        <div class="orderbook-card">
-          <div class="orderbook-head">
-            <h3>Order Book</h3>
-            <div class="orderbook-pair">BX / <span id="orderbookQuote">USDT</span></div>
-          </div>
-
-          <div class="ob-table-wrap ob-table-wrap--pro">
-  <div class="ob-table ob-head ob-head-pro">
-    <div class="ob-col bid">
-      <span>Bids</span>
-      <small>Amount</small>
+    <!-- HEADER -->
+    <div class="orderbook-head">
+      <h3>Order Book</h3>
+      <div class="orderbook-pair">
+        BX / <span id="orderbookQuote">USDT</span>
+      </div>
     </div>
 
-    <div class="ob-col mid">
-      <span>Prix</span>
-      <small>Mid</small>
-    </div>
+    <!-- ORDERBOOK BODY -->
+    <div class="ob-table-wrap ob-table-wrap--pro">
 
-    <div class="ob-col ask">
-      <span>Asks</span>
-      <small>Amount</small>
+      <!-- OPTIONAL HEADER (UI ONLY) -->
+      <div class="ob-head-lite">
+        <span class="left">Price</span>
+        <span class="right">Amount</span>
+      </div>
+
+      <!-- REAL ENGINE -->
+      <div id="orderBookRows" class="ob-body"></div>
+
     </div>
   </div>
-  <div id="orderBookRows" class="ob-body ob-body-pro"></div>
-         </div>
-        </div>
+    </div>
     </section>
 
     <!-- ================= CASINO ================= -->
