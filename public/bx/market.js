@@ -107,7 +107,7 @@
   const slippageEl = $("#slippage");
   const spreadEl = $("#spread");
 
-  const orderBookRowsEl = $("#orderBookRows");
+  const orderBookRowsEl = $("#orderBookGrid");
   const orderbookQuoteEl = $("#orderbookQuote");
 
   const metricOpen = $("#metricOpen");
