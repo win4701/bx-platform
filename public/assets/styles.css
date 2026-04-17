@@ -2147,7 +2147,7 @@ h3{
 #market .ob-grid-body{
   display:flex;
   flex-direction:column;
-  gap:3px;
+  gap:2px;
   max-height:520px;
   overflow-y:auto;
 }
@@ -2161,7 +2161,7 @@ h3{
   display:grid;
   grid-template-columns:1.2fr 1fr 1.2fr;
   align-items:center;
-  height:26px;
+  height:22px;
   border-radius:10px;
   position:relative;
   font-size:12px;
@@ -2172,7 +2172,7 @@ h3{
 
 /* ===== CELLS ===== */
 #market .ob-cell{
-  padding:0 8px;
+  padding:8px;
   display:flex;
   align-items:center;
   z-index:3;
@@ -2185,7 +2185,7 @@ h3{
 /* ===== TEXT ===== */
 #market .price{
   font-weight:1000;
-  letter-spacing:-.02em;
+  letter-spacing:.02em;
   color:#fff;
 }
 
