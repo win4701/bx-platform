@@ -135,43 +135,43 @@
       hash: '42 GH/s',
       daily: 1.21,
       days: 21,
-      boost: 0.40,
+      boost: 0.30,
       min: { BX: 200,  BNB: 0.5, SOL: 1.5 }
     },
     {
       id: 'pro',
       name: 'Pro ',
       hash: '90 GH/s',
-      daily: 1.55,
+      daily: 1.45,
       days: 30,
-      boost: 0.51,
+      boost: 0.32,
       min: { BX: 500,  BNB: 2, SOL: 5 }
     },
     {
       id: 'elite',
       name: 'Elite ',
       hash: '240 GH/s',
-      daily: 1.75,
+      daily: 1.55,
       days: 45,
-      boost: 0.62,
+      boost: 0.37,
       min: { BX: 1200, BNB: 5, SOL: 20 }
     },
     {
       id: 'ultra',
       name: 'Ultra ',
       hash: '540 GH/s',
-      daily: 2.05,
+      daily: 1.85,
       days: 60,
-      boost: 0.71,
+      boost: 0.41,
       min: { BX: 2500, BNB: 15, SOL: 40 }
     },
     {
       id: 'legend',
       name: 'Legend ',
       hash: '1200 GH/s',
-      daily: 2.25,
+      daily: 2.05,
       days: 90,
-      boost: 0.82,
+      boost: 0.52,
       min: { BX: 4500, BNB: 50, SOL: 100 }
     }
   ];
