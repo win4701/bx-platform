@@ -945,6 +945,55 @@
   <script src="https://unpkg.com/web3@1.10.0/dist/web3.min.js"></script>
   <script src="https://unpkg.com/@walletconnect/web3-provider@1.8.0/dist/umd/index.min.js"></script>
   <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+  <!-- ================= LOADER ================= -->
+  <div id="appLoader" class="bx-loader">
+    <canvas id="bxParticles"></canvas>
+
+    <div class="bx-loader-box">
+      <div class="bx-logo-3d">
+        <img src="assets/images/logo.svg">
+      </div>
+      <h2>Bloxio</h2>
+      <p id="loaderText">Initializing...</p>
+    </div>
+  </div>
+
+  <!-- ================= AUTH ================= -->
+  <div id="authOverlay" class="bx-auth-pro" style="display:none;">
+    <div class="bx-auth-center">
+      <div class="bx-auth-box">
+
+        <h2 id="authTitle">Create Account</h2>
+
+        <!-- REGISTER -->
+        <div id="registerBox">
+          <input id="regEmail" placeholder="Email">
+          <input id="regPass" type="password" placeholder="Password">
+          <input id="regPhone" placeholder="Phone Number">
+          <input id="regRef" placeholder="Referral Code (Optional)">
+
+          <button id="registerBtn" class="bx-btn-main full">
+            Create Account
+          </button>
+        </div>
+        <!-- LOGIN -->
+        <div id="loginBox" class="hidden">
+          <input id="loginEmail" placeholder="Email">
+          <input id="loginPass" type="password" placeholder="Password">
+
+          <button id="loginBtn" class="bx-btn-main full">
+            Login
+          </button>
+        </div>
+        <!-- SWITCH -->
+        <div class="bx-auth-switch">
+          <span id="switchText">Already have account?</span>
+          <button id="toggleAuth">Login</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
   <!-- ================= BX SYSTEM ================= -->
   <script src="bx/core.js"></script>
   <script src="bx/state.js"></script>
@@ -956,58 +1005,15 @@
   <script src="bx/mining.js"></script>
   <script src="bx/airdrop.js"></script>
   <script src="bx/main.js"></script>
-<link rel="stylesheet" href="bx/auth.css">
-<script src="bx/auth.js"></script>
-<script>
- AUTH.init();
-</script>
-  <div id="appLoader" class="bx-loader">
-  <!-- PARTICLES CANVAS -->
-  <canvas id="bxParticles"></canvas>
 
-  <div class="bx-loader-box">
-    <!-- 3D LOGO -->
-    <div class="bx-logo-3d">
-      <img src="assets/images/logo.svg">
-    </div>
-
-    <h2>Bloxio</h2>
-    <p id="loaderText">Initializing...</p>
-  </div>
-  </div>
-<div id="authOverlay" class="bx-auth-pro">
-  <div class="bx-auth-center">
-    <div class="bx-auth-box">
-
-      <h2 id="authTitle">Create Account</h2>
-
-      <!-- REGISTER -->
-      <div id="registerBox">
-
-        <input id="regEmail" placeholder="Email">
-        <input id="regPass" type="password" placeholder="Password">
-        <input id="regPhone" placeholder="Phone Number">
-        <!-- 🔥 REFERRAL -->
-        <input id="regRef" placeholder="Referral Code (Optional)">
-        <button id="registerBtn" class="bx-btn-main full">
-          Create Account
-        </button>
-      </div>
-     <!-- LOGIN -->
-      <div id="loginBox" class="hidden">
-
-        <input id="loginEmail" placeholder="Email">
-        <input id="loginPass" type="password" placeholder="Password">
-        <button id="loginBtn" class="bx-btn-main full">
-          Login
-        </button>
-      </div>
-      <!-- SWITCH -->
-      <div class="bx-auth-switch">
-        <span id="switchText">Already have account?</span>
-        <button id="toggleAuth">Login</button>
-      </div>
-    </div>
-  </div>
+  <!-- ================= AUTH ================= -->
+  <link rel="stylesheet" href="bx/auth.css">
+  <script src="bx/auth.js"></script>
+  <!-- 🔥 IMPORTANT -->
+  <script>
+    window.addEventListener("DOMContentLoaded", ()=>{
+      AUTH.init();
+    });
+  </script>
 </body>
 </html>
