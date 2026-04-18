@@ -1,124 +1,229 @@
-/* ================= AUTH BINANCE ================= */
+/* =========================================
+   BLOXIO AUTH SYSTEM — GLOBAL PRO UI
+========================================= */
 
-.bx-auth-pro{
-  position:fixed;
-  inset:0;
-  display:flex;
-  z-index:9999;
-  background:#0b0f14;
+/* RESET */
+* {
+  box-sizing: border-box;
 }
 
-/* LEFT */
-.bx-auth-left{
-  flex:1;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  background:linear-gradient(160deg,#0f1720,#0b0f14);
+body {
+  margin: 0;
+  font-family: Inter, system-ui, sans-serif;
+  background: #0b0f14;
+  color: #e6f1ff;
 }
 
-.bx-auth-brand{
-  text-align:center;
+/* ================= ROOT ================= */
+
+:root {
+  --bx-primary: #22c55e;
+  --bx-primary-hover: #16a34a;
+  --bx-danger: #f6465d;
+
+  --bx-bg: #0b0f14;
+  --bx-card: #0f1a1f;
+
+  --bx-border: rgba(255,255,255,.08);
+  --bx-text-dim: #9fb3c8;
 }
 
-.bx-auth-brand img{
-  width:90px;
-  margin-bottom:12px;
+/* ================= LAYOUT ================= */
+
+.bx-auth-pro {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  z-index: 9999;
+
+  background:
+    radial-gradient(circle at top, rgba(34,197,94,.08), transparent),
+    #0b0f14;
 }
 
-.bx-auth-brand h1{
-  font-size:34px;
-  font-weight:900;
+/* CENTER */
+.bx-auth-center {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.bx-auth-brand p{
-  color:#9fb3c8;
+/* ================= CARD ================= */
+
+.bx-auth-box {
+  width: 100%;
+  max-width: 400px;
+
+  padding: 28px;
+  border-radius: 20px;
+
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01)),
+    var(--bx-card);
+
+  border: 1px solid var(--bx-border);
+
+  box-shadow:
+    0 20px 60px rgba(0,0,0,.4);
+
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  animation: fadeIn .35s ease;
 }
 
-/* RIGHT */
-.bx-auth-right{
-  width:420px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
+/* TITLE */
+.bx-auth-box h2 {
+  font-size: 22px;
+  font-weight: 900;
+  margin: 0 0 4px;
 }
 
-/* FORM */
-.bx-auth-box{
-  width:100%;
-  padding:30px;
-  display:flex;
-  flex-direction:column;
-  gap:14px;
+/* ================= INPUT ================= */
+
+.bx-auth-box input {
+  width: 100%;
+  height: 52px;
+
+  border-radius: 14px;
+  border: 1px solid var(--bx-border);
+
+  background: #0d1725;
+  color: white;
+
+  padding: 0 14px;
+  font-size: 14px;
+
+  transition: .2s;
 }
 
-/* INPUT FIELD */
-.bx-field{
-  position:relative;
+/* FOCUS */
+.bx-auth-box input:focus {
+  outline: none;
+  border-color: var(--bx-primary);
+  box-shadow: 0 0 0 2px rgba(34,197,94,.2);
 }
 
-.bx-field input{
-  width:100%;
-  height:50px;
-  border-radius:12px;
-  border:1px solid rgba(255,255,255,.08);
-  background:#0d1725;
-  color:white;
-  padding:0 14px;
-  font-size:14px;
+/* PLACEHOLDER */
+.bx-auth-box input::placeholder {
+  color: #6b7c93;
 }
 
-.bx-field input:focus{
-  border-color:#22c55e;
-  box-shadow:0 0 0 2px rgba(34,197,94,.2);
-  outline:none;
+/* ================= BUTTON ================= */
+
+.bx-btn-main {
+  width: 100%;
+  height: 52px;
+
+  border: none;
+  border-radius: 14px;
+
+  font-weight: 900;
+  font-size: 15px;
+
+  background: linear-gradient(180deg, #4ade80, var(--bx-primary));
+  color: #08130b;
+
+  cursor: pointer;
+  transition: .2s;
 }
 
-/* BUTTON */
-.bx-btn-main{
-  height:50px;
-  border:none;
-  border-radius:12px;
-  font-weight:900;
-  background:linear-gradient(180deg,#4ade80,#22c55e);
-  color:#08130b;
-  cursor:pointer;
+/* HOVER */
+.bx-btn-main:hover {
+  background: linear-gradient(180deg, #22c55e, var(--bx-primary-hover));
 }
 
-.bx-btn-main:active{
-  transform:scale(.97);
+/* ACTIVE */
+.bx-btn-main:active {
+  transform: scale(.97);
 }
 
-/* OPTIONS */
-.bx-auth-options{
-  display:flex;
-  justify-content:space-between;
-  font-size:12px;
-  color:#9fb3c8;
+/* DISABLED */
+.bx-btn-main:disabled {
+  opacity: .6;
+  cursor: not-allowed;
 }
 
-.bx-auth-options a{
-  color:#22c55e;
-  text-decoration:none;
+/* ================= OPTIONS ================= */
+
+.bx-auth-options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  font-size: 12px;
+  color: var(--bx-text-dim);
 }
 
-/* SWITCH */
-.bx-auth-switch{
-  text-align:center;
-  font-size:13px;
-  color:#9fb3c8;
+/* CHECKBOX */
+.bx-auth-options input {
+  margin-right: 6px;
 }
 
-.bx-auth-switch button{
-  background:none;
-  border:none;
-  color:#22c55e;
-  font-weight:bold;
-  cursor:pointer;
+/* LINK */
+.bx-auth-options a {
+  color: var(--bx-primary);
+  text-decoration: none;
 }
 
-/* MOBILE */
-@media(max-width:768px){
-  .bx-auth-left{display:none;}
-  .bx-auth-right{width:100%;}
+/* ================= SWITCH ================= */
+
+.bx-auth-switch {
+  text-align: center;
+  font-size: 13px;
+  color: var(--bx-text-dim);
+}
+
+.bx-auth-switch button {
+  background: none;
+  border: none;
+  color: var(--bx-primary);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* ================= REFERRAL ================= */
+
+#regRef {
+  border: 1px dashed rgba(34,197,94,.4);
+}
+
+/* ================= ERROR ================= */
+
+.bx-error {
+  font-size: 12px;
+  color: var(--bx-danger);
+  margin-top: -8px;
+}
+
+/* ================= LOADING ================= */
+
+.bx-loading {
+  pointer-events: none;
+  opacity: .6;
+}
+
+/* ================= ANIMATION ================= */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
   }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ================= MOBILE ================= */
+
+@media (max-width: 768px) {
+
+  .bx-auth-box {
+    margin: 0 14px;
+    padding: 22px;
+  }
+}
