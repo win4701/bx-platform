@@ -963,19 +963,18 @@
   <script src="bx/mining.js"></script>
   <script src="bx/airdrop.js"></script>
   <script src="bx/main.js"></script>
-
+<link rel="stylesheet" href="bx/auth.css">
+<script src="bx/auth.js"></script>
+<script>
+  AUTH.init();
+</script>
 </body>
-  <!-- ================= AUTH OVERLAY ================= -->
+ <!-- AUTH SYSTEM -->
 <div id="authOverlay" class="bx-auth">
 
   <div class="bx-auth-card">
 
-    <!-- LOGO -->
-    <div class="bx-auth-logo">
-      <img src="assets/images/logo.svg">
-      <h2>Bloxio</h2>
-      <p>Trade • Earn • Play</p>
-    </div>
+    <h2>Bloxio</h2>
 
     <!-- REGISTER -->
     <div id="registerBox">
@@ -986,10 +985,7 @@
       <input id="regPhone" placeholder="Phone">
       <input id="regPass" type="password" placeholder="Password">
 
-      <button id="registerBtn" class="bx-auth-btn primary">
-        Create Account
-      </button>
-
+      <button id="registerBtn">Register</button>
     </div>
 
     <!-- LOGIN -->
@@ -998,18 +994,9 @@
       <input id="loginEmail" placeholder="Email">
       <input id="loginPass" type="password" placeholder="Password">
 
-      <button id="loginBtn" class="bx-auth-btn primary">
-        Login
-      </button>
-
+      <button id="loginBtn">Login</button>
     </div>
-
-    <!-- SWITCH -->
-    <button id="toggleAuth" class="bx-auth-switch">
-      Already have account?
-    </button>
-
-  </div>
-
-</div>
+  <button id="toggleAuth">Switch</button>
+     </div>
+    </div> 
 </html>
