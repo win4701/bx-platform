@@ -965,4 +965,51 @@
   <script src="bx/main.js"></script>
 
 </body>
+  <!-- ================= AUTH OVERLAY ================= -->
+<div id="authOverlay" class="bx-auth">
+
+  <div class="bx-auth-card">
+
+    <!-- LOGO -->
+    <div class="bx-auth-logo">
+      <img src="assets/images/logo.svg">
+      <h2>Bloxio</h2>
+      <p>Trade • Earn • Play</p>
+    </div>
+
+    <!-- REGISTER -->
+    <div id="registerBox">
+
+      <input id="regFirst" placeholder="First Name">
+      <input id="regLast" placeholder="Last Name">
+      <input id="regEmail" placeholder="Email">
+      <input id="regPhone" placeholder="Phone">
+      <input id="regPass" type="password" placeholder="Password">
+
+      <button id="registerBtn" class="bx-auth-btn primary">
+        Create Account
+      </button>
+
+    </div>
+
+    <!-- LOGIN -->
+    <div id="loginBox" class="hidden">
+
+      <input id="loginEmail" placeholder="Email">
+      <input id="loginPass" type="password" placeholder="Password">
+
+      <button id="loginBtn" class="bx-auth-btn primary">
+        Login
+      </button>
+
+    </div>
+
+    <!-- SWITCH -->
+    <button id="toggleAuth" class="bx-auth-switch">
+      Already have account?
+    </button>
+
+  </div>
+
+</div>
 </html>
