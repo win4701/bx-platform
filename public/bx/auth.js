@@ -1,26 +1,30 @@
 // ==========================================
-// BLOXIO AUTH SYSTEM — MASTER FINAL VERSION
+// BLOXIO AUTH SYSTEM — 2s LOADER VERSION
 // ==========================================
 
 window.AUTH = {
 
   API: "/api",
   tokenKey: "jwt",
+  LOADER_TIME: 2000, // 🔥 2 seconds
 
   // ================= INIT =================
   init() {
 
-    console.log("🔐 AUTH START");
+    console.log("🔐 AUTH INIT");
 
     this.cache();
     this.bind();
 
-    this.initParticles();     // 🔥 3D particles
+    this.initParticles();
     this.autoReferral();
 
-    this.setLoaderText("Checking session...");
+    this.setLoaderText("Initializing...");
 
-    this.guard();
+    // 🔥 انتظر 2 ثانية ثم قرر
+    setTimeout(() => {
+      this.guard();
+    }, this.LOADER_TIME);
   },
 
   // ================= CACHE =================
@@ -53,9 +57,7 @@ window.AUTH = {
   bind() {
 
     this.toggleBtn?.addEventListener("click", () => this.toggle());
-
     this.registerBtn?.addEventListener("click", () => this.register());
-
     this.loginBtn?.addEventListener("click", () => this.login());
   },
 
@@ -81,14 +83,12 @@ window.AUTH = {
 
     this.setLoaderText("Loading login...");
 
-    setTimeout(() => {
+    // 🔥 عرض الفورم
+    if (this.overlay)
+      this.overlay.style.display = "flex";
 
-      if (this.overlay)
-        this.overlay.style.display = "flex";
-
-      this.hideLoader();
-
-    }, 500);
+    // 🔥 إخفاء loader
+    this.hideLoader();
   },
 
   // ================= ENTER =================
@@ -100,19 +100,19 @@ window.AUTH = {
 
     this.setLoaderText("Entering platform...");
 
+    // 🔥 إخفاء loader
+    this.hideLoader();
+
     setTimeout(() => {
 
-      // hide auth
       if (this.overlay)
         this.overlay.style.display = "none";
 
-      this.hideLoader();
-
-      // 🔥 تشغيل الأنظمة
+      // 🔥 تشغيل النظام
       window.startBX?.();
       window.startMain?.();
 
-    }, 600);
+    }, 300);
   },
 
   // ================= TOGGLE =================
@@ -150,12 +150,7 @@ window.AUTH = {
       const res = await fetch(this.API + "/auth/register", {
         method: "POST",
         headers: this.headers(),
-        body: JSON.stringify({
-          email,
-          password,
-          phone,
-          referral
-        })
+        body: JSON.stringify({ email, password, phone, referral })
       });
 
       const data = await res.json();
@@ -167,7 +162,7 @@ window.AUTH = {
         this.error(data.error || "Register failed");
       }
 
-    } catch (e) {
+    } catch {
       this.error("Network error");
     }
 
@@ -202,29 +197,28 @@ window.AUTH = {
         this.error(data.error || "Login failed");
       }
 
-    } catch (e) {
+    } catch {
       this.error("Network error");
     }
 
     this.loading(this.loginBtn, false);
   },
 
-  // ================= LOGOUT =================
-  logout() {
-    localStorage.removeItem(this.tokenKey);
-    sessionStorage.removeItem(this.tokenKey);
-    location.reload();
+  // ================= LOADER =================
+  hideLoader() {
+
+    if (!this.loader) return;
+
+    this.loader.classList.add("hide");
+
+    setTimeout(() => {
+      this.loader.style.display = "none";
+    }, 500);
   },
 
-  // ================= REFERRAL =================
-  autoReferral() {
-
-    const params = new URLSearchParams(window.location.search);
-    const ref = params.get("ref");
-
-    if (ref && this.regRef) {
-      this.regRef.value = ref;
-    }
+  setLoaderText(txt) {
+    const el = document.getElementById("loaderText");
+    if (el) el.textContent = txt;
   },
 
   // ================= PARTICLES =================
@@ -272,20 +266,6 @@ window.AUTH = {
     }
 
     draw();
-  },
-
-  // ================= LOADER =================
-  hideLoader() {
-
-    if (!this.loader) return;
-
-    this.loader.classList.add("hide");
-  },
-
-  setLoaderText(txt) {
-
-    const el = document.getElementById("loaderText");
-    if (el) el.textContent = txt;
   },
 
   // ================= TOKEN =================
