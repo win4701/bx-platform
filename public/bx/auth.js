@@ -1,6 +1,6 @@
-// ========================================
-// BLOXIO AUTH SYSTEM — PRODUCTION VERSION
-// ========================================
+// ==========================================
+// BLOXIO AUTH SYSTEM — FINAL STABLE VERSION
+// ==========================================
 
 window.AUTH = {
 
@@ -9,13 +9,19 @@ window.AUTH = {
 
   // ================= INIT =================
   init() {
+
+    // 🔴 منع عرض التطبيق قبل التحقق
+    document.body.style.visibility = "hidden";
+
     this.cache();
     this.bind();
     this.autoReferral();
-    this.checkSession();
+
+    this.guard(); // 🔥 أهم شيء
+
   },
 
-  // ================= CACHE DOM =================
+  // ================= CACHE =================
   cache() {
     this.overlay = document.getElementById("authOverlay");
 
@@ -30,7 +36,6 @@ window.AUTH = {
     this.registerBtn = document.getElementById("registerBtn");
     this.loginBtn = document.getElementById("loginBtn");
 
-    // inputs
     this.regEmail = document.getElementById("regEmail");
     this.regPass = document.getElementById("regPass");
     this.regPhone = document.getElementById("regPhone");
@@ -39,24 +44,40 @@ window.AUTH = {
     this.loginEmail = document.getElementById("loginEmail");
     this.loginPass = document.getElementById("loginPass");
 
-    this.rememberMe = document.getElementById("rememberMe");
+    this.remember = document.getElementById("rememberMe");
   },
 
   // ================= EVENTS =================
   bind() {
 
     if (this.toggleBtn)
-      this.toggleBtn.onclick = () => this.toggleMode();
+      this.toggleBtn.onclick = () => this.toggle();
 
     if (this.registerBtn)
       this.registerBtn.onclick = () => this.register();
 
     if (this.loginBtn)
       this.loginBtn.onclick = () => this.login();
+
+  },
+
+  // ================= GUARD =================
+  guard() {
+
+    const token = this.getToken();
+
+    if (!token) {
+      // 🔥 عرض auth فقط
+      this.showAuth();
+      return;
+    }
+
+    // 🔥 دخول مباشر
+    this.enter();
   },
 
   // ================= TOGGLE =================
-  toggleMode() {
+  toggle() {
 
     this.registerBox.classList.toggle("hidden");
     this.loginBox.classList.toggle("hidden");
@@ -150,33 +171,29 @@ window.AUTH = {
   },
 
   // ================= ENTER =================
-  enter(){
-  document.body.style.visibility = "visible";
-  this.overlay.style.display = "none";
+  enter() {
 
-  if(window.BX && BX.init){
-    BX.init();
-   }
-  
-  }
-  
-  // ================= LOGOUT =================
-  logout() {
-    localStorage.removeItem(this.tokenKey);
-    location.reload();
-  },
+    // إخفاء auth
+    if (this.overlay)
+      this.overlay.style.display = "none";
 
-  // ================= SESSION =================
-  checkSession() {
+    // إظهار التطبيق
+    document.body.style.visibility = "visible";
 
-    const token = localStorage.getItem(this.tokenKey);
-
-    if (token) {
-      this.enter();
+    // تشغيل النظام الأساسي
+    if (window.BX && typeof BX.init === "function") {
+      BX.init();
     }
   },
 
-  // ================= REFERRAL AUTO =================
+  // ================= LOGOUT =================
+  logout() {
+    localStorage.removeItem(this.tokenKey);
+    sessionStorage.removeItem(this.tokenKey);
+    location.reload();
+  },
+
+  // ================= REFERRAL =================
   autoReferral() {
 
     const params = new URLSearchParams(window.location.search);
@@ -187,11 +204,10 @@ window.AUTH = {
     }
   },
 
-  // ================= HELPERS =================
-
+  // ================= TOKEN =================
   save(token) {
 
-    if (this.rememberMe?.checked) {
+    if (this.remember?.checked) {
       localStorage.setItem(this.tokenKey, token);
     } else {
       sessionStorage.setItem(this.tokenKey, token);
@@ -203,10 +219,12 @@ window.AUTH = {
         || sessionStorage.getItem(this.tokenKey);
   },
 
-  headers() {
-    return {
-      "Content-Type": "application/json"
-    };
+  // ================= UI =================
+  showAuth() {
+    if (this.overlay)
+      this.overlay.style.display = "flex";
+
+    document.body.style.visibility = "visible";
   },
 
   loading(btn, state) {
@@ -224,7 +242,13 @@ window.AUTH = {
 
   error(msg) {
     console.error("AUTH:", msg);
-    alert(msg); // لاحقًا toast
+    alert(msg);
+  },
+
+  headers() {
+    return {
+      "Content-Type": "application/json"
+    };
   }
 
 };
