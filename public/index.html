@@ -915,7 +915,6 @@
       </div>
     </section>
   </main>
-
   <!-- ================= BOTTOM NAV ================= -->
   <nav class="bottom-nav">
     <button data-view="wallet" type="button">
@@ -927,7 +926,6 @@
       <img src="assets/images/market.svg" alt="Market"/>
       <span>Market</span>
     </button>
-
     <button data-view="casino" type="button">
       <img src="assets/images/casino.svg" alt="Casino"/>
       <span>Casino</span>
@@ -943,7 +941,6 @@
       <span>Airdrop</span>
     </button>
   </nav>
-
   <!-- ================= LIBS ================= -->
   <script src="https://unpkg.com/web3@1.10.0/dist/web3.min.js"></script>
   <script src="https://unpkg.com/@walletconnect/web3-provider@1.8.0/dist/umd/index.min.js"></script>
@@ -962,7 +959,7 @@
 <link rel="stylesheet" href="bx/auth.css">
 <script src="bx/auth.js"></script>
 <script>
-  AUTH.init();
+  document.body.style.visibility = "hidden";
 </script>
 <div id="authOverlay" class="bx-auth-pro">
   <div class="bx-auth-center">
@@ -982,8 +979,7 @@
           Create Account
         </button>
       </div>
-
-      <!-- LOGIN -->
+     <!-- LOGIN -->
       <div id="loginBox" class="hidden">
 
         <input id="loginEmail" placeholder="Email">
