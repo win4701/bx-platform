@@ -1,0 +1,39 @@
+.bx-auth{
+  position:fixed;
+  inset:0;
+  z-index:9999;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:#0b0f14;
+}
+
+.bx-auth-card{
+  width:340px;
+  padding:20px;
+  border-radius:20px;
+  background:#0f1a1f;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.bx-auth input{
+  height:44px;
+  border-radius:12px;
+  border:1px solid #333;
+  background:#0d1725;
+  color:white;
+  padding:0 12px;
+}
+
+.bx-auth button{
+  height:44px;
+  border:none;
+  border-radius:12px;
+  background:#22c55e;
+}
+
+.hidden{
+  display:none;
+}
