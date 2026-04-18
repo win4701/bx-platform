@@ -150,17 +150,16 @@ window.AUTH = {
   },
 
   // ================= ENTER =================
-  enter() {
+  enter(){
+  document.body.style.visibility = "visible";
+  this.overlay.style.display = "none";
 
-    if (this.overlay)
-      this.overlay.style.display = "none";
-
-    // start main app
-    if (window.BX && typeof BX.init === "function") {
-      BX.init();
-    }
-  },
-
+  if(window.BX && BX.init){
+    BX.init();
+   }
+  
+  }
+  
   // ================= LOGOUT =================
   logout() {
     localStorage.removeItem(this.tokenKey);
