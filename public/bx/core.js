@@ -1,29 +1,27 @@
-/* =========================================================
-   BX CORE ENGINE (FINAL STABLE - NO CONFLICT)
-========================================================= */
+// ==========================================
+// BX CORE ENGINE — AUTH SAFE VERSION
+// ==========================================
 
 // ================= CONFIG =================
-
 const CONFIG = {
   API: "https://api.bloxio.online",
   WS: "wss://api.bloxio.online"
 };
 
 // ================= GLOBAL =================
-
 window.APP = {
   view: null,
   user: null,
-  ready: false
+  ready: false,
+  started: false // 🔥 يمنع التشغيل المكرر
 };
 
 // ================= NAVIGATION =================
-
 function switchView(view){
 
   if(!view || APP.view === view) return;
 
-  // 🔥 stop WS services (from ws.js)
+  // 🔥 stop WS
   if(window.WS){
     WS.channels?.forEach(c => WS.unsubscribe(c));
   }
@@ -34,7 +32,6 @@ function switchView(view){
     v.classList.remove("active");
   });
 
-  // show current
   const el = document.getElementById(view);
 
   if(!el){
@@ -45,7 +42,7 @@ function switchView(view){
   el.style.display = "block";
   el.classList.add("active");
 
-  // 🔥 update nav active
+  // nav active
   document.querySelectorAll(".bottom-nav button")
     .forEach(b => b.classList.remove("active"));
 
@@ -58,7 +55,6 @@ function switchView(view){
 }
 
 // ================= LOAD VIEW =================
-
 function loadView(view){
 
   try{
@@ -92,11 +88,9 @@ function loadView(view){
   }catch(e){
     console.error("View crash:", view, e);
   }
-
 }
 
-// ================= NAV UI =================
-
+// ================= NAV =================
 function bindNavigation(){
 
   document.querySelectorAll(".bottom-nav button")
@@ -105,11 +99,9 @@ function bindNavigation(){
         switchView(btn.dataset.view);
       };
     });
-
 }
 
 // ================= TELEGRAM =================
-
 async function initTelegram(){
 
   const tg = window.Telegram?.WebApp;
@@ -121,47 +113,63 @@ async function initTelegram(){
   tg.setBackgroundColor("#0b0f1a");
 
   const user = tg.initDataUnsafe?.user;
-
   if(!user) return;
 
   APP.user = user;
 
   console.log("👤 TG USER:", user);
 
-  // 🔥 auto login
+  // 🔥 optional login (public safe)
   try{
-
     const res = await API.post("/auth/telegram", {
       telegram_id:user.id,
       username:user.username
     });
 
     if(res?.token){
-      localStorage.setItem("token", res.token);
+      localStorage.setItem("jwt", res.token);
     }
 
   }catch(e){
-    console.warn("TG login failed");
+    console.warn("TG login skipped");
   }
-
 }
 
-// ================= INIT =================
+// ================= START ENGINE =================
+async function startApp(){
 
-document.addEventListener("DOMContentLoaded", async ()=>{
+  if(APP.started) return;
+  APP.started = true;
 
-  console.log("🚀 BX CORE START");
+  console.log("🚀 BX START (AUTH PASSED)");
 
   bindNavigation();
 
   await initTelegram();
 
-  // 🔥 start WS (from ws.js)
+  // WS
   window.WS?.connect();
 
-  // default view
-  switchView("wallet");
+  // 🔥 لا تجبر wallet
+  const hash = location.hash.replace("#","");
+  const view = hash || "wallet";
+
+  switchView(view);
 
   APP.ready = true;
+}
+
+// ================= AUTH HOOK =================
+
+// 🔥 هذا أهم شيء
+window.startBX = startApp;
+
+// ================= BOOT =================
+document.addEventListener("DOMContentLoaded", ()=>{
+
+  console.log("⏳ CORE READY (waiting auth)");
+
+  // ❌ لا تشغل التطبيق هنا
+  // ✔️ AUTH هو من يشغله
 
 });
