@@ -1,5 +1,5 @@
 // ==========================================
-// BLOXIO AUTH SYSTEM — ULTRA STABLE FINAL
+// BLOXIO AUTH SYSTEM — MASTER FINAL VERSION
 // ==========================================
 
 window.AUTH = {
@@ -10,19 +10,23 @@ window.AUTH = {
   // ================= INIT =================
   init() {
 
-    console.log("🔐 AUTH INIT");
+    console.log("🔐 AUTH START");
 
     this.cache();
     this.bind();
+
+    this.initParticles();     // 🔥 3D particles
     this.autoReferral();
 
-    // 🔥 أهم شيء
+    this.setLoaderText("Checking session...");
+
     this.guard();
   },
 
   // ================= CACHE =================
   cache() {
 
+    this.loader = document.getElementById("appLoader");
     this.overlay = document.getElementById("authOverlay");
 
     this.registerBox = document.getElementById("registerBox");
@@ -75,11 +79,16 @@ window.AUTH = {
 
     window.AUTH_READY = false;
 
-    if (this.overlay)
-      this.overlay.style.display = "flex";
+    this.setLoaderText("Loading login...");
 
-    // 🔥 مهم: أظهر الصفحة
-    document.body.style.visibility = "visible";
+    setTimeout(() => {
+
+      if (this.overlay)
+        this.overlay.style.display = "flex";
+
+      this.hideLoader();
+
+    }, 500);
   },
 
   // ================= ENTER =================
@@ -89,21 +98,21 @@ window.AUTH = {
 
     window.AUTH_READY = true;
 
-    // hide auth
-    if (this.overlay)
-      this.overlay.style.display = "none";
+    this.setLoaderText("Entering platform...");
 
-    // show app
-    document.body.style.visibility = "visible";
+    setTimeout(() => {
 
-    // 🔥 تشغيل الأنظمة بالترتيب الصحيح
-    if (window.startBX) {
-      window.startBX();
-    }
+      // hide auth
+      if (this.overlay)
+        this.overlay.style.display = "none";
 
-    if (window.startMain) {
-      window.startMain();
-    }
+      this.hideLoader();
+
+      // 🔥 تشغيل الأنظمة
+      window.startBX?.();
+      window.startMain?.();
+
+    }, 600);
   },
 
   // ================= TOGGLE =================
@@ -216,6 +225,67 @@ window.AUTH = {
     if (ref && this.regRef) {
       this.regRef.value = ref;
     }
+  },
+
+  // ================= PARTICLES =================
+  initParticles() {
+
+    const canvas = document.getElementById("bxParticles");
+    if (!canvas) return;
+
+    const ctx = canvas.getContext("2d");
+
+    let w = canvas.width = window.innerWidth;
+    let h = canvas.height = window.innerHeight;
+
+    let particles = [];
+
+    for (let i = 0; i < 60; i++) {
+      particles.push({
+        x: Math.random() * w,
+        y: Math.random() * h,
+        vx: (Math.random() - 0.5) * 0.5,
+        vy: (Math.random() - 0.5) * 0.5,
+        r: Math.random() * 2
+      });
+    }
+
+    function draw() {
+
+      ctx.clearRect(0, 0, w, h);
+
+      particles.forEach(p => {
+
+        p.x += p.vx;
+        p.y += p.vy;
+
+        if (p.x < 0 || p.x > w) p.vx *= -1;
+        if (p.y < 0 || p.y > h) p.vy *= -1;
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(34,197,94,.6)";
+        ctx.fill();
+      });
+
+      requestAnimationFrame(draw);
+    }
+
+    draw();
+  },
+
+  // ================= LOADER =================
+  hideLoader() {
+
+    if (!this.loader) return;
+
+    this.loader.classList.add("hide");
+  },
+
+  setLoaderText(txt) {
+
+    const el = document.getElementById("loaderText");
+    if (el) el.textContent = txt;
   },
 
   // ================= TOKEN =================
