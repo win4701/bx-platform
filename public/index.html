@@ -969,34 +969,76 @@
   AUTH.init();
 </script>
 </body>
- <!-- AUTH SYSTEM -->
-<div id="authOverlay" class="bx-auth">
+<div id="authOverlay" class="bx-auth-pro">
 
-  <div class="bx-auth-card">
-
-    <h2>Bloxio</h2>
-
-    <!-- REGISTER -->
-    <div id="registerBox">
-
-      <input id="regFirst" placeholder="First Name">
-      <input id="regLast" placeholder="Last Name">
-      <input id="regEmail" placeholder="Email">
-      <input id="regPhone" placeholder="Phone">
-      <input id="regPass" type="password" placeholder="Password">
-
-      <button id="registerBtn">Register</button>
+  <!-- LEFT BRAND -->
+  <div class="bx-auth-left">
+    <div class="bx-auth-brand">
+      <img src="assets/images/logo.svg">
+      <h1>Bloxio</h1>
+      <p>Crypto • Trading • Gaming Platform</p>
     </div>
+  </div>
 
-    <!-- LOGIN -->
-    <div id="loginBox" class="hidden">
+  <!-- RIGHT FORM -->
+  <div class="bx-auth-right">
 
-      <input id="loginEmail" placeholder="Email">
-      <input id="loginPass" type="password" placeholder="Password">
+    <div class="bx-auth-box">
 
-      <button id="loginBtn">Login</button>
+      <h2 id="authTitle">Create Account</h2>
+
+      <!-- REGISTER -->
+      <div id="registerBox">
+
+        <div class="bx-field">
+          <input id="regEmail" placeholder="Email">
+        </div>
+
+        <div class="bx-field">
+          <input id="regPass" type="password" placeholder="Password">
+        </div>
+
+        <div class="bx-field">
+          <input id="regPhone" placeholder="Phone Number">
+        </div>
+
+        <button id="registerBtn" class="bx-btn-main">
+          Create Account
+        </button>
+
+      </div>
+
+      <!-- LOGIN -->
+      <div id="loginBox" class="hidden">
+
+        <div class="bx-field">
+          <input id="loginEmail" placeholder="Email">
+        </div>
+
+        <div class="bx-field">
+          <input id="loginPass" type="password" placeholder="Password">
+        </div>
+
+        <button id="loginBtn" class="bx-btn-main">
+          Login
+        </button>
+
+      </div>
+
+      <!-- OPTIONS -->
+      <div class="bx-auth-options">
+        <label>
+          <input type="checkbox"> Remember me
+        </label>
+        <a href="#">Forgot Password?</a>
+      </div>
+
+      <!-- SWITCH -->
+      <div class="bx-auth-switch">
+        <span id="switchText">Already have account?</span>
+        <button id="toggleAuth">Login</button>
+      </div>
     </div>
-  <button id="toggleAuth">Switch</button>
-     </div>
-    </div> 
+  </div>
+</div> 
 </html>
