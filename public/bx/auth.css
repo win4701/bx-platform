@@ -1,39 +1,124 @@
-.bx-auth{
+/* ================= AUTH BINANCE ================= */
+
+.bx-auth-pro{
   position:fixed;
   inset:0;
-  z-index:9999;
   display:flex;
-  align-items:center;
-  justify-content:center;
+  z-index:9999;
   background:#0b0f14;
 }
 
-.bx-auth-card{
-  width:340px;
-  padding:20px;
-  border-radius:20px;
-  background:#0f1a1f;
+/* LEFT */
+.bx-auth-left{
+  flex:1;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:linear-gradient(160deg,#0f1720,#0b0f14);
+}
+
+.bx-auth-brand{
+  text-align:center;
+}
+
+.bx-auth-brand img{
+  width:90px;
+  margin-bottom:12px;
+}
+
+.bx-auth-brand h1{
+  font-size:34px;
+  font-weight:900;
+}
+
+.bx-auth-brand p{
+  color:#9fb3c8;
+}
+
+/* RIGHT */
+.bx-auth-right{
+  width:420px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+/* FORM */
+.bx-auth-box{
+  width:100%;
+  padding:30px;
   display:flex;
   flex-direction:column;
-  gap:10px;
+  gap:14px;
 }
 
-.bx-auth input{
-  height:44px;
+/* INPUT FIELD */
+.bx-field{
+  position:relative;
+}
+
+.bx-field input{
+  width:100%;
+  height:50px;
   border-radius:12px;
-  border:1px solid #333;
+  border:1px solid rgba(255,255,255,.08);
   background:#0d1725;
   color:white;
-  padding:0 12px;
+  padding:0 14px;
+  font-size:14px;
 }
 
-.bx-auth button{
-  height:44px;
+.bx-field input:focus{
+  border-color:#22c55e;
+  box-shadow:0 0 0 2px rgba(34,197,94,.2);
+  outline:none;
+}
+
+/* BUTTON */
+.bx-btn-main{
+  height:50px;
   border:none;
   border-radius:12px;
-  background:#22c55e;
+  font-weight:900;
+  background:linear-gradient(180deg,#4ade80,#22c55e);
+  color:#08130b;
+  cursor:pointer;
 }
 
-.hidden{
-  display:none;
+.bx-btn-main:active{
+  transform:scale(.97);
 }
+
+/* OPTIONS */
+.bx-auth-options{
+  display:flex;
+  justify-content:space-between;
+  font-size:12px;
+  color:#9fb3c8;
+}
+
+.bx-auth-options a{
+  color:#22c55e;
+  text-decoration:none;
+}
+
+/* SWITCH */
+.bx-auth-switch{
+  text-align:center;
+  font-size:13px;
+  color:#9fb3c8;
+}
+
+.bx-auth-switch button{
+  background:none;
+  border:none;
+  color:#22c55e;
+  font-weight:bold;
+  cursor:pointer;
+}
+
+/* MOBILE */
+@media(max-width:768px){
+  .bx-auth-left{display:none;}
+  .bx-auth-right{width:100%;}
+  }
