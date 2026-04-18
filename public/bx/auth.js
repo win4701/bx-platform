@@ -1,6 +1,6 @@
-// ===============================
-// BLOXIO AUTH SYSTEM (PRO)
-// ===============================
+// ========================================
+// BLOXIO AUTH SYSTEM — PRODUCTION VERSION
+// ========================================
 
 window.AUTH = {
 
@@ -9,13 +9,14 @@ window.AUTH = {
 
   // ================= INIT =================
   init() {
-    this.cacheDOM();
-    this.bindEvents();
+    this.cache();
+    this.bind();
+    this.autoReferral();
     this.checkSession();
   },
 
-  // ================= CACHE =================
-  cacheDOM() {
+  // ================= CACHE DOM =================
+  cache() {
     this.overlay = document.getElementById("authOverlay");
 
     this.registerBox = document.getElementById("registerBox");
@@ -29,28 +30,29 @@ window.AUTH = {
     this.registerBtn = document.getElementById("registerBtn");
     this.loginBtn = document.getElementById("loginBtn");
 
+    // inputs
     this.regEmail = document.getElementById("regEmail");
     this.regPass = document.getElementById("regPass");
     this.regPhone = document.getElementById("regPhone");
+    this.regRef = document.getElementById("regRef");
 
     this.loginEmail = document.getElementById("loginEmail");
     this.loginPass = document.getElementById("loginPass");
+
+    this.rememberMe = document.getElementById("rememberMe");
   },
 
   // ================= EVENTS =================
-  bindEvents() {
+  bind() {
 
-    if(this.toggleBtn){
+    if (this.toggleBtn)
       this.toggleBtn.onclick = () => this.toggleMode();
-    }
 
-    if(this.registerBtn){
+    if (this.registerBtn)
       this.registerBtn.onclick = () => this.register();
-    }
 
-    if(this.loginBtn){
+    if (this.loginBtn)
       this.loginBtn.onclick = () => this.login();
-    }
   },
 
   // ================= TOGGLE =================
@@ -76,35 +78,40 @@ window.AUTH = {
     const email = this.regEmail.value.trim();
     const password = this.regPass.value.trim();
     const phone = this.regPhone.value.trim();
+    const referral = this.regRef?.value.trim();
 
-    if(!email || !password){
-      return this.showError("Fill all required fields");
-    }
+    if (!email || !password)
+      return this.error("Fill required fields");
 
-    this.setLoading(this.registerBtn, true);
+    this.loading(this.registerBtn, true);
 
     try {
 
       const res = await fetch(this.API + "/auth/register", {
         method: "POST",
-        headers: this.getHeaders(),
-        body: JSON.stringify({ email, password, phone })
+        headers: this.headers(),
+        body: JSON.stringify({
+          email,
+          password,
+          phone,
+          referral
+        })
       });
 
       const data = await res.json();
 
-      if(data.token){
-        this.saveToken(data.token);
+      if (data.token) {
+        this.save(data.token);
         this.enter();
       } else {
-        this.showError(data.error || "Register failed");
+        this.error(data.error || "Register failed");
       }
 
-    } catch(err){
-      this.showError("Network error");
+    } catch (e) {
+      this.error("Network error");
     }
 
-    this.setLoading(this.registerBtn, false);
+    this.loading(this.registerBtn, false);
   },
 
   // ================= LOGIN =================
@@ -113,45 +120,43 @@ window.AUTH = {
     const email = this.loginEmail.value.trim();
     const password = this.loginPass.value.trim();
 
-    if(!email || !password){
-      return this.showError("Enter email & password");
-    }
+    if (!email || !password)
+      return this.error("Enter email & password");
 
-    this.setLoading(this.loginBtn, true);
+    this.loading(this.loginBtn, true);
 
     try {
 
       const res = await fetch(this.API + "/auth/login", {
         method: "POST",
-        headers: this.getHeaders(),
+        headers: this.headers(),
         body: JSON.stringify({ email, password })
       });
 
       const data = await res.json();
 
-      if(data.token){
-        this.saveToken(data.token);
+      if (data.token) {
+        this.save(data.token);
         this.enter();
       } else {
-        this.showError(data.error || "Login failed");
+        this.error(data.error || "Login failed");
       }
 
-    } catch(err){
-      this.showError("Network error");
+    } catch (e) {
+      this.error("Network error");
     }
 
-    this.setLoading(this.loginBtn, false);
+    this.loading(this.loginBtn, false);
   },
 
-  // ================= ENTER APP =================
+  // ================= ENTER =================
   enter() {
 
-    if(this.overlay){
+    if (this.overlay)
       this.overlay.style.display = "none";
-    }
 
-    // تشغيل النظام الأساسي
-    if(window.BX && typeof BX.init === "function"){
+    // start main app
+    if (window.BX && typeof BX.init === "function") {
       BX.init();
     }
   },
@@ -164,36 +169,63 @@ window.AUTH = {
 
   // ================= SESSION =================
   checkSession() {
+
     const token = localStorage.getItem(this.tokenKey);
 
-    if(token){
+    if (token) {
       this.enter();
+    }
+  },
+
+  // ================= REFERRAL AUTO =================
+  autoReferral() {
+
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get("ref");
+
+    if (ref && this.regRef) {
+      this.regRef.value = ref;
     }
   },
 
   // ================= HELPERS =================
 
-  saveToken(token){
-    localStorage.setItem(this.tokenKey, token);
+  save(token) {
+
+    if (this.rememberMe?.checked) {
+      localStorage.setItem(this.tokenKey, token);
+    } else {
+      sessionStorage.setItem(this.tokenKey, token);
+    }
   },
 
-  getHeaders(){
+  getToken() {
+    return localStorage.getItem(this.tokenKey)
+        || sessionStorage.getItem(this.tokenKey);
+  },
+
+  headers() {
     return {
       "Content-Type": "application/json"
     };
   },
 
-  setLoading(btn, state){
-    if(!btn) return;
+  loading(btn, state) {
+    if (!btn) return;
 
     btn.disabled = state;
-    btn.dataset.original = btn.dataset.original || btn.textContent;
-    btn.textContent = state ? "Processing..." : btn.dataset.original;
+
+    if (!btn.dataset.txt)
+      btn.dataset.txt = btn.textContent;
+
+    btn.textContent = state
+      ? "Processing..."
+      : btn.dataset.txt;
   },
 
-  showError(msg){
-    console.error("AUTH ERROR:", msg);
-    alert(msg); // لاحقًا نحولها toast
+  error(msg) {
+    console.error("AUTH:", msg);
+    alert(msg); // لاحقًا toast
   }
 
 };
