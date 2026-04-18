@@ -34,7 +34,7 @@ body {
   position: fixed;
   inset: 0;
   display: flex;
-  z-index: 9999;
+  z-index: 999;
 
   background:
     radial-gradient(circle at top, rgba(34,197,94,.08), transparent),
@@ -55,8 +55,8 @@ body {
   width: 100%;
   max-width: 400px;
 
-  padding: 28px;
-  border-radius: 20px;
+  padding: 22px;
+  border-radius: 16px;
 
   background:
     linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01)),
@@ -69,7 +69,7 @@ body {
 
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 10px;
 
   animation: fadeIn .35s ease;
 }
@@ -85,16 +85,16 @@ body {
 
 .bx-auth-box input {
   width: 100%;
-  height: 52px;
+  height: 48px;
 
-  border-radius: 14px;
+  border-radius: 12px;
   border: 1px solid var(--bx-border);
 
   background: #0d1725;
   color: white;
 
-  padding: 0 14px;
-  font-size: 14px;
+  padding: 0 12px;
+  font-size: 12px;
 
   transition: .2s;
 }
@@ -115,13 +115,13 @@ body {
 
 .bx-btn-main {
   width: 100%;
-  height: 52px;
+  height: 48px;
 
   border: none;
-  border-radius: 14px;
+  border-radius: 12px;
 
   font-weight: 900;
-  font-size: 15px;
+  font-size: 14px;
 
   background: linear-gradient(180deg, #4ade80, var(--bx-primary));
   color: #08130b;
@@ -172,7 +172,7 @@ body {
 
 .bx-auth-switch {
   text-align: center;
-  font-size: 13px;
+  font-size: 10px;
   color: var(--bx-text-dim);
 }
 
@@ -180,7 +180,7 @@ body {
   background: none;
   border: none;
   color: var(--bx-primary);
-  font-weight: 700;
+  font-weight: 800;
   cursor: pointer;
 }
 
@@ -223,7 +223,7 @@ body {
 @media (max-width: 768px) {
 
   .bx-auth-box {
-    margin: 0 14px;
+    margin: 0 12px;
     padding: 22px;
   }
 }
