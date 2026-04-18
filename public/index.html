@@ -898,7 +898,6 @@
         <span class="ref-link" id="ref-link">Loading...</span>
         <button class="btn" onclick="copyReferral()" type="button">Copy</button>
       </div>
-
       <div class="card">
         <h3>Airdrop</h3>
         <p id="airdrop-status">Loading...</p>
@@ -906,18 +905,15 @@
           Claim Airdrop
         </button>
       </div>
-
       <div class="card">
         <h3>Badges</h3>
         <ul id="badges-list"></ul>
       </div>
-
       <div class="card">
         <h3>Referral Leaderboard</h3>
         <ol id="ref-leaderboard"></ol>
       </div>
     </section>
-
   </main>
 
   <!-- ================= BOTTOM NAV ================= -->
@@ -970,19 +966,7 @@
 </script>
 </body>
 <div id="authOverlay" class="bx-auth-pro">
-
-  <!-- LEFT BRAND -->
-  <div class="bx-auth-left">
-    <div class="bx-auth-brand">
-      <img src="assets/images/logo.svg">
-      <h1>Bloxio</h1>
-      <p>Crypto • Trading • Gaming Platform</p>
-    </div>
-  </div>
-
-  <!-- RIGHT FORM -->
-  <div class="bx-auth-right">
-
+  <div class="bx-auth-center">
     <div class="bx-auth-box">
 
       <h2 id="authTitle">Create Account</h2>
@@ -990,49 +974,31 @@
       <!-- REGISTER -->
       <div id="registerBox">
 
-        <div class="bx-field">
-          <input id="regEmail" placeholder="Email">
-        </div>
-
-        <div class="bx-field">
-          <input id="regPass" type="password" placeholder="Password">
-        </div>
-
-        <div class="bx-field">
-          <input id="regPhone" placeholder="Phone Number">
-        </div>
-
-        <button id="registerBtn" class="bx-btn-main">
+        <input id="regEmail" placeholder="Email">
+        <input id="regPass" type="password" placeholder="Password">
+        <input id="regPhone" placeholder="Phone Number">
+        <!-- 🔥 REFERRAL -->
+        <input id="regRef" placeholder="Referral Code (Optional)">
+        <button id="registerBtn" class="bx-btn-main full">
           Create Account
         </button>
-
       </div>
 
       <!-- LOGIN -->
       <div id="loginBox" class="hidden">
 
-        <div class="bx-field">
-          <input id="loginEmail" placeholder="Email">
-        </div>
-
-        <div class="bx-field">
-          <input id="loginPass" type="password" placeholder="Password">
-        </div>
-
-        <button id="loginBtn" class="bx-btn-main">
+        <input id="loginEmail" placeholder="Email">
+        <input id="loginPass" type="password" placeholder="Password">
+        <button id="loginBtn" class="bx-btn-main full">
           Login
         </button>
-
       </div>
 
       <!-- OPTIONS -->
       <div class="bx-auth-options">
-        <label>
-          <input type="checkbox"> Remember me
-        </label>
-        <a href="#">Forgot Password?</a>
+        <label><input type="checkbox" id="rememberMe"> Remember me</label>
+        <a href="#">Forgot?</a>
       </div>
-
       <!-- SWITCH -->
       <div class="bx-auth-switch">
         <span id="switchText">Already have account?</span>
@@ -1040,5 +1006,4 @@
       </div>
     </div>
   </div>
-</div> 
 </html>
