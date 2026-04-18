@@ -1,5 +1,5 @@
 // ==========================================
-// BLOXIO AUTH SYSTEM — FINAL STABLE VERSION
+// BLOXIO AUTH SYSTEM — ULTRA STABLE FINAL
 // ==========================================
 
 window.AUTH = {
@@ -10,19 +10,19 @@ window.AUTH = {
   // ================= INIT =================
   init() {
 
-    // 🔴 منع عرض التطبيق قبل التحقق
-    document.body.style.visibility = "hidden";
+    console.log("🔐 AUTH INIT");
 
     this.cache();
     this.bind();
     this.autoReferral();
 
-    this.guard(); // 🔥 أهم شيء
-
+    // 🔥 أهم شيء
+    this.guard();
   },
 
   // ================= CACHE =================
   cache() {
+
     this.overlay = document.getElementById("authOverlay");
 
     this.registerBox = document.getElementById("registerBox");
@@ -43,22 +43,16 @@ window.AUTH = {
 
     this.loginEmail = document.getElementById("loginEmail");
     this.loginPass = document.getElementById("loginPass");
-
-    this.remember = document.getElementById("rememberMe");
   },
 
   // ================= EVENTS =================
   bind() {
 
-    if (this.toggleBtn)
-      this.toggleBtn.onclick = () => this.toggle();
+    this.toggleBtn?.addEventListener("click", () => this.toggle());
 
-    if (this.registerBtn)
-      this.registerBtn.onclick = () => this.register();
+    this.registerBtn?.addEventListener("click", () => this.register());
 
-    if (this.loginBtn)
-      this.loginBtn.onclick = () => this.login();
-
+    this.loginBtn?.addEventListener("click", () => this.login());
   },
 
   // ================= GUARD =================
@@ -67,13 +61,49 @@ window.AUTH = {
     const token = this.getToken();
 
     if (!token) {
-      // 🔥 عرض auth فقط
       this.showAuth();
       return;
     }
 
-    // 🔥 دخول مباشر
     this.enter();
+  },
+
+  // ================= SHOW AUTH =================
+  showAuth() {
+
+    console.log("🔓 SHOW AUTH");
+
+    window.AUTH_READY = false;
+
+    if (this.overlay)
+      this.overlay.style.display = "flex";
+
+    // 🔥 مهم: أظهر الصفحة
+    document.body.style.visibility = "visible";
+  },
+
+  // ================= ENTER =================
+  enter() {
+
+    console.log("✅ AUTH SUCCESS");
+
+    window.AUTH_READY = true;
+
+    // hide auth
+    if (this.overlay)
+      this.overlay.style.display = "none";
+
+    // show app
+    document.body.style.visibility = "visible";
+
+    // 🔥 تشغيل الأنظمة بالترتيب الصحيح
+    if (window.startBX) {
+      window.startBX();
+    }
+
+    if (window.startMain) {
+      window.startMain();
+    }
   },
 
   // ================= TOGGLE =================
@@ -170,22 +200,6 @@ window.AUTH = {
     this.loading(this.loginBtn, false);
   },
 
-  // ================= ENTER =================
-  enter() {
-
-    // إخفاء auth
-    if (this.overlay)
-      this.overlay.style.display = "none";
-
-    // إظهار التطبيق
-    document.body.style.visibility = "visible";
-
-    // تشغيل النظام الأساسي
-    if (window.BX && typeof BX.init === "function") {
-      BX.init();
-    }
-  },
-
   // ================= LOGOUT =================
   logout() {
     localStorage.removeItem(this.tokenKey);
@@ -206,12 +220,7 @@ window.AUTH = {
 
   // ================= TOKEN =================
   save(token) {
-
-    if (this.remember?.checked) {
-      localStorage.setItem(this.tokenKey, token);
-    } else {
-      sessionStorage.setItem(this.tokenKey, token);
-    }
+    localStorage.setItem(this.tokenKey, token);
   },
 
   getToken() {
@@ -220,14 +229,8 @@ window.AUTH = {
   },
 
   // ================= UI =================
-  showAuth() {
-    if (this.overlay)
-      this.overlay.style.display = "flex";
-
-    document.body.style.visibility = "visible";
-  },
-
   loading(btn, state) {
+
     if (!btn) return;
 
     btn.disabled = state;
@@ -241,7 +244,7 @@ window.AUTH = {
   },
 
   error(msg) {
-    console.error("AUTH:", msg);
+    console.error("AUTH ERROR:", msg);
     alert(msg);
   },
 
