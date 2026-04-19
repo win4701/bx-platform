@@ -4965,113 +4965,172 @@ button:active,
   font-size: 13px;
   color: #8fa2b8;
 }
+/* =========================================================
+   BLOXIO AUTH — FINAL PRO SYSTEM
+========================================================= */
+
+.auth{
+  position:fixed;
+  inset:0;
+  z-index:9999;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  background:
+    radial-gradient(circle at top, rgba(2,192,118,.08), transparent 30%),
+    linear-gradient(180deg,#05080d,#0b0f14);
+}
+
+/* ================= CARD ================= */
+
+.auth-card{
+  width:100%;
+  max-width:380px;
+
+  padding:22px;
+  border-radius:24px;
+
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.025), rgba(255,255,255,.01)),
+    linear-gradient(180deg,#0f1a1f,#0b141a);
+
+  border:1px solid var(--border);
+
+  box-shadow:
+    0 20px 50px rgba(0,0,0,.55),
+    inset 0 1px 0 rgba(255,255,255,.04);
+
+  display:flex;
+  flex-direction:column;
+  gap:16px;
+}
+
 /* ================= BRAND ================= */
 
 .auth-brand{
   display:flex;
   align-items:center;
   justify-content:center;
-  gap:8px;
-  margin-bottom:10px;
+  gap:10px;
 }
 
 .auth-brand img{
-  width:28px;
+  width:36px;
 }
 
 .auth-brand span{
-  font-weight:800;
+  font-weight:900;
   font-size:18px;
+}
+
+/* ================= HEADER ================= */
+
+.auth-head{
+  text-align:center;
+}
+
+.auth-head h2{
+  margin:0;
+  font-size:20px;
+  font-weight:900;
+}
+
+.auth-head p{
+  margin-top:4px;
+  font-size:13px;
+  color:var(--muted);
 }
 
 /* ================= FORM ================= */
 
-.form-group{
-  position:relative;
-  margin-bottom:14px;
+.auth-form{
+  display:none;
+  flex-direction:column;
+  gap:12px;
 }
 
-.form-group input{
-  width:100%;
-  height:54px;
-  border-radius:14px;
+.auth-form.active{
+  display:flex;
+}
 
-  border:1px solid rgba(255,255,255,.1);
-  background:#0b1220;
+/* ================= INPUT ================= */
+
+.auth-form input{
+  width:100%;
+  height:52px;
+
+  border-radius:16px;
+
+  background:linear-gradient(180deg,#0d1725,#08111d);
+  border:1px solid rgba(255,255,255,.05);
 
   padding:0 14px;
   color:#fff;
   font-size:14px;
 
   outline:none;
-}
-
-/* floating label */
-.form-group label{
-  position:absolute;
-  left:14px;
-  top:50%;
-  transform:translateY(-50%);
-  color:#6b7c93;
-  font-size:13px;
-  pointer-events:none;
   transition:.2s;
 }
 
-.form-group input:focus + label,
-.form-group input:not(:placeholder-shown) + label{
-  top:-8px;
-  font-size:11px;
-  background:#0f1720;
-  padding:0 6px;
-  color:#22c55e;
+.auth-form input::placeholder{
+  color:#6f7d91;
+  font-weight:800;
 }
 
-/* focus glow */
-.form-group input:focus{
-  border-color:#22c55e;
-  box-shadow:0 0 0 2px rgba(34,197,94,.2);
+.auth-form input:focus{
+  border-color:rgba(2,192,118,.4);
+
+  box-shadow:
+    0 0 0 3px rgba(2,192,118,.1);
 }
 
 /* ================= BUTTON ================= */
 
-.auth-btn.full{
-  width:100%;
+.auth-btn{
   height:52px;
-  border-radius:14px;
+  border:none;
+  border-radius:16px;
 
-  font-weight:800;
+  font-weight:900;
+  font-size:14px;
 
-  background:linear-gradient(180deg,#4ade80,#22c55e);
   color:#04120a;
 
-  margin-top:6px;
+  background:linear-gradient(180deg,#4ade80,#02C076);
+
+  box-shadow:0 12px 30px rgba(2,192,118,.25);
+
+  cursor:pointer;
+  transition:.2s;
+}
+
+.auth-btn:hover{
+  transform:translateY(-1px);
+}
+
+/* ================= ERROR ================= */
+
+.auth-error{
+  min-height:18px;
+  font-size:13px;
+  text-align:center;
+  color:var(--red);
 }
 
 /* ================= SWITCH ================= */
 
 .auth-switch{
   text-align:center;
-  margin-top:10px;
   font-size:13px;
+  color:var(--muted);
 }
 
 .auth-switch button{
-  color:#22c55e;
-  font-weight:700;
-}
-
-/* ================= ERROR ================= */
-
-.auth-error{
-  margin-top:8px;
-  padding:10px;
-  border-radius:12px;
-
-  background:rgba(246,70,93,.08);
-  border:1px solid rgba(246,70,93,.25);
-  color:#f6465d;
-
-  text-align:center;
-  font-size:13px;
+  background:none;
+  border:none;
+  color:var(--green);
+  font-weight:900;
+  cursor:pointer;
 }
