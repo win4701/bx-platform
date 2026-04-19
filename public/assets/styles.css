@@ -4969,7 +4969,7 @@ button:active,
    GLOBAL AUTH PRO UI (WORLD-CLASS)
 ========================================= */
 
-:auth{
+#auth{
   --auth-bg: #05080d;
   --auth-card: rgba(15,26,31,0.85);
 
