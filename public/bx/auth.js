@@ -1,6 +1,6 @@
-// ===============================
-// AUTH SYSTEM PRO (BLOXIO)
-// ===============================
+// =====================================================
+// BLOXIO AUTH SYSTEM — FINAL PRO VERSION
+// =====================================================
 
 const AUTH = {
 
@@ -11,23 +11,25 @@ const AUTH = {
     mode: "login"
   },
 
+  el: {},
+
   // ================= INIT =================
   init(){
+
     this.cache();
     this.bind();
     this.guard();
+
   },
 
+  // ================= CACHE DOM =================
   cache(){
+
     this.el = {
       overlay: document.getElementById("authOverlay"),
+
       loginBox: document.getElementById("loginBox"),
       registerBox: document.getElementById("registerBox"),
-      error: document.getElementById("authError"),
-
-      btnLogin: document.getElementById("loginBtn"),
-      btnRegister: document.getElementById("registerBtn"),
-      toggle: document.getElementById("toggleAuth"),
 
       email: document.getElementById("loginEmail"),
       pass: document.getElementById("loginPass"),
@@ -36,84 +38,107 @@ const AUTH = {
       regPass: document.getElementById("regPass"),
       regPhone: document.getElementById("regPhone"),
       regRef: document.getElementById("regRef"),
+
+      loginBtn: document.getElementById("loginBtn"),
+      registerBtn: document.getElementById("registerBtn"),
+
+      toggle: document.getElementById("toggleAuth"),
+
+      title: document.getElementById("authTitle"),
+      sub: document.getElementById("authSub"),
+      switchText: document.getElementById("switchText"),
+
+      error: document.getElementById("authError")
     };
+
   },
 
   // ================= EVENTS =================
   bind(){
 
-    this.el.toggle.onclick = ()=>this.toggleMode();
+    this.el.toggle.onclick = () => this.toggle();
 
-    this.el.btnLogin.onclick = ()=>this.login();
-    this.el.btnRegister.onclick = ()=>this.register();
+    this.el.loginBtn.onclick = () => this.login();
+    this.el.registerBtn.onclick = () => this.register();
 
-    // Enter submit
     document.addEventListener("keydown", (e)=>{
       if(e.key === "Enter"){
-        if(this.state.mode === "login") this.login();
-        else this.register();
+        this.state.mode === "login" ? this.login() : this.register();
       }
     });
 
   },
 
   // ================= MODE =================
-  toggleMode(){
+  toggle(){
+
+    const isLogin = this.state.mode === "login";
+
+    this.state.mode = isLogin ? "register" : "login";
+
+    this.el.loginBox.classList.toggle("active");
+    this.el.registerBox.classList.toggle("active");
+
+    if(isLogin){
+      this.el.title.innerText = "Create Account";
+      this.el.sub.innerText = "Register new account";
+      this.el.switchText.innerText = "Already have account?";
+    }else{
+      this.el.title.innerText = "Welcome Back";
+      this.el.sub.innerText = "Login to your account";
+      this.el.switchText.innerText = "Don't have account?";
+    }
 
     this.clearError();
-
-    this.state.mode = this.state.mode === "login" ? "register" : "login";
-
-    this.el.loginBox.classList.toggle("hidden");
-    this.el.registerBox.classList.toggle("hidden");
 
   },
 
   // ================= VALIDATION =================
-  validateEmail(email){
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  validateEmail(v){
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
   },
 
-  validatePassword(pass){
-    return pass.length >= 6;
+  validatePassword(v){
+    return v.length >= 6;
   },
 
-  validatePhone(phone){
-    return phone.length >= 6;
+  validatePhone(v){
+    return v.length >= 6;
   },
 
   // ================= UI =================
-  setLoading(btn, state){
+  loading(btn, state){
 
     this.state.loading = state;
 
     if(state){
-      btn.dataset.original = btn.innerText;
+      btn.dataset.txt = btn.innerText;
       btn.innerText = "Loading...";
       btn.disabled = true;
     }else{
-      btn.innerText = btn.dataset.original;
+      btn.innerText = btn.dataset.txt;
       btn.disabled = false;
     }
 
   },
 
-  showError(msg){
-    this.el.error.innerText = msg;
-    this.el.error.classList.remove("hidden");
+  error(msg){
 
-    // shake animation
+    this.el.error.innerText = msg;
+    this.el.error.style.opacity = "1";
+
     this.el.error.animate([
-      { transform: "translateX(0)" },
-      { transform: "translateX(-5px)" },
-      { transform: "translateX(5px)" },
-      { transform: "translateX(0)" }
-    ], { duration: 300 });
+      { transform:"translateX(0)" },
+      { transform:"translateX(-6px)" },
+      { transform:"translateX(6px)" },
+      { transform:"translateX(0)" }
+    ],{ duration:300 });
 
   },
 
   clearError(){
-    this.el.error.classList.add("hidden");
+    this.el.error.innerText = "";
+    this.el.error.style.opacity = "0";
   },
 
   // ================= REQUEST =================
@@ -122,16 +147,18 @@ const AUTH = {
     try{
 
       const controller = new AbortController();
-      const timeout = setTimeout(()=>controller.abort(), 8000);
+      const t = setTimeout(()=>controller.abort(), 8000);
 
       const res = await fetch(this.API + url, {
         method:"POST",
-        headers:{ "Content-Type":"application/json" },
+        headers:{
+          "Content-Type":"application/json"
+        },
         body: JSON.stringify(body),
         signal: controller.signal
       });
 
-      clearTimeout(timeout);
+      clearTimeout(t);
 
       const data = await res.json();
 
@@ -141,8 +168,8 @@ const AUTH = {
 
       return data;
 
-    }catch(err){
-      throw new Error(err.message || "Network error");
+    }catch(e){
+      throw new Error(e.message || "Network error");
     }
 
   },
@@ -156,28 +183,29 @@ const AUTH = {
     const pass  = this.el.pass.value.trim();
 
     if(!this.validateEmail(email))
-      return this.showError("Invalid email");
+      return this.error("Invalid email");
 
     if(!this.validatePassword(pass))
-      return this.showError("Password must be at least 6 characters");
+      return this.error("Password must be at least 6 characters");
 
-    this.setLoading(this.el.btnLogin, true);
+    this.loading(this.el.loginBtn, true);
     this.clearError();
 
     try{
 
       const data = await this.request("/auth/login", {
-        email, password: pass
+        email,
+        password: pass
       });
 
-      this.setSession(data);
+      this.session(data);
       this.enter();
 
-    }catch(err){
-      this.showError(err.message);
+    }catch(e){
+      this.error(e.message);
     }
 
-    this.setLoading(this.el.btnLogin, false);
+    this.loading(this.el.loginBtn, false);
 
   },
 
@@ -192,52 +220,39 @@ const AUTH = {
     const ref   = this.el.regRef.value.trim();
 
     if(!this.validateEmail(email))
-      return this.showError("Invalid email");
+      return this.error("Invalid email");
 
     if(!this.validatePassword(pass))
-      return this.showError("Weak password");
+      return this.error("Weak password");
 
     if(!this.validatePhone(phone))
-      return this.showError("Invalid phone");
+      return this.error("Invalid phone");
 
-    this.setLoading(this.el.btnRegister, true);
+    this.loading(this.el.registerBtn, true);
     this.clearError();
 
     try{
 
       const data = await this.request("/auth/register", {
-        email, password: pass, phone, referral: ref
+        email,
+        password: pass,
+        phone,
+        referral: ref
       });
 
-      this.setSession(data);
+      this.session(data);
       this.enter();
 
-    }catch(err){
-      this.showError(err.message);
+    }catch(e){
+      this.error(e.message);
     }
 
-    this.setLoading(this.el.btnRegister, false);
-
-  },
-
-  // ================= TELEGRAM =================
-  async telegram(user){
-
-    try{
-
-      const data = await this.request("/auth/telegram", user);
-
-      this.setSession(data);
-      this.enter();
-
-    }catch(err){
-      this.showError("Telegram login failed");
-    }
+    this.loading(this.el.registerBtn, false);
 
   },
 
   // ================= SESSION =================
-  setSession(data){
+  session(data){
 
     if(!data.token) throw new Error("Invalid token");
 
@@ -250,9 +265,12 @@ const AUTH = {
   },
 
   logout(){
+
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+
     location.reload();
+
   },
 
   // ================= ACCESS =================
@@ -269,15 +287,16 @@ const AUTH = {
   },
 
   enter(){
+
     this.el.overlay.style.display = "none";
+
+    // show app
+    const app = document.getElementById("app");
+    if(app) app.classList.remove("hidden");
+
   }
 
 };
 
-// ================= TELEGRAM CALLBACK =================
-window.onTelegramAuth = function(user){
-  AUTH.telegram(user);
-};
-
 // ================= START =================
-window.addEventListener("load", ()=>AUTH.init());
+window.addEventListener("load", () => AUTH.init());
