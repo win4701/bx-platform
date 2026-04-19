@@ -4965,3 +4965,217 @@ button:active,
   font-size: 13px;
   color: #8fa2b8;
 }
+/* =========================================
+   GLOBAL AUTH PRO UI (WORLD-CLASS)
+========================================= */
+
+:auth{
+  --auth-bg: #05080d;
+  --auth-card: rgba(15,26,31,0.85);
+
+  --auth-border: rgba(255,255,255,0.08);
+  --auth-border-focus: rgba(34,197,94,0.5);
+
+  --auth-primary: #22c55e;
+  --auth-primary-strong: #16a34a;
+
+  --auth-text: #e6f1ff;
+  --auth-text-dim: #8ea0b5;
+
+  --auth-danger: #f6465d;
+}
+
+/* ================= BACKGROUND ================= */
+
+.auth-overlay{
+  position:fixed;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:99999;
+
+  background:
+    radial-gradient(circle at 20% 10%, rgba(34,197,94,.12), transparent 40%),
+    radial-gradient(circle at 80% 90%, rgba(59,130,246,.08), transparent 40%),
+    linear-gradient(180deg,#05080d,#0b0f14 40%,#05080d);
+
+  overflow:hidden;
+}
+
+/* subtle animated glow */
+.auth-overlay::before{
+  content:"";
+  position:absolute;
+  width:600px;
+  height:600px;
+  background:radial-gradient(circle, rgba(34,197,94,.15), transparent 70%);
+  filter:blur(80px);
+  animation:authGlow 8s infinite alternate;
+}
+
+@keyframes authGlow{
+  from{ transform:translate(-20%, -10%); }
+  to{ transform:translate(20%, 10%); }
+}
+
+/* ================= CARD ================= */
+
+.auth-box{
+  position:relative;
+  width:100%;
+  max-width:380px;
+  padding:28px;
+  border-radius:20px;
+
+  background:var(--auth-card);
+  backdrop-filter:blur(20px);
+
+  border:1px solid var(--auth-border);
+
+  box-shadow:
+    0 40px 100px rgba(0,0,0,.8),
+    inset 0 1px 0 rgba(255,255,255,.05);
+
+  display:flex;
+  flex-direction:column;
+  gap:16px;
+
+  animation:authFade .4s ease;
+}
+
+@keyframes authFade{
+  from{ opacity:0; transform:translateY(10px) scale(.97); }
+  to{ opacity:1; transform:translateY(0) scale(1); }
+}
+
+/* ================= HEADER ================= */
+
+.auth-header{
+  text-align:center;
+}
+
+.auth-header h2{
+  font-size:22px;
+  font-weight:900;
+  margin:0;
+}
+
+.auth-header p{
+  font-size:13px;
+  color:var(--auth-text-dim);
+  margin-top:4px;
+}
+
+/* ================= INPUT ================= */
+
+.auth-box input{
+  width:100%;
+  height:52px;
+
+  border-radius:14px;
+  border:1px solid var(--auth-border);
+
+  background:#0d1725;
+  color:var(--auth-text);
+
+  padding:0 14px;
+  font-size:14px;
+
+  transition:.25s;
+}
+
+/* hover subtle */
+.auth-box input:hover{
+  border-color:rgba(255,255,255,.15);
+}
+
+/* focus glow */
+.auth-box input:focus{
+  outline:none;
+  border-color:var(--auth-border-focus);
+
+  box-shadow:
+    0 0 0 2px rgba(34,197,94,.15),
+    0 0 25px rgba(34,197,94,.25);
+}
+
+/* placeholder */
+.auth-box input::placeholder{
+  color:#6b7c93;
+}
+
+/* ================= BUTTON ================= */
+
+.auth-btn{
+  width:100%;
+  height:52px;
+
+  border:none;
+  border-radius:14px;
+
+  font-weight:900;
+  font-size:15px;
+
+  background:linear-gradient(180deg,#4ade80,var(--auth-primary));
+  color:#08130b;
+
+  cursor:pointer;
+  transition:.25s;
+
+  box-shadow:0 10px 25px rgba(34,197,94,.35);
+}
+
+/* hover */
+.auth-btn:hover{
+  transform:translateY(-1px);
+  background:linear-gradient(180deg,#22c55e,var(--auth-primary-strong));
+}
+
+/* active */
+.auth-btn:active{
+  transform:scale(.97);
+}
+
+/* ================= TELEGRAM ================= */
+
+.auth-social{
+  display:flex;
+  justify-content:center;
+  margin-top:6px;
+}
+
+/* ================= SWITCH ================= */
+
+.auth-switch{
+  text-align:center;
+  font-size:13px;
+  color:var(--auth-text-dim);
+}
+
+.auth-switch button{
+  background:none;
+  border:none;
+  color:var(--auth-primary);
+  font-weight:700;
+  cursor:pointer;
+}
+
+/* ================= ERROR ================= */
+
+.auth-error{
+  color:var(--auth-danger);
+  font-size:13px;
+  text-align:center;
+  padding:6px;
+  border-radius:10px;
+
+  background:rgba(246,70,93,.08);
+  border:1px solid rgba(246,70,93,.2);
+}
+
+/* ================= UTILITY ================= */
+
+.hidden{
+  display:none !important;
+   }
