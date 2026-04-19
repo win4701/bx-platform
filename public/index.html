@@ -945,56 +945,65 @@
   <script src="https://unpkg.com/web3@1.10.0/dist/web3.min.js"></script>
   <script src="https://unpkg.com/@walletconnect/web3-provider@1.8.0/dist/umd/index.min.js"></script>
   <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
-  <!-- ================= AUTH SYSTEM ================= -->
-<div id="authOverlay" class="auth-overlay">
-
+  <!-- ================= AUTH SYSTEM ================-->
   <div class="auth-box">
 
-    <!-- HEADER -->
-    <div class="auth-header">
-      <h2 id="authTitle">Welcome Back</h2>
-      <p id="authSubtitle">Login to your account</p>
+  <!-- LOGO -->
+  <div class="auth-brand">
+    <img src="assets/images/logo.png" alt="Bloxio">
+    <span>Bloxio</span>
+  </div>
+  <!-- HEADER -->
+  <div class="auth-header">
+    <h2 id="authTitle">Welcome Back</h2>
+    <p id="authSubtitle">Login to your account</p>
+  </div>
+  <!-- LOGIN -->
+  <div id="loginBox">
+
+    <div class="form-group">
+      <input id="loginEmail" type="email" required>
+      <label>Email</label>
     </div>
 
-    <!-- LOGIN -->
-    <div id="loginBox">
-
-      <input id="loginEmail" type="email" placeholder="Email">
-      <input id="loginPass" type="password" placeholder="Password">
-
-      <button id="loginBtn" class="auth-btn">Login</button>
+    <div class="form-group">
+      <input id="loginPass" type="password" required>
+      <label>Password</label>
     </div>
 
-    <!-- REGISTER -->
-    <div id="registerBox" class="hidden">
+    <button id="loginBtn" class="auth-btn full">Login</button>
 
-      <input id="regEmail" type="email" placeholder="Email">
-      <input id="regPass" type="password" placeholder="Password">
-      <input id="regPhone" type="text" placeholder="Phone number">
-      <input id="regRef" type="text" placeholder="Referral (optional)">
+  </div>
+  <!-- REGISTER -->
+  <div id="registerBox" class="hidden">
 
-      <button id="registerBtn" class="auth-btn">Create Account</button>
+    <div class="form-group">
+      <input id="regEmail" type="email">
+      <label>Email</label>
     </div>
-    <!-- TELEGRAM LOGIN -->
-    <div class="auth-social">
-
-      <script async src="https://telegram.org/js/telegram-widget.js?22"
-        data-telegram-login="@Bloxio_bot"
-        data-size="large"
-        data-userpic="false"
-        data-request-access="write"
-        data-onauth="onTelegramAuth(user)">
-      </script>
+    <div class="form-group">
+      <input id="regPass" type="password">
+      <label>Password</label>
     </div>
-
-    <!-- SWITCH -->
-    <div class="auth-switch">
-      <span id="switchText">Don't have account?</span>
-      <button id="toggleAuth">Sign up</button>
+    <div class="form-group">
+      <input id="regPhone" type="text">
+      <label>Phone number</label>
+    </div>
+    <div class="form-group">
+      <input id="regRef" type="text">
+      <label>Referral (optional)</label>
     </div>
 
-    <!-- ERROR -->
-    <div id="authError" class="auth-error hidden"></div>
+    <button id="registerBtn" class="auth-btn full">Create Account</button>
+  </div>
+  <!-- TELEGRAM -->
+  <div class="auth-social"></div>
+  <!-- ERROR -->
+  <div id="authError" class="auth-error hidden"></div>
+  <!-- SWITCH -->
+  <div class="auth-switch">
+    <span id="switchText">Don't have account?</span>
+    <button id="toggleAuth">Sign up</button>
   </div>
   </div>
   <!-- ================= BX SYSTEM ================= -->
