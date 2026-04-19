@@ -1,307 +1,283 @@
-// ==========================================
-// BLOXIO AUTH SYSTEM — 2s LOADER VERSION
-// ==========================================
+// ===============================
+// AUTH SYSTEM PRO (BLOXIO)
+// ===============================
 
-window.AUTH = {
+const AUTH = {
 
-  API: "/api",
-  tokenKey: "jwt",
-  LOADER_TIME: 2000, // 🔥 2 seconds
+  API: "https://api.bloxio.online",
 
-  // ================= INIT =================
-  init() {
-
-    console.log("🔐 AUTH INIT");
-
-    this.cache();
-    this.bind();
-
-    this.initParticles();
-    this.autoReferral();
-
-    this.setLoaderText("Initializing...");
-
-    // 🔥 انتظر 2 ثانية ثم قرر
-    setTimeout(() => {
-      this.guard();
-    }, this.LOADER_TIME);
+  state: {
+    loading: false,
+    mode: "login"
   },
 
-  // ================= CACHE =================
-  cache() {
+  // ================= INIT =================
+  init(){
+    this.cache();
+    this.bind();
+    this.guard();
+  },
 
-    this.loader = document.getElementById("appLoader");
-    this.overlay = document.getElementById("authOverlay");
+  cache(){
+    this.el = {
+      overlay: document.getElementById("authOverlay"),
+      loginBox: document.getElementById("loginBox"),
+      registerBox: document.getElementById("registerBox"),
+      error: document.getElementById("authError"),
 
-    this.registerBox = document.getElementById("registerBox");
-    this.loginBox = document.getElementById("loginBox");
+      btnLogin: document.getElementById("loginBtn"),
+      btnRegister: document.getElementById("registerBtn"),
+      toggle: document.getElementById("toggleAuth"),
 
-    this.authTitle = document.getElementById("authTitle");
-    this.switchText = document.getElementById("switchText");
+      email: document.getElementById("loginEmail"),
+      pass: document.getElementById("loginPass"),
 
-    this.toggleBtn = document.getElementById("toggleAuth");
-
-    this.registerBtn = document.getElementById("registerBtn");
-    this.loginBtn = document.getElementById("loginBtn");
-
-    this.regEmail = document.getElementById("regEmail");
-    this.regPass = document.getElementById("regPass");
-    this.regPhone = document.getElementById("regPhone");
-    this.regRef = document.getElementById("regRef");
-
-    this.loginEmail = document.getElementById("loginEmail");
-    this.loginPass = document.getElementById("loginPass");
+      regEmail: document.getElementById("regEmail"),
+      regPass: document.getElementById("regPass"),
+      regPhone: document.getElementById("regPhone"),
+      regRef: document.getElementById("regRef"),
+    };
   },
 
   // ================= EVENTS =================
-  bind() {
+  bind(){
 
-    this.toggleBtn?.addEventListener("click", () => this.toggle());
-    this.registerBtn?.addEventListener("click", () => this.register());
-    this.loginBtn?.addEventListener("click", () => this.login());
-  },
+    this.el.toggle.onclick = ()=>this.toggleMode();
 
-  // ================= GUARD =================
-  guard() {
+    this.el.btnLogin.onclick = ()=>this.login();
+    this.el.btnRegister.onclick = ()=>this.register();
 
-    const token = this.getToken();
-
-    if (!token) {
-      this.showAuth();
-      return;
-    }
-
-    this.enter();
-  },
-
-  // ================= SHOW AUTH =================
-  showAuth() {
-
-    console.log("🔓 SHOW AUTH");
-
-    window.AUTH_READY = false;
-
-    this.setLoaderText("Loading login...");
-
-    // 🔥 عرض الفورم
-    if (this.overlay)
-      this.overlay.style.display = "flex";
-
-    // 🔥 إخفاء loader
-    this.hideLoader();
-  },
-
-  // ================= ENTER =================
-  enter() {
-
-    console.log("✅ AUTH SUCCESS");
-
-    window.AUTH_READY = true;
-
-    this.setLoaderText("Entering platform...");
-
-    // 🔥 إخفاء loader
-    this.hideLoader();
-
-    setTimeout(() => {
-
-      if (this.overlay)
-        this.overlay.style.display = "none";
-
-      // 🔥 تشغيل النظام
-      window.startBX?.();
-      window.startMain?.();
-
-    }, 300);
-  },
-
-  // ================= TOGGLE =================
-  toggle() {
-
-    this.registerBox.classList.toggle("hidden");
-    this.loginBox.classList.toggle("hidden");
-
-    const isLogin = !this.loginBox.classList.contains("hidden");
-
-    this.authTitle.textContent = isLogin
-      ? "Welcome Back"
-      : "Create Account";
-
-    this.switchText.textContent = isLogin
-      ? "Don't have account?"
-      : "Already have account?";
-  },
-
-  // ================= REGISTER =================
-  async register() {
-
-    const email = this.regEmail.value.trim();
-    const password = this.regPass.value.trim();
-    const phone = this.regPhone.value.trim();
-    const referral = this.regRef?.value.trim();
-
-    if (!email || !password)
-      return this.error("Fill required fields");
-
-    this.loading(this.registerBtn, true);
-
-    try {
-
-      const res = await fetch(this.API + "/auth/register", {
-        method: "POST",
-        headers: this.headers(),
-        body: JSON.stringify({ email, password, phone, referral })
-      });
-
-      const data = await res.json();
-
-      if (data.token) {
-        this.save(data.token);
-        this.enter();
-      } else {
-        this.error(data.error || "Register failed");
+    // Enter submit
+    document.addEventListener("keydown", (e)=>{
+      if(e.key === "Enter"){
+        if(this.state.mode === "login") this.login();
+        else this.register();
       }
+    });
 
-    } catch {
-      this.error("Network error");
-    }
-
-    this.loading(this.registerBtn, false);
   },
 
-  // ================= LOGIN =================
-  async login() {
+  // ================= MODE =================
+  toggleMode(){
 
-    const email = this.loginEmail.value.trim();
-    const password = this.loginPass.value.trim();
+    this.clearError();
 
-    if (!email || !password)
-      return this.error("Enter email & password");
+    this.state.mode = this.state.mode === "login" ? "register" : "login";
 
-    this.loading(this.loginBtn, true);
+    this.el.loginBox.classList.toggle("hidden");
+    this.el.registerBox.classList.toggle("hidden");
 
-    try {
-
-      const res = await fetch(this.API + "/auth/login", {
-        method: "POST",
-        headers: this.headers(),
-        body: JSON.stringify({ email, password })
-      });
-
-      const data = await res.json();
-
-      if (data.token) {
-        this.save(data.token);
-        this.enter();
-      } else {
-        this.error(data.error || "Login failed");
-      }
-
-    } catch {
-      this.error("Network error");
-    }
-
-    this.loading(this.loginBtn, false);
   },
 
-  // ================= LOADER =================
-  hideLoader() {
-
-    if (!this.loader) return;
-
-    this.loader.classList.add("hide");
-
-    setTimeout(() => {
-      this.loader.style.display = "none";
-    }, 500);
+  // ================= VALIDATION =================
+  validateEmail(email){
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   },
 
-  setLoaderText(txt) {
-    const el = document.getElementById("loaderText");
-    if (el) el.textContent = txt;
+  validatePassword(pass){
+    return pass.length >= 6;
   },
 
-  // ================= PARTICLES =================
-  initParticles() {
-
-    const canvas = document.getElementById("bxParticles");
-    if (!canvas) return;
-
-    const ctx = canvas.getContext("2d");
-
-    let w = canvas.width = window.innerWidth;
-    let h = canvas.height = window.innerHeight;
-
-    let particles = [];
-
-    for (let i = 0; i < 60; i++) {
-      particles.push({
-        x: Math.random() * w,
-        y: Math.random() * h,
-        vx: (Math.random() - 0.5) * 0.5,
-        vy: (Math.random() - 0.5) * 0.5,
-        r: Math.random() * 2
-      });
-    }
-
-    function draw() {
-
-      ctx.clearRect(0, 0, w, h);
-
-      particles.forEach(p => {
-
-        p.x += p.vx;
-        p.y += p.vy;
-
-        if (p.x < 0 || p.x > w) p.vx *= -1;
-        if (p.y < 0 || p.y > h) p.vy *= -1;
-
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        ctx.fillStyle = "rgba(34,197,94,.6)";
-        ctx.fill();
-      });
-
-      requestAnimationFrame(draw);
-    }
-
-    draw();
-  },
-
-  // ================= TOKEN =================
-  save(token) {
-    localStorage.setItem(this.tokenKey, token);
-  },
-
-  getToken() {
-    return localStorage.getItem(this.tokenKey)
-        || sessionStorage.getItem(this.tokenKey);
+  validatePhone(phone){
+    return phone.length >= 6;
   },
 
   // ================= UI =================
-  loading(btn, state) {
+  setLoading(btn, state){
 
-    if (!btn) return;
+    this.state.loading = state;
 
-    btn.disabled = state;
+    if(state){
+      btn.dataset.original = btn.innerText;
+      btn.innerText = "Loading...";
+      btn.disabled = true;
+    }else{
+      btn.innerText = btn.dataset.original;
+      btn.disabled = false;
+    }
 
-    if (!btn.dataset.txt)
-      btn.dataset.txt = btn.textContent;
-
-    btn.textContent = state
-      ? "Processing..."
-      : btn.dataset.txt;
   },
 
-  error(msg) {
-    console.error("AUTH ERROR:", msg);
-    alert(msg);
+  showError(msg){
+    this.el.error.innerText = msg;
+    this.el.error.classList.remove("hidden");
+
+    // shake animation
+    this.el.error.animate([
+      { transform: "translateX(0)" },
+      { transform: "translateX(-5px)" },
+      { transform: "translateX(5px)" },
+      { transform: "translateX(0)" }
+    ], { duration: 300 });
+
   },
 
-  headers() {
-    return {
-      "Content-Type": "application/json"
-    };
+  clearError(){
+    this.el.error.classList.add("hidden");
+  },
+
+  // ================= REQUEST =================
+  async request(url, body){
+
+    try{
+
+      const controller = new AbortController();
+      const timeout = setTimeout(()=>controller.abort(), 8000);
+
+      const res = await fetch(this.API + url, {
+        method:"POST",
+        headers:{ "Content-Type":"application/json" },
+        body: JSON.stringify(body),
+        signal: controller.signal
+      });
+
+      clearTimeout(timeout);
+
+      const data = await res.json();
+
+      if(!res.ok){
+        throw new Error(data.error || "Request failed");
+      }
+
+      return data;
+
+    }catch(err){
+      throw new Error(err.message || "Network error");
+    }
+
+  },
+
+  // ================= LOGIN =================
+  async login(){
+
+    if(this.state.loading) return;
+
+    const email = this.el.email.value.trim();
+    const pass  = this.el.pass.value.trim();
+
+    if(!this.validateEmail(email))
+      return this.showError("Invalid email");
+
+    if(!this.validatePassword(pass))
+      return this.showError("Password must be at least 6 characters");
+
+    this.setLoading(this.el.btnLogin, true);
+    this.clearError();
+
+    try{
+
+      const data = await this.request("/auth/login", {
+        email, password: pass
+      });
+
+      this.setSession(data);
+      this.enter();
+
+    }catch(err){
+      this.showError(err.message);
+    }
+
+    this.setLoading(this.el.btnLogin, false);
+
+  },
+
+  // ================= REGISTER =================
+  async register(){
+
+    if(this.state.loading) return;
+
+    const email = this.el.regEmail.value.trim();
+    const pass  = this.el.regPass.value.trim();
+    const phone = this.el.regPhone.value.trim();
+    const ref   = this.el.regRef.value.trim();
+
+    if(!this.validateEmail(email))
+      return this.showError("Invalid email");
+
+    if(!this.validatePassword(pass))
+      return this.showError("Weak password");
+
+    if(!this.validatePhone(phone))
+      return this.showError("Invalid phone");
+
+    this.setLoading(this.el.btnRegister, true);
+    this.clearError();
+
+    try{
+
+      const data = await this.request("/auth/register", {
+        email, password: pass, phone, referral: ref
+      });
+
+      this.setSession(data);
+      this.enter();
+
+    }catch(err){
+      this.showError(err.message);
+    }
+
+    this.setLoading(this.el.btnRegister, false);
+
+  },
+
+  // ================= TELEGRAM =================
+  async telegram(user){
+
+    try{
+
+      const data = await this.request("/auth/telegram", user);
+
+      this.setSession(data);
+      this.enter();
+
+    }catch(err){
+      this.showError("Telegram login failed");
+    }
+
+  },
+
+  // ================= SESSION =================
+  setSession(data){
+
+    if(!data.token) throw new Error("Invalid token");
+
+    localStorage.setItem("token", data.token);
+
+    if(data.user){
+      localStorage.setItem("user", JSON.stringify(data.user));
+    }
+
+  },
+
+  logout(){
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    location.reload();
+  },
+
+  // ================= ACCESS =================
+  guard(){
+
+    const token = localStorage.getItem("token");
+
+    if(!token){
+      this.el.overlay.style.display = "flex";
+    }else{
+      this.enter();
+    }
+
+  },
+
+  enter(){
+    this.el.overlay.style.display = "none";
   }
 
 };
+
+// ================= TELEGRAM CALLBACK =================
+window.onTelegramAuth = function(user){
+  AUTH.telegram(user);
+};
+
+// ================= START =================
+window.addEventListener("load", ()=>AUTH.init());
