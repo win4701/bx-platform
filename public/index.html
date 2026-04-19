@@ -945,43 +945,60 @@
   <script src="https://unpkg.com/web3@1.10.0/dist/web3.min.js"></script>
   <script src="https://unpkg.com/@walletconnect/web3-provider@1.8.0/dist/umd/index.min.js"></script>
   <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
-  <!-- ================= AUTH ================= -->
-  <div id="authOverlay" class="bx-auth-pro" style="display:none;">
-    <div class="bx-auth-center">
-      <div class="bx-auth-box">
+  <!-- ================= AUTH SYSTEM ================= -->
+<div id="authOverlay" class="auth-overlay">
 
-        <h2 id="authTitle">Create Account</h2>
+  <div class="auth-box">
 
-        <!-- REGISTER -->
-        <div id="registerBox">
-          <input id="regEmail" placeholder="Email">
-          <input id="regPass" type="password" placeholder="Password">
-          <input id="regPhone" placeholder="Phone Number">
-          <input id="regRef" placeholder="Referral Code (Optional)">
-
-          <button id="registerBtn" class="bx-btn-main full">
-            Create Account
-          </button>
-        </div>
-        <!-- LOGIN -->
-        <div id="loginBox" class="hidden">
-          <input id="loginEmail" placeholder="Email">
-          <input id="loginPass" type="password" placeholder="Password">
-
-          <button id="loginBtn" class="bx-btn-main full">
-            Login
-          </button>
-        </div>
-        <!-- SWITCH -->
-        <div class="bx-auth-switch">
-          <span id="switchText">Already have account?</span>
-          <button id="toggleAuth">Login</button>
-        </div>
-
-      </div>
+    <!-- HEADER -->
+    <div class="auth-header">
+      <h2 id="authTitle">Welcome Back</h2>
+      <p id="authSubtitle">Login to your account</p>
     </div>
+
+    <!-- LOGIN -->
+    <div id="loginBox">
+
+      <input id="loginEmail" type="email" placeholder="Email">
+      <input id="loginPass" type="password" placeholder="Password">
+
+      <button id="loginBtn" class="auth-btn">Login</button>
+    </div>
+
+    <!-- REGISTER -->
+    <div id="registerBox" class="hidden">
+
+      <input id="regEmail" type="email" placeholder="Email">
+      <input id="regPass" type="password" placeholder="Password">
+      <input id="regPhone" type="text" placeholder="Phone number">
+      <input id="regRef" type="text" placeholder="Referral (optional)">
+
+      <button id="registerBtn" class="auth-btn">Create Account</button>
+    </div>
+    <!-- TELEGRAM LOGIN -->
+    <div class="auth-social">
+
+      <script async src="https://telegram.org/js/telegram-widget.js?22"
+        data-telegram-login="@Bloxio_bot"
+        data-size="large"
+        data-userpic="false"
+        data-request-access="write"
+        data-onauth="onTelegramAuth(user)">
+      </script>
+    </div>
+
+    <!-- SWITCH -->
+    <div class="auth-switch">
+      <span id="switchText">Don't have account?</span>
+      <button id="toggleAuth">Sign up</button>
+    </div>
+
+    <!-- ERROR -->
+    <div id="authError" class="auth-error hidden"></div>
+  </div>
   </div>
   <!-- ================= BX SYSTEM ================= -->
+  <script src="bx/auth.js"></script>
   <script src="bx/core.js"></script>
   <script src="bx/state.js"></script>
   <script src="bx/services/api.js"></script>
@@ -992,15 +1009,5 @@
   <script src="bx/mining.js"></script>
   <script src="bx/airdrop.js"></script>
   <script src="bx/main.js"></script>
-
-  <!-- ================= AUTH ================= -->
-  <link rel="stylesheet" href="bx/auth.css">
-  <script src="bx/auth.js"></script>
-  <!-- 🔥 IMPORTANT -->
-  <script>
-    window.addEventListener("DOMContentLoaded", ()=>{
-      AUTH.init();
-    });
-  </script>
 </body>
 </html>
