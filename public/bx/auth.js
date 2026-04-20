@@ -72,25 +72,33 @@ const AUTH = {
   // ================= MODE =================
   toggle(){
 
-    const isLogin = this.state.mode === "login";
+  const isLogin = this.state.mode === "login";
 
-    this.state.mode = isLogin ? "register" : "login";
+  this.state.mode = isLogin ? "register" : "login";
 
-    this.el.loginBox.classList.toggle("active");
-    this.el.registerBox.classList.toggle("active");
+  this.el.loginBox.classList.toggle("active");
+  this.el.registerBox.classList.toggle("active");
 
-    if(isLogin){
-      this.el.title.innerText = "Create Account";
-      this.el.sub.innerText = "Register new account";
-      this.el.switchText.innerText = "Already have account?";
-    }else{
-      this.el.title.innerText = "Welcome Back";
-      this.el.sub.innerText = "Login to your account";
-      this.el.switchText.innerText = "Don't have account?";
-    }
+  if(isLogin){
+    // 👉 REGISTER MODE
+    this.el.title.innerText = "Create Account";
+    this.el.sub.innerText = "Register new account";
 
-    this.clearError();
+    this.el.switchText.innerText = "Already have an account?";
+    this.el.toggle.innerText = "Sign in";
 
+  }else{
+    // 👉 LOGIN MODE
+    this.el.title.innerText = "Welcome Back";
+    this.el.sub.innerText = "Login to your account";
+
+    this.el.switchText.innerText = "Don't have an account?";
+    this.el.toggle.innerText = "Sign up";
+
+  }
+
+  this.clearError();
+    
   },
 
   // ================= VALIDATION =================
