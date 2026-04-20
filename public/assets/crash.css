@@ -240,6 +240,60 @@
   font-weight:1000;
 }
 
+/* ================= Crash MOBILE ================= */
+   
+#crashCanvas{
+  position:absolute;
+  inset:0;
+}
+
+#crashPlayers{
+  position:absolute;
+  right:10px;
+  top:100px;
+  width:180px;
+}
+
+.player{
+  display:flex;
+  justify-content:space-between;
+  font-size:11px;
+  margin-bottom:4px;
+}
+
+#liveBets{
+  position:fixed;
+  right:10px;
+  bottom:100px;
+  width:160px;
+}
+
+.bet{
+  background:#1e2329;
+  padding:6px;
+  margin-bottom:4px;
+  border-radius:6px;
+}
+
+#crashHistory{
+  position:fixed;
+  bottom:60px;
+  left:50%;
+  transform:translateX(-50%);
+  display:flex;
+  gap:6px;
+}
+
+#crashHistory span{
+  font-size:11px;
+  padding:4px 6px;
+  border-radius:4px;
+  background:#1e2329;
+}
+
+.win{ color:#0ecb81; }
+.lose{ color:#f6465d; }
+
 /* ================= MOBILE ================= */
 
 @media (max-width:420px){
