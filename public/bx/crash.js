@@ -1,5 +1,5 @@
 // ======================================================
-// BLOXIO CASINO — ULTRA STABLE FINAL (NO BUGS)
+// BLOXIO CASINO — FINAL MATCHED ENGINE
 // ======================================================
 
 (() => {
@@ -8,24 +8,8 @@
   if (window.BX_CASINO) return;
 
   const $ = (s) => document.querySelector(s);
+  const $$ = (s) => document.querySelectorAll(s);
 
-  // ================= GAMES =================
-  const GAMES = [
-    {id:"crash",name:"Crash"},
-    {id:"dice",name:"Dice"},
-    {id:"coinflip",name:"Coinflip"},
-    {id:"limbo",name:"Limbo"},
-    {id:"roulette",name:"Roulette"},
-    {id:"slots",name:"Slots"},
-    {id:"hi-lo",name:"Hi-Lo"},
-    {id:"wheel",name:"Wheel"},
-    {id:"keno",name:"Keno"},
-    {id:"plinko",name:"Plinko"},
-    {id:"mines",name:"Mines"},
-    {id:"blackjack",name:"Blackjack"}
-  ];
-
-  // ================= CASINO =================
   const CASINO = {
 
     state:{
@@ -34,42 +18,47 @@
       bet:10
     },
 
-    root:null,
-    lobby:null,
-    gameView:null,
-
-    // ================= INIT =================
     init(){
-
-      this.root = $("#casino");
-      if(!this.root) return;
 
       this.lobby = $("#casinoLobby");
       this.gameView = $("#casinoGameView");
 
-      this.renderLobby();
+      if(!this.lobby || !this.gameView) return;
+
+      this.bindGames();
       this.bindWS();
+      this.bindTop();
 
       window.BX_CASINO = this;
     },
 
-    // ================= LOBBY =================
-    renderLobby(){
+    // ================= BIND GAMES =================
+    bindGames(){
 
-      this.lobby.innerHTML = `
-        <div class="casino-grid">
-          ${GAMES.map(g=>`
-            <div class="casino-card" data-game="${g.id}">
-              <span>${g.name}</span>
-            </div>
-          `).join("")}
-        </div>
-      `;
-
-      document.querySelectorAll(".casino-card").forEach(card=>{
-        card.onclick = () => this.openGame(card.dataset.game);
+      $$(".casino-game-card").forEach(card=>{
+        card.addEventListener("click",()=>{
+          const game = card.dataset.game;
+          this.openGame(game);
+        });
       });
 
+    },
+
+    // ================= TOP BAR =================
+    bindTop(){
+
+      const refresh = $("#casinoRefreshBtn");
+
+      if(refresh){
+        refresh.onclick = ()=>{
+          this.refreshStats();
+        };
+      }
+
+    },
+
+    refreshStats(){
+      console.log("Refresh Casino Stats");
     },
 
     // ================= NAV =================
@@ -92,7 +81,7 @@
 
     },
 
-    // ================= GAME UI =================
+    // ================= UI =================
     renderGame(id){
 
       this.gameView.innerHTML = `
@@ -108,7 +97,7 @@
           <input id="betInput" type="number" value="${this.state.bet}" />
 
           <div id="gameControls">
-            ${this.renderControls(id)}
+            ${this.controls(id)}
           </div>
 
           <button id="playBtn">Play</button>
@@ -122,14 +111,15 @@
 
       if(id==="crash"){
         $("#cashoutBtn").onclick = ()=> this.cashout();
+        this.startCrashGraph();
       }
 
     },
 
     // ================= CONTROLS =================
-    renderControls(game){
+    controls(g){
 
-      switch(game){
+      switch(g){
 
         case "dice":
           return `<input id="diceTarget" type="range" min="1" max="99" value="50"/>`;
@@ -143,15 +133,15 @@
           `;
 
         case "limbo":
-          return `<input id="limboMultiplier" value="2" type="number"/>`;
+          return `<input id="limboMultiplier" type="number" value="2"/>`;
 
         case "crash":
-          return `<input id="crashCashout" value="2" type="number"/>`;
+          return `<input id="crashCashout" type="number" value="2"/>`;
 
         case "roulette":
           return `<input id="rouletteNumber" type="number" min="0" max="36"/>`;
 
-        case "hi-lo":
+        case "hilo":
           return `
             <select id="hiloChoice">
               <option value="high">High</option>
@@ -166,27 +156,27 @@
     },
 
     // ================= DATA =================
-    getGameData(){
+    getData(){
 
       switch(this.state.game){
 
         case "dice":
-          return {target:Number($("#diceTarget").value)};
+          return { target:Number($("#diceTarget").value) };
 
         case "coinflip":
-          return {side:$("#coinSide").value};
+          return { side:$("#coinSide").value };
 
         case "limbo":
-          return {multiplier:Number($("#limboMultiplier").value)};
+          return { multiplier:Number($("#limboMultiplier").value) };
 
         case "crash":
-          return {cashout:Number($("#crashCashout").value)};
+          return { cashout:Number($("#crashCashout").value) };
 
         case "roulette":
-          return {number:Number($("#rouletteNumber").value)};
+          return { number:Number($("#rouletteNumber").value) };
 
-        case "hi-lo":
-          return {choice:$("#hiloChoice").value};
+        case "hilo":
+          return { choice:$("#hiloChoice").value };
 
         default:
           return {};
@@ -213,7 +203,7 @@
           body:JSON.stringify({
             game:this.state.game,
             bet,
-            data:this.getGameData()
+            data:this.getData()
           })
         });
 
@@ -223,13 +213,13 @@
           this.finish(data.result);
         }
 
-      }catch{
+      }catch(e){
+        console.error(e);
         this.reset();
       }
 
     },
 
-    // ================= CASHOUT =================
     async cashout(){
       await fetch("/casino/crash/cashout",{method:"POST"});
     },
@@ -250,7 +240,7 @@
       });
 
       BX.on("ws:crash_tick",(d)=>{
-        const el=$("#gameMultiplier");
+        const el = $("#gameMultiplier");
         if(el) el.innerText = d.multiplier.toFixed(2)+"x";
       });
 
@@ -264,13 +254,52 @@
 
     },
 
+    // ================= CRASH GRAPH =================
+    startCrashGraph(){
+
+      const canvas = document.createElement("canvas");
+      const stage = $("#gameStage");
+
+      stage.appendChild(canvas);
+
+      const ctx = canvas.getContext("2d");
+
+      canvas.width = stage.clientWidth;
+      canvas.height = stage.clientHeight;
+
+      let pts=[], start=performance.now();
+
+      const loop = ()=>{
+        const t=(performance.now()-start)/1000;
+        const y=Math.exp(0.06*t);
+
+        pts.push(y);
+
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        ctx.beginPath();
+
+        pts.forEach((p,i)=>{
+          const x=i/pts.length*canvas.width;
+          const py=canvas.height-p*20;
+          i?ctx.lineTo(x,py):ctx.moveTo(x,py);
+        });
+
+        ctx.strokeStyle="#0ecb81";
+        ctx.stroke();
+
+        requestAnimationFrame(loop);
+      };
+
+      loop();
+    },
+
     // ================= RESULT =================
     finish({win,payout,multiplier}){
 
       this.state.playing = false;
       $("#playBtn").disabled = false;
 
-      const el=$("#gameMultiplier");
+      const el = $("#gameMultiplier");
       if(el) el.innerText = multiplier.toFixed(2)+"x";
 
       console.log(win ? "WIN +" + payout : "LOSE");
