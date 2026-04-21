@@ -153,7 +153,7 @@
       hash: '240 GH/s',
       daily: 1.55,
       days: 45,
-      boost: 0.37,
+      boost: 0.35,
       min: { BX: 1200, BNB: 5, SOL: 20 }
     },
     {
@@ -162,7 +162,7 @@
       hash: '540 GH/s',
       daily: 1.85,
       days: 60,
-      boost: 0.41,
+      boost: 0.40,
       min: { BX: 2500, BNB: 15, SOL: 40 }
     },
     {
@@ -171,7 +171,7 @@
       hash: '1200 GH/s',
       daily: 2.05,
       days: 90,
-      boost: 0.52,
+      boost: 0.48,
       min: { BX: 4500, BNB: 50, SOL: 100 }
     }
   ];
