@@ -1,15 +1,13 @@
 /* =========================================================
-   BLOXIO CASINO — ULTRA SYSTEM (2500+ STYLE ENGINE)
-   SINGLE FILE / MODULAR INTERNAL / PRODUCTION STYLE
+   BLOXIO CASINO — PRO SYSTEM (BC.GAME STYLE)
+   FULL UPGRADE / FILTER / LIVE / UX / ENGINE
 ========================================================= */
 
 (() => {
 "use strict";
 
-/* ================= GUARD ================= */
 if(window.BX_CASINO) return;
 
-/* ================= HELPERS ================= */
 const $  = s => document.querySelector(s);
 const $$ = s => document.querySelectorAll(s);
 
@@ -28,24 +26,21 @@ const SFX = {
   spin:()=> $("#snd-spin")?.play()
 };
 
-/* ================= CORE ================= */
+/* ================= CASINO ================= */
 const CASINO = {
 
 state:{
   game:null,
   playing:false,
   bet:10,
-  history:[]
-},
-
-fx:{
-  pulse:false
+  history:[],
+  filter:"all"
 },
 
 ui:{
-  stage:null,
+  lobby:null,
   view:null,
-  lobby:null
+  grid:null
 },
 
 /* ================= INIT ================= */
@@ -53,19 +48,23 @@ init(){
 
   this.ui.lobby = $("#casinoLobby");
   this.ui.view  = $("#casinoGameView");
+  this.ui.grid  = $("#casinoGamesGrid");
 
   if(!this.ui.lobby) return;
 
-  this.bindLobby();
+  this.bindGames();
   this.bindFilters();
   this.initTicker();
   this.initBigWins();
+  this.simulateStats();
 
   window.BX_CASINO = this;
+
+  console.log("🎰 CASINO READY");
 },
 
-/* ================= LOBBY ================= */
-bindLobby(){
+/* ================= GAME CLICK ================= */
+bindGames(){
 
   $$(".casino-game-card").forEach(card=>{
     card.onclick = ()=>{
@@ -76,6 +75,46 @@ bindLobby(){
 
 },
 
+/* ================= FILTER SYSTEM 🔥 ================= */
+bindFilters(){
+
+  const tabs = $$(".casino-filter-tab");
+  const games = $$(".casino-game-card");
+
+  tabs.forEach(tab=>{
+    tab.onclick = ()=>{
+
+      SFX.click();
+
+      tabs.forEach(t=>t.classList.remove("active"));
+      tab.classList.add("active");
+
+      const type = tab.dataset.tab;
+      this.state.filter = type;
+
+      games.forEach(game=>{
+
+        const gType = game.querySelector(".casino-game-type")?.innerText.toLowerCase();
+
+        if(type === "all"){
+          game.style.display="";
+          return;
+        }
+
+        if(gType?.includes(type)){
+          game.style.display="";
+        }else{
+          game.style.display="none";
+        }
+
+      });
+
+    };
+  });
+
+},
+
+/* ================= NAV ================= */
 open(game){
 
   this.state.game = game;
@@ -83,7 +122,7 @@ open(game){
   this.ui.lobby.classList.add("hidden");
   this.ui.view.classList.remove("hidden");
 
-  this.render();
+  this.renderGame();
 },
 
 close(){
@@ -93,45 +132,9 @@ close(){
   this.ui.view.classList.add("hidden");
   this.ui.lobby.classList.remove("hidden");
 },
-   
-/* ================= Filter ================= */
-bindFilters(){
 
-  const tabs = document.querySelectorAll('.casino-filter-tab');
-  const games = document.querySelectorAll('.casino-game-card');
-
-  tabs.forEach(tab=>{
-    tab.onclick = ()=>{
-
-      // active state
-      tabs.forEach(t=>t.classList.remove('active'));
-      tab.classList.add('active');
-
-      const type = tab.dataset.tab;
-
-      games.forEach(game=>{
-
-        const gameType = game.querySelector('.casino-game-type')?.innerText.toLowerCase();
-
-        if(type === 'all'){
-          game.style.display = '';
-          return;
-        }
-
-        if(gameType?.includes(type)){
-          game.style.display = '';
-        }else{
-          game.style.display = 'none';
-        }
-
-      });
-
-    };
-  });
-
-   }
-/* ================= UI ================= */
-render(){
+/* ================= GAME UI ================= */
+renderGame(){
 
 const g = this.state.game;
 
@@ -155,8 +158,6 @@ ${g==="crash"?'<button id="cashoutBtn">Cashout</button>':""}
 
 $("#backBtn").onclick=()=>this.close();
 $("#playBtn").onclick=()=>this.play();
-
-this.ui.stage = $("#gameStage");
 
 if(g==="crash"){
   $("#cashoutBtn").onclick=()=>this.cashout();
@@ -195,7 +196,7 @@ this.state.playing = true;
 
 SFX.click();
 
-setTimeout(()=> this.route(),200);
+setTimeout(()=> this.route(),150);
 
 },
 
@@ -294,7 +295,7 @@ this.finish(p===s, s);
 
 /* ================= CRASH ================= */
 initCrash(){
-this.ui.stage.innerHTML = `<div id="gameMultiplier">1.00x</div>`;
+$("#gameStage").innerHTML = `<div id="gameMultiplier">1.00x</div>`;
 },
 
 startCrash(){
@@ -335,11 +336,10 @@ finish(win,val){
 
 this.state.playing=false;
 
-this.ui.stage.innerHTML = `
-<div style="font-size:32px;font-weight:1000">
-${win?"WIN":"LOSE"}
+$("#gameStage").innerHTML = `
+<div class="game-result ${win?'win':'lose'}">
+${win?"WIN":"LOSE"}<br>${val}
 </div>
-<div>${val}</div>
 `;
 
 this.pushHistory(win,val);
@@ -351,13 +351,13 @@ win?SFX.win():SFX.lose();
 /* ================= HISTORY ================= */
 pushHistory(win,val){
 
-this.state.history.unshift({win,val,time:Date.now()});
+this.state.history.unshift({win,val});
 if(this.state.history.length>20) this.state.history.pop();
 
 this.renderTicker();
 },
 
-/* ================= TICKER ================= */
+/* ================= LIVE FEED ================= */
 initTicker(){
 this.ticker = $("#casinoTickerTrack");
 },
@@ -378,7 +378,7 @@ initBigWins(){
 this.bigWins = $("#bigWinsTrack");
 
 setInterval(()=>{
-  const val = (RNG.f(10,100)).toFixed(2)+"x";
+  const val = (RNG.f(5,200)).toFixed(2)+"x";
 
   const el = document.createElement("div");
   el.innerText = val;
@@ -389,7 +389,17 @@ setInterval(()=>{
     this.bigWins.removeChild(this.bigWins.lastChild);
   }
 
-},3000);
+},2500);
+
+},
+
+/* ================= FAKE LIVE STATS ================= */
+simulateStats(){
+
+setInterval(()=>{
+  $("#casinoOnlineText").innerText = RNG.i(120,450);
+  $("#casinoVolumeText").innerText = RNG.i(1000,9000)+" BX";
+},2000);
 
 }
 
