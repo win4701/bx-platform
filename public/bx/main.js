@@ -1,85 +1,64 @@
-// =====================================================
-// BLOXIO MAIN — CLEAN ROUTER (NO HASH)
-// =====================================================
+/* =====================================================
+   BLOXIO MAIN — ULTRA STABLE ROUTER (FIXED ALL)
+===================================================== */
 
 (() => {
   'use strict';
 
-  const APP = window.BX_APP || (window.BX_APP = {});
-  const UI = APP.ui || (APP.ui = {});
+  const APP   = window.BX_APP || (window.BX_APP = {});
+  const UI    = APP.ui || (APP.ui = {});
   const STATE = APP.state || (APP.state = {});
 
-  const VIEW_IDS = ['wallet', 'market', 'casino', 'mining', 'airdrop', 'settings'];
-  const DEFAULT_VIEW = 'wallet';
-  const STORAGE_KEY = 'bloxio:lastView';
+  const VIEWS = ['wallet','market','casino','mining','airdrop','settings'];
+  const DEFAULT = 'wallet';
+  const STORE = 'bloxio:view';
 
   const views = new Map();
-  const navButtons = new Map();
+  const nav   = new Map();
 
-  document.querySelectorAll('.view').forEach(v => {
-    if (v.id) views.set(v.id, v);
+  document.querySelectorAll('.view').forEach(v=>{
+    if(v.id) views.set(v.id, v);
   });
 
-  document.querySelectorAll('.bottom-nav [data-view]').forEach(btn => {
-    const id = btn.dataset.view;
-    if (id) navButtons.set(id, btn);
+  document.querySelectorAll('.bottom-nav [data-view]').forEach(b=>{
+    nav.set(b.dataset.view, b);
   });
 
-  const $ = (s, r = document) => r.querySelector(s);
-  const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+  const $  = s => document.querySelector(s);
+  const $$ = s => document.querySelectorAll(s);
 
-  function safe(fn, ...a){
-    try { if (typeof fn === 'function') return fn(...a); }
-    catch(e){ console.warn(e); }
+  const safe = fn=>{
+    try{ if(typeof fn === 'function') return fn(); }
+    catch(e){ console.warn('[SAFE]', e); }
+  };
+
+  /* ================= AUTH GUARD ================= */
+  function isLocked(){
+    const overlay = document.getElementById("authOverlay");
+    return overlay && overlay.style.display !== "none";
   }
 
-  function play(){
-    try{
-      const s = document.getElementById('snd-click');
-      if(!s || document.body.dataset.sound === 'off') return;
-      s.currentTime = 0;
-      s.play().catch(()=>{});
-    }catch(_){}
-  }
-
-  function normalize(id){
-    return VIEW_IDS.includes(id) ? id : DEFAULT_VIEW;
-  }
-
-  function save(id){
-    try{ localStorage.setItem(STORAGE_KEY, id); }catch(_){}
-  }
-
-  function load(){
-    try{
-      return normalize(localStorage.getItem(STORAGE_KEY) || DEFAULT_VIEW);
-    }catch(_){
-      return DEFAULT_VIEW;
-    }
-  }
-
+  /* ================= NAV ================= */
   function setNav(id){
-    navButtons.forEach((btn, key)=>{
-      const a = key === id;
-      btn.classList.toggle('active', a);
-      btn.setAttribute('aria-current', a ? 'page' : 'false');
+    nav.forEach((b,k)=>{
+      const a = k===id;
+      b.classList.toggle('active', a);
+      b.setAttribute('aria-current', a?'page':'false');
     });
   }
 
   function hideAll(){
     views.forEach(v=>{
+      v.style.display='none';
       v.classList.remove('active');
-      v.setAttribute('hidden','hidden');
-      v.style.display = 'none';
     });
   }
 
   function show(id){
     const v = views.get(id);
     if(!v) return;
+    v.style.display='';
     v.classList.add('active');
-    v.removeAttribute('hidden');
-    v.style.display = '';
   }
 
   function closePanels(){
@@ -87,150 +66,120 @@
     $$('.mining-sub-panel').forEach(p=>p.classList.add('mining-hidden'));
   }
 
+  /* ================= HOOKS ================= */
   function hooks(id){
 
-    document.dispatchEvent(new CustomEvent('bloxio:viewchange',{detail:{view:id}}));
+    document.dispatchEvent(new CustomEvent('bloxio:view',{detail:id}));
 
+    /* -------- WALLET -------- */
     if(id==='wallet'){
       safe(window.renderWallet);
       safe(window.updateWalletUI);
-      safe(window.refreshWalletUI);
     }
 
+    /* -------- MARKET -------- */
     if(id==='market'){
       safe(window.renderMarket);
       safe(window.updateMarketUI);
       safe(window.resizeMarketChart);
-      safe(window.syncMarketLayout);
-      setTimeout(()=>safe(window.resizeMarketChart),120);
     }
 
+    /* -------- CASINO -------- */
     if(id==='casino'){
       safe(window.renderCasinoLobby);
       safe(window.updateCasinoUI);
-      safe(window.syncCasinoLayout);
     }
 
+    /* -------- MINING FIX 🔥 -------- */
     if(id==='mining'){
-      safe(window.renderMiningPlans);
+
+      // ✅ fallback 1 (old system)
+      if(window.renderMining){
+        safe(window.renderMining);
+      }
+
+      // ✅ fallback 2 (new system)
+      if(window.renderMiningPlans){
+        safe(window.renderMiningPlans);
+      }
+
       safe(window.updateMiningUI);
-      safe(window.syncMiningLayout);
     }
 
+    /* -------- AIRDROP -------- */
     if(id==='airdrop'){
       safe(window.renderAirdrop);
-      safe(window.updateAirdropUI);
     }
 
+    /* -------- SETTINGS -------- */
     if(id==='settings'){
       safe(window.renderSettings);
-      safe(window.updateSettingsUI);
     }
   }
 
-  // ================= ROUTER =================
+  /* ================= ROUTER ================= */
+  function go(id, opt={}){
 
-  function goToView(next, opt = {}){
+    if(isLocked()) return; // 🔥 auth block
 
-    const id = normalize(next);
-    const current = STATE.currentView || null;
+    const view = VIEWS.includes(id)?id:DEFAULT;
 
-    if(!views.has(id)) return;
-
-    if(current === id && !opt.force){
-      setNav(id);
+    if(STATE.current === view && !opt.force){
+      setNav(view);
       return;
     }
 
     closePanels();
     hideAll();
-    show(id);
-    setNav(id);
+    show(view);
+    setNav(view);
 
-    STATE.currentView = id;
-    save(id);
+    STATE.current = view;
+    localStorage.setItem(STORE, view);
 
-    // 🚫 NO HASH HERE
-
-    hooks(id);
+    hooks(view);
   }
 
-  // ================= NAV =================
+  /* ================= NAV EVENTS ================= */
+  function bind(){
 
-  function bindNav(){
-    navButtons.forEach((btn,id)=>{
-      btn.addEventListener('click', ()=>{
-        play();
-        goToView(id);
-      });
+    nav.forEach((btn,id)=>{
+      btn.onclick = ()=>{
+        if(isLocked()) return;
+        go(id);
+      };
     });
-  }
 
-  // ================= ACTIONS =================
-
-  function bindActions(){
-    document.addEventListener('click', (e)=>{
+    document.addEventListener('click', e=>{
       const t = e.target.closest('[data-action]');
       if(!t) return;
 
+      if(isLocked()) return;
+
       const a = t.dataset.action;
 
-      if(a==='go-mining'){ play(); goToView('mining'); }
-      if(a==='go-wallet'){ play(); goToView('wallet'); }
-      if(a==='go-market'){ play(); goToView('market'); }
-      if(a==='go-casino'){ play(); goToView('casino'); }
-      if(a==='go-airdrop'){ play(); goToView('airdrop'); }
+      if(a==='go-mining') go('mining');
+      if(a==='go-wallet') go('wallet');
+      if(a==='go-market') go('market');
+      if(a==='go-casino') go('casino');
+      if(a==='go-airdrop') go('airdrop');
     });
+
   }
 
-  // ================= RESIZE =================
-
-  let rTimer = null;
-
-  function onResize(){
-    clearTimeout(rTimer);
-    rTimer = setTimeout(()=>{
-      const c = STATE.currentView || DEFAULT_VIEW;
-
-      if(c==='market'){
-        safe(window.resizeMarketChart);
-        safe(window.syncMarketLayout);
-      }
-
-      if(c==='casino'){
-        safe(window.syncCasinoLayout);
-      }
-
-      if(c==='mining'){
-        safe(window.syncMiningLayout);
-      }
-    },120);
-  }
-
-  // ================= API =================
-
-  UI.goToView = goToView;
-  UI.getCurrentView = () => STATE.currentView || DEFAULT_VIEW;
-
-  window.goToView = goToView;
-
-  // ================= BOOT =================
-
+  /* ================= BOOT ================= */
   function boot(){
 
-    bindNav();
-    bindActions();
+    bind();
 
-    window.addEventListener('resize', onResize);
+    const saved = localStorage.getItem(STORE) || DEFAULT;
 
-    const initial = load(); // 🔥 بدون hash
+    // 🔥 auth delay fix
+    setTimeout(()=>{
+      go(saved, {force:true});
+    }, 50);
 
-    goToView(initial, {force:true});
-
-    document.body.classList.add('app-ready');
-
-    console.log('[Bloxio] clean router loaded');
-
+    console.log('🚀 MAIN FIXED READY');
   }
 
   if(document.readyState==='loading'){
