@@ -57,6 +57,7 @@ init(){
   if(!this.ui.lobby) return;
 
   this.bindLobby();
+  this.bindFilters();
   this.initTicker();
   this.initBigWins();
 
@@ -92,7 +93,43 @@ close(){
   this.ui.view.classList.add("hidden");
   this.ui.lobby.classList.remove("hidden");
 },
+   
+/* ================= Filter ================= */
+bindFilters(){
 
+  const tabs = document.querySelectorAll('.casino-filter-tab');
+  const games = document.querySelectorAll('.casino-game-card');
+
+  tabs.forEach(tab=>{
+    tab.onclick = ()=>{
+
+      // active state
+      tabs.forEach(t=>t.classList.remove('active'));
+      tab.classList.add('active');
+
+      const type = tab.dataset.tab;
+
+      games.forEach(game=>{
+
+        const gameType = game.querySelector('.casino-game-type')?.innerText.toLowerCase();
+
+        if(type === 'all'){
+          game.style.display = '';
+          return;
+        }
+
+        if(gameType?.includes(type)){
+          game.style.display = '';
+        }else{
+          game.style.display = 'none';
+        }
+
+      });
+
+    };
+  });
+
+   }
 /* ================= UI ================= */
 render(){
 
