@@ -15,7 +15,7 @@
 
   if (!window.BX_BALANCE) {
   window.BX_BALANCE = {
-    get: () => 1000,
+    get: () => 0,
     add: () => {}
    };
   }
