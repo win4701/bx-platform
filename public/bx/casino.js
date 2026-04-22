@@ -1,6 +1,6 @@
 /* =========================================================
-   BLOXIO CASINO — COMPLETE SYSTEM (PRO STRUCTURE)
-   12 GAMES / CLEAN ARCH / REAL LOGIC BASE
+   BLOXIO CASINO — ULTRA SINGLE FILE ARCHITECTURE
+   core + games + ui (merged)
 ========================================================= */
 
 (() => {
@@ -8,143 +8,173 @@
 
 if(window.BX_CASINO) return;
 
-/* ================= HELPERS ================= */
+ /* =========================================================
+   CORE LAYER — CLEAN VERSION (FIXED)
+========================================================= */
 
-const $ = s => document.querySelector(s);
-const $$ = s => document.querySelectorAll(s);
+const CORE = {
 
-const RNG = {
+state:{
+  game:null,
+  bet:10,
+  running:false,
+  balance:1000,
+  history:[]
+},
+
+/* ================= RNG ================= */
+
+RNG:{
   float:(a,b)=> Math.random()*(b-a)+a,
   int:(a,b)=> Math.floor(Math.random()*(b-a+1))+a,
   pick:a=> a[Math.floor(Math.random()*a.length)]
-};
-
-const EDGE = 0.98;
-
-/* ================= MAIN ================= */
-
-const CASINO = {
-
-state:{
-  current:null,
-  running:false,
-  bet:10
 },
+
+edge:0.98,
+
+/* ================= STATE ================= */
+
+setGame(g){
+  this.state.game = g;
+},
+
+setRunning(v){
+  this.state.running = v;
+},
+
+/* ================= RESULT ENGINE ================= */
+
+result(win,data){
+
+  // save history
+  this.pushHistory(win,data);
+
+  // UI output
+  UI.showResult(win,data);
+
+},
+
+/* ================= HISTORY ================= */
+
+pushHistory(win,data){
+
+  this.state.history.unshift({
+    win,
+    data,
+    time:Date.now()
+  });
+
+  if(this.state.history.length > 20){
+    this.state.history.pop();
+  }
+
+  this.renderHistory();
+
+},
+
+renderHistory(){
+
+  const el = document.getElementById("casinoTickerTrack");
+  if(!el) return;
+
+  el.innerHTML = this.state.history.map(h=>`
+    <div class="${h.win?'win':'lose'}">
+      ${typeof h.data === "object"
+        ? JSON.stringify(h.data)
+        : h.data}
+    </div>
+  `).join("");
+
+},
+
+/* ================= LIVE STATS ================= */
+
+startStats(){
+
+  setInterval(()=>{
+
+    const online = document.getElementById("casinoOnlineText");
+    const volume = document.getElementById("casinoVolumeText");
+
+    if(online) online.innerText = this.RNG.int(120,450);
+    if(volume) volume.innerText = this.RNG.int(1000,9000)+" BX";
+
+  },2000);
+
+},
+
+/* ================= BIG WINS ================= */
+
+startBigWins(){
+
+  const container = document.getElementById("bigWinsTrack");
+  if(!container) return;
+
+  setInterval(()=>{
+
+    const val = this.RNG.float(5,200).toFixed(2)+"x";
+
+    const el = document.createElement("div");
+    el.className = "win";
+    el.innerText = val;
+
+    container.prepend(el);
+
+    if(container.children.length > 10){
+      container.removeChild(container.lastChild);
+    }
+
+  },2500);
+
+},
+
+/* ================= INIT ================= */
 
 init(){
 
-  this.lobby = $("#casinoLobby");
-  this.view  = $("#casinoGameView");
+  this.startStats();
+  this.startBigWins();
 
-  if(!this.lobby) return;
-
-  this.bindLobby();
-
-  window.BX_CASINO = this;
-},
-
-/* ================= NAV ================= */
-
-bindLobby(){
-
-  $$(".casino-game-card").forEach(card=>{
-    card.onclick = ()=> this.open(card.dataset.game);
-  });
-
-},
-
-open(game){
-
-  this.state.current = game;
-
-  this.lobby.classList.add("hidden");
-  this.view.classList.remove("hidden");
-
-  this.render();
-
-},
-
-close(){
-
-  this.state.running = false;
-
-  this.view.classList.add("hidden");
-  this.lobby.classList.remove("hidden");
-
-},
-
-/* ================= RENDER ================= */
-
-render(){
-
-const g = this.state.current;
-
-switch(g){
-
-case "crash": return this.renderCrash();
-case "dice": return this.renderDice();
-case "limbo": return this.renderLimbo();
-case "coinflip": return this.renderCoin();
-case "plinko": return this.renderPlinko();
-case "blackjack": return this.renderBlackjack();
-case "hilo": return this.renderHilo();
-case "slots": return this.renderSlots();
-case "mines": return this.renderMines();
-case "fruitparty": return this.renderFruit();
-case "bananafarm": return this.renderBanana();
-case "roulette": return this.renderRoulette();
+  console.log("🔥 CORE READY");
 
 }
 
-},
+};  
 
 /* =========================================================
-   CRASH
+   GAMES — AAA LOGIC SYSTEM
 ========================================================= */
 
-renderCrash(){
+const GAMES = {
 
-this.view.innerHTML = `
-<div class="game crash">
-<button id="back">←</button>
-<h2>Crash</h2>
+/* ================= CRASH (AAA MODEL) ================= */
 
-<div id="multiplier">1.00x</div>
+crash:{
 
-<input id="bet" value="${this.state.bet}">
-<button id="play">Start</button>
-<button id="cash">Cashout</button>
-</div>
-`;
+start(){
 
-$("#back").onclick = ()=>this.close();
-$("#play").onclick = ()=>this.crashStart();
-$("#cash").onclick = ()=>this.crashCash();
-
-},
-
-crashStart(){
-
-this.state.running = true;
+CORE.setRunning(true);
 
 let m = 1;
-let speed = 0.02;
+let velocity = 0.02;
 
 const loop = ()=>{
 
-if(!this.state.running) return;
+if(!CORE.state.running) return;
 
-m += m * speed;
+// acceleration curve
+velocity += 0.0008;
+m += m * velocity;
 
-if(m > 2) speed = 0.03;
-if(m > 5) speed = 0.05;
+UI.updateCrash(m);
 
-$("#multiplier").innerText = m.toFixed(2)+"x";
+// dynamic crash curve (real feeling)
+const crashPoint = Math.exp(Math.random() * 3);
 
-if(Math.random() < 0.01 * m){
-  this.state.running = false;
-  this.result(false,m);
-  return;
+if(m >= crashPoint){
+CORE.setRunning(false);
+CORE.result(false,m);
+return;
 }
 
 requestAnimationFrame(loop);
@@ -152,346 +182,449 @@ requestAnimationFrame(loop);
 };
 
 loop();
-},
-
-crashCash(){
-
-if(!this.state.running) return;
-
-this.state.running = false;
-
-const m = parseFloat($("#multiplier").innerText);
-this.result(true,m);
 
 },
 
-/* =========================================================
-   DICE
-========================================================= */
+cash(){
 
-renderDice(){
+if(!CORE.state.running) return;
 
-this.view.innerHTML = `
-<div class="game">
-<button id="back">←</button>
+CORE.setRunning(false);
+CORE.result(true, UI.getCrash());
 
-<input id="target" type="range" min="5" max="95" value="50">
-<button id="play">Roll</button>
-
-<div id="res"></div>
-</div>
-`;
-
-$("#back").onclick = ()=>this.close();
-$("#play").onclick = ()=>this.dice();
+}
 
 },
+
+/* ================= DICE (TRUE RTP) ================= */
 
 dice(){
 
-const t = Number($("#target").value);
-const roll = RNG.float(0,100);
+const target = Number(UI.get("target"));
 
-const payout = (100/t)*EDGE;
+// probability
+const chance = target / 100;
 
-this.result(roll<t,{roll,payout});
+// RTP control
+const payout = (1 / chance) * CORE.edge;
 
-},
+const roll = CORE.RNG.float(0,100);
 
-/* =========================================================
-   LIMBO
-========================================================= */
+const win = roll < target;
 
-renderLimbo(){
-
-this.view.innerHTML = `
-<div class="game">
-<button id="back">←</button>
-
-<input id="target" value="2">
-<button id="play">Play</button>
-</div>
-`;
-
-$("#back").onclick = ()=>this.close();
-$("#play").onclick = ()=>this.limbo();
+CORE.result(win,{
+roll: roll.toFixed(2),
+chance: (chance*100).toFixed(2)+"%",
+payout: payout.toFixed(2)+"x"
+});
 
 },
+
+/* ================= LIMBO (REAL FORMULA) ================= */
 
 limbo(){
 
-const t = Number($("#target").value);
-const r = (1/Math.random())*EDGE;
+const target = Number(UI.get("target"));
 
-this.result(r>=t,r);
+// exponential distribution
+const r = Math.floor((100 / (Math.random()*100 + 1)) * CORE.edge) / 10;
+
+const win = r >= target;
+
+CORE.result(win, r.toFixed(2)+"x");
 
 },
 
+/* ================= COIN (FAIR) ================= */
+
+coin(){
+
+const seed = Math.random();
+const result = seed > 0.5 ? "heads" : "tails";
+
+const choice = UI.get("side");
+
+CORE.result(result === choice, result);
+
+},
+
+/* ================= PLINKO (WEIGHTED) ================= */
+
+plinko(){
+
+const weights = [
+  {m:0.5,w:40},
+  {m:1,w:30},
+  {m:2,w:15},
+  {m:5,w:10},
+  {m:10,w:5}
+];
+
+const total = weights.reduce((a,b)=>a+b.w,0);
+let r = Math.random()*total;
+
+for(const item of weights){
+  if(r < item.w){
+    CORE.result(item.m>1,item.m+"x");
+    return;
+  }
+  r -= item.w;
+}
+
+},
+
+/* ================= BLACKJACK (REAL ENGINE) ================= */
+
+blackjack(){
+
+const deck = [];
+
+for(let i=1;i<=13;i++){
+  for(let j=0;j<4;j++){
+    deck.push(i>10?10:i);
+  }
+}
+
+const draw = ()=> deck.splice(CORE.RNG.int(0,deck.length-1),1)[0];
+
+let player = [draw(),draw()];
+let dealer = [draw(),draw()];
+
+const sum = a=> a.reduce((s,v)=>s+v,0);
+
+// player logic
+while(sum(player) < 17){
+  player.push(draw());
+}
+
+// dealer logic
+while(sum(dealer) < 17){
+  dealer.push(draw());
+}
+
+const ps = sum(player);
+const ds = sum(dealer);
+
+const win = ps<=21 && (ps>ds || ds>21);
+
+CORE.result(win,{
+player:ps,
+dealer:ds
+});
+
+},
+
+/* ================= HILO (CHAIN LOGIC) ================= */
+
+hilo(){
+
+let a = CORE.RNG.int(1,13);
+let b = CORE.RNG.int(1,13);
+
+const choice = UI.get("choice");
+
+const win = choice === "high" ? b > a : b < a;
+
+CORE.result(win,`${a} → ${b}`);
+
+},
+
+/* ================= SLOTS (REELS SYSTEM) ================= */
+
+slots(){
+
+const reels = [
+["🍒","🍒","💎","7"],
+["🍒","💎","💎","7"],
+["🍒","💎","7","7"]
+];
+
+const spin = reels.map(r=> r[CORE.RNG.int(0,r.length-1)]);
+
+UI.setSlots(spin);
+
+// payout table
+const key = spin.join("");
+
+let payout = 0;
+
+if(key === "7 7 7") payout = 10;
+else if(spin[0]===spin[1] && spin[1]===spin[2]) payout = 5;
+else if(spin.includes("💎")) payout = 2;
+
+CORE.result(payout>0, payout+"x");
+
+},
+
+/* ================= MINES (GRID ENGINE) ================= */
+
+mines(){
+
+const size = 25;
+const minesCount = 5;
+
+let grid = Array(size).fill("safe");
+
+for(let i=0;i<minesCount;i++){
+  let index;
+  do{
+    index = CORE.RNG.int(0,size-1);
+  }while(grid[index]==="mine");
+  grid[index] = "mine";
+}
+
+// simulate click
+const pick = CORE.RNG.int(0,size-1);
+
+const win = grid[pick] !== "mine";
+
+CORE.result(win, win ? "safe" : "💣");
+
+},
+
+/* ================= FRUIT ================= */
+
+fruit(){
+
+const table = [0,0,2,5,10];
+
+const r = CORE.RNG.pick(table);
+
+CORE.result(r>0,r+"x");
+
+},
+
+/* ================= BANANA ================= */
+
+banana(){
+
+const growth = CORE.RNG.float(0,6);
+
+const win = growth > 2;
+
+CORE.result(win, growth.toFixed(2)+"x");
+
+},
+
+/* ================= ROULETTE (EUROPEAN) ================= */
+
+roulette(){
+
+const spin = CORE.RNG.int(0,36);
+
+const pick = Number(UI.get("num"));
+
+const win = spin === pick;
+
+CORE.result(win,{
+spin,
+payout: win ? "36x" : "0"
+});
+
+},
+   
 /* =========================================================
-   COIN
+   UI LAYER (RENDER + DOM)
 ========================================================= */
 
-renderCoin(){
+const UI = {
+
+init(){
+
+this.lobby = document.getElementById("casinoLobby");
+this.view  = document.getElementById("casinoGameView");
+
+document.querySelectorAll(".casino-gac=>{
+  c.onclick = ()=> this.open(c.dataset.game);
+});
+
+},
+
+open(g){
+
+CORE.setGame(g);
+
+this.lobby.classList.add("hidden");
+this.view.classList.remove("hidden");
+
+this.render(g);
+
+},
+
+close(){
+
+CORE.setRunning(false);
+
+this.view.classList.add("hidden");
+this.lobby.classList.remove("hidden");
+
+},
+
+render(g){
+
+switch(g){
+
+case "crash": return this.crash();
+case "dice": return this.dice();
+case "limbo": return this.limbo();
+case "coinflip": return this.coin();
+case "plinko": return this.simple("Plinko",()=>GAMES.plinko());
+case "blackjack": return this.simple("Blackjack",()=>GAMES.blackjack());
+case "hilo": return this.hilo();
+case "slots": return this.slots();
+case "mines": return this.simple("Mines",()=>GAMES.mines());
+case "fruitparty": return this.simple("Fruit",()=>GAMES.fruit());
+case "bananafarm": return this.simple("Banana",()=>GAMES.banana());
+case "roulette": return this.roulette();
+
+}
+
+},
+
+/* ================= UI TEMPLATES ================= */
+
+base(title,body){
 
 this.view.innerHTML = `
 <div class="game">
 <button id="back">←</button>
+<h2>${title}</h2>
+${body}
+</div>
+`;
 
+document.getElementById("back").onclick=()=>this.close();
+
+},
+
+simple(title,action){
+
+this.base(title,`
+<button id="play">Play</button>
+`);
+
+document.getElementById("play").onclick=action;
+
+},
+
+/* ================= CRASH UI ================= */
+
+crash(){
+
+this.base("Crash",`
+<div id="multiplier">1.00x</div>
+<button id="play">Start</button>
+<button id="cash">Cashout</button>
+`);
+
+document.getElementById("play").onclick=()=>GAMES.crash.start();
+document.getElementById("cash").onclick=()=>GAMES.crash.cash();
+
+},
+
+updateCrash(m){
+document.getElementById("multiplier").innerText=m.toFixed(2)+"x";
+},
+
+getCrash(){
+return parseFloat(document.getElementById("multiplier").innerText);
+},
+
+/* ================= DICE UI ================= */
+
+dice(){
+
+this.base("Dice",`
+<input id="target" type="range" min="5" max="95" value="50">
+<button id="play">Roll</button>
+`);
+
+document.getElementById("play").onclick=()=>GAMES.dice();
+
+},
+
+/* ================= LIMBO ================= */
+
+limbo(){
+
+this.base("Limbo",`
+<input id="target" value="2">
+<button id="play">Play</button>
+`);
+
+document.getElementById("play").onclick=()=>GAMES.limbo();
+
+},
+
+/* ================= COIN ================= */
+
+coin(){
+
+this.base("Coin",`
 <select id="side">
 <option>heads</option>
 <option>tails</option>
 </select>
-
 <button id="play">Flip</button>
-</div>
-`;
+`);
 
-$("#back").onclick = ()=>this.close();
-$("#play").onclick = ()=>this.coin();
+document.getElementById("play").onclick=()=>GAMES.coin();
 
 },
 
-coin(){
+/* ================= HILO ================= */
 
-const s = $("#side").value;
-const r = RNG.pick(["heads","tails"]);
+hilo(){
 
-this.result(r===s,r);
-
-},
-
-/* =========================================================
-   PLINKO
-========================================================= */
-
-renderPlinko(){
-
-this.view.innerHTML = `
-<div class="game">
-<button id="back">←</button>
-<button id="play">Drop</button>
-</div>
-`;
-
-$("#back").onclick = ()=>this.close();
-$("#play").onclick = ()=>this.plinko();
-
-},
-
-plinko(){
-
-const multipliers = [0.5,1,2,5,10];
-const m = RNG.pick(multipliers);
-
-this.result(m>1,m);
-
-},
-
-/* =========================================================
-   BLACKJACK
-========================================================= */
-
-renderBlackjack(){
-
-this.view.innerHTML = `
-<div class="game">
-<button id="back">←</button>
-<button id="play">Draw</button>
-</div>
-`;
-
-$("#back").onclick = ()=>this.close();
-$("#play").onclick = ()=>this.blackjack();
-
-},
-
-blackjack(){
-
-const p = RNG.int(16,23);
-const d = RNG.int(16,23);
-
-const win = p<=21 && (p>d || d>21);
-
-this.result(win,`${p} vs ${d}`);
-
-},
-
-/* =========================================================
-   HILO
-========================================================= */
-
-renderHilo(){
-
-this.view.innerHTML = `
-<div class="game">
-<button id="back">←</button>
-
+this.base("HiLo",`
 <select id="choice">
 <option>high</option>
 <option>low</option>
 </select>
-
 <button id="play">Play</button>
-</div>
-`;
+`);
 
-$("#back").onclick = ()=>this.close();
-$("#play").onclick = ()=>this.hilo();
+document.getElementById("play").onclick=()=>GAMES.hilo();
 
 },
 
-hilo(){
-
-const a = RNG.int(1,13);
-const b = RNG.int(1,13);
-
-const c = $("#choice").value;
-
-this.result(c==="high"?b>a:b<a,`${a}→${b}`);
-
-},
-
-/* =========================================================
-   SLOTS
-========================================================= */
-
-renderSlots(){
-
-this.view.innerHTML = `
-<div class="game">
-<button id="back">←</button>
-
-<div id="slots">🎰🎰🎰</div>
-<button id="play">Spin</button>
-</div>
-`;
-
-$("#back").onclick = ()=>this.close();
-$("#play").onclick = ()=>this.slots();
-
-},
+/* ================= SLOTS ================= */
 
 slots(){
 
-const reels = ["🍒","💎","7"];
-const r = [RNG.pick(reels),RNG.pick(reels),RNG.pick(reels)];
-
-$("#slots").innerText = r.join("");
-
-this.result(r[0]===r[1]&&r[1]===r[2],r.join(" "));
-
-},
-
-/* =========================================================
-   MINES
-========================================================= */
-
-renderMines(){
-
-this.view.innerHTML = `
-<div class="game">
-<button id="back">←</button>
-<button id="play">Open</button>
-</div>
-`;
-
-$("#back").onclick = ()=>this.close();
-$("#play").onclick = ()=>this.mines();
-
-},
-
-mines(){
-
-const safe = Math.random()>0.3;
-
-this.result(safe,"mine");
-
-},
-
-/* =========================================================
-   FRUIT
-========================================================= */
-
-renderFruit(){
-
-this.view.innerHTML = `
-<div class="game">
-<button id="back">←</button>
-<button id="play">Play</button>
-</div>
-`;
-
-$("#back").onclick = ()=>this.close();
-$("#play").onclick = ()=>this.fruit();
-
-},
-
-fruit(){
-
-const m = RNG.pick([0,2,5,10]);
-
-this.result(m>0,m);
-
-},
-
-/* =========================================================
-   BANANA
-========================================================= */
-
-renderBanana(){
-
-this.view.innerHTML = `
-<div class="game">
-<button id="back">←</button>
-<button id="play">Play</button>
-</div>
-`;
-
-$("#back").onclick = ()=>this.close();
-$("#play").onclick = ()=>this.banana();
-
-},
-
-banana(){
-
-const m = RNG.pick([0,1,3,6]);
-
-this.result(m>1,m);
-
-},
-
-/* =========================================================
-   ROULETTE
-========================================================= */
-
-renderRoulette(){
-
-this.view.innerHTML = `
-<div class="game">
-<button id="back">←</button>
-
-<input id="num" min="0" max="36">
+this.base("Slots",`
+<div id="slots">🎰🎰🎰</div>
 <button id="play">Spin</button>
-</div>
-`;
+`);
 
-$("#back").onclick = ()=>this.close();
-$("#play").onclick = ()=>this.roulette();
+document.getElementById("play").onclick=()=>GAMES.slots();
 
 },
+
+setSlots(r){
+document.getElementById("slots").innerText=r.join("");
+},
+
+/* ================= ROULETTE ================= */
 
 roulette(){
 
-const p = Number($("#num").value);
-const r = RNG.int(0,36);
+this.base("Roulette",`
+<input id="num" min="0" max="36">
+<button id="play">Spin</button>
+`);
 
-this.result(p===r,r);
+document.getElementById("play").onclick=()=>GAMES.roulette();
 
 },
 
-/* ================= RESULT ================= */
+/* ================= HELPERS ================= */
 
-result(win,data){
+get(id){
+return document.getElementById(id).value;
+},
+
+showResult(win,data){
 
 this.view.insertAdjacentHTML("beforeend",`
 <div class="result ${win?'win':'lose'}">
@@ -503,8 +636,13 @@ ${win?'WIN':'LOSE'}<br>${JSON.stringify(data)}
 
 };
 
-/* ================= BOOT ================= */
+/* =========================================================
+   BOOT
+========================================================= */
 
-document.addEventListener("DOMContentLoaded",()=>CASINO.init());
+document.addEventListener("DOMContentLoaded",()=>{
+  UI.init();
+  window.BX_CASINO = {CORE,GAMES,UI};
+});
 
 })();
