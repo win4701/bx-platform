@@ -7,7 +7,7 @@
 "use strict";
 
 if(window.BX_CASINO) return ;
-
+window.BX_CASINO = true;
  /* =========================================================
    CORE LAYER — CLEAN VERSION (FIXED)
 ========================================================= */
