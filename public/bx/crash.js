@@ -6,10 +6,10 @@
 (() => {
 "use strict";
 
-if(window.BX_CASINO) return;
+if(window.BX_CASINO) return
 
-/* =========================================================
-   CORE LAYER (ENGINE / STATE / EVENTS)
+ /* =========================================================
+   CORE LAYER — CLEAN VERSION (FIXED)
 ========================================================= */
 
 const CORE = {
@@ -22,6 +22,8 @@ state:{
   history:[]
 },
 
+/* ================= RNG ================= */
+
 RNG:{
   float:(a,b)=> Math.random()*(b-a)+a,
   int:(a,b)=> Math.floor(Math.random()*(b-a+1))+a,
@@ -29,6 +31,8 @@ RNG:{
 },
 
 edge:0.98,
+
+/* ================= STATE ================= */
 
 setGame(g){
   this.state.game = g;
@@ -38,15 +42,104 @@ setRunning(v){
   this.state.running = v;
 },
 
+/* ================= RESULT ENGINE ================= */
+
 result(win,data){
 
-  this.state.history.unshift({win,data});
+  // save history
+  this.pushHistory(win,data);
 
+  // UI output
   UI.showResult(win,data);
+
+},
+
+/* ================= HISTORY ================= */
+
+pushHistory(win,data){
+
+  this.state.history.unshift({
+    win,
+    data,
+    time:Date.now()
+  });
+
+  if(this.state.history.length > 20){
+    this.state.history.pop();
+  }
+
+  this.renderHistory();
+
+},
+
+renderHistory(){
+
+  const el = document.getElementById("casinoTickerTrack");
+  if(!el) return;
+
+  el.innerHTML = this.state.history.map(h=>`
+    <div class="${h.win?'win':'lose'}">
+      ${typeof h.data === "object"
+        ? JSON.stringify(h.data)
+        : h.data}
+    </div>
+  `).join("");
+
+},
+
+/* ================= LIVE STATS ================= */
+
+startStats(){
+
+  setInterval(()=>{
+
+    const online = document.getElementById("casinoOnlineText");
+    const volume = document.getElementById("casinoVolumeText");
+
+    if(online) online.innerText = this.RNG.int(120,450);
+    if(volume) volume.innerText = this.RNG.int(1000,9000)+" BX";
+
+  },2000);
+
+},
+
+/* ================= BIG WINS ================= */
+
+startBigWins(){
+
+  const container = document.getElementById("bigWinsTrack");
+  if(!container) return;
+
+  setInterval(()=>{
+
+    const val = this.RNG.float(5,200).toFixed(2)+"x";
+
+    const el = document.createElement("div");
+    el.className = "win";
+    el.innerText = val;
+
+    container.prepend(el);
+
+    if(container.children.length > 10){
+      container.removeChild(container.lastChild);
+    }
+
+  },2500);
+
+},
+
+/* ================= INIT ================= */
+
+init(){
+
+  this.startStats();
+  this.startBigWins();
+
+  console.log("🔥 CORE READY");
 
 }
 
-};
+};  
 
 /* =========================================================
    GAMES — AAA LOGIC SYSTEM
@@ -328,9 +421,8 @@ spin,
 payout: win ? "36x" : "0"
 });
 
-}
-
-};
+},
+   
 /* =========================================================
    UI LAYER (RENDER + DOM)
 ========================================================= */
@@ -342,7 +434,7 @@ init(){
 this.lobby = document.getElementById("casinoLobby");
 this.view  = document.getElementById("casinoGameView");
 
-document.querySelectorAll(".casino-game-card").forEach(c=>{
+document.querySelectorAll(".casino-gac=>{
   c.onclick = ()=> this.open(c.dataset.game);
 });
 
@@ -544,62 +636,6 @@ ${win?'WIN':'LOSE'}<br>${JSON.stringify(data)}
 
 };
 
-/* ================= HISTORY ================= */
-pushHistory(win,val){
-
-this.state.history.unshift({win,val});
-if(this.state.history.length>20) this.state.history.pop();
-
-this.renderTicker();
-},
-
-/* ================= LIVE FEED ================= */
-initTicker(){
-this.ticker = $("#casinoTickerTrack");
-},
-
-renderTicker(){
-
-if(!this.ticker) return;
-
-this.ticker.innerHTML = this.state.history.map(h=>`
-<div class="${h.win?'win':'lose'}">${h.val}</div>
-`).join("");
-
-},
-
-/* ================= BIG WINS ================= */
-initBigWins(){
-
-this.bigWins = $("#bigWinsTrack");
-
-setInterval(()=>{
-  const val = (RNG.f(5,200)).toFixed(2)+"x";
-
-  const el = document.createElement("div");
-  el.innerText = val;
-
-  this.bigWins?.prepend(el);
-
-  if(this.bigWins?.children.length>10){
-    this.bigWins.removeChild(this.bigWins.lastChild);
-  }
-
-},2500);
-
-},
-
-/* ================= FAKE LIVE STATS ================= */
-simulateStats(){
-
-setInterval(()=>{
-  $("#casinoOnlineText").innerText = RNG.i(120,450);
-  $("#casinoVolumeText").innerText = RNG.i(1000,9000)+" BX";
-},2000);
-
-}
-
-};
 /* =========================================================
    BOOT
 ========================================================= */
