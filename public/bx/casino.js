@@ -434,7 +434,7 @@ init(){
 this.lobby = document.getElementById("casinoLobby");
 this.view  = document.getElementById("casinoGameView");
 
-document.querySelectorAll(".casino-gac=>{
+document.querySelectorAll(".casino-game-card").forEach(c=>{
   c.onclick = ()=> this.open(c.dataset.game);
 });
 
@@ -478,8 +478,8 @@ case "bananafarm": return this.simple("Banana",()=>GAMES.banana());
 case "roulette": return this.roulette();
 
 }
-
-},
+ },
+}; 
 
 /* ================= UI TEMPLATES ================= */
 
@@ -642,7 +642,7 @@ ${win?'WIN':'LOSE'}<br>${JSON.stringify(data)}
 
 document.addEventListener("DOMContentLoaded",()=>{
   UI.init();
-  window.BX_CASINO = {CORE,GAMES,UI};
+  CORE.init();
 });
 
 })();
