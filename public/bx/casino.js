@@ -6,7 +6,7 @@
 (() => {
 "use strict";
 
-if(window.BX_CASINO) return;
+if(window.BX_CASINO) return ;
 
  /* =========================================================
    CORE LAYER — CLEAN VERSION (FIXED)
