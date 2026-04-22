@@ -479,7 +479,6 @@ case "roulette": return this.roulette();
 
 }
  },
-}; 
 
 /* ================= UI TEMPLATES ================= */
 
