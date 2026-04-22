@@ -49,12 +49,12 @@ result(win,data){
 };
 
 /* =========================================================
-   GAMES LAYER (REAL LOGIC PER GAME)
+   GAMES — AAA LOGIC SYSTEM
 ========================================================= */
 
 const GAMES = {
 
-/* ================= CRASH ================= */
+/* ================= CRASH (AAA MODEL) ================= */
 
 crash:{
 
@@ -63,20 +63,22 @@ start(){
 CORE.setRunning(true);
 
 let m = 1;
-let speed = 0.02;
+let velocity = 0.02;
 
 const loop = ()=>{
 
 if(!CORE.state.running) return;
 
-m += m*speed;
-
-if(m>2) speed=0.03;
-if(m>5) speed=0.05;
+// acceleration curve
+velocity += 0.0008;
+m += m * velocity;
 
 UI.updateCrash(m);
 
-if(Math.random()<0.01*m){
+// dynamic crash curve (real feeling)
+const crashPoint = Math.exp(Math.random() * 3);
+
+if(m >= crashPoint){
 CORE.setRunning(false);
 CORE.result(false,m);
 return;
@@ -95,105 +97,195 @@ cash(){
 if(!CORE.state.running) return;
 
 CORE.setRunning(false);
-
-const m = UI.getCrash();
-CORE.result(true,m);
+CORE.result(true, UI.getCrash());
 
 }
 
 },
 
-/* ================= DICE ================= */
+/* ================= DICE (TRUE RTP) ================= */
 
 dice(){
 
-const t = UI.get("target");
+const target = Number(UI.get("target"));
+
+// probability
+const chance = target / 100;
+
+// RTP control
+const payout = (1 / chance) * CORE.edge;
+
 const roll = CORE.RNG.float(0,100);
 
-const payout = (100/t)*CORE.edge;
+const win = roll < target;
 
-CORE.result(roll<t,{roll,payout});
+CORE.result(win,{
+roll: roll.toFixed(2),
+chance: (chance*100).toFixed(2)+"%",
+payout: payout.toFixed(2)+"x"
+});
 
 },
 
-/* ================= LIMBO ================= */
+/* ================= LIMBO (REAL FORMULA) ================= */
 
 limbo(){
 
-const t = UI.get("target");
-const r = (1/Math.random())*CORE.edge;
+const target = Number(UI.get("target"));
 
-CORE.result(r>=t,r);
+// exponential distribution
+const r = Math.floor((100 / (Math.random()*100 + 1)) * CORE.edge) / 10;
+
+const win = r >= target;
+
+CORE.result(win, r.toFixed(2)+"x");
 
 },
 
-/* ================= COIN ================= */
+/* ================= COIN (FAIR) ================= */
 
 coin(){
 
-const s = UI.get("side");
-const r = CORE.RNG.pick(["heads","tails"]);
+const seed = Math.random();
+const result = seed > 0.5 ? "heads" : "tails";
 
-CORE.result(r===s,r);
+const choice = UI.get("side");
+
+CORE.result(result === choice, result);
 
 },
 
-/* ================= PLINKO ================= */
+/* ================= PLINKO (WEIGHTED) ================= */
 
 plinko(){
 
-const m = CORE.RNG.pick([0.5,1,2,5,10]);
+const weights = [
+  {m:0.5,w:40},
+  {m:1,w:30},
+  {m:2,w:15},
+  {m:5,w:10},
+  {m:10,w:5}
+];
 
-CORE.result(m>1,m);
+const total = weights.reduce((a,b)=>a+b.w,0);
+let r = Math.random()*total;
+
+for(const item of weights){
+  if(r < item.w){
+    CORE.result(item.m>1,item.m+"x");
+    return;
+  }
+  r -= item.w;
+}
 
 },
 
-/* ================= BLACKJACK ================= */
+/* ================= BLACKJACK (REAL ENGINE) ================= */
 
 blackjack(){
 
-const p = CORE.RNG.int(16,23);
-const d = CORE.RNG.int(16,23);
+const deck = [];
 
-CORE.result(p<=21&&(p>d||d>21),`${p} vs ${d}`);
+for(let i=1;i<=13;i++){
+  for(let j=0;j<4;j++){
+    deck.push(i>10?10:i);
+  }
+}
+
+const draw = ()=> deck.splice(CORE.RNG.int(0,deck.length-1),1)[0];
+
+let player = [draw(),draw()];
+let dealer = [draw(),draw()];
+
+const sum = a=> a.reduce((s,v)=>s+v,0);
+
+// player logic
+while(sum(player) < 17){
+  player.push(draw());
+}
+
+// dealer logic
+while(sum(dealer) < 17){
+  dealer.push(draw());
+}
+
+const ps = sum(player);
+const ds = sum(dealer);
+
+const win = ps<=21 && (ps>ds || ds>21);
+
+CORE.result(win,{
+player:ps,
+dealer:ds
+});
 
 },
 
-/* ================= HILO ================= */
+/* ================= HILO (CHAIN LOGIC) ================= */
 
 hilo(){
 
-const a = CORE.RNG.int(1,13);
-const b = CORE.RNG.int(1,13);
-const c = UI.get("choice");
+let a = CORE.RNG.int(1,13);
+let b = CORE.RNG.int(1,13);
 
-CORE.result(c==="high"?b>a:b<a,`${a}->${b}`);
+const choice = UI.get("choice");
+
+const win = choice === "high" ? b > a : b < a;
+
+CORE.result(win,`${a} → ${b}`);
 
 },
 
-/* ================= SLOTS ================= */
+/* ================= SLOTS (REELS SYSTEM) ================= */
 
 slots(){
 
-const r=[
-CORE.RNG.pick(["🍒","💎","7"]),
-CORE.RNG.pick(["🍒","💎","7"]),
-CORE.RNG.pick(["🍒","💎","7"])
+const reels = [
+["🍒","🍒","💎","7"],
+["🍒","💎","💎","7"],
+["🍒","💎","7","7"]
 ];
 
-UI.setSlots(r);
+const spin = reels.map(r=> r[CORE.RNG.int(0,r.length-1)]);
 
-CORE.result(r[0]===r[1]&&r[1]===r[2],r.join(" "));
+UI.setSlots(spin);
+
+// payout table
+const key = spin.join("");
+
+let payout = 0;
+
+if(key === "7 7 7") payout = 10;
+else if(spin[0]===spin[1] && spin[1]===spin[2]) payout = 5;
+else if(spin.includes("💎")) payout = 2;
+
+CORE.result(payout>0, payout+"x");
 
 },
 
-/* ================= MINES ================= */
+/* ================= MINES (GRID ENGINE) ================= */
 
 mines(){
 
-const safe = Math.random()>0.3;
+const size = 25;
+const minesCount = 5;
 
-CORE.result(safe,"grid");
+let grid = Array(size).fill("safe");
+
+for(let i=0;i<minesCount;i++){
+  let index;
+  do{
+    index = CORE.RNG.int(0,size-1);
+  }while(grid[index]==="mine");
+  grid[index] = "mine";
+}
+
+// simulate click
+const pick = CORE.RNG.int(0,size-1);
+
+const win = grid[pick] !== "mine";
+
+CORE.result(win, win ? "safe" : "💣");
 
 },
 
@@ -201,9 +293,11 @@ CORE.result(safe,"grid");
 
 fruit(){
 
-const m = CORE.RNG.pick([0,2,5,10]);
+const table = [0,0,2,5,10];
 
-CORE.result(m>0,m);
+const r = CORE.RNG.pick(table);
+
+CORE.result(r>0,r+"x");
 
 },
 
@@ -211,25 +305,32 @@ CORE.result(m>0,m);
 
 banana(){
 
-const m = CORE.RNG.pick([0,1,3,6]);
+const growth = CORE.RNG.float(0,6);
 
-CORE.result(m>1,m);
+const win = growth > 2;
+
+CORE.result(win, growth.toFixed(2)+"x");
 
 },
 
-/* ================= ROULETTE ================= */
+/* ================= ROULETTE (EUROPEAN) ================= */
 
 roulette(){
 
-const p = UI.get("num");
-const r = CORE.RNG.int(0,36);
+const spin = CORE.RNG.int(0,36);
 
-CORE.result(p===r,r);
+const pick = Number(UI.get("num"));
+
+const win = spin === pick;
+
+CORE.result(win,{
+spin,
+payout: win ? "36x" : "0"
+});
 
 }
 
 };
-
 /* =========================================================
    UI LAYER (RENDER + DOM)
 ========================================================= */
