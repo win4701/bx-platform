@@ -421,7 +421,8 @@ spin,
 payout: win ? "36x" : "0"
 });
 
-},
+  },
+ }; 
    
 /* =========================================================
    UI LAYER (RENDER + DOM)
@@ -642,6 +643,6 @@ ${win?'WIN':'LOSE'}<br>${JSON.stringify(data)}
 document.addEventListener("DOMContentLoaded",()=>{
   UI.init();
   CORE.init();
+  window.BX_CASINO = {CORE,GAMES,UI};
 });
-
 })();
