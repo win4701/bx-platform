@@ -2,133 +2,153 @@
 
   <div id="casino-root">
 
-    <!-- 🎮 3D LOBBY -->
+    <!-- 🎮 3D BACKGROUND -->
     <div id="casino-3d"></div>
 
-    <!-- ================= HUD ================= -->
-    <div class="casino-hud">
+    <!-- ================= HEADER ================= -->
+    <div class="casino-header">
 
-      <div class="casino-topbar">
+      <div class="left">
         <h2>🎰 Bloxio Casino</h2>
-        <div id="casinoWalletText">0 BX</div>
       </div>
 
-      <div class="casino-stats">
+      <div class="center">
         <span>👥 <b id="casinoOnlineText">0</b></span>
-        <span>💰 <b id="casinoVolumeText">0 BX</b></span>
+        <span>💰 <b id="casinoVolumeText">0</b></span>
       </div>
 
-      <div id="casinoFeed" class="casino-feed"></div>
+      <div class="right">
+        <span id="casinoWalletText">0 BX</span>
+      </div>
 
     </div>
 
-    <!-- ================= GAMES GRID ================= -->
-    <div id="casino-games" class="casino-games">
+    <!-- ================= MAIN ================= -->
+    <div class="casino-layout">
 
-      <!-- 🎲 Dice -->
-      <button class="game-card" data-game="dice">
-        <img src="assets/casino/dice.png">
-        <span>🎲 Dice</span>
-      </button>
+      <!-- ================= GAME AREA ================= -->
+      <div class="game-area">
 
-      <!-- 📈 Crash -->
-      <button class="game-card" data-game="crash">
-        <img src="assets/casino/crash.png">
-        <span>📈 Crash</span>
-      </button>
+        <!-- 🎰 GAME GRID -->
+        <div id="casino-games" class="game-grid">
 
-      <!-- 🔻 Plinko -->
-      <button class="game-card" data-game="plinko">
-        <img src="assets/casino/plinko.png">
-        <span>🔻 Plinko</span>
-      </button>
+          <button class="game-card" data-game="dice">
+            <img src="assets/casino/dice.png">
+            <span>Dice</span>
+          </button>
 
-      <!-- 💣 Mines -->
-      <button class="game-card" data-game="mines">
-        <img src="assets/casino/mines.png">
-        <span>💣 Mines</span>
-      </button>
+          <button class="game-card" data-game="crash">
+            <img src="assets/casino/crash.png">
+            <span>Crash</span>
+          </button>
 
-      <!-- 🎰 Slots -->
-      <button class="game-card" data-game="slots">
-        <img src="assets/casino/slot.png">
-        <span>🎰 Slots</span>
-      </button>
+          <button class="game-card" data-game="plinko">
+            <img src="assets/casino/plinko.png">
+            <span>Plinko</span>
+          </button>
 
-      <!-- 🪙 Coinflip -->
-      <button class="game-card" data-game="coinflip">
-        <img src="assets/casino/coinflip.png">
-        <span>🪙 Coinflip</span>
-      </button>
+          <button class="game-card" data-game="mines">
+            <img src="assets/casino/mines.png">
+            <span>Mines</span>
+          </button>
 
-      <!-- 🎡 Roulette -->
-      <button class="game-card" data-game="roulette">
-        <img src="assets/casino/roulette.png">
-        <span>🎡 Roulette</span>
-      </button>
+          <button class="game-card" data-game="slots">
+            <img src="assets/casino/slots.png">
+            <span>Slots</span>
+          </button>
 
-      <!-- 🃏 Blackjack -->
-      <button class="game-card" data-game="blackjack">
-        <img src="assets/casino/blackjack.png">
-        <span>🃏 Blackjack</span>
-      </button>
+          <button class="game-card" data-game="coinflip">
+            <img src="assets/casino/coinflip.png">
+            <span>Coinflip</span>
+          </button>
 
-      <!-- ⬆️ HiLo -->
-      <button class="game-card" data-game="hilo">
-        <img src="assets/casino/hilo.png">
-        <span>⬆️ Hi-Lo</span>
-      </button>
+          <button class="game-card" data-game="blackjack">
+            <img src="assets/casino/blackjack.png">
+            <span>Blackjack</span>
+          </button>
 
-      <!-- 🎯 Limbo -->
-      <button class="game-card" data-game="limbo">
-        <img src="assets/casino/limbo.png">
-        <span>🎯 Limbo</span>
-      </button>
+          <button class="game-card" data-game="hilo">
+            <img src="assets/casino/hilo.png">
+            <span>HiLo</span>
+          </button>
 
-      <!-- 🎡 Wheel -->
-      <button class="game-card" data-game="wheel">
-        <img src="assets/casino/wheel.png">
-        <span>🎡 Wheel</span>
-      </button>
+          <button class="game-card" data-game="limbo">
+            <img src="assets/casino/limbo.png">
+            <span>Limbo</span>
+          </button>
 
-      <!-- 🔢 Keno -->
-      <button class="game-card" data-game="keno">
-        <img src="assets/casino/keno.png">
-        <span>🔢 Keno</span>
-      </button>
+          <button class="game-card" data-game="fruitparty">
+            <img src="assets/casino/fruitparty.png">
+            <span>FruitParty</span>
+          </button>
 
-    </div>
+          <button class="game-card" data-game="bananafarm">
+            <img src="assets/casino/bananafarm.png">
+            <span>BananaFarm</span>
+          </button>
 
-    <!-- ================= GAME STAGE ================= -->
-    <div id="casino-stage" class="hidden">
+          <button class="game-card" data-game="airboss">
+            <img src="assets/casino/airboss.png">
+            <span>AirBoss</span>
+          </button>
 
-      <!-- 🎥 GAME CANVAS -->
-      <div id="game-canvas"></div>
-
-      <!-- 🎯 GAME UI -->
-      <div id="game-ui"></div>
-
-      <!-- 🎛 BET PANEL -->
-      <div id="bet-panel">
-
-        <div class="bet-controls">
-          <button id="betMinus">-</button>
-          <input id="betInput" value="10">
-          <button id="betPlus">+</button>
         </div>
 
-        <button id="betBtn" class="bet-btn">BET</button>
+        <!-- 🎮 GAME STAGE -->
+        <div id="casino-stage" class="hidden">
+
+          <div id="game-canvas"></div>
+
+          <div id="game-ui"></div>
+
+          <!-- 📡 LIVE BETS -->
+          <div id="liveBets" class="live-bets"></div>
+
+          <button id="exitGame" class="exit-btn">← Back</button>
+
+        </div>
 
       </div>
 
-      <!-- 💥 FX LAYER -->
-      <div id="fx-layer"></div>
+      <!-- ================= BET PANEL ================= -->
+      <div class="bet-panel">
 
-      <!-- 🔙 BACK -->
-      <button id="exitGame" class="exit-btn">← Back</button>
+        <div class="bet-box">
+
+          <label>Bet Amount</label>
+
+          <div class="bet-controls">
+            <button id="betHalf">½</button>
+            <button id="betMinus">-</button>
+            <input id="betInput" value="10">
+            <button id="betPlus">+</button>
+            <button id="betDouble">2x</button>
+          </div>
+
+        </div>
+
+        <!-- 🎯 OPTIONS -->
+        <div id="game-options"></div>
+
+        <!-- ⚡ ACTION -->
+        <div class="bet-actions">
+          <button id="betBtn" class="bet-btn">BET</button>
+          <button id="autoBtn" class="auto-btn">AUTO</button>
+        </div>
+
+        <!-- 📈 MULTIPLIER -->
+        <div id="multiplierBox">
+          <span id="multiplier">1.00x</span>
+        </div>
+
+        <!-- 👥 PLAYERS -->
+        <div id="playerList"></div>
+
+      </div>
 
     </div>
-
+    <!-- 💥 FX -->
+    <div id="fx-layer"></div>
   </div>
 
-</section>
+    </section>
