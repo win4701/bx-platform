@@ -172,6 +172,122 @@ const SceneManager = {
 };
 
 // =======================================================
+// 📈 CRASH 3D SCENE (PRODUCTION LEVEL)
+// =======================================================
+const CrashScene = {
+
+  line: null,
+  points: null,
+  maxPoints: 2000,
+  index: 0,
+
+  multiplier: 1,
+  crashPoint: 0,
+  running: false,
+
+  speed: 0.8,
+
+  init(engine) {
+
+    console.log("🚀 CrashScene Init");
+
+    this.engine = engine;
+
+    // 🎯 reset
+    this.multiplier = 1;
+    this.index = 0;
+    this.running = true;
+
+    // 🎯 crash point (later replace with provably fair)
+    this.crashPoint = 1.5 + Math.random() * 3;
+
+    // 📈 buffer
+    this.points = new Float32Array(this.maxPoints * 3);
+
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute("position", new THREE.BufferAttribute(this.points, 3));
+
+    geo.setDrawRange(0, 0);
+
+    const mat = new THREE.LineBasicMaterial({
+      color: 0x22c55e,
+      linewidth: 2
+    });
+
+    this.line = new THREE.Line(geo, mat);
+
+    engine.scene.add(this.line);
+
+    // 🎥 camera reset
+    engine.camera.position.set(0, 1, 6);
+
+  },
+
+  update(dt) {
+
+    if (!this.running) return;
+
+    // 📈 multiplier growth
+    this.multiplier += dt * this.speed;
+
+    // 📊 add point
+    const x = this.index * 0.02;
+    const y = this.multiplier;
+
+    const i = this.index * 3;
+
+    if (i >= this.points.length) return;
+
+    this.points[i] = x;
+    this.points[i + 1] = y;
+    this.points[i + 2] = 0;
+
+    this.index++;
+
+    // update geometry
+    this.line.geometry.setDrawRange(0, this.index);
+    this.line.geometry.attributes.position.needsUpdate = true;
+
+    // 🎥 camera follow
+    this.engine.camera.position.x = x * 0.3;
+    this.engine.camera.position.y = y * 0.5;
+
+    // 💥 crash condition
+    if (this.multiplier >= this.crashPoint) {
+      this.crash();
+    }
+
+  },
+
+  crash() {
+
+    console.log("💥 CRASH AT:", this.multiplier.toFixed(2));
+
+    this.running = false;
+
+    // 🔴 change color
+    this.line.material.color.set(0xff0000);
+
+    // 💥 FX (simple pulse)
+    this.engine.camera.position.z = 4;
+
+  },
+
+  destroy() {
+
+    console.log("🧹 CrashScene Destroy");
+
+    if (this.line) {
+      this.line.geometry.dispose();
+      this.line.material.dispose();
+      this.engine.scene.remove(this.line);
+    }
+
+  }
+
+};
+
+// =======================================================
 // 🧪 TEST SCENE (DEBUG + VALIDATION)
 // =======================================================
 const TestScene = {
@@ -259,9 +375,9 @@ document.addEventListener("bloxio:view", (e) => {
 
     Engine.init("game-canvas");
 
-    SceneManager.register("test", TestScene);
-
-    SceneManager.load("test");
+    SceneManager.register("crash", CrashScene);
+     
+    SceneManager.load("crash");
 
     console.log("🎰 CASINO ENGINE READY");
 
