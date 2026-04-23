@@ -1,629 +1,269 @@
-// =========================================================
-// 🎰 BLOXIO CASINO ENGINE (FINAL PRO)
-// =========================================================
+// =======================================================
+// 🎰 BLOXIO CASINO — PHASE 1 (WEBGL CORE ENGINE)
+// SINGLE FILE • PRODUCTION READY • NO DOM ANIMATION
+// =======================================================
 
-if (window.BX_CASINO) return;
-window.BX_CASINO = true;
+if (window.__CASINO_ENGINE__) return;
+window.__CASINO_ENGINE__ = true;
 
-// =========================================================
-// 🧠 CasinoEngine (STATE + API)
-// =========================================================
-const CasinoEngine = {
+// =======================================================
+// 🧠 CORE ENGINE
+// =======================================================
+const Engine = {
 
-  state: {
-    user: null,
-    balance: 0,
-    currentGame: null,
-    playing: false,
-    room: "global"
-  },
+  scene: null,
+  camera: null,
+  renderer: null,
+  clock: null,
+  currentScene: null,
+  container: null,
 
-  config: {
-    api: "/api/casino",
-    ws: "wss://api.bloxio.online"
-  },
+  init(containerId = "game-canvas") {
 
-  async play(game, payload) {
+    this.container = document.getElementById(containerId);
 
-    const res = await fetch(this.config.api + "/play", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer " + localStorage.getItem("token")
-      },
-      body: JSON.stringify({
-        game,
-        bet: payload.bet,
-        data: payload,
-        room: this.state.room
-      })
-    });
-
-    return res.json();
-  }
-
-};
-
-// =========================================================
-// 🌐 WS CLIENT (REALTIME + MULTIPLAYER)
-// =========================================================
-const WSClient = {
-
-  ws: null,
-
-  connect() {
-
-    this.ws = new WebSocket(CasinoEngine.config.ws);
-
-    this.ws.onmessage = (e) => {
-      const d = JSON.parse(e.data);
-      this.handle(d);
-    };
-
-  },
-
-  send(data) {
-    this.ws?.send(JSON.stringify(data));
-  },
-
-  handle(d) {
-
-    // 🎯 LIVE BETS
-    if (d.type === "live_bet") {
-      Multiplayer.addBet(d);
-    }
-
-    // 👥 PLAYERS
-    if (d.type === "room_players") {
-      Multiplayer.updatePlayers(d.players);
-    }
-
-    // 📈 CRASH
-    if (d.type === "crash_tick") {
-      Crash3D.update(d.multiplier);
-    }
-
-    // 💰 BIG WIN
-    if (d.type === "big_win") {
-      FX.bigWin(`${d.user} won ${d.payout}`);
-    }
-
-    // 💳 WALLET
-    if (d.type === "wallet_update") {
-      UI.updateBalance(d.balance);
-    }
-
-  }
-
-};
-
-// =========================================================
-// 🎮 GameEngine
-// =========================================================
-const GameEngine = {
-
-  current:null,
-
-  open(game){
-
-    this.current = game;
-
-    UI.enterGame();
-
-    this.load(game);
-
-  },
-
-  load(game){
-
-    const canvas = document.getElementById("game-canvas");
-    canvas.innerHTML = "";
-
-    // ================= 3D GAMES =================
-    if(game === "crash"){
-      Crash3D.init();
+    if (!this.container) {
+      console.error("❌ game-canvas not found");
       return;
     }
 
-    if(game === "roulette"){
-      Roulette3D.init();
-      return;
-    }
-
-    if(game === "slots"){
-      Slots3D.init();
-      return;
-    }
-
-    if(game === "mines"){
-      Mines3D.init();
-      return;
-    }
-
-    if(game === "plinko"){
-      Plinko3D.init();
-      return;
-    }
-
-    // ================= UI GAMES =================
-
-    if(game === "dice"){
-      canvas.innerHTML = `
-        <h2>🎲 Dice</h2>
-        <input id="diceTarget" value="50">
-      `;
-    }
-
-    if(game === "coinflip"){
-      canvas.innerHTML = `
-        <h2>🪙 Coinflip</h2>
-        <button onclick="GameEngine.setOption('heads')">Heads</button>
-        <button onclick="GameEngine.setOption('tails')">Tails</button>
-      `;
-    }
-
-    if(game === "limbo"){
-      canvas.innerHTML = `
-        <h2>🎯 Limbo</h2>
-        <input id="limboTarget" value="2">
-      `;
-    }
-
-    if(game === "hilo"){
-      canvas.innerHTML = `
-        <h2>⬆️ Hi-Lo</h2>
-        <button onclick="GameEngine.setOption('high')">High</button>
-        <button onclick="GameEngine.setOption('low')">Low</button>
-      `;
-    }
-
-    if(game === "blackjack"){
-      canvas.innerHTML = `<h2>🃏 Blackjack (API)</h2>`;
-    }
-
-    if(game === "keno"){
-      canvas.innerHTML = `<h2>🔢 Keno</h2>`;
-    }
-
-    if(game === "wheel"){
-      canvas.innerHTML = `<h2>🎡 Wheel</h2>`;
-    }
-
-  },
-
-  option:null,
-
-  setOption(v){
-    this.option = v;
-  },
-
-  getPayload(){
-
-    switch(this.current){
-
-      case "dice":
-        return {
-          target: Number(document.getElementById("diceTarget").value)
-        };
-
-      case "coinflip":
-        return {
-          side: this.option
-        };
-
-      case "limbo":
-        return {
-          multiplier: Number(document.getElementById("limboTarget").value)
-        };
-
-      case "hilo":
-        return {
-          choice: this.option
-        };
-
-      default:
-        return {};
-    }
-
-  },
-
-  async play(bet){
-
-    if(!this.current) return;
-
-    FX.start();
-
-    await delay(500);
-
-    const payload = this.getPayload();
-
-    const res = await CasinoEngine.play(this.current,{
-      bet,
-      ...payload
-    });
-
-    FX.reveal(res);
-
-    if(res.result?.win){
-      FX.win();
-      Sound.play("win");
-    }else{
-      FX.lose();
-      Sound.play("lose");
-    }
-
-  }
-
-};
-     
-// =========================================================
-// 🎛 UI ENGINE
-// =========================================================
-const UI = {
-
-  init() {
-    this.bindGames();
-    this.bindBet();
-    this.bindExit();
-    this.bindRooms();
-  },
-
-  bindGames() {
-
-    document.querySelectorAll(".game-card").forEach(btn => {
-      btn.onclick = () => GameEngine.open(btn.dataset.game);
-    });
-
-  },
-
-  bindBet() {
-
-    let value = 10;
-
-    betPlus.onclick = () => {
-      value += 10;
-      betInput.value = value;
-    };
-
-    betMinus.onclick = () => {
-      value = Math.max(1, value - 10);
-      betInput.value = value;
-    };
-
-    betBtn.onclick = () => {
-      GameEngine.play(value);
-    };
-
-  },
-
-  bindExit() {
-
-    exitGame.onclick = () => {
-      document.getElementById("casino-stage").classList.add("hidden");
-      document.getElementById("casino-games").classList.remove("hidden");
-    };
-
-  },
-
-  bindRooms() {
-
-    const select = document.getElementById("roomSelect");
-
-    if (!select) return;
-
-    select.onchange = () => {
-
-      const room = select.value;
-
-      CasinoEngine.state.room = room;
-
-      WSClient.send({
-        type: "join_room",
-        room
-      });
-
-    };
-
-  },
-
-  enterGame() {
-    document.getElementById("casino-stage").classList.remove("hidden");
-    document.getElementById("casino-games").classList.add("hidden");
-  },
-
-  updateBalance(bal) {
-    document.getElementById("casinoWalletText").innerText = bal + " BX";
-  }
-
-};
-
-// =========================================================
-// 💥 FX ENGINE
-// =========================================================
-const FX = {
-
-  start() {
-    document.body.classList.add("playing");
-  },
-
-  reveal(res) {
-    console.log("RESULT:", res);
-  },
-
-  win() {
-    this.flash("win");
-    Particles.spawn(window.innerWidth / 2, 200);
-  },
-
-  lose() {
-    this.flash("lose");
-  },
-
-  flash(type) {
-    document.body.classList.add(type);
-    setTimeout(() => document.body.classList.remove(type), 1500);
-  },
-
-  bigWin(txt) {
-
-    const el = document.createElement("div");
-    el.className = "big-win";
-    el.innerText = txt;
-
-    document.body.appendChild(el);
-
-    setTimeout(() => el.remove(), 3000);
-
-  }
-
-};
-
-// =========================================================
-// 🔊 SOUND
-// =========================================================
-const Sound = {
-  play(type) {
-    const map = {
-      win: "snd-win",
-      lose: "snd-lose",
-      spin: "snd-spin",
-      click: "snd-click"
-    };
-    document.getElementById(map[type])?.play();
-  }
-};
-
-// =========================================================
-// 🎡 3D SYSTEM
-// =========================================================
-const ThreeEngine = {
-
-  init() {
-
-    const container = document.getElementById("game-canvas");
-
+    // 🎮 SCENE
     this.scene = new THREE.Scene();
-    this.camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
 
-    this.renderer = new THREE.WebGLRenderer({ antialias: true });
-    this.renderer.setSize(container.clientWidth, container.clientHeight);
+    // 🎥 CAMERA
+    this.camera = new THREE.PerspectiveCamera(
+      70,
+      this.container.clientWidth / this.container.clientHeight,
+      0.1,
+      1000
+    );
+    this.camera.position.set(0, 0, 6);
 
-    container.appendChild(this.renderer.domElement);
+    // ⚡ RENDERER (optimized)
+    this.renderer = new THREE.WebGLRenderer({
+      antialias: false,
+      powerPreference: "high-performance",
+      alpha: true,
+      stencil: false,
+      depth: true
+    });
 
-    this.camera.position.z = 8;
+    this.renderer.setSize(
+      this.container.clientWidth,
+      this.container.clientHeight
+    );
 
-    const light = new THREE.PointLight(0xffffff, 2);
+    this.renderer.setPixelRatio(1); // 🔥 mobile safe
+    this.renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+    this.container.appendChild(this.renderer.domElement);
+
+    // ⏱ CLOCK
+    this.clock = new THREE.Clock();
+
+    // 🌫 BACKGROUND
+    this.scene.background = null;
+
+    // 💡 LIGHT (global)
+    const light = new THREE.DirectionalLight(0xffffff, 1);
     light.position.set(5, 5, 5);
     this.scene.add(light);
 
-    this.animate();
+    // 🎬 LOOP
+    this.loop = this.loop.bind(this);
+    requestAnimationFrame(this.loop);
+
+    // 📱 RESIZE
+    window.addEventListener("resize", () => this.resize());
+
+    console.log("🔥 WebGL Engine Initialized");
 
   },
 
-  animate() {
+  loop() {
 
-    requestAnimationFrame(() => this.animate());
+    const dt = this.clock.getDelta();
 
-    if (this.update) this.update();
+    if (this.currentScene && this.currentScene.update) {
+      this.currentScene.update(dt);
+    }
 
     this.renderer.render(this.scene, this.camera);
 
-  }
+    requestAnimationFrame(this.loop);
+  },
 
-};
+  setScene(scene) {
 
-// =========================================================
-// 🎡 ROULETTE 3D
-// =========================================================
-const Roulette3D = {
-
-  init() {
-
-    ThreeEngine.init();
-
-    const geo = new THREE.CylinderGeometry(3, 3, 0.5, 64);
-    const mat = new THREE.MeshStandardMaterial({ color: 0x7c2d12 });
-
-    this.wheel = new THREE.Mesh(geo, mat);
-
-    ThreeEngine.scene.add(this.wheel);
-
-    ThreeEngine.update = () => {
-      this.wheel.rotation.y += 0.01;
-    };
-
-  }
-
-};
-
-// =========================================================
-// 🎰 SLOTS 3D
-// =========================================================
-const Slots3D = {
-
-  init() {
-
-    ThreeEngine.init();
-
-    for (let i = 0; i < 3; i++) {
-
-      const geo = new THREE.BoxGeometry(1, 3, 1);
-      const mat = new THREE.MeshStandardMaterial({ color: 0x111 });
-
-      const reel = new THREE.Mesh(geo, mat);
-      reel.position.x = (i - 1) * 2;
-
-      ThreeEngine.scene.add(reel);
+    // 🧹 destroy old scene
+    if (this.currentScene && this.currentScene.destroy) {
+      this.currentScene.destroy();
     }
 
-  }
+    this.clearScene();
 
-};
+    this.currentScene = scene;
 
-// =========================================================
-// 💣 MINES 3D
-// =========================================================
-const Mines3D = {
-
-  init() {
-
-    ThreeEngine.init();
-
-    for (let i = 0; i < 25; i++) {
-
-      const cube = new THREE.Mesh(
-        new THREE.BoxGeometry(0.5, 0.5, 0.5),
-        new THREE.MeshStandardMaterial({ color: 0x1e293b })
-      );
-
-      cube.position.x = (i % 5) - 2;
-      cube.position.y = Math.floor(i / 5) - 2;
-
-      ThreeEngine.scene.add(cube);
+    if (scene.init) {
+      scene.init(this);
     }
-
-  }
-
-};
-
-// =========================================================
-// 🔻 PLINKO 3D
-// =========================================================
-const Plinko3D = {
-
-  init() {
-
-    ThreeEngine.init();
-
-    const ball = new THREE.Mesh(
-      new THREE.SphereGeometry(0.2),
-      new THREE.MeshStandardMaterial({ color: 0xffffff })
-    );
-
-    ThreeEngine.scene.add(ball);
-
-    ThreeEngine.update = () => {
-      ball.position.y -= 0.05;
-      ball.position.x += (Math.random() - 0.5) * 0.1;
-    };
-
-  }
-
-};
-
-// =========================================================
-// 📈 CRASH 3D
-// =========================================================
-const Crash3D = {
-
-  points: [],
-
-  init() {
-
-    ThreeEngine.init();
-
-    const mat = new THREE.LineBasicMaterial({ color: 0x22c55e });
-    const geo = new THREE.BufferGeometry();
-
-    this.line = new THREE.Line(geo, mat);
-
-    ThreeEngine.scene.add(this.line);
 
   },
 
-  update(m) {
+  clearScene() {
 
-    this.points.push(new THREE.Vector3(this.points.length * 0.2, m, 0));
+    while (this.scene.children.length > 0) {
+      const obj = this.scene.children[0];
 
-    this.line.geometry.setFromPoints(this.points);
+      if (obj.geometry) obj.geometry.dispose();
+      if (obj.material) {
+        if (Array.isArray(obj.material)) {
+          obj.material.forEach(m => m.dispose());
+        } else {
+          obj.material.dispose();
+        }
+      }
 
-  }
-
-};
-
-// =========================================================
-// 👥 MULTIPLAYER
-// =========================================================
-const Multiplayer = {
-
-  addBet(d) {
-
-    const el = document.createElement("div");
-    el.innerText = `${d.user} → ${d.bet}`;
-    document.getElementById("casinoFeed")?.prepend(el);
+      this.scene.remove(obj);
+    }
 
   },
 
-  updatePlayers(p) {
+  resize() {
 
-    document.getElementById("casinoOnlineText").innerText = p.length;
+    if (!this.container) return;
+
+    const w = this.container.clientWidth;
+    const h = this.container.clientHeight;
+
+    this.camera.aspect = w / h;
+    this.camera.updateProjectionMatrix();
+
+    this.renderer.setSize(w, h);
 
   }
 
 };
 
-// =========================================================
-// 🎯 PARTICLES
-// =========================================================
-const Particles = {
+// =======================================================
+// 🎮 SCENE MANAGER
+// =======================================================
+const SceneManager = {
 
-  spawn(x, y) {
+  scenes: {},
 
-    for (let i = 0; i < 10; i++) {
+  register(name, scene) {
+    this.scenes[name] = scene;
+  },
 
-      const p = document.createElement("div");
-      p.className = "particle";
-      p.style.left = x + "px";
-      p.style.top = y + "px";
+  load(name) {
 
-      document.body.appendChild(p);
+    const scene = this.scenes[name];
 
-      setTimeout(() => p.remove(), 1000);
-
+    if (!scene) {
+      console.error("❌ Scene not found:", name);
+      return;
     }
 
+    Engine.setScene(scene);
+
   }
 
 };
 
-// =========================================================
-// ⏱ UTILS
-// =========================================================
-function delay(ms) {
-  return new Promise(r => setTimeout(r, ms));
-}
+// =======================================================
+// 🧪 TEST SCENE (DEBUG + VALIDATION)
+// =======================================================
+const TestScene = {
 
-// =========================================================
-// 🚀 INIT
-// =========================================================
+  cube: null,
+  group: null,
+
+  init(engine) {
+
+    console.log("🎮 TestScene Init");
+
+    this.group = new THREE.Group();
+
+    // cube
+    const geo = new THREE.BoxGeometry(1, 1, 1);
+    const mat = new THREE.MeshStandardMaterial({
+      color: 0x22c55e,
+      roughness: 0.4,
+      metalness: 0.2
+    });
+
+    this.cube = new THREE.Mesh(geo, mat);
+
+    this.group.add(this.cube);
+
+    // floor
+    const floorGeo = new THREE.PlaneGeometry(10, 10);
+    const floorMat = new THREE.MeshBasicMaterial({
+      color: 0x111111,
+      side: THREE.DoubleSide
+    });
+
+    const floor = new THREE.Mesh(floorGeo, floorMat);
+    floor.rotation.x = Math.PI / 2;
+    floor.position.y = -1.5;
+
+    this.group.add(floor);
+
+    engine.scene.add(this.group);
+
+  },
+
+  update(dt) {
+
+    if (!this.cube) return;
+
+    this.cube.rotation.x += dt;
+    this.cube.rotation.y += dt * 1.2;
+
+  },
+
+  destroy() {
+
+    console.log("🧹 TestScene Destroyed");
+
+  }
+
+};
+
+// =======================================================
+// 🧰 UTILS
+// =======================================================
+const Utils = {
+
+  clamp(v, min, max) {
+    return Math.max(min, Math.min(max, v));
+  },
+
+  lerp(a, b, t) {
+    return a + (b - a) * t;
+  },
+
+  rand(min, max) {
+    return Math.random() * (max - min) + min;
+  }
+
+};
+
+// =======================================================
+// 🚀 INIT SYSTEM (HOOK WITH YOUR APP)
+// =======================================================
 document.addEventListener("bloxio:view", (e) => {
 
   if (e.detail === "casino") {
 
-    UI.init();
-    WSClient.connect();
+    Engine.init("game-canvas");
 
-    console.log("🎰 CASINO FULL SYSTEM READY");
+    SceneManager.register("test", TestScene);
+
+    SceneManager.load("test");
+
+    console.log("🎰 CASINO ENGINE READY");
 
   }
 
