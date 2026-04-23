@@ -288,6 +288,387 @@ const CrashScene = {
 };
 
 // =======================================================
+// ✈️ AIRBOSS 3D (AVIATOR STYLE)
+// =======================================================
+const AirBossScene = {
+
+  plane: null,
+  trail: null,
+
+  multiplier: 1,
+  crashPoint: 0,
+  running: false,
+  cashedOut: false,
+
+  speed: 0.9,
+
+  init(engine) {
+
+    console.log("✈️ AirBoss Init");
+
+    this.engine = engine;
+
+    this.multiplier = 1;
+    this.running = true;
+    this.cashedOut = false;
+
+    // 🎯 crash point (later WS / provably fair)
+    this.crashPoint = 1.5 + Math.random() * 3;
+
+    // ✈️ plane
+    const geo = new THREE.BoxGeometry(1.2, 0.3, 2);
+    const mat = new THREE.MeshStandardMaterial({ color: 0xffffff });
+
+    this.plane = new THREE.Mesh(geo, mat);
+    engine.scene.add(this.plane);
+
+    // 📈 trail
+    const points = [];
+    for (let i = 0; i < 1000; i++) {
+      points.push(new THREE.Vector3(0, 0, 0));
+    }
+
+    const geoLine = new THREE.BufferGeometry().setFromPoints(points);
+    const matLine = new THREE.LineBasicMaterial({ color: 0x22c55e });
+
+    this.trail = new THREE.Line(geoLine, matLine);
+    engine.scene.add(this.trail);
+
+    // 🎥 camera
+    engine.camera.position.set(0, 1, 6);
+
+  },
+
+  update(dt) {
+
+    if (!this.running) return;
+
+    // 📈 multiplier
+    this.multiplier += dt * this.speed;
+
+    const x = this.multiplier * 1.2;
+    const y = this.multiplier * 0.6;
+
+    // ✈️ move plane
+    this.plane.position.x = x;
+    this.plane.position.y = y;
+
+    // 🎯 rotate plane
+    this.plane.rotation.z = -Math.atan2(1, 2);
+
+    // 📈 update trail
+    const positions = this.trail.geometry.attributes.position.array;
+
+    for (let i = positions.length - 3; i > 0; i--) {
+      positions[i] = positions[i - 3];
+    }
+
+    positions[0] = x;
+    positions[1] = y;
+    positions[2] = 0;
+
+    this.trail.geometry.attributes.position.needsUpdate = true;
+
+    // 🎥 camera follow
+    this.engine.camera.position.x = x * 0.2;
+    this.engine.camera.position.y = y * 0.3;
+
+    // 💥 crash
+    if (this.multiplier >= this.crashPoint) {
+      this.crash();
+    }
+
+    // 🧠 UI update
+    this.updateUI();
+
+  },
+
+  updateUI() {
+
+    const el = document.getElementById("multiplier");
+
+    if (el) {
+      el.textContent = this.multiplier.toFixed(2) + "x";
+    }
+
+  },
+
+  // 💰 CASHOUT
+  cashout() {
+
+    if (!this.running || this.cashedOut) return;
+
+    this.cashedOut = true;
+
+    console.log("💰 CASHOUT AT:", this.multiplier.toFixed(2));
+
+    // 🟢 visual feedback
+    this.plane.material.color.set(0x22c55e);
+
+  },
+
+  crash() {
+
+    console.log("💥 CRASH AT:", this.multiplier.toFixed(2));
+
+    this.running = false;
+
+    // 🔴 visual
+    this.plane.material.color.set(0xff0000);
+
+    // 💥 camera punch
+    this.engine.camera.position.z = 4;
+
+  },
+
+  destroy() {
+
+    console.log("🧹 AirBoss Destroy");
+
+    if (this.plane) {
+      this.plane.geometry.dispose();
+      this.plane.material.dispose();
+      this.engine.scene.remove(this.plane);
+    }
+
+    if (this.trail) {
+      this.trail.geometry.dispose();
+      this.trail.material.dispose();
+      this.engine.scene.remove(this.trail);
+    }
+
+  }
+
+};
+
+// =======================================================
+// 🌐 WS CLIENT (FULL MULTIPLAYER ENGINE)
+// =======================================================
+const WSClient = {
+
+  ws: null,
+  connected: false,
+  room: "airboss-1",
+
+  queue: [],
+
+  connect() {
+
+    this.ws = new WebSocket("ws://localhost:3000");
+
+    this.ws.onopen = () => {
+      console.log("🌐 Connected");
+      this.connected = true;
+
+      this.send({
+        type: "join_room",
+        room: this.room
+      });
+    };
+
+    this.ws.onmessage = (msg) => {
+      const data = JSON.parse(msg.data);
+      this.queue.push(data);
+    };
+
+    this.ws.onclose = () => {
+      console.log("❌ WS Closed");
+      this.connected = false;
+    };
+
+    // ⚡ batching updates (performance)
+    setInterval(() => {
+      if (this.queue.length) {
+        this.processBatch(this.queue.splice(0, 20));
+      }
+    }, 100);
+
+  },
+
+  send(data) {
+    if (this.connected) {
+      this.ws.send(JSON.stringify(data));
+    }
+  },
+
+  processBatch(list) {
+    list.forEach(d => this.handle(d));
+  },
+
+  handle(d) {
+
+    switch (d.type) {
+
+      case "players":
+        UI.updatePlayers(d.count);
+      break;
+
+      case "bet":
+        Multiplayer.addBet(d);
+      break;
+
+      case "cashout":
+        Multiplayer.cashout(d);
+      break;
+
+      case "round_start":
+        SceneManager.load("airboss");
+      break;
+
+      case "crash":
+        Engine.currentScene?.crash();
+      break;
+
+    }
+
+  }
+
+};
+
+
+// =======================================================
+// 👥 MULTIPLAYER SYSTEM
+// =======================================================
+const Multiplayer = {
+
+  addBet(d) {
+
+    const el = document.createElement("div");
+    el.className = "bet-item";
+
+    el.innerHTML = `
+      <b>${d.user}</b> bet ${d.bet}
+    `;
+
+    document.getElementById("liveBets")?.prepend(el);
+
+    // auto remove
+    setTimeout(() => el.remove(), 4000);
+
+  },
+
+  cashout(d) {
+
+    const el = document.createElement("div");
+
+    el.innerHTML = `
+      💰 <b>${d.user}</b> cashed out ${d.multiplier}x
+    `;
+
+    document.getElementById("liveBets")?.prepend(el);
+
+  }
+
+};
+
+
+// =======================================================
+// 🎯 UI SYSTEM (PHASE 4)
+// =======================================================
+const UI = {
+
+  updatePlayers(count) {
+    const el = document.getElementById("casinoOnlineText");
+    if (el) el.textContent = count;
+  },
+
+  updateMultiplier(v) {
+    const el = document.getElementById("multiplier");
+    if (el) el.textContent = v.toFixed(2) + "x";
+  }
+
+};
+
+
+// =======================================================
+// 💰 BET SYSTEM (SERVER SYNC)
+// =======================================================
+const BetSystem = {
+
+  place(bet) {
+
+    WSClient.send({
+      type: "bet",
+      game: "airboss",
+      bet
+    });
+
+  },
+
+  cashout(multiplier) {
+
+    WSClient.send({
+      type: "cashout",
+      multiplier
+    });
+
+  }
+
+};
+
+
+// =======================================================
+// 🔗 PATCH AIRBOSS (CONNECT WITH WS)
+// =======================================================
+const oldUpdate = AirBossScene.update;
+
+AirBossScene.update = function (dt) {
+
+  oldUpdate.call(this, dt);
+
+  UI.updateMultiplier(this.multiplier);
+
+};
+
+AirBossScene.cashout = function () {
+
+  if (!this.running || this.cashedOut) return;
+
+  this.cashedOut = true;
+
+  BetSystem.cashout(this.multiplier);
+
+  this.plane.material.color.set(0x22c55e);
+
+};
+
+
+// =======================================================
+// 🎛 BUTTON HOOK
+// =======================================================
+const bindControls = () => {
+
+  const btn = document.getElementById("betBtn");
+
+  if (!btn) return;
+
+  btn.onclick = () => {
+
+    const bet = Number(document.getElementById("betInput").value);
+
+    if (Engine.currentScene === AirBossScene) {
+
+      if (!AirBossScene.cashedOut && AirBossScene.running) {
+        // CASHOUT
+        AirBossScene.cashout();
+      } else {
+        // BET
+        BetSystem.place(bet);
+      }
+
+    }
+
+  };
+
+};
+
+
+// =======================================================
+// 🚀 INIT PATCH (PHASE 4)
+// =======================================================
+
+
+// =======================================================
 // 🧪 TEST SCENE (DEBUG + VALIDATION)
 // =======================================================
 const TestScene = {
@@ -375,11 +756,13 @@ document.addEventListener("bloxio:view", (e) => {
 
     Engine.init("game-canvas");
 
-    SceneManager.register("crash", CrashScene);
-     
-    SceneManager.load("crash");
+    SceneManager.register("airboss", AirBossScene);
 
-    console.log("🎰 CASINO ENGINE READY");
+    WSClient.connect(); // 🔥 multiplayer start
+
+    bindControls();
+
+    console.log("🔥 PHASE 4 READY (MULTIPLAYER)");
 
   }
 
