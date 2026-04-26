@@ -2115,7 +2115,7 @@ h3{
 #market .orderbook-head h3{
   font-size:16px;
   font-weight:1000;
-  letter-spacing:-.09em;
+  letter-spacing:.19em;
 }
 
 #market .orderbook-pair{
@@ -2132,7 +2132,7 @@ h3{
   font-weight:1000;
   color:var(--mk-dim);
   text-transform:uppercase;
-  letter-spacing:.07em;
+  letter-spacing:.13em;
   border-bottom:2px solid var(--mk-border-soft);
 }
 
@@ -2157,7 +2157,7 @@ h3{
 /* ===== CELLS ===== */
 #market .ob-cell{
   position:relative;
-  padding:0 8px;
+  padding:8px;
   overflow:hidden;
   display:flex;
   align-items:center;
@@ -2171,7 +2171,7 @@ h3{
 #market .price{
   font-weight:1000;
   color:#fff;
-  letter-spacing:-.04em;
+  letter-spacing:.07em;
   cursor:pointer;
 }
 
@@ -2257,7 +2257,7 @@ h3{
 }
 
 #market #orderBookGrid{
-  max-height:460px;
+  max-height:520px;
   overflow-y:auto;
   scrollbar-width:none;
 }
