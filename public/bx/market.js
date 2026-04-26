@@ -343,45 +343,63 @@
   }
 
   /* =========================================================
-     ORDER BOOK ENGINE
-  ========================================================= */
-  function generateOrderBook() {
-    bids = [];
-    asks = [];
+   ORDER BOOK — PRO ENGINE (SAFE REPLACEMENT)
+========================================================= */
 
-    const mid = Number(marketPrice || BX_USDT_REFERENCE);
+function generateOrderBook() {
 
-    let tick;
-    if (mid >= 100) tick = 0.05;
-    else if (mid >= 10) tick = 0.01;
-    else if (mid >= 1) tick = 0.001;
-    else if (mid >= 0.1) tick = 0.0005;
-    else if (mid >= 0.01) tick = 0.00005;
-    else tick = 0.000001;
+  bids = [];
+  asks = [];
 
-    const spreadBase = tick * 2;
+  const mid = Number(marketPrice);
 
-    for (let i = 0; i < ROWS; i++) {
-      const price = +(mid - spreadBase - i * tick).toFixed(6);
-      const amount = +(rand(1.25, 95).toFixed(3));
-      const total = +(price * amount).toFixed(6);
-      bids.push({ price, amount, total });
-    }
+  let tick =
+    mid > 100 ? 0.05 :
+    mid > 10 ? 0.01 :
+    mid > 1 ? 0.001 :
+    mid > 0.1 ? 0.0005 :
+    mid > 0.01 ? 0.00005 :
+    0.000001;
 
-    for (let i = 0; i < ROWS; i++) {
-      const price = +(mid + spreadBase + i * tick).toFixed(6);
-      const amount = +(rand(1.25, 95).toFixed(3));
-      const total = +(price * amount).toFixed(6);
-      asks.push({ price, amount, total });
-    }
+  let totalBid = 0;
+  let totalAsk = 0;
 
-    bids.sort((a, b) => b.price - a.price);
-    asks.sort((a, b) => a.price - b.price);
+  for (let i = 0; i < ROWS; i++) {
+
+    const price = +(mid - (i + 1) * tick).toFixed(6);
+    const amount = +(rand(5, 120).toFixed(3));
+
+    totalBid += amount;
+
+    bids.push({
+      price,
+      amount,
+      total: totalBid
+    });
   }
-   
-// =====================================================
-// ORDER BOOK — GRID (MATCH HTML CURRENT)
-// =====================================================
+
+  for (let i = 0; i < ROWS; i++) {
+
+    const price = +(mid + (i + 1) * tick).toFixed(6);
+    const amount = +(rand(5, 120).toFixed(3));
+
+    totalAsk += amount;
+
+    asks.push({
+      price,
+      amount,
+      total: totalAsk
+    });
+  }
+
+  bids.sort((a, b) => b.price - a.price);
+  asks.sort((a, b) => a.price - b.price);
+}
+
+
+/* =========================================================
+   ORDER BOOK RENDER — PRO UI
+========================================================= */
 
 function renderOrderBook() {
 
@@ -389,71 +407,84 @@ function renderOrderBook() {
 
   orderBookRowsEl.innerHTML = "";
 
-  const rows = Math.max(bids.length, asks.length, ROWS);
+  const maxTotal = Math.max(
+    ...bids.map(o => o.total),
+    ...asks.map(o => o.total)
+  );
 
-  const maxBid = Math.max(...bids.map(x => x.total), 1);
-  const maxAsk = Math.max(...asks.map(x => x.total), 1);
+  const frag = document.createDocumentFragment();
 
-  for (let i = 0; i < rows; i++) {
+  /* ================= ASKS (TOP) ================= */
+  asks.slice().reverse().forEach(o => {
 
-    const bid = bids[i];
-    const ask = asks[i];
+    const depth = (o.total / maxTotal) * 100;
 
     const row = document.createElement("div");
     row.className = "ob-grid-row";
 
-    // 🟢 BID
-    let bidCell = `<div class="ob-cell"></div>`;
-    if (bid) {
-      const depth = (bid.total / maxBid) * 100;
-
-      bidCell = `
-        <div class="ob-cell bid">
-          <div class="ob-depth bid" style="width:${depth}%"></div>
-          <span class="ob-bid ob-click" data-price="${bid.price}">
-            ${fmtAmount(bid.amount)}
-          </span>
-        </div>
-      `;
-    }
-
-    // ⚪ PRICE
-    const price = bid?.price || ask?.price || marketPrice;
-
-    const priceCell = `
-      <div class="ob-cell center">
-        <span class="price ob-click" data-price="${price}">
-          ${fmtPrice(price)}
-        </span>
+    row.innerHTML = `
+      <div class="ob-cell">
+        <span class="ob-ask">${o.total.toFixed(2)}</span>
       </div>
+
+      <div class="ob-cell center">
+        <span class="price">${fmtPrice(o.price)}</span>
+      </div>
+
+      <div class="ob-cell">
+        <span class="ob-ask">${fmtAmount(o.amount)}</span>
+      </div>
+
+      <div class="ob-depth ask" style="width:${depth}%"></div>
     `;
 
-    // 🔴 ASK
-    let askCell = `<div class="ob-cell"></div>`;
-    if (ask) {
-      const depth = (ask.total / maxAsk) * 100;
+    frag.appendChild(row);
+  });
 
-      askCell = `
-        <div class="ob-cell ask">
-          <div class="ob-depth ask" style="width:${depth}%"></div>
-          <span class="ob-ask ob-click" data-price="${ask.price}">
-            ${fmtAmount(ask.amount)}
-          </span>
-        </div>
-      `;
-    }
+  /* ================= MID ================= */
+  const midRow = document.createElement("div");
+  midRow.className = "ob-grid-row";
+
+  midRow.innerHTML = `
+    <div></div>
+    <div class="ob-cell center price">${fmtPrice(marketPrice)}</div>
+    <div></div>
+  `;
+
+  frag.appendChild(midRow);
+
+  /* ================= BIDS ================= */
+  bids.forEach(o => {
+
+    const depth = (o.total / maxTotal) * 100;
+
+    const row = document.createElement("div");
+    row.className = "ob-grid-row";
 
     row.innerHTML = `
-      ${bidCell}
-      ${priceCell}
-      ${askCell}
+      <div class="ob-cell">
+        <span class="ob-bid">${o.total.toFixed(2)}</span>
+      </div>
+
+      <div class="ob-cell center">
+        <span class="price">${fmtPrice(o.price)}</span>
+      </div>
+
+      <div class="ob-cell">
+        <span class="ob-bid">${fmtAmount(o.amount)}</span>
+      </div>
+
+      <div class="ob-depth bid" style="width:${depth}%"></div>
     `;
 
-    orderBookRowsEl.appendChild(row);
-  }
+    frag.appendChild(row);
+  });
+
+  orderBookRowsEl.appendChild(frag);
 
   updateSpread();
 }
+    
      
   function updateSpread() {
     if (!asks.length || !bids.length) return;
