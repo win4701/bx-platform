@@ -2126,18 +2126,23 @@ h3{
 
 #market .ob-grid-head{
   display:grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  padding:8px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  padding:8px 10px;
   font-size:12px;
   font-weight:1000;
   color:var(--mk-dim);
   text-transform:uppercase;
-  letter-spacing:.13em;
+  letter-spacing:.07em;
   border-bottom:2px solid var(--mk-border-soft);
 }
 
+#market .ob-grid-head span{
+  text-align:center;
+}
+
 #market #orderBookGrid{
-  display:flex;
+  display:block;  
+}
   flex-direction:column;
   gap:3px;
   padding-top:3px;
@@ -2145,22 +2150,21 @@ h3{
 
 #market .ob-grid-row{
   display:grid;
-  grid-template-columns:1fr 1fr 1fr;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   align-items:center;
   height:30px;
   border-radius:10px;
-  position:relative;
   font-size:12px;
-  transition:.12s ease;
+  position:relative;
 }
 
 /* ===== CELLS ===== */
 #market .ob-cell{
-  position:relative;
-  padding:8px;
-  overflow:hidden;
+  padding:0 6px;
   display:flex;
   align-items:center;
+  justify-content:center; /
+  min-width:0;           
 }
 
 #market .ob-cell.center{
