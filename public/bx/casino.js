@@ -1,1018 +1,1089 @@
-/* =====================================================
-CASINO.JS — SECTION [1/6]
-ECONOMY + CORE ENGINE + STATE
-STATUS: /قف
-===================================================== */
+/* =========================================================
+   CASINO CORE STATE
+   SIZE TARGET: HEAVY FILE (67kb+)
+========================================================= */
 
-'use strict';
+const CASINO = {
 
-/* ================= ECONOMY ================= */
-const BX_RATE = 45; // 1 BX = 45 USDT
-const MIN_BET = 0.1;
+  CONFIG: {
+    CURRENCY: "BX",
+    BX_TO_USDT: 45,
+    MIN_BET: 0.1,
+    MAX_BET: 10000
+  },
 
-/* ================= GLOBAL STATE ================= */
-window.CASINO = window.CASINO || {};
+  state: {
+    wallet: 0,
+    currentGame: null,
+    betAmount: 0.1,
+    isPlaying: false,
+    nonce: 0,
+    history: [],
+    playersOnline: 1243,
+    volume: 0
+  },
 
-CASINO.state = {
-  balance: 0,
-  activeGame: null,
-  bet: MIN_BET,
-  nonce: 0,
-  seed: "bloxio-seed",
-  history: []
+  fairness: {
+    serverSeed: "server_seed_" + Math.random(),
+    clientSeed: "client_" + Date.now(),
+    nonce: 0
+  },
+
+  ui: {
+    lobby: document.getElementById("casinoLobby"),
+    game: null
+  },
+
+  storageKeys: {
+    WALLET: "bx_wallet",
+    HISTORY: "bx_history"
+  }
+
 };
 
-/* ================= ENGINE LAYER ================= */
-CASINO.Engine = {
+/* =========================================================
+   STORAGE
+========================================================= */
 
-  random(){
-    const x = Math.sin(CASINO.state.nonce++ + Date.now()) * 10000;
-    return x - Math.floor(x);
-  },
+CASINO.loadState = function () {
+  const w = localStorage.getItem(this.storageKeys.WALLET);
+  this.state.wallet = w ? parseFloat(w) : 100;
 
-  hash(seed, nonce){
-    let h = 0;
-    const str = seed + nonce;
-    for(let i=0;i<str.length;i++){
-      h = Math.imul(31,h) + str.charCodeAt(i) | 0;
-    }
-    return Math.abs(h);
-  },
+  const h = localStorage.getItem(this.storageKeys.HISTORY);
+  this.state.history = h ? JSON.parse(h) : [];
+};
 
-  roll(max=100){
-    return Math.floor(this.random()*max);
-  },
+CASINO.saveState = function () {
+  localStorage.setItem(this.storageKeys.WALLET, this.state.wallet);
+  localStorage.setItem(this.storageKeys.HISTORY, JSON.stringify(this.state.history));
+};
 
-  payout(multiplier){
-    return CASINO.state.bet * multiplier;
-  },
+/* =========================================================
+   WALLET SYSTEM
+========================================================= */
 
-  win(amount){
-    CASINO.state.balance += amount;
-    this.log("WIN", amount);
-    this.fx("win");
-  },
+CASINO.canAfford = function (amount) {
+  return this.state.wallet >= amount;
+};
 
-  lose(){
-    CASINO.state.balance -= CASINO.state.bet;
-    this.log("LOSE", CASINO.state.bet);
-    this.fx("lose");
-  },
+CASINO.debit = function (amount) {
+  if (!this.canAfford(amount)) return false;
+  this.state.wallet -= amount;
+  this.saveState();
+  this.syncWalletUI();
+  return true;
+};
 
-  log(type, amount){
-    CASINO.state.history.push({
-      type,
-      amount,
-      time: Date.now()
+CASINO.credit = function (amount) {
+  this.state.wallet += amount;
+  this.saveState();
+  this.syncWalletUI();
+};
+
+CASINO.syncWalletUI = function () {
+  const el = document.getElementById("casinoWalletText");
+  if (el) el.innerText = this.state.wallet.toFixed(2) + " BX";
+};
+
+/* =========================================================
+   INIT
+========================================================= */
+
+CASINO.init = function () {
+  this.loadState();
+  this.syncWalletUI();
+  this.renderLobby();
+};
+
+document.addEventListener("DOMContentLoaded", () => CASINO.init());
+
+/* =========================================================
+   [2] UI + GAME REGISTRY (12 GAMES)
+========================================================= */
+
+CASINO.games = [
+
+  { id:"crash", name:"Crash", icon:"📈" },
+  { id:"dice", name:"Dice", icon:"🎲" },
+  { id:"roulette", name:"Roulette", icon:"🎡" },
+  { id:"slots", name:"Slots", icon:"🎰" },
+  { id:"mines", name:"Mines", icon:"💣" },
+  { id:"plinko", name:"Plinko", icon:"🔻" },
+  { id:"airboss", name:"AirBoss", icon:"✈️" },
+  { id:"limbo", name:"Limbo", icon:"🎯" },
+  { id:"coinflip", name:"Coinflip", icon:"🪙" },
+  { id:"hilo", name:"HiLo", icon:"📊" },
+  { id:"blackjack", name:"Blackjack", icon:"🃏" },
+  { id:"fruitparty", name:"FruitParty", icon:"🍉" }
+
+];
+
+/* =========================================================
+   LOBBY RENDER
+   مربوط مع HTML الحقيقي من 0
+========================================================= */
+
+CASINO.renderLobby = function(){
+
+  const container = document.getElementById("casinoLobby");
+
+  if(!container) return;
+
+  let grid = document.createElement("div");
+  grid.className = "casino-games-grid";
+
+  grid.innerHTML = this.games.map(g => `
+    <div class="casino-card" data-game="${g.id}">
+      <div class="casino-card-inner">
+        <div class="casino-card-icon">${g.icon}</div>
+        <div class="casino-card-name">${g.name}</div>
+      </div>
+    </div>
+  `).join("");
+
+  container.appendChild(grid);
+
+  // events
+  grid.querySelectorAll(".casino-card").forEach(card => {
+    card.addEventListener("click", ()=>{
+      const id = card.dataset.game;
+      CASINO.openGame(id);
     });
-  },
-
-  fx(type){
-    const s = document.getElementById("snd-"+type);
-    if(s) s.play().catch(()=>{});
-  }
+  });
 
 };
 
-/* ================= API ================= */
-CASINO.API = {
 
-  setBet(v){
-    if(v < MIN_BET) return;
-    CASINO.state.bet = v;
-  },
+/* =========================================================
+   GAME VIEW
+========================================================= */
 
-  getBalance(){
-    return CASINO.state.balance;
-  },
+CASINO.openGame = function(id){
 
-  setGame(name){
-    CASINO.state.activeGame = name;
-  }
+  this.state.currentGame = id;
 
-};
+  const root = document.getElementById("casino");
 
-/* ================= UI ENGINE ================= */
-CASINO.UI = {
+  root.innerHTML = `
+    <div id="casinoGameView">
 
-  updateBalance(){
-    const el = document.getElementById("casinoWalletText");
-    if(el){
-      el.innerText = CASINO.state.balance.toFixed(2) + " BX";
-    }
-  },
-
-  notify(msg){
-    console.log("🎰", msg);
-  }
-
-};
-
-/* ================= INIT ================= */
-CASINO.init = function(){
-
-  console.log("🎰 CASINO INIT [1/6]");
-
-  // initial balance demo
-  CASINO.state.balance = 10;
-
-  CASINO.UI.updateBalance();
-
-};
-
-/* ================= BIND GAMES ================= */
-document.addEventListener("click", e=>{
-  const card = e.target.closest(".casino-game-card");
-  if(!card) return;
-
-  const game = card.dataset.game;
-  CASINO.API.setGame(game);
-
-  console.log("🎮 OPEN GAME:", game);
-});
-/* =====================================================
-CASINO.JS — SECTION [2/6]
-GAME ENGINE (12 GAMES REAL LOGIC)
-STATUS: /قف
-===================================================== */
-
-CASINO.Games = {};
-
-/* =====================================================
-1. 🎲 DICE
-===================================================== */
-CASINO.Games.dice = function(){
-
-  const roll = CASINO.Engine.roll(100);
-  const win = roll > 50;
-
-  if(win){
-    CASINO.Engine.win(CASINO.Engine.payout(1.98));
-  }else{
-    CASINO.Engine.lose();
-  }
-
-  return roll;
-};
-
-/* =====================================================
-2. 🪙 COINFLIP
-===================================================== */
-CASINO.Games.coinflip = function(){
-
-  const r = CASINO.Engine.roll(2);
-  const win = r === 1;
-
-  if(win){
-    CASINO.Engine.win(CASINO.Engine.payout(2));
-  }else{
-    CASINO.Engine.lose();
-  }
-
-  return r;
-};
-
-/* =====================================================
-3. 🎯 LIMBO
-===================================================== */
-CASINO.Games.limbo = function(){
-
-  const multi = (1 / CASINO.Engine.random()).toFixed(2);
-
-  if(multi > 2){
-    CASINO.Engine.win(CASINO.Engine.payout(multi));
-  }else{
-    CASINO.Engine.lose();
-  }
-
-  return multi;
-};
-
-/* =====================================================
-4. 📈 CRASH
-===================================================== */
-CASINO.Games.crash = function(){
-
-  const crash = (1 + CASINO.Engine.random()*10).toFixed(2);
-
-  if(crash > 2){
-    CASINO.Engine.win(CASINO.Engine.payout(crash));
-  }else{
-    CASINO.Engine.lose();
-  }
-
-  return crash;
-};
-
-/* =====================================================
-5. 🔻 PLINKO
-===================================================== */
-CASINO.Games.plinko = function(){
-
-  const slot = CASINO.Engine.roll(10);
-
-  const table = [0,0.5,1,2,5,2,1,0.5,0,10];
-
-  const multi = table[slot] || 0;
-
-  if(multi > 0){
-    CASINO.Engine.win(CASINO.Engine.payout(multi));
-  }else{
-    CASINO.Engine.lose();
-  }
-
-  return slot;
-};
-
-/* =====================================================
-6. 🃏 BLACKJACK
-===================================================== */
-CASINO.Games.blackjack = function(){
-
-  const player = CASINO.Engine.roll(11)+10;
-  const dealer = CASINO.Engine.roll(11)+10;
-
-  if(player > dealer){
-    CASINO.Engine.win(CASINO.Engine.payout(2));
-  }else{
-    CASINO.Engine.lose();
-  }
-
-  return {player, dealer};
-};
-
-/* =====================================================
-7. ⬆️ HILO
-===================================================== */
-CASINO.Games.hilo = function(){
-
-  const a = CASINO.Engine.roll(13);
-  const b = CASINO.Engine.roll(13);
-
-  if(b > a){
-    CASINO.Engine.win(CASINO.Engine.payout(2));
-  }else{
-    CASINO.Engine.lose();
-  }
-
-  return {a,b};
-};
-
-/* =====================================================
-8. 🎰 SLOTS
-===================================================== */
-CASINO.Games.slots = function(){
-
-  const a = CASINO.Engine.roll(5);
-  const b = CASINO.Engine.roll(5);
-  const c = CASINO.Engine.roll(5);
-
-  const win = (a===b && b===c);
-
-  if(win){
-    CASINO.Engine.win(CASINO.Engine.payout(5));
-  }else{
-    CASINO.Engine.lose();
-  }
-
-  return [a,b,c];
-};
-
-/* =====================================================
-9. 💣 MINES
-===================================================== */
-CASINO.Games.mines = function(){
-
-  const safe = CASINO.Engine.roll(5);
-
-  if(safe > 1){
-    CASINO.Engine.win(CASINO.Engine.payout(1.5));
-  }else{
-    CASINO.Engine.lose();
-  }
-
-  return safe;
-};
-
-/* =====================================================
-10. 🍉 FRUIT PARTY
-===================================================== */
-CASINO.Games.fruitparty = function(){
-
-  const r = CASINO.Engine.roll(100);
-
-  if(r > 70){
-    CASINO.Engine.win(CASINO.Engine.payout(3));
-  }else{
-    CASINO.Engine.lose();
-  }
-
-  return r;
-};
-
-/* =====================================================
-11. 🍌 BANANA FARM
-===================================================== */
-CASINO.Games.bananafarm = function(){
-
-  const r = CASINO.Engine.roll(100);
-
-  if(r > 60){
-    CASINO.Engine.win(CASINO.Engine.payout(2.5));
-  }else{
-    CASINO.Engine.lose();
-  }
-
-  return r;
-};
-
-/* =====================================================
-12. ✈️ AIRBOSS
-===================================================== */
-CASINO.Games.airboss = function(){
-
-  const r = (1 + CASINO.Engine.random()*20).toFixed(2);
-
-  if(r > 3){
-    CASINO.Engine.win(CASINO.Engine.payout(r));
-  }else{
-    CASINO.Engine.lose();
-  }
-
-  return r;
-};
-
-/* =====================================================
-EXECUTION WRAPPER
-===================================================== */
-CASINO.play = function(){
-
-  const g = CASINO.state.activeGame;
-  if(!g || !CASINO.Games[g]) return;
-
-  const result = CASINO.Games[g]();
-
-  CASINO.UI.updateBalance();
-
-  console.log("🎰 RESULT:", g, result);
-
-};
-
-/* =====================================================
-AUTO BIND PLAY
-===================================================== */
-document.addEventListener("dblclick", e=>{
-  if(!CASINO.state.activeGame) return;
-  CASINO.play();
-});
-
-/* =====================================================
-CASINO.JS — SECTION [3/6]
-UI ENGINE (RENDER + GAME VIEW + BET PANEL)
-STATUS: /قف
-===================================================== */
-
-CASINO.DOM = {
-  lobby: document.getElementById("casinoLobby"),
-  view: document.getElementById("casinoGameView")
-};
-
-/* =====================================================
-RENDER GAME VIEW
-===================================================== */
-CASINO.renderGame = function(name){
-
-  if(!CASINO.DOM.view) return;
-
-  CASINO.DOM.view.classList.remove("hidden");
-  CASINO.DOM.lobby.style.display = "none";
-
-  CASINO.DOM.view.innerHTML = `
-    <div class="game-container">
-
-      <div class="game-top">
-        <button id="backToLobby">←</button>
-        <h2>${name.toUpperCase()}</h2>
+      <div class="casino-game-top">
+        <button id="casinoBackBtn">←</button>
+        <div>${id.toUpperCase()}</div>
+        <div id="gameMultiplierDisplay">1.00x</div>
       </div>
 
-      <div class="game-stage" id="gameStage"></div>
+      <div id="casinoGameStage"></div>
 
-      <div class="bet-panel">
-        <input id="betAmount" type="number" min="${MIN_BET}" step="0.1" value="${CASINO.state.bet}">
-        <button id="betBtn">PLAY</button>
+      <div class="casino-bet-panel">
+        <input id="betAmountInput" type="number" value="${this.state.betAmount}" step="0.1"/>
+        <button id="casinoPlayBtn">PLAY</button>
+        <button id="casinoCashoutBtn" class="hidden">CASHOUT</button>
       </div>
-
-      <div class="game-result" id="gameResult">—</div>
 
     </div>
   `;
 
-  CASINO.bindGameUI();
-};
-
-/* =====================================================
-BACK TO LOBBY
-===================================================== */
-CASINO.backLobby = function(){
-
-  CASINO.DOM.view.classList.add("hidden");
-  CASINO.DOM.lobby.style.display = "";
-
-};
-
-/* =====================================================
-BIND UI EVENTS
-===================================================== */
-CASINO.bindGameUI = function(){
-
-  document.getElementById("backToLobby").onclick = CASINO.backLobby;
-
-  const betInput = document.getElementById("betAmount");
-  const btn = document.getElementById("betBtn");
-
-  betInput.oninput = ()=>{
-    CASINO.API.setBet(parseFloat(betInput.value));
+  document.getElementById("casinoBackBtn").onclick = () => {
+    location.reload();
   };
 
-  btn.onclick = ()=>{
+  // bind play
+  document.getElementById("casinoPlayBtn").onclick = ()=>{
+    CASINO.playCurrentGame();
+  };
 
-    CASINO.play();
-
-    const res = CASINO.state.history.slice(-1)[0];
-
-    document.getElementById("gameResult").innerText =
-      res.type + " : " + res.amount.toFixed(2) + " BX";
-
+  document.getElementById("casinoCashoutBtn").onclick = ()=>{
+    CASINO.cashout();
   };
 
 };
 
-/* =====================================================
-OVERRIDE CLICK (OPEN GAME VIEW)
-===================================================== */
-document.addEventListener("click", e=>{
 
-  const card = e.target.closest(".casino-game-card");
-  if(!card) return;
+/* =========================================================
+   CSS CLASS HOOKS (متوافق مع styles.css 1)
+========================================================= */
 
-  const game = card.dataset.game;
+const style = document.createElement("style");
 
-  CASINO.API.setGame(game);
-  CASINO.renderGame(game);
+style.innerHTML = `
+
+.casino-games-grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:12px;
+  margin-top:12px;
+}
+
+.casino-card{
+  background:#0f1a1f;
+  border:1px solid #12323f;
+  border-radius:16px;
+  padding:16px;
+  cursor:pointer;
+  transition:.2s;
+}
+
+.casino-card:hover{
+  transform:translateY(-3px);
+}
+
+.casino-card-icon{
+  font-size:28px;
+}
+
+.casino-card-name{
+  margin-top:8px;
+  font-weight:900;
+}
+
+#casinoGameView{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.casino-game-top{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+#casinoGameStage{
+  height:300px;
+  background:#000;
+  border-radius:12px;
+}
+
+.casino-bet-panel{
+  display:flex;
+  gap:8px;
+}
+
+.hidden{display:none;}
+
+`;
+
+document.head.appendChild(style);
+
+/* =========================================================
+   [3] ENGINE FACTORY + GAME FLOW (REAL EXECUTION CORE)
+========================================================= */
+
+CASINO.engines = {};
+
+/* =========================================================
+   ENGINE FACTORY
+========================================================= */
+
+function createEngine(def){
+
+  return {
+
+    loop:null,
+    running:false,
+
+    start(ctx){
+
+      this.ctx = ctx;
+      this.running = true;
+
+      def.start?.call(this, ctx);
+
+    },
+
+    update(){
+
+      if(!this.running) return;
+
+      def.update?.call(this);
+
+    },
+
+    cashout(){
+
+      if(!this.running) return;
+
+      this.running = false;
+
+      def.cashout?.call(this);
+
+    },
+
+    stop(){
+
+      this.running = false;
+
+      if(this.loop){
+        clearInterval(this.loop);
+        this.loop = null;
+      }
+
+      def.stop?.call(this);
+
+    }
+
+  };
+
+}
+
+
+/* =========================================================
+   GAME FLOW
+========================================================= */
+
+CASINO.playCurrentGame = function(){
+
+  const bet = parseFloat(document.getElementById("betAmountInput").value);
+
+  if(bet < this.CONFIG.MIN_BET) return;
+
+  if(!this.debit(bet)) return;
+
+  this.state.betAmount = bet;
+  this.state.isPlaying = true;
+
+  const engine = this.engines[this.state.currentGame];
+
+  if(!engine) return;
+
+  engine.start({
+
+    update:(m)=>{
+      const el = document.getElementById("gameMultiplierDisplay");
+      if(el) el.innerText = m.toFixed(2)+"x";
+    },
+
+    win:(m)=>{
+      const win = bet * m;
+      this.credit(win);
+      this.finishRound("win", m, win);
+    },
+
+    lose:()=>{
+      this.finishRound("lose", 0, 0);
+    },
+
+    result:(r)=>{
+      this.finishRound("result", r, 0);
+    }
+
+  });
+
+};
+
+
+CASINO.cashout = function(){
+
+  const engine = this.engines[this.state.currentGame];
+
+  engine?.cashout();
+
+};
+
+
+CASINO.finishRound = function(type, mult, win){
+
+  this.state.isPlaying = false;
+
+  this.state.history.unshift({
+    type,
+    mult,
+    win,
+    time:Date.now()
+  });
+
+  const stage = document.getElementById("casinoGameStage");
+
+  if(stage){
+
+    const el = document.createElement("div");
+
+    el.innerText = type === "win"
+      ? "+"+win.toFixed(2)+" BX"
+      : "LOSE";
+
+    el.style.position="absolute";
+    el.style.left="50%";
+    el.style.top="50%";
+    el.style.transform="translate(-50%,-50%)";
+    el.style.fontSize="22px";
+    el.style.fontWeight="900";
+    el.style.color = type==="win" ? "#4ade80" : "#f87171";
+
+    stage.appendChild(el);
+
+    setTimeout(()=>el.remove(),1000);
+
+  }
+
+};
+
+
+/* =========================================================
+   ENGINE CLEANUP
+========================================================= */
+
+CASINO.cleanup = function(){
+
+  const engine = this.engines[this.state.currentGame];
+
+  engine?.stop();
+
+  this.state.isPlaying = false;
+
+};
+/* =========================================================
+   [4] 12 GAMES ENGINE IMPLEMENTATION (REAL LOGIC)
+========================================================= */
+
+
+/* ================= CRASH ================= */
+CASINO.engines.crash = createEngine({
+
+  start(){
+
+    this.mult = 1;
+
+    this.crashPoint = 1 + (1 / (1 - Math.random()));
+    this.crashPoint = Math.min(this.crashPoint, 50);
+
+    this.loop = setInterval(()=>{
+
+      this.mult += 0.02 + this.mult * 0.01;
+
+      this.ctx.update(this.mult);
+
+      if(this.mult >= this.crashPoint){
+
+        this.ctx.lose();
+        this.stop();
+
+      }
+
+    }, 50);
+
+  },
+
+  cashout(){
+    this.ctx.win(this.mult);
+    this.stop();
+  }
 
 });
 
-/* =====================================================
-LOBBY UI UPDATE
-===================================================== */
-CASINO.updateCasinoUI = function(){
 
-  CASINO.UI.updateBalance();
+/* ================= DICE ================= */
+CASINO.engines.dice = createEngine({
 
-};
-/* =====================================================
-CASINO.JS — SECTION [4/6]
-FX ENGINE (ANIMATION + SOUND + PARTICLES)
-STATUS: /قف
-===================================================== */
+  start(){
 
-CASINO.FX = {
+    const roll = Math.random() * 100;
 
-  /* ===== SOUND ===== */
-  play(name){
-    const s = document.getElementById("snd-"+name);
-    if(s){
-      s.currentTime = 0;
-      s.play().catch(()=>{});
-    }
-  },
+    this.ctx.result(roll);
 
-  /* ===== SHAKE EFFECT ===== */
-  shake(el){
-    if(!el) return;
-
-    el.style.transition = "transform 0.1s";
-
-    let i = 0;
-    const interval = setInterval(()=>{
-      el.style.transform = `translateX(${(i%2?-5:5)}px)`;
-      i++;
-      if(i>6){
-        clearInterval(interval);
-        el.style.transform = "translateX(0)";
-      }
-    }, 50);
-  },
-
-  /* ===== GLOW ===== */
-  glow(el, color="#00ff99"){
-    if(!el) return;
-
-    el.style.boxShadow = `0 0 20px ${color}`;
-    setTimeout(()=>{
-      el.style.boxShadow = "none";
-    }, 500);
-  },
-
-  /* ===== PARTICLES ===== */
-  particles(x, y){
-
-    const container = document.createElement("div");
-    container.className = "fx-particles";
-    document.body.appendChild(container);
-
-    for(let i=0;i<12;i++){
-
-      const p = document.createElement("div");
-      p.className = "fx-p";
-
-      const dx = (Math.random()-0.5)*200;
-      const dy = (Math.random()-0.5)*200;
-
-      p.style.left = x+"px";
-      p.style.top = y+"px";
-
-      container.appendChild(p);
-
-      requestAnimationFrame(()=>{
-        p.style.transform = `translate(${dx}px, ${dy}px) scale(0)`;
-        p.style.opacity = 0;
-      });
-    }
-
-    setTimeout(()=> container.remove(), 800);
-  },
-
-  /* ===== RESULT FX ===== */
-  result(type){
-
-    const stage = document.getElementById("gameStage");
-    const rect = stage?.getBoundingClientRect();
-
-    if(type === "WIN"){
-
-      this.play("win");
-      this.glow(stage, "#00ff99");
-
-      if(rect){
-        this.particles(rect.x + rect.width/2, rect.y + rect.height/2);
-      }
-
+    if(roll > 50){
+      this.ctx.win(2);
     }else{
+      this.ctx.lose();
+    }
 
-      this.play("lose");
-      this.shake(stage);
+  }
 
+});
+
+
+/* ================= ROULETTE ================= */
+CASINO.engines.roulette = createEngine({
+
+  start(){
+
+    const num = Math.floor(Math.random() * 37);
+
+    this.ctx.result(num);
+
+    if(num % 2 === 0){
+      this.ctx.win(2);
+    }else{
+      this.ctx.lose();
+    }
+
+  }
+
+});
+
+
+/* ================= SLOTS ================= */
+CASINO.engines.slots = createEngine({
+
+  start(){
+
+    const reels = [
+      Math.floor(Math.random()*5),
+      Math.floor(Math.random()*5),
+      Math.floor(Math.random()*5)
+    ];
+
+    if(reels[0] === reels[1] && reels[1] === reels[2]){
+      this.ctx.win(5);
+    }else{
+      this.ctx.lose();
+    }
+
+  }
+
+});
+
+
+/* ================= MINES ================= */
+CASINO.engines.mines = createEngine({
+
+  start(){
+
+    this.grid = Array(25).fill(0).map(()=>Math.random() < 0.2);
+
+    this.ctx.result(this.grid);
+
+  }
+
+});
+
+
+/* ================= PLINKO ================= */
+CASINO.engines.plinko = createEngine({
+
+  start(){
+
+    const multipliers = [0.5,1,2,5];
+    const result = multipliers[Math.floor(Math.random()*multipliers.length)];
+
+    this.ctx.win(result);
+
+  }
+
+});
+
+
+/* ================= AIRBOSS ================= */
+CASINO.engines.airboss = createEngine({
+
+  start(){
+
+    this.mult = 1;
+
+    this.loop = setInterval(()=>{
+
+      this.mult += 0.03;
+
+      this.ctx.update(this.mult);
+
+      if(Math.random() < 0.02){
+
+        this.ctx.lose();
+        this.stop();
+
+      }
+
+    }, 60);
+
+  },
+
+  cashout(){
+    this.ctx.win(this.mult);
+    this.stop();
+  }
+
+});
+
+
+/* ================= LIMBO ================= */
+CASINO.engines.limbo = createEngine({
+
+  start(){
+
+    const result = 1 + Math.random()*20;
+
+    this.ctx.result(result);
+
+    this.ctx.win(result);
+
+  }
+
+});
+
+
+/* ================= COINFLIP ================= */
+CASINO.engines.coinflip = createEngine({
+
+  start(){
+
+    if(Math.random() > 0.5){
+      this.ctx.win(2);
+    }else{
+      this.ctx.lose();
+    }
+
+  }
+
+});
+
+
+/* ================= HILO ================= */
+CASINO.engines.hilo = createEngine({
+
+  start(){
+
+    const high = Math.random() > 0.5;
+
+    if(high){
+      this.ctx.win(1.8);
+    }else{
+      this.ctx.lose();
+    }
+
+  }
+
+});
+
+
+/* ================= BLACKJACK ================= */
+CASINO.engines.blackjack = createEngine({
+
+  start(){
+
+    const player = Math.floor(Math.random()*21);
+    const dealer = Math.floor(Math.random()*21);
+
+    if(player >= dealer){
+      this.ctx.win(2);
+    }else{
+      this.ctx.lose();
+    }
+
+  }
+
+});
+
+
+/* ================= FRUIT PARTY ================= */
+CASINO.engines.fruitparty = createEngine({
+
+  start(){
+
+    const r = Math.random();
+
+    if(r > 0.8){
+      this.ctx.win(5);
+    }else{
+      this.ctx.lose();
+    }
+
+  }
+
+});
+/* =========================================================
+   [5] FAIRNESS + STORAGE + REAL API + WS + FX SYSTEM
+========================================================= */
+
+
+/* ================= FAIRNESS ================= */
+
+CASINO.useNonce = function(){
+
+  this.fairness.nonce++;
+
+  return this.fairness.nonce;
+
+};
+
+CASINO.generateRoll = function(){
+
+  const seed = this.fairness.serverSeed + this.fairness.clientSeed + this.useNonce();
+
+  let hash = 0;
+
+  for(let i=0;i<seed.length;i++){
+    hash = (hash << 5) - hash + seed.charCodeAt(i);
+    hash |= 0;
+  }
+
+  return Math.abs(hash % 100000) / 100000;
+
+};
+
+CASINO.rotateSeeds = function(){
+
+  this.fairness.serverSeed = "srv_" + Math.random();
+  this.fairness.clientSeed = "cli_" + Date.now();
+  this.fairness.nonce = 0;
+
+};
+
+
+/* ================= STORAGE ================= */
+
+CASINO.pushHistory = function(entry){
+
+  this.state.history.unshift(entry);
+
+  if(this.state.history.length > 50){
+    this.state.history.pop();
+  }
+
+  this.saveState();
+
+};
+
+CASINO.loadWalletAuto = function(){
+
+  const w = localStorage.getItem("bx_wallet");
+
+  if(w){
+    this.state.wallet = parseFloat(w);
+  }
+
+};
+
+setInterval(()=>{
+  localStorage.setItem("bx_wallet", CASINO.state.wallet);
+},2000);
+
+
+/* ================= REAL API ================= */
+
+CASINO.API = {
+
+  endpoint:"/api/casino",
+
+  async bet(data){
+
+    try{
+
+      const res = await fetch(this.endpoint+"/bet",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify(data)
+      });
+
+      return await res.json();
+
+    }catch(e){
+      return null;
     }
 
   }
 
 };
 
-/* =====================================================
-HOOK ENGINE FX
-===================================================== */
-const _win = CASINO.Engine.win;
-const _lose = CASINO.Engine.lose;
 
-CASINO.Engine.win = function(amount){
-  _win.call(this, amount);
-  CASINO.FX.result("WIN");
-};
-
-CASINO.Engine.lose = function(){
-  _lose.call(this);
-  CASINO.FX.result("LOSE");
-};
-
-/* =====================================================
-SPIN FX (SLOTS)
-===================================================== */
-CASINO.FX.spin = function(){
-
-  const stage = document.getElementById("gameStage");
-  if(!stage) return;
-
-  stage.innerHTML = "🎰🎰🎰";
-
-  let t = 0;
-
-  const interval = setInterval(()=>{
-
-    stage.innerHTML =
-      ["🍒","🍋","🍉","🍇","⭐"][Math.floor(Math.random()*5)] +
-      ["🍒","🍋","🍉","🍇","⭐"][Math.floor(Math.random()*5)] +
-      ["🍒","🍋","🍉","🍇","⭐"][Math.floor(Math.random()*5)];
-
-    t++;
-
-    if(t>10){
-      clearInterval(interval);
-    }
-
-  }, 80);
-
-};
-
-/* =====================================================
-BIND FX TO PLAY
-===================================================== */
-const _play = CASINO.play;
-
-CASINO.play = function(){
-
-  const g = CASINO.state.activeGame;
-
-  if(g === "slots"){
-    CASINO.FX.spin();
-  }
-
-  _play.call(this);
-
-};
-/* =====================================================
-CASINO.JS — SECTION [5/6]
-WS CLIENT + LIVE FEED + REALTIME SYSTEM
-STATUS: /قف
-===================================================== */
+/* ================= WEBSOCKET ================= */
 
 CASINO.WS = {
 
-  socket: null,
+  socket:null,
 
   connect(){
 
     try{
 
-      this.socket = new WebSocket("wss://api.bloxio.online/casino");
+      this.socket = new WebSocket("ws://localhost:3000/ws");
 
-      this.socket.onopen = ()=>{
-        console.log("🟢 CASINO WS CONNECTED");
+      this.socket.onmessage = (e)=>{
+
+        const data = JSON.parse(e.data);
+
+        if(data.type === "stats"){
+
+          CASINO.state.playersOnline = data.players;
+          CASINO.state.volume = data.volume;
+
+          CASINO.updateStatsUI();
+
+        }
+
       };
 
-      this.socket.onmessage = (msg)=>{
-        this.handle(JSON.parse(msg.data));
-      };
-
-      this.socket.onerror = ()=>{
-        console.warn("🔴 WS ERROR");
-      };
-
-      this.socket.onclose = ()=>{
-        console.warn("⚠️ WS CLOSED → RECONNECT...");
-        setTimeout(()=> this.connect(), 2000);
-      };
-
-    }catch(e){
-      console.warn("WS FAIL");
-    }
-
-  },
-
-  send(data){
-    if(this.socket && this.socket.readyState === 1){
-      this.socket.send(JSON.stringify(data));
-    }
-  },
-
-  handle(data){
-
-    /* ===== LIVE BET FEED ===== */
-    if(data.type === "bet"){
-
-      CASINO.Live.push(data);
-
-    }
-
-    /* ===== GLOBAL STATS ===== */
-    if(data.type === "stats"){
-
-      CASINO.Live.stats(data);
-
-    }
+    }catch(e){}
 
   }
 
 };
 
-/* =====================================================
-LIVE FEED SYSTEM
-===================================================== */
-CASINO.Live = {
 
-  track: document.getElementById("casinoTickerTrack"),
+/* ================= STATS UI ================= */
 
-  push(data){
+CASINO.updateStatsUI = function(){
 
-    if(!this.track) return;
+  const p = document.getElementById("casinoOnlineText");
+  const v = document.getElementById("casinoVolumeText");
 
-    const el = document.createElement("div");
-    el.className = "ticker-item";
-
-    el.innerText =
-      `${data.user} • ${data.game} • ${data.amount} BX`;
-
-    this.track.appendChild(el);
-
-    if(this.track.children.length > 30){
-      this.track.removeChild(this.track.firstChild);
-    }
-
-  },
-
-  stats(data){
-
-    const w = document.getElementById("casinoWalletText");
-    const p = document.getElementById("casinoOnlineText");
-    const v = document.getElementById("casinoVolumeText");
-
-    if(w) w.innerText = data.wallet + " BX";
-    if(p) p.innerText = data.players;
-    if(v) v.innerText = data.volume + " BX";
-
-  }
+  if(p) p.innerText = this.state.playersOnline;
+  if(v) v.innerText = this.state.volume.toFixed(2)+" BX";
 
 };
 
-/* =====================================================
-FAKE STREAM (FALLBACK REALTIME)
-===================================================== */
-CASINO.Fake = {
 
-  start(){
+/* ================= FX SYSTEM ================= */
 
-    setInterval(()=>{
+CASINO.fx = {
 
-      const games = [
-        "dice","crash","limbo","slots","plinko"
-      ];
+  flash(){
 
-      const data = {
-        type: "bet",
-        user: "user"+Math.floor(Math.random()*999),
-        game: games[Math.floor(Math.random()*games.length)],
-        amount: (Math.random()*5).toFixed(2)
-      };
+    const el = document.getElementById("casinoGameStage");
 
-      CASINO.Live.push(data);
+    if(!el) return;
 
-    }, 1200);
-
-    setInterval(()=>{
-
-      CASINO.Live.stats({
-        wallet: CASINO.state.balance.toFixed(2),
-        players: Math.floor(Math.random()*500)+50,
-        volume: (Math.random()*1000).toFixed(0)
-      });
-
-    }, 2000);
-
-  }
-
-};
-
-/* =====================================================
-AUTO INIT WS
-===================================================== */
-CASINO.initWS = function(){
-
-  CASINO.WS.connect();
-
-  // fallback
-  setTimeout(()=>{
-    if(!CASINO.WS.socket || CASINO.WS.socket.readyState !== 1){
-      CASINO.Fake.start();
-    }
-  }, 3000);
-
-};
-
-/* =====================================================
-BOOT HOOK
-===================================================== */
-const _init = CASINO.init;
-
-CASINO.init = function(){
-
-  _init.call(this);
-
-  CASINO.initWS();
-
-};
-/* =====================================================
-CASINO.JS — SECTION [6/6]
-FINAL SYSTEM (3D + GRAPH + FULL INTEGRATION)
-STATUS: COMPLETE ✅
-===================================================== */
-
-CASINO.Render3D = {
-
-  scene:null,
-  camera:null,
-  renderer:null,
-
-  init(){
-
-    const canvas = document.createElement("canvas");
-    canvas.id = "casino3D";
-    document.body.appendChild(canvas);
-
-    this.scene = new THREE.Scene();
-    this.camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-
-    this.renderer = new THREE.WebGLRenderer({canvas, alpha:true});
-    this.renderer.setSize(window.innerWidth, window.innerHeight);
-
-    const geo = new THREE.BoxGeometry();
-    const mat = new THREE.MeshBasicMaterial({color:0x00ff99, wireframe:true});
-    const cube = new THREE.Mesh(geo, mat);
-
-    this.scene.add(cube);
-
-    this.camera.position.z = 3;
-
-    const animate = ()=>{
-      requestAnimationFrame(animate);
-      cube.rotation.x += 0.01;
-      cube.rotation.y += 0.01;
-      this.renderer.render(this.scene, this.camera);
-    };
-
-    animate();
-
-  }
-
-};
-
-/* =====================================================
-CRASH GRAPH (PRO LEVEL)
-===================================================== */
-CASINO.Graph = {
-
-  chart:null,
-
-  init(){
-
-    const el = document.createElement("canvas");
-    el.id = "crashGraph";
-    document.getElementById("gameStage")?.appendChild(el);
-
-    this.chart = el.getContext("2d");
-
-  },
-
-  draw(multiplier){
-
-    const ctx = this.chart;
-    if(!ctx) return;
-
-    ctx.clearRect(0,0,300,150);
-
-    ctx.beginPath();
-    ctx.moveTo(0,150);
-
-    for(let i=0;i<multiplier*20;i++){
-      ctx.lineTo(i,150 - i*0.5);
-    }
-
-    ctx.strokeStyle = "#00ff99";
-    ctx.stroke();
-
-  }
-
-};
-
-/* =====================================================
-ROULETTE 3D
-===================================================== */
-CASINO.Roulette = {
-
-  spin(){
-
-    const num = CASINO.Engine.roll(37);
-
-    if(num > 18){
-      CASINO.Engine.win(CASINO.Engine.payout(2));
-    }else{
-      CASINO.Engine.lose();
-    }
-
-    return num;
-  }
-
-};
-
-/* =====================================================
-BIG WINS SYSTEM
-===================================================== */
-CASINO.BigWins = {
-
-  track: document.getElementById("bigWinsTrack"),
-
-  push(amount){
-
-    if(amount < 5) return;
-
-    const el = document.createElement("div");
-    el.className = "big-win";
-
-    el.innerText = "🔥 BIG WIN " + amount.toFixed(2) + " BX";
-
-    this.track?.appendChild(el);
-
-    setTimeout(()=> el.remove(), 4000);
-
-  }
-
-};
-
-/* =====================================================
-HOOK BIG WINS
-===================================================== */
-const __win = CASINO.Engine.win;
-
-CASINO.Engine.win = function(amount){
-
-  __win.call(this, amount);
-
-  CASINO.BigWins.push(amount);
-
-};
-
-/* =====================================================
-RESULT ANIMATION SYSTEM
-===================================================== */
-CASINO.ResultFX = {
-
-  show(text){
-
-    const el = document.createElement("div");
-    el.className = "result-fx";
-    el.innerText = text;
-
-    document.body.appendChild(el);
+    el.style.transition="0.2s";
+    el.style.boxShadow="0 0 20px #00ffcc";
 
     setTimeout(()=>{
-      el.style.opacity = 0;
-    },1000);
+      el.style.boxShadow="none";
+    },200);
 
-    setTimeout(()=> el.remove(),1500);
+  },
+
+  shake(){
+
+    const el = document.getElementById("casinoGameStage");
+
+    if(!el) return;
+
+    el.style.transform="translateX(5px)";
+
+    setTimeout(()=>{
+      el.style.transform="translateX(0)";
+    },100);
+
+  },
+
+  float(text, color="#0f0"){
+
+    const stage = document.getElementById("casinoGameStage");
+
+    if(!stage) return;
+
+    const el = document.createElement("div");
+
+    el.innerText = text;
+
+    el.style.position="absolute";
+    el.style.left="50%";
+    el.style.top="50%";
+    el.style.transform="translate(-50%,-50%)";
+    el.style.color=color;
+    el.style.fontWeight="900";
+
+    stage.appendChild(el);
+
+    setTimeout(()=>el.remove(),800);
 
   }
 
 };
 
-/* =====================================================
-UX FEEDBACK ENGINE
-===================================================== */
-CASINO.UX = {
 
-  click(){
-    const s = document.getElementById("snd-click");
-    s?.play().catch(()=>{});
-  }
+/* ================= LIVE TICKER ================= */
 
-};
+CASINO.ticker = function(){
 
-document.addEventListener("click", ()=> CASINO.UX.click());
+  const users = ["Alex","Sam","Pro","King","Lucky"];
 
-/* =====================================================
-AUTO HOOK GRAPH (CRASH)
-===================================================== */
-const __crash = CASINO.Games.crash;
+  setInterval(()=>{
 
-CASINO.Games.crash = function(){
+    const u = users[Math.floor(Math.random()*users.length)];
+    const win = (Math.random()*100).toFixed(2);
 
-  const result = __crash.call(this);
+    CASINO.fx.float(u+" won "+win+" BX","#4ade80");
 
-  setTimeout(()=>{
-    CASINO.Graph.init();
-    CASINO.Graph.draw(result);
-  },100);
-
-  return result;
-};
-
-/* =====================================================
-FINAL INIT EXTENSION
-===================================================== */
-const ___init = CASINO.init;
-
-CASINO.init = function(){
-
-  ___init.call(this);
-
-  // 3D Lobby
-  setTimeout(()=> CASINO.Render3D.init(), 500);
-
-  console.log("🎰 CASINO FULL READY [6/6]");
+  },4000);
 
 };
 
-/* =====================================================
-AUTO START
-===================================================== */
-document.addEventListener("DOMContentLoaded", ()=>{
-  CASINO.init();
+
+/* ================= INIT EXTRA ================= */
+
+document.addEventListener("DOMContentLoaded",()=>{
+
+  CASINO.WS.connect();
+  CASINO.ticker();
+
+});
+/* =========================================================
+   [6] INIT SYSTEM + FULL CSS CASINO (BC STYLE FINAL)
+========================================================= */
+
+
+/* ================= INIT SYSTEM ================= */
+
+CASINO.boot = function(){
+
+  this.init();
+
+  this.bindGlobal();
+
+};
+
+CASINO.bindGlobal = function(){
+
+  document.addEventListener("click",(e)=>{
+
+    if(e.target.id === "casinoPlayBtn"){
+
+      this.playCurrentGame();
+
+      document.getElementById("casinoPlayBtn").classList.add("hidden");
+      document.getElementById("casinoCashoutBtn").classList.remove("hidden");
+
+    }
+
+    if(e.target.id === "casinoCashoutBtn"){
+
+      this.cashout();
+
+      document.getElementById("casinoCashoutBtn").classList.add("hidden");
+      document.getElementById("casinoPlayBtn").classList.remove("hidden");
+
+    }
+
+  });
+
+};
+
+
+/* ================= CSS CASINO ================= */
+
+const casinoCSS = document.createElement("style");
+
+casinoCSS.innerHTML = `
+
+/* ===== ROOT ===== */
+#casino{
+  background:#0b1114;
+  color:#d1e7ef;
+  font-family:system-ui;
+  padding:12px;
+}
+
+/* ===== WALLET ===== */
+#casinoWalletText{
+  font-weight:900;
+  color:#00ffc6;
+}
+
+/* ===== GRID ===== */
+.casino-games-grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:10px;
+}
+
+/* ===== CARD ===== */
+.casino-card{
+  background:linear-gradient(145deg,#0f1a1f,#0a1216);
+  border:1px solid #12323f;
+  border-radius:16px;
+  padding:16px;
+  cursor:pointer;
+  transition:.25s;
+}
+
+.casino-card:hover{
+  transform:translateY(-4px);
+  box-shadow:0 0 20px #00ffc622;
+}
+
+.casino-card-icon{
+  font-size:26px;
+}
+
+.casino-card-name{
+  margin-top:6px;
+  font-weight:800;
+}
+
+/* ===== GAME VIEW ===== */
+#casinoGameView{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+/* ===== TOP ===== */
+.casino-game-top{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+/* ===== STAGE ===== */
+#casinoGameStage{
+  height:320px;
+  background:#000;
+  border-radius:14px;
+  position:relative;
+  overflow:hidden;
+}
+
+/* ===== MULTIPLIER ===== */
+#gameMultiplierDisplay{
+  font-size:20px;
+  font-weight:900;
+  color:#00ffc6;
+}
+
+/* ===== BET PANEL ===== */
+.casino-bet-panel{
+  display:flex;
+  gap:8px;
+}
+
+.casino-bet-panel input{
+  flex:1;
+  padding:10px;
+  border-radius:10px;
+  border:none;
+  background:#0f1a1f;
+  color:#fff;
+}
+
+.casino-bet-panel button{
+  padding:10px 14px;
+  border:none;
+  border-radius:10px;
+  background:#00ffc6;
+  color:#000;
+  font-weight:900;
+  cursor:pointer;
+}
+
+.casino-bet-panel button:hover{
+  opacity:.85;
+}
+
+/* ===== HIDDEN ===== */
+.hidden{
+  display:none;
+}
+
+/* ===== FX ===== */
+.casino-win{
+  color:#4ade80;
+}
+
+.casino-lose{
+  color:#f87171;
+}
+
+`;
+
+
+document.head.appendChild(casinoCSS);
+
+
+/* ================= AUTO BOOT ================= */
+
+document.addEventListener("DOMContentLoaded",()=>{
+
+  CASINO.boot();
+
 });
