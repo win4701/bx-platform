@@ -39,6 +39,4 @@ The project uses **SQLite** by default.
 
 Initialize the database once:
 
-```bash
-cd backend/db
-python init_db.py
+
