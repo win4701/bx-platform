@@ -492,7 +492,9 @@ function renderOrderBook() {
     updatePriceUI();
     renderOrderBook();
     updateTradeInfo();
-    PRO_CHART.update(marketPrice);
+    setTimeout(()=>{
+    PRO_CHART.reset(marketPrice);
+    },80);
     updateMetrics();
   }
 
@@ -680,536 +682,320 @@ function renderOrderBook() {
      PRO CHART ENGINE
   ========================================================= */
   const PRO_CHART = {
-    canvas: null,
-    ctx: null,
-    tooltip: null,
 
-    candles: [],
-    ema: [],
-    vwap: [],
+  canvas:null,
+  ctx:null,
+  tooltip:null,
 
-    timeframe: 60 * 1000,
-    visibleCount: 60,
-    minVisible: 20,
-    maxVisible: 150,
-    maxCandles: 220,
+  candles:[],
+  ema:[],
+  vwap:[],
 
-    mode: "area",
-    current: null,
-    hoverIndex: -1,
-    mouseX: 0,
-    mouseY: 0,
-    isHovering: false,
-    raf: null,
+  timeframe:60*1000,
+  visibleCount:60,
+  minVisible:20,
+  maxVisible:150,
+  maxCandles:240,
 
-    init() {
-      this.canvas = chartCanvas;
-      if (!this.canvas) return;
+  mode:"area",
+  current:null,
 
-      this.ctx = this.canvas.getContext("2d");
-      this.tooltip = tooltipEl;
+  mouseX:0,
+  mouseY:0,
+  isHovering:false,
 
-      this.resize();
-      this.bindTimeframes();
-      this.bindModes();
-      this.bindMouse();
+  raf:null,
+  ready:false,
 
-      window.addEventListener("resize", () => {
-        requestAnimationFrame(() => this.resize());
-      });
+  /* ================= INIT ================= */
+  init(){
 
-      this.reset(marketPrice);
+    this.canvas = document.getElementById("marketChart");
+    if(!this.canvas) return;
+
+    this.ctx = this.canvas.getContext("2d");
+    this.tooltip = document.getElementById("marketTooltip");
+
+    this.resize();
+    this.bind();
+
+    window.addEventListener("resize", ()=>{
+      requestAnimationFrame(()=>this.resize());
+    });
+
+    this.reset(window.marketPrice || 45);
+
+    if(!this.raf){
       this.render();
-    },
+    }
 
-    resize() {
-      if (!this.canvas) return;
-      const p = this.canvas.parentElement;
-      if (!p) return;
+    this.ready = true;
+  },
 
-      const dpr = Math.max(1, window.devicePixelRatio || 1);
-      const w = p.clientWidth;
-      const h = p.clientHeight;
+  /* ================= RESIZE (FIXED) ================= */
+  resize(){
 
-      this.canvas.width = Math.floor(w * dpr);
-      this.canvas.height = Math.floor(h * dpr);
-      this.canvas.style.width = `${w}px`;
-      this.canvas.style.height = `${h}px`;
+    if(!this.canvas) return;
 
-      this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    },
+    const p = this.canvas.parentElement;
+    if(!p) return;
 
-    reset(price) {
-      this.candles = [];
-      this.ema = [];
-      this.vwap = [];
-      this.current = null;
-      this.bootstrap(price);
-      this.seedHistory(price);
-      updateMetrics();
-    },
+    const dpr = Math.max(1, window.devicePixelRatio || 1);
 
-    bootstrap(price) {
+    const w = p.clientWidth || 300;
+    const h = p.clientHeight || 220;
+
+    this.canvas.width = Math.floor(w * dpr);
+    this.canvas.height = Math.floor(h * dpr);
+
+    this.canvas.style.width = w+"px";
+    this.canvas.style.height = h+"px";
+
+    this.ctx.setTransform(dpr,0,0,dpr,0,0);
+  },
+
+  /* ================= RESET (FIX CRITICAL) ================= */
+  reset(price){
+
+    this.resize(); // 🔥 مهم
+
+    this.candles = [];
+    this.ema = [];
+    this.vwap = [];
+    this.current = null;
+
+    this.bootstrap(price);
+    this.seed(price);
+
+  },
+
+  /* ================= BOOTSTRAP ================= */
+  bootstrap(price){
+
+    this.current = {
+      open:price,
+      high:price,
+      low:price,
+      close:price,
+      volume:1,
+      time:Date.now()
+    };
+
+    this.candles.push(this.current);
+  },
+
+  /* ================= SEED ================= */
+  seed(price){
+
+    let p = price;
+
+    for(let i=0;i<40;i++){
+
+      const drift = (Math.random()-0.5)*price*0.002;
+
+      const next = Math.max(0.00001,p+drift);
+
       this.current = {
-        open: price,
-        high: price,
-        low: price,
-        close: price,
-        volume: rand(2, 8),
-        time: Date.now()
+        open:p,
+        high:Math.max(p,next),
+        low:Math.min(p,next),
+        close:next,
+        volume:Math.random()*10,
+        time:Date.now()-((40-i)*this.timeframe)
       };
+
       this.candles.push(this.current);
-    },
+      p = next;
+    }
 
-    seedHistory(price) {
-      let p = price;
-      for (let i = 0; i < 45; i++) {
-        const drift = rand(-0.22, 0.22) * (price * 0.0014);
-        const next = Math.max(0.000001, p + drift);
+    this.current = this.candles[this.candles.length-1];
+  },
 
-        this.current = {
-          open: p,
-          high: Math.max(p, next) + rand(0, price * 0.0007),
-          low: Math.min(p, next) - rand(0, price * 0.0007),
-          close: next,
-          volume: rand(2, 16),
-          time: Date.now() - (45 - i) * this.timeframe
-        };
+  /* ================= UPDATE (SAFE) ================= */
+  update(price){
 
-        this.candles.push(this.current);
-        p = next;
+    if(!this.ready || !this.ctx) return;
+
+    const now = Date.now();
+
+    if(!this.current){
+      this.bootstrap(price);
+      return;
+    }
+
+    if(now - this.current.time > this.timeframe){
+
+      this.current = {
+        open:this.current.close,
+        high:price,
+        low:price,
+        close:price,
+        volume:1,
+        time:now
+      };
+
+      this.candles.push(this.current);
+
+      if(this.candles.length > this.maxCandles){
+        this.candles.shift();
       }
 
-      this.current = this.candles[this.candles.length - 1];
-      this.calcEMA(14);
-      this.calcVWAP();
-    },
+    }else{
 
-    update(price) {
-      if (!price || price <= 0) return;
+      this.current.high = Math.max(this.current.high,price);
+      this.current.low = Math.min(this.current.low,price);
+      this.current.close = price;
+      this.current.volume += 0.5;
 
-      if (!this.current) {
-        this.bootstrap(price);
-        return;
-      }
+    }
 
-      const now = Date.now();
+  },
 
-      if (now - this.current.time > this.timeframe) {
-        this.current = {
-          open: this.current.close,
-          high: price,
-          low: price,
-          close: price,
-          volume: rand(1, 4),
-          time: now
-        };
+  /* ================= INPUT ================= */
+  bind(){
 
-        this.candles.push(this.current);
+    this.canvas.addEventListener("mousemove",(e)=>{
+      const r = this.canvas.getBoundingClientRect();
+      this.mouseX = e.clientX - r.left;
+      this.mouseY = e.clientY - r.top;
+      this.isHovering = true;
+    });
 
-        if (this.candles.length > this.maxCandles) {
-          this.candles.shift();
-        }
-      } else {
-        this.current.high = Math.max(this.current.high, price);
-        this.current.low = Math.min(this.current.low, price);
-        this.current.close = price;
-        this.current.volume += rand(0.3, 1.2);
-      }
+    this.canvas.addEventListener("mouseleave",()=>{
+      this.isHovering = false;
+    });
 
-      this.calcEMA(14);
-      this.calcVWAP();
-      updateMetrics();
-    },
+    this.canvas.addEventListener("wheel",(e)=>{
+      e.preventDefault();
+      const delta = e.deltaY > 0 ? 4 : -4;
+      this.visibleCount = Math.max(
+        this.minVisible,
+        Math.min(this.maxVisible, this.visibleCount + delta)
+      );
+    },{passive:false});
 
-    calcEMA(period) {
-      if (this.candles.length < 2) return;
+  },
 
-      const k = 2 / (period + 1);
-      this.ema = [];
+  /* ================= DRAW ================= */
+  render(){
 
-      let emaPrev = this.candles[0].close;
-      for (let i = 0; i < this.candles.length; i++) {
-        if (i === 0) {
-          this.ema.push(emaPrev);
-        } else {
-          const val = this.candles[i].close * k + emaPrev * (1 - k);
-          this.ema.push(val);
-          emaPrev = val;
-        }
-      }
-    },
+    if(!this.ctx){
+      this.raf = requestAnimationFrame(()=>this.render());
+      return;
+    }
 
-    calcVWAP() {
-      let pv = 0;
-      let vol = 0;
-      this.vwap = [];
+    const ctx = this.ctx;
+    const w = this.canvas.clientWidth;
+    const h = this.canvas.clientHeight;
 
-      for (const c of this.candles) {
-        const typical = (c.high + c.low + c.close) / 3;
-        pv += typical * c.volume;
-        vol += c.volume;
-        this.vwap.push(vol ? pv / vol : typical);
-      }
-    },
+    ctx.clearRect(0,0,w,h);
 
-    bindTimeframes() {
-      timeframeButtons.forEach((btn) => {
-        btn.addEventListener("click", () => {
-          timeframeButtons.forEach(b => b.classList.remove("active"));
-          btn.classList.add("active");
+    const visible = this.candles.slice(-this.visibleCount);
+    if(visible.length < 2){
+      this.raf = requestAnimationFrame(()=>this.render());
+      return;
+    }
 
-          const range = btn.dataset.range || "1H";
+    const chartH = h - 60;
+    const cw = w / visible.length;
 
-          if (range === "1H") {
-            this.timeframe = 60 * 1000;
-            this.visibleCount = 60;
-          } else if (range === "24H") {
-            this.timeframe = 5 * 60 * 1000;
-            this.visibleCount = 70;
-          } else if (range === "7D") {
-            this.timeframe = 30 * 60 * 1000;
-            this.visibleCount = 80;
-          } else if (range === "30D") {
-            this.timeframe = 2 * 60 * 60 * 1000;
-            this.visibleCount = 90;
-          } else if (range === "90D") {
-            this.timeframe = 6 * 60 * 60 * 1000;
-            this.visibleCount = 100;
-          }
+    const highs = visible.map(c=>c.high);
+    const lows = visible.map(c=>c.low);
 
-          this.reset(marketPrice);
-        });
-      });
-    },
+    let max = Math.max(...highs);
+    let min = Math.min(...lows);
 
-    bindModes() {
-      chartModeButtons.forEach((btn) => {
-        btn.addEventListener("click", () => {
-          chartModeButtons.forEach(b => b.classList.remove("active"));
-          btn.classList.add("active");
-          this.mode = btn.dataset.chartMode || "area";
-        });
-      });
-    },
+    if(max === min){
+      max += 0.0001;
+      min -= 0.0001;
+    }
 
-    bindMouse() {
-      if (!this.canvas) return;
+    const pad = (max-min)*0.1;
+    max += pad;
+    min -= pad;
 
-      this.canvas.addEventListener("mousemove", (e) => {
-        const rect = this.canvas.getBoundingClientRect();
-        this.mouseX = e.clientX - rect.left;
-        this.mouseY = e.clientY - rect.top;
-        this.isHovering = true;
-      });
+    const priceToY = (p)=> chartH - ((p-min)/(max-min))*chartH;
 
-      this.canvas.addEventListener("mouseleave", () => {
-        this.isHovering = false;
-        this.hoverIndex = -1;
-        if (this.tooltip) {
-          this.tooltip.classList.remove("show");
-        }
-      });
-
-      this.canvas.addEventListener("wheel", (e) => {
-        e.preventDefault();
-        const delta = e.deltaY > 0 ? 4 : -4;
-        this.visibleCount = clamp(this.visibleCount + delta, this.minVisible, this.maxVisible);
-      }, { passive: false });
-    },
-
-    priceToY(price, min, max, chartTop, chartHeight) {
-      return chartTop + ((max - price) / (max - min)) * chartHeight;
-    },
-
-    renderGrid(ctx, w, chartTop, chartHeight) {
-      ctx.save();
-      ctx.strokeStyle = "rgba(255,255,255,0.05)";
-      ctx.lineWidth = 1;
-
-      for (let i = 0; i < 5; i++) {
-        const y = chartTop + (chartHeight / 4) * i;
-        ctx.beginPath();
-        ctx.moveTo(0, y);
-        ctx.lineTo(w, y);
-        ctx.stroke();
-      }
-
-      for (let i = 0; i < 6; i++) {
-        const x = (w / 5) * i;
-        ctx.beginPath();
-        ctx.moveTo(x, chartTop);
-        ctx.lineTo(x, chartTop + chartHeight);
-        ctx.stroke();
-      }
-      ctx.restore();
-    },
-
-    renderEMA(ctx, visible, min, max, chartTop, chartHeight, candleWidth) {
-      if (this.ema.length < 2) return;
-
-      const emaVisible = this.ema.slice(-visible.length);
-
-      ctx.save();
+    /* ===== GRID ===== */
+    ctx.strokeStyle="rgba(255,255,255,0.05)";
+    for(let i=0;i<5;i++){
+      const y = (chartH/4)*i;
       ctx.beginPath();
-      ctx.lineWidth = 2;
-      ctx.strokeStyle = "rgba(240,185,11,.95)";
-
-      emaVisible.forEach((val, i) => {
-        const x = i * candleWidth + candleWidth / 2;
-        const y = this.priceToY(val, min, max, chartTop, chartHeight);
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-      });
-
+      ctx.moveTo(0,y);
+      ctx.lineTo(w,y);
       ctx.stroke();
-      ctx.restore();
-    },
+    }
 
-    renderVWAP(ctx, visible, min, max, chartTop, chartHeight, candleWidth) {
-      if (this.vwap.length < 2) return;
+    /* ===== DRAW ===== */
+    if(this.mode==="candles"){
 
-      const vwapVisible = this.vwap.slice(-visible.length);
+      visible.forEach((c,i)=>{
 
-      ctx.save();
-      ctx.beginPath();
-      ctx.lineWidth = 2;
-      ctx.strokeStyle = "rgba(168,85,247,.92)";
+        const x = i*cw + cw/2;
 
-      vwapVisible.forEach((val, i) => {
-        const x = i * candleWidth + candleWidth / 2;
-        const y = this.priceToY(val, min, max, chartTop, chartHeight);
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-      });
-
-      ctx.stroke();
-      ctx.restore();
-    },
-
-    renderArea(ctx, visible, min, max, chartTop, chartHeight, candleWidth, w) {
-      const closes = visible.map(c => c.close);
-
-      ctx.save();
-      ctx.beginPath();
-
-      closes.forEach((price, i) => {
-        const x = i * candleWidth + candleWidth / 2;
-        const y = this.priceToY(price, min, max, chartTop, chartHeight);
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-      });
-
-      const grad = ctx.createLinearGradient(0, chartTop, 0, chartTop + chartHeight);
-      grad.addColorStop(0, "rgba(14,203,129,.34)");
-      grad.addColorStop(.65, "rgba(14,203,129,.08)");
-      grad.addColorStop(1, "rgba(14,203,129,0)");
-
-      const lineGrad = ctx.createLinearGradient(0, chartTop, w, chartTop);
-      lineGrad.addColorStop(0, "rgba(116,255,208,.95)");
-      lineGrad.addColorStop(1, "rgba(56,217,154,.95)");
-
-      const lastX = (closes.length - 1) * candleWidth + candleWidth / 2;
-      ctx.lineTo(lastX, chartTop + chartHeight);
-      ctx.lineTo(candleWidth / 2, chartTop + chartHeight);
-      ctx.closePath();
-      ctx.fillStyle = grad;
-      ctx.fill();
-
-      ctx.beginPath();
-      closes.forEach((price, i) => {
-        const x = i * candleWidth + candleWidth / 2;
-        const y = this.priceToY(price, min, max, chartTop, chartHeight);
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-      });
-
-      ctx.strokeStyle = lineGrad;
-      ctx.lineWidth = 2.5;
-      ctx.stroke();
-      ctx.restore();
-    },
-
-    renderLine(ctx, visible, min, max, chartTop, chartHeight, candleWidth) {
-      ctx.save();
-      ctx.beginPath();
-
-      visible.forEach((c, i) => {
-        const x = i * candleWidth + candleWidth / 2;
-        const y = this.priceToY(c.close, min, max, chartTop, chartHeight);
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-      });
-
-      ctx.strokeStyle = "rgba(116,255,208,.95)";
-      ctx.lineWidth = 2.5;
-      ctx.stroke();
-      ctx.restore();
-    },
-
-    renderCandles(ctx, visible, min, max, chartTop, chartHeight, candleWidth) {
-      ctx.save();
-
-      visible.forEach((c, i) => {
-        const x = i * candleWidth + candleWidth / 2;
-        const openY = this.priceToY(c.open, min, max, chartTop, chartHeight);
-        const closeY = this.priceToY(c.close, min, max, chartTop, chartHeight);
-        const highY = this.priceToY(c.high, min, max, chartTop, chartHeight);
-        const lowY = this.priceToY(c.low, min, max, chartTop, chartHeight);
+        const openY = priceToY(c.open);
+        const closeY = priceToY(c.close);
+        const highY = priceToY(c.high);
+        const lowY = priceToY(c.low);
 
         const up = c.close >= c.open;
         const color = up ? "#0ecb81" : "#f6465d";
 
-        ctx.strokeStyle = color;
-        ctx.lineWidth = 1.2;
+        ctx.strokeStyle=color;
         ctx.beginPath();
-        ctx.moveTo(x, highY);
-        ctx.lineTo(x, lowY);
+        ctx.moveTo(x,highY);
+        ctx.lineTo(x,lowY);
         ctx.stroke();
 
-        const bodyY = Math.min(openY, closeY);
-        const bodyH = Math.max(2, Math.abs(closeY - openY));
-        const bodyW = Math.max(4, candleWidth * 0.56);
+        ctx.fillStyle=color;
+        ctx.fillRect(
+          x - cw*0.3,
+          Math.min(openY,closeY),
+          cw*0.6,
+          Math.max(2,Math.abs(closeY-openY))
+        );
 
-        ctx.fillStyle = color;
-        ctx.fillRect(x - bodyW / 2, bodyY, bodyW, bodyH);
       });
 
-      ctx.restore();
-    },
+    }else{
 
-    renderVolume(ctx, visible, chartTop, chartHeight, w, h, candleWidth) {
-      const volumeTop = chartTop + chartHeight + 8;
-      const volumeHeight = h - volumeTop - 10;
-      const maxVol = Math.max(...visible.map(c => c.volume), 1);
+      ctx.beginPath();
 
-      ctx.save();
-      visible.forEach((c, i) => {
-        const x = i * candleWidth + candleWidth * 0.18;
-        const barW = candleWidth * 0.64;
-        const barH = (c.volume / maxVol) * volumeHeight;
-        const y = volumeTop + (volumeHeight - barH);
-        const up = c.close >= c.open;
+      visible.forEach((c,i)=>{
+        const x = i*cw;
+        const y = priceToY(c.close);
 
-        ctx.fillStyle = up
-          ? "rgba(14,203,129,.28)"
-          : "rgba(246,70,93,.26)";
-
-        ctx.fillRect(x, y, barW, barH);
+        if(i===0) ctx.moveTo(x,y);
+        else ctx.lineTo(x,y);
       });
-      ctx.restore();
-    },
 
-    renderCrosshair(ctx, visible, min, max, chartTop, chartHeight, candleWidth, w) {
-      if (!this.isHovering) return;
-
-      const idx = clamp(Math.floor(this.mouseX / candleWidth), 0, visible.length - 1);
-      this.hoverIndex = idx;
-
-      const candle = visible[idx];
-      if (!candle) return;
-
-      const x = idx * candleWidth + candleWidth / 2;
-      const y = this.priceToY(candle.close, min, max, chartTop, chartHeight);
-
-      ctx.save();
-      ctx.strokeStyle = "rgba(255,255,255,.12)";
-      ctx.lineWidth = 1;
-      ctx.setLineDash([4, 4]);
-
-      ctx.beginPath();
-      ctx.moveTo(x, chartTop);
-      ctx.lineTo(x, chartTop + chartHeight);
+      ctx.strokeStyle="#00ffc6";
+      ctx.lineWidth=2;
       ctx.stroke();
 
-      ctx.beginPath();
-      ctx.moveTo(0, y);
-      ctx.lineTo(w, y);
-      ctx.stroke();
-
-      ctx.setLineDash([]);
-      ctx.fillStyle = "rgba(116,255,208,.95)";
-      ctx.beginPath();
-      ctx.arc(x, y, 3.2, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.restore();
-
-      this.showTooltip(candle, x, y);
-    },
-
-    showTooltip(candle, x, y) {
-      if (!this.tooltip || !this.canvas) return;
-
-      const rect = this.canvas.getBoundingClientRect();
-      const left = clamp(x + 18, 10, rect.width - 190);
-      const top = clamp(y + 18, 10, rect.height - 120);
-
-      this.tooltip.style.left = `${left}px`;
-      this.tooltip.style.top = `${top}px`;
-
-      this.tooltip.innerHTML = `
-        <div><strong>Open:</strong> ${fmtPrice(candle.open)}</div>
-        <div><strong>High:</strong> ${fmtPrice(candle.high)}</div>
-        <div><strong>Low:</strong> ${fmtPrice(candle.low)}</div>
-        <div><strong>Close:</strong> ${fmtPrice(candle.close)}</div>
-        <div><strong>Vol:</strong> ${fmtAmount(candle.volume, 2)}</div>
-      `;
-      this.tooltip.classList.add("show");
-    },
-
-    render() {
-      if (!this.canvas || !this.ctx) return;
-
-      const ctx = this.ctx;
-      const w = this.canvas.clientWidth;
-      const h = this.canvas.clientHeight;
-
-      ctx.clearRect(0, 0, w, h);
-
-      const visible = this.candles.slice(-this.visibleCount);
-      if (visible.length < 2) {
-        this.raf = requestAnimationFrame(() => this.render());
-        return;
-      }
-
-      const chartTop = 12;
-      const chartHeight = h - 110;
-      const candleWidth = w / visible.length;
-
-      const highs = visible.map(c => c.high);
-      const lows = visible.map(c => c.low);
-
-      let max = Math.max(...highs);
-      let min = Math.min(...lows);
-
-      if (Math.abs(max - min) < 0.0000001) {
-        max += 0.0001;
-        min -= 0.0001;
-      }
-
-      const padding = (max - min) * 0.12;
-      max += padding;
-      min -= padding;
-
-      this.renderGrid(ctx, w, chartTop, chartHeight);
-
-      if (this.mode === "candles") {
-        this.renderCandles(ctx, visible, min, max, chartTop, chartHeight, candleWidth);
-      } else if (this.mode === "line") {
-        this.renderLine(ctx, visible, min, max, chartTop, chartHeight, candleWidth);
-      } else {
-        this.renderArea(ctx, visible, min, max, chartTop, chartHeight, candleWidth, w);
-      }
-
-      this.renderEMA(ctx, visible, min, max, chartTop, chartHeight, candleWidth);
-      this.renderVWAP(ctx, visible, min, max, chartTop, chartHeight, candleWidth);
-      this.renderVolume(ctx, visible, chartTop, chartHeight, w, h, candleWidth);
-      this.renderCrosshair(ctx, visible, min, max, chartTop, chartHeight, candleWidth, w);
-
-      this.raf = requestAnimationFrame(() => this.render());
     }
-  };
+
+    /* ===== CROSSHAIR ===== */
+    if(this.isHovering){
+
+      ctx.strokeStyle="rgba(255,255,255,0.2)";
+      ctx.beginPath();
+      ctx.moveTo(this.mouseX,0);
+      ctx.lineTo(this.mouseX,h);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(0,this.mouseY);
+      ctx.lineTo(w,this.mouseY);
+      ctx.stroke();
+
+    }
+
+    this.raf = requestAnimationFrame(()=>this.render());
+  }
+
+};
+   
 
   /* =========================================================
      INIT
