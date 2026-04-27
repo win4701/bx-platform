@@ -13,7 +13,7 @@ BX Platform  **Web3 App**    Market، Wallet، Casino، Mining، Airdrop  **TON 
 - Casino & Mining
 - Airdrop system
 - TON Auto Deposit (Background Worker)
-- Binance / RedotPay integration
+- Binance / conect wallet integration
 - Unified Audit Logs
 - API Gateway
 - Render-ready deployment
