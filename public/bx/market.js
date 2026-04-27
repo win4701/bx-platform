@@ -9,7 +9,7 @@
   /* =========================================================
      CONFIG
   ========================================================= */
-  const ROWS = 12;
+  const ROWS = 16;
   const BX_USDT_REFERENCE = 45;
   const PRICE_DECIMALS = 6;
   const AMOUNT_DECIMALS = 4;
