@@ -1,13 +1,13 @@
 # BX Platform
 
-BX Platform  **Telegram Mini App**    Market، Wallet، Casino، Mining، Airdrop  **TON / USDT**  Backend . 
+BX Platform  **Web3 App**    Market، Wallet، Casino، Mining، Airdrop  **TON / USDT**  Backend . 
 
 
 ---
 
 ## ✨ Features
 
-- Telegram Mini App Authentication (Server-side)
+- web3 App Authentication (Server-side)
 - Wallet (TON / USDT)
 - Market (Buy / Sell BX)
 - Casino & Mining
