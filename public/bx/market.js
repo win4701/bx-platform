@@ -719,7 +719,9 @@ function renderOrderBook() {
       });
 
       this.reset(marketPrice);
-      this.render();
+      if (!this.raf) {
+      this.render(); // 🔥 ما تعاودش loop كل مرة
+      }
     },
 
     resize() {
@@ -728,8 +730,8 @@ function renderOrderBook() {
       if (!p) return;
 
       const dpr = Math.max(1, window.devicePixelRatio || 1);
-      const w = p.clientWidth;
-      const h = p.clientHeight;
+      const w = p.clientWidth || 300;
+      const h = p.clientHeight || 200;
 
       this.canvas.width = Math.floor(w * dpr);
       this.canvas.height = Math.floor(h * dpr);
@@ -740,14 +742,16 @@ function renderOrderBook() {
     },
 
     reset(price) {
-      this.candles = [];
-      this.ema = [];
-      this.vwap = [];
-      this.current = null;
-      this.bootstrap(price);
-      this.seedHistory(price);
-      updateMetrics();
-    },
+  this.candles = [];
+  this.ema = [];
+  this.vwap = [];
+  this.current = null;
+  this.resize(); // 🔥 FIX 1
+
+  this.bootstrap(price);
+  this.seedHistory(price);
+   
+   },
 
     bootstrap(price) {
       this.current = {
