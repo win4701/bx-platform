@@ -492,9 +492,7 @@ function renderOrderBook() {
     updatePriceUI();
     renderOrderBook();
     updateTradeInfo();
-    setTimeout(()=>{
     PRO_CHART.reset(marketPrice);
-    },80);
     updateMetrics();
   }
 
