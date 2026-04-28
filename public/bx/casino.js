@@ -1477,25 +1477,32 @@ CasinoWS.connect = function(){
 // =======================================================
 // 🔄 GLOBAL FULL INIT (FIXED ORDER)
 // =======================================================
-document.addEventListener("DOMContentLoaded", ()=>{
+window.addEventListener("DOMContentLoaded", () => {
 
-  console.log("🎰 FULL SYSTEM INIT");
+  console.log("🔥 CASINO BOOT");
 
-  // styles first
-  CasinoStyle.inject();
-  CasinoAdvancedStyle.inject();
-
-  // lobby bind
-  CasinoLobby.init();
-
-  // WS (safe)
-  try{
-    CasinoWS.connect();
-  }catch(e){
-    console.warn("WS disabled");
+  // 🎨 styles
+  if (typeof CasinoStyle !== "undefined") {
+    CasinoStyle.inject();
   }
 
-  // start system
-  CasinoInit.start();
+  // 🎮 lobby
+  if (typeof CasinoLobby !== "undefined") {
+    CasinoLobby.init();
+  }
+
+  // 🔌 WS (safe)
+  if (typeof CasinoWS !== "undefined") {
+    try {
+      CasinoWS.connect();
+    } catch(e){
+      console.warn("WS disabled");
+    }
+  }
+
+  // 🚀 start system
+  if (typeof CasinoInit !== "undefined") {
+    CasinoInit.start();
+  }
 
 });
