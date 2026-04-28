@@ -958,9 +958,7 @@ GameUI.load = function(gameId){
 // =======================================================
 // 🎰 CASINO.JS — [4/6] GAME FLOW + BET SYSTEM + API (FIXED)
 // =======================================================
-// =======================================================
-// 💰 BET SYSTEM (STRICT)
-// =======================================================
+
 const BetSystem = {
 
   get(){
@@ -994,6 +992,7 @@ const BetSystem = {
 // =======================================================
 // 🎮 GAME FLOW (BACKEND CONTROL)
 // =======================================================
+
 GameFlow.play = async function(payload){
 
   if(CasinoState.playing) return;
@@ -1143,10 +1142,6 @@ GameUI.finish = function(data){
 // 🎰 CASINO.JS — [5/6] FAIRNESS + STORAGE + FX (FIXED)
 // =======================================================
 
-
-// =======================================================
-// 🔐 FAIRNESS UI (DISPLAY ONLY)
-// =======================================================
 const FairnessUI = {
 
   data:{
@@ -1285,6 +1280,7 @@ const FX = {
 // =======================================================
 // 🎬 PATCH RESULT FX
 // =======================================================
+
 const __oldFinishFX = GameUI.finish;
 
 GameUI.finish = function(data){
@@ -1304,6 +1300,7 @@ GameUI.finish = function(data){
 // =======================================================
 // 💾 AUTO SAVE BET
 // =======================================================
+
 document.addEventListener("input",(e)=>{
 
   if(e.target && e.target.id === "betAmount"){
@@ -1316,6 +1313,7 @@ document.addEventListener("input",(e)=>{
 // =======================================================
 // 🔄 RESTORE BET ON LOAD
 // =======================================================
+
 document.addEventListener("DOMContentLoaded",()=>{
 
   const input = document.getElementById("betAmount");
@@ -1325,6 +1323,7 @@ document.addEventListener("DOMContentLoaded",()=>{
   }
 
 });
+
 // =======================================================
 // 🎰 CASINO.JS — [6/6] INIT + FINAL SYSTEM (FULL FIXED)
 // =======================================================
@@ -1373,6 +1372,7 @@ const CasinoInit = {
 // =======================================================
 // 🎨 ADVANCED STYLE (BC STYLE)
 // =======================================================
+
 const CasinoAdvancedStyle = {
 
   inject(){
@@ -1453,6 +1453,7 @@ const CasinoAdvancedStyle = {
 // =======================================================
 // 🔌 FINAL WS PATCH (SAFE RECONNECT)
 // =======================================================
+
 const __oldWSConnectFinal = CasinoWS.connect;
 
 CasinoWS.connect = function(){
@@ -1477,6 +1478,7 @@ CasinoWS.connect = function(){
 // =======================================================
 // 🔄 GLOBAL FULL INIT (FIXED ORDER)
 // =======================================================
+
 window.addEventListener("DOMContentLoaded", () => {
 
   console.log("🔥 CASINO BOOT");
