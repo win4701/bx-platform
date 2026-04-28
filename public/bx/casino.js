@@ -222,6 +222,7 @@ const CasinoLobby = {
 // =======================================================
 // 🎬 GAME FLOW (REAL CONTROL)
 // =======================================================
+ 
 const GameFlow = {
 
   enter(gameId){
@@ -280,20 +281,31 @@ const GameFlow = {
 };
 
 // =======================================================
-// 🎰 CASINO.JS — [2/6] UI SYSTEM (LOBBY → GAME VIEW) FIXED
+// 🎰 CASINO.JS — [2/6] UI SYSTEM (UPGRADED STABLE PRO)
 // =======================================================
 
-  
 const GameUI = {
 
+  currentGame:null,
+
+  // =====================================================
+  // 🎮 LOAD GAME VIEW (PRO FIXED)
+  // =====================================================
   load(gameId){
 
-    const view = document.getElementById("casinoGameView");
+    this.currentGame = gameId;
+
+    const lobby = document.getElementById("casinoLobby");
+    const view  = document.getElementById("casinoGameView");
 
     if(!view){
       console.error("GameView not found");
       return;
     }
+
+    // 🔥 hide lobby / show game
+    if(lobby) lobby.classList.add("hidden");
+    view.classList.remove("hidden");
 
     view.innerHTML = `
       <div class="game-container">
@@ -344,21 +356,29 @@ const GameUI = {
 
     this.bind(gameId);
 
+    // 🔥 ENGINE START (critical fix)
+    requestAnimationFrame(()=>{
+      EngineFactory.mount(gameId);
+    });
+
   },
 
 
   // =====================================================
-  // 🔗 BINDS (FIXED)
+  // 🔗 BINDS (UPGRADED)
   // =====================================================
   bind(gameId){
 
-    // EXIT
+    // EXIT GAME
     const exitBtn = document.getElementById("exitGameBtn");
     if(exitBtn){
-      exitBtn.onclick = ()=> GameFlow.exit();
+      exitBtn.onclick = ()=>{
+        this.destroy();
+        GameFlow.exit();
+      };
     }
 
-    // QUICK BETS
+    // QUICK BET BUTTONS
     document.querySelectorAll("[data-bet]").forEach(btn=>{
       btn.onclick = ()=>{
         const input = document.getElementById("betAmount");
@@ -392,12 +412,11 @@ const GameUI = {
 
 
   // =====================================================
-  // 🎬 START ANIMATION (UI ONLY)
+  // 🎬 START ANIMATION
   // =====================================================
   startAnimation(game, roundId){
 
     const overlay = document.getElementById("gameOverlay");
-
     if(!overlay) return;
 
     overlay.innerHTML = `
@@ -410,24 +429,50 @@ const GameUI = {
 
 
   // =====================================================
-  // 🎯 RESULT UI
+  // 🎯 RESULT UI (PRO)
   // =====================================================
   finish(data){
 
     const overlay = document.getElementById("gameOverlay");
-
     if(!overlay) return;
 
+    const isWin = data.win === true;
+
     overlay.innerHTML = `
-      <div class="game-result ${data.win ? 'win' : 'lose'}">
-        ${data.win ? "+" + (data.payout || 0).toFixed(2) + " BX" : "LOSE"}
-        <div class="multiplier">${data.multiplier || ""}</div>
+      <div class="game-result ${isWin ? 'win' : 'lose'}">
+        ${isWin ? "+" + data.payout.toFixed(2) + " BX" : "LOSE"}
+        <div class="multiplier">${data.multiplier || ""}x</div>
       </div>
     `;
 
     setTimeout(()=>{
       overlay.innerHTML = "";
-    }, 2000);
+    },2000);
+
+  },
+
+
+  // =====================================================
+  // 🧹 CLEAN GAME VIEW (IMPORTANT FIX)
+  // =====================================================
+  destroy(){
+
+    const view = document.getElementById("casinoGameView");
+    const lobby = document.getElementById("casinoLobby");
+
+    if(view){
+      view.innerHTML = "";
+      view.classList.add("hidden");
+    }
+
+    if(lobby){
+      lobby.classList.remove("hidden");
+    }
+
+    // 🔥 stop engine
+    if(EngineFactory.current && EngineFactory.current.destroy){
+      EngineFactory.current.destroy();
+    }
 
   }
 
@@ -435,7 +480,7 @@ const GameUI = {
 
 
 // =======================================================
-// 🎨 STYLE (SAFE INJECTION)
+// 🎨 STYLE (UPGRADED)
 // =======================================================
 const CasinoStyle = {
 
@@ -473,6 +518,7 @@ const CasinoStyle = {
     #gameCanvas {
       width:100%;
       height:100%;
+      display:block;
     }
 
     #gameOverlay {
@@ -483,6 +529,7 @@ const CasinoStyle = {
       justify-content:center;
       font-size:22px;
       font-weight:bold;
+      pointer-events:none;
     }
 
     .bet-panel {
@@ -521,13 +568,8 @@ const CasinoStyle = {
       cursor:pointer;
     }
 
-    .game-result.win {
-      color:#22c55e;
-    }
-
-    .game-result.lose {
-      color:#ef4444;
-    }
+    .game-result.win { color:#22c55e; }
+    .game-result.lose { color:#ef4444; }
 
     `;
 
