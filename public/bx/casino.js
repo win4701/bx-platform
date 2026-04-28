@@ -283,6 +283,9 @@ const GameFlow = {
 // 🎰 CASINO.JS — [2/6] UI SYSTEM (LOBBY → GAME VIEW) FIXED
 // =======================================================
 
+  
+const GameUI = {
+
   load(gameId){
 
     const view = document.getElementById("casinoGameView");
