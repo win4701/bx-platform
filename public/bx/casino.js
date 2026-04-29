@@ -690,45 +690,55 @@
     },
 
     playCurrentGame() {
-      if (!this.state.currentGame || this.state.isPlaying) return;
 
-      const amount = clamp(Number(this.state.betAmount || 0), 0, 1e9);
-      if (!amount || amount <= 0) return toast("Enter valid bet amount");
-      if (!this.canAfford(amount)) return toast("Insufficient balance");
+  if (!this.state.currentGame || this.state.isPlaying) return;
 
-      this.debit(amount);
-      this.state.isPlaying = true;
-      this.state.isCashedOut = false;
-      this.updateLiveState("Running");
+  const amount = clamp(Number(this.state.betAmount || 0), 0, 1e9);
 
-      const cashoutGames = ["crash", "mines", "airboss"];
-      this.toggleActionButtons({
-        play: false,
-        stop: true,
-        cashout: cashoutGames.includes(this.state.currentGame.id)
-      });
+  if (!amount || amount <= 0) return toast("Enter valid bet amount");
+  if (!this.canAfford(amount)) return toast("Insufficient balance");
 
-      this.useNonce();
-      if (this.state.activeEngine?.play) {
-        this.state.activeEngine.play(amount);
-      }
+  this.state.isPlaying = true;
+  this.state.isCashedOut = false;
+
+  this.updateLiveState("Connecting...");
+
+  this.toggleActionButtons({
+    play: false,
+    stop: true,
+    cashout: ["crash","mines","airboss"].includes(this.state.currentGame.id)
+  });
+
+  this.useNonce();
+
+  this.state.activeEngine?.play?.(amount);
+
+  REAL.play(this.state.currentGame.id, amount);
+
+ }
     },
 
     stopCurrentGame() {
-      if (!this.state.isPlaying) return;
-      if (this.state.activeEngine?.stop) this.state.activeEngine.stop();
+  if (!this.state.isPlaying) return;
 
-      this.finishRound({
-        win: false,
-        payout: 0,
-        multiplier: 0
-      });
+  this.updateLiveState("Stopping...");
+
+  REAL.play("stop", 0, {
+    game: this.state.currentGame.id
+  });
+     
     },
 
     cashoutCurrentGame() {
-      if (!this.state.isPlaying || this.state.isCashedOut) return;
-      if (this.state.activeEngine?.cashout) this.state.activeEngine.cashout();
-    },
+
+  if (!this.state.isPlaying || this.state.isCashedOut) return;
+
+  this.updateLiveState("Cashing out...");
+
+  REAL.play("cashout", 0, {
+    game: this.state.currentGame.id
+  });
+}
 
     finishRound({ win, payout = 0, multiplier = 1, meta = {} }) {
       const game = this.state.currentGame;
@@ -1987,54 +1997,36 @@ if (!window.CASINO) return;
 // ===============================
 // ENGINE BRIDGE
 // ===============================
+
 const REAL = {
 
-  pending: null,
+  pending: false,
 
   async play(game, amount, meta = {}) {
 
-    if (amount <= 0) return;
-    if (amount > CASINO.state.wallet) {
-      return toast("Insufficient balance");
-    }
-
-    // optimistic
-    CASINO.state.wallet -= amount;
-    CASINO.syncWalletUI();
+    if (this.pending) return;
+    this.pending = true;
 
     CASINO.updateLiveState("Connecting...");
-
-    this.pending = {
-      game,
-      amount,
-      meta,
-      ts: Date.now()
-    };
 
     try {
 
       const res = await fetch("/api/casino/bet", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          game,
-          amount,
-          meta
-        })
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ game, amount, meta })
       });
 
       const data = await res.json();
 
-      // fallback if no WS
-      if (data && data.instant) {
+      if (data?.instant) {
         this.resolve(data.result);
       }
 
     } catch (e) {
-      console.error("BET ERROR", e);
+      console.error(e);
       toast("Connection error");
+      this.pending = false;
     }
 
   },
@@ -2051,18 +2043,13 @@ const REAL = {
       CASINO.state.wallet += payout;
     }
 
-    CASINO.finishRound({
-      win,
-      payout,
-      multiplier
-    });
+    CASINO.finishRound({ win, payout, multiplier });
 
-    this.pending = null;
+    this.pending = false;
 
   }
 
 };
-
 
 // ===============================
 // WS LISTENER (REAL TIME)
