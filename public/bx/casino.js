@@ -183,7 +183,7 @@
     boundLobbyOnce: false,
 
     state: {
-      wallet: 2500,
+      wallet: null,
       currentGame: null,
       currentTab: "all",
       autoMode: false,
@@ -202,9 +202,9 @@
       activeEngine: null,
       mountedGameId: null,
       stats: {
-        online: 1284,
+        online: 2341,
         payout: 97.4,
-        volume: 348921
+        volume: 38921
       }
     },
 
@@ -1015,7 +1015,7 @@
             },
             onDone: () => {
               const win = overUnderSelect === "under" ? finalRoll < target : finalRoll > target;
-              const edge = 0.99;
+              const edge = 0.73;
               const chancePct = overUnderSelect === "under" ? target : (100 - target);
               const multiplier = +(100 / chancePct * edge).toFixed(2);
               const payout = win ? amount * multiplier : 0;
@@ -1073,7 +1073,7 @@
         },
 
         play(amount) {
-          result = chance(.5) ? "heads" : "tails";
+          result = chance(.27) ? "heads" : "tails";
           coinEl.classList.add("spinning");
           resultText.textContent = "Flipping...";
 
@@ -1171,7 +1171,7 @@
       let selected = new Set();
       let mines = new Set();
       let boardEl;
-      let mineCount = 3;
+      let mineCount = 9;
       let safeCount = 0;
       let currentMultiplier = 1;
       let statusEl;
