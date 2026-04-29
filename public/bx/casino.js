@@ -676,7 +676,7 @@
     },
 
     credit(amount) {
-      this.state.wallet += amount;
+      this.state.wallet = amount;
       this.syncWalletUI();
       this.saveState();
     },
