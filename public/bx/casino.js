@@ -1970,3 +1970,71 @@
     bootCasino();
   }
 })();
+
+  /* =========================================================
+           Real app Play 
+  ========================================================= */
+
+const REAL = {
+
+  pending: false,
+
+  async play(game, amount, meta = {}) {
+
+    if (this.pending) return;
+    this.pending = true;
+
+    try {
+
+      const res = await fetch("/api/casino/bet", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          game,
+          amount,
+          meta
+        })
+      });
+
+      const data = await res.json();
+
+      if (data?.instant) {
+        this.resolve(data.result);
+      }
+
+    } catch (e) {
+      console.error(e);
+      toast("Connection error");
+      this.pending = false;
+    }
+
+  },
+
+  resolve(result) {
+
+    if (!this.pending) return;
+
+    const { win, payout, multiplier, balance } = result;
+
+    // 🔥 backend هو المصدر الحقيقي
+    if (balance !== undefined) {
+      CASINO.state.wallet = balance;
+    } else {
+      CASINO.state.wallet += payout;
+    }
+
+    CASINO.syncWalletUI();
+
+    CASINO.finishRound({
+      win,
+      payout,
+      multiplier
+    });
+
+    this.pending = false;
+
+  }
+
+};
