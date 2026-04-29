@@ -1,9 +1,5 @@
 /* =========================================================
    BLOXIO CASINO — ROUTER SAFE PATCH FINAL
-   Compatible with:
-   - index.html surgical patch
-   - main.js surgical patch
-   - styles.css / casino css master
 ========================================================= */
 
 (() => {
