@@ -690,28 +690,22 @@
     },
 
     playCurrentGame() {
-      if (!this.state.currentGame || this.state.isPlaying) return;
 
-      const amount = clamp(Number(this.state.betAmount || 0), 0, 1e9);
-      if (!amount || amount <= 0) return toast("Enter valid bet amount");
-      if (!this.canAfford(amount)) return toast("Insufficient balance");
+  if (!this.state.currentGame || this.state.isPlaying) return;
 
-      this.debit(amount);
-      this.state.isPlaying = true;
-      this.state.isCashedOut = false;
-      this.updateLiveState("Running");
+  const amount = clamp(Number(this.state.betAmount || 0), 0, 1e9);
 
-      const cashoutGames = ["crash", "mines", "airboss"];
-      this.toggleActionButtons({
-        play: false,
-        stop: true,
-        cashout: cashoutGames.includes(this.state.currentGame.id)
-      });
+  if (!amount || amount <= 0) return toast("Enter valid bet");
+  if (!this.canAfford(amount)) return toast("Insufficient balance");
 
-      this.useNonce();
-      if (this.state.activeEngine?.play) {
-        this.state.activeEngine.play(amount);
-      }
+  this.state.isPlaying = true;
+  this.state.isCashedOut = false;
+
+  this.updateLiveState("Connecting...");
+
+  REAL.play(this.state.currentGame.id, amount);
+
+   }
     },
 
     stopCurrentGame() {
