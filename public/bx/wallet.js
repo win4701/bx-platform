@@ -94,7 +94,10 @@ async function handleDeposit(){
 
   try{
 
-    const data = await api("/api/payments/create",{ asset });
+    const data = await api("/api/payments/create",{
+      asset,
+      amount
+    });
 
     if(data.error) return toast(data.error,"error");
 
