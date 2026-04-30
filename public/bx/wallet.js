@@ -1,5 +1,5 @@
 /* =========================================================
-   BLOXIO WALLET — PRO MAX (REALTIME + PAYMENTS)
+   BLOXIO WALLET — FINAL STABLE (HTML MATCH VERSION)
 ========================================================= */
 
 (function(){
@@ -11,10 +11,7 @@ const safe = n => Number(n)||0;
 /* ================= STATE ================= */
 
 const state = {
-  balances:{},
-  activePanel:null,
-  deposit:null,
-  ws:null
+  balances:{}
 };
 
 /* ================= API ================= */
@@ -28,10 +25,13 @@ async function api(url, body){
   return await res.json();
 }
 
+/* ================= SYNC ================= */
+
 async function syncWallet(){
 
   try{
-    const res = await fetch("/api/finance/balance");
+
+    const res = await fetch("/api/wallet");
     const data = await res.json();
 
     if(data.balances){
@@ -40,39 +40,7 @@ async function syncWallet(){
     }
 
   }catch(e){
-    console.warn("sync fallback");
-  }
-}
-
-/* ================= REALTIME (WS) ================= */
-
-function connectWS(){
-
-  try{
-
-    const ws = new WebSocket(`wss://${location.host}/ws`);
-    state.ws = ws;
-
-    ws.onmessage = (e)=>{
-
-      const msg = JSON.parse(e.data);
-
-      if(msg.type === "wallet_update"){
-        state.balances = msg.balances;
-        renderBalances();
-      }
-
-      if(msg.type === "deposit_confirmed"){
-        toast("Deposit confirmed","success");
-        syncWallet();
-      }
-
-    };
-
-    ws.onclose = ()=> setTimeout(connectWS,3000);
-
-  }catch{
-    setInterval(syncWallet,5000);
+    console.error("wallet sync error",e);
   }
 
 }
@@ -85,10 +53,10 @@ function renderBalances(){
 
   Object.keys(state.balances).forEach(asset=>{
 
-    const data = state.balances[asset];
-    const val = safe(data.available || data);
+    const val = safe(state.balances[asset]);
 
     const el = $(`bal-${asset.toLowerCase()}`);
+
     if(el) el.textContent = val.toFixed(4);
 
     total += val;
@@ -102,7 +70,7 @@ function renderBalances(){
 }
 
 /* =========================================================
-💰 DEPOSIT (REAL + QR + STATUS)
+💰 DEPOSIT
 ========================================================= */
 
 async function handleDeposit(){
@@ -110,25 +78,26 @@ async function handleDeposit(){
   const asset = $("depositAsset").value;
   const amount = safe(prompt("Enter amount USD"));
 
-  if(!amount) return toast("Invalid amount","error");
+  if(!amount){
+    return toast("Invalid amount","error");
+  }
 
   setStatus("depositStatus","Creating payment...");
 
   try{
 
-    const data = await api("/api/payments/create",{ asset, amount });
+    const data = await api("/api/payments/create",{
+      asset,
+      amount
+    });
 
-    if(data.error) return toast(data.error,"error");
-
-    state.deposit = data;
+    if(data.error){
+      return toast(data.error,"error");
+    }
 
     $("depositAddressText").textContent = data.address;
 
-    generateQR(data.address);
-
-    showDepositStatus("Waiting payment...");
-
-    monitorDeposit();
+    toast("Send crypto to this address","success");
 
   }catch{
     toast("Server error","error");
@@ -136,57 +105,8 @@ async function handleDeposit(){
 
 }
 
-/* ================= QR ================= */
-
-function generateQR(address){
-
-  const canvas = $("depositQR");
-  if(!canvas || !window.QRCode) return;
-
-  canvas.innerHTML = "";
-
-  new QRCode(canvas,{
-    text: address,
-    width: 160,
-    height: 160
-  });
-
-}
-
-/* ================= STATUS ================= */
-
-function showDepositStatus(msg){
-  if($("depositLiveStatus")){
-    $("depositLiveStatus").textContent = msg;
-  }
-}
-
-/* ================= MONITOR ================= */
-
-function monitorDeposit(){
-
-  let t = 0;
-
-  const interval = setInterval(async ()=>{
-
-    t++;
-
-    if(t > 120){
-      clearInterval(interval);
-      showDepositStatus("Expired");
-      return;
-    }
-
-    showDepositStatus("Waiting confirmations...");
-
-    await syncWallet();
-
-  },5000);
-
-}
-
 /* =========================================================
-💸 WITHDRAW (SAFE UI)
+💸 WITHDRAW
 ========================================================= */
 
 async function handleWithdraw(){
@@ -195,16 +115,27 @@ async function handleWithdraw(){
   const amount = safe($("withdrawAmount").value);
   const address = $("withdrawAddress").value;
 
-  if(!amount) return toast("Invalid amount","error");
-  if(!address) return toast("Address required","error");
+  if(!amount){
+    return toast("Invalid amount","error");
+  }
 
-  setStatus("withdrawStatus","Sending...");
+  if(!address){
+    return toast("Address required","error");
+  }
+
+  setStatus("withdrawStatus","Processing...");
 
   try{
 
-    const data = await api("/api/payments/withdraw",{ asset, amount, address });
+    const data = await api("/api/payments/withdraw",{
+      asset,
+      amount,
+      address
+    });
 
-    if(data.error) return toast(data.error,"error");
+    if(data.error){
+      return toast(data.error,"error");
+    }
 
     toast("Withdraw sent","success");
 
@@ -216,24 +147,41 @@ async function handleWithdraw(){
 
 }
 
-/* ================= TRANSFER ================= */
+/* =========================================================
+🔁 TRANSFER
+========================================================= */
 
 async function handleTransfer(){
 
   const asset = $("transferAsset").value;
   const amount = safe($("transferAmount").value);
-  const to = $("transferTo").value;
 
-  if(!amount) return toast("Invalid amount","error");
-  if(!to) return toast("Recipient required","error");
+  const to =
+    $("transferTelegram").value ||
+    $("transferTo").value;
+
+  if(!amount){
+    return toast("Invalid amount","error");
+  }
+
+  if(!to){
+    return toast("Recipient required","error");
+  }
 
   try{
 
-    const data = await api("/api/finance/transfer",{ asset, amount, to_user: to });
+    const data = await api("/api/finance/transfer",{
+      asset,
+      amount,
+      to_user: to
+    });
 
-    if(data.error) return toast(data.error,"error");
+    if(data.error){
+      return toast(data.error,"error");
+    }
 
     toast("Transfer done","success");
+
     syncWallet();
 
   }catch{
@@ -242,46 +190,66 @@ async function handleTransfer(){
 
 }
 
-/* ================= COPY ================= */
+/* =========================================================
+📋 COPY ADDRESS
+========================================================= */
 
 function copyDeposit(){
-  const t = $("depositAddressText").textContent;
-  if(!t) return;
-  navigator.clipboard.writeText(t);
+
+  const txt = $("depositAddressText").textContent;
+
+  if(!txt || txt === "—"){
+    return;
+  }
+
+  navigator.clipboard.writeText(txt);
+
   toast("Copied","success");
+
 }
 
-/* ================= UI ================= */
+/* =========================================================
+🔔 UI
+========================================================= */
 
 function toast(msg){
 
   const el = $("walletStatus");
+
   if(!el) return;
 
   el.textContent = msg;
   el.classList.remove("hidden");
 
-  setTimeout(()=>el.classList.add("hidden"),2000);
+  setTimeout(()=>{
+    el.classList.add("hidden");
+  },2000);
 
 }
 
 function setStatus(id,msg){
+
   const el = $(id);
-  if(el){
-    el.textContent = msg;
-    el.classList.remove("hidden");
-  }
+
+  if(!el) return;
+
+  el.textContent = msg;
+  el.classList.remove("hidden");
+
 }
 
-/* ================= EVENTS ================= */
+/* =========================================================
+🎯 EVENTS
+========================================================= */
 
 function bind(){
 
   document.addEventListener("click",(e)=>{
 
+    // panels
     if(e.target.dataset.walletOpen){
       document.querySelectorAll(".wallet-panel")
-      .forEach(p=>p.classList.add("wallet-hidden"));
+        .forEach(p=>p.classList.add("wallet-hidden"));
 
       $(e.target.dataset.walletOpen)?.classList.remove("wallet-hidden");
     }
@@ -290,6 +258,7 @@ function bind(){
       $(e.target.dataset.walletClose)?.classList.add("wallet-hidden");
     }
 
+    // actions
     if(e.target.id==="generateDepositBtn") handleDeposit();
     if(e.target.id==="copyDepositBtn") copyDeposit();
     if(e.target.id==="submitWithdrawBtn") handleWithdraw();
@@ -299,15 +268,18 @@ function bind(){
 
 }
 
-/* ================= INIT ================= */
+/* =========================================================
+🚀 INIT
+========================================================= */
 
 function init(){
 
   bind();
-  connectWS();      // 🔥 realtime
-  syncWallet();     // fallback
 
-  console.log("🚀 WALLET PRO MAX READY");
+  syncWallet();
+  setInterval(syncWallet,5000);
+
+  console.log("✅ WALLET FINAL READY");
 
 }
 
