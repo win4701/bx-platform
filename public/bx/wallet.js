@@ -94,7 +94,7 @@ async function handleDeposit(){
 
   try{
 
-    const data = await api("/api/nowpayments/deposit",{ asset });
+    const data = await api("/api/payments/create",{ asset });
 
     if(data.error) return toast(data.error,"error");
 
@@ -132,7 +132,7 @@ async function handleWithdraw(){
 
   try{
 
-    const data = await api("/api/nowpayments/withdraw",{
+    const data = await api("/api/payments/withdraw",{
       asset, amount, address
     });
 
