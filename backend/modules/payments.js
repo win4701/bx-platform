@@ -1,97 +1,91 @@
-"use strict"
+"use strict";
 
-const express = require("express")
-const router = express.Router()
+const express = require("express");
+const router = express.Router();
 
-const axios = require("axios")
-const crypto = require("crypto")
+const axios = require("axios");
+const crypto = require("crypto");
 
-const db = require("../database")
-const ledger = require("../core/ledger")
+const db = require("../database");
+const ledger = require("../core/ledger");
 
-const NOWPAY_API = "https://api.nowpayments.io/v1"
+const NOWPAY_API = "https://api.nowpayments.io/v1";
 
-const BINANCE_API = "https://bpay.binanceapi.com"
-
-const NOWPAY_KEY = process.env.NOWPAY_API_KEY
-const NOWPAY_IPN = process.env.NOWPAY_IPN_SECRET
+const NOWPAY_KEY = process.env.NOWPAY_API_KEY;
+const NOWPAY_IPN = process.env.NOWPAY_IPN_SECRET;
 
 /* =====================================================
 SUPPORTED COINS
 ===================================================== */
 
-const SUPPORTED_COINS = [
-"USDT",
-"USDC",
-"BTC",
-"ETH",
-"BNB",
-"AVAX",
-"SOL",
-"LTC",
-"TON",
-"ZEC"
-]
+const SUPPORTED = [
+"USDT","USDC","BTC","ETH","BNB","AVAX","SOL","LTC","TON","ZEC"
+];
 
 /* =====================================================
-CREATE CRYPTO PAYMENT
-POST /payments/create
+HELPERS
+===================================================== */
+
+function auth(req){
+  if(!req.user?.id){
+    const e = new Error("unauthorized");
+    e.status = 401;
+    throw e;
+  }
+  return req.user.id;
+}
+
+function validateAmount(v){
+  const n = Number(v);
+  if(!n || n<=0) throw new Error("invalid_amount");
+  return n;
+}
+
+/* =====================================================
+CREATE DEPOSIT (NowPayments)
 ===================================================== */
 
 router.post("/create", async (req,res)=>{
 
 try{
 
-const userId = req.user?.id
+const userId = auth(req);
 
-if(!userId){
-return res.status(401).json({error:"unauthorized"})
+let { amount, asset="USDT" } = req.body;
+
+amount = validateAmount(amount);
+asset = String(asset).toUpperCase();
+
+if(!SUPPORTED.includes(asset)){
+return res.status(400).json({error:"unsupported_coin"});
 }
 
-let { amount, asset } = req.body
-
-amount = Number(amount)
-asset = String(asset || "USDT").toUpperCase()
-
-if(!SUPPORTED_COINS.includes(asset)){
-return res.status(400).json({error:"unsupported_coin"})
-}
-
-if(!amount || amount <= 0){
-return res.status(400).json({error:"invalid_amount"})
-}
+/* unique order */
+const orderId = `${userId}_${Date.now()}`;
 
 /* create payment */
 
-const payment = await axios.post(
-
+const r = await axios.post(
 `${NOWPAY_API}/payment`,
-
 {
 price_amount: amount,
 price_currency: "usd",
 pay_currency: asset,
-order_id: "BX_" + Date.now()
+order_id: orderId
 },
-
 {
-headers:{
-"x-api-key": NOWPAY_KEY
+headers:{ "x-api-key": NOWPAY_KEY }
 }
-}
+);
 
-)
+const p = r.data;
 
-const p = payment.data
-
-/* save payment */
+/* save */
 
 await db.query(
-
 `INSERT INTO payments
-(user_id,type,provider,amount,asset,status,external_id)
-VALUES($1,$2,$3,$4,$5,$6,$7)`,
-
+(user_id,type,provider,amount,asset,status,external_id,meta)
+VALUES($1,$2,$3,$4,$5,$6,$7,$8)`,
 [
 userId,
 "deposit",
@@ -99,222 +93,180 @@ userId,
 amount,
 asset,
 "pending",
-p.payment_id
-]
-
-)
+p.payment_id,
+JSON.stringify({orderId})
+],
+{tag:"payment_create"}
+);
 
 res.json({
-
 payment_id: p.payment_id,
-pay_address: p.pay_address,
+address: p.pay_address,
 amount: p.pay_amount,
 currency: p.pay_currency
-
-})
+});
 
 }catch(e){
-
-console.error("create payment error",e)
-
-res.status(500).json({error:"payment_create_failed"})
-
+res.status(e.status||500).json({error:e.message});
 }
 
-})
+});
 
 /* =====================================================
-NOWPAYMENTS WEBHOOK
-POST /payments/webhook
+WEBHOOK (SECURE + IDEMPOTENT)
 ===================================================== */
 
 router.post("/webhook", async (req,res)=>{
 
 try{
 
-const signature = req.headers["x-nowpayments-sig"]
+const sig = req.headers["x-nowpayments-sig"];
 
 const hash = crypto
 .createHmac("sha512", NOWPAY_IPN)
 .update(JSON.stringify(req.body))
-.digest("hex")
+.digest("hex");
 
-if(hash !== signature){
-return res.status(401).send("invalid_signature")
+if(hash !== sig){
+return res.status(401).send("invalid_signature");
 }
 
-const payment = req.body
+const payment = req.body;
 
+/* only finished */
 if(payment.payment_status !== "finished"){
-return res.send("pending")
+return res.send("pending");
 }
 
-/* find payment */
+/* find */
 
 const r = await db.query(
-
-`SELECT * FROM payments
-WHERE external_id=$1`,
-
+`SELECT * FROM payments WHERE external_id=$1`,
 [payment.payment_id]
-
-)
+);
 
 if(!r.rows.length){
-return res.send("payment_not_found")
+return res.send("not_found");
 }
 
-const p = r.rows[0]
+const p = r.rows[0];
 
 if(p.status === "completed"){
-return res.send("already_processed")
+return res.send("already_done");
 }
 
-/* credit wallet */
+/* atomic credit */
+
+await db.transaction(async (tx)=>{
 
 await ledger.credit({
-
 user_id: p.user_id,
 asset: p.asset,
-amount: payment.price_amount,
-reason: "deposit"
+amount: Number(payment.pay_amount),
+reason: "deposit",
+tx
+});
 
-})
-
-/* update payment */
-
-await db.query(
-
-`UPDATE payments
-SET status='completed'
-WHERE id=$1`,
-
+await tx.query(
+`UPDATE payments SET status='completed' WHERE id=$1`,
 [p.id]
+);
 
-)
+});
 
-res.send("ok")
+res.send("ok");
 
 }catch(e){
-
-console.error("webhook error",e)
-
-res.status(500).send("webhook_failed")
-
+console.error("webhook error",e);
+res.status(500).send("error");
 }
 
-})
+});
 
 /* =====================================================
-BINANCE PAY (SIMPLIFIED)
-POST /payments/binance/create
+WITHDRAW (NowPayments Payout)
 ===================================================== */
 
-router.post("/binance/create", async (req,res)=>{
+router.post("/withdraw", async (req,res)=>{
 
 try{
 
-const userId = req.user?.id
+const userId = auth(req);
 
-if(!userId){
-return res.status(401).json({error:"unauthorized"})
+let { amount, asset, address } = req.body;
+
+amount = validateAmount(amount);
+asset = String(asset).toUpperCase();
+
+if(!SUPPORTED.includes(asset)){
+return res.status(400).json({error:"unsupported_coin"});
 }
-
-let { amount } = req.body
-
-amount = Number(amount)
-
-if(!amount){
-return res.status(400).json({error:"invalid_amount"})
-}
-
-const orderId = "BNP_" + Date.now()
-
-await db.query(
-
-`INSERT INTO payments
-(user_id,type,provider,amount,asset,status,external_id)
-VALUES($1,$2,$3,$4,$5,$6,$7)`,
-
-[
-userId,
-"deposit",
-"binance",
-amount,
-"USDT",
-"pending",
-orderId
-]
-
-)
-
-res.json({
-
-order_id:orderId,
-pay_url:`https://pay.binance.com/order/${orderId}`
-
-})
-
-}catch(e){
-
-console.error("binance pay error",e)
-
-res.status(500).json({error:"binance_failed"})
-
-}
-
-})
-
-/* =====================================================
-WALLET CONNECT
-POST /payments/wallet/connect
-===================================================== */
-
-router.post("/wallet/connect", async (req,res)=>{
-
-try{
-
-const userId = req.user?.id
-
-if(!userId){
-return res.status(401).json({error:"unauthorized"})
-}
-
-const { type,address } = req.body
 
 if(!address){
-return res.status(400).json({error:"invalid_wallet"})
+return res.status(400).json({error:"invalid_address"});
 }
 
-await db.query(
+await db.transaction(async (tx)=>{
 
-`UPDATE users
-SET wallet_type=$1,
-wallet_address=$2
-WHERE id=$3`,
+/* 🔒 lock */
+const w = await tx.query(
+`SELECT balance FROM wallet_balances
+ WHERE user_id=$1 AND asset=$2
+ FOR UPDATE`,
+[userId,asset]
+);
 
-[
-type,
+if(!w.rows.length || Number(w.rows[0].balance) < amount){
+throw new Error("insufficient_balance");
+}
+
+/* debit */
+await ledger.debit({
+user_id:userId,
+asset,
+amount,
+reason:"withdraw",
+tx
+});
+
+/* payout */
+
+const payout = await axios.post(
+`${NOWPAY_API}/payout`,
+{
 address,
-userId
+currency: asset,
+amount
+},
+{
+headers:{ "x-api-key": NOWPAY_KEY }
+}
+);
+
+/* save */
+
+await tx.query(
+`INSERT INTO withdrawals
+(user_id,asset,amount,address,tx_hash,status)
+VALUES($1,$2,$3,$4,$5,'sent')`,
+[
+userId,
+asset,
+amount,
+address,
+payout.data.id
 ]
+);
 
-)
+});
 
-res.json({
-status:"connected",
-address
-})
+res.json({status:"sent"});
 
 }catch(e){
-
-console.error("wallet connect error",e)
-
-res.status(500).json({error:"wallet_connect_failed"})
-
+res.status(400).json({error:e.message});
 }
 
-})
+});
 
 /* =====================================================
 PAYMENT HISTORY
@@ -324,34 +276,24 @@ router.get("/history", async (req,res)=>{
 
 try{
 
-const userId = req.user?.id
-
-if(!userId){
-return res.status(401).json({error:"unauthorized"})
-}
+const userId = auth(req);
 
 const r = await db.query(
-
 `SELECT id,provider,amount,asset,status,created_at
-FROM payments
-WHERE user_id=$1
-ORDER BY created_at DESC
-LIMIT 50`,
+ FROM payments
+ WHERE user_id=$1
+ ORDER BY created_at DESC
+ LIMIT 50`,
+[userId],
+{tag:"payment_history"}
+);
 
-[userId]
-
-)
-
-res.json(r.rows)
+res.json(r.rows);
 
 }catch(e){
-
-console.error("payment history error",e)
-
-res.status(500).json({error:"history_failed"})
-
+res.status(500).json({error:"history_failed"});
 }
 
-})
+});
 
-module.exports = router
+module.exports = router;
