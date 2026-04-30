@@ -4,28 +4,30 @@ require("dotenv").config();
 const { Pool } = require("pg");
 
 /* =====================================
-CONFIG
+ENV VALIDATION
 ===================================== */
 
-const DATABASE_URL = process.env.DATABASE_URL;
+const REQUIRED = ["DATABASE_URL"];
 
-if (!DATABASE_URL) {
-  console.error("❌ DATABASE_URL missing");
-  process.exit(1);
-}
+REQUIRED.forEach((k) => {
+  if (!process.env[k]) {
+    console.error(`❌ Missing ENV: ${k}`);
+    process.exit(1);
+  }
+});
 
 const isProd = process.env.NODE_ENV === "production";
 
 /* =====================================
-POOL
+POOL (SUPABASE + HIGH LOAD READY)
 ===================================== */
 
 const pool = new Pool({
-  connectionString: DATABASE_URL,
+  connectionString: process.env.DATABASE_URL,
 
-  ssl: isProd ? { rejectUnauthorized: false } : false,
+  ssl: { rejectUnauthorized: false },
 
-  max: 25,
+  max: isProd ? 40 : 10,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 5000,
   keepAlive: true,
@@ -38,7 +40,8 @@ METRICS
 let stats = {
   queries: 0,
   errors: 0,
-  slow: 0
+  slow: 0,
+  retries: 0,
 };
 
 /* =====================================
@@ -46,28 +49,30 @@ POOL EVENTS
 ===================================== */
 
 pool.on("connect", () => {
-  console.log("✅ PostgreSQL connected");
+  console.log("✅ DB connected");
 });
 
 pool.on("error", (err) => {
-  console.error("❌ PostgreSQL pool error:", err.message);
   stats.errors++;
+  console.error("❌ Pool error:", err.message);
 });
 
 /* =====================================
-SAFE QUERY (TIMEOUT + RETRY + METRICS)
+SAFE QUERY (TAGGED + TIMEOUT + RETRY)
 ===================================== */
 
-async function query(text, params = [], retry = 2){
+async function query(text, params = [], opts = {}) {
 
   const start = Date.now();
   stats.queries++;
+
+  const tag = opts.tag || "default";
 
   const timeout = new Promise((_, reject) =>
     setTimeout(() => reject(new Error("QUERY_TIMEOUT")), 8000)
   );
 
-  try{
+  try {
 
     const res = await Promise.race([
       pool.query(text, params),
@@ -76,77 +81,89 @@ async function query(text, params = [], retry = 2){
 
     const duration = Date.now() - start;
 
-    if(duration > 500){
+    if (duration > 500) {
       stats.slow++;
-      console.log("🐢 Slow query:", duration, "ms");
+      console.warn(`🐢 [${tag}] slow query: ${duration}ms`);
     }
 
     return res;
 
-  }catch(err){
+  } catch (err) {
 
     stats.errors++;
-    console.error("❌ DB error:", err.message);
 
-    if(
-      retry > 0 &&
-      (
-        err.message === "QUERY_TIMEOUT" ||
-        err.code === "ECONNRESET" ||
-        err.code === "ETIMEDOUT"
-      )
-    ){
-      console.log("🔁 Retrying query...");
-      return query(text, params, retry - 1);
+    console.error(`❌ [${tag}]`, err.message);
+
+    if (
+      opts.retry !== false &&
+      ["QUERY_TIMEOUT", "ECONNRESET", "ETIMEDOUT"].includes(err.message || err.code)
+    ) {
+      stats.retries++;
+      return query(text, params, { ...opts, retry: false });
     }
 
     throw err;
   }
-
 }
 
 /* =====================================
-TRANSACTION (SAFE WRAPPER)
+TRANSACTION (SERIALIZABLE SAFE)
 ===================================== */
 
-async function transaction(fn){
+async function transaction(fn, options = {}) {
 
   const client = await pool.connect();
 
-  try{
+  try {
 
     await client.query("BEGIN");
 
-    const result = await fn({
-      query: (text, params)=> client.query(text, params)
-    });
+    // 🔥 isolation (critical for market)
+    if (options.isolation) {
+      await client.query(`SET TRANSACTION ISOLATION LEVEL ${options.isolation}`);
+    }
+
+    const tx = {
+      query: (text, params = []) => client.query(text, params),
+
+      // 🔒 row lock helper
+      lockWallet: async (userId, asset) => {
+        return client.query(
+          `SELECT * FROM wallet_balances
+           WHERE user_id = $1 AND asset = $2
+           FOR UPDATE`,
+          [userId, asset]
+        );
+      }
+    };
+
+    const result = await fn(tx);
 
     await client.query("COMMIT");
 
     return result;
 
-  }catch(err){
+  } catch (err) {
 
     await client.query("ROLLBACK");
-    stats.errors++;
 
+    stats.errors++;
     console.error("❌ TX failed:", err.message);
 
     throw err;
 
-  }finally{
+  } finally {
     client.release();
   }
-
 }
 
 /* =====================================
-HEALTH CHECK
+HEALTH (RENDER)
 ===================================== */
 
-async function health(){
+async function health() {
 
-  try{
+  try {
 
     const start = Date.now();
 
@@ -160,7 +177,7 @@ async function health(){
       stats
     };
 
-  }catch(e){
+  } catch (e) {
 
     return {
       status: "down",
@@ -168,35 +185,32 @@ async function health(){
     };
 
   }
-
 }
 
 /* =====================================
-AUTO CHECK (KEEP ALIVE)
+KEEP ALIVE (SUPABASE FIX)
 ===================================== */
 
-setInterval(async ()=>{
-
-  try{
+setInterval(async () => {
+  try {
     await pool.query("SELECT 1");
-  }catch(e){
-    console.error("⚠️ DB ping failed:", e.message);
+  } catch (e) {
+    console.warn("⚠️ DB ping failed:", e.message);
   }
-
-}, 30000);
+}, 25000);
 
 /* =====================================
 GRACEFUL SHUTDOWN
 ===================================== */
 
-async function shutdown(){
+async function shutdown() {
 
   console.log("🛑 Closing DB...");
 
-  try{
+  try {
     await pool.end();
     console.log("✅ DB closed");
-  }catch(e){
+  } catch (e) {
     console.error("Shutdown error:", e.message);
   }
 
