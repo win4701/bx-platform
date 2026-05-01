@@ -99,30 +99,26 @@ function closePanel(id){
 async function handleDeposit(){
 
   const asset = $("depositAsset").value;
-  const amount = safe(prompt("Enter amount USD"));
+  const amount = Number($("depositAmount")?.value || 0);
 
-  if(!amount) return toast("Invalid amount");
+  setStatus("depositStatus","Generating address...");
 
-  setStatus("depositStatus","Creating...");
+  const data = await api("/api/payments/create",{
+    asset,
+    amount: amount || undefined
+  });
 
-  try{
-
-    const data = await api("/api/payments/create",{
-      asset,
-      amount
-    });
-
-    if(data.error) return toast(data.error);
-
+  if(data?.address){
     $("depositAddressText").textContent = data.address;
 
-    toast("Send crypto to address");
-
-  }catch{
-    toast("Server error");
+    // optional QR
+    if(window.QRCode && $("depositQR")){
+      $("depositQR").classList.remove("hidden");
+      $("depositQR").innerHTML = "";
+      new QRCode($("depositQR"), data.address);
+    }
   }
 }
-
 /* ================= COPY ================= */
 
 function copyDeposit(){
