@@ -90,42 +90,65 @@
   <div class="wallet-panels">
 
     <!-- ===== DEPOSIT ===== -->
-    <div class="wallet-panel wallet-hidden" id="depositPanel">
-      <div class="wallet-panel-head">
-        <h4>Deposit Crypto</h4>
-        <button type="button" class="wallet-panel-close" id="closeDepositPanel" data-wallet-close="depositPanel">✕</button>
-      </div>
+<div class="wallet-panel wallet-hidden" id="depositPanel">
+  <div class="wallet-panel-head">
+    <h4>Deposit Crypto</h4>
+    <button type="button" class="wallet-panel-close" data-wallet-close="depositPanel">✕</button>
+  </div>
 
-      <div class="wallet-panel-body">
-        <label for="depositAsset">Asset</label>
-        <select id="depositAsset">
-          <option value="USDT">USDT</option>
-          <option value="USDC">USDC</option>
-          <option value="BTC">BTC</option>
-          <option value="BNB">BNB</option>
-          <option value="ETH">ETH</option>
-          <option value="AVAX">AVAX</option>
-          <option value="ZEC">ZEC</option>
-          <option value="TON">TON</option>
-          <option value="SOL">SOL</option>
-          <option value="LTC">LTC</option>
-        </select>
+  <div class="wallet-panel-body">
 
-        <button class="btn primary" id="generateDepositBtn" type="button">Generate Address</button>
+    <!-- ASSET -->
+    <label for="depositAsset">Asset</label>
+    <select id="depositAsset">
+      <option value="USDT">USDT</option>
+      <option value="USDC">USDC</option>
+      <option value="BTC">BTC</option>
+      <option value="BNB">BNB</option>
+      <option value="ETH">ETH</option>
+      <option value="AVAX">AVAX</option>
+      <option value="ZEC">ZEC</option>
+      <option value="TON">TON</option>
+      <option value="SOL">SOL</option>
+      <option value="LTC">LTC</option>
+    </select>
 
-        <div class="wallet-address-box">
-          <span class="wallet-address-label">Deposit Address</span>
-          <!-- مهم: دعم الاسمين حتى لا ينكسر JS -->
-          <code id="depositAddressText">—</code>
-        </div>
+    <!-- ✅ OPTIONAL AMOUNT (بدون كسر) -->
+    <label for="depositAmount">Amount (optional)</label>
+    <input 
+      id="depositAmount"
+      type="number"
+      min="0"
+      step="0.0001"
+      placeholder="Optional (USD)"
+      class="wallet-input"
+    >
 
-        <div class="wallet-inline-actions">
-          <button id="copyDepositBtn" class="btn secondary" type="button">Copy Address</button>
-        </div>
+    <!-- ACTION -->
+    <button class="btn primary" id="generateDepositBtn" type="button">
+      Generate Address
+    </button>
 
-        <div id="depositStatus" class="wallet-status hidden"></div>
-      </div>
+    <!-- ADDRESS -->
+    <div class="wallet-address-box">
+      <span class="wallet-address-label">Deposit Address</span>
+      <code id="depositAddressText">—</code>
     </div>
+
+    <!-- QR (اختياري — ما يكسر حتى شيء) -->
+    <div id="depositQR" class="wallet-qr hidden"></div>
+
+    <!-- ACTIONS -->
+    <div class="wallet-inline-actions">
+      <button id="copyDepositBtn" class="btn secondary" type="button">
+        Copy Address
+      </button>
+    </div>
+    <!-- STATUS -->
+    <div id="depositStatus" class="wallet-status hidden"></div>
+  </div>
+</div>
+    
 
     <!-- ===== WITHDRAW ===== -->
     <div class="wallet-panel wallet-hidden" id="withdrawPanel">
