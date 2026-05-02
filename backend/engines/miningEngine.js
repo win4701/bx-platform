@@ -7,17 +7,15 @@ const economy = require("../core/bxEconomy");
 CONFIG
 ========================================= */
 
-const REWARD_RATE = 0.0005; // per hash/sec
-const MAX_REWARD_PER_MIN = 5;
-const INTERVAL = 60 * 1000;
+const INTERVAL = 30000; // 30s
+const MAX_PER_TICK = 3;
+const MIN_HASH = 1;
 
 /* =========================================
 PROCESS
 ========================================= */
 
 async function processMining(){
-
-  const now = Date.now();
 
   const sessions = await db.query(`
     SELECT *
@@ -29,41 +27,46 @@ async function processMining(){
 
     try{
 
-      const last = new Date(s.last_reward || s.created_at).getTime();
-      const diff = (now - last) / 1000; // seconds
+      const last = new Date(s.last_reward).getTime();
+      const now = Date.now();
+      const diff = (now - last) / 1000;
 
       if(diff <= 0) continue;
 
-      /* ================= REWARD ================= */
+      /* ===== REWARD ===== */
 
-      let reward = Number(s.hash_rate) * REWARD_RATE * diff;
+      let reward = (s.hash_rate * 0.0002) * diff;
 
-      /* cap protection */
-      if(reward > MAX_REWARD_PER_MIN){
-        reward = MAX_REWARD_PER_MIN;
-      }
+      reward = Math.min(reward, MAX_PER_TICK);
 
       if(reward <= 0) continue;
 
-      /* ================= ECONOMY ================= */
+      /* ===== WALLET (SAFE) ===== */
 
       await economy.rewardBX(
         s.user_id,
         reward,
-        "mining_reward"
+        "mining"
       );
 
-      /* ================= UPDATE ================= */
+      /* ===== UPDATE ===== */
 
       await db.query(`
         UPDATE mining_sessions
-        SET last_reward = NOW(),
-            total_earned = COALESCE(total_earned,0) + $1
+        SET last_reward=NOW(),
+            total_earned = total_earned + $1
         WHERE id=$2
       `,[reward, s.id]);
 
+      /* ===== WS ===== */
+
+      sendWS(s.user_id,{
+        type:"mining_reward",
+        amount:reward
+      });
+
     }catch(e){
-      console.error("Mining session error:", e.message);
+      console.error("mining error:", e);
     }
 
   }
@@ -71,44 +74,54 @@ async function processMining(){
 }
 
 /* =========================================
-START
+START SESSION (SECURE)
 ========================================= */
 
-function startMiningScheduler(){
+async function startMining(userId, plan){
 
-  console.log("⛏ Mining Engine LIVE");
+  if(!plan) throw new Error("invalid_plan");
 
-  setInterval(async ()=>{
+  /* prevent multiple sessions */
+  const active = await db.query(`
+    SELECT id FROM mining_sessions
+    WHERE user_id=$1 AND status='active'
+  `,[userId]);
 
-    try{
-      await processMining();
-    }catch(e){
-      console.error("Mining error", e);
-    }
+  if(active.rows.length){
+    throw new Error("already_mining");
+  }
 
-  }, INTERVAL);
-
-}
-
-/* =========================================
-START SESSION
-========================================= */
-
-async function startMining(userId, hashRate){
-
-  if(hashRate <= 0) throw new Error("invalid_hashrate");
+  const hashRate = getPlanHash(plan);
 
   await db.query(`
     INSERT INTO mining_sessions
-    (user_id, hash_rate, status, created_at, last_reward)
-    VALUES($1,$2,'active',NOW(),NOW())
-  `,[userId, hashRate]);
+    (user_id,hash_rate,plan,status,created_at,last_reward)
+    VALUES($1,$2,$3,'active',NOW(),NOW())
+  `,[userId, hashRate, plan]);
 
-  return { success:true };
 }
 
 /* =========================================
-STOP SESSION
+PLAN HASH (IMPORTANT)
+========================================= */
+
+function getPlanHash(plan){
+
+  const map = {
+    starter: 10,
+    basic: 30,
+    pro: 80,
+    elite: 200,
+    ultra: 500,
+    legend: 1000
+  };
+
+  return map[plan] || MIN_HASH;
+
+}
+
+/* =========================================
+STOP
 ========================================= */
 
 async function stopMining(userId){
@@ -119,17 +132,17 @@ async function stopMining(userId){
     WHERE user_id=$1 AND status='active'
   `,[userId]);
 
-  return { success:true };
 }
 
 /* =========================================
-GET STATUS
+STATUS (REAL)
 ========================================= */
 
 async function getMiningStatus(userId){
 
   const r = await db.query(`
-    SELECT *
+    SELECT *,
+    EXTRACT(EPOCH FROM (NOW() - last_reward)) as elapsed
     FROM mining_sessions
     WHERE user_id=$1
     ORDER BY id DESC
@@ -140,8 +153,29 @@ async function getMiningStatus(userId){
 }
 
 /* =========================================
-EXPORT
+WS
 ========================================= */
+
+function sendWS(userId,data){
+
+  const ws = global.WS_HUB;
+  if(!ws) return;
+
+  ws.send(userId,data);
+
+}
+
+/* =========================================
+START LOOP
+========================================= */
+
+function startMiningScheduler(){
+
+  console.log("⛏ MINING ENGINE PRO RUNNING");
+
+  setInterval(processMining, INTERVAL);
+
+}
 
 module.exports = {
   startMiningScheduler,
