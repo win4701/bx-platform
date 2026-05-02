@@ -1,5 +1,5 @@
 /* =========================================================
-   BLOXIO WALLET — FINAL COMPLETE (NO BREAK VERSION)
+   BLOXIO WALLET — FINAL ULTIMATE SYSTEM
 ========================================================= */
 
 (function(){
@@ -8,27 +8,125 @@
 const $ = id => document.getElementById(id);
 const safe = n => Number(n)||0;
 
-/* ================= STATE ================= */
+/* =========================================================
+📊 ASSETS SYSTEM
+========================================================= */
+
+const ASSETS = {
+  BX:{name:"Bloxio",d:4},
+  USDT:{name:"Tether",d:2},
+  USDC:{name:"USD Coin",d:2},
+  BTC:{name:"Bitcoin",d:8},
+  ETH:{name:"Ethereum",d:6},
+  BNB:{name:"BNB",d:4},
+  SOL:{name:"Solana",d:4},
+  TON:{name:"Toncoin",d:4},
+  AVAX:{name:"Avalanche",d:4},
+  LTC:{name:"Litecoin",d:4},
+  ZEC:{name:"Zcash",d:4}
+};
+
+/* =========================================================
+📦 STATE
+========================================================= */
 
 const state = {
   balances:{},
+  ws:null,
   syncing:false
 };
 
-/* ================= API ================= */
+/* =========================================================
+🌐 API
+========================================================= */
 
 async function api(url, body){
-
   const res = await fetch(url,{
     method:"POST",
     headers:{ "Content-Type":"application/json" },
     body: JSON.stringify(body)
   });
-
   return await res.json();
 }
 
-/* ================= SYNC ================= */
+/* =========================================================
+⚡ WEBSOCKET ENGINE
+========================================================= */
+
+function connectWS(){
+
+  try{
+
+    const ws = new WebSocket(`wss://${location.host}/ws`);
+    state.ws = ws;
+
+    ws.onopen = ()=> console.log("⚡ WS CONNECTED");
+
+    ws.onmessage = (e)=>{
+
+      const msg = JSON.parse(e.data);
+
+      /* WALLET */
+      if(msg.type==="wallet_update"){
+        state.balances = msg.balances || state.balances;
+        renderBalances();
+      }
+
+      /* CASINO */
+      if(msg.type==="casino_balance"){
+        state.balances.BX = msg.balance;
+        renderBalances();
+      }
+
+      /* MINING */
+      if(msg.type==="mining_reward"){
+        state.balances.BX = safe(state.balances.BX) + msg.amount;
+        renderBalances();
+        toast("Mining +" + msg.amount);
+      }
+
+      /* MARKET */
+      if(msg.type==="market_balance"){
+        state.balances = msg.balances;
+        renderBalances();
+      }
+
+      /* DEPOSIT */
+      if(msg.type==="deposit_pending"){
+        setStatus("depositStatus","Pending...");
+      }
+
+      if(msg.type==="deposit_confirmed"){
+        toast("Deposit confirmed 💰");
+        syncWallet();
+      }
+
+      /* TRANSFER */
+      if(msg.type==="transfer_in"){
+        toast("Received funds 💸");
+        syncWallet();
+      }
+
+      /* FRAUD */
+      if(msg.type==="fraud_alert"){
+        toast("Security alert ⚠️");
+      }
+
+    };
+
+    ws.onclose = ()=>{
+      setTimeout(connectWS,2000);
+    };
+
+  }catch{
+    setInterval(syncWallet,5000);
+  }
+
+}
+
+/* =========================================================
+🔁 SYNC FALLBACK
+========================================================= */
 
 async function syncWallet(){
 
@@ -36,45 +134,47 @@ async function syncWallet(){
   state.syncing = true;
 
   try{
-
     const res = await fetch("/api/wallet");
     const data = await res.json();
 
-    if(data && data.balances){
+    if(data.balances){
       state.balances = data.balances;
       renderBalances();
     }
 
-  }catch(e){
-    console.error("wallet sync error", e);
-  }
+  }catch{}
 
   state.syncing = false;
 }
 
-/* ================= RENDER ================= */
+/* =========================================================
+💰 RENDER
+========================================================= */
 
 function renderBalances(){
 
   let total = 0;
 
-  Object.keys(state.balances).forEach(asset=>{
+  Object.entries(state.balances).forEach(([asset,val])=>{
 
-    const val = safe(state.balances[asset]);
+    const meta = ASSETS[asset] || {d:4};
+    const value = safe(val);
 
     const el = $(`bal-${asset.toLowerCase()}`);
-    if(el) el.textContent = val.toFixed(4);
+    if(el) el.textContent = value.toFixed(meta.d);
 
-    total += val;
+    total += value;
+
   });
 
   if($("walletTotal")){
     $("walletTotal").textContent = "$"+total.toFixed(2);
   }
+
 }
 
 /* =========================================================
-💰 DEPOSIT (NO POPUP — CORRECT FLOW)
+💰 DEPOSIT
 ========================================================= */
 
 async function handleDeposit(){
@@ -82,56 +182,28 @@ async function handleDeposit(){
   const asset = $("depositAsset")?.value;
   const amount = safe($("depositAmount")?.value || 0);
 
-  if(!asset) return toast("Select asset");
-
   setStatus("depositStatus","Generating address...");
 
-  try{
+  const data = await api("/api/payments/create",{
+    asset,
+    amount: amount || undefined
+  });
 
-    const data = await api("/api/payments/create",{
-      asset,
-      amount: amount || undefined
-    });
+  if(data?.address){
 
-    if(!data || data.error){
-      return toast(data?.error || "Deposit failed");
-    }
+    $("depositAddressText").textContent = data.address;
 
-    $("depositAddressText").textContent = data.address || "Error";
-
-    // QR optional
     if(window.QRCode && $("depositQR")){
       $("depositQR").classList.remove("hidden");
       $("depositQR").innerHTML = "";
-      new QRCode($("depositQR"), {
-        text: data.address,
-        width: 160,
-        height: 160
-      });
+      new QRCode($("depositQR"), data.address);
     }
 
     toast("Send crypto to address");
 
-  }catch{
-    toast("Server error");
+  }else{
+    toast("Deposit error");
   }
-
-}
-
-/* =========================================================
-📋 COPY ADDRESS
-========================================================= */
-
-function copyDeposit(){
-
-  const txt = $("depositAddressText")?.textContent;
-
-  if(!txt || txt==="—"){
-    return toast("No address");
-  }
-
-  navigator.clipboard.writeText(txt);
-  toast("Copied");
 
 }
 
@@ -145,66 +217,80 @@ async function handleWithdraw(){
   const amount = safe($("withdrawAmount")?.value);
   const address = $("withdrawAddress")?.value;
 
-  if(!amount) return toast("Invalid amount");
-  if(!address) return toast("Address required");
+  if(!amount || !address) return toast("Invalid input");
 
   setStatus("withdrawStatus","Processing...");
 
-  try{
+  const data = await api("/api/payments/withdraw",{ asset, amount, address });
 
-    const data = await api("/api/payments/withdraw",{
-      asset,
-      amount,
-      address
-    });
-
-    if(data?.error){
-      return toast(data.error);
-    }
-
+  if(data?.error){
+    toast(data.error);
+  }else{
     toast("Withdraw sent");
     syncWallet();
-
-  }catch{
-    toast("Server error");
   }
 
 }
 
 /* =========================================================
-🔁 TRANSFER
+💸 TRANSFER PRO
 ========================================================= */
 
 async function handleTransfer(){
 
-  const asset = $("transferAsset")?.value;
+  const asset = $("transferAsset")?.value || "BX";
   const amount = safe($("transferAmount")?.value);
-
-  const to =
-    $("transferTelegram")?.value ||
-    $("transferTo")?.value;
+  const to = $("transferUser")?.value?.trim();
 
   if(!amount) return toast("Invalid amount");
-  if(!to) return toast("Recipient required");
+  if(!to) return toast("Enter user ID or email");
 
-  try{
+  setStatus("transferStatus","Processing...");
 
-    const data = await api("/api/finance/transfer",{
-      asset,
-      amount,
-      to_user: to
-    });
+  const data = await api("/api/finance/transfer",{ asset, amount, to });
 
-    if(data?.error){
-      return toast(data.error);
-    }
-
-    toast("Transfer done");
+  if(data?.error){
+    toast(data.error);
+  }else{
+    toast("Transfer sent 💸");
     syncWallet();
-
-  }catch{
-    toast("Server error");
+    resetTransfer();
   }
+
+}
+
+function resetTransfer(){
+  if($("transferAmount")) $("transferAmount").value="";
+  if($("transferUser")) $("transferUser").value="";
+}
+
+/* =========================================================
+📋 COPY
+========================================================= */
+
+function copyDeposit(){
+
+  const txt = $("depositAddressText")?.textContent;
+  if(!txt || txt==="—") return;
+
+  navigator.clipboard.writeText(txt);
+  toast("Copied");
+
+}
+
+/* =========================================================
+🔐 ANTI-FRAUD UI
+========================================================= */
+
+function antiFraud(){
+
+  window.addEventListener("blur",()=>console.warn("focus lost"));
+
+  document.addEventListener("visibilitychange",()=>{
+    if(document.hidden){
+      console.warn("tab hidden");
+    }
+  });
 
 }
 
@@ -238,7 +324,7 @@ function bind(){
 
   document.addEventListener("click",(e)=>{
 
-    // open panel
+    /* PANELS */
     if(e.target.dataset.walletOpen){
       document.querySelectorAll(".wallet-panel")
         .forEach(p=>p.classList.add("wallet-hidden"));
@@ -246,12 +332,23 @@ function bind(){
       $(e.target.dataset.walletOpen)?.classList.remove("wallet-hidden");
     }
 
-    // close panel
     if(e.target.dataset.walletClose){
       $(e.target.dataset.walletClose)?.classList.add("wallet-hidden");
     }
 
-    // actions
+    /* QUICK ACTIONS */
+    if(e.target.id==="depositNowBtn" || e.target.id==="openDepositBtn"){
+      $("depositPanel")?.classList.remove("wallet-hidden");
+    }
+
+    if(e.target.id==="exploreMarketBtn"){
+      document.querySelectorAll(".view")
+        .forEach(v=>v.classList.remove("active"));
+
+      $("market")?.classList.add("active");
+    }
+
+    /* ACTIONS */
     if(e.target.id==="generateDepositBtn") handleDeposit();
     if(e.target.id==="copyDepositBtn") copyDeposit();
     if(e.target.id==="submitWithdrawBtn") handleWithdraw();
@@ -273,19 +370,17 @@ function toast(msg){
   el.textContent = msg;
   el.classList.remove("hidden");
 
-  setTimeout(()=>{
-    el.classList.add("hidden");
-  },2000);
+  setTimeout(()=>el.classList.add("hidden"),2000);
 
 }
 
 function setStatus(id,msg){
 
   const el = $(id);
-  if(!el) return;
-
-  el.textContent = msg;
-  el.classList.remove("hidden");
+  if(el){
+    el.textContent = msg;
+    el.classList.remove("hidden");
+  }
 
 }
 
@@ -298,10 +393,11 @@ function init(){
   bind();
   bindSearch();
 
+  connectWS();
   syncWallet();
-  setInterval(syncWallet,7000); // stable polling
+  antiFraud();
 
-  console.log("✅ WALLET FINAL COMPLETE READY");
+  console.log("🚀 WALLET FINAL SYSTEM READY");
 
 }
 
