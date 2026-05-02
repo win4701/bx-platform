@@ -183,42 +183,64 @@
         <div id="withdrawStatus" class="wallet-status hidden"></div>
       </div>
     </div>
-
     <!-- ===== TRANSFER ===== -->
-    <div class="wallet-panel wallet-hidden" id="transferPanel">
-      <div class="wallet-panel-head">
-        <h4>Transfer BX</h4>
-        <button type="button" class="wallet-panel-close" id="closeTransferPanel" data-wallet-close="transferPanel">✕</button>
-      </div>
+<div class="wallet-panel wallet-hidden" id="transferPanel">
+  <div class="wallet-panel-head">
+    <h4>Transfer Assets</h4>
+    <button type="button" class="wallet-panel-close" data-wallet-close="transferPanel">✕</button>
+  </div>
 
-      <div class="wallet-panel-body">
-        <!-- مهم جدًا: أضفنا transferAsset ليتوافق مع intelligence الجديد -->
-        <label for="transferAsset">Asset</label>
-        <select id="transferAsset">
-          <option value="BX">BX</option>
-          <option value="USDT">USDT</option>
-          <option value="USDC">USDC</option>
-          <option value="BNB">BNB</option>
-          <option value="SOL">SOL</option>
-        </select>
+  <div class="wallet-panel-body">
 
-        <!-- دعم القديم + الجديد -->
-        <label for="transferTelegram">Telegram ID / Recipient</label>
-        <input id="transferTelegram" type="text" placeholder="@username">
+    <!-- ASSET -->
+    <label for="transferAsset">Asset</label>
+    <select id="transferAsset">
+      <option value="BX">BX (Internal)</option>
+      <option value="USDT">USDT</option>
+      <option value="USDC">USDC</option>
+      <option value="BNB">BNB</option>
+      <option value="SOL">SOL</option>
+    </select>
 
-        <!-- دعم fallback لبعض الأكواد -->
-        <input id="transferTo" type="hidden" value="">
+    <!-- ✅ NEW: USER IDENTIFIER -->
+    <label for="transferUser">Recipient (Email or User ID)</label>
+    <input 
+      id="transferUser"
+      type="text"
+      placeholder="user@email.com or ID"
+      autocomplete="off"
+      class="wallet-input"
+    >
 
-        <label for="transferAmount">Amount</label>
-        <input id="transferAmount" type="number" min="0" step="0.0001" placeholder="0.00">
+    <!-- ⚠️ fallback compatibility -->
+    <input id="transferTo" type="hidden">
 
-        <button class="btn confirm" id="submitTransferBtn" type="button">Confirm Transfer</button>
+    <!-- AMOUNT -->
+    <label for="transferAmount">Amount</label>
+    <input 
+      id="transferAmount"
+      type="number"
+      min="0"
+      step="0.0001"
+      placeholder="0.00"
+      class="wallet-input"
+    >
 
-        <div id="transferStatus" class="wallet-status hidden"></div>
-      </div>
+    <!-- QUICK INFO -->
+    <div class="wallet-hint">
+      Transfers are instant inside Bloxio network.
     </div>
 
+    <!-- ACTION -->
+    <button class="btn confirm" id="submitTransferBtn" type="button">
+      Confirm Transfer
+    </button>
+
+    <!-- STATUS -->
+    <div id="transferStatus" class="wallet-status hidden"></div>
+
   </div>
+</div>
 
   <!-- ================= BALANCES ================= -->
   <div class="wallet-balances">
