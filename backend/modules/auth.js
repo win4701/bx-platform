@@ -1,209 +1,199 @@
-"use strict"
+"use strict";
 
-const express = require("express")
-const router = express.Router()
+const express = require("express");
+const router = express.Router();
 
-const jwt = require("jsonwebtoken")
-const crypto = require("crypto")
-const db = require("../database")
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcryptjs");
+const db = require("../database");
 
 /* =========================================
 CONFIG
 ========================================= */
 
-const JWT_SECRET = process.env.JWT_SECRET || "dev_secret_key"
-const TELEGRAM_TOKEN = process.env.TELEGRAM_BOT_TOKEN || null
-const TOKEN_EXPIRY = "30d"
+const JWT_SECRET = process.env.JWT_SECRET;
+const TOKEN_EXPIRY = "30d";
 
-if (!process.env.JWT_SECRET) {
-  console.warn("⚠️ Using default JWT_SECRET (NOT SAFE FOR PROD)")
+if(!JWT_SECRET){
+  throw new Error("JWT_SECRET REQUIRED");
 }
 
 /* =========================================
-CREATE TOKEN
+UTILS
 ========================================= */
 
 function createToken(user){
   return jwt.sign(
-    {
-      id: user.id,
-      telegram_id: user.telegram_id
-    },
+    { id:user.id },
     JWT_SECRET,
-    { expiresIn: TOKEN_EXPIRY }
-  )
+    { expiresIn:TOKEN_EXPIRY }
+  );
+}
+
+async function createWallets(userId){
+
+  const assets = ["BX","USDT","USDC","BTC","ETH","BNB","LTC","ZEC","TON","SOL"];
+
+  for(const a of assets){
+    await db.query(
+      `INSERT INTO wallet_balances (user_id,asset,balance)
+       VALUES($1,$2,0)
+       ON CONFLICT DO NOTHING`,
+      [userId,a]
+    );
+  }
+
 }
 
 /* =========================================
-AUTH MIDDLEWARE (DB VALIDATION)
+AUTH MIDDLEWARE
 ========================================= */
 
 async function authMiddleware(req,res,next){
 
   try{
 
-    const header = req.headers.authorization
+    const header = req.headers.authorization;
+    if(!header) return res.status(401).json({error:"NO_TOKEN"});
 
-    if(!header){
-      return res.status(401).json({ error:"NO_TOKEN" })
-    }
+    const token = header.split(" ")[1];
 
-    let token = header.startsWith("Bearer ")
-      ? header.split(" ")[1]
-      : header
+    const decoded = jwt.verify(token, JWT_SECRET);
 
-    if(!token){
-      return res.status(401).json({ error:"EMPTY_TOKEN" })
-    }
-
-    const decoded = jwt.verify(token, JWT_SECRET)
-
-    // 🔥 CHECK USER EXISTS
     const user = await db.query(
       `SELECT id FROM users WHERE id=$1`,
       [decoded.id]
-    )
+    );
 
     if(!user.rows.length){
-      return res.status(401).json({ error:"USER_NOT_FOUND" })
+      return res.status(401).json({error:"USER_NOT_FOUND"});
     }
 
-    req.user = decoded
-
-    next()
+    req.user = decoded;
+    next();
 
   }catch(e){
-
-    console.error("AUTH ERROR:", e.message)
-
-    return res.status(401).json({
-      error:"INVALID_TOKEN"
-    })
-
+    return res.status(401).json({error:"INVALID_TOKEN"});
   }
 
 }
 
 /* =========================================
-VERIFY TELEGRAM (STRONG)
+REGISTER
 ========================================= */
 
-function verifyTelegram(data){
-
-  if(!TELEGRAM_TOKEN) return true
-
-  if(!data.hash) return false
-
-  const secret = crypto
-    .createHash("sha256")
-    .update(TELEGRAM_TOKEN)
-    .digest()
-
-  const checkString = Object.keys(data)
-    .filter(k => k !== "hash")
-    .sort()
-    .map(k => `${k}=${data[k]}`)
-    .join("\n")
-
-  const hmac = crypto
-    .createHmac("sha256", secret)
-    .update(checkString)
-    .digest("hex")
-
-  return hmac === data.hash
-}
-
-/* =========================================
-CREATE USER WALLETS
-========================================= */
-
-async function createWallets(userId){
-
-  const assets = ["BX","USDT","BTC"]
-
-  for(const asset of assets){
-    await db.query(
-      `INSERT INTO wallet_balances (user_id,asset,balance)
-       VALUES($1,$2,0)
-       ON CONFLICT DO NOTHING`,
-      [userId,asset]
-    )
-  }
-
-}
-
-/* =========================================
-LOGIN
-========================================= */
-
-router.post("/telegram", async(req,res)=>{
+router.post("/register", async(req,res)=>{
 
   try{
 
-    const data = req.body
+    const { email, password, referral } = req.body;
 
-    if(!data.telegram_id){
-      return res.status(400).json({
-        error:"telegram_id_required"
-      })
+    if(!email || !password){
+      return res.status(400).json({error:"missing_fields"});
     }
 
-    if(!verifyTelegram(data)){
-      return res.status(403).json({
-        error:"telegram_verification_failed"
-      })
+    const exists = await db.query(
+      `SELECT id FROM users WHERE email=$1`,
+      [email]
+    );
+
+    if(exists.rows.length){
+      return res.status(400).json({error:"email_exists"});
     }
 
-    let username = data.username || "player"
+    const hash = await bcrypt.hash(password, 10);
 
-    let user = await db.query(
-      `SELECT id,telegram_id,username
-       FROM users WHERE telegram_id=$1`,
-      [data.telegram_id]
-    )
+    const result = await db.query(
+      `INSERT INTO users (email,password,created_at)
+       VALUES($1,$2,NOW())
+       RETURNING id,email`,
+      [email, hash]
+    );
 
-    if(user.rows.length === 0){
+    const user = result.rows[0];
 
-      const result = await db.query(
-        `INSERT INTO users (telegram_id,username,created_at)
-         VALUES($1,$2,NOW())
-         RETURNING id,telegram_id,username`,
-        [data.telegram_id, username]
-      )
+    /* 🔥 referral */
+    if(referral){
 
-      user = result.rows[0]
+      const r = await db.query(
+        `SELECT id FROM users WHERE ref_code=$1`,
+        [referral]
+      );
 
-      await createWallets(user.id)
+      if(r.rows.length){
 
-    }else{
+        await db.query(
+          `UPDATE users SET referred_by=$1 WHERE id=$2`,
+          [r.rows[0].id, user.id]
+        );
 
-      user = user.rows[0]
+      }
 
-      await db.query(
-        `UPDATE users SET last_login=NOW() WHERE id=$1`,
-        [user.id]
-      )
     }
 
-    const token = createToken(user)
+    /* 🔥 wallets */
+    await createWallets(user.id);
+
+    const token = createToken(user);
 
     res.json({
       success:true,
       token,
       user
-    })
+    });
 
   }catch(e){
-
-    console.error("AUTH ERROR:", e)
-
-    res.status(500).json({
-      error:"auth_failed"
-    })
-
+    console.error(e);
+    res.status(500).json({error:"register_error"});
   }
 
-})
+});
+
+/* =========================================
+LOGIN
+========================================= */
+
+router.post("/login", async(req,res)=>{
+
+  try{
+
+    const { email, password } = req.body;
+
+    const r = await db.query(
+      `SELECT id,email,password FROM users WHERE email=$1`,
+      [email]
+    );
+
+    if(!r.rows.length){
+      return res.status(400).json({error:"invalid_credentials"});
+    }
+
+    const user = r.rows[0];
+
+    const ok = await bcrypt.compare(password, user.password);
+
+    if(!ok){
+      return res.status(400).json({error:"invalid_credentials"});
+    }
+
+    await db.query(
+      `UPDATE users SET last_login=NOW() WHERE id=$1`,
+      [user.id]
+    );
+
+    const token = createToken(user);
+
+    res.json({
+      success:true,
+      token,
+      user:{ id:user.id, email:user.email }
+    });
+
+  }catch(e){
+    res.status(500).json({error:"login_error"});
+  }
+
+});
 
 /* =========================================
 ME
@@ -212,33 +202,29 @@ ME
 router.get("/me", authMiddleware, async(req,res)=>{
 
   const r = await db.query(
-    `SELECT id,telegram_id,username
-     FROM users WHERE id=$1`,
+    `SELECT id,email,bx_balance FROM users WHERE id=$1`,
     [req.user.id]
-  )
+  );
 
-  res.json({ user:r.rows[0] })
+  res.json({ user:r.rows[0] });
 
-})
-
-/* =========================================
-LOGOUT (CLIENT SIDE SUPPORT)
-========================================= */
-
-router.post("/logout", authMiddleware, (req,res)=>{
-  res.json({ success:true })
-})
+});
 
 /* =========================================
 CHECK
 ========================================= */
 
 router.get("/check", authMiddleware, (req,res)=>{
-  res.json({
-    ok:true,
-    user:req.user
-  })
-})
+  res.json({ ok:true });
+});
 
-module.exports = router
-module.exports.authMiddleware = authMiddleware
+/* =========================================
+LOGOUT
+========================================= */
+
+router.post("/logout", (req,res)=>{
+  res.json({ success:true });
+});
+
+module.exports = router;
+module.exports.authMiddleware = authMiddleware;
