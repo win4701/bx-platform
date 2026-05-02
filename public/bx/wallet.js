@@ -90,7 +90,11 @@ function connectWS(){
         state.balances = msg.balances;
         renderBalances();
       }
-
+      /* Airdrop */
+       if(msg.type === "airdrop_claim"){
+         WALLET.BX += msg.amount;
+         renderWallet();
+       }
       /* DEPOSIT */
       if(msg.type==="deposit_pending"){
         setStatus("depositStatus","Pending...");
