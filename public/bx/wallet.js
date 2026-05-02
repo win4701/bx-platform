@@ -80,11 +80,9 @@ function connectWS(){
 
       /* MINING */
       if(msg.type==="mining_reward"){
-        state.balances.BX = safe(state.balances.BX) + msg.amount;
+        WALLET.BX += msg.amount;
         renderBalances();
-        toast("Mining +" + msg.amount);
       }
-
       /* MARKET */
       if(msg.type==="market_balance"){
         state.balances = msg.balances;
