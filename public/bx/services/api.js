@@ -1,28 +1,47 @@
 /* =========================================================
-   BX API ENGINE (ULTRA FINAL PRO)
+   BX API ENGINE — PRO MAX STABLE
 ========================================================= */
 
-const BASE_URL = "https://api.bloxio.online";
+const BASE_URL =
+  location.origin.includes("localhost")
+    ? "http://localhost:3000/api"
+    : location.origin + "/api";
+
+/* ================= CORE ================= */
 
 const DEFAULT_HEADERS = {
-  "Content-Type": "application/json"
+  "Content-Type":"application/json"
 };
 
-// ================= CORE =================
+const listeners = new Map();
+
+function emit(event,data){
+  (listeners.get(event)||[]).forEach(fn=>{
+    try{ fn(data); }catch{}
+  });
+}
+
+function on(event,fn){
+  if(!listeners.has(event)) listeners.set(event,[]);
+  listeners.get(event).push(fn);
+}
+
+/* ================= REQUEST ================= */
 
 async function request(url, options = {}){
 
   const controller = new AbortController();
-  const timeout = setTimeout(()=>controller.abort(), 8000);
+  const timeout = setTimeout(()=>controller.abort(), 10000);
 
   try{
 
     const token = localStorage.getItem("token");
 
-    const res = await fetch(BASE_URL + url, {
+    const res = await fetch(BASE_URL + url,{
+      method:"GET",
       headers:{
         ...DEFAULT_HEADERS,
-        ...(token ? { "Authorization":"Bearer " + token } : {})
+        ...(token ? { Authorization:"Bearer "+token } : {})
       },
       credentials:"include",
       signal: controller.signal,
@@ -31,24 +50,23 @@ async function request(url, options = {}){
 
     clearTimeout(timeout);
 
-    let data;
+    let data = null;
 
-    try{
-      data = await res.json();
-    }catch{
-      data = null;
+    try{ data = await res.json(); }catch{}
+
+    /* ================= AUTH ================= */
+
+    if(res.status === 401){
+      localStorage.removeItem("token");
+      emit("auth:logout");
+      return { error:"unauthorized" };
     }
 
+    /* ================= ERROR ================= */
+
     if(!res.ok){
-
       console.warn("API ERROR:", url, data);
-
-      // 🔥 auth expired
-      if(res.status === 401){
-        localStorage.removeItem("token");
-      }
-
-      return null;
+      return { error: data?.error || "request_failed" };
     }
 
     return data;
@@ -59,51 +77,54 @@ async function request(url, options = {}){
 
     if(e.name === "AbortError"){
       console.warn("API TIMEOUT:", url);
-    } else {
-      console.error("API CRASH:", url, e);
+      return { error:"timeout" };
     }
 
-    return null;
+    console.error("API CRASH:", url, e);
+    return { error:"network" };
   }
 
 }
 
-// ================= RETRY =================
+/* ================= RETRY ================= */
 
-async function requestRetry(url, options = {}, retries = 2){
+async function requestRetry(url, options={}, retries=2){
 
-  let attempt = 0;
+  let i = 0;
 
-  while(attempt <= retries){
+  while(i <= retries){
 
     const res = await request(url, options);
 
-    if(res) return res;
+    if(res && !res.error) return res;
 
-    attempt++;
+    i++;
 
   }
 
-  return null;
+  return { error:"retry_failed" };
 }
 
-// ================= API =================
+/* ================= API ================= */
 
 window.API = {
 
-  // ---------- BASE ----------
+  on,
+
+  /* ===== BASE ===== */
+
   get(url){
     return requestRetry(url);
   },
 
-  post(url, body = {}){
+  post(url, body={}){
     return requestRetry(url,{
       method:"POST",
       body: JSON.stringify(body)
     });
   },
 
-  put(url, body = {}){
+  put(url, body={}){
     return requestRetry(url,{
       method:"PUT",
       body: JSON.stringify(body)
@@ -116,18 +137,22 @@ window.API = {
     });
   },
 
-  // ================= SERVICES =================
+  /* ================= SERVICES ================= */
 
   wallet(){
-    return this.get("/finance/wallet");
+    return this.get("/wallet");
   },
 
   market(){
-    return this.get("/market/data");
+    return this.get("/market");
+  },
+   
+   casino(){
+    return this.get("/casino");
   },
 
   mining(){
-    return this.get("/mining/user");
+    return this.get("/mining/status");
   },
 
   airdrop(){
@@ -138,38 +163,60 @@ window.API = {
     return this.get("/finance/history");
   },
 
-  // ================= ACTIONS =================
+  /* ================= ACTIONS ================= */
 
   claimAirdrop(){
     return this.post("/airdrop/claim");
   },
 
-  subscribeMining(data){
-    return this.post("/mining/subscribe", data);
+  startMining(data){
+    return this.post("/mining/start", data);
   },
 
-  claimMining(data){
-    return this.post("/mining/claim", data);
+  stopMining(){
+    return this.post("/mining/stop");
   },
 
   deposit(asset){
-    return this.get(`/finance/deposit/${asset}`);
+    return this.get(`/payments/deposit/${asset}`);
   },
 
   withdraw(data){
-    return this.post("/finance/withdraw", data);
+    return this.post("/payments/withdraw", data);
   },
 
   transfer(data){
     return this.post("/finance/transfer", data);
   },
 
-  binancePay(data){
-    return this.post("/payments/binance/create", data);
+  /* ================= REALTIME HOOKS ================= */
+
+  syncWallet(){
+
+    this.wallet().then(data=>{
+      if(data && !data.error){
+        emit("wallet:update", data);
+      }
+    });
+
   },
 
-  connectWallet(data){
-    return this.post("/finance/wallet/connect", data);
+  syncAll(){
+
+    this.syncWallet();
+
+    this.airdrop().then(d=>{
+      if(d && !d.error){
+        emit("airdrop:update", d);
+      }
+    });
+
+    this.mining().then(d=>{
+      if(d && !d.error){
+        emit("mining:update", d);
+      }
+    });
+
   }
 
 };
