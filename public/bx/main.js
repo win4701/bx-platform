@@ -1,5 +1,5 @@
 /* =====================================================
-   BLOXIO MAIN — ULTRA STABLE ROUTER (FIXED ALL)
+   BLOXIO MAIN — PRO ROUTER (NO CONFLICT VERSION)
 ===================================================== */
 
 (() => {
@@ -32,24 +32,26 @@
     catch(e){ console.warn('[SAFE]', e); }
   };
 
-  /* ================= AUTH GUARD ================= */
+  /* ================= AUTH ================= */
+
   function isLocked(){
     const overlay = document.getElementById("authOverlay");
     return overlay && overlay.style.display !== "none";
   }
 
   /* ================= NAV ================= */
+
   function setNav(id){
     nav.forEach((b,k)=>{
-      const a = k===id;
-      b.classList.toggle('active', a);
-      b.setAttribute('aria-current', a?'page':'false');
+      const active = k === id;
+      b.classList.toggle('active', active);
+      b.setAttribute('aria-current', active ? 'page' : 'false');
     });
   }
 
   function hideAll(){
     views.forEach(v=>{
-      v.style.display='none';
+      v.style.display = 'none';
       v.classList.remove('active');
     });
   }
@@ -57,79 +59,90 @@
   function show(id){
     const v = views.get(id);
     if(!v) return;
-    v.style.display='';
+    v.style.display = '';
     v.classList.add('active');
   }
 
-  function closePanels(){
-    $$('.wallet-panel').forEach(p=>p.classList.add('wallet-hidden'));
-    $$('.mining-sub-panel').forEach(p=>p.classList.add('mining-hidden'));
+  /* ================= PANEL FIX 🔥 ================= */
+
+  function closePanels(options = {}){
+
+    const { keepWallet } = options;
+
+    // 🔥 لا تغلق wallet panels إذا داخل wallet
+    if(!keepWallet){
+      $$('.wallet-panel').forEach(p=>{
+        p.classList.add('wallet-hidden');
+      });
+    }
+
+    // mining panels دائماً تتغلق
+    $$('.mining-sub-panel').forEach(p=>{
+      p.classList.add('mining-hidden');
+    });
+
   }
 
   /* ================= HOOKS ================= */
+
   function hooks(id){
 
     document.dispatchEvent(new CustomEvent('bloxio:view',{detail:id}));
 
-    /* -------- WALLET -------- */
-    if(id==='wallet'){
-      safe(window.renderWallet);
-      safe(window.updateWalletUI);
-    }
+    switch(id){
 
-    /* -------- MARKET -------- */
-    if(id==='market'){
-      safe(window.renderMarket);
-      safe(window.updateMarketUI);
-      safe(window.resizeMarketChart);
-    }
+      case 'wallet':
+        safe(window.renderWallet);
+        safe(window.updateWalletUI);
+        break;
 
-    /* -------- CASINO -------- */
-    if(id==='casino'){
-      safe(window.renderCasinoLobby);
-      safe(window.updateCasinoUI);
-    }
+      case 'market':
+        safe(window.renderMarket);
+        safe(window.updateMarketUI);
+        safe(window.resizeMarketChart);
+        break;
 
-    /* -------- MINING FIX 🔥 -------- */
-    if(id==='mining'){
+      case 'casino':
+        safe(window.renderCasinoLobby);
+        safe(window.updateCasinoUI);
+        break;
 
-      // ✅ fallback 1 (old system)
-      if(window.renderMining){
+      case 'mining':
         safe(window.renderMining);
-      }
-
-      // ✅ fallback 2 (new system)
-      if(window.renderMiningPlans){
         safe(window.renderMiningPlans);
-      }
+        safe(window.updateMiningUI);
+        break;
 
-      safe(window.updateMiningUI);
+      case 'airdrop':
+        safe(window.renderAirdrop);
+        break;
+
+      case 'settings':
+        safe(window.renderSettings);
+        break;
+
     }
 
-    /* -------- AIRDROP -------- */
-    if(id==='airdrop'){
-      safe(window.renderAirdrop);
-    }
-
-    /* -------- SETTINGS -------- */
-    if(id==='settings'){
-      safe(window.renderSettings);
-    }
   }
 
   /* ================= ROUTER ================= */
+
   function go(id, opt={}){
 
-    if(isLocked()) return; // 🔥 auth block
+    if(isLocked()) return;
 
-    const view = VIEWS.includes(id)?id:DEFAULT;
+    const view = VIEWS.includes(id) ? id : DEFAULT;
 
     if(STATE.current === view && !opt.force){
       setNav(view);
       return;
     }
 
-    closePanels();
+    // 🔥 FIX: لا تكسر wallet
+    closePanels({
+      keepWallet: view === "wallet"
+    });
+
     hideAll();
     show(view);
     setNav(view);
@@ -140,8 +153,36 @@
     hooks(view);
   }
 
-  /* ================= NAV EVENTS ================= */
-  function bind(){
+  /* ================= ACTION SYSTEM 🔥 ================= */
+
+  function bindActions(){
+
+    document.addEventListener('click', e=>{
+
+      const t = e.target.closest('[data-action]');
+      if(!t) return;
+
+      if(isLocked()) return;
+
+      const a = t.dataset.action;
+
+      switch(a){
+
+        case 'go-wallet':  go('wallet'); break;
+        case 'go-market':  go('market'); break;
+        case 'go-casino':  go('casino'); break;
+        case 'go-mining':  go('mining'); break;
+        case 'go-airdrop': go('airdrop'); break;
+
+      }
+
+    });
+
+  }
+
+  /* ================= NAV ================= */
+
+  function bindNav(){
 
     nav.forEach((btn,id)=>{
       btn.onclick = ()=>{
@@ -150,41 +191,28 @@
       };
     });
 
-    document.addEventListener('click', e=>{
-      const t = e.target.closest('[data-action]');
-      if(!t) return;
-
-      if(isLocked()) return;
-
-      const a = t.dataset.action;
-
-      if(a==='go-mining') go('mining');
-      if(a==='go-wallet') go('wallet');
-      if(a==='go-market') go('market');
-      if(a==='go-casino') go('casino');
-      if(a==='go-airdrop') go('airdrop');
-    });
-
   }
 
   /* ================= BOOT ================= */
+
   function boot(){
 
-    bind();
+    bindNav();
+    bindActions();
 
     const saved = localStorage.getItem(STORE) || DEFAULT;
 
-    // 🔥 auth delay fix
     setTimeout(()=>{
       go(saved, {force:true});
     }, 50);
 
-    console.log('🚀 MAIN FIXED READY');
+    console.log('🚀 MAIN PRO READY');
+
   }
 
-  if(document.readyState==='loading'){
+  if(document.readyState === 'loading'){
     document.addEventListener('DOMContentLoaded', boot);
-  }else{
+  } else {
     boot();
   }
 
