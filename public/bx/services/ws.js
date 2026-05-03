@@ -1,8 +1,17 @@
 /* =========================================================
-   BX WEBSOCKET ENGINE (ULTRA FINAL PRO)
+   BLOXIO WS ENGINE — FINAL PRO MAX
 ========================================================= */
 
-const WS_URL = "wss://api.bloxio.online";
+"use strict";
+
+const WS_URL =
+  location.origin.includes("localhost")
+    ? "ws://localhost:3000/ws"
+    : (location.protocol === "https:" ? "wss://" : "ws://") + location.host + "/ws";
+
+/* =========================================================
+WS CORE
+========================================================= */
 
 window.WS = {
 
@@ -14,6 +23,7 @@ window.WS = {
   channels: new Set(),
 
   reconnectDelay: 2000,
+  maxReconnectDelay: 15000,
 
   /* ================= CONNECT ================= */
 
@@ -21,15 +31,34 @@ window.WS = {
 
     if(this.connected || this.connecting) return;
 
-    this.connecting = true;
-
     const token = localStorage.getItem("token");
 
-    const url = token
-      ? `${WS_URL}?token=${token}`
-      : WS_URL;
+    if(!token){
+      console.warn("WS: no token");
+      return;
+    }
 
-    this.socket = new WebSocket(url);
+    this.connecting = true;
+
+    const url = `${WS_URL}?token=${token}`;
+
+    try{
+
+      this.socket = new WebSocket(url);
+
+    }catch(e){
+      console.error("WS INIT ERROR", e);
+      this.retry();
+      return;
+    }
+
+    this.bindSocket();
+
+  },
+
+  /* ================= BIND ================= */
+
+  bindSocket(){
 
     this.socket.onopen = ()=>{
 
@@ -38,19 +67,25 @@ window.WS = {
       this.connected = true;
       this.connecting = false;
 
+      this.reconnectDelay = 2000;
+
       this.flushQueue();
       this.resubscribe();
+
+      this.emit("ws:connected");
 
     };
 
     this.socket.onclose = ()=>{
 
-      console.log("🔴 WS CLOSED");
+      console.warn("🔴 WS CLOSED");
 
       this.connected = false;
       this.connecting = false;
 
-      setTimeout(()=> this.connect(), this.reconnectDelay);
+      this.emit("ws:disconnected");
+
+      this.retry();
 
     };
 
@@ -71,6 +106,21 @@ window.WS = {
 
   },
 
+  /* ================= RETRY ================= */
+
+  retry(){
+
+    setTimeout(()=>{
+      this.connect();
+    }, this.reconnectDelay);
+
+    this.reconnectDelay = Math.min(
+      this.reconnectDelay * 1.5,
+      this.maxReconnectDelay
+    );
+
+  },
+
   /* ================= SEND ================= */
 
   send(type, payload = {}){
@@ -83,11 +133,11 @@ window.WS = {
     if(!this.connected){
 
       this.queue.push(message);
-
       return;
     }
 
     this.socket.send(message);
+
   },
 
   /* ================= QUEUE ================= */
@@ -95,28 +145,27 @@ window.WS = {
   flushQueue(){
 
     while(this.queue.length){
-
-      const msg = this.queue.shift();
-      this.socket.send(msg);
-
+      this.socket.send(this.queue.shift());
     }
 
   },
 
-  /* ================= CHANNEL ================= */
+  /* ================= CHANNELS ================= */
 
   subscribe(channel){
 
-    this.channels.add(channel);
+    if(!channel) return;
 
+    this.channels.add(channel);
     this.send("subscribe", { channel });
 
   },
 
   unsubscribe(channel){
 
-    this.channels.delete(channel);
+    if(!channel) return;
 
+    this.channels.delete(channel);
     this.send("unsubscribe", { channel });
 
   },
@@ -137,39 +186,90 @@ window.WS = {
 
     switch(data.type){
 
+      /* ===== WALLET ===== */
       case "wallet_update":
 
-        STATE.set("wallet", data.wallet);
+        if(window.API){
+          API.syncWallet();
+        }
+
+        this.emit("wallet:update", data);
         break;
 
+      /* ===== MINING ===== */
+      case "mining_reward":
+
+        this.emit("mining:reward", data);
+        break;
+
+      /* ===== MARKET ===== */
       case "market_price":
 
-        STATE.set("market.price", data.price);
+        this.emit("market:price", data);
         break;
 
       case "market_trade":
 
-        window.onMarketWS?.(data);
+        this.emit("market:trade", data);
         break;
 
+      /* ===== CASINO ===== */
       case "casino_result":
 
-        window.onCasinoWS?.(data);
+        this.emit("casino:result", data);
         break;
 
+      /* ===== AIRDROP ===== */
       case "airdrop":
 
-        STATE.update("airdrop.reward", r => r + data.amount);
+        this.emit("airdrop:update", data);
         break;
 
+      /* ===== NOTIFICATION ===== */
       case "notification":
 
+        this.emit("notify", data);
         console.log("🔔", data.message);
         break;
 
       default:
         console.warn("WS UNKNOWN:", data);
     }
+
+  },
+
+  /* ================= EVENT SYSTEM ================= */
+
+  events: {},
+
+  on(event, fn){
+
+    if(!this.events[event]){
+      this.events[event] = [];
+    }
+
+    this.events[event].push(fn);
+
+  },
+
+  emit(event, data){
+
+    (this.events[event] || []).forEach(fn=>{
+      try{ fn(data); }catch{}
+    });
+
+  },
+
+  /* ================= CLOSE ================= */
+
+  disconnect(){
+
+    if(this.socket){
+      this.socket.close();
+    }
+
+    this.connected = false;
+    this.connecting = false;
 
   }
 
