@@ -1,54 +1,62 @@
 /* =========================================================
-   BX API ENGINE — PRO MAX STABLE
+   BLOXIO API ENGINE — FINAL PRO MAX
 ========================================================= */
+
+"use strict";
+
+/* ================= BASE ================= */
 
 const BASE_URL =
   location.origin.includes("localhost")
     ? "http://localhost:3000/api"
     : location.origin + "/api";
 
-/* ================= CORE ================= */
+/* ================= CONFIG ================= */
 
 const DEFAULT_HEADERS = {
-  "Content-Type":"application/json"
+  "Content-Type": "application/json"
 };
+
+const TIMEOUT = 10000;
+
+/* ================= EVENT BUS ================= */
 
 const listeners = new Map();
 
-function emit(event,data){
-  (listeners.get(event)||[]).forEach(fn=>{
-    try{ fn(data); }catch{}
+function emit(event, data){
+  (listeners.get(event) || []).forEach(fn=>{
+    try{ fn(data); }catch(e){ console.warn(e); }
   });
 }
 
-function on(event,fn){
-  if(!listeners.has(event)) listeners.set(event,[]);
+function on(event, fn){
+  if(!listeners.has(event)) listeners.set(event, []);
   listeners.get(event).push(fn);
 }
 
-/* ================= REQUEST ================= */
+/* ================= CORE REQUEST ================= */
 
 async function request(url, options = {}){
 
   const controller = new AbortController();
-  const timeout = setTimeout(()=>controller.abort(), 10000);
+  const timer = setTimeout(()=>controller.abort(), TIMEOUT);
 
   try{
 
     const token = localStorage.getItem("token");
 
-    const res = await fetch(BASE_URL + url,{
-      method:"GET",
+    const res = await fetch(BASE_URL + url, {
+      method: "GET",
       headers:{
         ...DEFAULT_HEADERS,
-        ...(token ? { Authorization:"Bearer "+token } : {})
+        ...(token ? { Authorization:"Bearer " + token } : {})
       },
       credentials:"include",
       signal: controller.signal,
       ...options
     });
 
-    clearTimeout(timeout);
+    clearTimeout(timer);
 
     let data = null;
 
@@ -57,15 +65,22 @@ async function request(url, options = {}){
     /* ================= AUTH ================= */
 
     if(res.status === 401){
+
       localStorage.removeItem("token");
+
       emit("auth:logout");
+
       return { error:"unauthorized" };
     }
 
     /* ================= ERROR ================= */
 
     if(!res.ok){
+
       console.warn("API ERROR:", url, data);
+
+      emit("api:error", { url, data });
+
       return { error: data?.error || "request_failed" };
     }
 
@@ -73,14 +88,17 @@ async function request(url, options = {}){
 
   }catch(e){
 
-    clearTimeout(timeout);
+    clearTimeout(timer);
 
     if(e.name === "AbortError"){
-      console.warn("API TIMEOUT:", url);
+      emit("api:error", { url, error:"timeout" });
       return { error:"timeout" };
     }
 
+    emit("api:error", { url, error:"network" });
+
     console.error("API CRASH:", url, e);
+
     return { error:"network" };
   }
 
@@ -88,7 +106,7 @@ async function request(url, options = {}){
 
 /* ================= RETRY ================= */
 
-async function requestRetry(url, options={}, retries=2){
+async function requestRetry(url, options = {}, retries = 2){
 
   let i = 0;
 
@@ -96,7 +114,9 @@ async function requestRetry(url, options={}, retries=2){
 
     const res = await request(url, options);
 
-    if(res && !res.error) return res;
+    if(res && !res.error){
+      return res;
+    }
 
     i++;
 
@@ -105,26 +125,28 @@ async function requestRetry(url, options={}, retries=2){
   return { error:"retry_failed" };
 }
 
-/* ================= API ================= */
+/* =========================================================
+API OBJECT
+========================================================= */
 
 window.API = {
 
   on,
 
-  /* ===== BASE ===== */
+  /* ================= BASE ================= */
 
   get(url){
     return requestRetry(url);
   },
 
-  post(url, body={}){
+  post(url, body = {}){
     return requestRetry(url,{
       method:"POST",
       body: JSON.stringify(body)
     });
   },
 
-  put(url, body={}){
+  put(url, body = {}){
     return requestRetry(url,{
       method:"PUT",
       body: JSON.stringify(body)
@@ -137,44 +159,24 @@ window.API = {
     });
   },
 
-  /* ================= SERVICES ================= */
+  /* ================= AUTH ================= */
+
+  check(){
+    return this.get("/auth/check");
+  },
+
+  /* ================= WALLET ================= */
 
   wallet(){
     return this.get("/wallet");
-  },
-
-  market(){
-    return this.get("/market");
-  },
-   
-   casino(){
-    return this.get("/casino");
-  },
-
-  mining(){
-    return this.get("/mining/status");
-  },
-
-  airdrop(){
-    return this.get("/airdrop/status");
   },
 
   history(){
     return this.get("/finance/history");
   },
 
-  /* ================= ACTIONS ================= */
-
-  claimAirdrop(){
-    return this.post("/airdrop/claim");
-  },
-
-  startMining(data){
-    return this.post("/mining/start", data);
-  },
-
-  stopMining(){
-    return this.post("/mining/stop");
+  transfer(data){
+    return this.post("/finance/transfer", data);
   },
 
   deposit(asset){
@@ -185,11 +187,43 @@ window.API = {
     return this.post("/payments/withdraw", data);
   },
 
-  transfer(data){
-    return this.post("/finance/transfer", data);
+  /* ================= MARKET ================= */
+
+  market(){
+    return this.get("/market");
   },
 
-  /* ================= REALTIME HOOKS ================= */
+  /* ================= CASINO ================= */
+
+  casino(){
+    return this.get("/casino");
+  },
+
+  /* ================= MINING ================= */
+
+  mining(){
+    return this.get("/mining/status");
+  },
+
+  startMining(data){
+    return this.post("/mining/start", data);
+  },
+
+  stopMining(){
+    return this.post("/mining/stop");
+  },
+
+  /* ================= AIRDROP ================= */
+
+  airdrop(){
+    return this.get("/airdrop/status");
+  },
+
+  claimAirdrop(){
+    return this.post("/airdrop/claim");
+  },
+
+  /* ================= SYNC SYSTEM ================= */
 
   syncWallet(){
 
@@ -201,21 +235,33 @@ window.API = {
 
   },
 
+  syncMining(){
+
+    this.mining().then(data=>{
+      if(data && !data.error){
+        emit("mining:update", data);
+      }
+    });
+
+  },
+
+  syncAirdrop(){
+
+    this.airdrop().then(data=>{
+      if(data && !data.error){
+        emit("airdrop:update", data);
+      }
+    });
+
+  },
+
+  /* ================= FULL SYNC ================= */
+
   syncAll(){
 
     this.syncWallet();
-
-    this.airdrop().then(d=>{
-      if(d && !d.error){
-        emit("airdrop:update", d);
-      }
-    });
-
-    this.mining().then(d=>{
-      if(d && !d.error){
-        emit("mining:update", d);
-      }
-    });
+    this.syncMining();
+    this.syncAirdrop();
 
   }
 
