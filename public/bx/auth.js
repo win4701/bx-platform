@@ -1,8 +1,10 @@
+/* =====================================================
+   BLOXIO AUTH — FINAL PRO MAX
+===================================================== */
+
 "use strict";
 
 const AUTH = {
-
-  API: location.origin + "/api",
 
   state:{
     loading:false,
@@ -18,6 +20,7 @@ const AUTH = {
     this.cache();
     this.bind();
     this.injectReferral();
+    this.bindGlobalEvents();
     this.guard();
 
   },
@@ -54,6 +57,17 @@ const AUTH = {
 
   },
 
+  /* ================= GLOBAL EVENTS ================= */
+
+  bindGlobalEvents(){
+
+    // 🔥 logout من API
+    if(window.API){
+      API.on("auth:logout", ()=> this.forceLogout());
+    }
+
+  },
+
   /* ================= EVENTS ================= */
 
   bind(){
@@ -73,7 +87,7 @@ const AUTH = {
 
   },
 
-  /* ================= REFERRAL AUTO ================= */
+  /* ================= REFERRAL ================= */
 
   injectReferral(){
 
@@ -126,6 +140,10 @@ const AUTH = {
     return v.length >= 6;
   },
 
+  validatePhone(v){
+    return !v || v.length >= 6;
+  },
+
   /* ================= UI ================= */
 
   loading(btn, state){
@@ -145,44 +163,37 @@ const AUTH = {
 
   error(msg){
 
+    if(!this.el.error) return;
+
     this.el.error.innerText = msg;
     this.el.error.style.opacity = "1";
 
   },
 
   clearError(){
+
+    if(!this.el.error) return;
+
     this.el.error.innerText = "";
     this.el.error.style.opacity = "0";
+
   },
 
-  /* ================= FETCH WRAPPER ================= */
+  /* ================= REQUEST ================= */
 
   async request(url, body){
 
-    try{
-
-      const token = localStorage.getItem("token");
-
-      const res = await fetch(this.API + url, {
-        method:"POST",
-        headers:{
-          "Content-Type":"application/json",
-          ...(token ? { Authorization:"Bearer "+token } : {})
-        },
-        body: JSON.stringify(body)
-      });
-
-      const data = await res.json();
-
-      if(!res.ok){
-        throw new Error(data.error || "Request failed");
-      }
-
-      return data;
-
-    }catch(e){
-      throw new Error(e.message || "Network error");
+    if(!window.API){
+      throw new Error("API not loaded");
     }
+
+    const res = await API.post(url, body);
+
+    if(!res || res.error){
+      throw new Error(res?.error || "Network error");
+    }
+
+    return res;
 
   },
 
@@ -199,14 +210,14 @@ const AUTH = {
       return this.error("Invalid email");
 
     if(!this.validatePassword(pass))
-      return this.error("Weak password");
+      return this.error("Password too short");
 
     this.loading(this.el.loginBtn,true);
     this.clearError();
 
     try{
 
-      const data = await this.request("/auth/login", {
+      const data = await this.request("/auth/login",{
         email,
         password: pass
       });
@@ -230,7 +241,8 @@ const AUTH = {
 
     const email = this.el.regEmail.value.trim();
     const pass  = this.el.regPass.value.trim();
-    const ref   = this.el.regRef.value.trim();
+    const phone = this.el.regPhone?.value.trim() || "";
+    const ref   = this.el.regRef?.value.trim() || "";
 
     if(!this.validateEmail(email))
       return this.error("Invalid email");
@@ -238,14 +250,18 @@ const AUTH = {
     if(!this.validatePassword(pass))
       return this.error("Weak password");
 
+    if(!this.validatePhone(phone))
+      return this.error("Invalid phone");
+
     this.loading(this.el.registerBtn,true);
     this.clearError();
 
     try{
 
-      const data = await this.request("/auth/register", {
+      const data = await this.request("/auth/register",{
         email,
         password: pass,
+        phone,
         referral: ref
       });
 
@@ -264,15 +280,37 @@ const AUTH = {
 
   session(data){
 
+    if(!data?.token){
+      throw new Error("Invalid auth response");
+    }
+
     localStorage.setItem("token", data.token);
-    localStorage.setItem("user", JSON.stringify(data.user));
+
+    if(data.user){
+      localStorage.setItem("user", JSON.stringify(data.user));
+    }
 
   },
+
+  /* ================= LOGOUT ================= */
 
   logout(){
 
     localStorage.clear();
+
+    if(window.WS){
+      WS.socket?.close();
+    }
+
     location.reload();
+
+  },
+
+  forceLogout(){
+
+    localStorage.clear();
+
+    this.el.overlay.style.display = "flex";
 
   },
 
@@ -283,29 +321,31 @@ const AUTH = {
     const token = localStorage.getItem("token");
 
     if(!token){
-      this.el.overlay.style.display = "flex";
+      this.showAuth();
       return;
     }
 
     try{
 
-      const res = await fetch(this.API + "/auth/check", {
-        headers:{
-          Authorization:"Bearer "+token
-        }
-      });
+      const res = await API.get("/auth/check");
 
-      if(!res.ok) throw new Error();
+      if(!res || res.error){
+        throw new Error();
+      }
 
       this.enter();
 
-    }catch(e){
+    }catch{
 
       localStorage.clear();
-      this.el.overlay.style.display = "flex";
+      this.showAuth();
 
     }
 
+  },
+
+  showAuth(){
+    this.el.overlay.style.display = "flex";
   },
 
   /* ================= ENTER ================= */
@@ -317,9 +357,15 @@ const AUTH = {
     const app = $("app");
     if(app) app.classList.remove("hidden");
 
-    // 🔥 sync modules
-    if(window.WALLET) WALLET.init?.();
-    if(window.AIRDROP) loadAirdrop?.();
+    // 🔥 تشغيل WS
+    if(window.WS){
+      WS.connect();
+    }
+
+    // 🔥 sync كامل
+    if(window.API){
+      API.syncAll();
+    }
 
   }
 
