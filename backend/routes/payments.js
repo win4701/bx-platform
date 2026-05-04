@@ -1,36 +1,34 @@
 "use strict";
 
+/* =========================================================
+   BLOXIO PAYMENTS ROUTES — ULTRA FINAL SECURE
+========================================================= */
+
 const express = require("express");
 const router = express.Router();
 
-const axios = require("axios");
 const crypto = require("crypto");
 
 const db = require("../database");
 const ledger = require("../core/ledger");
 
-const NOWPAY_API = "https://api.nowpayments.io/v1";
+const now = require("../services/nowPayments");
 
-const NOWPAY_KEY = process.env.NOWPAY_API_KEY;
-const NOWPAY_IPN = process.env.NOWPAY_IPN_SECRET;
+/* ===== CONFIG ===== */
 
-/* =====================================================
-SECURITY MIDDLEWARE (RAW BODY FOR WEBHOOK)
-===================================================== */
+const IPN_SECRET = process.env.NOWPAY_IPN_SECRET;
 
-const rawBodyParser = express.raw({ type: "application/json" });
-
-/* =====================================================
-SUPPORTED COINS
-===================================================== */
+/* =========================================================
+   SUPPORTED COINS
+========================================================= */
 
 const SUPPORTED = [
   "USDT","USDC","BTC","ETH","BNB","AVAX","SOL","LTC","TON","ZEC"
 ];
 
-/* =====================================================
-HELPERS
-===================================================== */
+/* =========================================================
+   HELPERS
+========================================================= */
 
 function auth(req){
   if(!req.user?.id){
@@ -43,45 +41,21 @@ function auth(req){
 
 function validateAmount(v){
   const n = Number(v);
-  if(!n || n <= 0) throw new Error("invalid_amount");
+  if(!n || n <= 0){
+    throw new Error("invalid_amount");
+  }
   return n;
 }
 
-/* =====================================================
-RATE LIMIT (BASIC)
-===================================================== */
-
-const rateMap = new Map();
-
-function rateLimit(key, limit = 5, window = 60000){
-
-  const now = Date.now();
-
-  if(!rateMap.has(key)){
-    rateMap.set(key, []);
-  }
-
-  const logs = rateMap.get(key).filter(t => now - t < window);
-
-  if(logs.length >= limit){
-    throw new Error("rate_limit");
-  }
-
-  logs.push(now);
-  rateMap.set(key, logs);
-}
-
-/* =====================================================
-CREATE DEPOSIT
-===================================================== */
+/* =========================================================
+   CREATE DEPOSIT (CLEAN + SERVICE BASED)
+========================================================= */
 
 router.post("/create", async (req,res)=>{
 
   try{
 
     const userId = auth(req);
-
-    rateLimit(userId + "_deposit");
 
     let { amount, asset="USDT" } = req.body;
 
@@ -92,112 +66,114 @@ router.post("/create", async (req,res)=>{
       return res.status(400).json({error:"unsupported_coin"});
     }
 
-    const orderId = `${userId}_${Date.now()}`;
+    /* ===== SERVICE CALL ===== */
+    const payment = await now.createPayment({
+      amount,
+      currency: asset,
+      userId
+    });
 
-    const r = await axios.post(
-      `${NOWPAY_API}/payment`,
-      {
-        price_amount: amount,
-        price_currency: "usd",
-        pay_currency: asset,
-        order_id: orderId,
-        ipn_callback_url: "https://api.bloxio.online/payments/webhook"
-      },
-      {
-        headers:{ "x-api-key": NOWPAY_KEY }
-      }
-    );
-
-    const p = r.data;
-
+    /* ===== STORE ===== */
     await db.query(`
       INSERT INTO payments
       (user_id,type,provider,amount,asset,status,external_id,meta)
-      VALUES($1,$2,$3,$4,$5,$6,$7,$8)
+      VALUES($1,'deposit','nowpayments',$2,$3,'pending',$4,$5)
+      ON CONFLICT (external_id) DO NOTHING
     `,[
       userId,
-      "deposit",
-      "nowpayments",
       amount,
       asset,
-      "pending",
-      p.payment_id,
-      JSON.stringify({orderId})
+      payment.payment_id,
+      JSON.stringify({
+        address: payment.pay_address
+      })
     ]);
 
     res.json({
-      payment_id: p.payment_id,
-      address: p.pay_address,
-      amount: p.pay_amount,
-      currency: p.pay_currency
+      payment_id: payment.payment_id,
+      address: payment.pay_address,
+      amount: payment.pay_amount,
+      currency: payment.pay_currency
     });
 
   }catch(e){
-    res.status(400).json({error:e.message});
+
+    res.status(e.status || 400).json({
+      error: e.message
+    });
+
   }
 
 });
 
-/* =====================================================
-WEBHOOK (SECURE + VERIFIED + IDEMPOTENT)
-===================================================== */
+/* =========================================================
+   WEBHOOK (ULTRA SECURE)
+========================================================= */
 
-router.post("/webhook", rawBodyParser, async (req,res)=>{
+router.post("/webhook",
+  express.raw({ type:"application/json" }),
+  async (req,res)=>{
 
   try{
 
-    const sig = req.headers["x-nowpayments-sig"];
-    const raw = req.body.toString();
+    const signature = req.headers["x-nowpayments-sig"];
+    const rawBody   = req.body.toString();
 
+    /* ===== VERIFY ===== */
     const hash = crypto
-      .createHmac("sha512", NOWPAY_IPN)
-      .update(raw)
+      .createHmac("sha512", IPN_SECRET)
+      .update(rawBody)
       .digest("hex");
 
-    if(hash !== sig){
+    if(hash !== signature){
       return res.status(401).send("invalid_signature");
     }
 
-    const payment = JSON.parse(raw);
+    const payment = JSON.parse(rawBody);
 
     if(payment.payment_status !== "finished"){
       return res.send("ignored");
     }
 
-    const r = await db.query(`
-      SELECT * FROM payments WHERE external_id=$1
-      FOR UPDATE
-    `,[payment.payment_id]);
-
-    if(!r.rows.length){
-      return res.send("not_found");
-    }
-
-    const p = r.rows[0];
-
-    /* ========= IDMP ========= */
-
-    if(p.status === "completed"){
-      return res.send("already_done");
-    }
-
-    /* ========= VALIDATION ========= */
-
-    if(payment.pay_currency !== p.asset){
-      return res.status(400).send("currency_mismatch");
-    }
-
-    if(Number(payment.price_amount) !== Number(p.amount)){
-      return res.status(400).send("amount_mismatch");
-    }
-
-    if(Number(payment.pay_amount) <= 0){
-      return res.status(400).send("invalid_amount");
-    }
-
-    /* ========= ATOMIC CREDIT ========= */
+    /* =====================================================
+       ATOMIC FLOW
+    ===================================================== */
 
     await db.transaction(async (tx)=>{
+
+      /* 🔒 LOCK */
+      const r = await tx.query(`
+        SELECT * FROM payments
+        WHERE external_id=$1
+        FOR UPDATE
+      `,[payment.payment_id]);
+
+      if(!r.rows.length){
+        throw new Error("payment_not_found");
+      }
+
+      const p = r.rows[0];
+
+      /* ===== IDEMPOTENT ===== */
+      if(p.status === "completed"){
+        return;
+      }
+
+      /* ===== VALIDATION ===== */
+
+      if(payment.pay_currency !== p.asset){
+        throw new Error("currency_mismatch");
+      }
+
+      if(Number(payment.price_amount) !== Number(p.amount)){
+        throw new Error("amount_mismatch");
+      }
+
+      if(Number(payment.pay_amount) <= 0){
+        throw new Error("invalid_amount");
+      }
+
+      /* ===== CREDIT ===== */
 
       await ledger.credit({
         user_id: p.user_id,
@@ -207,26 +183,57 @@ router.post("/webhook", rawBodyParser, async (req,res)=>{
         tx
       });
 
+      /* ===== UPDATE ===== */
+
       await tx.query(`
         UPDATE payments
-        SET status='completed', confirmed_at=NOW()
+        SET status='completed',
+            confirmed_at=NOW(),
+            meta = meta || $2
         WHERE id=$1
-      `,[p.id]);
+      `,[
+        p.id,
+        JSON.stringify({
+          tx_hash: payment.tx_hash || null
+        })
+      ]);
+
+      /* ===== AUDIT ===== */
+
+      await tx.query(`
+        INSERT INTO audit_logs(user_id,action,meta)
+        VALUES($1,$2,$3)
+      `,[
+        p.user_id,
+        "deposit_confirmed",
+        JSON.stringify({
+          amount: payment.pay_amount,
+          asset: p.asset
+        })
+      ]);
 
     });
 
     res.send("ok");
 
   }catch(e){
-    console.error("WEBHOOK ERROR", e);
+
+    console.error("WEBHOOK ERROR:", e);
+
+    await db.query(`
+      INSERT INTO fraud_logs(user_id,reason)
+      VALUES($1,$2)
+    `,[null, e.message]);
+
     res.status(500).send("error");
+
   }
 
 });
 
-/* =====================================================
-WITHDRAW (SAFE — QUEUE ONLY)
-===================================================== */
+/* =========================================================
+   WITHDRAW (LOCKED + SAFE)
+========================================================= */
 
 router.post("/withdraw", async (req,res)=>{
 
@@ -234,43 +241,43 @@ router.post("/withdraw", async (req,res)=>{
 
     const userId = auth(req);
 
-    rateLimit(userId + "_withdraw");
-
     let { amount, asset, address } = req.body;
 
     amount = validateAmount(amount);
     asset = String(asset).toUpperCase();
 
     if(!SUPPORTED.includes(asset)){
-      return res.status(400).json({error:"unsupported_coin"});
+      throw new Error("unsupported_coin");
     }
 
     if(!address){
-      return res.status(400).json({error:"invalid_address"});
+      throw new Error("invalid_address");
     }
 
     await db.transaction(async (tx)=>{
 
-      const w = await tx.query(`
-        SELECT balance FROM wallet_balances
+      const b = await tx.query(`
+        SELECT balance, locked
+        FROM wallet_balances
         WHERE user_id=$1 AND asset=$2
         FOR UPDATE
       `,[userId,asset]);
 
-      if(!w.rows.length || Number(w.rows[0].balance) < amount){
+      const balance = Number(b.rows[0]?.balance || 0);
+
+      if(balance < amount){
         throw new Error("insufficient_balance");
       }
 
-      /* debit */
-      await ledger.debit({
-        user_id:userId,
-        asset,
-        amount,
-        reason:"withdraw_request",
-        tx
-      });
+      /* 🔒 LOCK FUNDS */
+      await tx.query(`
+        UPDATE wallet_balances
+        SET balance = balance - $1,
+            locked  = COALESCE(locked,0) + $1
+        WHERE user_id=$2 AND asset=$3
+      `,[amount,userId,asset]);
 
-      /* queue (NOT sending payout here) */
+      /* 🧾 QUEUE */
       await tx.query(`
         INSERT INTO withdrawals
         (user_id,asset,amount,address,status)
@@ -279,17 +286,21 @@ router.post("/withdraw", async (req,res)=>{
 
     });
 
-    res.json({status:"pending_review"});
+    res.json({ status:"pending_review" });
 
   }catch(e){
-    res.status(400).json({error:e.message});
+
+    res.status(400).json({
+      error: e.message
+    });
+
   }
 
 });
 
-/* =====================================================
-PAYMENT HISTORY
-===================================================== */
+/* =========================================================
+   HISTORY
+========================================================= */
 
 router.get("/history", async (req,res)=>{
 
@@ -298,7 +309,7 @@ router.get("/history", async (req,res)=>{
     const userId = auth(req);
 
     const r = await db.query(`
-      SELECT id,provider,amount,asset,status,created_at
+      SELECT id,type,amount,asset,status,created_at
       FROM payments
       WHERE user_id=$1
       ORDER BY created_at DESC
