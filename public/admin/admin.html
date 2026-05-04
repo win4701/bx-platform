@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Bloxio Admin</title>
+  <link rel="stylesheet" href="./admin.css">
+</head>
+<body>
+
+  <div class="admin-layout">
+
+    <!-- SIDEBAR -->
+    <aside class="admin-sidebar">
+      <h2>⚙️ BLOXIO</h2>
+
+      <button data-tab="dashboard">Dashboard</button>
+      <button data-tab="users">Users</button>
+      <button data-tab="wallet">Wallet</button>
+      <button data-tab="airdrop">Airdrop</button>
+      <button data-tab="mining">Mining</button>
+      <button data-tab="market">Market</button>
+      <button data-tab="casino">Casino</button>
+      <button data-tab="logs">Logs</button>
+    </aside>
+
+    <!-- CONTENT -->
+    <main class="admin-main">
+
+      <section id="tab-dashboard" class="tab active">
+        <h2>📊 Dashboard</h2>
+        <div id="statsBox"></div>
+      </section>
+
+      <section id="tab-users" class="tab">
+        <h2>👥 Users</h2>
+        <input id="userId" placeholder="User ID">
+        <button id="banUser">Ban</button>
+        <button id="unbanUser">Unban</button>
+      </section>
+
+      <section id="tab-wallet" class="tab">
+        <h2>💰 Wallet</h2>
+        <input id="walletUser" placeholder="User ID">
+        <input id="walletAmount" placeholder="Amount">
+        <button id="walletAdd">Add</button>
+        <button id="walletRemove">Remove</button>
+      </section>
+
+      <section id="tab-airdrop" class="tab">
+        <h2>🎁 Airdrop</h2>
+        <input id="airdropValue" placeholder="Reward">
+        <button id="airdropUpdate">Update</button>
+      </section>
+
+      <section id="tab-mining" class="tab">
+        <h2>⛏ Mining</h2>
+        <input id="miningRate" placeholder="Rate">
+        <button id="miningUpdate">Update</button>
+      </section>
+
+      <section id="tab-market" class="tab">
+        <h2>📈 Market</h2>
+        <input id="marketPrice" placeholder="BTC Price">
+        <button id="marketUpdate">Update</button>
+      </section>
+
+      <section id="tab-casino" class="tab">
+        <h2>🎰 Casino</h2>
+        <input id="casinoRtp" placeholder="RTP">
+        <button id="casinoUpdate">Update</button>
+      </section>
+
+      <section id="tab-logs" class="tab">
+        <h2>📜 Logs</h2>
+        <div id="logsBox"></div>
+      </section>
+
+    </main>
+
+  </div>
+
+  <script src="./admin.js"></script>
+
+</body>
+  </html>
