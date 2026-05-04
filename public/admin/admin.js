@@ -1,5 +1,5 @@
 /* =========================================================
-   BLOXIO ADMIN ENGINE — PRO MAX
+   BLOXIO ADMIN ENGINE — ULTRA PRO MAX
 ========================================================= */
 
 "use strict";
@@ -7,45 +7,100 @@
 const ADMIN = {
 
   state:{
-    currentTab:"dashboard"
+    currentTab:"dashboard",
+    loading:false
   },
 
   el:{},
 
-  /* ================= INIT ================= */
+  /* =========================================================
+     INIT
+  ========================================================= */
 
-  init(){
+  async init(){
 
     this.cache();
+
+    await this.protect(); // 🔐 guard
+
     this.bindTabs();
     this.bindActions();
+    this.bindRealtime();
+
     this.boot();
 
   },
 
-  /* ================= CACHE ================= */
+  /* =========================================================
+     PROTECTION (SUPERADMIN ONLY)
+  ========================================================= */
 
-  cache(){
+  async protect(){
 
-    this.el.tabs = document.querySelectorAll(".admin-sidebar button");
-    this.el.panels = document.querySelectorAll(".tab");
+    const token = localStorage.getItem("token");
 
-    this.el.stats = $("statsBox");
-    this.el.logs  = $("logsBox");
+    if(!token){
+      return this.redirect();
+    }
+
+    try{
+
+      const res = await fetch("/api/auth/me",{
+        headers:{ Authorization:"Bearer "+token }
+      });
+
+      const data = await res.json();
+
+      if(!data?.user || data.user.role !== "superadmin"){
+        return this.redirect();
+      }
+
+      this.user = data.user;
+
+      this.log("ACCESS GRANTED → " + data.user.email);
+
+    }catch(e){
+
+      return this.redirect();
+
+    }
 
   },
 
-  /* ================= BOOT ================= */
+  redirect(){
+    location.href = "/";
+  },
+
+  /* =========================================================
+     CACHE
+  ========================================================= */
+
+  cache(){
+
+    this.el.tabs   = document.querySelectorAll(".admin-sidebar button");
+    this.el.panels = document.querySelectorAll(".tab");
+
+    this.el.logs  = $("logsBox");
+    this.el.stats = $("statsBox");
+
+  },
+
+  /* =========================================================
+     BOOT
+  ========================================================= */
 
   boot(){
 
     this.switchTab("dashboard");
-    this.loadMockStats();
-    this.log("ADMIN PANEL READY");
+    this.loadStats();
+
+    this.log("ADMIN READY");
 
   },
 
-  /* ================= TABS ================= */
+  /* =========================================================
+     TABS
+  ========================================================= */
 
   bindTabs(){
 
@@ -54,7 +109,6 @@ const ADMIN = {
       btn.onclick = ()=>{
 
         const tab = btn.dataset.tab;
-
         this.switchTab(tab);
 
       };
@@ -67,135 +121,224 @@ const ADMIN = {
 
     this.state.currentTab = tab;
 
-    // buttons
     this.el.tabs.forEach(b=>{
       b.classList.toggle("active", b.dataset.tab === tab);
     });
 
-    // panels
     this.el.panels.forEach(p=>{
       p.classList.remove("active");
     });
 
-    $("tab-" + tab)?.classList.add("active");
+    $("tab-"+tab)?.classList.add("active");
 
-    this.log("SWITCH TAB → " + tab);
+    this.log("TAB → " + tab);
 
   },
 
-  /* ================= ACTIONS ================= */
+  /* =========================================================
+     ACTIONS (CONNECTED TO API)
+  ========================================================= */
 
   bindActions(){
 
     /* ===== USERS ===== */
 
-    this.safeClick("banUser", ()=>{
+    this.safe("banUser", async ()=>{
 
-      const id = $("userId").value;
-      if(!id) return this.warn("User ID required");
+      const userId = $("userId").value;
 
-      this.log("BAN USER → " + id);
+      await this.api("/admin/user/ban",{userId});
+
+      this.success("User banned");
 
     });
 
-    this.safeClick("unbanUser", ()=>{
+    this.safe("unbanUser", async ()=>{
 
-      const id = $("userId").value;
-      if(!id) return this.warn("User ID required");
+      const userId = $("userId").value;
 
-      this.log("UNBAN USER → " + id);
+      await this.api("/admin/user/unban",{userId});
+
+      this.success("User unbanned");
 
     });
 
     /* ===== WALLET ===== */
 
-    this.safeClick("walletAdd", ()=>{
+    this.safe("walletAdd", async ()=>{
 
-      const id = $("walletUser").value;
+      const userId = $("walletUser").value;
       const amount = $("walletAmount").value;
 
-      if(!id || !amount) return this.warn("Missing data");
+      await this.api("/admin/wallet/add",{userId,amount});
 
-      this.log(`ADD ${amount} BX → USER ${id}`);
+      this.success("Balance added");
 
     });
 
-    this.safeClick("walletRemove", ()=>{
+    this.safe("walletRemove", async ()=>{
 
-      const id = $("walletUser").value;
+      const userId = $("walletUser").value;
       const amount = $("walletAmount").value;
 
-      if(!id || !amount) return this.warn("Missing data");
+      await this.api("/admin/wallet/remove",{userId,amount});
 
-      this.log(`REMOVE ${amount} BX → USER ${id}`);
+      this.success("Balance removed");
 
     });
 
     /* ===== AIRDROP ===== */
 
-    this.safeClick("airdropUpdate", ()=>{
+    this.safe("airdropUpdate", async ()=>{
 
-      const val = $("airdropValue").value;
+      const reward = $("airdropValue").value;
 
-      this.log("AIRDROP UPDATE → " + val);
+      await this.api("/admin/airdrop/update",{reward});
+
+      this.success("Airdrop updated");
 
     });
 
     /* ===== MINING ===== */
 
-    this.safeClick("miningUpdate", ()=>{
+    this.safe("miningUpdate", async ()=>{
 
-      const val = $("miningRate").value;
+      const rate = $("miningRate").value;
 
-      this.log("MINING UPDATE → " + val);
+      await this.api("/admin/mining/update",{rate});
+
+      this.success("Mining updated");
 
     });
 
     /* ===== MARKET ===== */
 
-    this.safeClick("marketUpdate", ()=>{
+    this.safe("marketUpdate", async ()=>{
 
-      const val = $("marketPrice").value;
+      const price = $("marketPrice").value;
 
-      this.log("MARKET UPDATE → " + val);
+      await this.api("/admin/market/update",{price});
+
+      this.success("Market updated");
 
     });
 
     /* ===== CASINO ===== */
 
-    this.safeClick("casinoUpdate", ()=>{
+    this.safe("casinoUpdate", async ()=>{
 
-      const val = $("casinoRtp").value;
+      const rtp = $("casinoRtp").value;
 
-      this.log("CASINO RTP → " + val);
+      await this.api("/admin/casino/update",{rtp});
+
+      this.success("Casino updated");
 
     });
 
   },
 
-  /* ================= HELPERS ================= */
+  /* =========================================================
+     API WRAPPER
+  ========================================================= */
 
-  safeClick(id, fn){
+  async api(url, body={}){
+
+    try{
+
+      const res = await API.post(url, body);
+
+      if(!res || res.error){
+        throw new Error(res?.error || "API error");
+      }
+
+      this.log("API OK → " + url);
+
+      return res;
+
+    }catch(e){
+
+      this.error(e.message);
+      throw e;
+
+    }
+
+  },
+
+  /* =========================================================
+     REALTIME (WS + STATE)
+  ========================================================= */
+
+  bindRealtime(){
+
+    if(window.WS){
+
+      WS.on("wallet:update", ()=> this.loadStats());
+      WS.on("mining:reward", ()=> this.loadStats());
+      WS.on("notify", (d)=> this.log("🔔 " + d.message));
+
+    }
+
+    if(window.STATE){
+
+      STATE.on("*", ()=>{
+        // optional reactive updates
+      });
+
+    }
+
+  },
+
+  /* =========================================================
+     STATS
+  ========================================================= */
+
+  async loadStats(){
+
+    try{
+
+      const res = await API.get("/admin/dashboard");
+
+      if(res.error) return;
+
+      this.el.stats.innerHTML = `
+        <div class="stat"><h4>Users</h4><span>${res.users}</span></div>
+        <div class="stat"><h4>Volume</h4><span>${res.volume}</span></div>
+        <div class="stat"><h4>Revenue</h4><span>${res.revenue}</span></div>
+        <div class="stat"><h4>Active</h4><span>${res.active}</span></div>
+      `;
+
+    }catch{}
+
+  },
+
+  /* =========================================================
+     HELPERS
+  ========================================================= */
+
+  safe(id, fn){
 
     const el = $(id);
     if(!el) return;
 
-    el.onclick = ()=>{
+    el.onclick = async ()=>{
+
+      if(this.state.loading) return;
 
       try{
-        fn();
+
+        this.state.loading = true;
+
+        await fn();
+
       }catch(e){
-        console.error(e);
-        this.warn("Action failed");
+
+      }finally{
+
+        this.state.loading = false;
+
       }
 
     };
-
-  },
-
-  warn(msg){
-
-    this.log("⚠️ " + msg);
 
   },
 
@@ -203,37 +346,36 @@ const ADMIN = {
 
     if(!this.el.logs) return;
 
-    const line = document.createElement("div");
+    const el = document.createElement("div");
 
-    line.innerText =
+    el.innerText =
       "[" + new Date().toLocaleTimeString() + "] " + msg;
 
-    this.el.logs.prepend(line);
+    this.el.logs.prepend(el);
 
   },
 
-  /* ================= MOCK (UI ONLY) ================= */
+  success(msg){
+    this.log("✅ " + msg);
+  },
 
-  loadMockStats(){
-
-    if(!this.el.stats) return;
-
-    this.el.stats.innerHTML = `
-      <div class="stat"><h4>Users</h4><span>12,450</span></div>
-      <div class="stat"><h4>Volume</h4><span>98,320 BX</span></div>
-      <div class="stat"><h4>Active</h4><span>1,240</span></div>
-      <div class="stat"><h4>Revenue</h4><span>12,930 BX</span></div>
-    `;
-
+  error(msg){
+    this.log("❌ " + msg);
   }
 
 };
 
-/* ================= START ================= */
+/* =========================================================
+   HELPERS
+========================================================= */
 
 function $(id){
   return document.getElementById(id);
 }
+
+/* =========================================================
+   START
+========================================================= */
 
 window.addEventListener("DOMContentLoaded", ()=>{
   ADMIN.init();
