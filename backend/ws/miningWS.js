@@ -1,20 +1,25 @@
 "use strict";
 
-const wsHub = require("./wsHub");
+/* =========================================================
+   BLOXIO MINING WS — ULTRA REALTIME ENGINE
+========================================================= */
 
-/* =========================================
-STATE
-========================================= */
+const wsHub = require("./wsHub");
+const redis = require("../core/redis");
+
+/* =========================================================
+   STATE (LOCAL CACHE)
+========================================================= */
 
 let totalHashrate = 0;
-const miners = new Map(); // userId -> hashrate
+const miners = new Map();
 const recentRewards = [];
 
 const MAX_HISTORY = 50;
 
-/* =========================================
-HELPERS
-========================================= */
+/* =========================================================
+   HELPERS
+========================================================= */
 
 function pushReward(data){
 
@@ -26,19 +31,55 @@ function pushReward(data){
 
 }
 
-/* =========================================
-UPDATE HASHRATE
-========================================= */
+/* =========================================================
+   HASHRATE UPDATE (DISTRIBUTED)
+========================================================= */
 
-function updateHashrate(userId, rate){
+async function updateHashrate(userId, rate){
+
+  rate = Number(rate);
+
+  if(!rate || rate <= 0 || rate > 10000){
+    return;
+  }
 
   miners.set(userId, rate);
 
-  totalHashrate = 0;
+  totalHashrate = [...miners.values()]
+    .reduce((a,b)=>a+b,0);
 
-  for(const r of miners.values()){
-    totalHashrate += r;
-  }
+  /* 🔥 Redis sync */
+  await redis.publish("mining_hashrate", {
+    userId,
+    rate
+  });
+
+  broadcastNetwork();
+
+}
+
+/* =========================================================
+   REMOVE MINER
+========================================================= */
+
+async function removeMiner(userId){
+
+  miners.delete(userId);
+
+  totalHashrate = [...miners.values()]
+    .reduce((a,b)=>a+b,0);
+
+  await redis.publish("mining_remove", { userId });
+
+  broadcastNetwork();
+
+}
+
+/* =========================================================
+   BROADCAST NETWORK
+========================================================= */
+
+function broadcastNetwork(){
 
   wsHub.broadcast("mining", {
     type: "network",
@@ -49,27 +90,11 @@ function updateHashrate(userId, rate){
 
 }
 
-/* =========================================
-REMOVE MINER
-========================================= */
+/* =========================================================
+   REWARD
+========================================================= */
 
-function removeMiner(userId){
-
-  miners.delete(userId);
-
-  totalHashrate = 0;
-
-  for(const r of miners.values()){
-    totalHashrate += r;
-  }
-
-}
-
-/* =========================================
-REWARD
-========================================= */
-
-function broadcastReward(userId, amount){
+async function broadcastReward(userId, amount){
 
   const data = {
     type: "reward",
@@ -80,13 +105,50 @@ function broadcastReward(userId, amount){
 
   pushReward(data);
 
+  /* 🔥 Redis sync */
+  await redis.publish("mining_reward", data);
+
   wsHub.broadcast("mining", data);
 
 }
 
-/* =========================================
-SNAPSHOT
-========================================= */
+/* =========================================================
+   REDIS SUBSCRIBE (🔥 مهم)
+========================================================= */
+
+redis.subscribe("mining_hashrate",(msg)=>{
+
+  miners.set(msg.userId, msg.rate);
+
+  totalHashrate = [...miners.values()]
+    .reduce((a,b)=>a+b,0);
+
+  broadcastNetwork();
+
+});
+
+redis.subscribe("mining_remove",(msg)=>{
+
+  miners.delete(msg.userId);
+
+  totalHashrate = [...miners.values()]
+    .reduce((a,b)=>a+b,0);
+
+  broadcastNetwork();
+
+});
+
+redis.subscribe("mining_reward",(msg)=>{
+
+  pushReward(msg);
+
+  wsHub.broadcast("mining", msg);
+
+});
+
+/* =========================================================
+   SNAPSHOT
+========================================================= */
 
 function sendSnapshot(ws){
 
@@ -101,9 +163,9 @@ function sendSnapshot(ws){
 
 }
 
-/* =========================================
-ON CONNECT
-========================================= */
+/* =========================================================
+   CONNECTION
+========================================================= */
 
 function handleConnection(ws){
 
@@ -113,9 +175,22 @@ function handleConnection(ws){
 
 }
 
-/* =========================================
-EXPORT
-========================================= */
+/* =========================================================
+   CLEANUP (IDLE MINERS)
+========================================================= */
+
+setInterval(()=>{
+
+  // example cleanup logic
+  if(miners.size > 10000){
+    miners.clear();
+  }
+
+}, 60000);
+
+/* =========================================================
+   EXPORT
+========================================================= */
 
 module.exports = {
   updateHashrate,
