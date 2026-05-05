@@ -1,59 +1,108 @@
 "use strict";
 
-const WebSocket = require("ws");
+/* =========================================================
+   BLOXIO WS ENGINE — ULTRA REALTIME PRO
+========================================================= */
 
-class WSEngine{
+const WebSocket = require("ws");
+const jwt = require("jsonwebtoken");
+const config = require("../config");
+
+class WSEngine {
 
   constructor(server){
 
     this.wss = new WebSocket.Server({ server });
-    this.clients = new Map(); // userId → Set
+
+    this.clients = new Map();   // userId → Set(ws)
+    this.channels = new Map();  // channel → Set(ws)
 
     this.init();
+    this.heartbeat();
 
   }
 
+  /* =========================================================
+     INIT
+  ========================================================= */
+
   init(){
 
-    this.wss.on("connection", (ws, req)=>{
+    this.wss.on("connection",(ws,req)=>{
 
-      ws.on("message",(msg)=>{
-        this.handle(ws, msg);
-      });
+      ws.isAlive = true;
 
-      ws.on("close",()=>{
-        this.cleanup(ws);
-      });
+      ws.on("pong",()=> ws.isAlive = true);
+
+      ws.on("message",(msg)=> this.handle(ws,msg));
+
+      ws.on("close",()=> this.cleanup(ws));
+
+      ws.on("error",()=> this.cleanup(ws));
 
     });
 
   }
 
-  /* =====================================================
-     AUTH + REGISTER
-  ===================================================== */
+  /* =========================================================
+     AUTH (JWT SECURE)
+  ========================================================= */
 
-  handle(ws, msg){
+  authenticate(ws, token){
+
+    try{
+
+      const decoded = jwt.verify(
+        token,
+        config.security.jwtSecret
+      );
+
+      ws.userId = decoded.id;
+
+      if(!this.clients.has(ws.userId)){
+        this.clients.set(ws.userId,new Set());
+      }
+
+      this.clients.get(ws.userId).add(ws);
+
+      ws.send(JSON.stringify({
+        type:"auth_success"
+      }));
+
+    }catch{
+      ws.send(JSON.stringify({ type:"auth_failed" }));
+      ws.close();
+    }
+
+  }
+
+  /* =========================================================
+     HANDLE MESSAGES
+  ========================================================= */
+
+  handle(ws,msg){
 
     try{
 
       const data = JSON.parse(msg);
 
-      if(data.type === "auth"){
+      switch(data.type){
 
-        const userId = data.userId;
+        case "auth":
+          this.authenticate(ws,data.token);
+          break;
 
-        ws.userId = userId;
+        case "subscribe":
+          this.subscribe(ws,data.channel);
+          break;
 
-        if(!this.clients.has(userId)){
-          this.clients.set(userId, new Set());
-        }
+        case "unsubscribe":
+          this.unsubscribe(ws,data.channel);
+          break;
 
-        this.clients.get(userId).add(ws);
-
-        ws.send(JSON.stringify({
-          type:"auth_success"
-        }));
+        case "ping":
+          ws.send(JSON.stringify({type:"pong"}));
+          break;
 
       }
 
@@ -61,53 +110,117 @@ class WSEngine{
 
   }
 
-  /* =====================================================
-     SEND TO USER
-  ===================================================== */
+  /* =========================================================
+     CHANNEL SYSTEM
+  ========================================================= */
 
-  send(userId, payload){
+  subscribe(ws,channel){
+
+    if(!this.channels.has(channel)){
+      this.channels.set(channel,new Set());
+    }
+
+    this.channels.get(channel).add(ws);
+
+  }
+
+  unsubscribe(ws,channel){
+
+    const set = this.channels.get(channel);
+
+    if(set) set.delete(ws);
+
+  }
+
+  /* =========================================================
+     SEND TO USER
+  ========================================================= */
+
+  send(userId,payload){
 
     const set = this.clients.get(userId);
-
     if(!set) return;
 
     set.forEach(ws=>{
-      try{
+      if(ws.readyState === 1){
         ws.send(JSON.stringify(payload));
-      }catch{}
+      }
     });
 
   }
 
-  /* =====================================================
+  /* =========================================================
      BROADCAST
-  ===================================================== */
+  ========================================================= */
 
   broadcast(payload){
 
     this.wss.clients.forEach(ws=>{
-      try{
+      if(ws.readyState === 1){
         ws.send(JSON.stringify(payload));
-      }catch{}
+      }
     });
 
   }
 
-  /* =====================================================
+  /* =========================================================
+     CHANNEL BROADCAST
+  ========================================================= */
+
+  publish(channel,payload){
+
+    const set = this.channels.get(channel);
+    if(!set) return;
+
+    set.forEach(ws=>{
+      if(ws.readyState === 1){
+        ws.send(JSON.stringify(payload));
+      }
+    });
+
+  }
+
+  /* =========================================================
+     HEARTBEAT (ANTI DEAD CONNECTIONS)
+  ========================================================= */
+
+  heartbeat(){
+
+    setInterval(()=>{
+
+      this.wss.clients.forEach(ws=>{
+
+        if(!ws.isAlive){
+          return ws.terminate();
+        }
+
+        ws.isAlive = false;
+        ws.ping();
+
+      });
+
+    }, config.ws.heartbeat || 30000);
+
+  }
+
+  /* =========================================================
      CLEANUP
-  ===================================================== */
+  ========================================================= */
 
   cleanup(ws){
 
-    const userId = ws.userId;
-
-    if(!userId) return;
-
-    const set = this.clients.get(userId);
-
-    if(set){
-      set.delete(ws);
+    /* remove user */
+    if(ws.userId){
+      const set = this.clients.get(ws.userId);
+      if(set){
+        set.delete(ws);
+      }
     }
+
+    /* remove from channels */
+    this.channels.forEach(set=>{
+      set.delete(ws);
+    });
 
   }
 
