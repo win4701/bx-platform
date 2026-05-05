@@ -1,66 +1,98 @@
 "use strict";
 
-const { Queue, Worker, QueueEvents } = require("bullmq");
-const connection = require("../core/redis");
+/* =========================================================
+   BLOXIO SYSTEM QUEUE — ULTRA ENTERPRISE
+========================================================= */
 
-/* =========================================
-QUEUE
-========================================= */
+const { Queue, Worker, QueueEvents } = require("bullmq");
+const redis = require("../core/redis");
+
+const connection = redis.redis;
+
+/* =========================================================
+   QUEUE
+========================================================= */
 
 const systemQueue = new Queue("system", {
   connection,
   defaultJobOptions: {
     removeOnComplete: true,
-    removeOnFail: false,
+    removeOnFail: 100,
     attempts: 5,
     backoff: {
       type: "exponential",
       delay: 2000
-    }
+    },
+    timeout: 30000
   }
 });
 
-/* =========================================
-QUEUE EVENTS (LOGGING)
-========================================= */
+/* =========================================================
+   EVENTS
+========================================================= */
 
 const events = new QueueEvents("system", { connection });
 
 events.on("completed", ({ jobId }) => {
-  console.log(`✅ Job completed: ${jobId}`);
+  console.log("✅ Job completed:", jobId);
 });
 
 events.on("failed", ({ jobId, failedReason }) => {
-  console.error(`❌ Job failed: ${jobId}`, failedReason);
+  console.error("❌ Job failed:", jobId, failedReason);
 });
 
-/* =========================================
-ADD JOB
-========================================= */
+/* =========================================================
+   JOB VALIDATION
+========================================================= */
 
-async function addJob(name, data, opts = {}) {
+function validateJob(name, data){
+  if(!name) throw new Error("invalid_job_name");
+  if(typeof data !== "object") throw new Error("invalid_job_data");
+}
+
+/* =========================================================
+   ADD JOB (IDEMPOTENT)
+========================================================= */
+
+async function addJob(name, data, opts = {}){
+
+  validateJob(name,data);
+
+  const jobId = opts.jobId || `${name}:${JSON.stringify(data)}`;
 
   return await systemQueue.add(name, data, {
+    jobId, // 🔥 prevents duplicates
+    priority: opts.priority || 1,
     ...opts
   });
 
 }
 
-/* =========================================
-ADD DELAYED JOB
-========================================= */
+/* =========================================================
+   DELAYED JOB
+========================================================= */
 
-async function addDelayedJob(name, data, delayMs) {
+async function addDelayedJob(name, data, delayMs){
 
   return await systemQueue.add(name, data, {
-    delay: delayMs
+    delay: delayMs,
+    jobId: `${name}:${Date.now()}`
   });
 
 }
 
-/* =========================================
-WORKER (🔥 المهم)
-========================================= */
+/* =========================================================
+   WORKERS (PRELOAD)
+========================================================= */
+
+const depositWatcher = require("../services/depositWatcher");
+const matchingEngine = require("../engines/matchingEngine");
+const systemBots = require("../services/systemBots");
+const miningEngine = require("../engines/miningEngine");
+
+/* =========================================================
+   WORKER
+========================================================= */
 
 const worker = new Worker(
   "system",
@@ -68,96 +100,101 @@ const worker = new Worker(
 
     const { name, data } = job;
 
-    console.log(`⚙️ Processing job: ${name}`);
+    console.log("⚙️ Processing:", name);
 
-    try {
+    try{
 
-      switch (name) {
+      /* 🔐 distributed lock */
+      const locked = await redis.lock("job:" + job.id);
 
-        /* =========================
-        DEPOSIT WATCHER
-        ========================= */
+      if(!locked){
+        return null;
+      }
+
+      switch(name){
+
         case "deposit_check":
-
-          const depositWatcher = require("../services/depositWatcher");
           return await depositWatcher.run(data);
 
-        /* =========================
-        MATCH ENGINE
-        ========================= */
         case "match_order":
-
-          const matchingEngine = require("../engines/matchingEngine");
           return await matchingEngine.process(data);
 
-        /* =========================
-        MARKET BOT
-        ========================= */
         case "market_bot":
+          return await systemBots.run(data);
 
-          const bot = require("../services/systemBots");
-          return await bot.run(data);
-
-        /* =========================
-        MINING
-        ========================= */
         case "mining_reward":
+          return await miningEngine.process(data);
 
-          const mining = require("../engines/miningEngine");
-          return await mining.process(data);
-
-        /* =========================
-        DEFAULT
-        ========================= */
         default:
-          console.log(" Unknown job:", name);
+          console.warn("Unknown job:", name);
           return null;
 
       }
 
-    } catch (err) {
+    }catch(err){
 
-      console.error(" Worker error:", err.message);
+      console.error("Worker error:", err.message);
       throw err;
 
+    }finally{
+      await redis.unlock("job:" + job.id);
     }
 
   },
   {
     connection,
-    concurrency: 5
+    concurrency: 10
   }
 );
 
-/* =========================================
-WORKER EVENTS
-========================================= */
+/* =========================================================
+   WORKER EVENTS
+========================================================= */
 
-worker.on("completed", (job) => {
-  console.log(` Worker done: ${job.id}`);
+worker.on("completed", (job)=>{
+  console.log("✔ Worker done:", job.id);
 });
 
-worker.on("failed", (job, err) => {
-  console.error(` Worker failed: ${job?.id}`, err.message);
+worker.on("failed", (job, err)=>{
+  console.error("❌ Worker failed:", job?.id, err.message);
 });
 
-/* =========================================
-GRACEFUL SHUTDOWN
-========================================= */
+/* =========================================================
+   MONITORING
+========================================================= */
 
-process.on("SIGINT", async () => {
-  console.log(" Closing queue...");
+async function stats(){
+
+  return {
+    waiting: await systemQueue.getWaitingCount(),
+    active: await systemQueue.getActiveCount(),
+    completed: await systemQueue.getCompletedCount(),
+    failed: await systemQueue.getFailedCount()
+  };
+
+}
+
+/* =========================================================
+   GRACEFUL SHUTDOWN
+========================================================= */
+
+async function shutdown(){
+
+  console.log("🛑 Shutting down queue...");
+
   await worker.close();
   await systemQueue.close();
-  process.exit(0);
-});
 
-/* =========================================
-EXPORT
-========================================= */
+}
+
+/* =========================================================
+   EXPORT
+========================================================= */
 
 module.exports = {
   systemQueue,
   addJob,
-  addDelayedJob
+  addDelayedJob,
+  stats,
+  shutdown
 };
