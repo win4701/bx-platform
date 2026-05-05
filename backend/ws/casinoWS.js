@@ -1,180 +1,263 @@
 "use strict";
 
 /* =========================================================
-   BLOXIO CASINO WS — ULTRA REALTIME ENGINE
+   BLOXIO WS HUB — ULTRA REALTIME CORE
 ========================================================= */
 
-const wsHub = require("./wsHub");
+const WebSocket = require("ws");
+const jwt = require("jsonwebtoken");
+const config = require("../config");
 const redis = require("../core/redis");
 
 /* =========================================================
-   STATE (LOCAL CACHE)
+   STATE
 ========================================================= */
 
-const recent = new Map(); // game -> events[]
-const MAX = 50;
+let wss;
+
+const clients = new Map(); // ws -> meta
+const channels = new Map(); // channel -> Set(ws)
 
 /* =========================================================
-   HELPERS
+   START
 ========================================================= */
 
-function push(game, data){
+function startWS(server){
 
-  if(!recent.has(game)){
-    recent.set(game, []);
-  }
+  wss = new WebSocket.Server({ server });
 
-  const arr = recent.get(game);
+  console.log("📡 WS Hub started");
 
-  arr.unshift(data);
+  wss.on("connection",(ws)=>{
 
-  if(arr.length > MAX){
-    arr.pop();
-  }
+    clients.set(ws,{
+      channels:new Set(),
+      userId:null
+    });
+
+    ws.isAlive = true;
+
+    ws.on("pong",()=> ws.isAlive = true);
+
+    ws.on("message",(msg)=> handleMessage(ws,msg));
+
+    ws.on("close",()=> cleanup(ws));
+
+    ws.on("error",()=> cleanup(ws));
+
+  });
+
+  heartbeat();
 
 }
 
 /* =========================================================
-   BROADCAST
+   AUTH (JWT 🔥)
 ========================================================= */
 
-function send(game, data){
+function authenticate(ws, token){
 
-  push(game, data);
+  try{
 
-  wsHub.broadcast(`casino:${game}`, data);
+    const decoded = jwt.verify(token, config.security.jwtSecret);
 
-}
+    clients.get(ws).userId = decoded.id;
 
-/* =========================================================
-   BET
-========================================================= */
+    ws.send(JSON.stringify({ type:"auth_success" }));
 
-async function broadcastBet(user, game, bet){
-
-  const data = {
-    type: "bet",
-    user,
-    game,
-    bet: Number(bet),
-    time: Date.now()
-  };
-
-  await redis.publish("casino_event", data);
-
-  send(game, data);
-
-}
-
-/* =========================================================
-   WIN
-========================================================= */
-
-async function broadcastWin(user, game, payout, multiplier=null){
-
-  const data = {
-    type: "win",
-    user,
-    game,
-    payout: Number(payout),
-    multiplier,
-    time: Date.now()
-  };
-
-  await redis.publish("casino_event", data);
-
-  send(game, data);
-
-  /* 🔥 BIG WIN */
-  if(payout >= 50){
-
-    const big = {
-      type: "big_win",
-      user,
-      game,
-      payout,
-      time: Date.now()
-    };
-
-    await redis.publish("casino_event", big);
-
-    send(game, big);
-
-    console.log("💰 BIG WIN:", user, payout);
-
+  }catch{
+    ws.send(JSON.stringify({ type:"auth_failed" }));
+    ws.close();
   }
 
 }
 
 /* =========================================================
-   REDIS SYNC (🔥 مهم)
+   MESSAGE HANDLER
 ========================================================= */
 
-redis.subscribe("casino_event",(msg)=>{
+function handleMessage(ws, msg){
 
-  send(msg.game, msg);
+  try{
 
-});
+    const data = JSON.parse(msg);
+    const meta = clients.get(ws);
 
-/* =========================================================
-   SNAPSHOT
-========================================================= */
+    if(!meta) return;
 
-function sendSnapshot(ws, game){
+    switch(data.type){
 
-  const data = recent.get(game) || [];
+      case "auth":
+        authenticate(ws, data.token);
+        break;
 
-  ws.send(JSON.stringify({
-    type: "casino_snapshot",
-    game,
-    data
-  }));
+      case "subscribe":
+        subscribe(ws, data.channel);
+        break;
+
+      case "unsubscribe":
+        unsubscribe(ws, data.channel);
+        break;
+
+      case "ping":
+        ws.send(JSON.stringify({type:"pong"}));
+        break;
+
+    }
+
+  }catch(e){
+    console.error("WS error:", e.message);
+  }
 
 }
 
 /* =========================================================
-   CONNECTION
+   SUBSCRIBE (OPTIMIZED 🔥)
 ========================================================= */
 
-function handleConnection(ws){
+function subscribe(ws, channel){
 
-  console.log("🎰 Casino WS connected");
+  if(!channel) return;
 
-  ws.on("message",(msg)=>{
+  const meta = clients.get(ws);
 
-    try{
+  meta.channels.add(channel);
 
-      const data = JSON.parse(msg);
+  if(!channels.has(channel)){
+    channels.set(channel,new Set());
+  }
 
-      switch(data.type){
+  channels.get(channel).add(ws);
 
-        case "subscribe":
+}
 
-          if(!data.game) return;
+/* =========================================================
+   UNSUBSCRIBE
+========================================================= */
 
-          ws.game = data.game;
+function unsubscribe(ws, channel){
 
-          wsHub.subscribe(ws, `casino:${data.game}`);
+  const meta = clients.get(ws);
 
-          sendSnapshot(ws, data.game);
+  if(!meta) return;
 
-          break;
+  meta.channels.delete(channel);
 
-        case "unsubscribe":
+  const set = channels.get(channel);
 
-          if(ws.game){
-            wsHub.unsubscribe(ws, `casino:${ws.game}`);
-          }
+  if(set){
+    set.delete(ws);
+  }
 
-          break;
+}
 
-      }
+/* =========================================================
+   BROADCAST (O(1) 🔥)
+========================================================= */
 
-    }catch(e){
-      console.error("Casino WS error:", e.message);
+function broadcast(channel, data){
+
+  const set = channels.get(channel);
+
+  if(!set) return;
+
+  const msg = JSON.stringify({
+    channel,
+    ...data
+  });
+
+  set.forEach(ws=>{
+    if(ws.readyState === 1){
+      ws.send(msg);
+    }
+  });
+
+}
+
+/* =========================================================
+   SEND TO USER
+========================================================= */
+
+function sendToUser(userId, data){
+
+  const msg = JSON.stringify(data);
+
+  clients.forEach((meta,ws)=>{
+
+    if(meta.userId === userId && ws.readyState === 1){
+      ws.send(msg);
     }
 
   });
+
+}
+
+/* =========================================================
+   REDIS SYNC (🔥 DISTRIBUTED)
+========================================================= */
+
+redis.subscribe("ws_broadcast",(msg)=>{
+  broadcast(msg.channel, msg.data);
+});
+
+async function publish(channel,data){
+  await redis.publish("ws_broadcast",{channel,data});
+}
+
+/* =========================================================
+   HEARTBEAT
+========================================================= */
+
+function heartbeat(){
+
+  setInterval(()=>{
+
+    wss.clients.forEach(ws=>{
+
+      if(!ws.isAlive){
+        return cleanup(ws);
+      }
+
+      ws.isAlive = false;
+      ws.ping();
+
+    });
+
+  }, config.ws.heartbeat || 30000);
+
+}
+
+/* =========================================================
+   CLEANUP
+========================================================= */
+
+function cleanup(ws){
+
+  const meta = clients.get(ws);
+
+  if(meta){
+
+    meta.channels.forEach(ch=>{
+      const set = channels.get(ch);
+      if(set) set.delete(ws);
+    });
+
+  }
+
+  clients.delete(ws);
+
+}
+
+/* =========================================================
+   STATS
+========================================================= */
+
+function getStats(){
+
+  return {
+    clients: clients.size,
+    channels: channels.size
+  };
 
 }
 
@@ -183,7 +266,11 @@ function handleConnection(ws){
 ========================================================= */
 
 module.exports = {
-  broadcastBet,
-  broadcastWin,
-  handleConnection
+  startWS,
+  broadcast,
+  publish,
+  sendToUser,
+  subscribe,
+  unsubscribe,
+  getStats
 };
