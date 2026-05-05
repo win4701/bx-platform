@@ -1,64 +1,136 @@
 "use strict";
 
+/* =========================================================
+   BLOXIO RISK ENGINE — ULTRA PROTECTION SYSTEM
+========================================================= */
+
 const db = require("../database");
+const config = require("../config");
 
-/* =========================================
-CONFIG
-========================================= */
+/* =========================================================
+   BASE LIMITS (FROM CONFIG)
+========================================================= */
 
-const LIMITS = {
-  maxBet: 500,
-  maxWin: 5000,
-  maxDailyBet: 10000,
-  maxExposure: 200000
-};
+function limits(){
 
-/* =========================================
-CHECK BET
-========================================= */
+  return {
+    maxBet: config.trading?.maxBet || 500,
+    maxWin: config.trading?.maxWin || 5000,
+    maxDailyBet: config.trading?.maxDailyBet || 10000,
+    maxExposure: config.trading?.maxExposure || 200000
+  };
+
+}
+
+/* =========================================================
+   USER RISK SCORE (🔥 مهم)
+========================================================= */
+
+async function getUserRisk(userId){
+
+  const r = await db.query(`
+    SELECT COUNT(*) as total
+    FROM fraud_logs
+    WHERE user_id=$1
+  `,[userId]);
+
+  const score = Number(r.rows[0].total);
+
+  return score;
+
+}
+
+/* =========================================================
+   CACHE (ANTI DB OVERLOAD)
+========================================================= */
+
+const cache = new Map();
+
+function cacheGet(key){
+  const v = cache.get(key);
+  if(!v) return null;
+  if(Date.now() > v.exp) return null;
+  return v.value;
+}
+
+function cacheSet(key,value,ttl=5000){
+  cache.set(key,{
+    value,
+    exp: Date.now() + ttl
+  });
+}
+
+/* =========================================================
+   BET CHECK (SMART)
+========================================================= */
 
 async function checkBet(userId, bet){
 
   if(bet <= 0) throw new Error("invalid_bet");
 
-  if(bet > LIMITS.maxBet){
+  const l = limits();
+
+  /* ===== risk score ===== */
+  const risk = await getUserRisk(userId);
+
+  const dynamicMax = risk > 5
+    ? l.maxBet / 2
+    : l.maxBet;
+
+  if(bet > dynamicMax){
     throw new Error("BET_LIMIT_EXCEEDED");
   }
 
-  /* daily limit */
+  /* ===== daily limit (cached) ===== */
 
-  const r = await db.query(`
-    SELECT COALESCE(SUM(bet),0) as total
-    FROM casino_bets
-    WHERE user_id=$1
-    AND created_at > NOW() - INTERVAL '1 day'
-  `,[userId]);
+  const cacheKey = `bet:${userId}`;
+  let total = cacheGet(cacheKey);
 
-  const total = Number(r.rows[0].total);
+  if(total === null){
 
-  if(total + bet > LIMITS.maxDailyBet){
+    const r = await db.query(`
+      SELECT COALESCE(SUM(bet),0) as total
+      FROM casino_bets
+      WHERE user_id=$1
+      AND created_at > NOW() - INTERVAL '1 day'
+    `,[userId]);
+
+    total = Number(r.rows[0].total);
+
+    cacheSet(cacheKey,total,5000);
+  }
+
+  if(total + bet > l.maxDailyBet){
     throw new Error("DAILY_LIMIT_EXCEEDED");
   }
 
 }
 
-/* =========================================
-CHECK WIN
-========================================= */
+/* =========================================================
+   WIN CHECK
+========================================================= */
 
 function checkWin(win){
 
-  if(win > LIMITS.maxWin){
+  const l = limits();
+
+  if(win > l.maxWin){
     throw new Error("WIN_LIMIT_EXCEEDED");
   }
 
 }
 
-/* =========================================
-SYSTEM EXPOSURE
-========================================= */
+/* =========================================================
+   SYSTEM EXPOSURE (CACHED)
+========================================================= */
 
 async function getExposure(){
+
+  const cacheKey = "exposure";
+
+  let exposure = cacheGet(cacheKey);
+
+  if(exposure !== null) return exposure;
 
   const r = await db.query(`
     SELECT COALESCE(SUM(payout - bet),0) as exposure
@@ -66,34 +138,51 @@ async function getExposure(){
     WHERE created_at > NOW() - INTERVAL '1 hour'
   `);
 
-  return Number(r.rows[0].exposure);
+  exposure = Number(r.rows[0].exposure);
+
+  cacheSet(cacheKey,exposure,3000);
+
+  return exposure;
+
 }
 
 async function checkExposure(amount){
 
+  const l = limits();
+
   const exposure = await getExposure();
 
-  if(exposure + amount > LIMITS.maxExposure){
+  if(exposure + amount > l.maxExposure){
     throw new Error("HOUSE_RISK_LIMIT");
   }
 
 }
 
-/* =========================================
-MARKET RISK
-========================================= */
+/* =========================================================
+   MARKET RISK (TRADING)
+========================================================= */
 
 async function checkMarketOrder(userId, amount){
 
-  if(amount > 10000){
+  if(amount <= 0){
+    throw new Error("invalid_amount");
+  }
+
+  const risk = await getUserRisk(userId);
+
+  if(risk > 10 && amount > 2000){
+    throw new Error("RISK_LIMIT");
+  }
+
+  if(amount > config.trading.maxOrder){
     throw new Error("ORDER_TOO_LARGE");
   }
 
 }
 
-/* =========================================
-MINING CONTROL
-========================================= */
+/* =========================================================
+   MINING CONTROL
+========================================================= */
 
 function checkMining(hashRate){
 
@@ -103,21 +192,47 @@ function checkMining(hashRate){
 
 }
 
-/* =========================================
-DYNAMIC LIMITS (ADVANCED)
-========================================= */
+/* =========================================================
+   ANOMALY DETECTION (🔥 مهم جداً)
+========================================================= */
 
-function dynamicMaxBet(balance){
+async function detectAnomaly(userId){
 
-  if(balance < 100) return 50;
-  if(balance < 1000) return 200;
-  return LIMITS.maxBet;
+  const r = await db.query(`
+    SELECT COUNT(*) as c
+    FROM casino_bets
+    WHERE user_id=$1
+    AND created_at > NOW() - INTERVAL '1 minute'
+  `,[userId]);
+
+  if(Number(r.rows[0].c) > 20){
+    throw new Error("SPAM_ACTIVITY");
+  }
 
 }
 
-/* =========================================
-EXPORT
-========================================= */
+/* =========================================================
+   GLOBAL RISK CHECK
+========================================================= */
+
+async function fullCheck({userId, amount, type}){
+
+  await detectAnomaly(userId);
+
+  if(type === "casino"){
+    await checkBet(userId, amount);
+    await checkExposure(amount);
+  }
+
+  if(type === "trade"){
+    await checkMarketOrder(userId, amount);
+  }
+
+}
+
+/* =========================================================
+   EXPORT
+========================================================= */
 
 module.exports = {
   checkBet,
@@ -125,5 +240,7 @@ module.exports = {
   checkExposure,
   checkMarketOrder,
   checkMining,
-  dynamicMaxBet
+  dynamicMaxBet: ()=>{}, // deprecated
+  fullCheck,
+  getUserRisk
 };
