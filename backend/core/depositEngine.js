@@ -1,17 +1,20 @@
 "use strict";
 
 /* =========================================================
-   DEPOSIT ENGINE — ULTRA SECURE CORE
+   BLOXIO DEPOSIT ENGINE — ULTRA PRO
 ========================================================= */
 
-class DepositEngine{
+const ledger = require("./ledger");
+const riskEngine = require("./riskEngine");
+
+class DepositEngine {
 
   constructor(db){
     this.db = db;
   }
 
   /* =========================================================
-     CREATE DEPOSIT (STORE ONLY)
+     CREATE DEPOSIT
   ========================================================= */
 
   async create({ userId, payment }){
@@ -38,7 +41,7 @@ class DepositEngine{
   }
 
   /* =========================================================
-     VERIFY WEBHOOK DATA (STRICT)
+     VALIDATION (ADVANCED)
   ========================================================= */
 
   validateWebhook(payment, record){
@@ -47,22 +50,23 @@ class DepositEngine{
       throw new Error("invalid_data");
     }
 
-    /* ===== status ===== */
     if(payment.payment_status !== "finished"){
       throw new Error("not_finished");
     }
 
-    /* ===== currency ===== */
     if(payment.pay_currency !== record.asset){
       throw new Error("currency_mismatch");
     }
 
-    /* ===== amount (USD reference) ===== */
-    if(Number(payment.price_amount) !== Number(record.amount)){
+    /* ===== tolerance (important) ===== */
+    const diff = Math.abs(
+      Number(payment.price_amount) - Number(record.amount)
+    );
+
+    if(diff > 0.5){
       throw new Error("amount_mismatch");
     }
 
-    /* ===== crypto amount sanity ===== */
     if(Number(payment.pay_amount) <= 0){
       throw new Error("invalid_crypto_amount");
     }
@@ -70,7 +74,24 @@ class DepositEngine{
   }
 
   /* =========================================================
-     CONFIRM DEPOSIT (ATOMIC + IDEMPOTENT)
+     REPLAY PROTECTION
+  ========================================================= */
+
+  async checkReplay(paymentId){
+
+    const r = await this.db.query(`
+      SELECT COUNT(*) FROM payments
+      WHERE external_id=$1 AND status='completed'
+    `,[paymentId]);
+
+    if(Number(r.rows[0].count) > 0){
+      throw new Error("replay_attack");
+    }
+
+  }
+
+  /* =========================================================
+     CONFIRM DEPOSIT (ULTRA SECURE)
   ========================================================= */
 
   async confirm({ paymentId, payload, ip }){
@@ -81,7 +102,7 @@ class DepositEngine{
 
       await client.query("BEGIN");
 
-      /* 🔒 LOCK */
+      /* ===== LOCK ===== */
       const r = await client.query(`
         SELECT * FROM payments
         WHERE external_id=$1
@@ -95,17 +116,17 @@ class DepositEngine{
       const p = r.rows[0];
 
       /* ===== IDEMPOTENT ===== */
-
       if(p.status === "completed"){
         return { already:true };
       }
 
-      /* ===== VALIDATION ===== */
+      /* ===== REPLAY CHECK ===== */
+      await this.checkReplay(paymentId);
 
+      /* ===== VALIDATE ===== */
       this.validateWebhook(payload, p);
 
-      /* ===== USER CHECK ===== */
-
+      /* ===== USER ===== */
       const u = await client.query(`
         SELECT id, banned, frozen
         FROM users
@@ -121,18 +142,23 @@ class DepositEngine{
         throw new Error("account_restricted");
       }
 
-      /* ===== CREDIT (LEDGER SAFE) ===== */
+      /* ===== RISK CHECK ===== */
+      await riskEngine.fullCheck({
+        userId: p.user_id,
+        amount: Number(payload.pay_amount),
+        type: "deposit"
+      });
 
-      await require("../core/ledger").credit({
-        user_id: p.user_id,
+      /* ===== CREDIT ===== */
+      await ledger.credit({
+        userId: p.user_id,
         asset: p.asset,
         amount: Number(payload.pay_amount),
         reason: "deposit",
         tx: client
       });
 
-      /* ===== UPDATE PAYMENT ===== */
-
+      /* ===== UPDATE ===== */
       await client.query(`
         UPDATE payments
         SET status='completed',
@@ -143,12 +169,12 @@ class DepositEngine{
         p.id,
         JSON.stringify({
           tx_hash: payload.tx_hash || null,
-          ip
+          ip,
+          provider: "nowpayments"
         })
       ]);
 
-      /* ===== AUDIT LOG ===== */
-
+      /* ===== AUDIT ===== */
       await client.query(`
         INSERT INTO audit_logs(user_id,action,meta)
         VALUES($1,$2,$3)
@@ -164,6 +190,12 @@ class DepositEngine{
 
       await client.query("COMMIT");
 
+      /* ===== WS ===== */
+      global.WS?.send(p.user_id,{
+        type:"deposit_confirmed",
+        amount: payload.pay_amount
+      });
+
       return { success:true };
 
     }catch(e){
@@ -171,15 +203,11 @@ class DepositEngine{
       await client.query("ROLLBACK");
 
       /* ===== FRAUD LOG ===== */
-
       try{
         await this.db.query(`
           INSERT INTO fraud_logs(user_id,reason)
           VALUES($1,$2)
-        `,[
-          null,
-          e.message
-        ]);
+        `,[null, e.message]);
       }catch{}
 
       throw e;
@@ -191,7 +219,7 @@ class DepositEngine{
   }
 
   /* =========================================================
-     CHECK DEPOSIT STATUS
+     STATUS
   ========================================================= */
 
   async getStatus(paymentId){
