@@ -1,35 +1,71 @@
 "use strict";
 
+/* =========================================================
+   BLOXIO MINING ROUTE — ULTRA PRO
+========================================================= */
+
 const express = require("express");
 const router = express.Router();
 
 const engine = require("../engines/miningEngine");
+const riskEngine = require("../core/riskEngine");
 
-/* =========================================
-AUTH
-========================================= */
+/* =========================================================
+   CONFIG
+========================================================= */
 
-function requireAuth(req,res){
-  const userId = req.user?.id;
+const MAX_HASHRATE = 1000;
+const COOLDOWN = 5000;
 
-  if(!userId){
-    res.status(401).json({ error:"unauthorized" });
-    return null;
+/* =========================================================
+   AUTH MIDDLEWARE
+========================================================= */
+
+function requireAuth(req,res,next){
+
+  if(!req.user?.id){
+    return res.status(401).json({error:"unauthorized"});
   }
 
-  return userId;
+  next();
 }
 
-/* =========================================
-START MINING
-========================================= */
+/* =========================================================
+   RATE LIMIT (SIMPLE)
+========================================================= */
 
-router.post("/start", async (req,res)=>{
+const lastAction = new Map();
+
+function rateLimit(userId){
+
+  const now = Date.now();
+
+  const last = lastAction.get(userId) || 0;
+
+  if(now - last < COOLDOWN){
+    return false;
+  }
+
+  lastAction.set(userId, now);
+
+  return true;
+}
+
+/* =========================================================
+   START MINING
+========================================================= */
+
+router.post("/start", requireAuth, async (req,res)=>{
 
   try{
 
-    const userId = requireAuth(req,res);
-    if(!userId) return;
+    const userId = req.user.id;
+
+    if(!rateLimit(userId)){
+      return res.status(429).json({
+        error:"too_many_requests"
+      });
+    }
 
     let { hashRate } = req.body;
 
@@ -41,7 +77,22 @@ router.post("/start", async (req,res)=>{
       });
     }
 
+    if(hashRate > MAX_HASHRATE){
+      return res.status(400).json({
+        error:"hashrate_too_high"
+      });
+    }
+
+    /* 🔥 risk check */
+    await riskEngine.checkMining(hashRate);
+
     const result = await engine.startMining(userId, hashRate);
+
+    /* ⚡ realtime */
+    global.WS?.send(userId,{
+      type:"mining_started",
+      hashRate
+    });
 
     res.json({
       success:true,
@@ -49,8 +100,6 @@ router.post("/start", async (req,res)=>{
     });
 
   }catch(e){
-
-    console.error("mining start error:", e);
 
     res.status(500).json({
       error:e.message || "mining_start_failed"
@@ -60,18 +109,21 @@ router.post("/start", async (req,res)=>{
 
 });
 
-/* =========================================
-STOP MINING
-========================================= */
+/* =========================================================
+   STOP MINING
+========================================================= */
 
-router.post("/stop", async (req,res)=>{
+router.post("/stop", requireAuth, async (req,res)=>{
 
   try{
 
-    const userId = requireAuth(req,res);
-    if(!userId) return;
+    const userId = req.user.id;
 
     const result = await engine.stopMining(userId);
+
+    global.WS?.send(userId,{
+      type:"mining_stopped"
+    });
 
     res.json(result);
 
@@ -85,16 +137,15 @@ router.post("/stop", async (req,res)=>{
 
 });
 
-/* =========================================
-STATUS
-========================================= */
+/* =========================================================
+   STATUS
+========================================================= */
 
-router.get("/status", async (req,res)=>{
+router.get("/status", requireAuth, async (req,res)=>{
 
   try{
 
-    const userId = requireAuth(req,res);
-    if(!userId) return;
+    const userId = req.user.id;
 
     const status = await engine.getMiningStatus(userId);
 
@@ -113,8 +164,8 @@ router.get("/status", async (req,res)=>{
 
 });
 
-/* =========================================
-EXPORT
-========================================= */
+/* =========================================================
+   EXPORT
+========================================================= */
 
 module.exports = router;
