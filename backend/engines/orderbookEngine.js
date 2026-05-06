@@ -1,107 +1,423 @@
 "use strict";
 
-const db = require("../database");
-const wsHub = require("../ws/wsHub");
+/* =========================================================
+   BXS ORDERBOOK ENGINE — ENTERPRISE DEPTH SYSTEM
+========================================================= */
 
-/* =========================================
-GET ORDERBOOK
-========================================= */
+const redis =
+  require("../core/redis");
 
-async function getOrderbook(pair){
+const ws =
+  require("../ws/wsHub");
 
-  if(!pair) throw new Error("pair_required");
+/* =========================================================
+   CONFIG
+========================================================= */
 
-  /* ===== BIDS ===== */
-  const bids = await db.query(`
-    SELECT price, SUM(amount) as amount
-    FROM orders
-    WHERE pair=$1
-      AND side='buy'
-      AND amount > 0
-    GROUP BY price
-    ORDER BY price DESC
-    LIMIT 20
-  `,[pair]);
+const MAX_DEPTH = 50;
 
-  /* ===== ASKS ===== */
-  const asks = await db.query(`
-    SELECT price, SUM(amount) as amount
-    FROM orders
-    WHERE pair=$1
-      AND side='sell'
-      AND amount > 0
-    GROUP BY price
-    ORDER BY price ASC
-    LIMIT 20
-  `,[pair]);
+/* =========================================================
+   MEMORY BOOK
+========================================================= */
 
-  return {
-    pair,
-    bids: bids.rows.map(b => ({
-      price: Number(b.price),
-      amount: Number(b.amount)
-    })),
-    asks: asks.rows.map(a => ({
-      price: Number(a.price),
-      amount: Number(a.amount)
-    }))
+const books = {};
+
+/* =========================================================
+   INIT
+========================================================= */
+
+function initPair(pair){
+
+  if(books[pair]){
+    return;
+  }
+
+  books[pair] = {
+
+    bids:new Map(),
+
+    asks:new Map(),
+
+    sequence:0,
+
+    updatedAt:Date.now()
+
   };
 
 }
 
-/* =========================================
-BROADCAST ORDERBOOK (🔥 مهم)
-========================================= */
+/* =========================================================
+   SORT
+========================================================= */
 
-async function broadcastOrderbook(pair){
+function sorted(map,side){
 
-  try{
+  const arr = [];
 
-    const ob = await getOrderbook(pair);
+  for(const [
 
-    wsHub.broadcast("market", {
-      type: "orderbook",
-      pair: ob.pair,
-      bids: ob.bids,
-      asks: ob.asks
+    price,
+    amount
+
+  ] of map){
+
+    if(amount <= 0){
+      continue;
+    }
+
+    arr.push({
+
+      price:Number(price),
+
+      amount:Number(amount)
+
     });
-
-  }catch(e){
-
-    console.error("Orderbook error:", e.message);
 
   }
 
-}
+  arr.sort((a,b)=>{
 
-/* =========================================
-AUTO LOOP (اختياري)
-========================================= */
+    return side === "bids"
+      ? b.price - a.price
+      : a.price - b.price;
 
-let running = false;
+  });
 
-function startOrderbookFeed(pair){
-
-  if(running) return;
-
-  running = true;
-
-  console.log("📊 Orderbook Feed started");
-
-  setInterval(()=>{
-
-    broadcastOrderbook(pair);
-
-  }, 1000);
+  return arr.slice(
+    0,
+    MAX_DEPTH
+  );
 
 }
 
-/* =========================================
-EXPORT
-========================================= */
+/* =========================================================
+   SNAPSHOT
+========================================================= */
+
+function snapshot(pair){
+
+  initPair(pair);
+
+  const b = books[pair];
+
+  return {
+
+    pair,
+
+    sequence:b.sequence,
+
+    bids:
+      sorted(
+        b.bids,
+        "bids"
+      ),
+
+    asks:
+      sorted(
+        b.asks,
+        "asks"
+      ),
+
+    updatedAt:
+      b.updatedAt
+
+  };
+
+}
+
+/* =========================================================
+   UPDATE LEVEL
+========================================================= */
+
+async function update({
+
+  pair,
+  side,
+  price,
+  amount
+
+}){
+
+  initPair(pair);
+
+  const b =
+    books[pair];
+
+  const map =
+    side === "buy"
+      ? b.bids
+      : b.asks;
+
+  const p =
+    Number(price)
+      .toFixed(8);
+
+  const a =
+    Number(amount);
+
+  /* =====================================
+     REMOVE
+  ===================================== */
+
+  if(a <= 0){
+
+    map.delete(p);
+
+  }else{
+
+    map.set(p,a);
+
+  }
+
+  b.sequence++;
+
+  b.updatedAt =
+    Date.now();
+
+  /* =====================================
+     REDIS
+  ===================================== */
+
+  await redis.setCache(
+
+    `orderbook:${pair}`,
+
+    snapshot(pair),
+
+    60
+
+  );
+
+  /* =====================================
+     DIFF STREAM
+  ===================================== */
+
+  await ws.publish(
+
+    `depth:${pair}`,
+
+    {
+
+      type:"depth",
+
+      pair,
+
+      sequence:
+        b.sequence,
+
+      side,
+
+      price:Number(p),
+
+      amount:a
+
+    }
+
+  );
+
+}
+
+/* =========================================================
+   LOAD SNAPSHOT
+========================================================= */
+
+async function load(pair){
+
+  const cached =
+    await redis.getCache(
+      `orderbook:${pair}`
+    );
+
+  if(cached){
+
+    books[pair] = {
+
+      bids:new Map(
+        cached.bids.map(
+          x=>[
+            String(x.price),
+            x.amount
+          ]
+        )
+      ),
+
+      asks:new Map(
+        cached.asks.map(
+          x=>[
+            String(x.price),
+            x.amount
+          ]
+        )
+      ),
+
+      sequence:
+        cached.sequence,
+
+      updatedAt:
+        cached.updatedAt
+
+    };
+
+    return snapshot(pair);
+
+  }
+
+  return snapshot(pair);
+
+}
+
+/* =========================================================
+   SPREAD
+========================================================= */
+
+function spread(pair){
+
+  const s =
+    snapshot(pair);
+
+  if(
+    !s.bids.length ||
+    !s.asks.length
+  ){
+
+    return null;
+
+  }
+
+  return Number(
+    (
+      s.asks[0].price -
+      s.bids[0].price
+    ).toFixed(8)
+  );
+
+}
+
+/* =========================================================
+   MID PRICE
+========================================================= */
+
+function mid(pair){
+
+  const s =
+    snapshot(pair);
+
+  if(
+    !s.bids.length ||
+    !s.asks.length
+  ){
+
+    return null;
+
+  }
+
+  return Number(
+    (
+      (
+        s.bids[0].price +
+        s.asks[0].price
+      ) / 2
+    ).toFixed(8)
+  );
+
+}
+
+/* =========================================================
+   IMBALANCE
+========================================================= */
+
+function imbalance(pair){
+
+  const s =
+    snapshot(pair);
+
+  const bids =
+    s.bids.reduce(
+      (a,b)=>a+b.amount,
+      0
+    );
+
+  const asks =
+    s.asks.reduce(
+      (a,b)=>a+b.amount,
+      0
+    );
+
+  if(
+    bids + asks === 0
+  ){
+
+    return 0;
+
+  }
+
+  return Number(
+    (
+      (
+        bids - asks
+      ) /
+      (
+        bids + asks
+      )
+    ).toFixed(4)
+  );
+
+}
+
+/* =========================================================
+   BROADCAST SNAPSHOT
+========================================================= */
+
+async function broadcast(pair){
+
+  await ws.publish(
+
+    `depth:${pair}`,
+
+    {
+
+      type:"snapshot",
+
+      ...snapshot(pair)
+
+    }
+
+  );
+
+}
+
+/* =========================================================
+   START
+========================================================= */
+
+function start(){
+
+  console.log(
+    "📚 BXS Orderbook Engine LIVE"
+  );
+
+}
+
+/* =========================================================
+   EXPORT
+========================================================= */
 
 module.exports = {
-  getOrderbook,
-  broadcastOrderbook,
-  startOrderbookFeed
+
+  start,
+
+  update,
+
+  snapshot,
+
+  load,
+
+  spread,
+
+  mid,
+
+  imbalance,
+
+  broadcast
+
 };
