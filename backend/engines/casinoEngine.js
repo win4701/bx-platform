@@ -1,316 +1,732 @@
 "use strict";
 
-const crypto = require("crypto");
-const db = require("../database");
-const ledger = require("../core/ledger");
-const risk = require("../core/riskEngine");
-const casinoWS = require("../ws/casinoWS");
-const ai = require("../core/aiEngine");
+/* =========================================================
+   BXS CASINO ENGINE — ENTERPRISE GAMING CORE
+========================================================= */
 
-/* =========================================
-CONFIG
-========================================= */
+const crypto =
+  require("crypto");
+
+const db =
+  require("../database");
+
+const redis =
+  require("../core/redis");
+
+const ledger =
+  require("../core/ledger");
+
+const risk =
+  require("../security/riskEngine");
+
+const ws =
+  require("../ws/wsHub");
+
+const ai =
+  require("./aiEngine");
+
+const whale =
+  require("./whaleTracker");
+
+const vip =
+  require("./vipSystem");
+
+/* =========================================================
+   CONFIG
+========================================================= */
 
 const HOUSE_EDGE = 0.01;
-const BASE_RTP = 0.96;
 
-/* =========================================
-FAIR RNG
-========================================= */
+const MAX_PAYOUT =
+  1_000_000;
 
-function hash(serverSeed, clientSeed, nonce){
+/* =========================================================
+   RNG
+========================================================= */
+
+function hmac(
+
+  serverSeed,
+  clientSeed,
+  nonce
+
+){
+
   return crypto
-    .createHmac("sha256", serverSeed)
-    .update(`${clientSeed}:${nonce}`)
+    .createHmac(
+      "sha256",
+      serverSeed
+    )
+    .update(
+      `${clientSeed}:${nonce}`
+    )
     .digest("hex");
+
 }
 
-function rng(serverSeed, clientSeed, nonce){
-  const h = hash(serverSeed, clientSeed, nonce);
-  const slice = h.slice(0, 13);
-  const num = parseInt(slice, 16);
-  return num / 0x1fffffffffffff;
+function rng({
+
+  serverSeed,
+  clientSeed,
+  nonce
+
+}){
+
+  const hash =
+    hmac(
+      serverSeed,
+      clientSeed,
+      nonce
+    );
+
+  const num =
+    parseInt(
+      hash.substring(0,13),
+      16
+    );
+
+  return (
+    num /
+    0x1fffffffffffff
+  );
+
 }
 
-/* =========================================
-GAMES (unchanged logic)
-========================================= */
+/* =========================================================
+   GAME ENGINE
+========================================================= */
 
-function playGame(game, r, data){
+function play({
+
+  game,
+  r,
+  data
+
+}){
 
   switch(game){
 
     case "coinflip":{
-      const side = r > 0.5 ? "heads" : "tails";
+
+      const side =
+        r > 0.5
+          ? "heads"
+          : "tails";
+
       return {
-        result: side,
-        win: side === data.side,
-        multiplier: 2 * (1 - HOUSE_EDGE)
+
+        result:side,
+
+        win:
+          side === data.side,
+
+        multiplier:
+          2 * (
+            1 -
+            HOUSE_EDGE
+          )
+
       };
+
     }
 
     case "dice":{
-      const roll = Number((r * 100).toFixed(2));
-      const win = roll > (data.target || 50);
-      return {
-        result: roll,
-        win,
-        multiplier: 100 / (100 - (data.target || 50)) * (1 - HOUSE_EDGE)
-      };
-    }
 
-    case "limbo":{
-      const m = Number((1 / (1 - r)).toFixed(2));
+      const roll =
+        Number(
+          (r * 100)
+          .toFixed(2)
+        );
+
+      const target =
+        data.target || 50;
+
+      const win =
+        roll > target;
+
       return {
-        result: m,
-        win: m >= data.multiplier,
-        multiplier: data.multiplier * (1 - HOUSE_EDGE)
+
+        result:roll,
+
+        win,
+
+        multiplier:
+          (
+            100 /
+            (
+              100 - target
+            )
+          ) *
+          (
+            1 -
+            HOUSE_EDGE
+          )
+
       };
+
     }
 
     case "crash":{
-      const crash = Number((1 / (1 - r)).toFixed(2));
-      return {
-        result: crash,
-        win: crash >= data.cashout,
-        multiplier: data.cashout * (1 - HOUSE_EDGE)
-      };
-    }
 
-    case "roulette":{
-      const num = Math.floor(r * 37);
-      return {
-        result: num,
-        win: num === data.number,
-        multiplier: 36
-      };
-    }
+      const crash =
+        Number(
+          (
+            1 /
+            (1-r)
+          ).toFixed(2)
+        );
 
-    case "slots":{
-      const slot = Math.floor(r * 10);
       return {
-        result: slot,
-        win: slot === 7,
-        multiplier: 10
-      };
-    }
 
-    case "hi-lo":{
-      return {
-        result: r,
-        win: data.choice === (r > 0.5 ? "high" : "low"),
-        multiplier: 2
-      };
-    }
+        result:crash,
 
-    case "wheel":{
-      const wheel = Math.floor(r * 10);
-      return {
-        result: wheel,
-        win: wheel === data.number,
-        multiplier: 5
-      };
-    }
+        win:
+          crash >=
+          data.cashout,
 
-    case "keno":
-    case "plinko":
-    case "mines":{
-      return {
-        result: r,
-        win: true,
-        multiplier: 1 + r
-      };
-    }
+        multiplier:
+          data.cashout *
+          (
+            1 -
+            HOUSE_EDGE
+          )
 
-    case "blackjack":{
-      return {
-        result: r,
-        win: r > 0.5,
-        multiplier: 2
       };
+
     }
 
     default:
-      throw new Error("game_not_supported");
+
+      throw new Error(
+        "unsupported_game"
+      );
+
   }
 
 }
 
-/* =========================================
-USER SEED
-========================================= */
+/* =========================================================
+   USER STATE
+========================================================= */
 
-async function getUserState(userId){
+async function getState(userId){
 
-  const r = await db.query(`
-    SELECT server_seed, client_seed, nonce
-    FROM casino_seeds
-    WHERE user_id=$1
-  `,[userId]);
+  let state =
+    await redis.getCache(
+      `casino:seed:${userId}`
+    );
+
+  if(state){
+    return state;
+  }
+
+  const r =
+    await db.query(`
+      SELECT
+        server_seed,
+        client_seed,
+        nonce
+      FROM casino_seeds
+      WHERE user_id=$1
+    `,[userId]);
 
   if(!r.rows.length){
 
-    const serverSeed = crypto.randomBytes(32).toString("hex");
-    const clientSeed = crypto.randomBytes(16).toString("hex");
+    state = {
+
+      serverSeed:
+        crypto
+          .randomBytes(32)
+          .toString("hex"),
+
+      clientSeed:
+        crypto
+          .randomBytes(16)
+          .toString("hex"),
+
+      nonce:0
+
+    };
 
     await db.query(`
-      INSERT INTO casino_seeds(user_id,server_seed,client_seed,nonce)
+      INSERT INTO casino_seeds
+      (
+        user_id,
+        server_seed,
+        client_seed,
+        nonce
+      )
       VALUES($1,$2,$3,0)
-    `,[userId,serverSeed,clientSeed]);
+    `,[
 
-    return { serverSeed, clientSeed, nonce:0 };
+      userId,
+
+      state.serverSeed,
+
+      state.clientSeed
+
+    ]);
+
+  }else{
+
+    state = {
+
+      serverSeed:
+        r.rows[0].server_seed,
+
+      clientSeed:
+        r.rows[0].client_seed,
+
+      nonce:
+        Number(
+          r.rows[0].nonce
+        )
+
+    };
+
   }
 
-  return {
-    serverSeed: r.rows[0].server_seed,
-    clientSeed: r.rows[0].client_seed,
-    nonce: Number(r.rows[0].nonce)
-  };
+  await redis.setCache(
+
+    `casino:seed:${userId}`,
+
+    state,
+
+    3600
+
+  );
+
+  return state;
 
 }
 
-/* =========================================
-PLAY (🔥 SMART ENGINE)
-========================================= */
+/* =========================================================
+   PROCESS GAME
+========================================================= */
 
-async function processGame({ userId, game, bet, data }){
+async function processGame({
 
-  /* 1. VALIDATION */
-  await risk.checkBet(userId, bet);
+  userId,
+  game,
+  bet,
+  data
 
-  /* 2. RNG */
-  const state = await getUserState(userId);
-  const r = rng(state.serverSeed, state.clientSeed, state.nonce);
-
-  let g = playGame(game, r, data);
+}){
 
   /* =====================================
-  AI DECISION LAYER 🔥
+     VALIDATION
   ===================================== */
 
-  const { rtp } = ai.decide(userId, BASE_RTP);
-
-  const aiWin = ai.shouldWin(userId, rtp);
-
-  /* override logic (soft control) */
-  if(!aiWin){
-    g.win = false;
+  if(!bet || bet <= 0){
+    throw new Error(
+      "invalid_bet"
+    );
   }
 
   /* =====================================
-  PAYOUT
+     RISK
   ===================================== */
 
-  let payout = g.win ? bet * g.multiplier : 0;
+  await risk.check({
 
-  /* risk protection */
-  await risk.checkWin(payout);
-  await risk.checkExposure(payout);
-
-  /* =====================================
-  LEDGER
-  ===================================== */
-
-  await ledger.debit({
     userId,
-    asset: "BX",
-    amount: bet,
-    reason: "casino_bet"
+    amount:bet
+
   });
 
-  if(payout > 0){
-    await ledger.credit({
+  /* =====================================
+     USER STATE
+  ===================================== */
+
+  const state =
+    await getState(userId);
+
+  /* =====================================
+     RNG
+  ===================================== */
+
+  const r =
+    rng({
+
+      serverSeed:
+        state.serverSeed,
+
+      clientSeed:
+        state.clientSeed,
+
+      nonce:
+        state.nonce
+
+    });
+
+  /* =====================================
+     GAME RESULT
+  ===================================== */
+
+  const result =
+    play({
+
+      game,
+      r,
+      data
+
+    });
+
+  /* =====================================
+     VIP BOOST
+  ===================================== */
+
+  const vipInfo =
+    await vip.getVIP(
+      userId
+    );
+
+  const benefits =
+    vip.getBenefits(
+      vipInfo.level
+    );
+
+  /* =====================================
+     PAYOUT
+  ===================================== */
+
+  let payout =
+    result.win
+      ? (
+          bet *
+          result.multiplier *
+          benefits.stakingBoost
+        )
+      : 0;
+
+  payout =
+    Math.min(
+      payout,
+      MAX_PAYOUT
+    );
+
+  /* =====================================
+     TREASURY
+  ===================================== */
+
+  const treasury =
+    await whale
+      .treasuryImpact(
+        userId
+      );
+
+  if(
+    treasury === "danger"
+  ){
+
+    payout *= 0.8;
+
+  }
+
+  /* =====================================
+     TRANSACTION
+  ===================================== */
+
+  const client =
+    await db.connect();
+
+  try{
+
+    await client.query(
+      "BEGIN"
+    );
+
+    /* ===============================
+       DEBIT
+    =============================== */
+
+    await ledger.debit({
+
       userId,
-      asset: "BX",
-      amount: payout,
-      reason: "casino_win"
+
+      asset:"BX",
+
+      amount:bet,
+
+      reason:"casino_bet"
+
     });
+
+    /* ===============================
+       CREDIT
+    =============================== */
+
+    if(payout > 0){
+
+      await ledger.credit({
+
+        userId,
+
+        asset:"BX",
+
+        amount:payout,
+
+        reason:"casino_win"
+
+      });
+
+    }
+
+    /* ===============================
+       SAVE
+    =============================== */
+
+    await client.query(`
+      INSERT INTO casino_sessions
+      (
+        user_id,
+        game,
+        bet,
+        payout,
+        multiplier,
+        result,
+        nonce,
+        created_at
+      )
+      VALUES(
+        $1,$2,$3,$4,
+        $5,$6,$7,NOW()
+      )
+    `,[
+
+      userId,
+
+      game,
+
+      bet,
+
+      payout,
+
+      result.multiplier,
+
+      JSON.stringify(
+        result.result
+      ),
+
+      state.nonce
+
+    ]);
+
+    /* ===============================
+       NONCE
+    =============================== */
+
+    await client.query(`
+      UPDATE casino_seeds
+      SET nonce=nonce+1
+      WHERE user_id=$1
+    `,[userId]);
+
+    await client.query(
+      "COMMIT"
+    );
+
+  }catch(e){
+
+    await client.query(
+      "ROLLBACK"
+    );
+
+    throw e;
+
+  }finally{
+
+    client.release();
+
   }
 
   /* =====================================
-  AI MEMORY
+     AI MEMORY
   ===================================== */
 
-  ai.recordGame(userId, bet, payout > 0);
+  await ai.recordGame({
 
-  /* =====================================
-  SAVE
-  ===================================== */
-
-  await db.query(`
-    INSERT INTO casino_sessions
-    (user_id,game,bet,result,profit)
-    VALUES($1,$2,$3,$4,$5)
-  `,[
     userId,
-    game,
-    bet,
-    JSON.stringify(g.result),
-    payout - bet
-  ]);
-
-  /* =====================================
-  NONCE
-  ===================================== */
-
-  await db.query(`
-    UPDATE casino_seeds
-    SET nonce = nonce + 1
-    WHERE user_id=$1
-  `,[userId]);
-
-  /* =====================================
-  BIG WIN
-  ===================================== */
-
-  if(payout > bet * 5){
-    casinoWS.broadcast("casino", {
-      type:"big_win",
-      user:userId,
-      amount:payout,
-      game
-    });
-  }
-
-  /* =====================================
-  WS
-  ===================================== */
-
-  casinoWS.broadcast("casino", {
-    type:"game",
-    user:userId,
     game,
     bet,
     payout
+
   });
 
-  return {
+  /* =====================================
+     WHALE TRACK
+  ===================================== */
+
+  await whale.track({
+
+    userId,
     game,
-    result: g.result,
+    bet,
+    payout
+
+  });
+
+  /* =====================================
+     VIP XP
+  ===================================== */
+
+  await vip.addXP(
+    userId,
+    bet
+  );
+
+  /* =====================================
+     REALTIME
+  ===================================== */
+
+  await ws.publish(
+
+    "casino",
+
+    {
+
+      type:"game",
+
+      user:userId,
+
+      game,
+
+      bet,
+
+      payout
+
+    }
+
+  );
+
+  /* =====================================
+     BIG WIN
+  ===================================== */
+
+  if(
+    payout >=
+    bet * 10
+  ){
+
+    await ws.publish(
+
+      "casino",
+
+      {
+
+        type:"big_win",
+
+        user:userId,
+
+        game,
+
+        payout
+
+      }
+
+    );
+
+  }
+
+  /* =====================================
+     VERIFY
+  ===================================== */
+
+  return {
+
+    game,
+
+    result:
+      result.result,
+
     payout,
-    multiplier: g.multiplier
+
+    multiplier:
+      result.multiplier,
+
+    nonce:
+      state.nonce,
+
+    serverSeedHash:
+      crypto
+        .createHash(
+          "sha256"
+        )
+        .update(
+          state.serverSeed
+        )
+        .digest("hex"),
+
+    clientSeed:
+      state.clientSeed
+
   };
 
 }
 
-/* =========================================
-SEED ROTATE
-========================================= */
+/* =========================================================
+   ROTATE SEED
+========================================================= */
 
 async function rotateSeed(userId){
 
-  const newSeed = crypto.randomBytes(32).toString("hex");
+  const seed =
+    crypto
+      .randomBytes(32)
+      .toString("hex");
 
   await db.query(`
     UPDATE casino_seeds
-    SET server_seed=$1, nonce=0
+    SET
+      server_seed=$1,
+      nonce=0
     WHERE user_id=$2
-  `,[newSeed,userId]);
+  `,[seed,userId]);
 
-  return { success:true };
+  await redis.delCache(
+    `casino:seed:${userId}`
+  );
+
+  return {
+
+    success:true
+
+  };
+
 }
 
+/* =========================================================
+   VERIFY GAME
+========================================================= */
+
+function verify({
+
+  serverSeed,
+  clientSeed,
+  nonce
+
+}){
+
+  return rng({
+
+    serverSeed,
+    clientSeed,
+    nonce
+
+  });
+
+}
+
+/* =========================================================
+   EXPORT
+========================================================= */
+
 module.exports = {
+
   processGame,
-  rotateSeed
+
+  rotateSeed,
+
+  verify
+
 };
