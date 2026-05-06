@@ -1,157 +1,394 @@
 "use strict";
 
-/* =========================================
-STATE (PLAYER BRAINS)
-========================================= */
+/* =========================================================
+   BXS AI ENGINE — ENTERPRISE PLAYER INTELLIGENCE
+========================================================= */
 
-const brains = new Map();
+const crypto = require("crypto");
 
-/* =========================================
-GET / INIT BRAIN
-========================================= */
+const redis =
+  require("../core/redis");
 
-function getBrain(userId){
+const adaptiveRTP =
+  require("./adaptiveRTP");
 
-  if(!brains.has(userId)){
-    brains.set(userId,{
-      bets: [],
-      wins: 0,
-      losses: 0,
-      totalBet: 0,
-      lastResults: [],
-      sessionStart: Date.now()
-    });
+/* =========================================================
+   CONFIG
+========================================================= */
+
+const SESSION_TTL = 86400;
+
+const MAX_HISTORY = 100;
+
+const BASE_RTP = 0.94;
+
+/* =========================================================
+   GET PLAYER PROFILE
+========================================================= */
+
+async function getProfile(userId){
+
+  let profile =
+    await redis.getCache(
+      `ai:${userId}`
+    );
+
+  if(profile){
+    return profile;
   }
 
-  return brains.get(userId);
+  profile = {
+
+    bets: [],
+    wins: 0,
+    losses: 0,
+
+    totalBet: 0,
+
+    totalWin: 0,
+
+    streak: 0,
+
+    risk: "normal",
+
+    confidence: 0,
+
+    createdAt: Date.now()
+
+  };
+
+  await saveProfile(
+    userId,
+    profile
+  );
+
+  return profile;
+
 }
 
-/* =========================================
-RECORD GAME
-========================================= */
+/* =========================================================
+   SAVE PROFILE
+========================================================= */
 
-function recordGame(userId, bet, win){
+async function saveProfile(userId,profile){
 
-  const b = getBrain(userId);
+  await redis.setCache(
+    `ai:${userId}`,
+    profile,
+    SESSION_TTL
+  );
 
-  b.bets.push(bet);
-  b.totalBet += bet;
+}
 
-  if(win){
-    b.wins++;
-    b.lastResults.push(1);
+/* =========================================================
+   RECORD GAME
+========================================================= */
+
+async function recordGame({
+
+  userId,
+  game,
+  bet,
+  payout
+
+}){
+
+  const p =
+    await getProfile(userId);
+
+  p.bets.push({
+
+    game,
+    bet,
+    payout,
+    time:Date.now()
+
+  });
+
+  if(p.bets.length > MAX_HISTORY){
+    p.bets.shift();
+  }
+
+  p.totalBet += bet;
+
+  if(payout > 0){
+
+    p.wins++;
+
+    p.totalWin += payout;
+
+    p.streak =
+      p.streak >= 0
+        ? p.streak + 1
+        : 1;
+
   }else{
-    b.losses++;
-    b.lastResults.push(0);
+
+    p.losses++;
+
+    p.streak =
+      p.streak <= 0
+        ? p.streak - 1
+        : -1;
+
   }
 
-  if(b.lastResults.length > 20){
-    b.lastResults.shift();
-  }
+  /* =====================================
+     RISK SCORE
+  ===================================== */
+
+  p.risk =
+    calculateRisk(p);
+
+  /* =====================================
+     CONFIDENCE
+  ===================================== */
+
+  const total =
+    p.wins + p.losses;
+
+  p.confidence =
+    Math.min(1,total / 100);
+
+  await saveProfile(
+    userId,
+    p
+  );
+
+  return p;
 
 }
 
-/* =========================================
-PREDICTION ENGINE
-========================================= */
+/* =========================================================
+   ANALYZE
+========================================================= */
 
-function analyze(userId){
+async function analyze(userId){
 
-  const b = getBrain(userId);
+  const p =
+    await getProfile(userId);
 
-  const total = b.wins + b.losses;
+  const total =
+    p.wins + p.losses;
 
-  if(total < 5){
-    return {
-      type:"new",
-      confidence:0
-    };
-  }
+  const winRate =
+    total
+      ? p.wins / total
+      : 0;
 
-  const winRate = b.wins / total;
-  const avgBet = b.totalBet / total;
-
-  const last = b.lastResults.slice(-5);
-
-  let streak = "mixed";
-
-  if(last.length === 5){
-    if(last.every(x=>x===0)) streak = "losing";
-    else if(last.every(x=>x===1)) streak = "winning";
-  }
+  const avgBet =
+    total
+      ? p.totalBet / total
+      : 0;
 
   return {
-    type:"regular",
+
+    total,
+
     winRate,
+
     avgBet,
-    streak,
-    confidence: Math.min(1, total / 50)
+
+    streak:p.streak,
+
+    risk:p.risk,
+
+    confidence:p.confidence
+
   };
 
 }
 
-/* =========================================
-DECISION ENGINE
-========================================= */
+/* =========================================================
+   DECISION ENGINE
+========================================================= */
 
-function decide(userId, baseRTP = 0.96){
+async function decide(user,game){
 
-  const p = analyze(userId);
+  const profile =
+    await analyze(user.id);
 
-  let rtp = baseRTP;
+  let rtp =
+    await adaptiveRTP
+      .getAdaptiveRTP(
+        user,
+        game
+      );
 
-  /* new player boost */
+  /* =====================================
+     NEW PLAYER BOOST
+  ===================================== */
 
-  if(p.type === "new"){
-    rtp += 0.03;
-  }
-
-  /* losing streak */
-
-  if(p.streak === "losing"){
+  if(profile.total < 10){
     rtp += 0.02;
   }
 
-  /* winning streak */
+  /* =====================================
+     LOSING RECOVERY
+  ===================================== */
 
-  if(p.streak === "winning"){
-    rtp -= 0.02;
+  if(profile.streak <= -5){
+    rtp += 0.01;
   }
 
-  /* high bettor */
+  /* =====================================
+     WINNING CONTROL
+  ===================================== */
 
-  if(p.avgBet && p.avgBet > 500){
+  if(profile.streak >= 5){
     rtp -= 0.01;
   }
 
-  /* clamp */
+  /* =====================================
+     HIGH RISK
+  ===================================== */
 
-  rtp = Math.max(0.85, Math.min(0.98, rtp));
+  if(profile.risk === "high"){
+    rtp -= 0.005;
+  }
+
+  rtp =
+    clamp(rtp);
 
   return {
+
     rtp,
-    profile: p
+
+    profile
+
   };
 
 }
 
-/* =========================================
-SMART RESULT CONTROL
-========================================= */
+/* =========================================================
+   PROVABLY FAIR RNG
+========================================================= */
 
-function shouldWin(userId, rtp){
+function roll({
 
-  return Math.random() < rtp;
+  serverSeed,
+  clientSeed,
+  nonce
+
+}){
+
+  const hmac = crypto
+    .createHmac(
+      "sha256",
+      serverSeed
+    )
+    .update(
+      `${clientSeed}:${nonce}`
+    )
+    .digest("hex");
+
+  const num =
+    parseInt(
+      hmac.substring(0,8),
+      16
+    );
+
+  return num / 0xffffffff;
+
 }
 
-/* =========================================
-EXPORT
-========================================= */
+/* =========================================================
+   SHOULD WIN
+========================================================= */
+
+function shouldWin({
+
+  rtp,
+  serverSeed,
+  clientSeed,
+  nonce
+
+}){
+
+  const value =
+    roll({
+      serverSeed,
+      clientSeed,
+      nonce
+    });
+
+  return value < rtp;
+
+}
+
+/* =========================================================
+   RISK
+========================================================= */
+
+function calculateRisk(p){
+
+  const total =
+    p.wins + p.losses;
+
+  if(total < 20){
+    return "normal";
+  }
+
+  const avg =
+    p.totalBet / total;
+
+  const ratio =
+    p.totalWin /
+    Math.max(1,p.totalBet);
+
+  if(avg > 1000 && ratio > 1.5){
+    return "high";
+  }
+
+  if(avg < 20){
+    return "low";
+  }
+
+  return "normal";
+
+}
+
+/* =========================================================
+   CLAMP
+========================================================= */
+
+function clamp(v){
+
+  return Math.max(
+    0.88,
+    Math.min(0.98,v)
+  );
+
+}
+
+/* =========================================================
+   RESET SESSION
+========================================================= */
+
+async function reset(userId){
+
+  await redis.delCache(
+    `ai:${userId}`
+  );
+
+}
+
+/* =========================================================
+   EXPORT
+========================================================= */
 
 module.exports = {
-  getBrain,
+
+  getProfile,
+
   recordGame,
+
   analyze,
+
   decide,
-  shouldWin
+
+  shouldWin,
+
+  reset
+
 };
