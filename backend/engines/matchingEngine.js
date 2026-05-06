@@ -1,208 +1,542 @@
 "use strict";
 
-const db = require("../database");
-const ledger = require("../core/ledger");
-const tradesFeed = require("./tradesFeed");
-const candleEngine = require("./candleEngine");
-const wsHub = require("../ws/wsHub");
+/* =========================================================
+   BXS MATCHING ENGINE — ENTERPRISE EXCHANGE CORE
+========================================================= */
 
-const FEE = 0.002;
+const crypto =
+  require("crypto");
 
-/* =========================================
-MATCH STEP
-========================================= */
+const redis =
+  require("../core/redis");
 
-async function matchOrders(pair){
+const ledger =
+  require("../core/ledger");
 
-  const client = await db.pool.connect();
+const ws =
+  require("../ws/wsHub");
 
-  try{
+const candle =
+  require("./candleEngine");
 
-    await client.query("BEGIN");
+const orderbook =
+  require("./orderbookEngine");
 
-    const buy = await client.query(`
-      SELECT * FROM orders
-      WHERE pair=$1 AND side='buy' AND amount > 0
-      ORDER BY price DESC, created_at ASC
-      LIMIT 1
-      FOR UPDATE SKIP LOCKED
-    `,[pair]);
+/* =========================================================
+   CONFIG
+========================================================= */
 
-    const sell = await client.query(`
-      SELECT * FROM orders
-      WHERE pair=$1 AND side='sell' AND amount > 0
-      ORDER BY price ASC, created_at ASC
-      LIMIT 1
-      FOR UPDATE SKIP LOCKED
-    `,[pair]);
+const PAIRS = [
 
-    if(!buy.rows.length || !sell.rows.length){
-      await client.query("COMMIT");
-      return false;
-    }
+  "BX_USDT"
 
-    const b = buy.rows[0];
-    const s = sell.rows[0];
+];
 
-    if(Number(b.price) < Number(s.price)){
-      await client.query("COMMIT");
-      return false;
-    }
+const MAKER_FEE = 0.001;
 
-    /* ================= EXECUTION ================= */
+const TAKER_FEE = 0.002;
 
-    const price = Number(s.price);
-    const amount = Math.min(Number(b.amount), Number(s.amount));
-    const value = price * amount;
+const LOOP_DELAY = 1;
 
-    const feeBuy = amount * FEE;
-    const feeSell = value * FEE;
+/* =========================================================
+   MEMORY BOOKS
+========================================================= */
 
-    /* ================= UPDATE ORDERS ================= */
+const books = {};
 
-    await client.query(`
-      UPDATE orders
-      SET amount = amount - $1,
-          filled = filled + $1,
-          status = CASE 
-            WHEN amount - $1 <= 0 THEN 'filled' 
-            ELSE 'partial' 
-          END
-      WHERE id=$2
-    `,[amount,b.id]);
+/* =========================================================
+   INIT
+========================================================= */
 
-    await client.query(`
-      UPDATE orders
-      SET amount = amount - $1,
-          filled = filled + $1,
-          status = CASE 
-            WHEN amount - $1 <= 0 THEN 'filled' 
-            ELSE 'partial' 
-          END
-      WHERE id=$2
-    `,[amount,s.id]);
+function initPair(pair){
 
-    /* ❌ حذف محذوف → تم إلغاء DELETE */
-
-    /* ================= LEDGER ================= */
-
-    await ledger.trade({
-      userId: b.user_id,
-      assetIn: "USDT",
-      assetOut: "BX",
-      amountIn: value,
-      amountOut: amount - feeBuy
-    });
-
-    await ledger.trade({
-      userId: s.user_id,
-      assetIn: "BX",
-      assetOut: "USDT",
-      amountIn: amount,
-      amountOut: value - feeSell
-    });
-
-    /* ================= TRADE ================= */
-
-    const tradeRes = await client.query(`
-      INSERT INTO trades
-      (pair,price,amount,buyer_id,seller_id,side)
-      VALUES($1,$2,$3,$4,$5,$6)
-      RETURNING *
-    `,[
-      pair,
-      price,
-      amount,
-      b.user_id,
-      s.user_id,
-      "buy"
-    ]);
-
-    await client.query("COMMIT");
-
-    const trade = tradeRes.rows[0];
-
-    /* ================= REALTIME ================= */
-
-    await tradesFeed.publishTrade(trade);
-
-    candleEngine.updateCandle(pair, price, amount);
-
-    wsHub.broadcast("market", {
-      type:"trade",
-      price,
-      amount,
-      pair
-    });
-
-    /* ================= ORDERBOOK ================= */
-
-    const ob = await db.query(`
-      SELECT side, price, SUM(amount) as volume
-      FROM orders
-      WHERE pair=$1 AND amount > 0
-      GROUP BY side, price
-    `,[pair]);
-
-    const bids = ob.rows
-      .filter(o=>o.side==="buy")
-      .sort((a,b)=>b.price-a.price)
-      .slice(0,10);
-
-    const asks = ob.rows
-      .filter(o=>o.side==="sell")
-      .sort((a,b)=>a.price-b.price)
-      .slice(0,10);
-
-    wsHub.broadcast("market", {
-      type:"orderbook",
-      bids,
-      asks
-    });
-
-    return true;
-
-  }catch(e){
-
-    await client.query("ROLLBACK");
-    console.error("Matching error:", e);
-    return false;
-
-  }finally{
-    client.release();
+  if(books[pair]){
+    return;
   }
+
+  books[pair] = {
+
+    buys:[],
+
+    sells:[],
+
+    sequence:0
+
+  };
 
 }
 
-/* =========================================
-ENGINE LOOP (MULTI PAIR)
-========================================= */
+/* =========================================================
+   ORDER ID
+========================================================= */
+
+function orderId(){
+
+  return crypto
+    .randomBytes(12)
+    .toString("hex");
+
+}
+
+/* =========================================================
+   LOAD
+========================================================= */
+
+async function loadOrders(pair){
+
+  initPair(pair);
+
+  const r =
+    await redis.getCache(
+      `orders:${pair}`
+    );
+
+  if(r){
+
+    books[pair] = r;
+
+    return;
+
+  }
+
+  books[pair] = {
+
+    buys:[],
+
+    sells:[],
+
+    sequence:0
+
+  };
+
+}
+
+/* =========================================================
+   SAVE
+========================================================= */
+
+async function persist(pair){
+
+  await redis.setCache(
+
+    `orders:${pair}`,
+
+    books[pair],
+
+    3600
+
+  );
+
+}
+
+/* =========================================================
+   ADD ORDER
+========================================================= */
+
+async function addOrder({
+
+  userId,
+  pair,
+  side,
+  price,
+  amount
+
+}){
+
+  initPair(pair);
+
+  const order = {
+
+    id:orderId(),
+
+    userId,
+
+    pair,
+
+    side,
+
+    price:Number(price),
+
+    amount:Number(amount),
+
+    remaining:Number(amount),
+
+    createdAt:Date.now()
+
+  };
+
+  const b =
+    books[pair];
+
+  if(side === "buy"){
+
+    b.buys.push(order);
+
+    b.buys.sort((a,b)=>{
+
+      if(b.price !== a.price){
+
+        return b.price - a.price;
+
+      }
+
+      return (
+        a.createdAt -
+        b.createdAt
+      );
+
+    });
+
+  }else{
+
+    b.sells.push(order);
+
+    b.sells.sort((a,b)=>{
+
+      if(a.price !== b.price){
+
+        return a.price - b.price;
+
+      }
+
+      return (
+        a.createdAt -
+        b.createdAt
+      );
+
+    });
+
+  }
+
+  b.sequence++;
+
+  await persist(pair);
+
+  return order;
+
+}
+
+/* =========================================================
+   MATCH
+========================================================= */
+
+async function match(pair){
+
+  initPair(pair);
+
+  const b =
+    books[pair];
+
+  while(
+
+    b.buys.length &&
+    b.sells.length
+
+  ){
+
+    const buy =
+      b.buys[0];
+
+    const sell =
+      b.sells[0];
+
+    /* =====================================
+       PRICE CHECK
+    ===================================== */
+
+    if(
+      buy.price <
+      sell.price
+    ){
+
+      break;
+
+    }
+
+    /* =====================================
+       SELF TRADE PREVENTION
+    ===================================== */
+
+    if(
+      buy.userId ===
+      sell.userId
+    ){
+
+      b.sells.shift();
+
+      continue;
+
+    }
+
+    /* =====================================
+       MATCH
+    ===================================== */
+
+    const fill =
+      Math.min(
+
+        buy.remaining,
+
+        sell.remaining
+
+      );
+
+    const price =
+      sell.price;
+
+    const value =
+      fill * price;
+
+    const makerFee =
+      fill *
+      MAKER_FEE;
+
+    const takerFee =
+      value *
+      TAKER_FEE;
+
+    /* =====================================
+       UPDATE
+    ===================================== */
+
+    buy.remaining -= fill;
+
+    sell.remaining -= fill;
+
+    /* =====================================
+       SETTLEMENT
+    ===================================== */
+
+    await settle({
+
+      buy,
+      sell,
+      fill,
+      price,
+
+      makerFee,
+      takerFee
+
+    });
+
+    /* =====================================
+       TRADE STREAM
+    ===================================== */
+
+    const trade = {
+
+      pair,
+
+      price,
+
+      amount:fill,
+
+      buyer:
+        buy.userId,
+
+      seller:
+        sell.userId,
+
+      time:Date.now()
+
+    };
+
+    await ws.publish(
+
+      `market:${pair}`,
+
+      {
+
+        type:"trade",
+
+        ...trade
+
+      }
+
+    );
+
+    /* =====================================
+       CANDLES
+    ===================================== */
+
+    await candle.updateCandle({
+
+      pair,
+
+      price,
+
+      amount:fill
+
+    });
+
+    /* =====================================
+       ORDERBOOK
+    ===================================== */
+
+    await orderbook.update({
+
+      pair,
+
+      side:"buy",
+
+      price:
+        buy.price,
+
+      amount:
+        buy.remaining
+
+    });
+
+    await orderbook.update({
+
+      pair,
+
+      side:"sell",
+
+      price:
+        sell.price,
+
+      amount:
+        sell.remaining
+
+    });
+
+    /* =====================================
+       REMOVE FILLED
+    ===================================== */
+
+    if(
+      buy.remaining <= 0
+    ){
+
+      b.buys.shift();
+
+    }
+
+    if(
+      sell.remaining <= 0
+    ){
+
+      b.sells.shift();
+
+    }
+
+    b.sequence++;
+
+  }
+
+  await persist(pair);
+
+}
+
+/* =========================================================
+   SETTLEMENT
+========================================================= */
+
+async function settle({
+
+  buy,
+  sell,
+
+  fill,
+  price,
+
+  makerFee,
+  takerFee
+
+}){
+
+  const total =
+    fill * price;
+
+  /* =====================================
+     BUYER GETS BX
+  ===================================== */
+
+  await ledger.transfer({
+
+    fromUser:
+      sell.userId,
+
+    toUser:
+      buy.userId,
+
+    asset:"BX",
+
+    amount:
+      fill - makerFee
+
+  });
+
+  /* =====================================
+     SELLER GETS USDT
+  ===================================== */
+
+  await ledger.transfer({
+
+    fromUser:
+      buy.userId,
+
+    toUser:
+      sell.userId,
+
+    asset:"USDT",
+
+    amount:
+      total - takerFee
+
+  });
+
+}
+
+/* =========================================================
+   LOOP
+========================================================= */
 
 let running = false;
 
-const PAIRS = ["BX_USDT"];
+async function loop(){
 
-async function runMatching(){
+  if(running){
+    return;
+  }
 
-  if(running) return;
   running = true;
 
-  console.log("🚀 Matching Engine LIVE");
+  console.log(
+    "⚡ BXS Matching Engine LIVE"
+  );
 
   while(running){
 
     try{
 
       for(const pair of PAIRS){
-        await matchOrders(pair);
+
+        await match(pair);
+
       }
 
-      await new Promise(r=>setTimeout(r,10));
+      await new Promise(r=>
+        setTimeout(
+          r,
+          LOOP_DELAY
+        )
+      );
 
     }catch(e){
 
-      console.error("Loop error:", e);
-      await new Promise(r=>setTimeout(r,200));
+      console.error(
+
+        "Matching:",
+
+        e.message
+
+      );
+
+      await new Promise(r=>
+        setTimeout(r,50)
+      );
 
     }
 
@@ -210,20 +544,80 @@ async function runMatching(){
 
 }
 
-/* =========================================
-CONTROL
-========================================= */
+/* =========================================================
+   STOP
+========================================================= */
 
-function startMatching(){
-  runMatching();
-}
+function stop(){
 
-function stopMatching(){
   running = false;
+
 }
+
+/* =========================================================
+   STATS
+========================================================= */
+
+function stats(){
+
+  const s = {};
+
+  for(const pair of PAIRS){
+
+    initPair(pair);
+
+    s[pair] = {
+
+      buys:
+        books[pair]
+        .buys.length,
+
+      sells:
+        books[pair]
+        .sells.length,
+
+      sequence:
+        books[pair]
+        .sequence
+
+    };
+
+  }
+
+  return s;
+
+}
+
+/* =========================================================
+   START
+========================================================= */
+
+async function start(){
+
+  for(const pair of PAIRS){
+
+    await loadOrders(pair);
+
+  }
+
+  loop();
+
+}
+
+/* =========================================================
+   EXPORT
+========================================================= */
 
 module.exports = {
-  startMatching,
-  stopMatching,
-  matchOrders
+
+  start,
+
+  stop,
+
+  addOrder,
+
+  match,
+
+  stats
+
 };
