@@ -1,231 +1,610 @@
 "use strict";
 
+/* =========================================================
+   BXS DATABASE CORE — ENTERPRISE POSTGRES LAYER
+========================================================= */
+
 require("dotenv").config();
-const { Pool } = require("pg");
 
-/* =====================================
-ENV VALIDATION
-===================================== */
+const {
 
-const REQUIRED = ["DATABASE_URL"];
+  Pool
 
-REQUIRED.forEach((k) => {
-  if (!process.env[k]) {
-    console.error(`❌ Missing ENV: ${k}`);
+} = require("pg");
+
+const crypto =
+  require("crypto");
+
+/* =========================================================
+   ENV
+========================================================= */
+
+const REQUIRED = [
+
+  "DATABASE_URL"
+
+];
+
+for(const k of REQUIRED){
+
+  if(!process.env[k]){
+
+    console.error(
+      `❌ Missing ENV: ${k}`
+    );
+
     process.exit(1);
+
   }
-});
 
-const isProd = process.env.NODE_ENV === "production";
+}
 
-/* =====================================
-POOL (SUPABASE + HIGH LOAD READY)
-===================================== */
+const isProd =
+  process.env.NODE_ENV ===
+  "production";
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+/* =========================================================
+   CONFIG
+========================================================= */
 
-  ssl: { rejectUnauthorized: false },
+const CONFIG = {
 
-  max: isProd ? 40 : 10,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 5000,
-  keepAlive: true,
-});
+  max:
+    isProd ? 50 : 10,
 
-/* =====================================
-METRICS
-===================================== */
+  idleTimeoutMillis:
+    30000,
 
-let stats = {
-  queries: 0,
-  errors: 0,
-  slow: 0,
-  retries: 0,
+  connectionTimeoutMillis:
+    5000,
+
+  keepAlive:true,
+
+  statement_timeout:
+    10000,
+
+  query_timeout:
+    10000
+
 };
 
-/* =====================================
-POOL EVENTS
-===================================== */
+/* =========================================================
+   POOL
+========================================================= */
 
-pool.on("connect", () => {
-  console.log("✅ DB connected");
-});
+const pool =
+  new Pool({
 
-pool.on("error", (err) => {
-  stats.errors++;
-  console.error("❌ Pool error:", err.message);
-});
+    connectionString:
+      process.env
+        .DATABASE_URL,
 
-/* =====================================
-SAFE QUERY (TAGGED + TIMEOUT + RETRY)
-===================================== */
+    ssl:{
+      rejectUnauthorized:false
+    },
 
-async function query(text, params = [], opts = {}) {
+    ...CONFIG
 
-  const start = Date.now();
+  });
+
+/* =========================================================
+   METRICS
+========================================================= */
+
+const stats = {
+
+  queries:0,
+
+  errors:0,
+
+  retries:0,
+
+  slow:0,
+
+  tx:0,
+
+  deadlocks:0
+
+};
+
+/* =========================================================
+   POOL EVENTS
+========================================================= */
+
+pool.on(
+
+  "connect",
+
+  async(client)=>{
+
+    console.log(
+      "✅ DB connected"
+    );
+
+    try{
+
+      await client.query(`
+        SET statement_timeout
+        TO 10000
+      `);
+
+    }catch(e){}
+
+  }
+
+);
+
+pool.on(
+
+  "error",
+
+  err=>{
+
+    stats.errors++;
+
+    console.error(
+
+      "❌ Pool error:",
+
+      err.message
+
+    );
+
+  }
+
+);
+
+/* =========================================================
+   TRACE ID
+========================================================= */
+
+function trace(){
+
+  return crypto
+    .randomBytes(6)
+    .toString("hex");
+
+}
+
+/* =========================================================
+   QUERY
+========================================================= */
+
+async function query(
+
+  text,
+  params=[],
+  opts={}
+
+){
+
+  const start =
+    Date.now();
+
+  const id =
+    trace();
+
   stats.queries++;
 
-  const tag = opts.tag || "default";
+  const tag =
+    opts.tag ||
+    "default";
 
-  const timeout = new Promise((_, reject) =>
-    setTimeout(() => reject(new Error("QUERY_TIMEOUT")), 8000)
-  );
+  try{
 
-  try {
+    const res =
+      await pool.query({
 
-    const res = await Promise.race([
-      pool.query(text, params),
-      timeout
-    ]);
+        text,
+        values:params,
 
-    const duration = Date.now() - start;
+        statement_timeout:
+          opts.timeout ||
+          10000
 
-    if (duration > 500) {
+      });
+
+    const duration =
+      Date.now() - start;
+
+    if(duration > 500){
+
       stats.slow++;
-      console.warn(`🐢 [${tag}] slow query: ${duration}ms`);
+
+      console.warn(
+
+        `🐢 [${tag}]`,
+
+        `${duration}ms`,
+
+        id
+
+      );
+
     }
 
     return res;
 
-  } catch (err) {
+  }catch(err){
 
     stats.errors++;
 
-    console.error(`❌ [${tag}]`, err.message);
+    console.error(
 
-    if (
+      `❌ [${tag}]`,
+
+      err.message,
+
+      id
+
+    );
+
+    /* ===================================
+       RETRY
+    =================================== */
+
+    if(
+
       opts.retry !== false &&
-      ["QUERY_TIMEOUT", "ECONNRESET", "ETIMEDOUT"].includes(err.message || err.code)
-    ) {
+
+      [
+
+        "40001",
+        "40P01",
+        "ETIMEDOUT",
+        "ECONNRESET"
+
+      ].includes(
+
+        err.code ||
+        err.message
+
+      )
+
+    ){
+
       stats.retries++;
-      return query(text, params, { ...opts, retry: false });
+
+      if(
+        err.code === "40P01"
+      ){
+
+        stats.deadlocks++;
+
+      }
+
+      await sleep(50);
+
+      return query(
+
+        text,
+
+        params,
+
+        {
+
+          ...opts,
+
+          retry:false
+
+        }
+
+      );
+
     }
 
     throw err;
+
   }
+
 }
 
-/* =====================================
-TRANSACTION (SERIALIZABLE SAFE)
-===================================== */
+/* =========================================================
+   SLEEP
+========================================================= */
 
-async function transaction(fn, options = {}) {
+function sleep(ms){
 
-  const client = await pool.connect();
+  return new Promise(r=>
+    setTimeout(r,ms)
+  );
 
-  try {
+}
 
-    await client.query("BEGIN");
+/* =========================================================
+   TRANSACTION
+========================================================= */
 
-    // 🔥 isolation (critical for market)
-    if (options.isolation) {
-      await client.query(`SET TRANSACTION ISOLATION LEVEL ${options.isolation}`);
+async function transaction(
+
+  fn,
+  options={}
+
+){
+
+  const client =
+    await pool.connect();
+
+  const txId =
+    trace();
+
+  stats.tx++;
+
+  try{
+
+    await client.query(
+      "BEGIN"
+    );
+
+    /* ===================================
+       ISOLATION
+    =================================== */
+
+    if(
+      options.isolation
+    ){
+
+      await client.query(
+        `SET TRANSACTION ISOLATION LEVEL ${options.isolation}`
+      );
+
     }
 
-    const tx = {
-      query: (text, params = []) => client.query(text, params),
+    /* ===================================
+       TIMEOUT
+    =================================== */
 
-      // 🔒 row lock helper
-      lockWallet: async (userId, asset) => {
-        return client.query(
-          `SELECT * FROM wallet_balances
-           WHERE user_id = $1 AND asset = $2
-           FOR UPDATE`,
-          [userId, asset]
-        );
-      }
+    await client.query(`
+      SET LOCAL statement_timeout
+      TO 10000
+    `);
+
+    const tx = {
+
+      query:(
+
+        text,
+        params=[]
+
+      )=>client.query({
+
+        text,
+
+        values:params
+
+      }),
+
+      lockWallet:(
+        userId,
+        asset
+      )=>client.query(`
+        SELECT *
+        FROM wallet_balances
+        WHERE user_id=$1
+        AND asset=$2
+        FOR UPDATE
+      `,[
+
+        userId,
+        asset
+
+      ]),
+
+      client
+
     };
 
-    const result = await fn(tx);
+    const result =
+      await fn(tx);
 
-    await client.query("COMMIT");
+    await client.query(
+      "COMMIT"
+    );
 
     return result;
 
-  } catch (err) {
+  }catch(err){
 
-    await client.query("ROLLBACK");
+    await client.query(
+      "ROLLBACK"
+    );
 
     stats.errors++;
-    console.error("❌ TX failed:", err.message);
+
+    console.error(
+
+      "❌ TX:",
+
+      err.message,
+
+      txId
+
+    );
+
+    /* ===================================
+       SERIALIZATION RETRY
+    =================================== */
+
+    if(
+
+      options.retry !== false &&
+
+      [
+
+        "40001",
+        "40P01"
+
+      ].includes(err.code)
+
+    ){
+
+      stats.retries++;
+
+      await sleep(100);
+
+      return transaction(
+
+        fn,
+
+        {
+
+          ...options,
+
+          retry:false
+
+        }
+
+      );
+
+    }
 
     throw err;
 
-  } finally {
+  }finally{
+
     client.release();
+
   }
+
 }
 
-/* =====================================
-HEALTH (RENDER)
-===================================== */
+/* =========================================================
+   HEALTH
+========================================================= */
 
-async function health() {
+async function health(){
 
-  try {
+  try{
 
-    const start = Date.now();
+    const start =
+      Date.now();
 
-    await pool.query("SELECT 1");
+    await pool.query(
+      "SELECT 1"
+    );
 
     return {
-      status: "ok",
-      latency: Date.now() - start,
-      connections: pool.totalCount,
-      idle: pool.idleCount,
+
+      status:"ok",
+
+      latency:
+        Date.now()-start,
+
+      total:
+        pool.totalCount,
+
+      idle:
+        pool.idleCount,
+
+      waiting:
+        pool.waitingCount,
+
       stats
+
     };
 
-  } catch (e) {
+  }catch(e){
 
     return {
-      status: "down",
-      error: e.message
+
+      status:"down",
+
+      error:e.message
+
     };
 
   }
+
 }
 
-/* =====================================
-KEEP ALIVE (SUPABASE FIX)
-===================================== */
+/* =========================================================
+   KEEP ALIVE
+========================================================= */
 
-setInterval(async () => {
-  try {
-    await pool.query("SELECT 1");
-  } catch (e) {
-    console.warn("⚠️ DB ping failed:", e.message);
-  }
-}, 25000);
+setInterval(
 
-/* =====================================
-GRACEFUL SHUTDOWN
-===================================== */
+  async()=>{
 
-async function shutdown() {
+    try{
 
-  console.log("🛑 Closing DB...");
+      await pool.query(
+        "SELECT 1"
+      );
 
-  try {
+    }catch(e){
+
+      console.warn(
+
+        "⚠️ DB ping:",
+
+        e.message
+
+      );
+
+    }
+
+  },
+
+  25000
+
+);
+
+/* =========================================================
+   SHUTDOWN
+========================================================= */
+
+async function shutdown(){
+
+  console.log(
+    "🛑 Closing DB..."
+  );
+
+  try{
+
     await pool.end();
-    console.log("✅ DB closed");
-  } catch (e) {
-    console.error("Shutdown error:", e.message);
+
+    console.log(
+      "✅ DB closed"
+    );
+
+  }catch(e){
+
+    console.error(
+
+      "Shutdown:",
+
+      e.message
+
+    );
+
   }
 
 }
 
-process.on("SIGINT", shutdown);
-process.on("SIGTERM", shutdown);
+process.on(
+  "SIGINT",
+  shutdown
+);
 
-/* =====================================
-EXPORT
-===================================== */
+process.on(
+  "SIGTERM",
+  shutdown
+);
+
+/* =========================================================
+   EXPORT
+========================================================= */
 
 module.exports = {
+
   pool,
+
   query,
+
   transaction,
-  health
+
+  health,
+
+  stats
+
 };
