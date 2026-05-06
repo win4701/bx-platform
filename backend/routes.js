@@ -1,152 +1,391 @@
 "use strict";
 
-const express = require("express");
-const router = express.Router();
+/* =========================================================
+   BXS API GATEWAY — ENTERPRISE EDGE ROUTER
+========================================================= */
 
-const rateLimit = require("express-rate-limit");
-const db = require("./database");
+const express =
+  require("express");
 
-/* ======================================
-MODULES
-====================================== */
+const crypto =
+  require("crypto");
 
-const auth = require("./modules/auth");
-const wallet = require("./modules/wallet");
-const casino = require("./modules/casino");
-const market = require("./modules/market");
-const mining = require("./modules/mining");
-const airdrop = require("./modules/airdrop");
-const payments = require("./modules/payments");
+const compression =
+  require("compression");
 
-/* ======================================
-RATE LIMIT (GLOBAL)
-====================================== */
+const helmet =
+  require("helmet");
 
-const limiter = rateLimit({
-  windowMs: 60 * 1000,
-  max: 300
-});
+const cors =
+  require("cors");
 
-router.use(limiter);
+const morgan =
+  require("morgan");
 
-/* ======================================
-LOGGER
-====================================== */
+const rateLimit =
+  require("express-rate-limit");
 
-router.use((req, res, next) => {
+const RedisStore =
+  require("rate-limit-redis");
 
-  const start = Date.now();
+const redis =
+  require("./core/redis");
 
-  res.on("finish", () => {
+const db =
+  require("./database");
 
-    const duration = Date.now() - start;
+/* =========================================================
+   ROUTER
+========================================================= */
 
-    console.log(
-      `${req.method} ${req.originalUrl} ${res.statusCode} ${duration}ms`
-    );
+const router =
+  express.Router();
 
-  });
+/* =========================================================
+   MODULES
+========================================================= */
+
+const auth =
+  require("./routes/auth");
+
+const wallet =
+  require("./routes/wallet");
+
+const casino =
+  require("./routes/casino");
+
+const market =
+  require("./routes/market");
+
+const mining =
+  require("./routes/mining");
+
+const airdrop =
+  require("./routes/airdrop");
+
+const payments =
+  require("./routes/payments");
+
+/* =========================================================
+   TRUST PROXY (RENDER)
+========================================================= */
+
+router.set?.(
+  "trust proxy",
+  1
+);
+
+/* =========================================================
+   SECURITY
+========================================================= */
+
+router.use(
+
+  helmet({
+
+    crossOriginEmbedderPolicy:false,
+
+    contentSecurityPolicy:false
+
+  })
+
+);
+
+router.use(cors({
+
+  origin:true,
+
+  credentials:true
+
+}));
+
+router.use(compression());
+
+/* =========================================================
+   REQUEST ID
+========================================================= */
+
+router.use((req,res,next)=>{
+
+  req.requestId =
+    crypto.randomUUID();
+
+  res.setHeader(
+
+    "x-request-id",
+
+    req.requestId
+
+  );
 
   next();
+
 });
 
-/* ======================================
-ROOT
-====================================== */
+/* =========================================================
+   LOGGER
+========================================================= */
 
-router.get("/", (req, res) => {
-  res.json({
-    name: "Bloxio API",
-    status: "online",
-    version: "LIVE",
-    time: Date.now()
-  });
-});
+morgan.token(
 
-/* ======================================
-HEALTH
-====================================== */
+  "id",
 
-router.get("/health", async (req, res) => {
+  req=>req.requestId
 
-  try {
+);
 
-    const dbHealth = await db.health();
+router.use(
+
+  morgan(
+
+    ':id :method :url :status :response-time ms'
+
+  )
+
+);
+
+/* =========================================================
+   GLOBAL RATE LIMIT
+========================================================= */
+
+router.use(
+
+  rateLimit({
+
+    windowMs:
+      60 * 1000,
+
+    max:500,
+
+    standardHeaders:true,
+
+    legacyHeaders:false,
+
+    store:new RedisStore({
+
+      sendCommand:(...args)=>
+
+        redis.client.call(
+          ...args
+        )
+
+    })
+
+  })
+
+);
+
+/* =========================================================
+   ROOT
+========================================================= */
+
+router.get(
+
+  "/",
+
+  (req,res)=>{
 
     res.json({
-      status: "ok",
-      uptime: process.uptime(),
-      db: dbHealth
-    });
 
-  } catch (e) {
+      name:
+        "BXS API",
 
-    res.status(500).json({
-      status: "error"
+      status:
+        "online",
+
+      version:
+        "enterprise",
+
+      requestId:
+        req.requestId,
+
+      time:
+        Date.now()
+
     });
 
   }
 
+);
+
+/* =========================================================
+   HEALTH
+========================================================= */
+
+router.get(
+
+  "/health",
+
+  async(req,res)=>{
+
+    try{
+
+      const dbHealth =
+        await db.health();
+
+      return res.json({
+
+        status:"ok",
+
+        uptime:
+          process.uptime(),
+
+        memory:
+          process.memoryUsage(),
+
+        db:
+          dbHealth,
+
+        requestId:
+          req.requestId
+
+      });
+
+    }catch(e){
+
+      return res.status(500)
+        .json({
+
+          status:"error",
+
+          error:e.message
+
+        });
+
+    }
+
+  }
+
+);
+
+/* =========================================================
+   ROUTES
+========================================================= */
+
+router.use(
+  "/auth",
+  auth
+);
+
+router.use(
+  "/finance",
+  wallet
+);
+
+router.use(
+  "/casino",
+  casino
+);
+
+router.use(
+  "/market",
+  market
+);
+
+router.use(
+  "/mining",
+  mining
+);
+
+router.use(
+  "/airdrop",
+  airdrop
+);
+
+router.use(
+  "/payments",
+  payments
+);
+
+/* =========================================================
+   VERSIONED API
+========================================================= */
+
+const api =
+  express.Router();
+
+api.use("/auth",auth);
+api.use("/finance",wallet);
+api.use("/casino",casino);
+api.use("/market",market);
+api.use("/mining",mining);
+api.use("/airdrop",airdrop);
+api.use("/payments",payments);
+
+router.use(
+  "/api/v1",
+  api
+);
+
+/* =========================================================
+   NOT FOUND
+========================================================= */
+
+router.use((req,res)=>{
+
+  res.status(404)
+    .json({
+
+      success:false,
+
+      error:
+        "endpoint_not_found",
+
+      path:
+        req.originalUrl,
+
+      requestId:
+        req.requestId
+
+    });
+
 });
 
-/* ======================================
-🔥 DIRECT ROUTES (CRITICAL FIX)
-====================================== */
+/* =========================================================
+   ERROR HANDLER
+========================================================= */
 
-/* ⚠️ نفس المسارات اللي frontend يستخدمها */
+router.use((
 
-router.use("/auth", auth);
+  err,
+  req,
+  res,
+  next
 
-/* 🔥 FIX مهم */
-router.use("/finance", wallet);   // بدل /wallet
+)=>{
 
-router.use("/casino", casino);
-router.use("/market", market);
-router.use("/mining", mining);
-router.use("/airdrop", airdrop);
-router.use("/payments", payments);
+  console.error(
 
-/* ======================================
-OPTIONAL VERSION (لا يكسر شيء)
-====================================== */
+    "❌ API:",
 
-const api = express.Router();
+    err.message,
 
-api.use("/auth", auth);
-api.use("/finance", wallet);
-api.use("/casino", casino);
-api.use("/market", market);
-api.use("/mining", mining);
-api.use("/airdrop", airdrop);
-api.use("/payments", payments);
+    req.requestId
 
-router.use("/api/v1", api);
+  );
 
-/* ======================================
-NOT FOUND
-====================================== */
+  res.status(
 
-router.use((req, res) => {
+    err.status || 500
 
-  res.status(404).json({
-    error: "endpoint_not_found",
-    path: req.originalUrl
+  ).json({
+
+    success:false,
+
+    error:
+      err.message ||
+      "internal_error",
+
+    requestId:
+      req.requestId
+
   });
 
 });
 
-/* ======================================
-ERROR HANDLER
-====================================== */
+/* =========================================================
+   EXPORT
+========================================================= */
 
-router.use((err, req, res, next) => {
-
-  console.error(" API ERROR:", err.message);
-
-  res.status(err.status || 500).json({
-    error: err.message || "internal_error"
-  });
-
-});
-
-module.exports = router;
+module.exports =
+  router;
