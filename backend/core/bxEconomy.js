@@ -1,158 +1,512 @@
 "use strict";
 
-const db = require("../database");
-const ledger = require("./ledger");
+/* =========================================================
+   BXS ECONOMY ENGINE — ENTERPRISE MONETARY SYSTEM
+========================================================= */
+
+const db =
+  require("../database");
+
+const ledger =
+  require("./ledger");
+
+const redis =
+  require("./redis");
+
+/* =========================================================
+   CONFIG
+========================================================= */
+
+const DECIMALS = 8;
+
+const MAX_SUPPLY =
+  1_000_000_000;
+
+const UNIT =
+  100000000;
 
 /* =========================================
-CONFIG
+SUPPLY ALLOCATION
 ========================================= */
 
-const MAX_SUPPLY = 5_000_000; // 5M BX
-const MINING_DAILY_CAP = 50000;
+const ALLOCATION = {
+
+  ecosystem: 350_000_000,
+
+  validators: 200_000_000,
+
+  liquidity: 150_000_000,
+
+  treasury: 100_000_000,
+
+  team: 100_000_000,
+
+  airdrop: 50_000_000,
+
+  reserve: 50_000_000
+
+};
 
 /* =========================================
-GET TOTAL SUPPLY
+ECONOMY CONFIG
 ========================================= */
+
+const CONFIG = {
+
+  txFee: 0.001,
+
+  burnPercent: 0.25,
+
+  treasuryPercent: 0.25,
+
+  validatorPercent: 0.50,
+
+  miningDailyCap: 500000,
+
+  whaleLimit: 5_000_000,
+
+  stakingAPR: 0.12
+
+};
+
+/* =========================================================
+   TOTAL SUPPLY
+========================================================= */
 
 async function getTotalSupply(){
 
+  const cached =
+    await redis.getCache(
+      "bx:supply"
+    );
+
+  if(cached){
+    return cached;
+  }
+
   const r = await db.query(`
-    SELECT COALESCE(SUM(balance),0) as total
+    SELECT
+      COALESCE(
+        SUM(balance),
+        0
+      ) total
     FROM wallet_balances
     WHERE asset='BX'
   `);
 
-  return Number(r.rows[0].total);
+  const total =
+    Number(r.rows[0].total);
+
+  await redis.setCache(
+    "bx:supply",
+    total,
+    60
+  );
+
+  return total;
 
 }
 
-/* =========================================
-REWARD (SAFE)
-========================================= */
+/* =========================================================
+   CIRCULATING SUPPLY
+========================================================= */
 
-async function rewardBX(userId, amount, reason){
+async function getCirculatingSupply(){
 
-  if(amount <= 0){
-    throw new Error("invalid_reward");
-  }
+  const total =
+    await getTotalSupply();
 
-  const total = await getTotalSupply();
+  const locked =
+    await getLockedSupply();
 
-  if(total + amount > MAX_SUPPLY){
-    throw new Error("MAX_SUPPLY_REACHED");
+  return total - locked;
+
+}
+
+/* =========================================================
+   LOCKED SUPPLY
+========================================================= */
+
+async function getLockedSupply(){
+
+  const r = await db.query(`
+    SELECT
+      COALESCE(
+        SUM(amount),
+        0
+      ) total
+    FROM locked_balances
+    WHERE asset='BX'
+  `);
+
+  return Number(
+    r.rows[0].total
+  );
+
+}
+
+/* =========================================================
+   MINT
+========================================================= */
+
+async function mint({
+
+  userId,
+  amount,
+  reason
+
+}){
+
+  validateAmount(amount);
+
+  const total =
+    await getTotalSupply();
+
+  if(
+    total + amount >
+    MAX_SUPPLY
+  ){
+    throw new Error(
+      "MAX_SUPPLY_REACHED"
+    );
   }
 
   await ledger.credit({
+
     userId,
-    asset: "BX",
+
+    asset:"BX",
+
     amount,
+
+    type:"mint",
+
     reason
+
   });
+
+  await invalidate();
 
 }
 
-/* =========================================
-BURN (SAFE)
-========================================= */
+/* =========================================================
+   BURN
+========================================================= */
 
-async function burnBX(userId, amount){
+async function burn({
 
-  if(amount <= 0){
-    throw new Error("invalid_burn");
-  }
+  userId,
+  amount,
+  reason="burn"
+
+}){
+
+  validateAmount(amount);
 
   await ledger.debit({
+
     userId,
-    asset: "BX",
+
+    asset:"BX",
+
     amount,
-    reason: "burn"
+
+    type:"burn",
+
+    reason
+
   });
+
+  await invalidate();
 
 }
 
-/* =========================================
-TRANSFER WITH FEE (ECONOMY CONTROL)
-========================================= */
+/* =========================================================
+   TRANSFER
+========================================================= */
 
-async function transferBX(fromUser, toUser, amount){
+async function transfer({
 
-  const FEE = amount * 0.01; // 1%
-  const net = amount - FEE;
+  fromUser,
+  toUser,
+  amount
+
+}){
+
+  validateAmount(amount);
+
+  /* =====================================
+     WHALE PROTECTION
+  ===================================== */
+
+  if(amount > CONFIG.whaleLimit){
+
+    throw new Error(
+      "WHALE_LIMIT"
+    );
+
+  }
+
+  const fee =
+    amount *
+    CONFIG.txFee;
+
+  const burnFee =
+    fee *
+    CONFIG.burnPercent;
+
+  const treasuryFee =
+    fee *
+    CONFIG.treasuryPercent;
+
+  const validatorFee =
+    fee *
+    CONFIG.validatorPercent;
+
+  const net =
+    amount - fee;
 
   if(net <= 0){
-    throw new Error("invalid_transfer");
+    throw new Error(
+      "INVALID_TRANSFER"
+    );
   }
 
-  /* transfer */
+  /* =====================================
+     TRANSFER
+  ===================================== */
+
   await ledger.transfer({
+
     fromUser,
     toUser,
-    asset: "BX",
-    amount: net
+
+    asset:"BX",
+
+    amount:net
+
   });
 
-  /* burn fee */
-  await ledger.debit({
-    userId: fromUser,
-    asset: "BX",
-    amount: FEE,
-    reason: "tx_fee_burn"
+  /* =====================================
+     BURN
+  ===================================== */
+
+  await burn({
+
+    userId:fromUser,
+
+    amount:burnFee,
+
+    reason:"tx_burn"
+
   });
+
+  /* =====================================
+     TREASURY
+  ===================================== */
+
+  await ledger.transfer({
+
+    fromUser,
+
+    toUser:0,
+
+    asset:"BX",
+
+    amount:treasuryFee
+
+  });
+
+  /* =====================================
+     VALIDATORS
+  ===================================== */
+
+  await validatorPool(
+    validatorFee
+  );
 
 }
 
-/* =========================================
-MINING LIMIT CONTROL
-========================================= */
+/* =========================================================
+   VALIDATOR REWARDS
+========================================================= */
 
-async function checkMiningLimit(userId, amount){
+async function validatorPool(amount){
+
+  await redis.incrByFloat(
+    "bx:validator_pool",
+    amount
+  );
+
+}
+
+/* =========================================================
+   MINING CONTROL
+========================================================= */
+
+async function checkMiningLimit(
+
+  userId,
+  amount
+
+){
 
   const r = await db.query(`
-    SELECT COALESCE(SUM(amount),0) as total
+    SELECT
+      COALESCE(
+        SUM(amount),
+        0
+      ) total
     FROM wallet_transactions
     WHERE user_id=$1
     AND reason='mining_reward'
-    AND created_at > NOW() - INTERVAL '1 day'
+    AND created_at >
+      NOW() - INTERVAL '1 day'
   `,[userId]);
 
-  const total = Number(r.rows[0].total);
+  const total =
+    Number(r.rows[0].total);
 
-  if(total + amount > MINING_DAILY_CAP){
-    throw new Error("MINING_DAILY_LIMIT");
+  if(
+    total + amount >
+    CONFIG.miningDailyCap
+  ){
+    throw new Error(
+      "MINING_LIMIT"
+    );
   }
 
 }
 
-/* =========================================
-STATS
-========================================= */
+/* =========================================================
+   HALVING
+========================================================= */
+
+function currentEmission(){
+
+  const years =
+    Math.floor(
+      Date.now() /
+      (365*24*60*60*1000)
+    );
+
+  return Math.max(
+    0.1,
+    1 / (years + 1)
+  );
+
+}
+
+/* =========================================================
+   STATS
+========================================================= */
 
 async function getStats(){
 
-  const total = await getTotalSupply();
+  const [
 
-  const r = await db.query(`
-    SELECT COUNT(*) as users
-    FROM users
-  `);
+    totalSupply,
+
+    circulating,
+
+    locked
+
+  ] = await Promise.all([
+
+    getTotalSupply(),
+
+    getCirculatingSupply(),
+
+    getLockedSupply()
+
+  ]);
 
   return {
-    totalSupply: total,
-    maxSupply: MAX_SUPPLY,
-    users: Number(r.rows[0].users)
+
+    name:"BXS Network",
+
+    symbol:"BX",
+
+    decimals:DECIMALS,
+
+    totalSupply,
+
+    maxSupply:MAX_SUPPLY,
+
+    circulatingSupply:
+      circulating,
+
+    lockedSupply:
+      locked,
+
+    emission:
+      currentEmission(),
+
+    allocation:
+      ALLOCATION
+
   };
 
 }
 
-/* =========================================
-EXPORT
-========================================= */
+/* =========================================================
+   VALIDATION
+========================================================= */
+
+function validateAmount(a){
+
+  if(
+    !a ||
+    isNaN(a) ||
+    a <= 0
+  ){
+    throw new Error(
+      "INVALID_AMOUNT"
+    );
+  }
+
+}
+
+/* =========================================================
+   CACHE INVALIDATION
+========================================================= */
+
+async function invalidate(){
+
+  await redis.delCache(
+    "bx:supply"
+  );
+
+}
+
+/* =========================================================
+   EXPORT
+========================================================= */
 
 module.exports = {
-  rewardBX,
-  burnBX,
-  transferBX,
+
+  DECIMALS,
+
+  MAX_SUPPLY,
+
+  ALLOCATION,
+
+  CONFIG,
+
+  mint,
+
+  burn,
+
+  transfer,
+
   checkMiningLimit,
+
   getTotalSupply,
+
+  getCirculatingSupply,
+
+  getLockedSupply,
+
   getStats
+
 };
