@@ -1,135 +1,339 @@
 "use strict";
 
-/* =========================================
-WS HUB
-========================================= */
+/* =========================================================
+   BXS TRADES FEED — ENTERPRISE MARKET STREAM
+========================================================= */
 
-let wsHub = null;
+const crypto =
+  require("crypto");
 
-function attachWS(hub){
-  wsHub = hub;
-}
+const redis =
+  require("../core/redis");
 
-/* =========================================
-STATE
-========================================= */
+const ws =
+  require("../ws/wsHub");
 
-const trades = [];
-const candles = {};
+const candle =
+  require("./candleEngine");
 
-const MAX_TRADES = 200;
-const CANDLE_INTERVAL = 60 * 1000; // 1 min
+/* =========================================================
+   CONFIG
+========================================================= */
 
-/* =========================================
-CANDLE HELPER
-========================================= */
+const MAX_TRADES = 500;
 
-function getCandleBucket(time){
-  return Math.floor(time / CANDLE_INTERVAL) * CANDLE_INTERVAL;
-}
+const FEED_TTL = 86400;
 
-function updateCandle(trade){
+/* =========================================================
+   TRADE ID
+========================================================= */
 
-  const bucket = getCandleBucket(trade.time);
+function tradeId(){
 
-  if(!candles[bucket]){
-    candles[bucket] = {
-      time: bucket,
-      open: trade.price,
-      high: trade.price,
-      low: trade.price,
-      close: trade.price,
-      volume: trade.amount
-    };
-  }else{
-
-    const c = candles[bucket];
-
-    c.high = Math.max(c.high, trade.price);
-    c.low = Math.min(c.low, trade.price);
-    c.close = trade.price;
-    c.volume += trade.amount;
-  }
+  return crypto
+    .randomBytes(12)
+    .toString("hex");
 
 }
 
-/* =========================================
-PUBLISH TRADE (UPGRADED)
-========================================= */
+/* =========================================================
+   PUBLISH TRADE
+========================================================= */
 
-async function publishTrade(trade){
+async function publishTrade({
 
-  try{
+  pair,
+  price,
+  amount,
+  side="buy",
 
-    const data = {
-      pair: trade.pair,
-      price: Number(trade.price),
-      amount: Number(trade.amount),
-      side: trade.side || "buy",
-      buyer: trade.buyer || null,
-      seller: trade.seller || null,
-      time: Date.now()
-    };
+  buyer=null,
+  seller=null
 
-    /* store trades */
-    trades.unshift(data);
+}){
 
-    if(trades.length > MAX_TRADES){
-      trades.pop();
+  const trade = {
+
+    id:tradeId(),
+
+    pair,
+
+    price:Number(price),
+
+    amount:Number(amount),
+
+    side,
+
+    buyer,
+
+    seller,
+
+    timestamp:Date.now()
+
+  };
+
+  /* =====================================
+     STORE
+  ===================================== */
+
+  await redis.lPush(
+
+    `trades:${pair}`,
+
+    JSON.stringify(trade)
+
+  );
+
+  await redis.lTrim(
+
+    `trades:${pair}`,
+
+    0,
+
+    MAX_TRADES
+
+  );
+
+  await redis.expire(
+
+    `trades:${pair}`,
+
+    FEED_TTL
+
+  );
+
+  /* =====================================
+     STREAM
+  ===================================== */
+
+  await redis.publish(
+
+    `stream:trades:${pair}`,
+
+    JSON.stringify(trade)
+
+  );
+
+  /* =====================================
+     CANDLES
+  ===================================== */
+
+  await candle.updateCandle({
+
+    pair,
+
+    price,
+
+    amount
+
+  });
+
+  /* =====================================
+     REALTIME
+  ===================================== */
+
+  await ws.publish(
+
+    `trades:${pair}`,
+
+    {
+
+      type:"trade",
+
+      ...trade
+
     }
 
-    /* update candle */
-    updateCandle(data);
+  );
 
-    /* broadcast */
+  /* =====================================
+     TICKER
+  ===================================== */
 
-    if(wsHub){
+  await ws.publish(
 
-      wsHub.broadcast("trade", data);
+    `ticker:${pair}`,
 
-      wsHub.broadcast("ticker", {
-        pair: data.pair,
-        price: data.price
-      });
+    {
+
+      type:"ticker",
+
+      pair,
+
+      price,
+
+      volume:amount,
+
+      timestamp:
+        trade.timestamp
 
     }
 
-    console.log("📊 Trade:", data.price, data.amount);
+  );
 
-  }catch(e){
-    console.error("Trade publish error:", e);
+  return trade;
+
+}
+
+/* =========================================================
+   GET TRADES
+========================================================= */
+
+async function getTrades({
+
+  pair,
+
+  limit=100
+
+}){
+
+  const data =
+    await redis.lRange(
+
+      `trades:${pair}`,
+
+      0,
+
+      limit - 1
+
+    );
+
+  return data.map(x=>
+    JSON.parse(x)
+  );
+
+}
+
+/* =========================================================
+   LAST PRICE
+========================================================= */
+
+async function lastPrice(pair){
+
+  const trades =
+    await getTrades({
+
+      pair,
+
+      limit:1
+
+    });
+
+  return (
+    trades[0]?.price
+  ) || 0;
+
+}
+
+/* =========================================================
+   TICKER
+========================================================= */
+
+async function ticker(pair){
+
+  const trades =
+    await getTrades({
+
+      pair,
+
+      limit:100
+
+    });
+
+  if(!trades.length){
+
+    return null;
+
   }
 
+  const prices =
+    trades.map(
+      t=>t.price
+    );
+
+  const volumes =
+    trades.map(
+      t=>t.amount
+    );
+
+  return {
+
+    pair,
+
+    last:
+      prices[0],
+
+    high:
+      Math.max(...prices),
+
+    low:
+      Math.min(...prices),
+
+    volume:
+      volumes.reduce(
+        (a,b)=>a+b,
+        0
+      ),
+
+    trades:
+      trades.length
+
+  };
+
 }
 
-/* =========================================
-GET TRADES
-========================================= */
+/* =========================================================
+   SNAPSHOT
+========================================================= */
 
-function getTrades(pair){
-  if(!pair) return trades;
-  return trades.filter(t => t.pair === pair);
+async function snapshot(pair){
+
+  return {
+
+    ticker:
+      await ticker(pair),
+
+    trades:
+      await getTrades({
+
+        pair,
+
+        limit:50
+
+      })
+
+  };
+
 }
 
-/* =========================================
-GET CANDLES
-========================================= */
+/* =========================================================
+   START
+========================================================= */
 
-function getCandles(limit = 100){
+function start(){
 
-  const list = Object.values(candles)
-    .sort((a,b)=>a.time - b.time);
+  console.log(
+    "📡 BXS Trades Feed LIVE"
+  );
 
-  return list.slice(-limit);
 }
 
-/* =========================================
-EXPORT
-========================================= */
+/* =========================================================
+   EXPORT
+========================================================= */
 
 module.exports = {
+
+  start,
+
   publishTrade,
+
   getTrades,
-  getCandles,
-  attachWS
+
+  lastPrice,
+
+  ticker,
+
+  snapshot
+
 };
