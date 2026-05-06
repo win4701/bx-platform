@@ -1,324 +1,905 @@
 "use strict";
 
-const express = require("express");
-const router = express.Router();
+/* =========================================================
+   BXS WALLET API — ENTERPRISE FINANCIAL GATEWAY
+========================================================= */
 
-const db = require("../database");
-const ledger = require("../core/ledger");
+const express =
+  require("express");
 
-/* =====================================
-SUPPORTED COINS
-===================================== */
+const Joi =
+  require("joi");
+
+const crypto =
+  require("crypto");
+
+const router =
+  express.Router();
+
+const db =
+  require("../database");
+
+const redis =
+  require("../core/redis");
+
+const ledger =
+  require("../core/ledger");
+
+const auth =
+  require("../middleware/auth");
+
+const fraud =
+  require("../security/fraudEngine");
+
+const ws =
+  require("../ws/wsHub");
+
+/* =========================================================
+   CONFIG
+========================================================= */
 
 const COINS = [
-"BX","USDT","TON","BTC","ETH","BNB","SOL","ZEC","TRX","USDC","LTC"
+
+  "BX",
+  "USDT",
+  "TON",
+  "BTC",
+  "ETH",
+  "BNB",
+  "SOL",
+  "ZEC",
+  "TRX",
+  "USDC",
+  "LTC"
+
 ];
 
-/* =====================================
-HELPERS
-===================================== */
+const MAX_TRANSFER =
+  1_000_000;
 
-function auth(req){
-  if(!req.user?.id){
-    const err = new Error("unauthorized");
-    err.status = 401;
-    throw err;
+const MAX_WITHDRAW =
+  500_000;
+
+/* =========================================================
+   SCHEMAS
+========================================================= */
+
+const transferSchema =
+  Joi.object({
+
+    to_user:
+      Joi.number()
+      .required(),
+
+    amount:
+      Joi.number()
+      .positive()
+      .max(MAX_TRANSFER)
+      .required(),
+
+    asset:
+      Joi.string()
+      .valid(...COINS)
+      .required()
+
+  });
+
+const withdrawSchema =
+  Joi.object({
+
+    asset:
+      Joi.string()
+      .valid(...COINS)
+      .required(),
+
+    amount:
+      Joi.number()
+      .positive()
+      .max(MAX_WITHDRAW)
+      .required(),
+
+    address:
+      Joi.string()
+      .min(10)
+      .required()
+
+  });
+
+/* =========================================================
+   HELPERS
+========================================================= */
+
+function ok(res,data={}){
+
+  return res.json({
+
+    success:true,
+
+    ...data
+
+  });
+
+}
+
+function fail(
+
+  res,
+  error="error",
+  code=400
+
+){
+
+  return res.status(code)
+    .json({
+
+      success:false,
+
+      error
+
+    });
+
+}
+
+/* =========================================================
+   IDEMPOTENCY
+========================================================= */
+
+async function idempotency(
+
+  req,
+  res,
+  next
+
+){
+
+  const key =
+    req.headers[
+      "x-idempotency-key"
+    ];
+
+  if(!key){
+    return next();
   }
-  return req.user.id;
+
+  const exists =
+    await redis.getCache(
+      `wallet:idem:${key}`
+    );
+
+  if(exists){
+
+    return fail(
+
+      res,
+
+      "duplicate_request",
+
+      409
+
+    );
+
+  }
+
+  await redis.setCache(
+
+    `wallet:idem:${key}`,
+
+    true,
+
+    60
+
+  );
+
+  next();
+
 }
 
-/* =====================================
-GET BALANCES (WITH LOCKED)
-===================================== */
+/* =========================================================
+   RATE LIMIT
+========================================================= */
 
-router.get("/balance", async (req,res)=>{
+async function rateLimit(
 
-try{
+  req,
+  res,
+  next
 
-const userId = auth(req);
+){
 
-const r = await db.query(
-`SELECT asset,balance,locked
- FROM wallet_balances
- WHERE user_id=$1`,
-[userId],
-{tag:"wallet_balance"}
+  const key =
+    `wallet:rl:${req.user.id}`;
+
+  const count =
+    await redis.incr(key);
+
+  if(count === 1){
+
+    await redis.expire(
+      key,
+      1
+    );
+
+  }
+
+  if(count > 10){
+
+    return fail(
+
+      res,
+
+      "rate_limited",
+
+      429
+
+    );
+
+  }
+
+  next();
+
+}
+
+/* =========================================================
+   BALANCES
+========================================================= */
+
+router.get(
+
+  "/balance",
+
+  auth,
+
+  async(req,res)=>{
+
+    try{
+
+      const r =
+        await db.query(`
+          SELECT
+            asset,
+            balance,
+            locked
+          FROM wallet_balances
+          WHERE user_id=$1
+      `,[
+
+        req.user.id
+
+      ]);
+
+      const balances =
+        {};
+
+      for(const row of r.rows){
+
+        balances[
+          row.asset
+        ] = {
+
+          available:
+            Number(
+              row.balance
+            ),
+
+          locked:
+            Number(
+              row.locked || 0
+            ),
+
+          total:
+            Number(
+              row.balance
+            ) +
+            Number(
+              row.locked || 0
+            )
+
+        };
+
+      }
+
+      return ok(res,{
+
+        balances
+
+      });
+
+    }catch(e){
+
+      return fail(
+
+        res,
+
+        "balance_failed",
+
+        500
+
+      );
+
+    }
+
+  }
+
 );
 
-const balances = {};
+/* =========================================================
+   TRANSFER
+========================================================= */
 
-for(const row of r.rows){
-balances[row.asset] = {
-  available: Number(row.balance),
-  locked: Number(row.locked || 0)
-};
-}
+router.post(
 
-res.json({balances});
+  "/transfer",
 
-}catch(e){
-res.status(e.status||500).json({error:e.message});
-}
+  auth,
 
-});
+  idempotency,
 
-/* =====================================
-TRANSFER (SAFE TX)
-===================================== */
+  rateLimit,
 
-router.post("/transfer", async (req,res)=>{
+  async(req,res)=>{
 
-try{
+    try{
 
-const userId = auth(req);
+      const {
 
-let {to_user,amount,asset="BX"} = req.body;
+        error,
 
-amount = Number(amount);
-asset = String(asset).toUpperCase();
+        value
 
-if(!to_user || amount<=0 || !COINS.includes(asset)){
-return res.status(400).json({error:"invalid_request"});
-}
+      } =
+        transferSchema
+          .validate(
+            req.body
+          );
 
-await db.transaction(async (tx)=>{
+      if(error){
 
-await ledger.transfer({
-fromUser:userId,
-toUser:to_user,
-asset,
-amount,
-tx
-});
+        return fail(
 
-});
+          res,
 
-res.json({status:"ok"});
+          error.details[0]
+            .message
 
-}catch(e){
-res.status(400).json({error:e.message});
-}
+        );
 
-});
+      }
 
-/* =====================================
-DEPOSIT ADDRESS (NOWPAY READY)
-===================================== */
+      /* ===================================
+         FRAUD
+      =================================== */
 
-router.get("/deposit/:asset", async (req,res)=>{
+      const risk =
+        await fraud.check({
 
-try{
+          userId:
+            req.user.id,
 
-const userId = auth(req);
-const {asset} = req.params;
+          amount:
+            value.amount,
 
-if(!COINS.includes(asset)){
-return res.status(400).json({error:"unsupported_asset"});
-}
+          ip:req.ip,
 
-/* use wallets table */
+          deviceId:
+            req.headers[
+              "x-device-id"
+            ]
 
-let r = await db.query(
-`SELECT deposit_address
- FROM wallets
- WHERE user_id=$1 AND asset=$2`,
-[userId,asset],
-{tag:"deposit_get"}
+        });
+
+      if(risk.blocked){
+
+        return fail(
+
+          res,
+
+          "risk_blocked",
+
+          403
+
+        );
+
+      }
+
+      /* ===================================
+         TX
+      =================================== */
+
+      await db.transaction(
+
+        async(tx)=>{
+
+          await ledger.transfer({
+
+            fromUser:
+              req.user.id,
+
+            toUser:
+              value.to_user,
+
+            asset:
+              value.asset,
+
+            amount:
+              value.amount,
+
+            tx
+
+          });
+
+        }
+
+      );
+
+      /* ===================================
+         WS
+      =================================== */
+
+      await ws.sendToUser(
+
+        req.user.id,
+
+        {
+
+          type:
+            "wallet_transfer",
+
+          asset:
+            value.asset,
+
+          amount:
+            value.amount
+
+        }
+
+      );
+
+      return ok(res,{
+
+        transferred:true
+
+      });
+
+    }catch(e){
+
+      return fail(
+        res,
+        e.message
+      );
+
+    }
+
+  }
+
 );
 
-if(!r.rows.length){
+/* =========================================================
+   DEPOSIT ADDRESS
+========================================================= */
 
-/* 🔥 placeholder — real address via NowPayments */
-const address = `${asset}_${userId}_${Date.now()}`;
+router.get(
 
-await db.query(
-`INSERT INTO wallets (user_id,asset,deposit_address)
- VALUES($1,$2,$3)`,
-[userId,asset,address]
+  "/deposit/:asset",
+
+  auth,
+
+  async(req,res)=>{
+
+    try{
+
+      const asset =
+        String(
+          req.params.asset
+        ).toUpperCase();
+
+      if(
+        !COINS.includes(asset)
+      ){
+
+        return fail(
+
+          res,
+
+          "unsupported_asset"
+
+        );
+
+      }
+
+      let r =
+        await db.query(`
+          SELECT
+            deposit_address
+          FROM wallets
+          WHERE user_id=$1
+          AND asset=$2
+      `,[
+
+        req.user.id,
+
+        asset
+
+      ]);
+
+      /* ===================================
+         CREATE ADDRESS
+      =================================== */
+
+      if(!r.rows.length){
+
+        const address =
+          crypto
+            .randomBytes(24)
+            .toString("hex");
+
+        await db.query(`
+          INSERT INTO wallets
+          (
+            user_id,
+            asset,
+            deposit_address
+          )
+          VALUES($1,$2,$3)
+        `,[
+
+          req.user.id,
+
+          asset,
+
+          address
+
+        ]);
+
+        return ok(res,{
+
+          asset,
+
+          address
+
+        });
+
+      }
+
+      return ok(res,{
+
+        asset,
+
+        address:
+          r.rows[0]
+            .deposit_address
+
+      });
+
+    }catch(e){
+
+      return fail(
+
+        res,
+
+        "deposit_failed",
+
+        500
+
+      );
+
+    }
+
+  }
+
 );
 
-return res.json({asset,address});
-}
+/* =========================================================
+   WITHDRAW
+========================================================= */
 
-res.json({asset,address:r.rows[0].deposit_address});
+router.post(
 
-}catch(e){
-res.status(500).json({error:"deposit_failed"});
-}
+  "/withdraw",
 
-});
+  auth,
 
-/* =====================================
-WITHDRAW (NOWPAY READY + SAFE)
-===================================== */
+  idempotency,
 
-router.post("/withdraw", async (req,res)=>{
+  rateLimit,
 
-try{
+  async(req,res)=>{
 
-const userId = auth(req);
+    try{
 
-let {asset,amount,address} = req.body;
+      const {
 
-amount = Number(amount);
-asset = String(asset).toUpperCase();
+        error,
 
-if(!COINS.includes(asset)){
-return res.status(400).json({error:"unsupported_asset"});
-}
+        value
 
-if(!amount || amount<=0 || !address){
-return res.status(400).json({error:"invalid_request"});
-}
+      } =
+        withdrawSchema
+          .validate(
+            req.body
+          );
 
-await db.transaction(async (tx)=>{
+      if(error){
 
-/* 🔒 lock wallet */
-const w = await tx.query(
-`SELECT balance FROM wallet_balances
- WHERE user_id=$1 AND asset=$2
- FOR UPDATE`,
-[userId,asset]
+        return fail(
+
+          res,
+
+          error.details[0]
+            .message
+
+        );
+
+      }
+
+      /* ===================================
+         FRAUD
+      =================================== */
+
+      const risk =
+        await fraud.check({
+
+          userId:
+            req.user.id,
+
+          amount:
+            value.amount,
+
+          ip:req.ip,
+
+          wallet:
+            value.address,
+
+          deviceId:
+            req.headers[
+              "x-device-id"
+            ]
+
+        });
+
+      if(risk.blocked){
+
+        return fail(
+
+          res,
+
+          "withdraw_blocked",
+
+          403
+
+        );
+
+      }
+
+      /* ===================================
+         TX
+      =================================== */
+
+      await db.transaction(
+
+        async(tx)=>{
+
+          const w =
+            await tx.query(`
+              SELECT
+                balance
+              FROM wallet_balances
+              WHERE user_id=$1
+              AND asset=$2
+              FOR UPDATE
+          `,[
+
+            req.user.id,
+
+            value.asset
+
+          ]);
+
+          if(
+            !w.rows.length ||
+            Number(
+              w.rows[0]
+                .balance
+            ) <
+            value.amount
+          ){
+
+            throw new Error(
+              "insufficient_balance"
+            );
+
+          }
+
+          /* ===============================
+             DEBIT
+          =============================== */
+
+          await ledger.debit({
+
+            userId:
+              req.user.id,
+
+            asset:
+              value.asset,
+
+            amount:
+              value.amount,
+
+            reason:
+              "withdraw_request",
+
+            tx
+
+          });
+
+          /* ===============================
+             SAVE REQUEST
+          =============================== */
+
+          await tx.query(`
+            INSERT INTO withdraw_requests
+            (
+              user_id,
+              asset,
+              amount,
+              address,
+              status,
+              created_at
+            )
+            VALUES(
+              $1,$2,$3,$4,
+              'pending',
+              NOW()
+            )
+          `,[
+
+            req.user.id,
+
+            value.asset,
+
+            value.amount,
+
+            value.address
+
+          ]);
+
+        }
+
+      );
+
+      await ws.sendToUser(
+
+        req.user.id,
+
+        {
+
+          type:
+            "withdraw_submitted",
+
+          asset:
+            value.asset,
+
+          amount:
+            value.amount
+
+        }
+
+      );
+
+      return ok(res,{
+
+        submitted:true
+
+      });
+
+    }catch(e){
+
+      return fail(
+        res,
+        e.message
+      );
+
+    }
+
+  }
+
 );
 
-if(!w.rows.length || Number(w.rows[0].balance) < amount){
-throw new Error("insufficient_balance");
-}
+/* =========================================================
+   HISTORY
+========================================================= */
 
-/* debit */
-await ledger.debit({
-user_id:userId,
-asset,
-amount,
-reason:"withdraw",
-tx
-});
+router.get(
 
-/* save request */
-await tx.query(
-`INSERT INTO withdraw_requests
-(user_id,asset,amount,address,status)
-VALUES($1,$2,$3,$4,'pending')`,
-[userId,asset,amount,address]
+  "/history",
+
+  auth,
+
+  async(req,res)=>{
+
+    try{
+
+      const limit =
+        Math.min(
+
+          Number(
+            req.query.limit
+          ) || 100,
+
+          500
+
+        );
+
+      const r =
+        await db.query(`
+          SELECT
+            asset,
+            amount,
+            type,
+            reason,
+            created_at
+          FROM wallet_transactions
+          WHERE user_id=$1
+          ORDER BY id DESC
+          LIMIT $2
+      `,[
+
+        req.user.id,
+
+        limit
+
+      ]);
+
+      return ok(res,{
+
+        history:
+          r.rows
+
+      });
+
+    }catch(e){
+
+      return fail(
+
+        res,
+
+        "history_failed",
+
+        500
+
+      );
+
+    }
+
+  }
+
 );
 
-});
+/* =========================================================
+   HEALTH
+========================================================= */
 
-res.json({status:"submitted"});
+router.get(
 
-}catch(e){
-res.status(400).json({error:e.message});
-}
+  "/health",
 
-});
+  async(req,res)=>{
 
-/* =====================================
-LOCK / UNLOCK (MARKET)
-===================================== */
+    return ok(res,{
 
-router.post("/lock", async (req,res)=>{
+      status:"ok",
 
-try{
+      time:
+        Date.now()
 
-const userId = auth(req);
-const {asset,amount} = req.body;
+    });
 
-await db.query(
-`UPDATE wallet_balances
- SET balance = balance - $1,
-     locked = locked + $1
- WHERE user_id=$2 AND asset=$3`,
-[amount,userId,asset]
+  }
+
 );
 
-res.json({status:"locked"});
+/* =========================================================
+   EXPORT
+========================================================= */
 
-}catch(e){
-res.status(400).json({error:e.message});
-}
-
-});
-
-router.post("/unlock", async (req,res)=>{
-
-try{
-
-const userId = auth(req);
-const {asset,amount} = req.body;
-
-await db.query(
-`UPDATE wallet_balances
- SET balance = balance + $1,
-     locked = locked - $1
- WHERE user_id=$2 AND asset=$3`,
-[amount,userId,asset]
-);
-
-res.json({status:"unlocked"});
-
-}catch(e){
-res.status(400).json({error:e.message});
-}
-
-});
-
-/* =====================================
-CONVERT (MINING + AIRDROP)
-===================================== */
-
-router.post("/convert", async (req,res)=>{
-
-try{
-
-const userId = auth(req);
-
-await db.transaction(async (tx)=>{
-
-await tx.query(
-`UPDATE wallet
- SET balance = balance + mining + bonus,
-     mining = 0,
-     bonus = 0
- WHERE user_id=$1`,
-[userId]
-);
-
-});
-
-res.json({status:"converted"});
-
-}catch(e){
-res.status(400).json({error:e.message});
-}
-
-});
-
-/* =====================================
-HISTORY
-===================================== */
-
-router.get("/history", async (req,res)=>{
-
-try{
-
-const userId = auth(req);
-
-const r = await db.query(
-`SELECT asset,amount,type,reason,created_at
- FROM wallet_transactions
- WHERE user_id=$1
- ORDER BY created_at DESC
- LIMIT 100`,
-[userId],
-{tag:"wallet_history"}
-);
-
-res.json(r.rows);
-
-}catch(e){
-res.status(500).json({error:"history_failed"});
-}
-
-});
-
-module.exports = router;
+module.exports =
+  router;
