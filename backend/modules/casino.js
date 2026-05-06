@@ -1,279 +1,681 @@
 "use strict";
 
-const express = require("express");
-const router = express.Router();
+/* =========================================================
+   BXS CASINO API — ENTERPRISE GATEWAY
+========================================================= */
 
-const { addJob } = require("../queues/systemQueue");
-const engine = require("../engines/casinoEngine");
-const crash = require("../engines/crashEngine");
+const express =
+  require("express");
 
-/* =========================================
-AUTH
-========================================= */
+const router =
+  express.Router();
 
-function requireAuth(req,res){
-  const userId = req.user?.id;
+const Joi =
+  require("joi");
 
-  if(!userId){
-    res.status(401).json({ error:"unauthorized" });
-    return null;
+const crypto =
+  require("crypto");
+
+const redis =
+  require("../core/redis");
+
+const casino =
+  require("../engines/casinoEngine");
+
+const crash =
+  require("../engines/crashEngine");
+
+const fraud =
+  require("../security/fraudEngine");
+
+const auth =
+  require("../middleware/auth");
+
+const ws =
+  require("../ws/wsHub");
+
+const db =
+  require("../database");
+
+const {
+
+  addJob
+
+} = require(
+  "../queues/systemQueue"
+);
+
+/* =========================================================
+   CONFIG
+========================================================= */
+
+const BET_LIMIT = 100_000;
+
+/* =========================================================
+   SCHEMAS
+========================================================= */
+
+const playSchema =
+  Joi.object({
+
+    game:
+      Joi.string()
+      .required(),
+
+    bet:
+      Joi.number()
+      .positive()
+      .max(BET_LIMIT)
+      .required(),
+
+    data:
+      Joi.object()
+      .default({})
+
+  });
+
+/* =========================================================
+   IDEMPOTENCY
+========================================================= */
+
+async function idempotency(
+
+  req,
+  res,
+  next
+
+){
+
+  const key =
+    req.headers[
+      "x-idempotency-key"
+    ];
+
+  if(!key){
+
+    return next();
+
   }
 
-  return userId;
-}
+  const exists =
+    await redis.getCache(
+      `idem:${key}`
+    );
 
-/* =========================================
-VALIDATION
-========================================= */
+  if(exists){
 
-function validateGame(game, data){
+    return res.status(409)
+      .json({
 
-  switch(game){
+        error:
+          "duplicate_request"
 
-    case "dice":
-      if(!data.target || data.target < 1 || data.target > 99){
-        throw new Error("invalid_target");
-      }
-      break;
+      });
 
-    case "coinflip":
-      if(!["heads","tails"].includes(data.side)){
-        throw new Error("invalid_side");
-      }
-      break;
-
-    case "limbo":
-      if(!data.multiplier || data.multiplier < 1.01){
-        throw new Error("invalid_multiplier");
-      }
-      break;
-
-    case "crash":
-      if(!data.cashout || data.cashout < 1.01){
-        throw new Error("invalid_cashout");
-      }
-      break;
-
-    case "roulette":
-    case "blackjack":
-    case "mines":
-    case "plinko":
-    case "slots":
-    case "hi-lo":
-    case "wheel":
-    case "keno":
-      break;
-
-    default:
-      throw new Error("game_not_supported");
   }
 
+  await redis.setCache(
+
+    `idem:${key}`,
+
+    true,
+
+    60
+
+  );
+
+  next();
+
 }
 
-/* =========================================
-RATE LIMIT (simple)
-========================================= */
+/* =========================================================
+   RATE LIMIT
+========================================================= */
 
-const userCooldown = new Map();
+async function rateLimit(
 
-function checkCooldown(userId){
+  req,
+  res,
+  next
 
-  const now = Date.now();
-  const last = userCooldown.get(userId) || 0;
+){
 
-  if(now - last < 500){
-    throw new Error("too_fast");
+  const userId =
+    req.user.id;
+
+  const key =
+    `casino:rl:${userId}`;
+
+  const count =
+    await redis.incr(key);
+
+  if(count === 1){
+
+    await redis.expire(
+      key,
+      1
+    );
+
   }
 
-  userCooldown.set(userId, now);
+  if(count > 5){
+
+    return res.status(429)
+      .json({
+
+        error:
+          "rate_limited"
+
+      });
+
+  }
+
+  next();
+
 }
 
-/* =========================================
-PLAY GAME
-========================================= */
+/* =========================================================
+   PLAY
+========================================================= */
 
-router.post("/play", async (req,res)=>{
+router.post(
 
-  try{
+  "/play",
 
-    const userId = requireAuth(req,res);
-    if(!userId) return;
+  auth,
 
-    const { game, bet, data } = req.body;
+  idempotency,
 
-    if(!game || !bet){
-      return res.status(400).json({ error:"missing_params" });
-    }
+  rateLimit,
 
-    if(bet <= 0 || bet > 10000){
-      return res.status(400).json({ error:"invalid_bet" });
-    }
-
-    checkCooldown(userId);
-    validateGame(game, data || {});
-
-    /* ================= TRY QUEUE ================= */
+  async(req,res)=>{
 
     try{
 
-      await addJob("casino_play", {
-        userId,
+      /* ===================================
+         VALIDATION
+      =================================== */
+
+      const {
+
+        error,
+
+        value
+
+      } =
+        playSchema.validate(
+          req.body
+        );
+
+      if(error){
+
+        return res
+          .status(400)
+          .json({
+
+            error:
+              error.details[0]
+                .message
+
+          });
+
+      }
+
+      const {
+
         game,
         bet,
         data
-      });
+
+      } = value;
+
+      /* ===================================
+         FRAUD CHECK
+      =================================== */
+
+      const risk =
+        await fraud.check({
+
+          userId:
+            req.user.id,
+
+          amount:bet,
+
+          ip:req.ip,
+
+          deviceId:
+            req.headers[
+              "x-device-id"
+            ]
+
+        });
+
+      if(risk.blocked){
+
+        return res
+          .status(403)
+          .json({
+
+            error:
+              "risk_blocked"
+
+          });
+
+      }
+
+      /* ===================================
+         QUEUE
+      =================================== */
+
+      let mode =
+        "queue";
+
+      let result =
+        null;
+
+      try{
+
+        await addJob(
+
+          "casino_play",
+
+          {
+
+            requestId:
+              crypto
+                .randomUUID(),
+
+            userId:
+              req.user.id,
+
+            game,
+            bet,
+            data
+
+          }
+
+        );
+
+      }catch(e){
+
+        mode =
+          "direct";
+
+        result =
+          await casino
+            .processGame({
+
+              userId:
+                req.user.id,
+
+              game,
+              bet,
+              data
+
+            });
+
+      }
+
+      /* ===================================
+         WS USER EVENT
+      =================================== */
+
+      await ws.sendToUser(
+
+        req.user.id,
+
+        {
+
+          type:
+            "casino_request",
+
+          game,
+
+          mode
+
+        }
+
+      );
 
       return res.json({
+
         success:true,
-        mode:"queue"
+
+        mode,
+
+        result
+
       });
 
     }catch(e){
 
-      console.warn("queue failed → fallback direct");
+      console.error(
 
-      /* fallback مباشر */
+        "Casino API:",
 
-      const result = await engine.processGame({
-        userId,
-        game,
-        bet,
-        data
-      });
+        e.message
 
-      return res.json({
-        success:true,
-        mode:"direct",
-        result
-      });
+      );
+
+      return res
+        .status(400)
+        .json({
+
+          error:
+            e.message
+
+        });
 
     }
 
-  }catch(e){
+  }
 
-    console.error("casino error:", e.message);
+);
 
-    res.status(400).json({
-      error:e.message || "casino_failed"
+/* =========================================================
+   CRASH JOIN
+========================================================= */
+
+router.post(
+
+  "/crash/join",
+
+  auth,
+
+  rateLimit,
+
+  async(req,res)=>{
+
+    try{
+
+      const {
+
+        bet,
+
+        autoCashout
+
+      } = req.body;
+
+      if(
+        !bet ||
+        bet <= 0
+      ){
+
+        return res
+          .status(400)
+          .json({
+
+            error:
+              "invalid_bet"
+
+          });
+
+      }
+
+      await crash.join({
+
+        userId:
+          req.user.id,
+
+        bet,
+
+        autoCashout
+
+      });
+
+      return res.json({
+
+        success:true
+
+      });
+
+    }catch(e){
+
+      return res
+        .status(400)
+        .json({
+
+          error:
+            e.message
+
+        });
+
+    }
+
+  }
+
+);
+
+/* =========================================================
+   CRASH CASHOUT
+========================================================= */
+
+router.post(
+
+  "/crash/cashout",
+
+  auth,
+
+  async(req,res)=>{
+
+    try{
+
+      await crash.cashout(
+        req.user.id
+      );
+
+      return res.json({
+
+        success:true
+
+      });
+
+    }catch(e){
+
+      return res
+        .status(400)
+        .json({
+
+          error:
+            e.message
+
+        });
+
+    }
+
+  }
+
+);
+
+/* =========================================================
+   HISTORY
+========================================================= */
+
+router.get(
+
+  "/history",
+
+  auth,
+
+  async(req,res)=>{
+
+    try{
+
+      const limit =
+        Math.min(
+
+          Number(
+            req.query.limit
+          ) || 50,
+
+          200
+
+        );
+
+      const r =
+        await db.query(`
+          SELECT
+            game,
+            bet,
+            payout,
+            multiplier,
+            result,
+            nonce,
+            created_at
+          FROM casino_sessions
+          WHERE user_id=$1
+          ORDER BY id DESC
+          LIMIT $2
+      `,[
+
+        req.user.id,
+
+        limit
+
+      ]);
+
+      return res.json({
+
+        sessions:
+          r.rows
+
+      });
+
+    }catch(e){
+
+      return res
+        .status(500)
+        .json({
+
+          error:
+            "history_failed"
+
+        });
+
+    }
+
+  }
+
+);
+
+/* =========================================================
+   VERIFY
+========================================================= */
+
+router.post(
+
+  "/verify",
+
+  async(req,res)=>{
+
+    try{
+
+      const {
+
+        serverSeed,
+        clientSeed,
+        nonce
+
+      } = req.body;
+
+      const result =
+        casino.verify({
+
+          serverSeed,
+          clientSeed,
+          nonce
+
+        });
+
+      return res.json({
+
+        success:true,
+
+        result
+
+      });
+
+    }catch(e){
+
+      return res
+        .status(400)
+        .json({
+
+          error:
+            e.message
+
+        });
+
+    }
+
+  }
+
+);
+
+/* =========================================================
+   GAMES
+========================================================= */
+
+router.get(
+
+  "/games",
+
+  (req,res)=>{
+
+    return res.json({
+
+      games:[
+
+        "dice",
+        "coinflip",
+        "limbo",
+        "crash",
+        "roulette",
+        "blackjack",
+        "mines",
+        "plinko",
+        "slots",
+        "hi-lo",
+        "wheel",
+        "keno"
+
+      ]
+
     });
 
   }
 
-});
+);
 
-/* =========================================
-CRASH JOIN
-========================================= */
+/* =========================================================
+   HEALTH
+========================================================= */
 
-router.post("/crash/join", async (req,res)=>{
+router.get(
 
-  try{
+  "/health",
 
-    const userId = requireAuth(req,res);
-    if(!userId) return;
+  async(req,res)=>{
 
-    const { bet } = req.body;
+    return res.json({
 
-    if(!bet || bet <= 0){
-      return res.status(400).json({ error:"invalid_bet" });
-    }
+      status:"ok",
 
-    await crash.join(userId, bet);
+      ws:
+        ws.getStats(),
 
-    res.json({ success:true });
+      time:
+        Date.now()
 
-  }catch(e){
-    res.status(400).json({ error:e.message });
+    });
+
   }
 
-});
+);
 
-/* =========================================
-CRASH CASHOUT
-========================================= */
+/* =========================================================
+   EXPORT
+========================================================= */
 
-router.post("/crash/cashout", async (req,res)=>{
-
-  try{
-
-    const userId = requireAuth(req,res);
-    if(!userId) return;
-
-    await crash.cashout(userId);
-
-    res.json({ success:true });
-
-  }catch(e){
-    res.status(400).json({ error:e.message });
-  }
-
-});
-
-/* =========================================
-HISTORY
-========================================= */
-
-router.get("/history", async (req,res)=>{
-
-  try{
-
-    const userId = requireAuth(req,res);
-    if(!userId) return;
-
-    const db = require("../database");
-
-    const r = await db.query(`
-      SELECT game,bet,profit,result,created_at
-      FROM casino_sessions
-      WHERE user_id=$1
-      ORDER BY id DESC
-      LIMIT 50
-    `,[userId]);
-
-    res.json(r.rows);
-
-  }catch(e){
-    res.status(500).json({ error:"history_failed" });
-  }
-
-});
-
-/* =========================================
-GAMES
-========================================= */
-
-router.get("/games",(req,res)=>{
-
-  res.json([
-    "dice",
-    "coinflip",
-    "limbo",
-    "crash",
-    "roulette",
-    "blackjack",
-    "mines",
-    "plinko",
-    "slots",
-    "hi-lo",
-    "wheel",
-    "keno"
-  ]);
-
-});
-
-/* =========================================
-HEALTH CHECK
-========================================= */
-
-router.get("/health",(req,res)=>{
-  res.json({
-    status:"ok",
-    time:Date.now()
-  });
-});
-
-/* =========================================
-EXPORT
-========================================= */
-
-module.exports = router;
+module.exports =
+  router;
