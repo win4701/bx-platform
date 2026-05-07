@@ -3,227 +3,317 @@
 require("dotenv").config();
 
 const express = require("express");
-const cors = require("cors");
 const http = require("http");
+const cors = require("cors");
 const helmet = require("helmet");
-const rateLimit = require("express-rate-limit");
 
 const routes = require("./routes");
 const db = require("./database");
-
 const wsHub = require("./ws/wsHub");
-const { startSystemBots } = require("./systemBots");
 
-/* =========================================
-ENV VALIDATION
-========================================= */
+/* ======================================================
+ENV
+====================================================== */
 
-const REQUIRED = ["DATABASE_URL", "JWT_SECRET"];
+const REQUIRED = [
 
-REQUIRED.forEach((key) => {
-  if (!process.env[key]) {
-    console.error(`❌ Missing ENV: ${key}`);
-    process.exit(1);
-  }
-});
+  "DATABASE_URL",
+  "JWT_SECRET"
 
-/* =========================================
-CONFIG
-========================================= */
-
-const PORT = process.env.PORT || 3000;
-const RUN_BOTS = process.env.BOTS === "true";
-
-const ALLOWED_ORIGINS = [
-  "https://www.bloxio.online",
-  "https://bloxio.online",
-  "http://localhost:3000"
 ];
 
-/* =========================================
-APP
-========================================= */
+for(const key of REQUIRED){
 
-const app = express();
+  if(!process.env[key]){
 
-/* ===== TRUST PROXY (Render / Fly) ===== */
-app.set("trust proxy", 1);
+    console.error(
+      `❌ Missing ENV: ${key}`
+    );
 
-/* ===== SECURITY ===== */
+    process.exit(1);
 
-app.use(helmet());
-
-app.use(cors({
-  origin: (origin, cb) => {
-    if (!origin || ALLOWED_ORIGINS.includes(origin)) {
-      return cb(null, true);
-    }
-    return cb(null, false);
-  },
-  credentials: true
-}));
-
-app.use(express.json({ limit: "1mb" }));
-
-/* =========================================
-RATE LIMIT
-========================================= */
-
-const globalLimiter = rateLimit({
-  windowMs: 60 * 1000,
-  max: 300
-});
-
-app.use(globalLimiter);
-
-/* =========================================
-ROOT
-========================================= */
-
-app.get("/", (req, res) => {
-  res.json({
-    name: "Bloxio Backend",
-    mode: RUN_BOTS ? "BOT" : "API",
-    status: "running",
-    time: Date.now()
-  });
-});
-
-/* =========================================
-HEALTH (Render uses this)
-========================================= */
-
-app.get("/health", async (req, res) => {
-
-  try{
-    const dbHealth = await db.health();
-
-    res.json({
-      status: "ok",
-      db: dbHealth,
-      uptime: process.uptime()
-    });
-
-  }catch(e){
-    res.status(500).json({ status:"error" });
   }
-
-});
-
-/* =========================================
-ROUTES (🔥 FIXED)
-========================================= */
-
-if (!RUN_BOTS) {
-
-  /* ⚠️ بدون /api */
-  app.use("/", routes);
 
 }
 
-/* =========================================
-ERROR HANDLER
-========================================= */
+/* ======================================================
+CONFIG
+====================================================== */
 
-app.use((err, req, res, next) => {
+const PORT =
+  process.env.PORT || 3000;
 
-  console.error("🔥 API ERROR:", err.message);
+const app =
+  express();
 
-  res.status(500).json({
-    error: err.message || "internal_error"
+const server =
+  http.createServer(app);
+
+/* ======================================================
+TRUST PROXY
+====================================================== */
+
+app.set(
+  "trust proxy",
+  1
+);
+
+/* ======================================================
+SECURITY
+====================================================== */
+
+app.use(
+
+  helmet({
+
+    contentSecurityPolicy:false
+
+  })
+
+);
+
+app.use(cors({
+
+  origin:true,
+
+  credentials:true
+
+}));
+
+/* ======================================================
+BODY
+====================================================== */
+
+app.use(express.json({
+
+  limit:"1mb"
+
+}));
+
+/* ======================================================
+ROOT
+====================================================== */
+
+app.get("/",(req,res)=>{
+
+  res.json({
+
+    name:"BLOXIO Backend",
+
+    status:"online",
+
+    uptime:process.uptime(),
+
+    time:Date.now()
+
   });
 
 });
 
-/* =========================================
-START SERVER
-========================================= */
+/* ======================================================
+HEALTH
+====================================================== */
+
+app.get("/health", async(req,res)=>{
+
+  try{
+
+    const health =
+      await db.health();
+
+    res.json({
+
+      status:"ok",
+
+      db:health,
+
+      uptime:process.uptime()
+
+    });
+
+  }catch(e){
+
+    res.status(500).json({
+
+      status:"error"
+
+    });
+
+  }
+
+});
+
+/* ======================================================
+ROUTES
+====================================================== */
+
+app.use("/", routes);
+
+/* ======================================================
+WEBSOCKET
+====================================================== */
+
+wsHub.startWS(server);
+
+/* ======================================================
+ERROR HANDLER
+====================================================== */
+
+app.use((
+
+  err,
+  req,
+  res,
+  next
+
+)=>{
+
+  console.error(
+
+    "❌ API:",
+
+    err.message
+
+  );
+
+  res.status(
+
+    err.status || 500
+
+  ).json({
+
+    success:false,
+
+    error:
+      err.message ||
+      "internal_error"
+
+  });
+
+});
+
+/* ======================================================
+START
+====================================================== */
 
 async function start(){
 
   try{
 
-    console.log("🔌 Connecting DB...");
+    console.log(
+      "🔌 Connecting DB..."
+    );
 
-    await db.query("SELECT 1");
+    await db.query(
+      "SELECT 1"
+    );
 
-    console.log("✅ DB Connected");
+    console.log(
+      "✅ DB Connected"
+    );
 
-    const server = http.createServer(app);
+    server.listen(
 
-    /* ================= WS ================= */
+      PORT,
 
-    if(!RUN_BOTS){
-      wsHub.startWS(server);
-      console.log("📡 WS Ready");
-    }
+      ()=>{
 
-    /* ================= HTTP ================= */
+        console.log(
+          `🚀 Server running ${PORT}`
+        );
 
-    server.listen(PORT, ()=>{
+      }
 
-      console.log(`🚀 Server running on ${PORT}`);
-      console.log(`Mode: ${RUN_BOTS ? "BOT" : "API"}`);
-
-    });
-
-    /* ================= BOTS ================= */
-
-    if(RUN_BOTS){
-
-      setTimeout(()=>{
-
-        console.log("🤖 Starting bots...");
-        startSystemBots();
-
-      }, 2000);
-
-    }
-
-    /* =========================================
-    HEARTBEAT
-    ========================================= */
-
-    setInterval(()=>{
-      console.log("💓 Alive:", new Date().toISOString());
-    }, 30000);
-
-    /* =========================================
-    CRASH SAFETY
-    ========================================= */
-
-    process.on("uncaughtException", (err)=>{
-      console.error("💥 Uncaught:", err.message);
-    });
-
-    process.on("unhandledRejection", (err)=>{
-      console.error("💥 Rejection:", err);
-    });
-
-    /* =========================================
-    GRACEFUL SHUTDOWN
-    ========================================= */
-
-    const shutdown = ()=>{
-
-      console.log("🔻 Shutting down...");
-
-      server.close(()=>{
-        process.exit(0);
-      });
-
-    };
-
-    process.on("SIGINT", shutdown);
-    process.on("SIGTERM", shutdown);
+    );
 
   }catch(e){
 
-    console.error(" Startup failed:", e.message);
+    console.error(
+
+      "❌ Startup:",
+
+      e.message
+
+    );
+
     process.exit(1);
 
   }
 
 }
+
+/* ======================================================
+CRASH SAFETY
+====================================================== */
+
+process.on(
+
+  "unhandledRejection",
+
+  err=>{
+
+    console.error(
+      "💥 Rejection:",
+      err
+    );
+
+  }
+
+);
+
+process.on(
+
+  "uncaughtException",
+
+  err=>{
+
+    console.error(
+      "💥 Uncaught:",
+      err
+    );
+
+  }
+
+);
+
+/* ======================================================
+SHUTDOWN
+====================================================== */
+
+async function shutdown(){
+
+  console.log(
+    "🔻 Shutdown..."
+  );
+
+  try{
+
+    server.close();
+
+    await db.pool.end();
+
+    process.exit(0);
+
+  }catch(e){
+
+    process.exit(1);
+
+  }
+
+}
+
+process.on(
+  "SIGINT",
+  shutdown
+);
+
+process.on(
+  "SIGTERM",
+  shutdown
+);
+
+/* ======================================================
+BOOT
+====================================================== */
 
 start();
