@@ -98,7 +98,7 @@ app.get("/",(req,res)=>{
 
   res.json({
 
-    name:"BLOXIO Backend",
+    name:"BXS Backend",
 
     status:"online",
 
