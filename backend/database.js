@@ -1,94 +1,62 @@
 "use strict";
 
 /* =========================================================
-   BXS DATABASE CORE — ENTERPRISE POSTGRES LAYER
+   BXS DATABASE CORE
+   Render + Neon Optimized
 ========================================================= */
 
 require("dotenv").config();
 
-const {
-
-  Pool
-
-} = require("pg");
-
-const crypto =
-  require("crypto");
+const { Pool } =
+  require("pg");
 
 /* =========================================================
-   ENV
+   ENV VALIDATION
 ========================================================= */
 
-const REQUIRED = [
+if(!process.env.DATABASE_URL){
 
-  "DATABASE_URL"
+  console.error(
+    "❌ DATABASE_URL missing"
+  );
 
-];
-
-for(const k of REQUIRED){
-
-  if(!process.env[k]){
-
-    console.error(
-      `❌ Missing ENV: ${k}`
-    );
-
-    process.exit(1);
-
-  }
+  process.exit(1);
 
 }
-
-const isProd =
-  process.env.NODE_ENV ===
-  "production";
 
 /* =========================================================
    CONFIG
 ========================================================= */
 
-const CONFIG = {
-
-  max:
-    isProd ? 50 : 10,
-
-  idleTimeoutMillis:
-    30000,
-
-  connectionTimeoutMillis:
-    5000,
-
-  keepAlive:true,
-
-  statement_timeout:
-    10000,
-
-  query_timeout:
-    10000
-
-};
-
-/* =========================================================
-   POOL
-========================================================= */
+const isProd =
+  process.env.NODE_ENV ===
+  "production";
 
 const pool =
   new Pool({
 
     connectionString:
-      process.env
-        .DATABASE_URL,
+      process.env.DATABASE_URL,
 
-    ssl:{
-      rejectUnauthorized:false
-    },
+    ssl:
+      isProd
 
-    ...CONFIG
+        ? {
+            rejectUnauthorized:false
+          }
+
+        : false,
+
+    max:3,
+
+    idleTimeoutMillis:10000,
+
+    connectionTimeoutMillis:10000
 
   });
 
 /* =========================================================
-   METRICS
+   STATS
 ========================================================= */
 
 const stats = {
@@ -97,38 +65,27 @@ const stats = {
 
   errors:0,
 
-  retries:0,
+  connected:false,
 
-  slow:0,
-
-  tx:0,
-
-  deadlocks:0
+  lastQuery:null
 
 };
 
 /* =========================================================
-   POOL EVENTS
+   EVENTS
 ========================================================= */
 
 pool.on(
 
   "connect",
 
-  async(client)=>{
+  ()=>{
+
+    stats.connected = true;
 
     console.log(
-      "✅ DB connected"
+      "✅ PostgreSQL connected"
     );
-
-    try{
-
-      await client.query(`
-        SET statement_timeout
-        TO 10000
-      `);
-
-    }catch(e){}
 
   }
 
@@ -144,7 +101,7 @@ pool.on(
 
     console.error(
 
-      "❌ Pool error:",
+      "❌ PostgreSQL:",
 
       err.message
 
@@ -155,75 +112,30 @@ pool.on(
 );
 
 /* =========================================================
-   TRACE ID
-========================================================= */
-
-function trace(){
-
-  return crypto
-    .randomBytes(6)
-    .toString("hex");
-
-}
-
-/* =========================================================
    QUERY
 ========================================================= */
 
 async function query(
 
   text,
-  params=[],
-  opts={}
+  params=[]
 
 ){
 
-  const start =
-    Date.now();
-
-  const id =
-    trace();
-
-  stats.queries++;
-
-  const tag =
-    opts.tag ||
-    "default";
-
   try{
 
-    const res =
-      await pool.query({
+    stats.queries++;
 
-        text,
-        values:params,
+    stats.lastQuery =
+      Date.now();
 
-        statement_timeout:
-          opts.timeout ||
-          10000
+    return await pool.query(
 
-      });
+      text,
 
-    const duration =
-      Date.now() - start;
+      params
 
-    if(duration > 500){
-
-      stats.slow++;
-
-      console.warn(
-
-        `🐢 [${tag}]`,
-
-        `${duration}ms`,
-
-        id
-
-      );
-
-    }
-
-    return res;
+    );
 
   }catch(err){
 
@@ -231,67 +143,11 @@ async function query(
 
     console.error(
 
-      `❌ [${tag}]`,
+      "❌ Query:",
 
-      err.message,
-
-      id
+      err.message
 
     );
-
-    /* ===================================
-       RETRY
-    =================================== */
-
-    if(
-
-      opts.retry !== false &&
-
-      [
-
-        "40001",
-        "40P01",
-        "ETIMEDOUT",
-        "ECONNRESET"
-
-      ].includes(
-
-        err.code ||
-        err.message
-
-      )
-
-    ){
-
-      stats.retries++;
-
-      if(
-        err.code === "40P01"
-      ){
-
-        stats.deadlocks++;
-
-      }
-
-      await sleep(50);
-
-      return query(
-
-        text,
-
-        params,
-
-        {
-
-          ...opts,
-
-          retry:false
-
-        }
-
-      );
-
-    }
 
     throw err;
 
@@ -300,35 +156,15 @@ async function query(
 }
 
 /* =========================================================
-   SLEEP
-========================================================= */
-
-function sleep(ms){
-
-  return new Promise(r=>
-    setTimeout(r,ms)
-  );
-
-}
-
-/* =========================================================
    TRANSACTION
 ========================================================= */
 
 async function transaction(
-
-  fn,
-  options={}
-
+  callback
 ){
 
   const client =
     await pool.connect();
-
-  const txId =
-    trace();
-
-  stats.tx++;
 
   try{
 
@@ -336,66 +172,8 @@ async function transaction(
       "BEGIN"
     );
 
-    /* ===================================
-       ISOLATION
-    =================================== */
-
-    if(
-      options.isolation
-    ){
-
-      await client.query(
-        `SET TRANSACTION ISOLATION LEVEL ${options.isolation}`
-      );
-
-    }
-
-    /* ===================================
-       TIMEOUT
-    =================================== */
-
-    await client.query(`
-      SET LOCAL statement_timeout
-      TO 10000
-    `);
-
-    const tx = {
-
-      query:(
-
-        text,
-        params=[]
-
-      )=>client.query({
-
-        text,
-
-        values:params
-
-      }),
-
-      lockWallet:(
-        userId,
-        asset
-      )=>client.query(`
-        SELECT *
-        FROM wallet_balances
-        WHERE user_id=$1
-        AND asset=$2
-        FOR UPDATE
-      `,[
-
-        userId,
-        asset
-
-      ]),
-
-      client
-
-    };
-
     const result =
-      await fn(tx);
+      await callback(client);
 
     await client.query(
       "COMMIT"
@@ -409,54 +187,13 @@ async function transaction(
       "ROLLBACK"
     );
 
-    stats.errors++;
-
     console.error(
 
       "❌ TX:",
 
-      err.message,
-
-      txId
+      err.message
 
     );
-
-    /* ===================================
-       SERIALIZATION RETRY
-    =================================== */
-
-    if(
-
-      options.retry !== false &&
-
-      [
-
-        "40001",
-        "40P01"
-
-      ].includes(err.code)
-
-    ){
-
-      stats.retries++;
-
-      await sleep(100);
-
-      return transaction(
-
-        fn,
-
-        {
-
-          ...options,
-
-          retry:false
-
-        }
-
-      );
-
-    }
 
     throw err;
 
@@ -488,7 +225,7 @@ async function health(){
       status:"ok",
 
       latency:
-        Date.now()-start,
+        Date.now() - start,
 
       total:
         pool.totalCount,
@@ -503,13 +240,13 @@ async function health(){
 
     };
 
-  }catch(e){
+  }catch(err){
 
     return {
 
       status:"down",
 
-      error:e.message
+      error:err.message
 
     };
 
@@ -518,45 +255,13 @@ async function health(){
 }
 
 /* =========================================================
-   KEEP ALIVE
-========================================================= */
-
-setInterval(
-
-  async()=>{
-
-    try{
-
-      await pool.query(
-        "SELECT 1"
-      );
-
-    }catch(e){
-
-      console.warn(
-
-        "⚠️ DB ping:",
-
-        e.message
-
-      );
-
-    }
-
-  },
-
-  25000
-
-);
-
-/* =========================================================
    SHUTDOWN
 ========================================================= */
 
 async function shutdown(){
 
   console.log(
-    "🛑 Closing DB..."
+    "🛑 Closing PostgreSQL..."
   );
 
   try{
@@ -564,16 +269,16 @@ async function shutdown(){
     await pool.end();
 
     console.log(
-      "✅ DB closed"
+      "✅ PostgreSQL closed"
     );
 
-  }catch(e){
+  }catch(err){
 
     console.error(
 
       "Shutdown:",
 
-      e.message
+      err.message
 
     );
 
@@ -592,7 +297,7 @@ process.on(
 );
 
 /* =========================================================
-   EXPORT
+   EXPORTS
 ========================================================= */
 
 module.exports = {
