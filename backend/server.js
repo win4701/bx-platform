@@ -1,23 +1,70 @@
 "use strict";
 
+/* =========================================================
+   BXS SERVER CORE
+========================================================= */
+
 require("dotenv").config();
 
-const express = require("express");
-const http = require("http");
-const cors = require("cors");
-const helmet = require("helmet");
+/* =========================================================
+   MODULES
+========================================================= */
 
-const routes = require("./routes");
-const db = require("./database");
-const wsHub = require("./ws/wsHub");
+const express =
+  require("express");
 
-/* ======================================================
-ENV
-====================================================== */
+const http =
+  require("http");
+
+const cors =
+  require("cors");
+
+const helmet =
+  require("helmet");
+
+const compression =
+  require("compression");
+
+/* =========================================================
+   INTERNALS
+========================================================= */
+
+const routes =
+  require("./routes");
+
+const db =
+  require("./database");
+
+const wsHub =
+  require("./ws/wsHub");
+
+/* =========================================================
+   OPTIONAL REDIS
+========================================================= */
+
+let redis = null;
+
+try{
+
+  redis =
+    require("./core/redis");
+
+}catch{
+
+  console.log(
+    "⚠️ Redis disabled"
+  );
+
+}
+
+/* =========================================================
+   ENV VALIDATION
+========================================================= */
 
 const REQUIRED = [
 
   "DATABASE_URL",
+
   "JWT_SECRET"
 
 ];
@@ -27,7 +74,9 @@ for(const key of REQUIRED){
   if(!process.env[key]){
 
     console.error(
+
       `❌ Missing ENV: ${key}`
+
     );
 
     process.exit(1);
@@ -36,12 +85,20 @@ for(const key of REQUIRED){
 
 }
 
-/* ======================================================
-CONFIG
-====================================================== */
+/* =========================================================
+   CONFIG
+========================================================= */
 
 const PORT =
   process.env.PORT || 3000;
+
+const NODE_ENV =
+  process.env.NODE_ENV ||
+  "development";
+
+/* =========================================================
+   APP
+========================================================= */
 
 const app =
   express();
@@ -49,18 +106,18 @@ const app =
 const server =
   http.createServer(app);
 
-/* ======================================================
-TRUST PROXY
-====================================================== */
+/* =========================================================
+   TRUST PROXY
+========================================================= */
 
 app.set(
   "trust proxy",
   1
 );
 
-/* ======================================================
-SECURITY
-====================================================== */
+/* =========================================================
+   SECURITY
+========================================================= */
 
 app.use(
 
@@ -72,92 +129,175 @@ app.use(
 
 );
 
-app.use(cors({
+app.use(
 
-  origin:true,
+  cors({
 
-  credentials:true
+    origin:true,
 
-}));
+    credentials:true
 
-/* ======================================================
-BODY
-====================================================== */
+  })
 
-app.use(express.json({
+);
 
-  limit:"1mb"
+/* =========================================================
+   PERFORMANCE
+========================================================= */
 
-}));
+app.use(
+  compression()
+);
 
-/* ======================================================
-ROOT
-====================================================== */
+/* =========================================================
+   BODY
+========================================================= */
+
+app.use(
+
+  express.json({
+
+    limit:"1mb"
+
+  })
+
+);
+
+app.use(
+
+  express.urlencoded({
+
+    extended:true,
+
+    limit:"1mb"
+
+  })
+
+);
+
+/* =========================================================
+   ROOT
+========================================================= */
 
 app.get("/",(req,res)=>{
 
   res.json({
 
+    success:true,
+
     name:"BXS Backend",
+
+    env:NODE_ENV,
 
     status:"online",
 
     uptime:process.uptime(),
 
-    time:Date.now()
+    timestamp:Date.now()
 
   });
 
 });
 
-/* ======================================================
-HEALTH
-====================================================== */
+/* =========================================================
+   HEALTH
+========================================================= */
 
-app.get("/health", async(req,res)=>{
+app.get(
 
-  try{
+  "/health",
 
-    const health =
-      await db.health();
+  async(req,res)=>{
 
-    res.json({
+    try{
 
-      status:"ok",
+      const dbHealth =
+        await db.health();
 
-      db:health,
+      let redisHealth =
+        false;
 
-      uptime:process.uptime()
+      if(redis){
 
-    });
+        try{
 
-  }catch(e){
+          redisHealth =
+            await redis.ping();
 
-    res.status(500).json({
+        }catch{}
 
-      status:"error"
+      }
 
-    });
+      res.json({
+
+        success:true,
+
+        status:"ok",
+
+        database:dbHealth,
+
+        redis:
+          redis
+            ? "online"
+            : "disabled",
+
+        uptime:
+          process.uptime(),
+
+        memory:
+          process.memoryUsage(),
+
+        timestamp:
+          Date.now()
+
+      });
+
+    }catch(err){
+
+      res.status(500).json({
+
+        success:false,
+
+        status:"error",
+
+        error:err.message
+
+      });
+
+    }
 
   }
 
+);
+
+/* =========================================================
+   API
+========================================================= */
+
+app.use(
+  "/api",
+  routes
+);
+
+/* =========================================================
+   404
+========================================================= */
+
+app.use((req,res)=>{
+
+  res.status(404).json({
+
+    success:false,
+
+    error:"route_not_found"
+
+  });
+
 });
 
-/* ======================================================
-ROUTES
-====================================================== */
-
-app.use("/", routes);
-
-/* ======================================================
-WEBSOCKET
-====================================================== */
-
-wsHub.startWS(server);
-
-/* ======================================================
-ERROR HANDLER
-====================================================== */
+/* =========================================================
+   ERROR HANDLER
+========================================================= */
 
 app.use((
 
@@ -185,16 +325,43 @@ app.use((
     success:false,
 
     error:
-      err.message ||
-      "internal_error"
+      NODE_ENV === "production"
+
+        ? "internal_server_error"
+
+        : err.message
 
   });
 
 });
 
-/* ======================================================
-START
-====================================================== */
+/* =========================================================
+   WEBSOCKET
+========================================================= */
+
+try{
+
+  wsHub.startWS(server);
+
+  console.log(
+    "📡 WebSocket ready"
+  );
+
+}catch(err){
+
+  console.error(
+
+    "❌ WS:",
+
+    err.message
+
+  );
+
+}
+
+/* =========================================================
+   START
+========================================================= */
 
 async function start(){
 
@@ -209,7 +376,7 @@ async function start(){
     );
 
     console.log(
-      "✅ DB Connected"
+      "✅ PostgreSQL connected"
     );
 
     server.listen(
@@ -219,32 +386,41 @@ async function start(){
       ()=>{
 
         console.log(
-          `🚀 Server running ${PORT}`
+
+          `🚀 Server running on ${PORT}`
+
         );
 
       }
 
     );
 
-  }catch(e){
+  }catch(err){
 
     console.error(
 
       "❌ Startup:",
 
-      e.message
+      err.message
 
     );
 
-    process.exit(1);
+    console.log(
+      "🔄 Retrying in 5s..."
+    );
+
+    setTimeout(
+      start,
+      5000
+    );
 
   }
 
 }
 
-/* ======================================================
-CRASH SAFETY
-====================================================== */
+/* =========================================================
+   CRASH SAFETY
+========================================================= */
 
 process.on(
 
@@ -253,8 +429,11 @@ process.on(
   err=>{
 
     console.error(
+
       "💥 Rejection:",
+
       err
+
     );
 
   }
@@ -268,17 +447,20 @@ process.on(
   err=>{
 
     console.error(
+
       "💥 Uncaught:",
+
       err
+
     );
 
   }
 
 );
 
-/* ======================================================
-SHUTDOWN
-====================================================== */
+/* =========================================================
+   SHUTDOWN
+========================================================= */
 
 async function shutdown(){
 
@@ -290,11 +472,23 @@ async function shutdown(){
 
     server.close();
 
-    await db.pool.end();
+    if(db.pool){
+
+      await db.pool.end();
+
+    }
 
     process.exit(0);
 
-  }catch(e){
+  }catch(err){
+
+    console.error(
+
+      "Shutdown:",
+
+      err.message
+
+    );
 
     process.exit(1);
 
@@ -312,8 +506,8 @@ process.on(
   shutdown
 );
 
-/* ======================================================
-BOOT
-====================================================== */
+/* =========================================================
+   BOOT
+========================================================= */
 
 start();
