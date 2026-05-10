@@ -63,9 +63,11 @@ const config = {
   },
 
   /* ===== DATABASE ===== */
-  db: {
-    url: env("DB_URL"),
-    ssl: bool("DB_SSL", false)
+db: {
+
+  url: env("DATABASE_URL"),
+
+  ssl: bool("DB_SSL", true)
   },
 
   /* ===== REDIS ===== */
