@@ -25,12 +25,6 @@ const morgan =
 const rateLimit =
   require("express-rate-limit");
 
-const RedisStore =
-  require("rate-limit-redis");
-
-const redis =
-  require("./core/redis");
-
 const db =
   require("./database");
 
@@ -159,17 +153,7 @@ router.use(
 
     standardHeaders:true,
 
-    legacyHeaders:false,
-
-    store:new RedisStore({
-
-      sendCommand:(...args)=>
-
-        redis.client.call(
-          ...args
-        )
-
-    })
+    legacyHeaders:false
 
   })
 
