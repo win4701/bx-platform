@@ -40,25 +40,25 @@ const router =
 ========================================================= */
 
 const auth =
-  require("./routes/auth");
+  require("./modules/auth");
 
 const wallet =
-  require("./routes/wallet");
+  require("./modules/wallet");
 
 const casino =
-  require("./routes/casino");
+  require("./modules/casino");
 
 const market =
-  require("./routes/market");
+  require("./modules/market");
 
 const mining =
-  require("./routes/mining");
+  require("./modules/mining");
 
 const airdrop =
-  require("./routes/airdrop");
+  require("./modules/airdrop");
 
 const payments =
-  require("./routes/payments");
+  require("./modules/payments");
 
 /* =========================================================
    TRUST PROXY (RENDER)
