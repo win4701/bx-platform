@@ -4972,7 +4972,7 @@ button:active,
    Add BELOW current styles.css
 ========================================================= */
 
-#auth-view{
+:auth{
   --auth-green:#7dffb3;
   --auth-green-2:#42f59b;
   --auth-green-dark:#1ed67a;
