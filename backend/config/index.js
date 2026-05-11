@@ -1,123 +1,379 @@
 "use strict";
 
 /* =========================================================
-   BLOXIO GLOBAL CONFIG — ULTRA PRODUCTION
+   BLOXIO GLOBAL CONFIG
 ========================================================= */
 
 require("dotenv").config();
 
-const assert = require("assert");
+const assert =
+  require("assert");
 
 /* =========================================================
-   ENV HELPER
+   ENV HELPERS
 ========================================================= */
 
-function env(key, fallback = undefined) {
-  const value = process.env[key];
+function env(
+  key,
+  fallback = undefined
+){
 
-  if (value === undefined || value === "") {
-    if (fallback !== undefined) return fallback;
-    throw new Error(`❌ Missing ENV: ${key}`);
+  const value =
+    process.env[key];
+
+  if(
+    value === undefined ||
+    value === ""
+  ){
+
+    if(
+      fallback !== undefined
+    ){
+
+      return fallback;
+
+    }
+
+    throw new Error(
+      `❌ Missing ENV: ${key}`
+    );
+
   }
 
   return value;
+
 }
 
-function num(key, fallback) {
-  const v = env(key, fallback);
-  const n = Number(v);
-  if (isNaN(n)) throw new Error(`❌ ENV ${key} must be number`);
+function num(
+  key,
+  fallback
+){
+
+  const v =
+    env(
+      key,
+      fallback
+    );
+
+  const n =
+    Number(v);
+
+  if(isNaN(n)){
+
+    throw new Error(
+      `❌ ENV ${key} must be number`
+    );
+
+  }
+
   return n;
+
 }
 
-function bool(key, fallback = false) {
-  const v = env(key, fallback);
-  return v === "true" || v === true;
+function bool(
+  key,
+  fallback = false
+){
+
+  const v =
+    env(
+      key,
+      fallback
+    );
+
+  return (
+    v === "true" ||
+    v === true
+  );
+
 }
 
 /* =========================================================
-   CORE CONFIG
+   OPTIONAL ENV
+========================================================= */
+
+function optional(
+  key,
+  fallback = null
+){
+
+  const value =
+    process.env[key];
+
+  if(
+    value === undefined ||
+    value === ""
+  ){
+
+    return fallback;
+
+  }
+
+  return value;
+
+}
+
+/* =========================================================
+   CONFIG
 ========================================================= */
 
 const config = {
 
   /* ===== APP ===== */
+
   app: {
-    name: "BLOXIO",
-    env: env("NODE_ENV", "development"),
-    port: num("PORT", 3000),
-    url: env("APP_URL", "http://localhost:3000")
+
+    name:
+      "BLOXIO",
+
+    env:
+      env(
+        "NODE_ENV",
+        "development"
+      ),
+
+    port:
+      num(
+        "PORT",
+        3000
+      ),
+
+    url:
+      env(
+        "APP_URL",
+        "http://localhost:3000"
+      )
+
   },
 
   /* ===== SECURITY ===== */
-  security: {
-    jwtSecret: env("JWT_SECRET"),
-    jwtExpire: env("JWT_EXPIRE", "7d"),
 
-    bcryptRounds: num("BCRYPT_ROUNDS", 10),
+  security: {
+
+    jwtSecret:
+      env(
+        "JWT_SECRET"
+      ),
+
+    jwtExpire:
+      env(
+        "JWT_EXPIRE",
+        "7d"
+      ),
+
+    bcryptRounds:
+      num(
+        "BCRYPT_ROUNDS",
+        10
+      ),
 
     rateLimit: {
-      windowMs: num("RATE_LIMIT_WINDOW", 60000),
-      max: num("RATE_LIMIT_MAX", 100)
+
+      windowMs:
+        num(
+          "RATE_LIMIT_WINDOW",
+          60000
+        ),
+
+      max:
+        num(
+          "RATE_LIMIT_MAX",
+          100
+        )
+
     }
+
   },
 
   /* ===== DATABASE ===== */
-db: {
 
-  url: env("DATABASE_URL"),
+  db: {
 
-  ssl: bool("DB_SSL", true)
+    url:
+      env(
+        "DATABASE_URL"
+      ),
+
+    ssl:
+      bool(
+        "DB_SSL",
+        true
+      )
+
   },
 
   /* ===== REDIS ===== */
+
   redis: {
-    url: env("REDIS_URL"),
-    prefix: env("REDIS_PREFIX", "bx:")
+
+    url:
+      optional(
+        "REDIS_URL"
+      ),
+
+    prefix:
+      env(
+        "REDIS_PREFIX",
+        "bx:"
+      )
+
   },
 
   /* ===== NOWPAYMENTS ===== */
+
   nowpayments: {
-    apiKey: env("NOWPAY_KEY"),
-    ipnSecret: env("NOWPAY_IPN_SECRET"),
-    baseURL: "https://api.nowpayments.io/v1"
+
+    apiKey:
+      optional(
+        "NOWPAY_API_KEY"
+      ),
+
+    ipnSecret:
+      optional(
+        "NOWPAY_IPN_SECRET"
+      ),
+
+    baseURL:
+      "https://api.nowpayments.io/v1"
+
   },
 
   /* ===== TRADING ===== */
+
   trading: {
+
     fee: {
-      maker: Number(env("MAKER_FEE", 0.001)),
-      taker: Number(env("TAKER_FEE", 0.002))
+
+      maker:
+        Number(
+          env(
+            "MAKER_FEE",
+            0.001
+          )
+        ),
+
+      taker:
+        Number(
+          env(
+            "TAKER_FEE",
+            0.002
+          )
+        )
+
     },
-    minOrder: Number(env("MIN_ORDER", 1)),
-    maxOrder: Number(env("MAX_ORDER", 100000))
+
+    minOrder:
+      Number(
+        env(
+          "MIN_ORDER",
+          1
+        )
+      ),
+
+    maxOrder:
+      Number(
+        env(
+          "MAX_ORDER",
+          100000
+        )
+      )
+
   },
 
   /* ===== WITHDRAW ===== */
+
   withdraw: {
-    min: Number(env("WITHDRAW_MIN", 10)),
-    max: Number(env("WITHDRAW_MAX", 50000)),
-    dailyLimit: Number(env("WITHDRAW_DAILY_LIMIT", 100000))
+
+    min:
+      Number(
+        env(
+          "WITHDRAW_MIN",
+          10
+        )
+      ),
+
+    max:
+      Number(
+        env(
+          "WITHDRAW_MAX",
+          50000
+        )
+      ),
+
+    dailyLimit:
+      Number(
+        env(
+          "WITHDRAW_DAILY_LIMIT",
+          100000
+        )
+      )
+
   },
 
   /* ===== FRAUD ===== */
+
   fraud: {
-    maxWithdrawPerHour: num("FRAUD_WITHDRAW_HOUR", 5),
-    maxIPsPerUser: num("FRAUD_MAX_IP", 5),
-    blockScore: num("FRAUD_BLOCK_SCORE", 100)
+
+    maxWithdrawPerHour:
+      num(
+        "FRAUD_WITHDRAW_HOUR",
+        5
+      ),
+
+    maxIPsPerUser:
+      num(
+        "FRAUD_MAX_IP",
+        5
+      ),
+
+    blockScore:
+      num(
+        "FRAUD_BLOCK_SCORE",
+        100
+      )
+
   },
 
   /* ===== WS ===== */
+
   ws: {
-    heartbeat: num("WS_HEARTBEAT", 30000)
+
+    heartbeat:
+      num(
+        "WS_HEARTBEAT",
+        30000
+      )
+
   },
 
   /* ===== FEATURES ===== */
+
   features: {
-    trading: bool("FEATURE_TRADING", true),
-    casino: bool("FEATURE_CASINO", true),
-    mining: bool("FEATURE_MINING", true),
-    airdrop: bool("FEATURE_AIRDROP", true)
+
+    trading:
+      bool(
+        "FEATURE_TRADING",
+        true
+      ),
+
+    casino:
+      bool(
+        "FEATURE_CASINO",
+        true
+      ),
+
+    mining:
+      bool(
+        "FEATURE_MINING",
+        true
+      ),
+
+    airdrop:
+      bool(
+        "FEATURE_AIRDROP",
+        true
+      )
+
   }
 
 };
@@ -126,14 +382,36 @@ db: {
    VALIDATION
 ========================================================= */
 
-(function validate() {
+(function validate(){
 
-  assert(config.security.jwtSecret.length >= 10, "JWT too short");
+  assert(
 
-  if (config.app.env === "production") {
-    if (!config.db.ssl) {
-      console.warn("⚠️ DB SSL is disabled in production");
+    config
+      .security
+      .jwtSecret
+      .length >= 10,
+
+    "JWT too short"
+
+  );
+
+  if(
+
+    config.app.env ===
+    "production"
+
+  ){
+
+    if(
+      !config.db.ssl
+    ){
+
+      console.warn(
+        "⚠️ DB SSL disabled"
+      );
+
     }
+
   }
 
 })();
@@ -142,4 +420,5 @@ db: {
    EXPORT
 ========================================================= */
 
-module.exports = config;
+module.exports =
+  config;
