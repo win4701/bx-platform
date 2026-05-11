@@ -1,7 +1,7 @@
 "use strict";
 
 /* =========================================================
-   BXS PAYMENTS API — ENTERPRISE PAYMENT GATEWAY
+   BXS PAYMENTS API
 ========================================================= */
 
 const express =
@@ -22,20 +22,69 @@ const router =
 const db =
   require("../database");
 
-const redis =
-  require("../core/redis");
-
-const ledger =
-  require("../core/ledger");
-
 const auth =
   require("../middleware/auth");
 
-const fraud =
-  require("../security/fraudEngine");
+/* =========================================================
+   OPTIONAL MODULES
+========================================================= */
 
-const ws =
-  require("../ws/wsHub");
+let redis = null;
+let ledger = null;
+let fraud = null;
+let ws = null;
+
+try{
+
+  redis =
+    require("../core/redis");
+
+}catch{
+
+  console.log(
+    "⚠️ Redis disabled"
+  );
+
+}
+
+try{
+
+  ledger =
+    require("../core/ledger");
+
+}catch{
+
+  console.log(
+    "⚠️ Ledger disabled"
+  );
+
+}
+
+try{
+
+  fraud =
+    require("../security/fraudEngine");
+
+}catch{
+
+  console.log(
+    "⚠️ Fraud disabled"
+  );
+
+}
+
+try{
+
+  ws =
+    require("../ws/wsHub");
+
+}catch{
+
+  console.log(
+    "⚠️ WS disabled"
+  );
+
+}
 
 /* =========================================================
    CONFIG
@@ -48,8 +97,12 @@ const NOWPAY_KEY =
   process.env.NOWPAY_API_KEY;
 
 const NOWPAY_IPN =
-  process.env
-    .NOWPAY_IPN_SECRET;
+  process.env.NOWPAY_IPN_SECRET;
+
+const NOWPAY_ENABLED =
+
+  !!NOWPAY_KEY &&
+  !!NOWPAY_IPN;
 
 const SUPPORTED = [
 
@@ -58,19 +111,19 @@ const SUPPORTED = [
   "BTC",
   "ETH",
   "BNB",
-  "AVAX",
-  "SOL",
   "LTC",
-  "TON",
-  "ZEC"
+  "SOL",
+  "ZEC",
+  "AVAX",
+  "TON"
 
 ];
 
 const MAX_DEPOSIT =
-  1_000_000;
+  1000000;
 
 const MAX_WITHDRAW =
-  500_000;
+  500000;
 
 /* =========================================================
    SCHEMAS
@@ -130,14 +183,13 @@ function ok(res,data={}){
 }
 
 function fail(
-
   res,
   error="error",
   code=400
-
 ){
 
-  return res.status(code)
+  return res
+    .status(code)
     .json({
 
       success:false,
@@ -153,52 +205,68 @@ function fail(
 ========================================================= */
 
 async function idempotency(
-
   req,
   res,
   next
-
 ){
 
-  const key =
-    req.headers[
-      "x-idempotency-key"
-    ];
+  if(!redis){
 
-  if(!key){
     return next();
-  }
-
-  const exists =
-    await redis.getCache(
-      `payments:idem:${key}`
-    );
-
-  if(exists){
-
-    return fail(
-
-      res,
-
-      "duplicate_request",
-
-      409
-
-    );
 
   }
 
-  await redis.setCache(
+  try{
 
-    `payments:idem:${key}`,
+    const key =
+      req.headers[
+        "x-idempotency-key"
+      ];
 
-    true,
+    if(!key){
 
-    60
+      return next();
 
-  );
+    }
 
-  next();
+    const exists =
+      await redis.getCache(
+
+        `payments:idem:${key}`
+
+      );
+
+    if(exists){
+
+      return fail(
+
+        res,
+
+        "duplicate_request",
+
+        409
+
+      );
+
+    }
+
+    await redis.setCache(
+
+      `payments:idem:${key}`,
+
+      true,
+
+      60
+
+    );
+
+    next();
+
+  }catch{
+
+    next();
+
+  }
 
 }
 
@@ -207,43 +275,55 @@ async function idempotency(
 ========================================================= */
 
 async function rateLimit(
-
   req,
   res,
   next
-
 ){
 
-  const key =
-    `payments:rl:${req.user.id}`;
+  if(!redis){
 
-  const count =
-    await redis.incr(key);
-
-  if(count === 1){
-
-    await redis.expire(
-      key,
-      1
-    );
+    return next();
 
   }
 
-  if(count > 5){
+  try{
 
-    return fail(
+    const key =
+      `payments:rl:${req.user.id}`;
 
-      res,
+    const count =
+      await redis.incr(key);
 
-      "rate_limited",
+    if(count === 1){
 
-      429
+      await redis.expire(
+        key,
+        1
+      );
 
-    );
+    }
+
+    if(count > 5){
+
+      return fail(
+
+        res,
+
+        "rate_limited",
+
+        429
+
+      );
+
+    }
+
+    next();
+
+  }catch{
+
+    next();
 
   }
-
-  next();
 
 }
 
@@ -265,12 +345,23 @@ router.post(
 
     try{
 
+      if(!NOWPAY_ENABLED){
+
+        return fail(
+
+          res,
+
+          "payments_disabled",
+
+          503
+
+        );
+
+      }
+
       const {
-
         error,
-
         value
-
       } =
         createSchema.validate(
           req.body
@@ -291,10 +382,6 @@ router.post(
 
       const orderId =
         crypto.randomUUID();
-
-      /* ===================================
-         PROVIDER
-      =================================== */
 
       const r =
         await axios.post(
@@ -333,10 +420,6 @@ router.post(
       const p =
         r.data;
 
-      /* ===================================
-         SAVE
-      =================================== */
-
       await db.query(`
         INSERT INTO payments
         (
@@ -351,11 +434,14 @@ router.post(
           created_at
         )
         VALUES(
-          $1,'deposit',
+          $1,
+          'deposit',
           'nowpayments',
-          $2,$3,
+          $2,
+          $3,
           'pending',
-          $4,$5,
+          $4,
+          $5,
           NOW()
         )
       `,[
@@ -369,31 +455,33 @@ router.post(
         p.payment_id,
 
         JSON.stringify({
-
           orderId
-
         })
 
       ]);
 
-      await ws.sendToUser(
+      if(ws?.sendToUser){
 
-        req.user.id,
+        await ws.sendToUser(
 
-        {
+          req.user.id,
 
-          type:
-            "deposit_created",
+          {
 
-          asset:
-            value.asset,
+            type:
+              "deposit_created",
 
-          amount:
-            value.amount
+            asset:
+              value.asset,
 
-        }
+            amount:
+              value.amount
 
-      );
+          }
+
+        );
+
+      }
 
       return ok(res,{
 
@@ -446,6 +534,16 @@ router.post(
 
     try{
 
+      if(!NOWPAY_ENABLED){
+
+        return res
+          .status(503)
+          .send(
+            "disabled"
+          );
+
+      }
+
       const sig =
         req.headers[
           "x-nowpayments-sig"
@@ -459,11 +557,8 @@ router.post(
       const hmac =
         crypto
           .createHmac(
-
             "sha512",
-
             NOWPAY_IPN
-
           )
           .update(raw)
           .digest("hex");
@@ -490,14 +585,18 @@ router.post(
       const payment =
         req.body;
 
-      /* ===================================
-         REPLAY PROTECTION
-      =================================== */
+      let replay = null;
 
-      const replay =
-        await redis.getCache(
-          `webhook:${payment.payment_id}`
-        );
+      if(redis){
+
+        replay =
+          await redis.getCache(
+
+            `webhook:${payment.payment_id}`
+
+          );
+
+      }
 
       if(replay){
 
@@ -507,19 +606,19 @@ router.post(
 
       }
 
-      await redis.setCache(
+      if(redis){
 
-        `webhook:${payment.payment_id}`,
+        await redis.setCache(
 
-        true,
+          `webhook:${payment.payment_id}`,
 
-        3600
+          true,
 
-      );
+          3600
 
-      /* ===================================
-         ONLY FINISHED
-      =================================== */
+        );
+
+      }
 
       if(
         payment.payment_status !==
@@ -531,10 +630,6 @@ router.post(
         );
 
       }
-
-      /* ===================================
-         FIND
-      =================================== */
 
       const r =
         await db.query(`
@@ -569,18 +664,55 @@ router.post(
 
       }
 
-      /* ===================================
-         CREDIT
-      =================================== */
-
       await db.transaction(
 
         async(tx)=>{
 
-          await ledger.credit({
+          if(ledger?.credit){
 
-            userId:
-              p.user_id,
+            await ledger.credit({
+
+              userId:
+                p.user_id,
+
+              asset:
+                p.asset,
+
+              amount:
+                Number(
+                  payment
+                    .pay_amount
+                ),
+
+              reason:
+                "deposit",
+
+              tx
+
+            });
+
+          }
+
+          await tx.query(`
+            UPDATE payments
+            SET status='completed'
+            WHERE id=$1
+          `,[p.id]);
+
+        }
+
+      );
+
+      if(ws?.sendToUser){
+
+        await ws.sendToUser(
+
+          p.user_id,
+
+          {
+
+            type:
+              "deposit_completed",
 
             asset:
               p.asset,
@@ -589,49 +721,17 @@ router.post(
               Number(
                 payment
                   .pay_amount
-              ),
+              )
 
-            reason:
-              "deposit",
+          }
 
-            tx
+        );
 
-          });
+      }
 
-          await tx.query(`
-            UPDATE payments
-            SET
-              status='completed'
-            WHERE id=$1
-          `,[p.id]);
-
-        }
-
+      return res.send(
+        "ok"
       );
-
-      await ws.sendToUser(
-
-        p.user_id,
-
-        {
-
-          type:
-            "deposit_completed",
-
-          asset:
-            p.asset,
-
-          amount:
-            Number(
-              payment
-                .pay_amount
-            )
-
-        }
-
-      );
-
-      return res.send("ok");
 
     }catch(e){
 
@@ -669,16 +769,12 @@ router.post(
     try{
 
       const {
-
         error,
-
         value
-
       } =
-        withdrawSchema
-          .validate(
-            req.body
-          );
+        withdrawSchema.validate(
+          req.body
+        );
 
       if(error){
 
@@ -693,30 +789,36 @@ router.post(
 
       }
 
-      /* ===================================
-         FRAUD
-      =================================== */
+      let risk = {
 
-      const risk =
-        await fraud.check({
+        blocked:false
 
-          userId:
-            req.user.id,
+      };
 
-          amount:
-            value.amount,
+      if(fraud?.check){
 
-          wallet:
-            value.address,
+        risk =
+          await fraud.check({
 
-          ip:req.ip,
+            userId:
+              req.user.id,
 
-          deviceId:
-            req.headers[
-              "x-device-id"
-            ]
+            amount:
+              value.amount,
 
-        });
+            wallet:
+              value.address,
+
+            ip:req.ip,
+
+            deviceId:
+              req.headers[
+                "x-device-id"
+              ]
+
+          });
+
+      }
 
       if(risk.blocked){
 
@@ -732,18 +834,13 @@ router.post(
 
       }
 
-      /* ===================================
-         TX
-      =================================== */
-
       await db.transaction(
 
         async(tx)=>{
 
           const w =
             await tx.query(`
-              SELECT
-                balance
+              SELECT balance
               FROM wallet_balances
               WHERE user_id=$1
               AND asset=$2
@@ -771,31 +868,27 @@ router.post(
 
           }
 
-          /* ===============================
-             DEBIT
-          =============================== */
+          if(ledger?.debit){
 
-          await ledger.debit({
+            await ledger.debit({
 
-            userId:
-              req.user.id,
+              userId:
+                req.user.id,
 
-            asset:
-              value.asset,
+              asset:
+                value.asset,
 
-            amount:
-              value.amount,
+              amount:
+                value.amount,
 
-            reason:
-              "withdraw_request",
+              reason:
+                "withdraw_request",
 
-            tx
+              tx
 
-          });
+            });
 
-          /* ===============================
-             SAVE REQUEST
-          =============================== */
+          }
 
           await tx.query(`
             INSERT INTO withdrawals
@@ -808,7 +901,10 @@ router.post(
               created_at
             )
             VALUES(
-              $1,$2,$3,$4,
+              $1,
+              $2,
+              $3,
+              $4,
               'pending',
               NOW()
             )
@@ -828,24 +924,28 @@ router.post(
 
       );
 
-      await ws.sendToUser(
+      if(ws?.sendToUser){
 
-        req.user.id,
+        await ws.sendToUser(
 
-        {
+          req.user.id,
 
-          type:
-            "withdraw_submitted",
+          {
 
-          asset:
-            value.asset,
+            type:
+              "withdraw_submitted",
 
-          amount:
-            value.amount
+            asset:
+              value.asset,
 
-        }
+            amount:
+              value.amount
 
-      );
+          }
+
+        );
+
+      }
 
       return ok(res,{
 
@@ -949,12 +1049,18 @@ router.get(
 
     return ok(res,{
 
-      status:"ok",
+      success:true,
 
       provider:
         "nowpayments",
 
-      time:
+      enabled:
+        NOWPAY_ENABLED,
+
+      redis:
+        !!redis,
+
+      timestamp:
         Date.now()
 
     });
@@ -962,10 +1068,6 @@ router.get(
   }
 
 );
-
-/* =========================================================
-   EXPORT
-========================================================= */
 
 module.exports =
   router;
