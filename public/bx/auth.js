@@ -1,5 +1,5 @@
 /* =====================================================
-   BLOXIO AUTH — FINAL PRO MAX
+   BLOXIO AUTH — GLOBAL FINAL SYSTEM
 ===================================================== */
 
 "use strict";
@@ -8,155 +8,280 @@ const AUTH = {
 
   state:{
     loading:false,
-    mode:"login"
+    mode:"login",
+    authenticated:false
   },
 
   el:{},
 
-  /* ================= INIT ================= */
+  /* =====================================================
+     INIT
+  ===================================================== */
 
   init(){
 
     this.cache();
+
+    if(!this.el.overlay){
+      console.error("AUTH overlay missing");
+      return;
+    }
+
+    this.lockApp();
+
     this.bind();
+
     this.injectReferral();
+
     this.bindGlobalEvents();
+
     this.guard();
 
   },
 
-  /* ================= DOM ================= */
+  /* =====================================================
+     DOM
+  ===================================================== */
 
   cache(){
 
     this.el = {
-      overlay: $("authOverlay"),
 
-      loginBox: $("loginBox"),
-      registerBox: $("registerBox"),
+      app:$("app"),
 
-      email: $("loginEmail"),
-      pass: $("loginPass"),
+      overlay:$("authOverlay"),
 
-      regEmail: $("regEmail"),
-      regPass: $("regPass"),
-      regPhone: $("regPhone"),
-      regRef: $("regRef"),
+      loginBox:$("loginBox"),
+      registerBox:$("registerBox"),
 
-      loginBtn: $("loginBtn"),
-      registerBtn: $("registerBtn"),
+      email:$("loginEmail"),
+      pass:$("loginPass"),
 
-      toggle: $("toggleAuth"),
+      regEmail:$("regEmail"),
+      regPass:$("regPass"),
+      regPhone:$("regPhone"),
+      regRef:$("regRef"),
 
-      title: $("authTitle"),
-      sub: $("authSub"),
-      switchText: $("switchText"),
+      loginBtn:$("loginBtn"),
+      registerBtn:$("registerBtn"),
 
-      error: $("authError")
+      toggle:$("toggleAuth"),
+
+      title:$("authTitle"),
+      sub:$("authSub"),
+      switchText:$("switchText"),
+
+      error:$("authError")
     };
 
   },
 
-  /* ================= GLOBAL EVENTS ================= */
+  /* =====================================================
+     GLOBAL EVENTS
+  ===================================================== */
 
   bindGlobalEvents(){
 
-    // 🔥 logout من API
     if(window.API){
-      API.on("auth:logout", ()=> this.forceLogout());
+
+      API.on("auth:logout", ()=>{
+
+        this.forceLogout();
+
+      });
+
     }
 
-  },
+    window.addEventListener("storage",(e)=>{
 
-  /* ================= EVENTS ================= */
+      if(e.key === "token" && !e.newValue){
 
-  bind(){
+        this.forceLogout();
 
-    this.el.toggle.onclick = () => this.toggle();
-
-    this.el.loginBtn.onclick = () => this.login();
-    this.el.registerBtn.onclick = () => this.register();
-
-    document.addEventListener("keydown",(e)=>{
-      if(e.key==="Enter"){
-        this.state.mode==="login"
-          ? this.login()
-          : this.register();
       }
+
     });
 
   },
 
-  /* ================= REFERRAL ================= */
+  /* =====================================================
+     EVENTS
+  ===================================================== */
+
+  bind(){
+
+    this.el.toggle?.addEventListener("click",()=>{
+
+      this.toggle();
+
+    });
+
+    this.el.loginBtn?.addEventListener("click",()=>{
+
+      this.login();
+
+    });
+
+    this.el.registerBtn?.addEventListener("click",()=>{
+
+      this.register();
+
+    });
+
+    document.addEventListener("keydown",(e)=>{
+
+      if(e.key !== "Enter") return;
+
+      if(this.state.loading) return;
+
+      this.state.mode === "login"
+        ? this.login()
+        : this.register();
+
+    });
+
+  },
+
+  /* =====================================================
+     REFERRAL
+  ===================================================== */
 
   injectReferral(){
 
-    const ref = new URLSearchParams(location.search).get("ref");
+    const ref =
+      new URLSearchParams(location.search)
+      .get("ref");
 
     if(ref && this.el.regRef){
+
       this.el.regRef.value = ref;
+
     }
 
   },
 
-  /* ================= MODE ================= */
+  /* =====================================================
+     APP LOCK
+  ===================================================== */
+
+  lockApp(){
+
+    document.body.classList.add("auth-lock");
+
+    if(this.el.app){
+
+      this.el.app.classList.add("hidden");
+
+    }
+
+  },
+
+  unlockApp(){
+
+    document.body.classList.remove("auth-lock");
+
+    if(this.el.app){
+
+      this.el.app.classList.remove("hidden");
+
+    }
+
+  },
+
+  /* =====================================================
+     MODE
+  ===================================================== */
 
   toggle(){
 
-    const isLogin = this.state.mode === "login";
+    const isLogin =
+      this.state.mode === "login";
 
-    this.state.mode = isLogin ? "register" : "login";
+    this.state.mode =
+      isLogin
+        ? "register"
+        : "login";
 
-    this.el.loginBox.classList.toggle("active");
-    this.el.registerBox.classList.toggle("active");
+    this.el.loginBox?.classList.toggle("active");
 
-    this.el.title.innerText = isLogin
-      ? "Create Account"
-      : "Welcome Back";
+    this.el.registerBox?.classList.toggle("active");
 
-    this.el.sub.innerText = isLogin
-      ? "Register new account"
-      : "Login to your account";
+    this.el.title.innerText =
+      isLogin
+        ? "Create Account"
+        : "Welcome Back";
 
-    this.el.switchText.innerText = isLogin
-      ? "Already have an account?"
-      : "Don't have an account?";
+    this.el.sub.innerText =
+      isLogin
+        ? "Register new account"
+        : "Login to your account";
 
-    this.el.toggle.innerText = isLogin
-      ? "Sign in"
-      : "Sign up";
+    this.el.switchText.innerText =
+      isLogin
+        ? "Already have an account?"
+        : "Don't have an account?";
+
+    this.el.toggle.innerText =
+      isLogin
+        ? "Sign in"
+        : "Sign up";
 
     this.clearError();
 
   },
 
-  /* ================= VALIDATION ================= */
+  /* =====================================================
+     VALIDATION
+  ===================================================== */
 
   validateEmail(v){
+
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+
   },
 
   validatePassword(v){
-    return v.length >= 6;
+
+    return typeof v === "string"
+      && v.length >= 6;
+
   },
 
   validatePhone(v){
+
     return !v || v.length >= 6;
+
   },
 
-  /* ================= UI ================= */
+  /* =====================================================
+     UI
+  ===================================================== */
 
-  loading(btn, state){
+  loading(btn,state){
 
     this.state.loading = state;
 
+    if(!btn) return;
+
     if(state){
+
       btn.dataset.txt = btn.innerText;
+
       btn.innerText = "Loading...";
+
       btn.disabled = true;
+
+      btn.style.opacity = ".8";
+
     }else{
-      btn.innerText = btn.dataset.txt;
+
+      btn.innerText =
+        btn.dataset.txt || "Continue";
+
       btn.disabled = false;
+
+      btn.style.opacity = "1";
+
     }
 
   },
@@ -166,6 +291,7 @@ const AUTH = {
     if(!this.el.error) return;
 
     this.el.error.innerText = msg;
+
     this.el.error.style.opacity = "1";
 
   },
@@ -175,134 +301,226 @@ const AUTH = {
     if(!this.el.error) return;
 
     this.el.error.innerText = "";
+
     this.el.error.style.opacity = "0";
 
   },
 
-  /* ================= REQUEST ================= */
+  /* =====================================================
+     REQUEST
+  ===================================================== */
 
-  async request(url, body){
+  async request(url,body){
 
     if(!window.API){
+
       throw new Error("API not loaded");
+
     }
 
-    const res = await API.post(url, body);
+    const res = await API.post(url,body);
 
     if(!res || res.error){
-      throw new Error(res?.error || "Network error");
+
+      throw new Error(
+        res?.error || "Network error"
+      );
+
     }
 
     return res;
 
   },
 
-  /* ================= LOGIN ================= */
+  /* =====================================================
+     LOGIN
+  ===================================================== */
 
   async login(){
 
     if(this.state.loading) return;
 
-    const email = this.el.email.value.trim();
-    const pass  = this.el.pass.value.trim();
+    const email =
+      this.el.email?.value.trim();
 
-    if(!this.validateEmail(email))
+    const pass =
+      this.el.pass?.value.trim();
+
+    if(!this.validateEmail(email)){
+
       return this.error("Invalid email");
 
-    if(!this.validatePassword(pass))
-      return this.error("Password too short");
+    }
 
-    this.loading(this.el.loginBtn,true);
+    if(!this.validatePassword(pass)){
+
+      return this.error(
+        "Password too short"
+      );
+
+    }
+
+    this.loading(
+      this.el.loginBtn,
+      true
+    );
+
     this.clearError();
 
     try{
 
-      const data = await this.request("/auth/login",{
-        email,
-        password: pass
-      });
+      const data = await this.request(
+        "/auth/login",
+        {
+          email,
+          password:pass
+        }
+      );
 
       this.session(data);
-      this.enter();
+
+      await this.enter();
 
     }catch(e){
-      this.error(e.message);
+
+      this.error(
+        e.message || "Login failed"
+      );
+
     }
 
-    this.loading(this.el.loginBtn,false);
+    this.loading(
+      this.el.loginBtn,
+      false
+    );
 
   },
 
-  /* ================= REGISTER ================= */
+  /* =====================================================
+     REGISTER
+  ===================================================== */
 
   async register(){
 
     if(this.state.loading) return;
 
-    const email = this.el.regEmail.value.trim();
-    const pass  = this.el.regPass.value.trim();
-    const phone = this.el.regPhone?.value.trim() || "";
-    const ref   = this.el.regRef?.value.trim() || "";
+    const email =
+      this.el.regEmail?.value.trim();
 
-    if(!this.validateEmail(email))
+    const pass =
+      this.el.regPass?.value.trim();
+
+    const phone =
+      this.el.regPhone?.value.trim() || "";
+
+    const ref =
+      this.el.regRef?.value.trim() || "";
+
+    if(!this.validateEmail(email)){
+
       return this.error("Invalid email");
 
-    if(!this.validatePassword(pass))
+    }
+
+    if(!this.validatePassword(pass)){
+
       return this.error("Weak password");
 
-    if(!this.validatePhone(phone))
+    }
+
+    if(!this.validatePhone(phone)){
+
       return this.error("Invalid phone");
 
-    this.loading(this.el.registerBtn,true);
+    }
+
+    this.loading(
+      this.el.registerBtn,
+      true
+    );
+
     this.clearError();
 
     try{
 
-      const data = await this.request("/auth/register",{
-        email,
-        password: pass,
-        phone,
-        referral: ref
-      });
+      const data = await this.request(
+        "/auth/register",
+        {
+          email,
+          password:pass,
+          phone,
+          referral:ref
+        }
+      );
 
       this.session(data);
-      this.enter();
+
+      await this.enter();
 
     }catch(e){
-      this.error(e.message);
+
+      this.error(
+        e.message || "Register failed"
+      );
+
     }
 
-    this.loading(this.el.registerBtn,false);
+    this.loading(
+      this.el.registerBtn,
+      false
+    );
 
   },
 
-  /* ================= SESSION ================= */
+  /* =====================================================
+     SESSION
+  ===================================================== */
 
   session(data){
 
     if(!data?.token){
-      throw new Error("Invalid auth response");
+
+      throw new Error(
+        "Invalid auth response"
+      );
+
     }
 
-    localStorage.setItem("token", data.token);
+    localStorage.setItem(
+      "token",
+      data.token
+    );
 
     if(data.user){
-      localStorage.setItem("user", JSON.stringify(data.user));
+
+      localStorage.setItem(
+        "user",
+        JSON.stringify(data.user)
+      );
+
     }
+
+    this.state.authenticated = true;
 
   },
 
-  /* ================= LOGOUT ================= */
+  /* =====================================================
+     LOGOUT
+  ===================================================== */
 
   logout(){
 
     localStorage.clear();
 
+    this.state.authenticated = false;
+
     if(window.WS){
+
       WS.socket?.close();
+
     }
 
-    location.reload();
+    this.showAuth();
 
   },
 
@@ -310,73 +528,138 @@ const AUTH = {
 
     localStorage.clear();
 
-    this.el.overlay.style.display = "flex";
+    this.state.authenticated = false;
+
+    this.showAuth();
 
   },
 
-  /* ================= GUARD ================= */
+  /* =====================================================
+     GUARD
+  ===================================================== */
 
   async guard(){
 
-    const token = localStorage.getItem("token");
+    const token =
+      localStorage.getItem("token");
 
     if(!token){
+
       this.showAuth();
+
       return;
+
     }
 
     try{
 
-      const res = await API.get("/auth/check");
+      const res =
+        await API.get("/auth/check");
 
       if(!res || res.error){
+
         throw new Error();
+
       }
 
-      this.enter();
+      await this.enter();
 
     }catch{
 
       localStorage.clear();
+
       this.showAuth();
 
     }
 
   },
 
+  /* =====================================================
+     AUTH VIEW
+  ===================================================== */
+
   showAuth(){
-    this.el.overlay.style.display = "flex";
+
+    this.lockApp();
+
+    this.el.overlay.style.display =
+      "flex";
+
   },
 
-  /* ================= ENTER ================= */
+  hideAuth(){
 
-  enter(){
+    this.el.overlay.style.display =
+      "none";
 
-    this.el.overlay.style.display = "none";
+  },
 
-    const app = $("app");
-    if(app) app.classList.remove("hidden");
+  /* =====================================================
+     ENTER APP
+  ===================================================== */
 
-    // 🔥 تشغيل WS
+  async enter(){
+
+    this.unlockApp();
+
+    this.hideAuth();
+
+    requestAnimationFrame(()=>{
+
+      document.body.scrollTop = 0;
+
+      document.documentElement.scrollTop = 0;
+
+    });
+
     if(window.WS){
-      WS.connect();
+
+      try{
+
+        WS.connect();
+
+      }catch(e){
+
+        console.error(e);
+
+      }
+
     }
 
-    // 🔥 sync كامل
     if(window.API){
-      API.syncAll();
+
+      try{
+
+        API.syncAll();
+
+      }catch(e){
+
+        console.error(e);
+
+      }
+
     }
 
   }
 
 };
 
-/* ================= HELPER ================= */
+/* =====================================================
+   HELPER
+===================================================== */
 
 function $(id){
+
   return document.getElementById(id);
+
 }
 
-/* ================= START ================= */
+/* =====================================================
+   START
+===================================================== */
 
-window.addEventListener("load", ()=> AUTH.init());
+window.addEventListener("load",()=>{
+
+  AUTH.init();
+
+});
