@@ -1,11 +1,22 @@
 "use strict";
 
+/* =========================================================
+   BXS REDIS CORE
+========================================================= */
+
 const Redis =
   require("ioredis");
 
-if(!process.env.REDIS_URL){
+const REDIS_URL =
+  process.env.REDIS_URL;
 
-  console.warn(
+/* =========================================================
+   OPTIONAL REDIS
+========================================================= */
+
+if(!REDIS_URL){
+
+  console.log(
     "⚠️ Redis disabled"
   );
 
@@ -15,25 +26,44 @@ if(!process.env.REDIS_URL){
 
 }
 
+/* =========================================================
+   CLIENT
+========================================================= */
+
 const redis =
   new Redis(
 
-    process.env.REDIS_URL,
+    REDIS_URL,
 
     {
+
+      lazyConnect:true,
 
       maxRetriesPerRequest:3,
 
       enableReadyCheck:true,
 
-      lazyConnect:true
+      retryStrategy(times){
+
+        return Math.min(
+          times * 200,
+          2000
+        );
+
+      }
 
     }
 
 );
 
+/* =========================================================
+   EVENTS
+========================================================= */
+
 redis.on(
+
   "connect",
+
   ()=>{
 
     console.log(
@@ -41,10 +71,13 @@ redis.on(
     );
 
   }
+
 );
 
 redis.on(
+
   "error",
+
   err=>{
 
     console.error(
@@ -56,7 +89,104 @@ redis.on(
     );
 
   }
+
 );
 
-module.exports =
-  redis;
+/* =========================================================
+   HELPERS
+========================================================= */
+
+async function getCache(
+  key
+){
+
+  try{
+
+    return await redis.get(
+      key
+    );
+
+  }catch{
+
+    return null;
+
+  }
+
+}
+
+async function setCache(
+  key,
+  value,
+  ttl = 60
+){
+
+  try{
+
+    await redis.set(
+
+      key,
+
+      typeof value === "string"
+        ? value
+        : JSON.stringify(value),
+
+      "EX",
+
+      ttl
+
+    );
+
+    return true;
+
+  }catch{
+
+    return false;
+
+  }
+
+}
+
+async function delCache(
+  key
+){
+
+  try{
+
+    await redis.del(key);
+
+  }catch{}
+
+}
+
+/* =========================================================
+   EXPORT
+========================================================= */
+
+module.exports = {
+
+  client:
+    redis,
+
+  getCache,
+
+  setCache,
+
+  delCache,
+
+  incr:
+    (...args)=>
+      redis.incr(...args),
+
+  expire:
+    (...args)=>
+      redis.expire(...args),
+
+  publish:
+    (...args)=>
+      redis.publish(...args),
+
+  subscribe:
+    (...args)=>
+      redis.subscribe(...args)
+
+};
