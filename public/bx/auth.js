@@ -1,5 +1,5 @@
 /* =====================================================
-   BLOXIO AUTH — GLOBAL FINAL SYSTEM
+   BLOXIO AUTH — GLOBAL PRODUCTION SYSTEM
 ===================================================== */
 
 "use strict";
@@ -23,8 +23,13 @@ const AUTH = {
     this.cache();
 
     if(!this.el.overlay){
-      console.error("AUTH overlay missing");
+
+      console.error(
+        "AUTH overlay missing"
+      );
+
       return;
+
     }
 
     this.lockApp();
@@ -47,31 +52,57 @@ const AUTH = {
 
     this.el = {
 
-      app:$("app"),
+      app:
+        $("app"),
 
-      overlay:$("authOverlay"),
+      overlay:
+        $("authOverlay"),
 
-      loginBox:$("loginBox"),
-      registerBox:$("registerBox"),
+      loginBox:
+        $("loginBox"),
 
-      email:$("loginEmail"),
-      pass:$("loginPass"),
+      registerBox:
+        $("registerBox"),
 
-      regEmail:$("regEmail"),
-      regPass:$("regPass"),
-      regPhone:$("regPhone"),
-      regRef:$("regRef"),
+      email:
+        $("loginEmail"),
 
-      loginBtn:$("loginBtn"),
-      registerBtn:$("registerBtn"),
+      pass:
+        $("loginPass"),
 
-      toggle:$("toggleAuth"),
+      regEmail:
+        $("regEmail"),
 
-      title:$("authTitle"),
-      sub:$("authSub"),
-      switchText:$("switchText"),
+      regPass:
+        $("regPass"),
 
-      error:$("authError")
+      regPhone:
+        $("regPhone"),
+
+      regRef:
+        $("regRef"),
+
+      loginBtn:
+        $("loginBtn"),
+
+      registerBtn:
+        $("registerBtn"),
+
+      toggle:
+        $("toggleAuth"),
+
+      title:
+        $("authTitle"),
+
+      sub:
+        $("authSub"),
+
+      switchText:
+        $("switchText"),
+
+      error:
+        $("authError")
+
     };
 
   },
@@ -82,25 +113,34 @@ const AUTH = {
 
   bindGlobalEvents(){
 
-    if(window.API){
+    if(window.API?.on){
 
-      API.on("auth:logout", ()=>{
+      API.on(
+        "auth:logout",
+        ()=>{
 
-        this.forceLogout();
+          this.forceLogout();
 
-      });
+        }
+      );
 
     }
 
-    window.addEventListener("storage",(e)=>{
+    window.addEventListener(
+      "storage",
+      e=>{
 
-      if(e.key === "token" && !e.newValue){
+        if(
+          e.key === "token" &&
+          !e.newValue
+        ){
 
-        this.forceLogout();
+          this.forceLogout();
+
+        }
 
       }
-
-    });
+    );
 
   },
 
@@ -110,35 +150,54 @@ const AUTH = {
 
   bind(){
 
-    this.el.toggle?.addEventListener("click",()=>{
+    this.el.toggle
+    ?.addEventListener(
+      "click",
+      ()=>{
 
-      this.toggle();
+        this.toggle();
 
-    });
+      }
+    );
 
-    this.el.loginBtn?.addEventListener("click",()=>{
+    this.el.loginBtn
+    ?.addEventListener(
+      "click",
+      ()=>{
 
-      this.login();
+        this.login();
 
-    });
+      }
+    );
 
-    this.el.registerBtn?.addEventListener("click",()=>{
+    this.el.registerBtn
+    ?.addEventListener(
+      "click",
+      ()=>{
 
-      this.register();
+        this.register();
 
-    });
+      }
+    );
 
-    document.addEventListener("keydown",(e)=>{
+    document.addEventListener(
+      "keydown",
+      e=>{
 
-      if(e.key !== "Enter") return;
+        if(
+          e.key !== "Enter"
+        ) return;
 
-      if(this.state.loading) return;
+        if(
+          this.state.loading
+        ) return;
 
-      this.state.mode === "login"
-        ? this.login()
-        : this.register();
+        this.state.mode === "login"
+          ? this.login()
+          : this.register();
 
-    });
+      }
+    );
 
   },
 
@@ -149,12 +208,17 @@ const AUTH = {
   injectReferral(){
 
     const ref =
-      new URLSearchParams(location.search)
-      .get("ref");
+      new URLSearchParams(
+        location.search
+      ).get("ref");
 
-    if(ref && this.el.regRef){
+    if(
+      ref &&
+      this.el.regRef
+    ){
 
-      this.el.regRef.value = ref;
+      this.el.regRef.value =
+        ref;
 
     }
 
@@ -166,25 +230,27 @@ const AUTH = {
 
   lockApp(){
 
-    document.body.classList.add("auth-lock");
+    document.body.classList.add(
+      "auth-lock"
+    );
 
-    if(this.el.app){
-
-      this.el.app.classList.add("hidden");
-
-    }
+    this.el.app
+    ?.classList.add(
+      "hidden"
+    );
 
   },
 
   unlockApp(){
 
-    document.body.classList.remove("auth-lock");
+    document.body.classList.remove(
+      "auth-lock"
+    );
 
-    if(this.el.app){
-
-      this.el.app.classList.remove("hidden");
-
-    }
+    this.el.app
+    ?.classList.remove(
+      "hidden"
+    );
 
   },
 
@@ -195,16 +261,23 @@ const AUTH = {
   toggle(){
 
     const isLogin =
-      this.state.mode === "login";
+      this.state.mode ===
+      "login";
 
     this.state.mode =
       isLogin
         ? "register"
         : "login";
 
-    this.el.loginBox?.classList.toggle("active");
+    this.el.loginBox
+    ?.classList.toggle(
+      "active"
+    );
 
-    this.el.registerBox?.classList.toggle("active");
+    this.el.registerBox
+    ?.classList.toggle(
+      "active"
+    );
 
     this.el.title.innerText =
       isLogin
@@ -218,8 +291,8 @@ const AUTH = {
 
     this.el.switchText.innerText =
       isLogin
-        ? "Already have an account?"
-        : "Don't have an account?";
+        ? "Already have account?"
+        : "Don't have account?";
 
     this.el.toggle.innerText =
       isLogin
@@ -236,20 +309,26 @@ const AUTH = {
 
   validateEmail(v){
 
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+      .test(v);
 
   },
 
   validatePassword(v){
 
-    return typeof v === "string"
-      && v.length >= 6;
+    return (
+      typeof v === "string" &&
+      v.length >= 6
+    );
 
   },
 
   validatePhone(v){
 
-    return !v || v.length >= 6;
+    return (
+      !v ||
+      v.length >= 6
+    );
 
   },
 
@@ -257,30 +336,40 @@ const AUTH = {
      UI
   ===================================================== */
 
-  loading(btn,state){
+  loading(
+    btn,
+    state
+  ){
 
-    this.state.loading = state;
+    this.state.loading =
+      state;
 
     if(!btn) return;
 
     if(state){
 
-      btn.dataset.txt = btn.innerText;
-
-      btn.innerText = "Loading...";
-
       btn.disabled = true;
 
-      btn.style.opacity = ".8";
+      btn.classList.add(
+        "loading"
+      );
+
+      btn.setAttribute(
+        "aria-busy",
+        "true"
+      );
 
     }else{
 
-      btn.innerText =
-        btn.dataset.txt || "Continue";
-
       btn.disabled = false;
 
-      btn.style.opacity = "1";
+      btn.classList.remove(
+        "loading"
+      );
+
+      btn.removeAttribute(
+        "aria-busy"
+      );
 
     }
 
@@ -288,21 +377,36 @@ const AUTH = {
 
   error(msg){
 
-    if(!this.el.error) return;
+    if(!this.el.error)
+      return;
 
-    this.el.error.innerText = msg;
+    this.el.error.innerText =
+      msg ||
+      "Unexpected error";
 
-    this.el.error.style.opacity = "1";
+    this.el.error.style.opacity =
+      "1";
+
+    this.el.error.classList.add(
+      "active"
+    );
 
   },
 
   clearError(){
 
-    if(!this.el.error) return;
+    if(!this.el.error)
+      return;
 
-    this.el.error.innerText = "";
+    this.el.error.innerText =
+      "";
 
-    this.el.error.style.opacity = "0";
+    this.el.error.style.opacity =
+      "0";
+
+    this.el.error.classList.remove(
+      "active"
+    );
 
   },
 
@@ -310,20 +414,73 @@ const AUTH = {
      REQUEST
   ===================================================== */
 
-  async request(url,body){
+  async request(
+    url,
+    body = {}
+  ){
 
     if(!window.API){
 
-      throw new Error("API not loaded");
+      throw new Error(
+        "API not loaded"
+      );
 
     }
 
-    const res = await API.post(url,body);
+    const timeout =
+      new Promise(
+        (_,reject)=>{
 
-    if(!res || res.error){
+          setTimeout(()=>{
+
+            reject(
+              new Error(
+                "Request timeout"
+              )
+            );
+
+          },10000);
+
+        }
+      );
+
+    let res;
+
+    try{
+
+      res =
+        await Promise.race([
+
+          API.post(
+            url,
+            body
+          ),
+
+          timeout
+
+        ]);
+
+    }catch(e){
 
       throw new Error(
-        res?.error || "Network error"
+
+        e.message ||
+        "Network error"
+
+      );
+
+    }
+
+    if(
+      !res ||
+      res.error
+    ){
+
+      throw new Error(
+
+        res?.error ||
+        "Network error"
+
       );
 
     }
@@ -338,21 +495,37 @@ const AUTH = {
 
   async login(){
 
-    if(this.state.loading) return;
+    if(
+      this.state.loading
+    ) return;
 
     const email =
-      this.el.email?.value.trim();
+      this.el.email
+      ?.value
+      .trim();
 
     const pass =
-      this.el.pass?.value.trim();
+      this.el.pass
+      ?.value
+      .trim();
 
-    if(!this.validateEmail(email)){
+    if(
+      !this.validateEmail(
+        email
+      )
+    ){
 
-      return this.error("Invalid email");
+      return this.error(
+        "Invalid email"
+      );
 
     }
 
-    if(!this.validatePassword(pass)){
+    if(
+      !this.validatePassword(
+        pass
+      )
+    ){
 
       return this.error(
         "Password too short"
@@ -369,13 +542,14 @@ const AUTH = {
 
     try{
 
-      const data = await this.request(
-        "/auth/login",
-        {
-          email,
-          password:pass
-        }
-      );
+      const data =
+        await this.request(
+          "/auth/login",
+          {
+            email,
+            password:pass
+          }
+        );
 
       this.session(data);
 
@@ -384,7 +558,10 @@ const AUTH = {
     }catch(e){
 
       this.error(
-        e.message || "Login failed"
+
+        e.message ||
+        "Login failed"
+
       );
 
     }
@@ -402,35 +579,63 @@ const AUTH = {
 
   async register(){
 
-    if(this.state.loading) return;
+    if(
+      this.state.loading
+    ) return;
 
     const email =
-      this.el.regEmail?.value.trim();
+      this.el.regEmail
+      ?.value
+      .trim();
 
     const pass =
-      this.el.regPass?.value.trim();
+      this.el.regPass
+      ?.value
+      .trim();
 
     const phone =
-      this.el.regPhone?.value.trim() || "";
+      this.el.regPhone
+      ?.value
+      .trim() || "";
 
     const ref =
-      this.el.regRef?.value.trim() || "";
+      this.el.regRef
+      ?.value
+      .trim() || "";
 
-    if(!this.validateEmail(email)){
+    if(
+      !this.validateEmail(
+        email
+      )
+    ){
 
-      return this.error("Invalid email");
+      return this.error(
+        "Invalid email"
+      );
 
     }
 
-    if(!this.validatePassword(pass)){
+    if(
+      !this.validatePassword(
+        pass
+      )
+    ){
 
-      return this.error("Weak password");
+      return this.error(
+        "Weak password"
+      );
 
     }
 
-    if(!this.validatePhone(phone)){
+    if(
+      !this.validatePhone(
+        phone
+      )
+    ){
 
-      return this.error("Invalid phone");
+      return this.error(
+        "Invalid phone"
+      );
 
     }
 
@@ -443,15 +648,16 @@ const AUTH = {
 
     try{
 
-      const data = await this.request(
-        "/auth/register",
-        {
-          email,
-          password:pass,
-          phone,
-          referral:ref
-        }
-      );
+      const data =
+        await this.request(
+          "/auth/register",
+          {
+            email,
+            password:pass,
+            phone,
+            referral:ref
+          }
+        );
 
       this.session(data);
 
@@ -460,7 +666,10 @@ const AUTH = {
     }catch(e){
 
       this.error(
-        e.message || "Register failed"
+
+        e.message ||
+        "Register failed"
+
       );
 
     }
@@ -478,7 +687,9 @@ const AUTH = {
 
   session(data){
 
-    if(!data?.token){
+    if(
+      !data?.token
+    ){
 
       throw new Error(
         "Invalid auth response"
@@ -495,12 +706,15 @@ const AUTH = {
 
       localStorage.setItem(
         "user",
-        JSON.stringify(data.user)
+        JSON.stringify(
+          data.user
+        )
       );
 
     }
 
-    this.state.authenticated = true;
+    this.state.authenticated =
+      true;
 
   },
 
@@ -512,7 +726,8 @@ const AUTH = {
 
     localStorage.clear();
 
-    this.state.authenticated = false;
+    this.state.authenticated =
+      false;
 
     if(window.WS){
 
@@ -528,7 +743,8 @@ const AUTH = {
 
     localStorage.clear();
 
-    this.state.authenticated = false;
+    this.state.authenticated =
+      false;
 
     this.showAuth();
 
@@ -541,7 +757,9 @@ const AUTH = {
   async guard(){
 
     const token =
-      localStorage.getItem("token");
+      localStorage.getItem(
+        "token"
+      );
 
     if(!token){
 
@@ -553,10 +771,38 @@ const AUTH = {
 
     try{
 
-      const res =
-        await API.get("/auth/check");
+      const timeout =
+        new Promise(
+          (_,reject)=>{
 
-      if(!res || res.error){
+            setTimeout(()=>{
+
+              reject(
+                new Error(
+                  "Session timeout"
+                )
+              );
+
+            },8000);
+
+          }
+        );
+
+      const res =
+        await Promise.race([
+
+          API.get(
+            "/auth/check"
+          ),
+
+          timeout
+
+        ]);
+
+      if(
+        !res ||
+        res.error
+      ){
 
         throw new Error();
 
@@ -564,7 +810,12 @@ const AUTH = {
 
       await this.enter();
 
-    }catch{
+    }catch(e){
+
+      console.error(
+        "AUTH GUARD:",
+        e.message
+      );
 
       localStorage.clear();
 
@@ -582,15 +833,38 @@ const AUTH = {
 
     this.lockApp();
 
-    this.el.overlay.style.display =
-      "flex";
+    if(this.el.overlay){
+
+      this.el.overlay.style.display =
+        "flex";
+
+      requestAnimationFrame(()=>{
+
+        this.el.overlay.classList.add(
+          "visible"
+        );
+
+      });
+
+    }
 
   },
 
   hideAuth(){
 
-    this.el.overlay.style.display =
-      "none";
+    if(!this.el.overlay)
+      return;
+
+    this.el.overlay.classList.remove(
+      "visible"
+    );
+
+    setTimeout(()=>{
+
+      this.el.overlay.style.display =
+        "none";
+
+    },180);
 
   },
 
@@ -606,9 +880,13 @@ const AUTH = {
 
     requestAnimationFrame(()=>{
 
-      document.body.scrollTop = 0;
+      window.scrollTo({
 
-      document.documentElement.scrollTop = 0;
+        top:0,
+
+        behavior:"instant"
+
+      });
 
     });
 
@@ -620,7 +898,10 @@ const AUTH = {
 
       }catch(e){
 
-        console.error(e);
+        console.error(
+          "WS:",
+          e
+        );
 
       }
 
@@ -634,7 +915,10 @@ const AUTH = {
 
       }catch(e){
 
-        console.error(e);
+        console.error(
+          "SYNC:",
+          e
+        );
 
       }
 
@@ -650,7 +934,8 @@ const AUTH = {
 
 function $(id){
 
-  return document.getElementById(id);
+  return document
+    .getElementById(id);
 
 }
 
@@ -658,8 +943,14 @@ function $(id){
    START
 ===================================================== */
 
-window.addEventListener("load",()=>{
+document.addEventListener(
 
-  AUTH.init();
+  "DOMContentLoaded",
 
-});
+  ()=>{
+
+    AUTH.init();
+
+  }
+
+);
