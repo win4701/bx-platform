@@ -5417,3 +5417,43 @@ body.auth-lock{
     font-size:12px;
   }
 }
+/* =========================================================
+   AUTH LOADER FIX
+========================================================= */
+
+#authOverlay .auth-btn{
+  position:relative;
+}
+
+#authOverlay .auth-btn.loading{
+  pointer-events:none;
+  color:transparent !important;
+}
+
+#authOverlay .auth-btn.loading::before{
+  content:"";
+
+  position:absolute;
+
+  width:18px;
+  height:18px;
+
+  top:50%;
+  left:50%;
+
+  margin-left:-9px;
+  margin-top:-9px;
+
+  border-radius:50%;
+
+  border:2px solid rgba(0,0,0,.15);
+  border-top-color:#08130b;
+
+  animation:authSpin .65s linear infinite;
+}
+
+@keyframes authSpin{
+  to{
+    transform:rotate(360deg);
+  }
+}
