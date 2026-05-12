@@ -39,6 +39,27 @@ img{
 }
 
 /* =========================================================
+   APP PRELOAD FIX
+========================================================= */
+
+body.app-preload{
+  overflow:hidden;
+  background:#070b11;
+}
+
+.app-hidden{
+  opacity:0 !important;
+  visibility:hidden !important;
+  pointer-events:none !important;
+}
+
+#app{
+  transition:
+    opacity .28s ease,
+    visibility .28s ease;
+}
+
+/* =========================================================
    HEADER
 ========================================================= */
 .app-header{
