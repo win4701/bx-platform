@@ -230,27 +230,46 @@ const AUTH = {
 
   lockApp(){
 
-    document.body.classList.add(
-      "auth-lock"
-    );
+  document.body.classList.add(
+    "auth-lock"
+  );
 
-    this.el.app
-    ?.classList.add(
-      "hidden"
+  if(this.el.app){
+
+    this.el.app.classList.add(
+      "app-hidden"
     );
+  }
 
   },
-
+   
   unlockApp(){
 
-    document.body.classList.remove(
-      "auth-lock"
+  document.body.classList.remove(
+    "auth-lock"
+  );
+
+  document.body.classList.remove(
+    "app-preload"
+  );
+
+  if(this.el.app){
+
+    this.el.app.classList.remove(
+      "app-hidden"
     );
 
-    this.el.app
-    ?.classList.remove(
-      "hidden"
-    );
+    requestAnimationFrame(()=>{
+
+      this.el.app.style.opacity =
+        "1";
+
+      this.el.app.style.visibility =
+        "visible";
+
+    });
+
+  }
 
   },
 
@@ -831,25 +850,24 @@ const AUTH = {
 
   showAuth(){
 
-    this.lockApp();
+  this.lockApp();
 
-    if(this.el.overlay){
+  if(!this.el.overlay)
+    return;
 
-      this.el.overlay.style.display =
-        "flex";
+  this.el.overlay.style.display =
+    "flex";
 
-      requestAnimationFrame(()=>{
+  requestAnimationFrame(()=>{
 
-        this.el.overlay.classList.add(
-          "visible"
-        );
+    this.el.overlay.classList.add(
+      "visible"
+    );
 
-      });
-
-    }
+  });
 
   },
-
+   
   hideAuth(){
 
     if(!this.el.overlay)
