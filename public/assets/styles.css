@@ -4997,25 +4997,6 @@ body.auth-lock{
 }
 
 /* =========================================================
-   AUTH BOOT FIX
-========================================================= */
-
-#authOverlay.auth-boot{
-  opacity:0;
-  visibility:hidden;
-  pointer-events:none;
-}
-
-#authOverlay.visible{
-  opacity:1;
-  visibility:visible;
-  pointer-events:auto;
-  transition:
-    opacity .24s ease,
-    visibility .24s ease;
-}
-
-/* =========================================================
    OVERLAY
 ========================================================= */
 
