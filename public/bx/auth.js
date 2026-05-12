@@ -855,6 +855,10 @@ const AUTH = {
   if(!this.el.overlay)
     return;
 
+  this.el.overlay.classList.remove(
+    "auth-boot"
+  );
+
   this.el.overlay.style.display =
     "flex";
 
@@ -863,29 +867,31 @@ const AUTH = {
     this.el.overlay.classList.add(
       "visible"
     );
-
-  });
-
-  },
+     });
+   },
    
   hideAuth(){
 
-    if(!this.el.overlay)
-      return;
+  if(!this.el.overlay)
+    return;
 
-    this.el.overlay.classList.remove(
-      "visible"
-    );
+  this.el.overlay.classList.remove(
+    "visible"
+  );
 
-    setTimeout(()=>{
+  this.el.overlay.classList.add(
+    "auth-boot"
+  );
 
-      this.el.overlay.style.display =
-        "none";
+  setTimeout(()=>{
 
-    },180);
+    this.el.overlay.style.display =
+      "none";
+
+    },220);
 
   },
-
+   
   /* =====================================================
      ENTER APP
   ===================================================== */
