@@ -42,21 +42,31 @@ img{
    APP PRELOAD FIX
 ========================================================= */
 
-body.app-preload{
-  overflow:hidden;
-  background:#070b11;
+body.app-preload .view{
+  display:none !important;
 }
 
-.app-hidden{
+body.app-preload #authOverlay{
+  display:flex !important;
+  opacity:1 !important;
+  visibility:visible !important;
+}
+
+/* app hidden before auth */
+body.app-preload #app{
   opacity:0 !important;
   visibility:hidden !important;
   pointer-events:none !important;
 }
 
-#app{
+/* unlock after auth */
+body.app-ready #app{
+  opacity:1 !important;
+  visibility:visible !important;
+  pointer-events:auto !important;
   transition:
-    opacity .28s ease,
-    visibility .28s ease;
+    opacity .25s ease,
+    visibility .25s ease;
 }
 
 /* =========================================================
@@ -103,7 +113,7 @@ body.app-preload{
 
 .view {
   display:none;
-  min-height: calc(100vh - 60px);
+  min-height: calc(100vh);
   overflow-y:auto;
   padding-bottom:100px;
   z-index:1;
