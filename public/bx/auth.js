@@ -253,22 +253,15 @@ const AUTH = {
     "app-preload"
   );
 
+  document.body.classList.add(
+    "app-ready"
+  );
+
   if(this.el.app){
 
     this.el.app.classList.remove(
       "app-hidden"
     );
-
-    requestAnimationFrame(()=>{
-
-      this.el.app.style.opacity =
-        "1";
-
-      this.el.app.style.visibility =
-        "visible";
-
-    });
-
   }
 
   },
