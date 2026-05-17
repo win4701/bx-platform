@@ -5,7 +5,7 @@
 ========================================================= */
 
 const nodemailer = require("nodemailer");
-const { addJob } = require("../core/systemQueue");
+const { addJob } = require("../queues/systemQueue");
 const config = require("../config");
 
 /* =========================================================
