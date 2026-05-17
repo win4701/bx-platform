@@ -4,7 +4,7 @@
    BLOXIO WITHDRAW FRAUD ENGINE — ULTRA PROTECTION
 ========================================================= */
 
-const config = require("../config");
+const config = require("./config");
 
 /* =========================================================
    CACHE (ANTI DB LOAD)
