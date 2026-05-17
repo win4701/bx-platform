@@ -8,7 +8,7 @@ const crypto =
   require("crypto");
 
 const db =
-  require("./database");
+  require("../database");
 
 const redis =
   require("./core/redis");
