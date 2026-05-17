@@ -26,7 +26,7 @@ const crash =
   require("../engines/crashEngine");
 
 const fraud =
-  require("../security/fraudEngine");
+  require("../core/fraudEngine");
 
 const auth =
   require("../middleware/auth");
