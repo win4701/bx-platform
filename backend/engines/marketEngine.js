@@ -17,7 +17,7 @@ const ws =
   require("../ws/wsHub");
 
 const candle =
-  require("../trading/candleEngine");
+  require("../candleEngine");
 
 /* =========================================================
    CONFIG
