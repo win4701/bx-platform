@@ -5,10 +5,10 @@
 ========================================================= */
 
 const redis =
-  require("../core/redis");
+  require("./core/redis");
 
 const ws =
-  require("../ws/wsHub");
+  require("./ws/wsHub");
 
 /* =========================================================
    CONFIG
