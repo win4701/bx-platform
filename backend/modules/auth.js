@@ -10,8 +10,8 @@ const router = express.Router();
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 
-const db = require("../database");
-const config = require("../config");
+const db = require("./database");
+const config = require("./config");
 
 /* =========================================================
    HELPERS
