@@ -4,8 +4,8 @@
    BLOXIO RISK ENGINE — ULTRA PROTECTION SYSTEM
 ========================================================= */
 
-const db = require("../database");
-const config = require("../config");
+const db = require("./database");
+const config = require("./config");
 
 /* =========================================================
    BASE LIMITS (FROM CONFIG)
