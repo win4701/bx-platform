@@ -29,7 +29,7 @@ const auth =
   require("../middleware/auth");
 
 const fraud =
-  require("../security/fraudEngine");
+  require("../core/fraudEngine");
 
 const ws =
   require("../ws/wsHub");
