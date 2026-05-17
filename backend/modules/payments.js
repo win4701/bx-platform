@@ -20,10 +20,10 @@ const router =
   express.Router();
 
 const db =
-  require("../database");
+  require("./database");
 
 const auth =
-  require("../middleware/auth");
+  require("./middleware/auth");
 
 /* =========================================================
    OPTIONAL MODULES
