@@ -8,28 +8,28 @@ const crypto =
   require("crypto");
 
 const db =
-  require("../database");
+  require("./database");
 
 const redis =
-  require("../core/redis");
+  require("./core/redis");
 
 const ledger =
-  require("../core/ledger");
+  require("./core/ledger");
 
 const risk =
-  require("../security/riskEngine");
+  require("../core/riskEngine");
 
 const ws =
   require("../ws/wsHub");
 
 const ai =
-  require("./aiEngine");
+  require("./core/aiEngine");
 
 const whale =
-  require("./whaleTracker");
+  require("./core/whaleTracker");
 
 const vip =
-  require("./vipSystem");
+  require("./core/vipSystem");
 
 /* =========================================================
    CONFIG
