@@ -8,7 +8,7 @@ const crypto =
   require("crypto");
 
 const redis =
-  require("../core/redis");
+  require("./core/redis");
 
 const geoip =
   require("geoip-lite");
