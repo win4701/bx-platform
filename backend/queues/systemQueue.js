@@ -1,70 +1,230 @@
 "use strict";
 
 /* =========================================================
-   BLOXIO SYSTEM QUEUE — ULTRA ENTERPRISE
+   BLOXIO SYSTEM QUEUE — ENTERPRISE
 ========================================================= */
 
-const { Queue, Worker, QueueEvents } = require("bullmq");
-const redis = require("../core/redis");
+const {
+  Queue,
+  Worker,
+  QueueEvents
+} = require("bullmq");
 
-const connection = redis.redis;
+const redis =
+  require("../core/redis");
+
+/* =========================================================
+   REDIS
+========================================================= */
+
+const connection =
+  redis.client;
+
+/* =========================================================
+   SAFETY
+========================================================= */
+
+if(!connection){
+
+  console.warn(
+    "⚠️ Queue disabled: Redis unavailable"
+  );
+
+  module.exports = {
+
+    systemQueue:null,
+
+    async addJob(){
+      return null;
+    },
+
+    async addDelayedJob(){
+      return null;
+    },
+
+    async stats(){
+
+      return {
+
+        waiting:0,
+        active:0,
+        completed:0,
+        failed:0
+
+      };
+
+    },
+
+    async shutdown(){
+      return true;
+    }
+
+  };
+
+  return;
+
+}
 
 /* =========================================================
    QUEUE
 ========================================================= */
 
-const systemQueue = new Queue("system", {
-  connection,
-  defaultJobOptions: {
-    removeOnComplete: true,
-    removeOnFail: 100,
-    attempts: 5,
-    backoff: {
-      type: "exponential",
-      delay: 2000
-    },
-    timeout: 30000
-  }
-});
+const systemQueue =
+  new Queue(
+
+    "system",
+
+    {
+
+      connection,
+
+      defaultJobOptions: {
+
+        removeOnComplete:true,
+
+        removeOnFail:100,
+
+        attempts:5,
+
+        backoff:{
+
+          type:"exponential",
+
+          delay:2000
+
+        },
+
+        timeout:30000
+
+      }
+
+    }
+
+);
 
 /* =========================================================
    EVENTS
 ========================================================= */
 
-const events = new QueueEvents("system", { connection });
+const events =
+  new QueueEvents(
 
-events.on("completed", ({ jobId }) => {
-  console.log("✅ Job completed:", jobId);
-});
+    "system",
 
-events.on("failed", ({ jobId, failedReason }) => {
-  console.error("❌ Job failed:", jobId, failedReason);
-});
+    {
+
+      connection
+
+    }
+
+);
+
+events.on(
+
+  "completed",
+
+  ({ jobId })=>{
+
+    console.log(
+      "✅ Job completed:",
+      jobId
+    );
+
+  }
+
+);
+
+events.on(
+
+  "failed",
+
+  ({
+    jobId,
+    failedReason
+  })=>{
+
+    console.error(
+
+      "❌ Job failed:",
+
+      jobId,
+
+      failedReason
+
+    );
+
+  }
+
+);
 
 /* =========================================================
-   JOB VALIDATION
+   VALIDATION
 ========================================================= */
 
-function validateJob(name, data){
-  if(!name) throw new Error("invalid_job_name");
-  if(typeof data !== "object") throw new Error("invalid_job_data");
+function validateJob(
+  name,
+  data
+){
+
+  if(!name){
+
+    throw new Error(
+      "invalid_job_name"
+    );
+
+  }
+
+  if(
+    typeof data !== "object"
+  ){
+
+    throw new Error(
+      "invalid_job_data"
+    );
+
+  }
+
 }
 
 /* =========================================================
-   ADD JOB (IDEMPOTENT)
+   ADD JOB
 ========================================================= */
 
-async function addJob(name, data, opts = {}){
+async function addJob(
+  name,
+  data,
+  opts = {}
+){
 
-  validateJob(name,data);
+  validateJob(
+    name,
+    data
+  );
 
-  const jobId = opts.jobId || `${name}:${JSON.stringify(data)}`;
+  const jobId =
 
-  return await systemQueue.add(name, data, {
-    jobId, // 🔥 prevents duplicates
-    priority: opts.priority || 1,
-    ...opts
-  });
+    opts.jobId ||
+
+    `${name}:${Date.now()}`;
+
+  return await systemQueue.add(
+
+    name,
+
+    data,
+
+    {
+
+      jobId,
+
+      priority:
+        opts.priority || 1,
+
+      ...opts
+
+    }
+
+  );
 
 }
 
@@ -72,117 +232,281 @@ async function addJob(name, data, opts = {}){
    DELAYED JOB
 ========================================================= */
 
-async function addDelayedJob(name, data, delayMs){
+async function addDelayedJob(
+  name,
+  data,
+  delayMs = 1000
+){
 
-  return await systemQueue.add(name, data, {
-    delay: delayMs,
-    jobId: `${name}:${Date.now()}`
-  });
+  return await systemQueue.add(
+
+    name,
+
+    data,
+
+    {
+
+      delay:delayMs,
+
+      jobId:
+        `${name}:${Date.now()}`
+
+    }
+
+  );
 
 }
 
 /* =========================================================
-   WORKERS (PRELOAD)
+   SERVICES
 ========================================================= */
 
-const depositWatcher = require("../services/depositWatcher");
-const matchingEngine = require("../engines/matchingEngine");
-const systemBots = require("../services/systemBots");
-const miningEngine = require("../engines/miningEngine");
+let depositWatcher = null;
+let matchingEngine = null;
+let systemBots = null;
+let miningEngine = null;
+
+try{
+
+  depositWatcher =
+    require("../services/depositWatcher");
+
+}catch{}
+
+try{
+
+  matchingEngine =
+    require("../engines/matchingEngine");
+
+}catch{}
+
+try{
+
+  systemBots =
+    require("../services/systemBots");
+
+}catch{}
+
+try{
+
+  miningEngine =
+    require("../engines/miningEngine");
+
+}catch{}
 
 /* =========================================================
    WORKER
 ========================================================= */
 
-const worker = new Worker(
-  "system",
-  async (job) => {
+const worker =
+  new Worker(
 
-    const { name, data } = job;
+    "system",
 
-    console.log("⚙️ Processing:", name);
+    async job=>{
 
-    try{
+      const {
+        name,
+        data
+      } = job;
 
-      /* 🔐 distributed lock */
-      const locked = await redis.lock("job:" + job.id);
+      console.log(
+        "⚙️ Processing:",
+        name
+      );
 
-      if(!locked){
-        return null;
-      }
+      const lockKey =
+        "job:" + job.id;
 
-      switch(name){
+      try{
 
-        case "deposit_check":
-          return await depositWatcher.run(data);
+        const locked =
+          await redis.lock(
+            lockKey
+          );
 
-        case "match_order":
-          return await matchingEngine.process(data);
+        if(!locked){
 
-        case "market_bot":
-          return await systemBots.run(data);
-
-        case "mining_reward":
-          return await miningEngine.process(data);
-
-        default:
-          console.warn("Unknown job:", name);
           return null;
 
+        }
+
+        switch(name){
+
+          case "deposit_check":
+
+            if(
+              depositWatcher?.run
+            ){
+
+              return await depositWatcher
+                .run(data);
+
+            }
+
+            return null;
+
+          case "match_order":
+
+            if(
+              matchingEngine?.process
+            ){
+
+              return await matchingEngine
+                .process(data);
+
+            }
+
+            return null;
+
+          case "market_bot":
+
+            if(
+              systemBots?.run
+            ){
+
+              return await systemBots
+                .run(data);
+
+            }
+
+            return null;
+
+          case "mining_reward":
+
+            if(
+              miningEngine?.process
+            ){
+
+              return await miningEngine
+                .process(data);
+
+            }
+
+            return null;
+
+          default:
+
+            console.warn(
+              "Unknown job:",
+              name
+            );
+
+            return null;
+
+        }
+
+      }catch(err){
+
+        console.error(
+
+          "❌ Worker error:",
+
+          err.message
+
+        );
+
+        throw err;
+
+      }finally{
+
+        await redis.unlock(
+          lockKey
+        );
+
       }
 
-    }catch(err){
+    },
 
-      console.error("Worker error:", err.message);
-      throw err;
+    {
 
-    }finally{
-      await redis.unlock("job:" + job.id);
+      connection,
+
+      concurrency:10
+
     }
 
-  },
-  {
-    connection,
-    concurrency: 10
-  }
 );
 
 /* =========================================================
    WORKER EVENTS
 ========================================================= */
 
-worker.on("completed", (job)=>{
-  console.log("✔ Worker done:", job.id);
-});
+worker.on(
 
-worker.on("failed", (job, err)=>{
-  console.error("❌ Worker failed:", job?.id, err.message);
-});
+  "completed",
+
+  job=>{
+
+    console.log(
+      "✔ Worker done:",
+      job.id
+    );
+
+  }
+
+);
+
+worker.on(
+
+  "failed",
+
+  (job,err)=>{
+
+    console.error(
+
+      "❌ Worker failed:",
+
+      job?.id,
+
+      err.message
+
+    );
+
+  }
+
+);
 
 /* =========================================================
-   MONITORING
+   MONITOR
 ========================================================= */
 
 async function stats(){
 
   return {
-    waiting: await systemQueue.getWaitingCount(),
-    active: await systemQueue.getActiveCount(),
-    completed: await systemQueue.getCompletedCount(),
-    failed: await systemQueue.getFailedCount()
+
+    waiting:
+      await systemQueue
+        .getWaitingCount(),
+
+    active:
+      await systemQueue
+        .getActiveCount(),
+
+    completed:
+      await systemQueue
+        .getCompletedCount(),
+
+    failed:
+      await systemQueue
+        .getFailedCount()
+
   };
 
 }
 
 /* =========================================================
-   GRACEFUL SHUTDOWN
+   SHUTDOWN
 ========================================================= */
 
 async function shutdown(){
 
-  console.log("🛑 Shutting down queue...");
+  console.log(
+    "🛑 Queue shutdown..."
+  );
 
   await worker.close();
+
   await systemQueue.close();
 
 }
@@ -192,9 +516,15 @@ async function shutdown(){
 ========================================================= */
 
 module.exports = {
+
   systemQueue,
+
   addJob,
+
   addDelayedJob,
+
   stats,
+
   shutdown
+
 };
