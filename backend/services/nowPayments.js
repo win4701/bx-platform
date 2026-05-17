@@ -7,9 +7,9 @@
 const axios = require("axios");
 const crypto = require("crypto");
 
-const db = require("../database");
-const redis = require("../core/redis");
-const ledger = require("../core/ledger");
+const db = require("./database");
+const redis = require("./core/redis");
+const ledger = require("./core/ledger");
 
 const BASE_URL =
   "https://api.nowpayments.io/v1";
