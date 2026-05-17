@@ -5,8 +5,8 @@
 ========================================================= */
 
 const { Worker } = require("bullmq");
-const redis = require("../core/redis");
-const config = require("../config");
+const redis = require("./core/redis");
+const config = require("./config");
 
 const connection = redis.redis;
 
@@ -14,9 +14,9 @@ const connection = redis.redis;
    ENGINES (PRELOAD 🔥)
 ========================================================= */
 
-const marketEngine = require("../engines/marketEngine");
-const casinoEngine = require("../engines/casinoEngine");
-const miningEngine = require("../engines/miningEngine");
+const marketEngine = require("./engines/marketEngine");
+const casinoEngine = require("./engines/casinoEngine");
+const miningEngine = require("./engines/miningEngine");
 
 /* =========================================================
    JOB VALIDATION
