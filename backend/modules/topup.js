@@ -1,5 +1,5 @@
-const db = require("../database")
-const economy = require("../core/bxEconomy")
+const db = require("./database")
+const economy = require("./core/bxEconomy")
 
 exports.execute = async (req,res)=>{
 
