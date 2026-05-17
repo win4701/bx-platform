@@ -4,8 +4,8 @@
    BLOXIO LEDGER ENGINE — ULTRA SECURE
 ========================================================= */
 
-const db = require("../database");
-const config = require("../config");
+const db = require("./database");
+const config = require("./config");
 
 /* =========================================================
    HELPERS
