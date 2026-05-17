@@ -7,7 +7,7 @@
 const crypto = require("crypto");
 
 const redis =
-  require("../core/redis");
+  require("./redis");
 
 const adaptiveRTP =
   require("./adaptiveRTP");
