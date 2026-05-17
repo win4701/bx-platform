@@ -11,7 +11,7 @@ const {
 } = require("bullmq");
 
 const redis =
-  require("../core/redis");
+  require("./core/redis");
 
 /* =========================================================
    REDIS
