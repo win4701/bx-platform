@@ -5,7 +5,7 @@
 ========================================================= */
 
 const db =
-  require("../database");
+  require("./database");
 
 const ledger =
   require("./ledger");
