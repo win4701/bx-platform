@@ -5,9 +5,9 @@
 ========================================================= */
 
 const wsHub = require("./wsHub");
-const tradesFeed = require("../engines/tradesFeed");
-const marketEngine = require("../engines/marketEngine");
-const redis = require("../core/redis");
+const tradesFeed = require("./engines/tradesFeed");
+const marketEngine = require("./engines/marketEngine");
+const redis = require("./core/redis");
 
 /* =========================================================
    INIT
