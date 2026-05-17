@@ -17,32 +17,32 @@ const crypto =
   require("crypto");
 
 const redis =
-  require("../core/redis");
+  require("./core/redis");
 
 const casino =
-  require("../engines/casinoEngine");
+  require("./engines/casinoEngine");
 
 const crash =
-  require("../engines/crashEngine");
+  require("./engines/crashEngine");
 
 const fraud =
-  require("../core/fraudEngine");
+  require("./core/fraudEngine");
 
 const auth =
-  require("../middleware/auth");
+  require("./middleware/auth");
 
 const ws =
-  require("../ws/wsHub");
+  require("./ws/wsHub");
 
 const db =
-  require("../database");
+  require("./database");
 
 const {
 
   addJob
 
 } = require(
-  "../queues/systemQueue"
+  "./queues/systemQueue"
 );
 
 /* =========================================================
