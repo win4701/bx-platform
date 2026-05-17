@@ -7,8 +7,8 @@
 const express = require("express");
 const router = express.Router();
 
-const engine = require("../engines/miningEngine");
-const riskEngine = require("../core/riskEngine");
+const engine = require("./engines/miningEngine");
+const riskEngine = require("./core/riskEngine");
 
 /* =========================================================
    CONFIG
