@@ -5,9 +5,9 @@
 ========================================================= */
 
 const db = require("../database");
-const redis = require("../core/redis");
-const ledger = require("../core/ledger");
-const fraud = require("../core/fraudEngine");
+const redis = require("./core/redis");
+const ledger = require("./core/ledger");
+const fraud = require("./core/fraudEngine");
 
 const MAX_LEVEL = 5;
 const MIN_AMOUNT = 0.01;
