@@ -8,13 +8,13 @@ const crypto =
   require("crypto");
 
 const redis =
-  require("../core/redis");
+  require("./core/redis");
 
 const ledger =
-  require("../core/ledger");
+  require("./core/ledger");
 
 const ws =
-  require("../ws/wsHub");
+  require("./ws/wsHub");
 
 const candle =
   require("./candleEngine");
