@@ -4,7 +4,7 @@
    TX PROCESSOR — PARSE + APPLY
 ========================================================= */
 
-const ledger = require("../core/ledger");
+const ledger = require("./core/ledger");
 
 /* =========================================================
    ADDRESS MAPPING
