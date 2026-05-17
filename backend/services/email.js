@@ -5,8 +5,8 @@
 ========================================================= */
 
 const nodemailer = require("nodemailer");
-const { addJob } = require("../queues/systemQueue");
-const config = require("../config");
+const { addJob } = require("./queues/systemQueue");
+const config = require("./config");
 
 /* =========================================================
    TRANSPORT
