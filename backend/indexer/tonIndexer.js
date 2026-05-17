@@ -5,8 +5,8 @@
 ========================================================= */
 
 const axios = require("axios");
-const redis = require("../core/redis");
-const { addJob } = require("../core/systemQueue");
+const redis = require("./core/redis");
+const { addJob } = require("./queues/systemQueue");
 
 /* =========================================================
    CONFIG
