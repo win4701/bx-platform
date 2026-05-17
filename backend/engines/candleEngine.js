@@ -5,13 +5,13 @@
 ========================================================= */
 
 const db =
-  require("../database");
+  require("./database");
 
 const redis =
-  require("../core/redis");
+  require("./core/redis");
 
 const ws =
-  require("../ws/wsHub");
+  require("./ws/wsHub");
 
 /* =========================================================
    CONFIG
