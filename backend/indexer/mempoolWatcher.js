@@ -4,7 +4,7 @@
    MEMPOOL WATCH (SIMULATED VIA FAST POLL)
 ========================================================= */
 
-const redis = require("../core/redis");
+const redis = require("./core/redis");
 
 async function watch(tx){
 
