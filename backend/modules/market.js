@@ -17,25 +17,25 @@ const router =
   express.Router();
 
 const market =
-  require("../engines/marketEngine");
+  require("./engines/marketEngine");
 
 const tradesFeed =
-  require("../engines/tradesFeed");
+  require("./engines/tradesFeed");
 
 const orderbook =
-  require("../engines/orderbookEngine");
+  require("./engines/orderbookEngine");
 
 const candle =
-  require("../engines/candleEngine");
+  require("./engines/candleEngine");
 
 const auth =
-  require("../middleware/auth");
+  require("./middleware/auth");
 
 const redis =
-  require("../core/redis");
+  require("./core/redis");
 
 const ws =
-  require("../ws/wsHub");
+  require("./ws/wsHub");
 
 /* =========================================================
    CONFIG
