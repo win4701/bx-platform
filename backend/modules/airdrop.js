@@ -3,8 +3,8 @@
 const express = require("express");
 const router = express.Router();
 
-const db = require("../database");
-const economy = require("../core/bxEconomy");
+const db = require("./database");
+const economy = require("./core/bxEconomy");
 
 /* =========================================
 CONFIG (PRO)
