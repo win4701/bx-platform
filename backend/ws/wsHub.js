@@ -8,8 +8,8 @@ const WebSocket = require("ws");
 const jwt = require("jsonwebtoken");
 const zlib = require("zlib");
 
-const redis = require("../core/redis");
-const config = require("../config");
+const redis = require("./core/redis");
+const config = require("./config");
 
 /* =========================================================
    STATE
