@@ -9,10 +9,10 @@ const router = express.Router();
 
 const crypto = require("crypto");
 
-const db = require("../database");
-const ledger = require("../core/ledger");
+const db = require("./database");
+const ledger = require("./core/ledger");
 
-const now = require("../services/nowPayments");
+const now = require("./services/nowPayments");
 
 /* ===== CONFIG ===== */
 
