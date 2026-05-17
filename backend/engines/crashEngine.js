@@ -8,16 +8,16 @@ const crypto =
   require("crypto");
 
 const db =
-  require("../database");
+  require("./database");
 
 const redis =
-  require("../core/redis");
+  require("./core/redis");
 
 const ledger =
-  require("../core/ledger");
+  require("./core/ledger");
 
 const ws =
-  require("../ws/wsHub");
+  require("./ws/wsHub");
 
 /* =========================================================
    CONFIG
