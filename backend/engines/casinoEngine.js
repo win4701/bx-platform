@@ -8,7 +8,7 @@ const crypto =
   require("crypto");
 
 const db =
-  require("../database");
+  require("./database");
 
 const redis =
   require("./core/redis");
@@ -17,10 +17,10 @@ const ledger =
   require("./core/ledger");
 
 const risk =
-  require("../core/riskEngine");
+  require("./core/riskEngine");
 
 const ws =
-  require("../ws/wsHub");
+  require("./ws/wsHub");
 
 const ai =
   require("./core/aiEngine");
