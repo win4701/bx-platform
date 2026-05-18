@@ -5,16 +5,16 @@
 ========================================================= */
 
 const redis =
-  require("./core/redis");
+  require("../core/redis");
 
 const db =
-  require("./database");
+  require("../database");
 
 const ws =
-  require("./ws/wsHub");
+  require("../ws/wsHub");
 
 const market =
-  require("./marketEngine");
+  require("../marketEngine");
 
 /* =========================================================
    CONFIG
