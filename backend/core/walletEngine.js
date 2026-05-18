@@ -4,8 +4,8 @@
    BLOXIO WALLET ENGINE — ULTRA SECURE
 ========================================================= */
 
-const ledger = require("./ledger");
-const riskEngine = require("./riskEngine");
+const ledger = require("../ledger");
+const riskEngine = require("../riskEngine");
 
 class WalletEngine{
 
