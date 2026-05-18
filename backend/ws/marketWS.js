@@ -4,10 +4,10 @@
    BLOXIO MARKET WS — ULTRA REALTIME ENGINE
 ========================================================= */
 
-const wsHub = require("./wsHub");
-const tradesFeed = require("./engines/tradesFeed");
-const marketEngine = require("./engines/marketEngine");
-const redis = require("./core/redis");
+const wsHub = require("../wsHub");
+const tradesFeed = require("../engines/tradesFeed");
+const marketEngine = require("../engines/marketEngine");
+const redis = require("../core/redis");
 
 /* =========================================================
    INIT
