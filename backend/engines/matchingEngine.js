@@ -17,10 +17,10 @@ const ws =
   require("../ws/wsHub");
 
 const candle =
-  require("../candleEngine");
+  require("../engines/candleEngine");
 
 const orderbook =
-  require("../orderbookEngine");
+  require("../engines/orderbookEngine");
 
 /* =========================================================
    CONFIG
