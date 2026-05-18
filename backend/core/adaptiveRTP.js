@@ -13,7 +13,7 @@ const whale =
   require("../whaleTracker");
 
 const redis =
-  require("../redis");
+  require("../core/redis");
 
 /* =========================================================
    CONFIG
