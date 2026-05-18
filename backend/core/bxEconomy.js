@@ -8,7 +8,7 @@ const db =
   require("../database");
 
 const ledger =
-  require("../ledger");
+  require("../core/ledger");
 
 const redis =
   require("../core/redis");
