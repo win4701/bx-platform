@@ -42,7 +42,7 @@ const {
   addJob
 
 } = require(
-  "./queues/systemQueue"
+  "../queues/systemQueue"
 );
 
 /* =========================================================
