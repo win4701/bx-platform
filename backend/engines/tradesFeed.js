@@ -14,7 +14,7 @@ const ws =
   require("../ws/wsHub");
 
 const candle =
-  require("../candleEngine");
+  require("../engines/candleEngine");
 
 /* =========================================================
    CONFIG
