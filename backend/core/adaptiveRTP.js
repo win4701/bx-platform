@@ -7,10 +7,10 @@
 const crypto = require("crypto");
 
 const { getVIP, getBenefits } =
-  require("../vipSystem");
+  require("../core/vipSystem");
 
 const whale =
-  require("../whaleTracker");
+  require("../core/whaleTracker");
 
 const redis =
   require("../core/redis");
