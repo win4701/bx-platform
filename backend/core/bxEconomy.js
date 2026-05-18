@@ -11,7 +11,7 @@ const ledger =
   require("../ledger");
 
 const redis =
-  require("../redis");
+  require("../core/redis");
 
 /* =========================================================
    CONFIG
