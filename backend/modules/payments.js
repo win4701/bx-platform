@@ -25,6 +25,9 @@ const db =
 const auth =
   require("../middleware/auth");
 
+const now = 
+  require("../services/nowPayments");
+
 /* =========================================================
    OPTIONAL MODULES
 ========================================================= */
