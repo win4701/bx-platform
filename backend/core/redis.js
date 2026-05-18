@@ -37,23 +37,23 @@ const redis =
 
     {
 
-      lazyConnect:true,
+      lazyConnect:false,
 
-      maxRetriesPerRequest:3,
+      maxRetriesPerRequest:null,
 
       enableReadyCheck:true,
+
+      connectTimeout:10000,
 
       retryStrategy(times){
 
         return Math.min(
-          times * 200,
-          2000
+          times * 300,
+          3000
         );
-
       }
-
     }
-
+     
 );
 
 /* =========================================================
