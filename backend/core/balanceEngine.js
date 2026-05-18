@@ -4,7 +4,7 @@
    BLOXIO BALANCE ENGINE — ULTRA CORE
 ========================================================= */
 
-const ledger = require("./ledger");
+const ledger = require("../ledger");
 
 class BalanceEngine{
 
