@@ -4,8 +4,8 @@
    BLOXIO DEPOSIT ENGINE — ULTRA PRO
 ========================================================= */
 
-const ledger = require("./ledger");
-const riskEngine = require("./riskEngine");
+const ledger = require("../ledger");
+const riskEngine = require("../riskEngine");
 
 class DepositEngine {
 
