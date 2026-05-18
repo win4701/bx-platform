@@ -5,13 +5,13 @@
 ========================================================= */
 
 const db =
-  require("./database");
+  require("../database");
 
 const ledger =
-  require("./ledger");
+  require("../ledger");
 
 const redis =
-  require("./redis");
+  require("../redis");
 
 /* =========================================================
    CONFIG
