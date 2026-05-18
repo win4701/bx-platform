@@ -4,8 +4,8 @@
    BLOXIO MINING WS — ULTRA REALTIME ENGINE
 ========================================================= */
 
-const wsHub = require("./wsHub");
-const redis = require("./core/redis");
+const wsHub = require("../wsHub");
+const redis = require("../core/redis");
 
 /* =========================================================
    STATE (LOCAL CACHE)
