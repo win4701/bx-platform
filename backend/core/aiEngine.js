@@ -10,7 +10,7 @@ const redis =
   require("../core/redis");
 
 const adaptiveRTP =
-  require("../adaptiveRTP");
+  require("../core/adaptiveRTP");
 
 /* =========================================================
    CONFIG
