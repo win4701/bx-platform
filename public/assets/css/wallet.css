@@ -1,0 +1,833 @@
+/* =========================================================
+BLOXIO WALLET — ENTERPRISE SYSTEM
+========================================================= */
+
+/* =========================================================
+SECTION
+========================================================= */
+
+#wallet-section{
+
+position:relative;
+
+width:100%;
+
+display:flex;
+
+flex-direction:column;
+
+gap:24px;
+
+}
+
+/* =========================================================
+HERO
+========================================================= */
+
+.wallet-hero{
+
+position:relative;
+
+overflow:hidden;
+
+padding:
+34px;
+
+border-radius:
+var(--radius-xl);
+
+background:
+
+linear-gradient(
+  135deg,
+  rgba(0,224,255,.12),
+  rgba(59,130,246,.10)
+);
+
+border:
+1px solid rgba(255,255,255,.08);
+
+backdrop-filter:
+blur(24px);
+
+box-shadow:
+0 30px 80px rgba(0,0,0,.35);
+
+}
+
+.wallet-hero::before{
+
+content:"";
+
+position:absolute;
+
+top:-120px;
+right:-120px;
+
+width:300px;
+height:300px;
+
+border-radius:50%;
+
+background:
+rgba(0,224,255,.14);
+
+filter:
+blur(90px);
+
+}
+
+.wallet-hero::after{
+
+content:"";
+
+position:absolute;
+
+bottom:-140px;
+left:-120px;
+
+width:320px;
+height:320px;
+
+border-radius:50%;
+
+background:
+rgba(59,130,246,.12);
+
+filter:
+blur(100px);
+
+}
+
+/* =========================================================
+HERO CONTENT
+========================================================= */
+
+.wallet-hero-content{
+
+position:relative;
+
+z-index:2;
+
+}
+
+.wallet-badge{
+
+display:inline-flex;
+
+align-items:center;
+
+gap:10px;
+
+padding:
+10px 18px;
+
+margin-bottom:22px;
+
+border-radius:
+var(--radius-full);
+
+background:
+rgba(255,255,255,.06);
+
+border:
+1px solid rgba(255,255,255,.08);
+
+color:#fff;
+
+font-size:12px;
+
+font-weight:900;
+
+letter-spacing:.12em;
+
+text-transform:uppercase;
+
+}
+
+.wallet-title{
+
+font-size:
+clamp(40px,6vw,76px);
+
+line-height:1;
+
+font-weight:1000;
+
+letter-spacing:-.06em;
+
+color:#fff;
+
+margin-bottom:18px;
+
+}
+
+.wallet-sub{
+
+max-width:620px;
+
+color:
+rgba(255,255,255,.72);
+
+line-height:1.8;
+
+font-size:15px;
+
+}
+
+/* =========================================================
+TOTAL CARD
+========================================================= */
+
+.wallet-total-card{
+
+position:relative;
+
+overflow:hidden;
+
+padding:
+30px;
+
+border-radius:
+var(--radius-xl);
+
+background:
+rgba(255,255,255,.04);
+
+border:
+1px solid rgba(255,255,255,.06);
+
+backdrop-filter:
+blur(20px);
+
+}
+
+.wallet-total-label{
+
+font-size:13px;
+
+font-weight:800;
+
+text-transform:uppercase;
+
+letter-spacing:.12em;
+
+color:
+rgba(255,255,255,.42);
+
+margin-bottom:14px;
+
+}
+
+#walletTotal{
+
+font-size:
+clamp(44px,8vw,82px);
+
+line-height:1;
+
+font-weight:1000;
+
+letter-spacing:-.06em;
+
+color:#fff;
+
+text-shadow:
+0 0 40px rgba(0,224,255,.18);
+
+}
+
+/* =========================================================
+ACTIONS
+========================================================= */
+
+.wallet-actions{
+
+display:grid;
+
+grid-template-columns:
+repeat(auto-fit,minmax(180px,1fr));
+
+gap:18px;
+
+}
+
+.wallet-action{
+
+height:62px;
+
+border:none;
+
+outline:none;
+
+cursor:pointer;
+
+border-radius:
+var(--radius-lg);
+
+background:
+rgba(255,255,255,.04);
+
+border:
+1px solid rgba(255,255,255,.06);
+
+color:#fff;
+
+font-size:14px;
+
+font-weight:900;
+
+letter-spacing:.04em;
+
+backdrop-filter:
+blur(16px);
+
+transition:
+.25s var(--ease);
+
+}
+
+.wallet-action:hover{
+
+transform:
+translateY(-2px);
+
+background:
+rgba(0,224,255,.08);
+
+border-color:
+rgba(0,224,255,.18);
+
+box-shadow:
+0 18px 40px rgba(0,224,255,.12);
+
+}
+
+/* =========================================================
+ASSETS
+========================================================= */
+
+.wallet-assets{
+
+display:flex;
+
+flex-direction:column;
+
+gap:16px;
+
+}
+
+/* =========================================================
+ROW
+========================================================= */
+
+.wallet-row{
+
+display:flex;
+
+align-items:center;
+justify-content:space-between;
+
+gap:18px;
+
+padding:
+22px;
+
+border-radius:
+var(--radius-lg);
+
+background:
+rgba(255,255,255,.04);
+
+border:
+1px solid rgba(255,255,255,.06);
+
+backdrop-filter:
+blur(18px);
+
+transition:
+.25s var(--ease);
+
+}
+
+.wallet-row:hover{
+
+transform:
+translateY(-2px);
+
+border-color:
+rgba(0,224,255,.16);
+
+box-shadow:
+0 18px 40px rgba(0,0,0,.22);
+
+}
+
+/* =========================================================
+ASSET INFO
+========================================================= */
+
+.wallet-asset{
+
+display:flex;
+
+align-items:center;
+
+gap:16px;
+
+}
+
+.wallet-asset-icon{
+
+width:54px;
+height:54px;
+
+display:flex;
+
+align-items:center;
+justify-content:center;
+
+border-radius:18px;
+
+background:
+rgba(255,255,255,.05);
+
+border:
+1px solid rgba(255,255,255,.08);
+
+font-size:20px;
+
+}
+
+.wallet-asset-meta{
+
+display:flex;
+
+flex-direction:column;
+
+gap:4px;
+
+}
+
+.wallet-asset-meta strong{
+
+font-size:15px;
+
+font-weight:900;
+
+color:#fff;
+
+}
+
+.wallet-asset-meta span{
+
+color:
+rgba(255,255,255,.42);
+
+font-size:12px;
+
+font-weight:700;
+
+}
+
+/* =========================================================
+BALANCE
+========================================================= */
+
+.wallet-balance{
+
+display:flex;
+
+flex-direction:column;
+
+align-items:flex-end;
+
+gap:4px;
+
+}
+
+.wallet-balance strong{
+
+font-size:16px;
+
+font-weight:1000;
+
+color:#fff;
+
+}
+
+.wallet-balance span{
+
+font-size:12px;
+
+color:
+rgba(255,255,255,.42);
+
+}
+
+/* =========================================================
+SEARCH
+========================================================= */
+
+.wallet-search{
+
+position:relative;
+
+}
+
+#walletAssetSearch{
+
+width:100%;
+
+height:60px;
+
+border:none;
+
+outline:none;
+
+padding:
+0 18px;
+
+border-radius:
+var(--radius-lg);
+
+background:
+rgba(255,255,255,.04);
+
+border:
+1px solid rgba(255,255,255,.06);
+
+color:#fff;
+
+font-size:15px;
+
+}
+
+#walletAssetSearch::placeholder{
+
+color:
+rgba(255,255,255,.35);
+
+}
+
+#walletAssetSearch:focus{
+
+border-color:
+rgba(0,224,255,.22);
+
+box-shadow:
+0 0 0 4px rgba(0,224,255,.08);
+
+}
+
+/* =========================================================
+PANELS
+========================================================= */
+
+.wallet-panel{
+
+position:fixed;
+
+inset:0;
+
+z-index:3000;
+
+display:flex;
+
+align-items:center;
+justify-content:center;
+
+padding:24px;
+
+background:
+rgba(4,7,12,.82);
+
+backdrop-filter:
+blur(20px);
+
+}
+
+.wallet-hidden{
+
+display:none;
+
+}
+
+/* =========================================================
+PANEL CARD
+========================================================= */
+
+.wallet-panel-card{
+
+width:100%;
+max-width:520px;
+
+border-radius:
+var(--radius-xl);
+
+background:
+rgba(15,23,36,.82);
+
+border:
+1px solid rgba(255,255,255,.06);
+
+backdrop-filter:
+blur(28px);
+
+overflow:hidden;
+
+box-shadow:
+0 30px 80px rgba(0,0,0,.42);
+
+animation:
+modalOpen .35s var(--ease);
+
+}
+
+/* =========================================================
+PANEL HEADER
+========================================================= */
+
+.wallet-panel-head{
+
+display:flex;
+
+align-items:center;
+justify-content:space-between;
+
+padding:
+24px;
+
+border-bottom:
+1px solid rgba(255,255,255,.05);
+
+}
+
+.wallet-panel-head h3{
+
+font-size:18px;
+
+font-weight:1000;
+
+color:#fff;
+
+}
+
+/* =========================================================
+FORM
+========================================================= */
+
+.wallet-form{
+
+display:flex;
+
+flex-direction:column;
+
+gap:18px;
+
+padding:
+24px;
+
+}
+
+.wallet-form input,
+.wallet-form select{
+
+width:100%;
+
+height:58px;
+
+border:none;
+
+outline:none;
+
+padding:
+0 18px;
+
+border-radius:
+var(--radius-md);
+
+background:
+rgba(255,255,255,.04);
+
+border:
+1px solid rgba(255,255,255,.06);
+
+color:#fff;
+
+font-size:14px;
+
+}
+
+.wallet-form input:focus,
+.wallet-form select:focus{
+
+border-color:
+rgba(0,224,255,.22);
+
+}
+
+/* =========================================================
+QR
+========================================================= */
+
+#depositQR{
+
+display:flex;
+
+align-items:center;
+justify-content:center;
+
+padding:
+24px;
+
+border-radius:
+var(--radius-lg);
+
+background:
+rgba(255,255,255,.04);
+
+}
+
+#depositQR img{
+
+width:180px;
+height:180px;
+
+}
+
+/* =========================================================
+ADDRESS
+========================================================= */
+
+.deposit-address{
+
+display:flex;
+
+align-items:center;
+
+gap:12px;
+
+}
+
+#depositAddressText{
+
+flex:1;
+
+padding:
+16px;
+
+border-radius:
+var(--radius-md);
+
+background:
+rgba(255,255,255,.04);
+
+color:#fff;
+
+font-size:13px;
+
+word-break:break-all;
+
+}
+
+/* =========================================================
+STATUS
+========================================================= */
+
+#walletStatus,
+#depositStatus,
+#withdrawStatus,
+#transferStatus{
+
+padding:
+14px 18px;
+
+border-radius:
+var(--radius-md);
+
+background:
+rgba(0,224,255,.08);
+
+border:
+1px solid rgba(0,224,255,.12);
+
+color:#fff;
+
+font-size:13px;
+
+font-weight:700;
+
+}
+
+/* =========================================================
+MOBILE
+========================================================= */
+
+@media(max-width:768px){
+
+.wallet-hero{
+
+padding:26px;
+
+}
+
+.wallet-title{
+
+font-size:44px;
+
+}
+
+.wallet-row{
+
+flex-direction:column;
+
+align-items:flex-start;
+
+}
+
+.wallet-balance{
+
+align-items:flex-start;
+
+}
+
+.wallet-actions{
+
+grid-template-columns:1fr;
+
+}
+
+.wallet-panel{
+
+padding:18px;
+
+}
+
+}
+
+/* =========================================================
+SMALL MOBILE
+========================================================= */
+
+@media(max-width:420px){
+
+.wallet-title{
+
+font-size:36px;
+
+}
+
+#walletTotal{
+
+font-size:54px;
+
+}
+
+.wallet-hero{
+
+padding:22px;
+
+}
+
+}
