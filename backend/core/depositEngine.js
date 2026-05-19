@@ -5,7 +5,7 @@
 ========================================================= */
 
 const ledger = require("../core/ledger");
-const riskEngine = require("../core/riskEngine");
+const riskEngine = require("../engines/riskEngine");
 
 class DepositEngine {
 
