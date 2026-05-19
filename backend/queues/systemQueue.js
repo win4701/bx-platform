@@ -1,530 +1,486 @@
 "use strict";
 
 /* =========================================================
-   BLOXIO SYSTEM QUEUE — ENTERPRISE
+BLOXIO SYSTEM QUEUE
 ========================================================= */
 
 const {
-  Queue,
-  Worker,
-  QueueEvents
+Queue,
+Worker,
+QueueEvents
 } = require("bullmq");
 
 const redis =
-  require("../core/redis");
+require("../core/redis");
 
 /* =========================================================
-   REDIS
+REDIS SAFETY
 ========================================================= */
 
-const connection =
-  redis.client;
+if(
+!redis ||
+!redis.client
+){
 
-/* =========================================================
-   SAFETY
-========================================================= */
+console.log(
+" Queue disabled"
+);
 
-if(!connection){
+module.exports = {
 
-  console.warn(
-    "⚠️ Queue disabled: Redis unavailable"
-  );
+systemQueue:null,
 
-  module.exports = {
+async addJob(){
+  return null;
+},
 
-    systemQueue:null,
+async addDelayedJob(){
+  return null;
+},
 
-    async addJob(){
-      return null;
-    },
+async stats(){
 
-    async addDelayedJob(){
-      return null;
-    },
+  return {
 
-    async stats(){
-
-      return {
-
-        waiting:0,
-        active:0,
-        completed:0,
-        failed:0
-
-      };
-
-    },
-
-    async shutdown(){
-      return true;
-    }
+    waiting:0,
+    active:0,
+    completed:0,
+    failed:0
 
   };
 
-  return;
+},
+
+async shutdown(){
+  return true;
+}
+
+};
+
+return;
 
 }
 
 /* =========================================================
-   QUEUE
+DEDICATED CONNECTIONS
+========================================================= */
+
+const queueConnection =
+redis.duplicate();
+
+const workerConnection =
+redis.duplicate();
+
+const eventsConnection =
+redis.duplicate();
+
+/* =========================================================
+QUEUE
 ========================================================= */
 
 const systemQueue =
-  new Queue(
+new Queue(
 
-    "system",
+"system",
 
-    {
+{
 
-      connection,
+  connection:
+    queueConnection,
 
-      defaultJobOptions: {
+  defaultJobOptions: {
 
-        removeOnComplete:true,
+    removeOnComplete:100,
 
-        removeOnFail:100,
+    removeOnFail:50,
 
-        attempts:5,
+    attempts:3,
 
-        backoff:{
+    backoff:{
 
-          type:"exponential",
+      type:"exponential",
 
-          delay:2000
-
-        },
-
-        timeout:30000
-
-      }
+      delay:2000
 
     }
+
+  }
+
+}
 
 );
 
 /* =========================================================
-   EVENTS
+EVENTS
 ========================================================= */
 
 const events =
-  new QueueEvents(
+new QueueEvents(
 
-    "system",
+"system",
 
-    {
+{
 
-      connection
+  connection:
+    eventsConnection
 
-    }
+}
 
 );
 
 events.on(
 
-  "completed",
+"completed",
 
-  ({ jobId })=>{
+({ jobId })=>{
 
-    console.log(
-      "✅ Job completed:",
-      jobId
-    );
+console.log(
+  "✅ Job completed:",
+  jobId
+);
 
-  }
+}
 
 );
 
 events.on(
 
-  "failed",
+"failed",
 
-  ({
-    jobId,
-    failedReason
-  })=>{
+({
+jobId,
+failedReason
+})=>{
 
-    console.error(
+console.error(
 
-      "❌ Job failed:",
+  " Job failed:",
 
-      jobId,
+  jobId,
 
-      failedReason
+  failedReason
 
-    );
+);
 
-  }
+}
 
 );
 
 /* =========================================================
-   VALIDATION
-========================================================= */
-
-function validateJob(
-  name,
-  data
-){
-
-  if(!name){
-
-    throw new Error(
-      "invalid_job_name"
-    );
-
-  }
-
-  if(
-    typeof data !== "object"
-  ){
-
-    throw new Error(
-      "invalid_job_data"
-    );
-
-  }
-
-}
-
-/* =========================================================
-   ADD JOB
-========================================================= */
-
-async function addJob(
-  name,
-  data,
-  opts = {}
-){
-
-  validateJob(
-    name,
-    data
-  );
-
-  const jobId =
-
-    opts.jobId ||
-
-    `${name}:${Date.now()}`;
-
-  return await systemQueue.add(
-
-    name,
-
-    data,
-
-    {
-
-      jobId,
-
-      priority:
-        opts.priority || 1,
-
-      ...opts
-
-    }
-
-  );
-
-}
-
-/* =========================================================
-   DELAYED JOB
-========================================================= */
-
-async function addDelayedJob(
-  name,
-  data,
-  delayMs = 1000
-){
-
-  return await systemQueue.add(
-
-    name,
-
-    data,
-
-    {
-
-      delay:delayMs,
-
-      jobId:
-        `${name}:${Date.now()}`
-
-    }
-
-  );
-
-}
-
-/* =========================================================
-   SERVICES
+SERVICES
 ========================================================= */
 
 let depositWatcher = null;
 let matchingEngine = null;
-let systemBots = null;
 let miningEngine = null;
 
 try{
 
-  depositWatcher =
-    require("../services/depositWatcher");
+depositWatcher =
+require("../services/depositWatcher");
 
 }catch{}
 
 try{
 
-  matchingEngine =
-    require("../engines/matchingEngine");
+matchingEngine =
+require("../engines/matchingEngine");
 
 }catch{}
 
 try{
 
-  systemBots =
-    require("../services/systemBots");
-
-}catch{}
-
-try{
-
-  miningEngine =
-    require("../engines/miningEngine");
+miningEngine =
+require("../engines/miningEngine");
 
 }catch{}
 
 /* =========================================================
-   WORKER
+PROCESSOR
 ========================================================= */
 
-const worker =
-  new Worker(
+async function processJob(
+job
+){
 
-    "system",
+const {
+name,
+data
+} = job;
 
-    async job=>{
+const lockKey =
+"job:${job.id}";
 
-      const {
-        name,
-        data
-      } = job;
+try{
 
-      console.log(
-        "⚙️ Processing:",
-        name
-      );
+const locked =
+  await redis.lock(
+    lockKey
+  );
 
-      const lockKey =
-        "job:" + job.id;
+if(!locked){
 
-      try{
+  return null;
 
-        const locked =
-          await redis.lock(
-            lockKey
-          );
+}
 
-        if(!locked){
+console.log(
+  " Processing:",
+  name
+);
 
-          return null;
+switch(name){
 
-        }
+  case "deposit_check":
 
-        switch(name){
+    if(
+      depositWatcher?.run
+    ){
 
-          case "deposit_check":
-
-            if(
-              depositWatcher?.run
-            ){
-
-              return await depositWatcher
-                .run(data);
-
-            }
-
-            return null;
-
-          case "match_order":
-
-            if(
-              matchingEngine?.process
-            ){
-
-              return await matchingEngine
-                .process(data);
-
-            }
-
-            return null;
-
-          case "market_bot":
-
-            if(
-              systemBots?.run
-            ){
-
-              return await systemBots
-                .run(data);
-
-            }
-
-            return null;
-
-          case "mining_reward":
-
-            if(
-              miningEngine?.process
-            ){
-
-              return await miningEngine
-                .process(data);
-
-            }
-
-            return null;
-
-          default:
-
-            console.warn(
-              "Unknown job:",
-              name
-            );
-
-            return null;
-
-        }
-
-      }catch(err){
-
-        console.error(
-
-          "❌ Worker error:",
-
-          err.message
-
-        );
-
-        throw err;
-
-      }finally{
-
-        await redis.unlock(
-          lockKey
-        );
-
-      }
-
-    },
-
-    {
-
-      connection,
-
-      concurrency:10
+      return await depositWatcher
+        .run(data);
 
     }
 
+    break;
+
+  case "match_order":
+
+    if(
+      matchingEngine?.process
+    ){
+
+      return await matchingEngine
+        .process(data);
+
+    }
+
+    break;
+
+  case "mining_reward":
+
+    if(
+      miningEngine?.process
+    ){
+
+      return await miningEngine
+        .process(data);
+
+    }
+
+    break;
+
+  default:
+
+    console.warn(
+      "Unknown job:",
+      name
+    );
+
+    return null;
+
+}
+
+}catch(err){
+
+console.error(
+
+  " Worker error:",
+
+  err.message
+
 );
 
+throw err;
+
+}finally{
+
+await redis.unlock(
+  lockKey
+);
+
+}
+
+}
+
 /* =========================================================
-   WORKER EVENTS
+WORKER
 ========================================================= */
 
-worker.on(
+const worker =
+new Worker(
 
-  "completed",
+"system",
 
-  job=>{
+processJob,
 
-    console.log(
-      "✔ Worker done:",
-      job.id
-    );
+{
 
-  }
+  connection:
+    workerConnection,
+
+  concurrency:5
+
+}
 
 );
 
 worker.on(
 
-  "failed",
+"completed",
 
-  (job,err)=>{
+job=>{
 
-    console.error(
+console.log(
+  "✔ Worker done:",
+  job.id
+);
 
-      "❌ Worker failed:",
+}
 
-      job?.id,
+);
 
-      err.message
+worker.on(
 
-    );
+"failed",
 
-  }
+(job,err)=>{
+
+console.error(
+
+  " Worker failed:",
+
+  job?.id,
+
+  err.message
+
+);
+
+}
 
 );
 
 /* =========================================================
-   MONITOR
+ADD JOB
+========================================================= */
+
+async function addJob(
+name,
+data = {},
+opts = {}
+){
+
+return await systemQueue.add(
+
+name,
+
+data,
+
+{
+
+  jobId:
+
+    opts.jobId ||
+
+    `${name}:${Date.now()}`,
+
+  ...opts
+
+}
+
+);
+
+}
+
+/* =========================================================
+DELAYED JOB
+========================================================= */
+
+async function addDelayedJob(
+name,
+data = {},
+delay = 1000
+){
+
+return await systemQueue.add(
+
+name,
+
+data,
+
+{
+
+  delay,
+
+  jobId:
+    `${name}:${Date.now()}`
+
+}
+
+);
+
+}
+
+/* =========================================================
+STATS
 ========================================================= */
 
 async function stats(){
 
-  return {
+return {
 
-    waiting:
-      await systemQueue
-        .getWaitingCount(),
+waiting:
+  await systemQueue
+    .getWaitingCount(),
 
-    active:
-      await systemQueue
-        .getActiveCount(),
+active:
+  await systemQueue
+    .getActiveCount(),
 
-    completed:
-      await systemQueue
-        .getCompletedCount(),
+completed:
+  await systemQueue
+    .getCompletedCount(),
 
-    failed:
-      await systemQueue
-        .getFailedCount()
+failed:
+  await systemQueue
+    .getFailedCount()
 
-  };
+};
 
 }
 
 /* =========================================================
-   SHUTDOWN
+SHUTDOWN
 ========================================================= */
 
 async function shutdown(){
 
-  console.log(
-    "🛑 Queue shutdown..."
-  );
+console.log(
+" Queue shutdown..."
+);
 
-  await worker.close();
+await worker.close();
 
-  await systemQueue.close();
+await events.close();
+
+await systemQueue.close();
 
 }
 
 /* =========================================================
-   EXPORT
+EXPORT
 ========================================================= */
 
 module.exports = {
 
-  systemQueue,
+systemQueue,
 
-  addJob,
+addJob,
 
-  addDelayedJob,
+addDelayedJob,
 
-  stats,
+stats,
 
-  shutdown
+shutdown
 
 };
