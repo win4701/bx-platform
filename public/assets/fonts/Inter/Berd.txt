@@ -1,5 +1,0 @@
-wallet balance
-market price
-transaction hash
-crypto values
-mining rewards
