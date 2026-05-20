@@ -1,9 +1,162 @@
 /* =========================================================
-BLOXIO — DESIGN TOKENS
-VARIABLES SYSTEM
+   BLOXIO TYPOGRAPHY SYSTEM
+========================================================= */
+
+@font-face{
+
+font-family:"Inter";
+
+src:
+url("../fonts/Inter/Inter-Regular.woff2")
+format("woff2");
+
+font-weight:400;
+
+font-style:normal;
+
+font-display:swap;
+
+}
+
+@font-face{
+
+font-family:"Inter";
+
+src:
+url("../fonts/Inter/Inter-Medium.woff2")
+format("woff2");
+
+font-weight:500;
+
+font-style:normal;
+
+font-display:swap;
+
+}
+
+@font-face{
+
+font-family:"Inter";
+
+src:
+url("../fonts/Inter/Inter-Bold.woff2")
+format("woff2");
+
+font-weight:700;
+
+font-style:normal;
+
+font-display:swap;
+
+}
+
+@font-face{
+
+font-family:"Inter";
+
+src:
+url("../fonts/Inter/Inter-Black.woff2")
+format("woff2");
+
+font-weight:900;
+
+font-style:normal;
+
+font-display:swap;
+
+}
+
+
+/* ========================= */
+
+@font-face{
+
+font-family:"JetBrains Mono";
+
+src:
+url("../fonts/JetBrainsMono/JetBrainsMono-Regular.woff2")
+format("woff2");
+
+font-weight:400;
+
+font-style:normal;
+
+font-display:swap;
+
+}
+
+@font-face{
+
+font-family:"JetBrains Mono";
+
+src:
+url("../fonts/JetBrainsMono/JetBrainsMono-Bold.woff2")
+format("woff2");
+
+font-weight:700;
+
+font-style:normal;
+
+font-display:swap;
+
+}
+
+
+/* ========================= */
+
+@font-face{
+
+font-family:"Space Grotesk";
+
+src:
+url("../fonts/SpaceGrotesk/SpaceGrotesk-Regular.woff2")
+format("woff2");
+
+font-weight:400;
+
+font-style:normal;
+
+font-display:swap;
+
+}
+
+@font-face{
+
+font-family:"Space Grotesk";
+
+src:
+url("../fonts/SpaceGrotesk/SpaceGrotesk-Bold.woff2")
+format("woff2");
+
+font-weight:700;
+
+font-style:normal;
+
+font-display:swap;
+
+}
+
+
+/* =========================================================
+   TOKENS
 ========================================================= */
 
 :root{
+
+--font-main:
+"Inter",
+system-ui,
+sans-serif;
+
+--font-brand:
+"Space Grotesk",
+sans-serif;
+
+--font-mono:
+"JetBrains Mono",
+monospace;
+
+}
 
 /* =====================================================
 COLORS
