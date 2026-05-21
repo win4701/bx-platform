@@ -1291,57 +1291,19 @@ src="/assets/sounds/notification.mp3"
 preload="auto"
 ></audio>
 
-
-<script
-src="
-https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js
-"></script>
-
-
-<script
-type="module"
-src="/bx/main.js"
-></script>
-
-<script
-type="module"
-src="/bx/core.js"
-></script>
-
-<script
-type="module"
-src="/bx/state.js"
-></script>
-
-<script
-type="module"
-src="/bx/auth.js"
-></script>
-
-<script
-type="module"
-src="/bx/wallet.js"
-></script>
-
-<script
-type="module"
-src="/bx/market.js"
-></script>
-
-<script
-type="module"
-src="/bx/casino.js"
-></script>
-
-<script
-type="module"
-src="/bx/mining.js"
-></script>
-
-<script
-type="module"
-src="/bx/airdrop.js"
-></script>
-
+<!-- ================= BX exporter ================= -->
+<script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+<!-- ================= BX SYSTEM ================= -->
+  <script src="bx/auth.js"></script>
+  <script src="bx/core.js"></script>
+  <script src="bx/state.js"></script>
+  <script src="bx/services/api.js"></script>
+  <script src="bx/services/ws.js"></script>
+  <script src="bx/wallet.js"></script>
+  <script src="bx/market.js"></script>
+  <script src="bx/casino.js"></script>
+  <script src="bx/mining.js"></script>
+  <script src="bx/airdrop.js"></script>
+  <script src="bx/main.js"></script>
 </body>
 </html>
