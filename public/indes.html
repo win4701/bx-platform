@@ -279,12 +279,62 @@ view
 "
 ></section>
 
-<section
-id="airdrop"
-class="
-view
-"
-></section>
+<!-- ================= AIRDROP ================= -->
+    <section id="airdrop" class="view">
+      <div class="airdrop-container">
+
+        <div class="airdrop-box">
+          <div id="airdropTasks" class="airdrop-tasks"></div>
+          <img src="assets/images/bx.png" alt="BX">
+          <div class="airdrop-reward" id="airdropReward">+0.00 BX</div>
+          <button id="claimAirdropBtn" class="airdrop-action" type="button">Claim Airdrop</button>
+          <div class="airdrop-status" id="airdrop-ref-stats">Loading...</div>
+        </div>
+
+        <div class="airdrop-referral">
+          <h3>Referral</h3>
+          <div class="referral-box">
+            <input id="ref-link-airdrop" readonly class="ref-input">
+            <button id="copyRefBtn" type="button">Copy</button>
+          </div>
+        </div>
+
+        <div class="airdrop-whitepaper">
+          <a class="whitepaper-btn" href="assets/bloxio.pdf" target="_blank" rel="noopener">Read Whitepaper</a>
+        </div>
+      </div>
+
+      <div class="airdrop-partners">
+        <h3 class="section-title">Partners</h3>
+        <div class="partners-grid">
+          <div class="partner-item"><img src="assets/images/aliexpress.png" alt="AliExpress"></div>
+          <div class="partner-item"><img src="assets/images/xiaomi.png" alt="Xiaomi"></div>
+          <div class="partner-item"><img src="assets/images/nike.png" alt="Nike"></div>
+          <div class="partner-item"><img src="assets/images/samsung.png" alt="Samsung"></div>
+        </div>
+      </div>
+
+      <div class="min-card">
+        <img src="assets/images/min.jpg" alt="Mining">
+        <h3>Start Mining</h3>
+        <p>Sub Mining and earn extra (BX-BNB-SOL) rewards.</p>
+        <button class="btn secondary" data-action="go-mining" type="button">Start Mining</button>
+      </div>
+
+      <div class="topup-card">
+        <div class="topup-header">
+          <h3>Mobile Top-Up</h3>
+          <span>Min 5 USDT • Number + country code</span>
+        </div>
+        <div class="topup-body">
+          <div class="input-group"><input type="text" id="topup-country" placeholder="Country"></div>
+          <div class="input-group"><input type="tel" id="topup-phone" placeholder="+33"></div>
+          <div class="input-group"><input type="number" id="topup-amount" min="5" placeholder="Amount USDT"></div>
+          <button id="topup-confirm" class="btn-confirm" type="button">Confirm Payment</button>
+          <div id="topup-message" class="topup-message"></div>
+        </div>
+      </div>
+    </section>
 
 <!-- ================= SETTINGS ================= -->
     <section id="settings" class="view">
