@@ -265,12 +265,159 @@ view
 "
 ></section>
 
-<section
-id="casino"
-class="
-view
-"
-></section>
+<!-- ================= CASINO ================= -->
+    <section id="casino" class="view">
+
+      <div id="casinoLobby">
+        <div class="casino-topbar">
+          <div class="casino-brand-wrap">
+            <div class="casino-brand-badge">🎰</div>
+            <div>
+              <h2 class="casino-title">Bloxio Casino</h2>
+              <p class="casino-subtitle">Provably fair • Live gameplay</p>
+            </div>
+          </div>
+          <button class="casino-icon-btn" id="casinoRefreshBtn" type="button">⟳</button>
+        </div>
+
+        <div class="casino-stats-strip">
+          <div class="casino-stat-card">
+            <span class="casino-stat-label">Wallet</span>
+            <strong id="casinoWalletText">0 BX</strong>
+          </div>
+          <div class="casino-stat-card">
+            <span class="casino-stat-label">Players</span>
+            <strong id="casinoOnlineText">0</strong>
+          </div>
+          <div class="casino-stat-card">
+            <span class="casino-stat-label">Volume</span>
+            <strong id="casinoVolumeText">0 BX</strong>
+          </div>
+        </div>
+
+        <div class="ticker-pulse-wrap">
+          <div class="ticker-pulse-label">LIVE FEED</div>
+          <div class="ticker-pulse-track" id="casinoTickerTrack"></div>
+        </div>
+
+        <div class="casino-filter-tabs" id="casinoFilterTabs">
+          <button class="casino-filter-tab active" data-tab="all" type="button">All</button>
+          <button class="casino-filter-tab" data-tab="popular" type="button">Popular</button>
+          <button class="casino-filter-tab" data-tab="classic" type="button">Classic</button>
+          <button class="casino-filter-tab" data-tab="slots" type="button">Slots</button>
+          <button class="casino-filter-tab" data-tab="strategy" type="button">Strategy</button>
+          <button class="casino-filter-tab" data-tab="cards" type="button">Cards</button>
+          <button class="casino-filter-tab" data-tab="instant" type="button">Instant</button>
+        </div>
+
+        <div id="casinoGamesGrid">
+
+          <button type="button" class="casino-game-card" data-game="coinflip" data-image="assets/casino/coinflip.png">
+            <div class="casino-game-thumb"><img src="assets/casino/coinflip.png" alt="Coinflip"></div>
+            <div class="casino-game-meta">
+              <div class="casino-game-name">🪙 Coinflip</div>
+              <div class="casino-game-type">Classic</div>
+            </div>
+          </button>
+
+          <button type="button" class="casino-game-card" data-game="limbo" data-image="assets/casino/limbo.png">
+            <div class="casino-game-thumb"><img src="assets/casino/limbo.png" alt="Limbo"></div>
+            <div class="casino-game-meta">
+              <div class="casino-game-name">🎯 Limbo</div>
+              <div class="casino-game-type">Instant</div>
+            </div>
+          </button>
+
+          <button type="button" class="casino-game-card" data-game="dice" data-image="assets/casino/dice.png">
+            <div class="casino-game-thumb"><img src="assets/casino/dice.png" alt="Dice"></div>
+            <div class="casino-game-meta">
+              <div class="casino-game-name">🎲 Dice</div>
+              <div class="casino-game-type">Classic</div>
+            </div>
+          </button>
+
+          <button type="button" class="casino-game-card" data-game="crash" data-image="assets/casino/crash.png">
+            <div class="casino-game-thumb"><img src="assets/casino/crash.png" alt="Crash"></div>
+            <div class="casino-game-meta">
+              <div class="casino-game-name">📈 Crash</div>
+              <div class="casino-game-type">Popular</div>
+            </div>
+          </button>
+
+          <button type="button" class="casino-game-card" data-game="plinko" data-image="assets/casino/plinko.png">
+            <div class="casino-game-thumb"><img src="assets/casino/plinko.png" alt="Plinko"></div>
+            <div class="casino-game-meta">
+              <div class="casino-game-name">🔻 Plinko</div>
+              <div class="casino-game-type">Popular</div>
+            </div>
+          </button>
+
+          <button type="button" class="casino-game-card" data-game="blackjack" data-image="assets/casino/blackjack.png">
+            <div class="casino-game-thumb"><img src="assets/casino/blackjack.png" alt="Blackjack"></div>
+            <div class="casino-game-meta">
+              <div class="casino-game-name">🃏 Blackjack</div>
+              <div class="casino-game-type">Cards</div>
+            </div>
+          </button>
+
+          <button type="button" class="casino-game-card" data-game="hilo" data-image="assets/casino/hilo.png">
+            <div class="casino-game-thumb"><img src="assets/casino/hilo.png" alt="Hi-Lo"></div>
+            <div class="casino-game-meta">
+              <div class="casino-game-name">⬆️ Hi-Lo</div>
+              <div class="casino-game-type">Cards</div>
+            </div>
+          </button>
+
+          <button type="button" class="casino-game-card" data-game="slots" data-image="assets/casino/slot.png">
+            <div class="casino-game-thumb"><img src="assets/casino/slot.png" alt="Slots"></div>
+            <div class="casino-game-meta">
+              <div class="casino-game-name">🎰 Slots</div>
+              <div class="casino-game-type">Slots</div>
+            </div>
+          </button>
+
+          <button type="button" class="casino-game-card" data-game="mines" data-image="assets/casino/mines.png">
+            <div class="casino-game-thumb"><img src="assets/casino/mines.png" alt="Mines"></div>
+            <div class="casino-game-meta">
+              <div class="casino-game-name">💣 Mines </div>
+              <div class="casino-game-type">Strategy</div>
+            </div>
+          </button>
+
+          <button type="button" class="casino-game-card" data-game="fruitparty" data-image="assets/casino/fruitparty.png">
+            <div class="casino-game-thumb"><img src="assets/casino/fruitparty.png" alt="FruitParty"></div>
+            <div class="casino-game-meta">
+              <div class="casino-game-name">🍉 FruitParty</div>
+              <div class="casino-game-type">Slots</div>
+            </div>
+          </button>
+
+          <button type="button" class="casino-game-card" data-game="bananafarm" data-image="assets/casino/bananafarm.png">
+            <div class="casino-game-thumb"><img src="assets/casino/bananafarm.png" alt="BananaFarm"></div>
+            <div class="casino-game-meta">
+              <div class="casino-game-name">🍌 BananaFarm</div>
+              <div class="casino-game-type">Slots</div>
+            </div>
+          </button>
+
+          <button type="button" class="casino-game-card" data-game="airboss" data-image="assets/casino/airboss.png">
+            <div class="casino-game-thumb"><img src="assets/casino/airboss.png" alt="AirBoss"></div>
+            <div class="casino-game-meta">
+              <div class="casino-game-name">✈️ AirBoss</div>
+              <div class="casino-game-type">Popular</div>
+            </div>
+          </button>
+
+        </div>
+
+        <div class="big-wins">
+          <div class="big-wins-title">Big Wins</div>
+          <div class="big-wins-track" id="bigWinsTrack"></div>
+        </div>
+      </div>
+
+      <div id="casinoGameView" class="hidden"></div>
+    </section>
 
 <!-- ================= MINING ================= -->
    <section id="mining" class="view">
