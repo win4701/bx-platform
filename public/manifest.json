@@ -1,0 +1,180 @@
+{
+  "id": "/",
+  "name": "BLOXIO",
+  "short_name": "BLOXIO",
+  "description": "BLOXIO Crypto Wallet, Market, Mining, Casino and Airdrop Platform",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": [
+    "window-controls-overlay",
+    "standalone",
+    "browser"
+  ],
+  "orientation": "portrait-primary",
+  "theme_color": "#00e0ff",
+  "background_color": "#05080e",
+  "categories": [
+    "finance",
+    "business",
+    "productivity",
+    "utilities"
+  ],
+  "lang": "en",
+  "dir": "ltr",
+
+  "icons": [
+
+    {
+      "src": "/assets/images/pwa/icon-72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "any"
+    },
+
+    {
+      "src": "/assets/images/pwa/icon-96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any"
+    },
+
+    {
+      "src": "/assets/images/pwa/icon-128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "any"
+    },
+
+    {
+      "src": "/assets/images/pwa/icon-144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any"
+    },
+
+    {
+      "src": "/assets/images/pwa/icon-152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "any"
+    },
+
+    {
+      "src": "/assets/images/pwa/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+
+    {
+      "src": "/assets/images/pwa/icon-384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+
+    {
+      "src": "/assets/images/pwa/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    }
+
+  ],
+
+  "screenshots": [
+
+    {
+      "src": "/assets/images/pwa/screenshots/mobile-home.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "BLOXIO Mobile Home"
+    },
+
+    {
+      "src": "/assets/images/pwa/screenshots/dashboard.png",
+      "sizes": "1920x1080",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "BLOXIO Dashboard"
+    }
+
+  ],
+
+  "shortcuts": [
+
+    {
+      "name": "Wallet",
+      "short_name": "Wallet",
+      "description": "Open Wallet",
+      "url": "/?view=wallet",
+      "icons": [
+        {
+          "src": "/assets/images/pwa/wallet-shortcut.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+
+    {
+      "name": "Market",
+      "short_name": "Market",
+      "description": "Open Market",
+      "url": "/?view=market",
+      "icons": [
+        {
+          "src": "/assets/images/pwa/market-shortcut.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+
+    {
+      "name": "Mining",
+      "short_name": "Mining",
+      "description": "Open Mining",
+      "url": "/?view=mining",
+      "icons": [
+        {
+          "src": "/assets/images/pwa/mining-shortcut.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+
+    {
+      "name": "Casino",
+      "short_name": "Casino",
+      "description": "Open Casino",
+      "url": "/?view=casino",
+      "icons": [
+        {
+          "src": "/assets/images/pwa/casino-shortcut.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+
+  ],
+
+  "launch_handler": {
+    "client_mode": [
+      "focus-existing",
+      "navigate-existing"
+    ]
+  },
+
+  "edge_side_panel": {
+    "preferred_width": 420
+  },
+
+  "handle_links": "preferred",
+
+  "prefer_related_applications": false
+  }
