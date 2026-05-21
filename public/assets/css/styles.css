@@ -15,7 +15,6 @@ IMPORTS
 @import url("./motion.css");
 
 /* CORE */
-@import url("./loader.css");
 
 /* MODULES */
 @import url("./auth.css");
