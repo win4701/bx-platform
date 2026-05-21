@@ -286,12 +286,32 @@ view
 "
 ></section>
 
-<section
-id="settings"
-class="
-view
-"
-></section>
+<!-- ================= SETTINGS ================= -->
+    <section id="settings" class="view">
+      <h2 class="page-title">Settings</h2>
+
+      <div class="card">
+        <h3>🔗 Referral</h3>
+        <p>Your referral link:</p>
+        <span class="ref-link" id="ref-link">Loading...</span>
+        <button class="btn" onclick="copyReferral()" type="button">Copy</button>
+      </div>
+      <div class="card">
+        <h3>Airdrop</h3>
+        <p id="airdrop-status">Loading...</p>
+        <button id="claim-airdrop" class="btn primary hidden" onclick="claimAirdrop()" type="button">
+          Claim Airdrop
+        </button>
+      </div>
+      <div class="card">
+        <h3>Badges</h3>
+        <ul id="badges-list"></ul>
+      </div>
+      <div class="card">
+        <h3>Referral Leaderboard</h3>
+        <ol id="ref-leaderboard"></ol>
+      </div>
+    </section>
 
 </main>
 
