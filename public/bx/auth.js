@@ -1,967 +1,867 @@
 /* =====================================================
-   BLOXIO AUTH — GLOBAL PRODUCTION SYSTEM
+BLOXIO AUTH ENGINE V5
+BROWSER FIRST
+OPTIONAL AUTH
+OPTIONAL TELEGRAM
+NO APP LOCK LOOP
 ===================================================== */
 
 "use strict";
 
-const AUTH = {
+const AUTH={
 
-  state:{
-    loading:false,
-    mode:"login",
-    authenticated:false
-  },
+state:{
 
-  el:{},
+loading:false,
 
-  /* =====================================================
-     INIT
-  ===================================================== */
+mode:"login",
 
-  init(){
+authenticated:false,
 
-    this.cache();
+token:null,
 
-    if(!this.el.overlay){
+browser:true
 
-      console.error(
-        "AUTH overlay missing"
-      );
+},
 
-      return;
+el:{},
 
-    }
+/* =====================================================
+INIT
+===================================================== */
 
-    this.lockApp();
+init(){
 
-    this.bind();
+this.cache();
 
-    this.injectReferral();
+this.bind();
 
-    this.bindGlobalEvents();
+this.bindGlobal();
 
-    this.guard();
+this.injectReferral();
 
-  },
+this.bootstrap();
 
-  /* =====================================================
-     DOM
-  ===================================================== */
+},
 
-  cache(){
+/* =====================================================
+DOM
+===================================================== */
 
-    this.el = {
+cache(){
 
-      app:
-        $("app"),
+this.el={
 
-      overlay:
-        $("authOverlay"),
+app:$("app"),
 
-      loginBox:
-        $("loginBox"),
+overlay:$("authOverlay"),
 
-      registerBox:
-        $("registerBox"),
+loginBox:$("loginBox"),
 
-      email:
-        $("loginEmail"),
+registerBox:$("registerBox"),
 
-      pass:
-        $("loginPass"),
+email:$("loginEmail"),
 
-      regEmail:
-        $("regEmail"),
+pass:$("loginPass"),
 
-      regPass:
-        $("regPass"),
+regEmail:$("regEmail"),
 
-      regPhone:
-        $("regPhone"),
+regPass:$("regPass"),
 
-      regRef:
-        $("regRef"),
+regPhone:$("regPhone"),
 
-      loginBtn:
-        $("loginBtn"),
+regRef:$("regRef"),
 
-      registerBtn:
-        $("registerBtn"),
+loginBtn:$("loginBtn"),
 
-      toggle:
-        $("toggleAuth"),
+registerBtn:$("registerBtn"),
 
-      title:
-        $("authTitle"),
+toggle:$("toggleAuth"),
 
-      sub:
-        $("authSub"),
+error:$("authError"),
 
-      switchText:
-        $("switchText"),
+title:$("authTitle"),
 
-      error:
-        $("authError")
+sub:$("authSub"),
 
-    };
-
-  },
-
-  /* =====================================================
-     GLOBAL EVENTS
-  ===================================================== */
-
-  bindGlobalEvents(){
-
-    if(window.API?.on){
-
-      API.on(
-        "auth:logout",
-        ()=>{
-
-          this.forceLogout();
-
-        }
-      );
-
-    }
-
-    window.addEventListener(
-      "storage",
-      e=>{
-
-        if(
-          e.key === "token" &&
-          !e.newValue
-        ){
-
-          this.forceLogout();
-
-        }
-
-      }
-    );
-
-  },
-
-  /* =====================================================
-     EVENTS
-  ===================================================== */
-
-  bind(){
-
-    this.el.toggle
-    ?.addEventListener(
-      "click",
-      ()=>{
-
-        this.toggle();
-
-      }
-    );
-
-    this.el.loginBtn
-    ?.addEventListener(
-      "click",
-      ()=>{
-
-        this.login();
-
-      }
-    );
-
-    this.el.registerBtn
-    ?.addEventListener(
-      "click",
-      ()=>{
-
-        this.register();
-
-      }
-    );
-
-    document.addEventListener(
-      "keydown",
-      e=>{
-
-        if(
-          e.key !== "Enter"
-        ) return;
-
-        if(
-          this.state.loading
-        ) return;
-
-        this.state.mode === "login"
-          ? this.login()
-          : this.register();
-
-      }
-    );
-
-  },
-
-  /* =====================================================
-     REFERRAL
-  ===================================================== */
-
-  injectReferral(){
-
-    const ref =
-      new URLSearchParams(
-        location.search
-      ).get("ref");
-
-    if(
-      ref &&
-      this.el.regRef
-    ){
-
-      this.el.regRef.value =
-        ref;
-
-    }
-
-  },
-
-  /* =====================================================
-     APP LOCK
-  ===================================================== */
-
-  lockApp(){
-
-  document.body.classList.add(
-    "auth-lock"
-  );
-
-  if(this.el.app){
-
-    this.el.app.classList.add(
-      "app-hidden"
-    );
-  }
-
-  },
-   
-  unlockApp(){
-
-  document.body.classList.remove(
-    "auth-lock"
-  );
-
-  document.body.classList.remove(
-    "app-preload"
-  );
-
-  document.body.classList.add(
-    "app-ready"
-  );
-
-  if(this.el.app){
-
-    this.el.app.classList.remove(
-      "app-hidden"
-    );
-  }
-
-  },
-
-  /* =====================================================
-     MODE
-  ===================================================== */
-
-  toggle(){
-
-    const isLogin =
-      this.state.mode ===
-      "login";
-
-    this.state.mode =
-      isLogin
-        ? "register"
-        : "login";
-
-    this.el.loginBox
-    ?.classList.toggle(
-      "active"
-    );
-
-    this.el.registerBox
-    ?.classList.toggle(
-      "active"
-    );
-
-    this.el.title.innerText =
-      isLogin
-        ? "Create Account"
-        : "Welcome Back";
-
-    this.el.sub.innerText =
-      isLogin
-        ? "Register new account"
-        : "Login to your account";
-
-    this.el.switchText.innerText =
-      isLogin
-        ? "Already have account?"
-        : "Don't have account?";
-
-    this.el.toggle.innerText =
-      isLogin
-        ? "Sign in"
-        : "Sign up";
-
-    this.clearError();
-
-  },
-
-  /* =====================================================
-     VALIDATION
-  ===================================================== */
-
-  validateEmail(v){
-
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-      .test(v);
-
-  },
-
-  validatePassword(v){
-
-    return (
-      typeof v === "string" &&
-      v.length >= 6
-    );
-
-  },
-
-  validatePhone(v){
-
-    return (
-      !v ||
-      v.length >= 6
-    );
-
-  },
-
-  /* =====================================================
-     UI
-  ===================================================== */
-
-  loading(
-    btn,
-    state
-  ){
-
-    this.state.loading =
-      state;
-
-    if(!btn) return;
-
-    if(state){
-
-      btn.disabled = true;
-
-      btn.classList.add(
-        "loading"
-      );
-
-      btn.setAttribute(
-        "aria-busy",
-        "true"
-      );
-
-    }else{
-
-      btn.disabled = false;
-
-      btn.classList.remove(
-        "loading"
-      );
-
-      btn.removeAttribute(
-        "aria-busy"
-      );
-
-    }
-
-  },
-
-  error(msg){
-
-    if(!this.el.error)
-      return;
-
-    this.el.error.innerText =
-      msg ||
-      "Unexpected error";
-
-    this.el.error.style.opacity =
-      "1";
-
-    this.el.error.classList.add(
-      "active"
-    );
-
-  },
-
-  clearError(){
-
-    if(!this.el.error)
-      return;
-
-    this.el.error.innerText =
-      "";
-
-    this.el.error.style.opacity =
-      "0";
-
-    this.el.error.classList.remove(
-      "active"
-    );
-
-  },
-
-  /* =====================================================
-     REQUEST
-  ===================================================== */
-
-  async request(
-    url,
-    body = {}
-  ){
-
-    if(!window.API){
-
-      throw new Error(
-        "API not loaded"
-      );
-
-    }
-
-    const timeout =
-      new Promise(
-        (_,reject)=>{
-
-          setTimeout(()=>{
-
-            reject(
-              new Error(
-                "Request timeout"
-              )
-            );
-
-          },10000);
-
-        }
-      );
-
-    let res;
-
-    try{
-
-      res =
-        await Promise.race([
-
-          API.post(
-            url,
-            body
-          ),
-
-          timeout
-
-        ]);
-
-    }catch(e){
-
-      throw new Error(
-
-        e.message ||
-        "Network error"
-
-      );
-
-    }
-
-    if(
-      !res ||
-      res.error
-    ){
-
-      throw new Error(
-
-        res?.error ||
-        "Network error"
-
-      );
-
-    }
-
-    return res;
-
-  },
-
-  /* =====================================================
-     LOGIN
-  ===================================================== */
-
-  async login(){
-
-    if(
-      this.state.loading
-    ) return;
-
-    const email =
-      this.el.email
-      ?.value
-      .trim();
-
-    const pass =
-      this.el.pass
-      ?.value
-      .trim();
-
-    if(
-      !this.validateEmail(
-        email
-      )
-    ){
-
-      return this.error(
-        "Invalid email"
-      );
-
-    }
-
-    if(
-      !this.validatePassword(
-        pass
-      )
-    ){
-
-      return this.error(
-        "Password too short"
-      );
-
-    }
-
-    this.loading(
-      this.el.loginBtn,
-      true
-    );
-
-    this.clearError();
-
-    try{
-
-      const data =
-        await this.request(
-          "/auth/login",
-          {
-            email,
-            password:pass
-          }
-        );
-
-      this.session(data);
-
-      await this.enter();
-
-    }catch(e){
-
-      this.error(
-
-        e.message ||
-        "Login failed"
-
-      );
-
-    }
-
-    this.loading(
-      this.el.loginBtn,
-      false
-    );
-
-  },
-
-  /* =====================================================
-     REGISTER
-  ===================================================== */
-
-  async register(){
-
-    if(
-      this.state.loading
-    ) return;
-
-    const email =
-      this.el.regEmail
-      ?.value
-      .trim();
-
-    const pass =
-      this.el.regPass
-      ?.value
-      .trim();
-
-    const phone =
-      this.el.regPhone
-      ?.value
-      .trim() || "";
-
-    const ref =
-      this.el.regRef
-      ?.value
-      .trim() || "";
-
-    if(
-      !this.validateEmail(
-        email
-      )
-    ){
-
-      return this.error(
-        "Invalid email"
-      );
-
-    }
-
-    if(
-      !this.validatePassword(
-        pass
-      )
-    ){
-
-      return this.error(
-        "Weak password"
-      );
-
-    }
-
-    if(
-      !this.validatePhone(
-        phone
-      )
-    ){
-
-      return this.error(
-        "Invalid phone"
-      );
-
-    }
-
-    this.loading(
-      this.el.registerBtn,
-      true
-    );
-
-    this.clearError();
-
-    try{
-
-      const data =
-        await this.request(
-          "/auth/register",
-          {
-            email,
-            password:pass,
-            phone,
-            referral:ref
-          }
-        );
-
-      this.session(data);
-
-      await this.enter();
-
-    }catch(e){
-
-      this.error(
-
-        e.message ||
-        "Register failed"
-
-      );
-
-    }
-
-    this.loading(
-      this.el.registerBtn,
-      false
-    );
-
-  },
-
-  /* =====================================================
-     SESSION
-  ===================================================== */
-
-  session(data){
-
-    if(
-      !data?.token
-    ){
-
-      throw new Error(
-        "Invalid auth response"
-      );
-
-    }
-
-    localStorage.setItem(
-      "token",
-      data.token
-    );
-
-    if(data.user){
-
-      localStorage.setItem(
-        "user",
-        JSON.stringify(
-          data.user
-        )
-      );
-
-    }
-
-    this.state.authenticated =
-      true;
-
-  },
-
-  /* =====================================================
-     LOGOUT
-  ===================================================== */
-
-  logout(){
-
-    localStorage.clear();
-
-    this.state.authenticated =
-      false;
-
-    if(window.WS){
-
-      WS.socket?.close();
-
-    }
-
-    this.showAuth();
-
-  },
-
-  forceLogout(){
-
-    localStorage.clear();
-
-    this.state.authenticated =
-      false;
-
-    this.showAuth();
-
-  },
-
-  /* =====================================================
-     GUARD
-  ===================================================== */
-
-  async guard(){
-
-    const token =
-      localStorage.getItem(
-        "token"
-      );
-
-    if(!token){
-
-      this.showAuth();
-
-      return;
-
-    }
-
-    try{
-
-      const timeout =
-        new Promise(
-          (_,reject)=>{
-
-            setTimeout(()=>{
-
-              reject(
-                new Error(
-                  "Session timeout"
-                )
-              );
-
-            },8000);
-
-          }
-        );
-
-      const res =
-        await Promise.race([
-
-          API.get(
-            "/auth/check"
-          ),
-
-          timeout
-
-        ]);
-
-      if(
-        !res ||
-        res.error
-      ){
-
-        throw new Error();
-
-      }
-
-      await this.enter();
-
-    }catch(e){
-
-      console.error(
-        "AUTH GUARD:",
-        e.message
-      );
-
-      localStorage.clear();
-
-      this.showAuth();
-
-    }
-
-  },
-
-  /* =====================================================
-     AUTH VIEW
-  ===================================================== */
-
-  showAuth(){
-
-  this.lockApp();
-
-  if(!this.el.overlay)
-    return;
-
-  this.el.overlay.style.display =
-    "flex";
-
-  requestAnimationFrame(()=>{
-
-    this.el.overlay.classList.add(
-      "visible"
-    );
-
-  });
-
-  },
-   
-  hideAuth(){
-
-    if(!this.el.overlay)
-      return;
-
-    this.el.overlay.classList.remove(
-      "visible"
-    );
-
-    setTimeout(()=>{
-
-      this.el.overlay.style.display =
-        "none";
-
-    },180);
-
-  },
-
-  /* =====================================================
-     ENTER APP
-  ===================================================== */
-
-  async enter(){
-
-    this.unlockApp();
-
-    this.hideAuth();
-
-    requestAnimationFrame(()=>{
-
-      window.scrollTo({
-
-        top:0,
-
-        behavior:"instant"
-
-      });
-
-    });
-
-    if(window.WS){
-
-      try{
-
-        WS.connect();
-
-      }catch(e){
-
-        console.error(
-          "WS:",
-          e
-        );
-
-      }
-
-    }
-
-    if(window.API){
-
-      try{
-
-        API.syncAll();
-
-      }catch(e){
-
-        console.error(
-          "SYNC:",
-          e
-        );
-
-      }
-
-    }
-
-  }
+switch:$("switchText")
 
 };
 
+},
+
 /* =====================================================
-   HELPER
+BOOT
 ===================================================== */
 
-function $(id){
+bootstrap(){
 
-  return document
-    .getElementById(id);
+const token=
+
+localStorage.getItem(
+"token"
+);
+
+this.state.token=token;
+
+/* Browser First */
+
+this.unlockApp();
+
+this.hideAuth();
+
+/* Existing Session */
+
+if(token){
+
+this.restore();
 
 }
 
+/* Optional Telegram */
+
+this.telegram();
+
+},
+
 /* =====================================================
-   START
+TG
 ===================================================== */
+
+telegram(){
+
+if(
+
+!window.Telegram
+?.WebApp
+
+){
+
+return;
+
+}
+
+try{
+
+window.Telegram
+.WebApp
+.ready();
+
+window.Telegram
+.WebApp
+.expand();
+
+console.log(
+
+"Telegram Optional Ready"
+
+);
+
+}catch(e){
+
+console.warn(
+
+"TG Optional",
+
+e
+
+);
+
+}
+
+},
+
+/* =====================================================
+GLOBAL
+===================================================== */
+
+bindGlobal(){
+
+window.addEventListener(
+
+"storage",
+
+e=>{
+
+if(
+
+e.key==="token"
+
+&&
+
+!e.newValue
+
+){
+
+this.logout();
+
+}
+
+}
+
+);
+
+window.API?.on?.(
+
+"auth:logout",
+
+()=>{
+
+this.logout();
+
+}
+
+);
+
+},
+
+/* =====================================================
+EVENTS
+===================================================== */
+
+bind(){
+
+this.el.toggle
+?.addEventListener(
+
+"click",
+
+()=>{
+
+this.toggle();
+
+}
+
+);
+
+this.el.loginBtn
+?.addEventListener(
+
+"click",
+
+()=>{
+
+this.login();
+
+}
+
+);
+
+this.el.registerBtn
+?.addEventListener(
+
+"click",
+
+()=>{
+
+this.register();
+
+}
+
+);
 
 document.addEventListener(
 
-  "DOMContentLoaded",
+"keydown",
 
-  ()=>{
+e=>{
 
-    AUTH.init();
+if(
 
-  }
+e.key!=="Enter"
+
+)return;
+
+if(
+
+this.state.loading
+
+)return;
+
+this.state.mode==="login"
+
+?this.login()
+
+:this.register();
+
+}
+
+);
+
+},
+
+/* =====================================================
+REF
+===================================================== */
+
+injectReferral(){
+
+const ref=
+
+new URLSearchParams(
+
+location.search
+
+).get("ref");
+
+if(
+
+ref
+
+&&
+
+this.el.regRef
+
+){
+
+this.el.regRef.value=ref;
+
+}
+
+},
+
+/* =====================================================
+APP
+===================================================== */
+
+unlockApp(){
+
+document.body.classList.remove(
+
+"auth-lock"
+
+);
+
+document.body.classList.remove(
+
+"loading"
+
+);
+
+document.body.classList.remove(
+
+"app-preload"
+
+);
+
+document.body.classList.add(
+
+"app-ready"
+
+);
+
+this.el.app
+?.classList.remove(
+
+"app-hidden"
+
+);
+
+},
+
+lockApp(){
+
+document.body.classList.add(
+
+"auth-lock"
+
+);
+
+},
+
+/* =====================================================
+VIEW
+===================================================== */
+
+showAuth(){
+
+if(
+
+!this.el.overlay
+
+)return;
+
+this.lockApp();
+
+this.el.overlay.style.display=
+
+"flex";
+
+requestAnimationFrame(()=>{
+
+this.el.overlay.classList.add(
+
+"visible"
+
+);
+
+});
+
+},
+
+hideAuth(){
+
+if(
+
+!this.el.overlay
+
+)return;
+
+this.el.overlay.classList.remove(
+
+"visible"
+
+);
+
+setTimeout(()=>{
+
+this.el.overlay.style.display=
+
+"none";
+
+},200);
+
+},
+
+toggle(){
+
+const login=
+
+this.state.mode==="login";
+
+this.state.mode=
+
+login
+
+?"register"
+
+:"login";
+
+this.el.loginBox
+?.classList.toggle(
+"active"
+);
+
+this.el.registerBox
+?.classList.toggle(
+"active"
+);
+
+this.clearError();
+
+},
+
+/* =====================================================
+VALIDATE
+===================================================== */
+
+email(v){
+
+return
+
+/^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+.test(v);
+
+},
+
+password(v){
+
+return(
+
+typeof v==="string"
+
+&&
+
+v.length>=6
+
+);
+
+},
+
+/* =====================================================
+REQUEST
+===================================================== */
+
+async request(
+
+url,
+body={}
+
+){
+
+if(
+
+!window.API
+
+){
+
+throw new Error(
+
+"API Missing"
+
+);
+
+}
+
+const res=
+
+await API.post(
+
+url,
+body
+
+);
+
+if(
+
+!res
+
+||
+
+res.error
+
+){
+
+throw new Error(
+
+res?.error||
+
+"Network Error"
+
+);
+
+}
+
+return res;
+
+},
+
+/* =====================================================
+LOGIN
+===================================================== */
+
+async login(){
+
+if(
+
+this.state.loading
+
+)return;
+
+const email=
+
+this.el.email
+?.value
+?.trim();
+
+const pass=
+
+this.el.pass
+?.value
+?.trim();
+
+if(
+
+!this.email(email)
+
+){
+
+return this.error(
+
+"Invalid Email"
+
+);
+
+}
+
+if(
+
+!this.password(pass)
+
+){
+
+return this.error(
+
+"Password Short"
+
+);
+
+}
+
+try{
+
+this.loading(
+
+this.el.loginBtn,
+true
+
+);
+
+const data=
+
+await this.request(
+
+"/auth/login",
+
+{
+
+email,
+
+password:pass
+
+}
+
+);
+
+this.session(data);
+
+this.enter();
+
+}catch(e){
+
+this.error(
+
+e.message
+
+);
+
+}
+
+this.loading(
+
+this.el.loginBtn,
+false
+
+);
+
+},
+
+/* =====================================================
+REGISTER
+===================================================== */
+
+async register(){
+
+if(
+
+this.state.loading
+
+)return;
+
+try{
+
+this.loading(
+
+this.el.registerBtn,
+true
+
+);
+
+const data=
+
+await this.request(
+
+"/auth/register",
+
+{
+
+email:
+
+this.el.regEmail
+?.value,
+
+password:
+
+this.el.regPass
+?.value,
+
+phone:
+
+this.el.regPhone
+?.value,
+
+referral:
+
+this.el.regRef
+?.value
+
+}
+
+);
+
+this.session(data);
+
+this.enter();
+
+}catch(e){
+
+this.error(
+
+e.message
+
+);
+
+}
+
+this.loading(
+
+this.el.registerBtn,
+false
+
+);
+
+},
+
+/* =====================================================
+SESSION
+===================================================== */
+
+session(data){
+
+if(
+
+!data?.token
+
+){
+
+throw new Error(
+
+"Token Missing"
+
+);
+
+}
+
+localStorage.setItem(
+
+"token",
+
+data.token
+
+);
+
+if(data.user){
+
+localStorage.setItem(
+
+"user",
+
+JSON.stringify(
+data.user
+)
+
+);
+
+}
+
+this.state.authenticated=true;
+
+},
+
+restore(){
+
+this.state.authenticated=true;
+
+},
+
+logout(){
+
+localStorage.removeItem(
+"token"
+);
+
+localStorage.removeItem(
+"user"
+);
+
+this.state.authenticated=false;
+
+},
+
+enter(){
+
+this.unlockApp();
+
+this.hideAuth();
+
+window.WS
+?.connect
+?.();
+
+window.API
+?.syncAll
+?.();
+
+},
+
+/* =====================================================
+UI
+===================================================== */
+
+loading(btn,state){
+
+this.state.loading=state;
+
+if(!btn)return;
+
+btn.disabled=state;
+
+btn.classList.toggle(
+
+"loading",
+
+state
+
+);
+
+},
+
+error(msg){
+
+if(!this.el.error)
+
+return;
+
+this.el.error.innerText=msg;
+
+this.el.error.classList.add(
+"active"
+);
+
+},
+
+clearError(){
+
+if(!this.el.error)
+
+return;
+
+this.el.error.innerText="";
+
+this.el.error.classList.remove(
+"active"
+);
+
+}
+
+};
+
+function $(id){
+
+return document
+.getElementById(id);
+
+}
+
+document.addEventListener(
+
+"DOMContentLoaded",
+
+()=>{
+
+AUTH.init();
+
+}
 
 );
