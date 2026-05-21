@@ -258,13 +258,167 @@ view active
 "
 ></section>
 
-<section
-id="market"
-class="
-view
-"
-></section>
+<!-- ================= MARKET ================= -->
+    <section id="market" class="view market-view">
+      <!-- خليت market كما هو لأن بنيته سليمة مع js الحالي -->
+      <!-- (أبقيت نفس DOM IDs حتى لا نكسر market.js) -->
 
+      <div class="market-header">
+        <div class="pair-title">
+          <span class="base">BX</span>
+          <span class="arrow">/</span>
+          <span class="quote" id="quoteAsset">USDT</span>
+        </div>
+
+        <div class="price-box">
+          <div id="marketPrice" class="price-main">0.000000</div>
+          <div id="marketApprox" class="approx">≈ 0.000000 USDT</div>
+        </div>
+      </div>
+
+      <div class="wallet-box compact">
+        <div>BX <strong id="walletBX">0.00</strong></div>
+        <div><span id="walletQuoteLabel">USDT</span> <strong id="walletUSDT">0.00</strong></div>
+      </div>
+
+      <div class="pair-grid">
+        <button class="pair-btn active" data-quote="USDT" type="button">USDT</button>
+        <button class="pair-btn" data-quote="USDC" type="button">USDC</button>
+        <button class="pair-btn" data-quote="BTC" type="button">BTC</button>
+        <button class="pair-btn" data-quote="BNB" type="button">BNB</button>
+        <button class="pair-btn" data-quote="ETH" type="button">ETH</button>
+        <button class="pair-btn" data-quote="AVAX" type="button">AVAX</button>
+        <button class="pair-btn" data-quote="ZEC" type="button">ZEC</button>
+        <button class="pair-btn" data-quote="TON" type="button">TON</button>
+        <button class="pair-btn" data-quote="SOL" type="button">SOL</button>
+        <button class="pair-btn" data-quote="LTC" type="button">LTC</button>
+      </div>
+
+      <div class="market-hero">
+        <div class="market-identity">
+          <div class="market-logo">™</div>
+          <div class="market-title">
+            <h2 id="assetName">Bloxio</h2>
+            <span id="assetSymbol">BX</span>
+          </div>
+        </div>
+
+        <div class="market-price-box">
+          <div id="assetPrice" class="market-price">$0.00000</div>
+          <div id="assetChangeBadge" class="market-change-badge is-up">▲ 0.00%</div>
+        </div>
+
+        <div class="market-toolbar">
+          <div class="market-timeframes">
+            <button class="active" data-range="1H" type="button">1H</button>
+            <button data-range="24H" type="button">24H</button>
+            <button data-range="7D" type="button">7D</button>
+            <button data-range="30D" type="button">30D</button>
+            <button data-range="90D" type="button">90D</button>
+          </div>
+
+          <div class="market-chart-modes">
+            <button class="active" data-chart-mode="area" type="button">Area</button>
+            <button data-chart-mode="line" type="button">Line</button>
+            <button data-chart-mode="candles" type="button">Candles</button>
+          </div>
+        </div>
+
+        <div class="market-chart-card market-chart-card--pro">
+          <div class="market-chart-topbar">
+            <div class="chart-top-left">
+              <span class="chart-mini-label">BX / <span id="chartQuoteLabel">USDT</span></span>
+              <strong id="chartLivePrice">$0.00000</strong>
+            </div>
+            <div class="chart-top-right">
+              <span id="chartLiveChange" class="chart-live-change is-up">▲ 0.00%</span>
+            </div>
+          </div>
+
+          <div class="market-chart-shell market-chart-shell--full">
+            <canvas id="marketChart"></canvas>
+            <div class="chart-glow"></div>
+            <div class="chart-overlay"></div>
+            <div id="marketTooltip" class="market-tooltip"></div>
+            <div class="market-crosshair">
+              <span id="crosshairPrice">--</span>
+              <span id="crosshairTime">--</span>
+            </div>
+          </div>
+
+          <div class="market-chart-footer">
+            <div class="chart-footer-item"><span>Open</span><strong id="metricOpen">0.00000</strong></div>
+            <div class="chart-footer-item"><span>High</span><strong id="metricHigh">0.00000</strong></div>
+            <div class="chart-footer-item"><span>Low</span><strong id="metricLow">0.00000</strong></div>
+            <div class="chart-footer-item"><span>Close</span><strong id="metricClose">0.00000</strong></div>
+          </div>
+        </div>
+
+        <div class="market-stats-grid">
+          <div class="stat-card"><span>24H High</span><strong id="statHigh">$0.00000</strong></div>
+          <div class="stat-card"><span>24H Low</span><strong id="statLow">$0.00000</strong></div>
+          <div class="stat-card"><span>Volume</span><strong id="statVolume">0 BX</strong></div>
+          <div class="stat-card"><span>Market</span><strong id="statMarketCap">$0</strong></div>
+        </div>
+
+        <div class="market-ohlc">
+          <div class="ohlc-item"><span>Open</span><strong id="metricOpenPanel">0.00000</strong></div>
+          <div class="ohlc-item"><span>High</span><strong id="metricHighPanel">0.00000</strong></div>
+          <div class="ohlc-item"><span>Low</span><strong id="metricLowPanel">0.00000</strong></div>
+          <div class="ohlc-item"><span>Close</span><strong id="metricClosePanel">0.00000</strong></div>
+          <div class="ohlc-item"><span>Volume</span><strong id="metricVol">0</strong></div>
+        </div>
+      </div>
+
+      <div class="trade-box buy" id="tradeBox">
+        <div class="trade-tabs">
+          <button id="buyTab" class="active" type="button">Buy</button>
+          <button id="sellTab" type="button">Sell</button>
+        </div>
+
+        <div class="trade-form">
+          <label for="orderAmount">Amount BX</label>
+          <input id="orderAmount" type="number" placeholder="0.00" inputmode="decimal" step="0.0001" min="0">
+
+          <div class="percent-row">
+            <button type="button" data-percent="10">10%</button>
+            <button type="button" data-percent="25">25%</button>
+            <button type="button" data-percent="50">50%</button>
+            <button type="button" data-percent="100">MAX</button>
+          </div>
+
+          <div class="trade-stats">
+            <div>Price: <span id="execPrice">—</span></div>
+            <div>Slippage: <span id="slippage">—%</span></div>
+            <div>Spread: <span id="spread">—</span></div>
+          </div>
+
+          <button class="action-btn buy" id="actionBtn" type="button">Buy BX</button>
+        </div>
+      </div>
+    <div class="market-cards">
+    <!-- ================= ORDER BOOK GRID ================= -->
+<div class="orderbook-card">
+
+  <!-- HEADER -->
+  <div class="orderbook-head">
+    <h3>Order Book</h3>
+    <div class="orderbook-pair">
+      BX / <span id="orderbookQuote">USDT</span>
+    </div>
+  </div>
+
+  <!-- TABLE HEADER -->
+  <div class="ob-grid-head">
+    <span>Amount</span>
+    <span>Price</span>
+    <span>Amount</span>
+  </div>
+
+  <!-- BODY -->
+   <div id="orderBookGrid" class="ob-grid-body"></div>
+      </div>
+    </section>
 <!-- ================= CASINO ================= -->
     <section id="casino" class="view">
 
