@@ -1,219 +1,785 @@
 /* =====================================================
-   BLOXIO MAIN — PRO ROUTER (NO CONFLICT VERSION)
+BLOXIO MAIN ENGINE V5
+APP CONTROLLER
+BROWSER FIRST
+NO LOOP
+NO PANEL CONFLICT
 ===================================================== */
 
 (() => {
-  'use strict';
 
-  const APP   = window.BX_APP || (window.BX_APP = {});
-  const UI    = APP.ui || (APP.ui = {});
-  const STATE = APP.state || (APP.state = {});
+"use strict";
 
-  const VIEWS = ['wallet','market','casino','mining','airdrop','settings'];
-  const DEFAULT = 'wallet';
-  const STORE = 'bloxio:view';
+/* =====================================================
+APP
+===================================================== */
 
-  const views = new Map();
-  const nav   = new Map();
+const APP=
 
-  document.querySelectorAll('.view').forEach(v=>{
-    if(v.id) views.set(v.id, v);
-  });
+window.BX_APP||
 
-  document.querySelectorAll('.bottom-nav [data-view]').forEach(b=>{
-    nav.set(b.dataset.view, b);
-  });
+(window.BX_APP={});
 
-  const $  = s => document.querySelector(s);
-  const $$ = s => document.querySelectorAll(s);
+APP.ui=
 
-  const safe = fn=>{
-    try{ if(typeof fn === 'function') return fn(); }
-    catch(e){ console.warn('[SAFE]', e); }
-  };
+APP.ui||{};
 
-  /* ================= AUTH ================= */
+APP.router=
 
-  function isLocked(){
-    const overlay = document.getElementById("authOverlay");
-    return overlay && overlay.style.display !== "none";
-  }
+APP.router||{};
 
-  /* ================= NAV ================= */
+/* =====================================================
+CONFIG
+===================================================== */
 
-  function setNav(id){
-    nav.forEach((b,k)=>{
-      const active = k === id;
-      b.classList.toggle('active', active);
-      b.setAttribute('aria-current', active ? 'page' : 'false');
-    });
-  }
+const CONFIG={
 
-  function hideAll(){
-    views.forEach(v=>{
-      v.style.display = 'none';
-      v.classList.remove('active');
-    });
-  }
+DEFAULT:"wallet",
 
-  function show(id){
-    const v = views.get(id);
-    if(!v) return;
-    v.style.display = '';
-    v.classList.add('active');
-  }
+STORE:"bloxio:view",
 
-  /* ================= PANEL FIX 🔥 ================= */
+VIEWS:[
 
-  function closePanels(options = {}){
+"wallet",
 
-    const { keepWallet } = options;
+"market",
 
-    // 🔥 لا تغلق wallet panels إذا داخل wallet
-    if(!keepWallet){
-      $$('.wallet-panel').forEach(p=>{
-        p.classList.add('wallet-hidden');
-      });
-    }
+"casino",
 
-    // mining panels دائماً تتغلق
-    $$('.mining-sub-panel').forEach(p=>{
-      p.classList.add('mining-hidden');
-    });
+"mining",
 
-  }
+"airdrop",
 
-  /* ================= HOOKS ================= */
+"settings"
 
-  function hooks(id){
+]
 
-    document.dispatchEvent(new CustomEvent('bloxio:view',{detail:id}));
+};
 
-    switch(id){
+/* =====================================================
+STATE
+===================================================== */
 
-      case 'wallet':
-        safe(window.renderWallet);
-        safe(window.updateWalletUI);
-        break;
+const views=new Map();
 
-      case 'market':
-        safe(window.renderMarket);
-        safe(window.updateMarketUI);
-        safe(window.resizeMarketChart);
-        break;
+const nav=new Map();
 
-      case 'casino':
-        safe(window.renderCasinoLobby);
-        safe(window.updateCasinoUI);
-        break;
+let booted=false;
 
-      case 'mining':
-        safe(window.renderMining);
-        safe(window.renderMiningPlans);
-        safe(window.updateMiningUI);
-        break;
+/* =====================================================
+DOM
+===================================================== */
 
-      case 'airdrop':
-        safe(window.renderAirdrop);
-        break;
+function cache(){
 
-      case 'settings':
-        safe(window.renderSettings);
-        break;
+document
+.querySelectorAll(
 
-    }
+".view"
 
-  }
+)
 
-  /* ================= ROUTER ================= */
+.forEach(v=>{
 
-  function go(id, opt={}){
+if(v.id){
 
-    if(isLocked()) return;
+views.set(
 
-    const view = VIEWS.includes(id) ? id : DEFAULT;
+v.id,
+v
 
-    if(STATE.current === view && !opt.force){
-      setNav(view);
-      return;
-    }
+);
 
-    // 🔥 FIX: لا تكسر wallet
-    closePanels({
-      keepWallet: view === "wallet"
-    });
+}
 
-    hideAll();
-    show(view);
-    setNav(view);
+});
 
-    STATE.current = view;
-    localStorage.setItem(STORE, view);
+document
+.querySelectorAll(
 
-    hooks(view);
-  }
+"[data-view]"
 
-  /* ================= ACTION SYSTEM 🔥 ================= */
+)
 
-  function bindActions(){
+.forEach(btn=>{
 
-    document.addEventListener('click', e=>{
+nav.set(
 
-      const t = e.target.closest('[data-action]');
-      if(!t) return;
+btn.dataset.view,
+btn
 
-      if(isLocked()) return;
+);
 
-      const a = t.dataset.action;
+});
 
-      switch(a){
+}
 
-        case 'go-wallet':  go('wallet'); break;
-        case 'go-market':  go('market'); break;
-        case 'go-casino':  go('casino'); break;
-        case 'go-mining':  go('mining'); break;
-        case 'go-airdrop': go('airdrop'); break;
+/* =====================================================
+SAFE
+===================================================== */
 
-      }
+function safe(fn){
 
-    });
+try{
 
-  }
+if(
 
-  /* ================= NAV ================= */
+typeof fn
+==="function"
 
-  function bindNav(){
+){
 
-    nav.forEach((btn,id)=>{
-      btn.onclick = ()=>{
-        if(isLocked()) return;
-        go(id);
-      };
-    });
+return fn();
 
-  }
+}
 
-  /* ================= BOOT ================= */
+}catch(e){
 
-  function boot(){
+console.warn(
 
-    bindNav();
-    bindActions();
+"[SAFE]",
 
-    const saved = localStorage.getItem(STORE) || DEFAULT;
+e
 
-    setTimeout(()=>{
-      go(saved, {force:true});
-    }, 50);
+);
 
-    console.log('🚀 MAIN PRO READY');
+}
 
-  }
+}
 
-  if(document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', boot);
-  } else {
-    boot();
-  }
+/* =====================================================
+AUTH
+===================================================== */
+
+function locked(){
+
+return document.body
+.classList.contains(
+
+"auth-lock"
+
+);
+
+}
+
+/* =====================================================
+VIEW
+===================================================== */
+
+function hideAll(){
+
+views.forEach(v=>{
+
+v.classList.remove(
+
+"active"
+
+);
+
+v.style.display=
+
+"none";
+
+});
+
+}
+
+function show(id){
+
+const view=
+
+views.get(id);
+
+if(!view)return;
+
+view.style.display="";
+
+requestAnimationFrame(()=>{
+
+view.classList.add(
+
+"active"
+
+);
+
+});
+
+}
+
+/* =====================================================
+NAV
+===================================================== */
+
+function setNav(id){
+
+nav.forEach(
+
+(btn,key)=>{
+
+const active=
+
+key===id;
+
+btn.classList.toggle(
+
+"active",
+
+active
+
+);
+
+btn.setAttribute(
+
+"aria-current",
+
+active
+
+?
+
+"page"
+
+:
+
+"false"
+
+);
+
+}
+
+);
+
+}
+
+/* =====================================================
+PANELS
+===================================================== */
+
+function closePanels(view){
+
+if(
+
+view!=="wallet"
+
+){
+
+document
+.querySelectorAll(
+
+".wallet-panel"
+
+)
+
+.forEach(el=>{
+
+el.classList.add(
+
+"wallet-hidden"
+
+);
+
+});
+
+}
+
+document
+.querySelectorAll(
+
+".mining-sub-panel"
+
+)
+
+.forEach(el=>{
+
+el.classList.add(
+
+"mining-hidden"
+
+);
+
+});
+
+document
+.querySelectorAll(
+
+".market-modal"
+
+)
+
+.forEach(el=>{
+
+el.classList.remove(
+
+"open"
+
+);
+
+});
+
+}
+
+/* =====================================================
+HOOKS
+===================================================== */
+
+function hooks(view){
+
+window.STATE
+?.set(
+
+"ui.view",
+
+view
+
+);
+
+document.dispatchEvent(
+
+new CustomEvent(
+
+"bloxio:view",
+
+{
+
+detail:view
+
+}
+
+)
+
+);
+
+switch(view){
+
+case"wallet":
+
+safe(
+
+window.renderWallet
+
+);
+
+safe(
+
+window.updateWalletUI
+
+);
+
+break;
+
+case"market":
+
+safe(
+
+window.renderMarket
+
+);
+
+safe(
+
+window.updateMarketUI
+
+);
+
+safe(
+
+window.resizeMarketChart
+
+);
+
+break;
+
+case"casino":
+
+safe(
+
+window.renderCasinoLobby
+
+);
+
+safe(
+
+window.updateCasinoUI
+
+);
+
+break;
+
+case"mining":
+
+safe(
+
+window.renderMining
+
+);
+
+safe(
+
+window.renderMiningPlans
+
+);
+
+safe(
+
+window.updateMiningUI
+
+);
+
+break;
+
+case"airdrop":
+
+safe(
+
+window.renderAirdrop
+
+);
+
+break;
+
+case"settings":
+
+safe(
+
+window.renderSettings
+
+);
+
+break;
+
+}
+
+}
+
+/* =====================================================
+ROUTER
+===================================================== */
+
+function go(
+
+view,
+
+opt={}
+
+){
+
+if(
+
+locked()
+
+)return;
+
+const next=
+
+CONFIG.VIEWS.includes(
+
+view
+
+)
+
+?
+
+view
+
+:
+
+CONFIG.DEFAULT;
+
+const current=
+
+window.STATE
+?.get(
+
+"ui.view"
+
+);
+
+if(
+
+current===next
+
+&&
+
+!opt.force
+
+){
+
+setNav(next);
+
+return;
+
+}
+
+closePanels(next);
+
+hideAll();
+
+show(next);
+
+setNav(next);
+
+window.STATE
+?.set(
+
+"ui.view",
+
+next
+
+);
+
+localStorage.setItem(
+
+CONFIG.STORE,
+
+next
+
+);
+
+hooks(next);
+
+APP.router.current=
+
+next;
+
+}
+
+/* =====================================================
+ACTIONS
+===================================================== */
+
+function actions(){
+
+document
+.addEventListener(
+
+"click",
+
+e=>{
+
+const target=
+
+e.target.closest(
+
+"[data-action]"
+
+);
+
+if(
+
+!target
+
+||
+
+locked()
+
+)
+
+return;
+
+const action=
+
+target.dataset.action;
+
+switch(action){
+
+case"go-wallet":
+
+go("wallet");
+
+break;
+
+case"go-market":
+
+go("market");
+
+break;
+
+case"go-casino":
+
+go("casino");
+
+break;
+
+case"go-mining":
+
+go("mining");
+
+break;
+
+case"go-airdrop":
+
+go("airdrop");
+
+break;
+
+case"go-settings":
+
+go("settings");
+
+break;
+
+}
+
+}
+
+);
+
+}
+
+/* =====================================================
+NAV
+===================================================== */
+
+function bindNav(){
+
+nav.forEach(
+
+(btn,id)=>{
+
+btn.onclick=()=>{
+
+go(id);
+
+};
+
+}
+
+);
+
+}
+
+/* =====================================================
+RESTORE
+===================================================== */
+
+function restore(){
+
+const saved=
+
+localStorage.getItem(
+
+CONFIG.STORE
+
+);
+
+go(
+
+saved||
+
+CONFIG.DEFAULT,
+
+{
+
+force:true
+
+}
+
+);
+
+}
+
+/* =====================================================
+ONLINE
+===================================================== */
+
+function network(){
+
+window.addEventListener(
+
+"online",
+
+()=>{
+
+document.body
+.classList.remove(
+
+"offline"
+
+);
+
+}
+
+);
+
+window.addEventListener(
+
+"offline",
+
+()=>{
+
+document.body
+.classList.add(
+
+"offline"
+
+);
+
+}
+
+);
+
+}
+
+/* =====================================================
+BOOT
+===================================================== */
+
+function boot(){
+
+if(
+
+booted
+
+)return;
+
+booted=true;
+
+cache();
+
+actions();
+
+bindNav();
+
+network();
+
+restore();
+
+console.log(
+
+"MAIN READY"
+
+);
+
+}
+
+/* =====================================================
+API
+===================================================== */
+
+APP.router.go=go;
+
+/* =====================================================
+START
+===================================================== */
+
+if(
+
+document.readyState
+==="loading"
+
+){
+
+document.addEventListener(
+
+"DOMContentLoaded",
+
+boot
+
+);
+
+}else{
+
+boot();
+
+}
 
 })();
