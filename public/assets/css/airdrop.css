@@ -1,703 +1,787 @@
-/* =========================================================
-BLOXIO AIRDROP — CINEMATIC SYSTEM
-========================================================= */
+/* =====================================================
+BLOXIO AIRDROP V5
+PRODUCTION REWARD SYSTEM
+===================================================== */
 
-/* =========================================================
-SECTION
-========================================================= */
+#airdrop{
 
-#airdrop-section{
+display:flex;
+
+flex-direction:column;
+
+gap:22px;
+
+padding-bottom:
+
+calc(
+130px +
+env(
+safe-area-inset-bottom
+)
+);
+
+min-height:100vh;
+
+overflow:hidden;
+
+}
+
+/* =====================================================
+MAIN
+===================================================== */
+
+.airdrop-container{
+
+display:grid;
+
+grid-template-columns:
+
+2fr 1fr;
+
+gap:22px;
+
+align-items:start;
+
+}
+
+/* =====================================================
+REWARD BOX
+===================================================== */
+
+.airdrop-box{
 
 position:relative;
+
+overflow:hidden;
+
+padding:34px;
+
+border-radius:34px;
+
+background:
+
+linear-gradient(
+145deg,
+rgba(0,224,255,.08),
+rgba(10,18,28,.96)
+);
+
+border:
+
+1px solid
+rgba(255,255,255,.05);
+
+display:flex;
+
+flex-direction:column;
+
+align-items:center;
+
+text-align:center;
+
+gap:18px;
+
+}
+
+.airdrop-box::before{
+
+content:"";
+
+position:absolute;
+
+width:260px;
+
+height:260px;
+
+right:-100px;
+
+top:-100px;
+
+border-radius:50%;
+
+background:
+
+rgba(
+0,
+224,
+255,
+.12
+);
+
+filter:
+
+blur(
+90px
+);
+
+}
+
+.airdrop-box img{
+
+width:110px;
+
+height:110px;
+
+object-fit:contain;
+
+filter:
+
+drop-shadow(
+0 0 24px
+rgba(
+0,
+224,
+255,
+.30
+)
+);
+
+}
+
+.airdrop-tasks{
 
 width:100%;
 
 display:flex;
 
 flex-direction:column;
-
-gap:24px;
-
-}
-
-/* =========================================================
-HERO
-========================================================= */
-
-.airdrop-hero{
-
-position:relative;
-
-overflow:hidden;
-
-border-radius:
-var(--radius-xl);
-
-padding:
-34px;
-
-background:
-
-linear-gradient(
-  135deg,
-  rgba(139,92,246,.18),
-  rgba(0,224,255,.12)
-);
-
-border:
-1px solid rgba(255,255,255,.08);
-
-backdrop-filter:
-blur(24px);
-
-box-shadow:
-0 24px 60px rgba(0,0,0,.35);
-
-}
-
-.airdrop-hero::before{
-
-content:"";
-
-position:absolute;
-
-top:-120px;
-right:-120px;
-
-width:280px;
-height:280px;
-
-border-radius:50%;
-
-background:
-rgba(139,92,246,.18);
-
-filter:
-blur(80px);
-
-}
-
-.airdrop-hero::after{
-
-content:"";
-
-position:absolute;
-
-bottom:-120px;
-left:-120px;
-
-width:260px;
-height:260px;
-
-border-radius:50%;
-
-background:
-rgba(0,224,255,.12);
-
-filter:
-blur(80px);
-
-}
-
-/* =========================================================
-HERO CONTENT
-========================================================= */
-
-.airdrop-hero-content{
-
-position:relative;
-
-z-index:2;
-
-}
-
-.airdrop-badge{
-
-display:inline-flex;
-
-align-items:center;
-
-gap:10px;
-
-padding:
-10px 18px;
-
-border-radius:
-var(--radius-full);
-
-background:
-rgba(255,255,255,.06);
-
-border:
-1px solid rgba(255,255,255,.08);
-
-font-size:12px;
-
-font-weight:900;
-
-letter-spacing:.12em;
-
-text-transform:uppercase;
-
-color:
-#fff;
-
-margin-bottom:22px;
-
-}
-
-.airdrop-title{
-
-font-size:
-clamp(38px,6vw,72px);
-
-line-height:1;
-
-letter-spacing:-.05em;
-
-font-weight:1000;
-
-color:#fff;
-
-margin-bottom:18px;
-
-}
-
-.airdrop-sub{
-
-max-width:640px;
-
-color:
-rgba(255,255,255,.72);
-
-line-height:1.8;
-
-font-size:15px;
-
-}
-
-/* =========================================================
-REWARD CARD
-========================================================= */
-
-.airdrop-reward{
-
-position:relative;
-
-overflow:hidden;
-
-padding:
-28px;
-
-border-radius:
-var(--radius-xl);
-
-background:
-rgba(255,255,255,.04);
-
-border:
-1px solid rgba(255,255,255,.06);
-
-backdrop-filter:
-blur(20px);
-
-}
-
-.airdrop-reward::before{
-
-content:"";
-
-position:absolute;
-
-inset:0;
-
-background:
-linear-gradient(
-135deg,
-rgba(139,92,246,.08),
-transparent
-);
-
-}
-
-.airdrop-reward-label{
-
-position:relative;
-
-z-index:2;
-
-font-size:13px;
-
-font-weight:800;
-
-text-transform:uppercase;
-
-letter-spacing:.12em;
-
-color:
-rgba(255,255,255,.45);
-
-margin-bottom:12px;
-
-}
-
-.airdrop-reward-value{
-
-position:relative;
-
-z-index:2;
-
-font-size:
-clamp(42px,8vw,76px);
-
-line-height:1;
-
-font-weight:1000;
-
-letter-spacing:-.06em;
-
-color:#fff;
-
-text-shadow:
-0 0 40px rgba(139,92,246,.25);
-
-}
-
-/* =========================================================
-STATS
-========================================================= */
-
-.airdrop-stats{
-
-display:grid;
-
-grid-template-columns:
-repeat(auto-fit,minmax(180px,1fr));
-
-gap:18px;
-
-}
-
-.airdrop-stat{
-
-padding:
-22px;
-
-border-radius:
-var(--radius-lg);
-
-background:
-rgba(255,255,255,.04);
-
-border:
-1px solid rgba(255,255,255,.06);
-
-backdrop-filter:
-blur(16px);
-
-}
-
-.airdrop-stat small{
-
-display:block;
-
-margin-bottom:10px;
-
-color:
-rgba(255,255,255,.42);
-
-font-size:12px;
-
-font-weight:800;
-
-text-transform:uppercase;
-
-}
-
-.airdrop-stat strong{
-
-font-size:24px;
-
-font-weight:1000;
-
-color:#fff;
-
-}
-
-/* =========================================================
-REFERRAL
-========================================================= */
-
-.airdrop-ref{
-
-display:flex;
-
-flex-direction:column;
-
-gap:16px;
-
-padding:
-26px;
-
-border-radius:
-var(--radius-xl);
-
-background:
-rgba(255,255,255,.04);
-
-border:
-1px solid rgba(255,255,255,.06);
-
-}
-
-.airdrop-ref-title{
-
-font-size:14px;
-
-font-weight:900;
-
-text-transform:uppercase;
-
-letter-spacing:.08em;
-
-color:#fff;
-
-}
-
-.airdrop-ref-box{
-
-display:flex;
 
 gap:12px;
 
 }
 
-.airdrop-ref-box input{
+.airdrop-reward{
 
-flex:1;
+font-size:
 
-height:58px;
-
-border:none;
-
-outline:none;
-
-padding:
-0 18px;
-
-border-radius:
-var(--radius-md);
-
-background:
-rgba(255,255,255,.04);
-
-border:
-1px solid rgba(255,255,255,.06);
-
-color:#fff;
-
-}
-
-.airdrop-copy{
-
-min-width:120px;
-
-border:none;
-
-cursor:pointer;
-
-border-radius:
-var(--radius-md);
-
-background:
-linear-gradient(
-135deg,
-#8b5cf6,
-#00e0ff
+clamp(
+38px,
+7vw,
+58px
 );
 
-color:#fff;
-
-font-weight:900;
-
-}
-
-/* =========================================================
-TASKS
-========================================================= */
-
-.airdrop-tasks{
-
-display:flex;
-
-flex-direction:column;
-
-gap:16px;
-
-}
-
-.task{
-
-display:flex;
-
-align-items:center;
-justify-content:space-between;
-
-gap:18px;
-
-padding:
-22px;
-
-border-radius:
-var(--radius-lg);
+font-weight:1000;
 
 background:
-rgba(255,255,255,.04);
 
-border:
-1px solid rgba(255,255,255,.06);
+linear-gradient(
+135deg,
+#00e0ff,
+#00ffb7
+);
 
-backdrop-filter:
-blur(16px);
+-webkit-background-clip:text;
 
-transition:
-.25s var(--ease);
-
-}
-
-.task:hover{
-
-transform:
-translateY(-2px);
-
-border-color:
-rgba(139,92,246,.18);
+color:transparent;
 
 }
 
-.task-left{
-
-display:flex;
-
-flex-direction:column;
-
-gap:6px;
-
-}
-
-.task-left span{
-
-font-size:15px;
-
-font-weight:800;
-
-color:#fff;
-
-}
-
-.task-left small{
-
-color:
-rgba(255,255,255,.42);
-
-font-size:12px;
-
-font-weight:700;
-
-}
-
-.task button{
-
-min-width:120px;
-
-height:48px;
-
-border:none;
-
-outline:none;
-
-cursor:pointer;
-
-border-radius:
-var(--radius-md);
-
-background:
-rgba(255,255,255,.06);
-
-border:
-1px solid rgba(255,255,255,.08);
-
-color:#fff;
-
-font-weight:900;
-
-transition:
-.25s ease;
-
-}
-
-.task button:hover{
-
-background:
-rgba(139,92,246,.16);
-
-}
-
-.task button:disabled{
-
-opacity:.45;
-
-cursor:not-allowed;
-
-}
-
-/* =========================================================
-CLAIM
-========================================================= */
-
-.airdrop-claim{
+.airdrop-action{
 
 width:100%;
 
-height:64px;
+height:60px;
 
 border:none;
 
-outline:none;
-
 cursor:pointer;
 
-border-radius:
-var(--radius-lg);
-
-background:
-linear-gradient(
-135deg,
-#8b5cf6,
-#00e0ff
-);
-
-color:#fff;
+border-radius:20px;
 
 font-size:16px;
 
 font-weight:1000;
 
-letter-spacing:.04em;
+background:
 
-box-shadow:
-0 20px 50px rgba(139,92,246,.22);
+linear-gradient(
+135deg,
+#00e0ff,
+#00ffb7
+);
 
-transition:
-.3s var(--ease);
+color:#041019;
+
+transition:.2s;
 
 }
 
-.airdrop-claim:hover{
+.airdrop-action:hover{
 
 transform:
+
 translateY(-2px);
 
-box-shadow:
-0 26px 60px rgba(139,92,246,.28);
+}
+
+.airdrop-action:active{
+
+transform:
+
+scale(.98);
 
 }
 
-.airdrop-claim:disabled{
+.airdrop-status{
 
-opacity:.45;
+padding:14px;
 
-cursor:not-allowed;
+border-radius:16px;
 
-transform:none;
+background:
 
-}
+rgba(
+255,
+255,
+255,
+.04
+);
 
-/* =========================================================
-REF STATS
-========================================================= */
+width:100%;
 
-#airdrop-ref-stats{
+font-size:14px;
 
-color:
-rgba(255,255,255,.58);
-
-font-size:13px;
-
-font-weight:700;
+opacity:.9;
 
 }
 
-/* =========================================================
-MOBILE
-========================================================= */
+/* =====================================================
+REFERRAL
+===================================================== */
 
-@media(max-width:768px){
-
-.airdrop-hero{
+.airdrop-referral{
 
 padding:26px;
 
+border-radius:30px;
+
+background:
+
+rgba(
+10,
+18,
+28,
+.95
+);
+
+border:
+
+1px solid
+rgba(
+255,
+255,
+255,
+.05
+);
+
 }
 
-.airdrop-title{
+.airdrop-referral h3{
 
-font-size:44px;
+margin-top:0;
+
+font-size:22px;
 
 }
 
-.airdrop-reward{
+.referral-box{
+
+display:flex;
+
+gap:10px;
+
+margin-top:18px;
+
+}
+
+.ref-input{
+
+flex:1;
+
+height:56px;
+
+padding:0 18px;
+
+border:none;
+
+outline:none;
+
+border-radius:18px;
+
+background:
+
+rgba(
+255,
+255,
+255,
+.04
+);
+
+color:white;
+
+font-size:14px;
+
+}
+
+.referral-box button{
+
+width:110px;
+
+border:none;
+
+cursor:pointer;
+
+border-radius:18px;
+
+font-weight:900;
+
+background:
+
+#00e0ff;
+
+color:#041019;
+
+}
+
+/* =====================================================
+WHITEPAPER
+===================================================== */
+
+.airdrop-whitepaper{
+
+margin-top:18px;
+
+}
+
+.whitepaper-btn{
+
+display:flex;
+
+justify-content:center;
+
+align-items:center;
+
+height:58px;
+
+border-radius:18px;
+
+font-weight:900;
+
+text-decoration:none;
+
+background:
+
+rgba(
+255,
+255,
+255,
+.05
+);
+
+color:white;
+
+transition:.2s;
+
+}
+
+.whitepaper-btn:hover{
+
+background:
+
+rgba(
+0,
+224,
+255,
+.12
+);
+
+}
+
+/* =====================================================
+PARTNERS
+===================================================== */
+
+.airdrop-partners{
+
+padding:28px;
+
+border-radius:30px;
+
+background:
+
+rgba(
+10,
+18,
+28,
+.95
+);
+
+border:
+
+1px solid
+rgba(
+255,
+255,
+255,
+.05
+);
+
+}
+
+.section-title{
+
+margin-top:0;
+
+margin-bottom:22px;
+
+font-size:22px;
+
+}
+
+.partners-grid{
+
+display:grid;
+
+grid-template-columns:
+
+repeat(
+4,
+1fr
+);
+
+gap:18px;
+
+}
+
+.partner-item{
+
+height:110px;
+
+padding:18px;
+
+border-radius:24px;
+
+background:
+
+rgba(
+255,
+255,
+255,
+.03
+);
+
+display:flex;
+
+align-items:center;
+
+justify-content:center;
+
+transition:.25s;
+
+}
+
+.partner-item:hover{
+
+transform:
+
+translateY(-3px);
+
+border:
+
+1px solid
+rgba(
+0,
+224,
+255,
+.16
+);
+
+}
+
+.partner-item img{
+
+max-width:70%;
+
+max-height:70%;
+
+object-fit:contain;
+
+}
+
+/* =====================================================
+MINING PROMO
+===================================================== */
+
+.min-card{
+
+padding:28px;
+
+border-radius:30px;
+
+background:
+
+rgba(
+10,
+18,
+28,
+.95
+);
+
+border:
+
+1px solid
+rgba(
+255,
+255,
+255,
+.05
+);
+
+text-align:center;
+
+}
+
+.min-card img{
+
+width:100%;
+
+height:180px;
+
+border-radius:22px;
+
+object-fit:cover;
+
+margin-bottom:18px;
+
+}
+
+.min-card h3{
+
+margin:0;
+
+font-size:24px;
+
+}
+
+.min-card p{
+
+opacity:.62;
+
+margin:12px 0 20px;
+
+}
+
+/* =====================================================
+TOPUP
+===================================================== */
+
+.topup-card{
+
+padding:28px;
+
+border-radius:30px;
+
+background:
+
+rgba(
+10,
+18,
+28,
+.95
+);
+
+border:
+
+1px solid
+rgba(
+255,
+255,
+255,
+.05
+);
+
+}
+
+.topup-header{
+
+margin-bottom:20px;
+
+}
+
+.topup-header h3{
+
+margin:0;
+
+font-size:22px;
+
+}
+
+.topup-header span{
+
+opacity:.55;
+
+}
+
+.topup-body{
+
+display:flex;
+
+flex-direction:column;
+
+gap:14px;
+
+}
+
+.input-group input{
+
+width:100%;
+
+height:56px;
+
+padding:0 18px;
+
+border:none;
+
+outline:none;
+
+border-radius:18px;
+
+background:
+
+rgba(
+255,
+255,
+255,
+.04
+);
+
+color:white;
+
+}
+
+.btn-confirm{
+
+height:58px;
+
+border:none;
+
+cursor:pointer;
+
+border-radius:18px;
+
+font-weight:1000;
+
+background:
+
+linear-gradient(
+135deg,
+#00e0ff,
+#00ffb7
+);
+
+color:#041019;
+
+}
+
+.topup-message{
+
+margin-top:10px;
+
+opacity:.7;
+
+}
+
+/* =====================================================
+RESPONSIVE
+===================================================== */
+
+@media(max-width:980px){
+
+.airdrop-container{
+
+grid-template-columns:
+
+1fr;
+
+}
+
+}
+
+@media(max-width:768px){
+
+.partners-grid{
+
+grid-template-columns:
+
+repeat(
+2,
+1fr
+);
+
+}
+
+.referral-box{
+
+flex-direction:column;
+
+}
+
+.referral-box button{
+
+width:100%;
+
+height:56px;
+
+}
+
+}
+
+@media(max-width:420px){
+
+.partners-grid{
+
+grid-template-columns:
+
+1fr;
+
+}
+
+.airdrop-box{
 
 padding:24px;
 
 }
 
-.airdrop-ref-box{
+.airdrop-box img{
 
-flex-direction:column;
+width:84px;
 
-}
-
-.airdrop-copy{
-
-width:100%;
-
-height:54px;
+height:84px;
 
 }
 
-.task{
+.airdrop-reward{
 
-flex-direction:column;
-
-align-items:flex-start;
-
-}
-
-.task button{
-
-width:100%;
+font-size:42px;
 
 }
 
 }
 
-/* =========================================================
-SMALL MOBILE
-========================================================= */
+/* =====================================================
+PERFORMANCE
+===================================================== */
 
-@media(max-width:420px){
+.airdrop-box,
+.partner-item,
+.topup-card{
 
-.airdrop-title{
+transform:
 
-font-size:36px;
+translateZ(0);
 
-}
+backface-visibility:hidden;
 
-.airdrop-reward-value{
+will-change:transform;
 
-font-size:52px;
-
-}
-
-}
+  }
