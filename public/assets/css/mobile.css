@@ -1,113 +1,475 @@
-/* =========================================================
- BLOXIO MOBILE SYSTEM
- Enterprise Responsive Layer
-========================================================= */
+/* ==================================================
+BLOXIO MOBILE SYSTEM V7
+REAL DEVICE FIX
+360 → 980 PX
+================================================== */
 
+@media (max-width:980px){
 
-/* =========================================================
-ROOT MOBILE FIX
-========================================================= */
+.app-container{
 
-html{
+padding:
 
--webkit-text-size-adjust:100%;
-
-touch-action:manipulation;
-
-scroll-behavior:smooth;
-
-height:100%;
-
-}
-
-body{
-
-min-height:100dvh;
-
-overflow-x:hidden;
-
-overscroll-behavior:none;
-
--webkit-tap-highlight-color:
-
-transparent;
-
-text-rendering:
-
-optimizeLegibility;
-
-}
-
-
-/* =========================================================
-SAFE AREA
-========================================================= */
-
-:root{
-
---safe-top:
-
-env(safe-area-inset-top,0px);
-
---safe-bottom:
-
-env(safe-area-inset-bottom,0px);
-
---safe-left:
-
-env(safe-area-inset-left,0px);
-
---safe-right:
-
-env(safe-area-inset-right,0px);
-
-}
-
-
-/* =========================================================
-GLOBAL CONTAINER
-========================================================= */
-
-.container,
-.page-shell,
-.main-shell{
+14px
+14px
+120px;
 
 width:100%;
 
-max-width:100%;
-
-padding-left:
-
-max(18px,var(--safe-left));
-
-padding-right:
-
-max(18px,var(--safe-right));
+overflow-x:hidden;
 
 }
 
+.app-header{
 
-/* =========================================================
-SECTION SAFE
-========================================================= */
+padding:
 
-section{
+12px
+16px;
 
-scroll-margin-top:
+min-height:72px;
 
-90px;
+}
+
+.logo{
+
+gap:10px;
 
 min-width:0;
 
 }
 
-.card,
-.panel,
-.market-panel,
-.wallet-panel-card,
-.auth-card,
-.mining-card,
+.logo img{
+
+width:42px;
+
+height:42px;
+
+flex-shrink:0;
+
+}
+
+.logo-text span{
+
+font-size:20px;
+
+}
+
+.logo-text small{
+
+font-size:10px;
+
+}
+
+.social-links{
+
+gap:10px;
+
+}
+
+.social-btn{
+
+width:48px;
+
+height:48px;
+
+border-radius:16px;
+
+flex-shrink:0;
+
+}
+
+.social-btn img{
+
+width:22px;
+
+height:22px;
+
+object-fit:contain;
+
+}
+
+/* WALLET */
+
+.wallet-actions{
+
+display:grid;
+
+grid-template-columns:
+
+1fr
+1fr
+1fr;
+
+gap:10px;
+
+}
+
+.wallet-panel{
+
+width:100%;
+
+padding:20px;
+
+}
+
+.wallet-panel-body{
+
+display:flex;
+
+flex-direction:column;
+
+gap:14px;
+
+}
+
+.wallet-panel-body input,
+.wallet-panel-body select{
+
+width:100%;
+
+min-width:0;
+
+}
+
+.wallet-inline-actions{
+
+display:flex;
+
+flex-wrap:wrap;
+
+gap:10px;
+
+}
+
+.wallet-inline-actions button{
+
+flex:1;
+
+}
+
+.wallet-address-box{
+
+overflow-wrap:anywhere;
+
+}
+
+/* MARKET */
+
+.market-stats-grid{
+
+grid-template-columns:
+
+1fr
+1fr;
+
+}
+
+.market-ohlc{
+
+grid-template-columns:
+
+1fr
+1fr;
+
+}
+
+.market-timeframes{
+
+display:flex;
+
+overflow:auto;
+
+gap:8px;
+
+padding-bottom:6px;
+
+}
+
+.market-chart-modes{
+
+display:flex;
+
+overflow:auto;
+
+gap:8px;
+
+}
+
+.market-timeframes button,
+.market-chart-modes button{
+
+flex:none;
+
+}
+
+.trade-tabs{
+
+display:flex;
+
+}
+
+.trade-tabs button{
+
+flex:1;
+
+}
+
+.percent-row{
+
+display:grid;
+
+grid-template-columns:
+
+repeat(4,1fr);
+
+gap:8px;
+
+}
+
+.orderbook-card{
+
+overflow-x:auto;
+
+}
+
+/* CASINO */
+
+#casinoGamesGrid{
+
+display:grid;
+
+grid-template-columns:
+
+1fr
+1fr;
+
+gap:14px;
+
+}
+
 .casino-game-card{
+
+min-height:180px;
+
+}
+
+.casino-game-thumb{
+
+height:100px;
+
+}
+
+.casino-game-thumb img{
+
+max-width:90%;
+
+max-height:90%;
+
+object-fit:contain;
+
+}
+
+/* MINING */
+
+.mining-shell{
+
+display:flex;
+
+flex-direction:column;
+
+gap:18px;
+
+}
+
+.mining-overview-grid{
+
+grid-template-columns:
+
+1fr
+1fr;
+
+}
+
+#miningGrid{
+
+display:grid;
+
+grid-template-columns:
+
+1fr;
+
+gap:18px;
+
+}
+
+.mining-plan{
+
+width:100%;
+
+overflow:hidden;
+
+padding:22px;
+
+}
+
+.mining-active-actions{
+
+display:grid;
+
+grid-template-columns:
+
+1fr;
+
+gap:10px;
+
+}
+
+.mining-quick-row{
+
+display:grid;
+
+grid-template-columns:
+
+repeat(3,1fr);
+
+gap:10px;
+
+}
+
+/* AIRDROP */
+
+.airdrop-container{
+
+display:flex;
+
+flex-direction:column;
+
+gap:18px;
+
+}
+
+.referral-box{
+
+display:flex;
+
+flex-direction:column;
+
+gap:10px;
+
+}
+
+.referral-box button{
+
+width:100%;
+
+}
+
+.partners-grid{
+
+grid-template-columns:
+
+1fr
+1fr;
+
+}
+
+.partner-item{
+
+height:90px;
+
+}
+
+/* FOOTER */
+
+.legal-footer{
+
+padding-bottom:110px;
+
+text-align:center;
+
+}
+
+.footer-socials{
+
+display:flex;
+
+justify-content:center;
+
+flex-wrap:wrap;
+
+gap:18px;
+
+}
+
+/* NAVIGATION */
+
+.mobile-nav{
+
+position:fixed;
+
+left:10px;
+
+right:10px;
+
+bottom:10px;
+
+height:72px;
+
+padding:
+
+8px;
+
+display:flex;
+
+gap:6px;
+
+border-radius:26px;
+
+z-index:9999;
+
+background:
+
+rgba(
+4,
+8,
+16,
+.95
+);
+
+backdrop-filter:
+
+blur(20px);
+
+box-shadow:
+
+0 12px 50px
+rgba(
+0,
+0,
+0,
+.45
+);
+
+}
+
+.nav-btn{
+
+flex:1;
+
+display:flex;
+
+align-items:center;
+
+justify-content:center;
+
+font-size:13px;
+
+font-weight:800;
+
+border-radius:18px;
+
+padding:0;
 
 min-width:0;
 
@@ -115,47 +477,26 @@ overflow:hidden;
 
 }
 
+.nav-btn.active{
 
-/* =========================================================
-VIDEO SAFE
-========================================================= */
+background:
 
-video{
+rgba(
+0,
+224,
+255,
+.12
+);
 
-max-width:100%;
-
-height:auto;
-
-object-fit:cover;
-
-}
-
-video.bg-video{
-
-position:absolute;
-
-inset:0;
-
-width:100%;
-
-height:100%;
-
-object-fit:cover;
-
-pointer-events:none;
+color:#00e0ff;
 
 }
 
-
-/* =========================================================
-IMAGES
-========================================================= */
+/* GLOBAL */
 
 img{
 
 max-width:100%;
-
-display:block;
 
 height:auto;
 
@@ -167,336 +508,41 @@ max-width:100%;
 
 }
 
+.card{
 
-/* =========================================================
-BUTTON UX
-========================================================= */
-
-button{
-
-touch-action:
-
-manipulation;
-
-min-height:44px;
-
-}
-
-input,
-textarea,
-select{
-
-font-size:
-
-16px;
-
-}
-
-button,
-input,
-select{
-
-font-family:
-
-inherit;
-
-}
-
-
-/* =========================================================
-SCROLL
-========================================================= */
-
-.scroll-x{
-
-overflow-x:auto;
-
--webkit-overflow-scrolling:
-
-touch;
-
-scrollbar-width:none;
-
-}
-
-.scroll-x::-webkit-scrollbar{
-
-display:none;
-
-}
-
-
-/* =========================================================
-BOTTOM NAV SAFE
-========================================================= */
-
-.bottom-nav{
-
-padding-bottom:
-
-max(14px,var(--safe-bottom));
-
-}
-
-body.has-mobile-nav{
-
-padding-bottom:
-
-82px;
-
-}
-
-
-/* =========================================================
-IOS FIX
-========================================================= */
-
-@supports (-webkit-touch-callout:none){
-
-body{
-
-min-height:
-
--webkit-fill-available;
-
-}
-
-html{
-
-height:
-
--webkit-fill-available;
+overflow:hidden;
 
 }
 
 }
 
-
-/* =========================================================
-TABLETS
-========================================================= */
-
-@media(max-width:1200px){
-
-.market-grid{
-
-grid-template-columns:
-
-1fr;
-
-}
-
-.mining-shell{
-
-grid-template-columns:
-
-1fr;
-
-}
-
-.wallet-actions{
-
-grid-template-columns:
-
-repeat(2,1fr);
-
-}
-
-}
-
-
-/* =========================================================
-IPAD
-========================================================= */
-
-@media(max-width:992px){
-
-.casino-stats-strip{
-
-grid-template-columns:
-
-repeat(2,1fr);
-
-}
-
-.market-metrics{
-
-grid-template-columns:
-
-repeat(2,1fr);
-
-}
-
-.airdrop-stats{
-
-grid-template-columns:
-
-repeat(2,1fr);
-
-}
-
-.wallet-assets{
-
-gap:14px;
-
-}
-
-}
-
-
-/* =========================================================
-MOBILE LARGE
-========================================================= */
-
-@media(max-width:768px){
-
-:root{
-
---radius-xl:28px;
-
---radius-lg:22px;
-
---radius-md:16px;
-
-}
-
-/* layout */
-
-#app{
-
-padding-top:
-
-calc(
-var(--safe-top)
-+ 8px
-);
-
-}
-
-/* hero */
-
-.market-title,
-.wallet-title,
-.airdrop-title{
-
-font-size:
-
-42px;
-
-}
-
-.auth-title{
-
-font-size:
-
-34px;
-
-}
-
-.mining-top h2{
-
-font-size:
-
-42px;
-
-}
-
-.casino-title{
-
-font-size:
-
-38px;
-
-}
-
-/* cards */
-
-.wallet-row{
-
-flex-direction:column;
-
-align-items:flex-start;
-
-}
-
-.task{
-
-flex-direction:column;
-
-align-items:flex-start;
-
-}
-
-.wallet-actions{
-
-grid-template-columns:
-
-1fr;
-
-}
-
-.market-exec{
-
-grid-template-columns:
-
-1fr;
-
-}
-
-.market-grid{
-
-gap:18px;
-
-}
-
-.airdrop-stats{
-
-grid-template-columns:
-
-1fr;
-
-}
-
-/* wallet */
-
-.wallet-balance{
-
-align-items:flex-start;
-
-}
-
-/* game */
-
-#gameMultiplierDisplay{
-
-font-size:
-
-52px;
-
-}
-
-/* panel */
-
-.wallet-panel{
-
-padding:16px;
-
-}
-
-.auth-form{
-
-padding:18px;
-
-}
-
-}
-
-
-/* =========================================================
-MOBILE NORMAL
-========================================================= */
+/* PHONE */
 
 @media(max-width:640px){
+
+.market-stats-grid{
+
+grid-template-columns:
+
+1fr;
+
+}
+
+.market-ohlc{
+
+grid-template-columns:
+
+1fr;
+
+}
+
+.wallet-actions{
+
+grid-template-columns:
+
+1fr;
+
+}
 
 #casinoGamesGrid{
 
@@ -506,124 +552,7 @@ grid-template-columns:
 
 }
 
-.wallet-assets{
-
-gap:12px;
-
-}
-
-.market-chart{
-
-height:
-
-340px;
-
-}
-
-#marketPrice{
-
-font-size:
-
-48px;
-
-}
-
-.wallet-total-card{
-
-padding:22px;
-
-}
-
-.airdrop-reward{
-
-padding:20px;
-
-}
-
-.auth-card{
-
-border-radius:
-
-24px;
-
-}
-
-.casino-topbar{
-
-flex-direction:column;
-
-align-items:flex-start;
-
-gap:18px;
-
-}
-
-}
-
-
-/* =========================================================
-SMALL MOBILE
-========================================================= */
-
-@media(max-width:480px){
-
-:root{
-
---space:
-
-14px;
-
-}
-
-/* typography */
-
-.market-title,
-.wallet-title,
-.airdrop-title{
-
-font-size:
-
-34px;
-
-}
-
-.auth-title{
-
-font-size:
-
-30px;
-
-}
-
-.casino-title{
-
-font-size:
-
-30px;
-
-}
-
-.mining-top h2{
-
-font-size:
-
-32px;
-
-}
-
-/* chart */
-
-.market-chart{
-
-height:
-
-280px;
-
-}
-
-/* stats */
-
-.casino-stats-strip{
+.partners-grid{
 
 grid-template-columns:
 
@@ -631,7 +560,7 @@ grid-template-columns:
 
 }
 
-.market-metrics{
+.mining-overview-grid{
 
 grid-template-columns:
 
@@ -639,202 +568,104 @@ grid-template-columns:
 
 }
 
-.wallet-actions{
+.logo-text small{
 
-gap:12px;
-
-}
-
-.bet-quick-row{
-
-flex-wrap:wrap;
-
-}
-
-.wallet-row{
-
-padding:18px;
-
-}
-
-.task{
-
-padding:18px;
+display:none;
 
 }
 
 }
 
+/* SMALL */
 
-/* =========================================================
-FOLD DEVICES
-========================================================= */
+@media(max-width:420px){
 
-@media(max-width:360px){
+.app-container{
 
-.market-title{
+padding:
 
-font-size:
-
-28px;
-
-}
-
-.wallet-title{
-
-font-size:
-
-28px;
+12px
+10px
+120px;
 
 }
 
-#marketPrice{
+.mobile-nav{
 
-font-size:
-
-42px;
+height:66px;
 
 }
 
-#walletTotal{
+.nav-btn{
 
-font-size:
-
-42px;
+font-size:12px;
 
 }
 
-#gameMultiplierDisplay{
+.logo img{
 
-font-size:
+width:38px;
 
-42px;
+height:38px;
 
 }
 
-button{
+.social-btn{
 
-font-size:
+width:44px;
 
-14px;
+height:44px;
 
 }
 
 }
 
+/* SAFE AREA */
 
-/* =========================================================
-LANDSCAPE MOBILE
-========================================================= */
+@supports(
 
-@media(max-height:520px)
-and (orientation:landscape){
+padding:max(0px)
 
-.auth-card{
+){
 
-max-height:
-
-92vh;
-
-overflow:auto;
-
-}
-
-.market-chart{
-
-height:
-
-220px;
-
-}
-
-#casino{
-
-padding-top:12px;
-
-}
-
-.wallet-panel{
-
-align-items:flex-start;
-
-overflow:auto;
-
-}
-
-}
-
-
-/* =========================================================
-PERFORMANCE
-========================================================= */
-
-@media(prefers-reduced-motion:reduce){
-
-*{
-
-animation:none
-!important;
-
-transition:none
-!important;
-
-scroll-behavior:auto;
-
-}
-
-}
-
-
-/* =========================================================
-HOVER MOBILE FIX
-========================================================= */
-
-@media(hover:none){
-
-button:hover{
-
-transform:none;
-
-}
-
-.wallet-row:hover{
-
-transform:none;
-
-}
-
-.task:hover{
-
-transform:none;
-
-}
-
-.casino-game-card:hover{
-
-transform:none;
-
-}
-
-}
-
-
-/* =========================================================
-PWA FIX
-========================================================= */
-
-@media(display-mode:standalone){
-
-body{
-
-padding-top:
-
-var(--safe-top);
+.mobile-nav{
 
 padding-bottom:
 
-var(--safe-bottom);
+max(
+8px,
+env(
+safe-area-inset-bottom
+)
+);
 
 }
 
 }
+
+/* FIX OVERFLOW */
+
+html,
+body{
+
+overflow-x:hidden;
+
+max-width:100%;
+
+}
+
+.view{
+
+overflow-x:hidden;
+
+min-width:0;
+
+}
+
+*{
+
+box-sizing:border-box;
+
+min-width:0;
+
+ }
