@@ -1,6 +1,37 @@
 /* =========================================================
-BLOXIO — MOTION SYSTEM
+BLOXIO MOTION SYSTEM V6
+PRODUCTION MOTION ENGINE
 ========================================================= */
+
+/* =========================================================
+GLOBAL ENGINE
+========================================================= */
+
+:root{
+
+--motion-fast:.16s;
+--motion-normal:.28s;
+--motion-slow:.45s;
+
+--motion-ease:
+
+cubic-bezier(
+.22,
+1,
+.36,
+1
+);
+
+--motion-bounce:
+
+cubic-bezier(
+.34,
+1.56,
+.64,
+1
+);
+
+}
 
 /* =========================================================
 GLOBAL TRANSITIONS
@@ -10,22 +41,34 @@ GLOBAL TRANSITIONS
 
 transition:
 
-background-color var(--speed-normal) var(--ease),
+background-color
+var(--motion-normal)
+var(--motion-ease),
 
-border-color var(--speed-normal) var(--ease),
+border-color
+var(--motion-normal)
+var(--motion-ease),
 
-color var(--speed-fast) var(--ease),
+opacity
+var(--motion-normal)
+var(--motion-ease),
 
-opacity var(--speed-normal) var(--ease),
+transform
+var(--motion-normal)
+var(--motion-ease),
 
-transform var(--speed-normal) var(--ease),
+box-shadow
+var(--motion-normal)
+var(--motion-ease),
 
-box-shadow var(--speed-normal) var(--ease);
+filter
+var(--motion-normal)
+var(--motion-ease);
 
 }
 
 /* =========================================================
-HARDWARE ACCELERATION
+GPU
 ========================================================= */
 
 .fade-in,
@@ -33,30 +76,39 @@ HARDWARE ACCELERATION
 .fade-down,
 .scale-in,
 .float,
-.glow-pulse,
 .slide-left,
-.slide-right{
-
-will-change:
-transform,
-opacity;
+.slide-right,
+.glow-pulse,
+.card-enter,
+.card-float,
+.panel-enter{
 
 transform:
+
 translateZ(0);
 
 backface-visibility:
+
 hidden;
+
+will-change:
+
+transform,
+opacity;
 
 }
 
 /* =========================================================
-FADE IN
+FADE
 ========================================================= */
 
 .fade-in{
 
 animation:
-fadeIn .6s var(--ease) forwards;
+
+fadeIn .5s
+var(--motion-ease)
+forwards;
 
 }
 
@@ -77,7 +129,7 @@ opacity:1;
 }
 
 /* =========================================================
-FADE UP
+UP
 ========================================================= */
 
 .fade-up{
@@ -85,10 +137,14 @@ FADE UP
 opacity:0;
 
 transform:
-translateY(28px);
+
+translateY(26px);
 
 animation:
-fadeUp .7s var(--ease) forwards;
+
+fadeUp .65s
+var(--motion-ease)
+forwards;
 
 }
 
@@ -99,14 +155,15 @@ to{
 opacity:1;
 
 transform:
-  translateY(0);
+
+translateY(0);
 
 }
 
 }
 
 /* =========================================================
-FADE DOWN
+DOWN
 ========================================================= */
 
 .fade-down{
@@ -114,10 +171,14 @@ FADE DOWN
 opacity:0;
 
 transform:
-translateY(-28px);
+
+translateY(-26px);
 
 animation:
-fadeDown .7s var(--ease) forwards;
+
+fadeDown .65s
+var(--motion-ease)
+forwards;
 
 }
 
@@ -128,14 +189,15 @@ to{
 opacity:1;
 
 transform:
-  translateY(0);
+
+translateY(0);
 
 }
 
 }
 
 /* =========================================================
-SCALE IN
+SCALE
 ========================================================= */
 
 .scale-in{
@@ -143,10 +205,14 @@ SCALE IN
 opacity:0;
 
 transform:
+
 scale(.92);
 
 animation:
-scaleIn .5s var(--ease) forwards;
+
+scaleIn .45s
+var(--motion-ease)
+forwards;
 
 }
 
@@ -157,14 +223,15 @@ to{
 opacity:1;
 
 transform:
-  scale(1);
+
+scale(1);
 
 }
 
 }
 
 /* =========================================================
-SLIDE LEFT
+LEFT RIGHT
 ========================================================= */
 
 .slide-left{
@@ -172,10 +239,14 @@ SLIDE LEFT
 opacity:0;
 
 transform:
-translateX(40px);
+
+translateX(34px);
 
 animation:
-slideLeft .6s var(--ease) forwards;
+
+slideLeft .55s
+var(--motion-ease)
+forwards;
 
 }
 
@@ -186,25 +257,26 @@ to{
 opacity:1;
 
 transform:
-  translateX(0);
+
+translateX(0);
 
 }
 
 }
-
-/* =========================================================
-SLIDE RIGHT
-========================================================= */
 
 .slide-right{
 
 opacity:0;
 
 transform:
-translateX(-40px);
+
+translateX(-34px);
 
 animation:
-slideRight .6s var(--ease) forwards;
+
+slideRight .55s
+var(--motion-ease)
+forwards;
 
 }
 
@@ -215,7 +287,8 @@ to{
 opacity:1;
 
 transform:
-  translateX(0);
+
+translateX(0);
 
 }
 
@@ -228,7 +301,10 @@ FLOAT
 .float{
 
 animation:
-floating 5s ease-in-out infinite;
+
+floating 5s
+ease-in-out
+infinite;
 
 }
 
@@ -238,172 +314,124 @@ floating 5s ease-in-out infinite;
 100%{
 
 transform:
-  translateY(0);
+
+translateY(0);
 
 }
 
 50%{
 
 transform:
-  translateY(-8px);
+
+translateY(-8px);
 
 }
 
 }
 
 /* =========================================================
-GLOW PULSE
+CARD ENTER
 ========================================================= */
 
-.glow-pulse{
+.card-enter{
+
+opacity:0;
+
+transform:
+
+translateY(18px)
+scale(.98);
 
 animation:
-glowPulse 2.6s ease infinite;
+
+cardEnter .45s
+var(--motion-ease)
+forwards;
 
 }
 
-@keyframes glowPulse{
+@keyframes cardEnter{
 
-0%,
-100%{
-
-box-shadow:
-  0 0 0 rgba(0,224,255,0);
-
-}
-
-50%{
-
-box-shadow:
-  0 0 30px
-  rgba(0,224,255,.25);
-
-}
-
-}
-
-/* =========================================================
-SOFT BLINK
-========================================================= */
-
-.soft-blink{
-
-animation:
-softBlink 1.6s ease infinite;
-
-}
-
-@keyframes softBlink{
-
-0%,
-100%{
+to{
 
 opacity:1;
 
-}
+transform:
 
-50%{
-
-opacity:.45;
+translateY(0)
+scale(1);
 
 }
 
 }
 
 /* =========================================================
-ROTATE
+PANEL
 ========================================================= */
 
-.spin{
+.panel-enter{
+
+opacity:0;
+
+transform:
+
+translateY(30px);
 
 animation:
-spin 1s linear infinite;
+
+panelEnter .34s
+var(--motion-ease)
+forwards;
 
 }
 
-@keyframes spin{
+@keyframes panelEnter{
 
 to{
 
+opacity:1;
+
 transform:
-  rotate(360deg);
+
+translateY(0);
 
 }
 
 }
 
 /* =========================================================
-SLOW ROTATE
+GLASS
 ========================================================= */
-
-.spin-slow{
-
-animation:
-spinSlow 12s linear infinite;
-
-}
-
-@keyframes spinSlow{
-
-to{
-
-transform:
-  rotate(360deg);
-
-}
-
-}
-
-/* =========================================================
-CARD HOVER
-========================================================= */
-
-.hover-lift{
-
-transition:
-transform var(--speed-normal) var(--ease),
-box-shadow var(--speed-normal) var(--ease);
-
-}
-
-.hover-lift:hover{
-
-transform:
-translateY(-4px);
-
-box-shadow:
-var(--shadow-md);
-
-}
-
-/* =========================================================
-GLASS HOVER
-========================================================= */
-
-.glass-hover{
-
-transition:
-.3s var(--ease);
-
-}
 
 .glass-hover:hover{
 
 background:
-rgba(255,255,255,.06);
 
-border-color:
-rgba(255,255,255,.12);
+rgba(
+255,
+255,
+255,
+.06
+);
+
+backdrop-filter:
+
+blur(20px);
+
+transform:
+
+translateY(-2px);
 
 }
 
 /* =========================================================
-BUTTON PRESS
+BUTTON
 ========================================================= */
 
 .press{
 
 transition:
+
 transform .12s ease;
 
 }
@@ -411,12 +439,29 @@ transform .12s ease;
 .press:active{
 
 transform:
+
 scale(.96);
 
 }
 
+.btn:hover{
+
+transform:
+
+translateY(-2px);
+
+}
+
+.btn:active{
+
+transform:
+
+scale(.97);
+
+}
+
 /* =========================================================
-BUTTON SHIMMER
+SHIMMER
 ========================================================= */
 
 .shimmer{
@@ -433,29 +478,41 @@ content:"";
 
 position:absolute;
 
-top:0;
-left:-120%;
+inset:0;
 
-width:80%;
-height:100%;
+left:-140%;
 
 background:
+
 linear-gradient(
+
 90deg,
+
 transparent,
-rgba(255,255,255,.18),
+
+rgba(
+255,
+255,
+255,
+.16
+),
+
 transparent
+
 );
 
 transform:
-skewX(-20deg);
+
+skewX(-24deg);
 
 }
 
 .shimmer:hover::before{
 
 animation:
-shimmerMove 1s ease;
+
+shimmerMove
+1s ease;
 
 }
 
@@ -463,117 +520,204 @@ shimmerMove 1s ease;
 
 to{
 
-left:140%;
+left:150%;
 
 }
 
 }
 
 /* =========================================================
-SECTION REVEAL
+GLOW
 ========================================================= */
 
-.section-reveal{
-
-opacity:0;
-
-transform:
-translateY(40px);
-
-}
-
-.section-reveal.visible{
+.glow-pulse{
 
 animation:
-revealSection .8s var(--ease) forwards;
+
+glowPulse
+2.8s
+ease
+infinite;
 
 }
 
-@keyframes revealSection{
-
-to{
-
-opacity:1;
-
-transform:
-  translateY(0);
-
-}
-
-}
-
-/* =========================================================
-LOADER DOTS
-========================================================= */
-
-.loader-dots{
-
-display:flex;
-
-align-items:center;
-
-gap:8px;
-
-}
-
-.loader-dots span{
-
-width:10px;
-height:10px;
-
-border-radius:50%;
-
-background:
-var(--accent);
-
-animation:
-dotPulse 1.2s ease infinite;
-
-}
-
-.loader-dots span:nth-child(2){
-
-animation-delay:.15s;
-
-}
-
-.loader-dots span:nth-child(3){
-
-animation-delay:.3s;
-
-}
-
-@keyframes dotPulse{
+@keyframes glowPulse{
 
 0%,
 100%{
 
-opacity:.25;
+box-shadow:
 
-transform:
-  scale(.8);
+0 0 0
+rgba(
+0,
+224,
+255,
+0
+);
 
 }
 
 50%{
 
-opacity:1;
+box-shadow:
 
-transform:
-  scale(1);
+0 0 28px
+rgba(
+0,
+224,
+255,
+.26
+);
 
 }
 
 }
 
 /* =========================================================
-NOTIFICATION POP
+MARKET
+========================================================= */
+
+.chart-live{
+
+animation:
+
+chartLive
+2s linear
+infinite;
+
+}
+
+@keyframes chartLive{
+
+50%{
+
+opacity:.7;
+
+}
+
+}
+
+/* =========================================================
+CASINO
+========================================================= */
+
+.casino-card:hover{
+
+transform:
+
+translateY(-4px);
+
+}
+
+.ticker-move{
+
+animation:
+
+tickerMove
+18s
+linear
+infinite;
+
+}
+
+@keyframes tickerMove{
+
+from{
+
+transform:
+
+translateX(0);
+
+}
+
+to{
+
+transform:
+
+translateX(-50%);
+
+}
+
+}
+
+/* =========================================================
+MINING
+========================================================= */
+
+.energy-pulse{
+
+animation:
+
+energyPulse
+2.4s
+ease
+infinite;
+
+}
+
+@keyframes energyPulse{
+
+50%{
+
+box-shadow:
+
+0 0 40px
+rgba(
+0,
+224,
+255,
+.32
+);
+
+}
+
+}
+
+/* =========================================================
+AIRDROP
+========================================================= */
+
+.airdrop-pulse{
+
+animation:
+
+airdropPulse
+2.5s
+ease
+infinite;
+
+}
+
+@keyframes airdropPulse{
+
+50%{
+
+box-shadow:
+
+0 0 40px
+rgba(
+80,
+255,
+220,
+.28
+);
+
+}
+
+}
+
+/* =========================================================
+TOAST
 ========================================================= */
 
 .toast-pop{
 
 animation:
-toastPop .45s var(--ease);
+
+toastPop
+.35s
+var(--motion-bounce);
 
 }
 
@@ -584,8 +728,9 @@ from{
 opacity:0;
 
 transform:
-  translateY(18px)
-  scale(.95);
+
+translateY(16px)
+scale(.95);
 
 }
 
@@ -594,21 +739,25 @@ to{
 opacity:1;
 
 transform:
-  translateY(0)
-  scale(1);
+
+translateY(0)
+scale(1);
 
 }
 
 }
 
 /* =========================================================
-MODAL OPEN
+MODAL
 ========================================================= */
 
 .modal-open{
 
 animation:
-modalOpen .35s var(--ease);
+
+modalOpen
+.3s
+var(--motion-ease);
 
 }
 
@@ -619,7 +768,8 @@ from{
 opacity:0;
 
 transform:
-  scale(.92);
+
+scale(.94);
 
 }
 
@@ -628,134 +778,65 @@ to{
 opacity:1;
 
 transform:
-  scale(1);
+
+scale(1);
 
 }
 
 }
 
 /* =========================================================
-NAV ACTIVE
+LOADER
 ========================================================= */
 
-.nav-btn.active{
+.loader-spin{
 
 animation:
-navPulse .3s ease;
+
+loaderSpin
+1s linear
+infinite;
 
 }
 
-@keyframes navPulse{
-
-0%{
-
-transform:
-  scale(.9);
-
-}
-
-100%{
-
-transform:
-  scale(1);
-
-}
-
-}
-
-/* =========================================================
-MARKET TICKER
-========================================================= */
-
-.ticker-scroll{
-
-animation:
-tickerMove 20s linear infinite;
-
-}
-
-@keyframes tickerMove{
-
-from{
-
-transform:
-  translateX(0);
-
-}
+@keyframes loaderSpin{
 
 to{
 
 transform:
-  translateX(-50%);
+
+rotate(360deg);
 
 }
 
 }
 
-/* =========================================================
-MINING ENERGY
-========================================================= */
-
-.energy-pulse{
+.loader-pulse{
 
 animation:
-energyPulse 2s ease infinite;
+
+loaderPulse
+1.5s ease
+infinite;
 
 }
 
-@keyframes energyPulse{
-
-0%,
-100%{
-
-box-shadow:
-  0 0 0 rgba(0,224,255,0);
-
-}
+@keyframes loaderPulse{
 
 50%{
 
-box-shadow:
-  0 0 35px
-  rgba(0,224,255,.35);
+opacity:.5;
+
+transform:
+
+scale(.95);
 
 }
 
 }
 
 /* =========================================================
-AIRDROP GLOW
-========================================================= */
-
-.airdrop-glow{
-
-animation:
-airdropGlow 2.5s ease infinite;
-
-}
-
-@keyframes airdropGlow{
-
-0%,
-100%{
-
-box-shadow:
-  0 0 0 rgba(139,92,246,0);
-
-}
-
-50%{
-
-box-shadow:
-  0 0 40px
-  rgba(139,92,246,.32);
-
-}
-
-}
-
-/* =========================================================
-SCROLL REVEAL HELPERS
+REVEAL
 ========================================================= */
 
 [data-animate]{
@@ -763,7 +844,8 @@ SCROLL REVEAL HELPERS
 opacity:0;
 
 transform:
-translateY(24px);
+
+translateY(22px);
 
 }
 
@@ -772,24 +854,27 @@ translateY(24px);
 opacity:1;
 
 transform:
+
 translateY(0);
 
 }
 
 /* =========================================================
-REDUCED MOTION
+REDUCED
 ========================================================= */
 
-@media(prefers-reduced-motion:reduce){
+@media(
+prefers-reduced-motion:reduce
+){
 
 *{
 
-animation:none !important;
+animation:none!important;
 
-transition:none !important;
+transition:none!important;
 
-scroll-behavior:auto !important;
-
-}
+scroll-behavior:auto!important;
 
 }
+
+  }
