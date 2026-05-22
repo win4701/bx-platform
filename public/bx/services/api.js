@@ -1,268 +1,900 @@
 /* =========================================================
-   BLOXIO API ENGINE — FINAL PRO MAX
+BLOXIO API ENGINE V6
+ENTERPRISE NETWORK LAYER
 ========================================================= */
 
 "use strict";
 
-/* ================= BASE ================= */
+(function(){
 
-const BASE_URL =
-  location.origin.includes("localhost")
-    ? "http://localhost:3000/api"
-    : location.origin + "/api";
+/* =====================================================
+CONFIG
+===================================================== */
 
-/* ================= CONFIG ================= */
+const CONFIG={
 
-const DEFAULT_HEADERS = {
-  "Content-Type": "application/json"
+BASE:
+
+location.hostname==="localhost"
+
+?
+
+"http://localhost:3000/api"
+
+:
+
+location.origin+"/api",
+
+TIMEOUT:12000,
+
+RETRIES:3,
+
+BACKOFF:500,
+
+CACHE:20000,
+
+QUEUE:4
+
 };
 
-const TIMEOUT = 10000;
+/* =====================================================
+STATE
+===================================================== */
 
-/* ================= EVENT BUS ================= */
+const cache=new Map();
 
-const listeners = new Map();
+const pending=new Map();
 
-function emit(event, data){
-  (listeners.get(event) || []).forEach(fn=>{
-    try{ fn(data); }catch(e){ console.warn(e); }
-  });
-}
+const listeners=new Map();
 
-function on(event, fn){
-  if(!listeners.has(event)) listeners.set(event, []);
-  listeners.get(event).push(fn);
-}
+const controllers=new Set();
 
-/* ================= CORE REQUEST ================= */
+const queue=[];
 
-async function request(url, options = {}){
+let active=0;
 
-  const controller = new AbortController();
-  const timer = setTimeout(()=>controller.abort(), TIMEOUT);
+const metrics={
 
-  try{
+success:0,
 
-    const token = localStorage.getItem("token");
+failed:0,
 
-    const res = await fetch(BASE_URL + url, {
-      method: "GET",
-      headers:{
-        ...DEFAULT_HEADERS,
-        ...(token ? { Authorization:"Bearer " + token } : {})
-      },
-      credentials:"include",
-      signal: controller.signal,
-      ...options
-    });
+network:0,
 
-    clearTimeout(timer);
-
-    let data = null;
-
-    try{ data = await res.json(); }catch{}
-
-    /* ================= AUTH ================= */
-
-    if(res.status === 401){
-
-      localStorage.removeItem("token");
-
-      emit("auth:logout");
-
-      return { error:"unauthorized" };
-    }
-
-    /* ================= ERROR ================= */
-
-    if(!res.ok){
-
-      console.warn("API ERROR:", url, data);
-
-      emit("api:error", { url, data });
-
-      return { error: data?.error || "request_failed" };
-    }
-
-    return data;
-
-  }catch(e){
-
-    clearTimeout(timer);
-
-    if(e.name === "AbortError"){
-      emit("api:error", { url, error:"timeout" });
-      return { error:"timeout" };
-    }
-
-    emit("api:error", { url, error:"network" });
-
-    console.error("API CRASH:", url, e);
-
-    return { error:"network" };
-  }
-
-}
-
-/* ================= RETRY ================= */
-
-async function requestRetry(url, options = {}, retries = 2){
-
-  let i = 0;
-
-  while(i <= retries){
-
-    const res = await request(url, options);
-
-    if(res && !res.error){
-      return res;
-    }
-
-    i++;
-
-  }
-
-  return { error:"retry_failed" };
-}
-
-/* =========================================================
-API OBJECT
-========================================================= */
-
-window.API = {
-
-  on,
-
-  /* ================= BASE ================= */
-
-  get(url){
-    return requestRetry(url);
-  },
-
-  post(url, body = {}){
-    return requestRetry(url,{
-      method:"POST",
-      body: JSON.stringify(body)
-    });
-  },
-
-  put(url, body = {}){
-    return requestRetry(url,{
-      method:"PUT",
-      body: JSON.stringify(body)
-    });
-  },
-
-  delete(url){
-    return requestRetry(url,{
-      method:"DELETE"
-    });
-  },
-
-  /* ================= AUTH ================= */
-
-  check(){
-    return this.get("/auth/check");
-  },
-
-  /* ================= WALLET ================= */
-
-  wallet(){
-    return this.get("/wallet");
-  },
-
-  history(){
-    return this.get("/finance/history");
-  },
-
-  transfer(data){
-    return this.post("/finance/transfer", data);
-  },
-
-  deposit(asset){
-    return this.get(`/payments/deposit/${asset}`);
-  },
-
-  withdraw(data){
-    return this.post("/payments/withdraw", data);
-  },
-
-  /* ================= MARKET ================= */
-
-  market(){
-    return this.get("/market");
-  },
-
-  /* ================= CASINO ================= */
-
-  casino(){
-    return this.get("/casino");
-  },
-
-  /* ================= MINING ================= */
-
-  mining(){
-    return this.get("/mining/status");
-  },
-
-  startMining(data){
-    return this.post("/mining/start", data);
-  },
-
-  stopMining(){
-    return this.post("/mining/stop");
-  },
-
-  /* ================= AIRDROP ================= */
-
-  airdrop(){
-    return this.get("/airdrop/status");
-  },
-
-  claimAirdrop(){
-    return this.post("/airdrop/claim");
-  },
-
-  /* ================= SYNC SYSTEM ================= */
-
-  syncWallet(){
-
-    this.wallet().then(data=>{
-      if(data && !data.error){
-        emit("wallet:update", data);
-      }
-    });
-
-  },
-
-  syncMining(){
-
-    this.mining().then(data=>{
-      if(data && !data.error){
-        emit("mining:update", data);
-      }
-    });
-
-  },
-
-  syncAirdrop(){
-
-    this.airdrop().then(data=>{
-      if(data && !data.error){
-        emit("airdrop:update", data);
-      }
-    });
-
-  },
-
-  /* ================= FULL SYNC ================= */
-
-  syncAll(){
-
-    this.syncWallet();
-    this.syncMining();
-    this.syncAirdrop();
-
-  }
+cached:0
 
 };
+
+/* =====================================================
+BUS
+===================================================== */
+
+function emit(
+
+event,
+payload
+
+){
+
+(listeners.get(event)||[])
+.forEach(fn=>{
+
+try{
+
+fn(payload);
+
+}catch(e){
+
+console.warn(e);
+
+}
+
+});
+
+}
+
+function on(
+
+event,
+fn
+
+){
+
+if(
+
+!listeners.has(event)
+
+){
+
+listeners.set(
+
+event,
+[]
+
+);
+
+}
+
+listeners
+.get(event)
+.push(fn);
+
+}
+
+/* =====================================================
+TOKEN
+===================================================== */
+
+function token(){
+
+return localStorage
+.getItem(
+
+"token"
+
+);
+
+}
+
+/* =====================================================
+HEADERS
+===================================================== */
+
+function headers(extra={}){
+
+return{
+
+"Content-Type":
+
+"application/json",
+
+...(token()
+
+?{
+
+Authorization:
+
+`Bearer ${token()}`
+
+}
+
+:{}),
+
+...extra
+
+};
+
+}
+
+/* =====================================================
+QUEUE
+===================================================== */
+
+function enqueue(fn){
+
+return new Promise(
+
+(resolve,reject)=>{
+
+queue.push({
+
+fn,
+
+resolve,
+
+reject
+
+});
+
+pump();
+
+}
+
+);
+
+}
+
+function pump(){
+
+if(
+
+active>=CONFIG.QUEUE
+
+)return;
+
+const job=
+
+queue.shift();
+
+if(!job)return;
+
+active++;
+
+job.fn()
+
+.then(job.resolve)
+
+.catch(job.reject)
+
+.finally(()=>{
+
+active--;
+
+pump();
+
+});
+
+}
+
+/* =====================================================
+CACHE
+===================================================== */
+
+function key(
+
+url,
+opt
+
+){
+
+return JSON.stringify({
+
+url,
+
+method:
+
+opt.method||
+
+"GET",
+
+body:
+
+opt.body||
+
+null
+
+});
+
+}
+
+function cached(k){
+
+const c=
+
+cache.get(k);
+
+if(!c)return null;
+
+if(
+
+Date.now()
+
+>
+
+c.expire
+
+){
+
+cache.delete(k);
+
+return null;
+
+}
+
+metrics.cached++;
+
+return c.value;
+
+}
+
+/* =====================================================
+FETCH
+===================================================== */
+
+async function request(
+
+url,
+opt={}
+
+){
+
+const method=
+
+opt.method||
+
+"GET";
+
+const k=
+
+key(url,opt);
+
+if(
+
+method==="GET"
+
+){
+
+const hit=
+
+cached(k);
+
+if(hit){
+
+return hit;
+
+}
+
+}
+
+if(
+
+pending.has(k)
+
+){
+
+return pending.get(k);
+
+}
+
+const promise=
+
+enqueue(
+
+()=>attempt(
+
+url,
+opt
+
+)
+
+);
+
+pending.set(
+
+k,
+promise
+
+);
+
+try{
+
+const res=
+
+await promise;
+
+if(
+
+method==="GET"
+
+&&
+
+!res.error
+
+){
+
+cache.set(
+
+k,
+
+{
+
+value:res,
+
+expire:
+
+Date.now()
+
++
+
+CONFIG.CACHE
+
+}
+
+);
+
+}
+
+return res;
+
+}finally{
+
+pending.delete(k);
+
+}
+
+}
+
+/* =====================================================
+RETRY
+===================================================== */
+
+async function attempt(
+
+url,
+opt
+
+){
+
+let tries=0;
+
+while(
+
+tries<=
+
+CONFIG.RETRIES
+
+){
+
+const res=
+
+await raw(
+
+url,
+opt
+
+);
+
+if(
+
+!res.error
+
+){
+
+metrics.success++;
+
+return res;
+
+}
+
+tries++;
+
+await wait(
+
+CONFIG.BACKOFF
+*tries
+
+);
+
+}
+
+metrics.failed++;
+
+return{
+
+error:
+
+"retry_failed"
+
+};
+
+}
+
+/* =====================================================
+RAW
+===================================================== */
+
+async function raw(
+
+url,
+opt
+
+){
+
+const controller=
+
+new AbortController();
+
+controllers.add(
+
+controller
+
+);
+
+const timer=
+
+setTimeout(
+
+()=>{
+
+controller.abort();
+
+},
+
+CONFIG.TIMEOUT
+
+);
+
+try{
+
+const res=
+
+await fetch(
+
+CONFIG.BASE
++url,
+
+{
+
+method:
+
+opt.method||
+
+"GET",
+
+headers:
+
+headers(
+
+opt.headers
+
+),
+
+credentials:
+
+"include",
+
+signal:
+
+controller.signal,
+
+body:
+
+opt.body
+
+}
+
+);
+
+clearTimeout(
+
+timer
+
+);
+
+controllers.delete(
+
+controller
+
+);
+
+let data=null;
+
+try{
+
+data=
+
+await res.json();
+
+}catch{}
+
+if(
+
+res.status===401
+
+){
+
+localStorage
+.removeItem(
+
+"token"
+
+);
+
+emit(
+
+"auth:logout"
+
+);
+
+return{
+
+error:
+
+"unauthorized"
+
+};
+
+}
+
+if(
+
+!res.ok
+
+){
+
+emit(
+
+"api:error",
+
+{
+
+url,
+
+status:
+
+res.status
+
+}
+
+);
+
+return{
+
+error:
+
+data?.error||
+
+"request_failed"
+
+};
+
+}
+
+return data;
+
+}catch(e){
+
+clearTimeout(
+
+timer
+
+);
+
+controllers.delete(
+
+controller
+
+);
+
+metrics.network++;
+
+if(
+
+e.name===
+
+"AbortError"
+
+){
+
+return{
+
+error:
+
+"timeout"
+
+};
+
+}
+
+return{
+
+error:
+
+"network"
+
+};
+
+}
+
+}
+
+/* =====================================================
+UTIL
+===================================================== */
+
+function wait(ms){
+
+return new Promise(
+
+r=>setTimeout(r,ms)
+
+);
+
+}
+
+/* =====================================================
+SYNC
+===================================================== */
+
+function syncAll(){
+
+wallet();
+
+mining();
+
+market();
+
+airdrop();
+
+}
+
+/* =====================================================
+API
+===================================================== */
+
+function get(url){
+
+return request(url);
+
+}
+
+function post(
+
+url,
+body={}
+
+){
+
+return request(
+
+url,
+
+{
+
+method:"POST",
+
+body:
+
+JSON.stringify(
+
+body
+
+)
+
+}
+
+);
+
+}
+
+function put(
+
+url,
+body={}
+
+){
+
+return request(
+
+url,
+
+{
+
+method:"PUT",
+
+body:
+
+JSON.stringify(body)
+
+}
+
+);
+
+}
+
+function del(url){
+
+return request(
+
+url,
+
+{
+
+method:
+
+"DELETE"
+
+}
+
+);
+
+}
+
+/* =====================================================
+MODULES
+===================================================== */
+
+function wallet(){
+
+return get(
+
+"/wallet"
+
+);
+
+}
+
+function market(){
+
+return get(
+
+"/market"
+
+);
+
+}
+
+function mining(){
+
+return get(
+
+"/mining/status"
+
+);
+
+}
+
+function casino(){
+
+return get(
+
+"/casino"
+
+);
+
+}
+
+function airdrop(){
+
+return get(
+
+"/airdrop/status"
+
+);
+
+}
+
+/* =====================================================
+CANCEL
+===================================================== */
+
+function cancelAll(){
+
+controllers
+.forEach(c=>{
+
+c.abort();
+
+});
+
+controllers.clear();
+
+}
+
+/* =====================================================
+EXPORT
+===================================================== */
+
+window.API={
+
+get,
+
+post,
+
+put,
+
+delete:del,
+
+wallet,
+
+market,
+
+mining,
+
+casino,
+
+airdrop,
+
+syncAll,
+
+on,
+
+emit,
+
+cancelAll,
+
+metrics
+
+};
+
+})();
