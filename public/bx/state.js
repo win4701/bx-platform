@@ -1,151 +1,708 @@
 /* =========================================================
-   BX STATE MANAGER (ULTRA FINAL STABLE)
+BLOXIO STATE ENGINE V5
+ENTERPRISE STATE SYSTEM
 ========================================================= */
 
-window.STATE = {
+"use strict";
 
-  data: {
-    user: null,
+window.STATE=(function(){
 
-    wallet: {},
+const VERSION="5.0.0";
 
-    mining: {
-      subscription: null
-    },
+const STORAGE_KEY="BX_STATE";
 
-    airdrop: {
-      reward: 0
-    },
+const listeners=new Map();
 
-    ui: {
-      view: "wallet"
-    }
-  },
+const middleware=[];
 
-  listeners: new Map(),
+let saveTimer=null;
 
-  /* ================= GET ================= */
+const defaults=()=>({
 
-  get(path){
+meta:{
 
-    return path.split(".").reduce((o,k)=>o?.[k], this.data);
+version:VERSION,
 
-  },
+booted:false,
 
-  /* ================= SET ================= */
+updatedAt:Date.now()
 
-  set(path, value){
+},
 
-    const keys = path.split(".");
-    let obj = this.data;
+user:null,
 
-    keys.slice(0,-1).forEach(k=>{
-      if(!obj[k] || typeof obj[k] !== "object"){
-        obj[k] = {};
-      }
-      obj = obj[k];
-    });
+wallet:{
 
-    const lastKey = keys.at(-1);
+balance:0,
 
-    const oldVal = obj[lastKey];
+currency:"USD",
 
-    // ❌ avoid useless update
-    if(oldVal === value) return;
+transactions:[]
 
-    obj[lastKey] = value;
+},
 
-    this.notify(path, value, oldVal);
-  },
+market:{
 
-  /* ================= UPDATE ================= */
+prices:{},
 
-  update(path, fn){
+favorites:[],
 
-    const current = this.get(path);
+lastSync:0
 
-    const next = fn(current);
+},
 
-    this.set(path, next);
-  },
+mining:{
 
-  /* ================= SUBSCRIBE ================= */
+active:false,
 
-  subscribe(path, callback){
+subscription:null,
 
-    if(!this.listeners.has(path)){
-      this.listeners.set(path, []);
-    }
+hashrate:0,
 
-    const arr = this.listeners.get(path);
+reward:0
 
-    arr.push(callback);
+},
 
-    // 🔥 return unsubscribe
-    return () => {
-      const i = arr.indexOf(callback);
-      if(i !== -1) arr.splice(i,1);
-    };
-  },
+casino:{
 
-  /* ================= NOTIFY ================= */
+games:{},
 
-  notify(path, value, oldVal){
+history:[]
 
-    this.listeners.forEach((callbacks, key)=>{
+},
 
-      if(path.startsWith(key)){
+airdrop:{
 
-        callbacks.forEach(cb=>{
-          try{
-            cb(value, oldVal, path);
-          }catch(e){
-            console.error("STATE ERROR:", key, e);
-          }
-        });
+reward:0,
 
-      }
+claimed:false
 
-    });
+},
 
-  },
+ui:{
 
-  /* ================= RESET ================= */
+view:"wallet",
 
-  reset(){
+theme:"dark",
 
-    this.data = {
-      user:null,
-      wallet:{},
-      mining:{ subscription:null },
-      airdrop:{ reward:0 },
-      ui:{ view:"wallet" }
-    };
+sidebar:false,
 
-    this.listeners.clear();
-  },
+loading:false,
 
-  /* ================= PERSIST (OPTIONAL) ================= */
+mobile:false
 
-  save(){
+},
 
-    try{
-      localStorage.setItem("BX_STATE", JSON.stringify(this.data));
-    }catch(e){}
-  },
+system:{
 
-  load(){
+online:navigator.onLine,
 
-    try{
+ws:false,
 
-      const saved = localStorage.getItem("BX_STATE");
+latency:0
 
-      if(saved){
-        this.data = JSON.parse(saved);
-      }
+}
 
-    }catch(e){}
+});
 
-  }
+let data=hydrate();
+
+/* =====================================================
+HYDRATE
+===================================================== */
+
+function hydrate(){
+
+try{
+
+const raw=
+
+localStorage.getItem(
+STORAGE_KEY
+);
+
+if(!raw){
+
+return defaults();
+
+}
+
+const parsed=
+
+JSON.parse(raw);
+
+return merge(
+
+defaults(),
+parsed
+
+);
+
+}catch(e){
+
+console.error(
+"STATE LOAD",
+e
+);
+
+return defaults();
+
+}
+
+}
+
+/* =====================================================
+MERGE
+===================================================== */
+
+function merge(a,b){
+
+for(const k in b){
+
+if(
+
+typeof b[k]==="object"
+
+&&
+
+b[k]
+
+&&
+
+!Array.isArray(b[k])
+
+){
+
+a[k]=merge(
+
+a[k]||{},
+b[k]
+
+);
+
+}else{
+
+a[k]=b[k];
+
+}
+
+}
+
+return a;
+
+}
+
+/* =====================================================
+PATH
+===================================================== */
+
+function get(path){
+
+if(!path){
+
+return data;
+
+}
+
+return path
+.split(".")
+.reduce(
+
+(o,k)=>o?.[k],
+
+data
+
+);
+
+}
+
+function set(path,value){
+
+const keys=
+
+path.split(".");
+
+let obj=data;
+
+for(
+
+let i=0;
+
+i<keys.length-1;
+
+i++
+
+){
+
+const key=keys[i];
+
+if(
+
+typeof obj[key]
+!=="object"
+
+||
+
+!obj[key]
+
+){
+
+obj[key]={};
+
+}
+
+obj=obj[key];
+
+}
+
+const last=
+
+keys.at(-1);
+
+const old=
+
+obj[last];
+
+if(
+
+Object.is(
+old,
+value
+)
+
+){
+
+return;
+
+}
+
+obj[last]=value;
+
+data.meta.updatedAt=
+
+Date.now();
+
+runMiddleware(
+
+path,
+value,
+old
+
+);
+
+notify(
+
+path,
+value,
+old
+
+);
+
+persist();
+
+}
+
+/* =====================================================
+UPDATE
+===================================================== */
+
+function update(
+
+path,
+fn
+
+){
+
+const current=
+
+get(path);
+
+set(
+
+path,
+
+fn(current)
+
+);
+
+}
+
+/* =====================================================
+BATCH
+===================================================== */
+
+function batch(fn){
+
+try{
+
+fn();
+
+persist();
+
+}catch(e){
+
+console.error(
+
+"BATCH",
+
+e
+
+);
+
+}
+
+}
+
+/* =====================================================
+SUBSCRIBE
+===================================================== */
+
+function subscribe(
+
+path,
+callback
+
+){
+
+if(
+
+!listeners.has(path)
+
+){
+
+listeners.set(
+
+path,
+
+new Set()
+
+);
+
+}
+
+listeners
+.get(path)
+.add(callback);
+
+return()=>{
+
+listeners
+.get(path)
+?.delete(callback);
 
 };
+
+}
+
+/* =====================================================
+NOTIFY
+===================================================== */
+
+function notify(
+
+path,
+value,
+old
+
+){
+
+listeners.forEach(
+
+(set,key)=>{
+
+if(
+
+path===key
+
+||
+
+path.startsWith(
+
+key+"."
+
+)
+
+){
+
+set.forEach(
+
+fn=>{
+
+try{
+
+fn(
+
+value,
+old,
+path
+
+);
+
+}catch(e){
+
+console.error(
+
+"STATE LISTENER",
+
+e
+
+);
+
+}
+
+}
+
+);
+
+}
+
+}
+
+);
+
+}
+
+/* =====================================================
+MIDDLEWARE
+===================================================== */
+
+function use(fn){
+
+middleware.push(fn);
+
+}
+
+function runMiddleware(
+
+path,
+value,
+old
+
+){
+
+middleware.forEach(
+
+fn=>{
+
+try{
+
+fn({
+
+path,
+
+value,
+
+old,
+
+state:data
+
+});
+
+}catch(e){
+
+console.error(
+
+"MIDDLEWARE",
+
+e
+
+);
+
+}
+
+}
+
+);
+
+}
+
+/* =====================================================
+PERSIST
+===================================================== */
+
+function persist(){
+
+clearTimeout(
+
+saveTimer
+
+);
+
+saveTimer=
+
+setTimeout(()=>{
+
+try{
+
+localStorage.setItem(
+
+STORAGE_KEY,
+
+JSON.stringify(data)
+
+);
+
+}catch(e){
+
+console.error(
+
+"SAVE",
+
+e
+
+);
+
+}
+
+},150);
+
+}
+
+/* =====================================================
+RESET
+===================================================== */
+
+function reset(){
+
+data=defaults();
+
+persist();
+
+notify(
+
+"*",
+
+data,
+null
+
+);
+
+}
+
+/* =====================================================
+SYNC
+===================================================== */
+
+window.addEventListener(
+
+"storage",
+
+e=>{
+
+if(
+
+e.key
+!==STORAGE_KEY
+
+)return;
+
+try{
+
+data=hydrate();
+
+notify(
+
+"*",
+
+data,
+null
+
+);
+
+}catch{}
+
+}
+
+);
+
+/* =====================================================
+ONLINE
+===================================================== */
+
+window.addEventListener(
+
+"online",
+
+()=>{
+
+set(
+
+"system.online",
+
+true
+
+);
+
+}
+
+);
+
+window.addEventListener(
+
+"offline",
+
+()=>{
+
+set(
+
+"system.online",
+
+false
+
+);
+
+}
+
+);
+
+/* =====================================================
+BOOT
+===================================================== */
+
+set(
+
+"meta.booted",
+
+true
+
+);
+
+return{
+
+VERSION,
+
+get,
+
+set,
+
+update,
+
+batch,
+
+subscribe,
+
+reset,
+
+use,
+
+persist,
+
+hydrate:()=>{
+
+data=hydrate();
+
+},
+
+dump:()=>{
+
+return structuredClone(
+
+data
+
+);
+
+}
+
+};
+
+})();
