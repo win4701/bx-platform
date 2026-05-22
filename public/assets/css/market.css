@@ -1,57 +1,235 @@
-/* =========================================================
-BLOXIO MARKET — EXCHANGE SYSTEM
-========================================================= */
-
-/* =========================================================
-SECTION
-========================================================= */
+/* =====================================================
+BLOXIO MARKET V5
+PRODUCTION MARKET SYSTEM
+===================================================== */
 
 #market{
-
-position:relative;
-
-width:100%;
 
 display:flex;
 
 flex-direction:column;
 
-gap:24px;
+gap:22px;
 
-}
+padding-bottom:
 
-/* =========================================================
-HERO
-========================================================= */
+calc(
+130px +
+env(
+safe-area-inset-bottom
+)
+);
 
-.market-hero{
-
-position:relative;
+min-height:100vh;
 
 overflow:hidden;
 
-padding:
-34px;
+}
 
-border-radius:
-var(--radius-xl);
+/* =====================================================
+HEADER
+===================================================== */
+
+.market-header{
+
+display:flex;
+
+justify-content:space-between;
+
+align-items:center;
+
+gap:16px;
+
+padding:22px;
+
+border-radius:28px;
+
+background:
+
+rgba(10,18,30,.92);
+
+border:
+
+1px solid
+rgba(255,255,255,.05);
+
+backdrop-filter:
+
+blur(18px);
+
+}
+
+.pair-title{
+
+display:flex;
+
+align-items:center;
+
+gap:8px;
+
+font-size:26px;
+
+font-weight:1000;
+
+}
+
+.base{
+
+color:#00e0ff;
+
+}
+
+.arrow{
+
+opacity:.4;
+
+}
+
+.quote{
+
+opacity:.8;
+
+}
+
+.price-box{
+
+text-align:right;
+
+}
+
+.price-main{
+
+font-size:28px;
+
+font-weight:1000;
+
+}
+
+.approx{
+
+font-size:12px;
+
+opacity:.55;
+
+margin-top:4px;
+
+}
+
+/* =====================================================
+WALLET
+===================================================== */
+
+.wallet-box.compact{
+
+display:flex;
+
+justify-content:space-between;
+
+padding:18px 22px;
+
+border-radius:22px;
+
+background:
+
+rgba(255,255,255,.03);
+
+border:
+
+1px solid
+rgba(255,255,255,.04);
+
+font-weight:800;
+
+}
+
+/* =====================================================
+PAIR GRID
+===================================================== */
+
+.pair-grid{
+
+display:grid;
+
+grid-template-columns:
+
+repeat(
+auto-fit,
+minmax(
+80px,
+1fr
+)
+);
+
+gap:10px;
+
+}
+
+.pair-btn{
+
+height:52px;
+
+border:none;
+
+cursor:pointer;
+
+border-radius:16px;
+
+font-weight:900;
+
+background:
+
+rgba(255,255,255,.04);
+
+color:white;
+
+transition:.2s;
+
+}
+
+.pair-btn.active{
 
 background:
 
 linear-gradient(
-  135deg,
-  rgba(0,224,255,.10),
-  rgba(16,185,129,.08)
+135deg,
+#00e0ff,
+#008cff
 );
 
+color:#051019;
+
+}
+
+.pair-btn:active{
+
+transform:
+
+scale(.96);
+
+}
+
+/* =====================================================
+HERO
+===================================================== */
+
+.market-hero{
+
+padding:24px;
+
+border-radius:30px;
+
+background:
+
+rgba(10,16,26,.95);
+
 border:
-1px solid rgba(255,255,255,.08);
 
-backdrop-filter:
-blur(24px);
+1px solid
+rgba(255,255,255,.05);
 
-box-shadow:
-0 30px 80px rgba(0,0,0,.35);
+overflow:hidden;
+
+position:relative;
 
 }
 
@@ -61,261 +239,275 @@ content:"";
 
 position:absolute;
 
-top:-120px;
-right:-120px;
+right:-100px;
 
-width:320px;
-height:320px;
+top:-100px;
+
+width:240px;
+
+height:240px;
 
 border-radius:50%;
 
 background:
-rgba(0,224,255,.12);
+
+rgba(0,224,255,.10);
 
 filter:
+
 blur(90px);
 
 }
 
-.market-hero::after{
-
-content:"";
-
-position:absolute;
-
-bottom:-140px;
-left:-140px;
-
-width:340px;
-height:340px;
-
-border-radius:50%;
-
-background:
-rgba(16,185,129,.10);
-
-filter:
-blur(110px);
-
-}
-
-/* =========================================================
-HERO CONTENT
-========================================================= */
-
-.market-hero-content{
-
-position:relative;
-
-z-index:2;
-
-}
-
-.market-badge{
-
-display:inline-flex;
-
-align-items:center;
-
-gap:10px;
-
-padding:
-10px 18px;
-
-margin-bottom:22px;
-
-border-radius:
-var(--radius-full);
-
-background:
-rgba(255,255,255,.06);
-
-border:
-1px solid rgba(255,255,255,.08);
-
-color:#fff;
-
-font-size:12px;
-
-font-weight:900;
-
-letter-spacing:.12em;
-
-text-transform:uppercase;
-
-}
-
-.market-title{
-
-font-size:
-clamp(40px,6vw,78px);
-
-line-height:1;
-
-font-weight:1000;
-
-letter-spacing:-.06em;
-
-color:#fff;
-
-margin-bottom:18px;
-
-}
-
-.market-sub{
-
-max-width:640px;
-
-color:
-rgba(255,255,255,.72);
-
-line-height:1.8;
-
-font-size:15px;
-
-}
-
-/* =========================================================
-PAIRS
-========================================================= */
-
-.market-pairs{
+.market-identity{
 
 display:flex;
 
-flex-wrap:wrap;
+justify-content:space-between;
 
-gap:12px;
+align-items:center;
 
-}
-
-.pair-btn{
-
-height:46px;
-
-padding:
-0 18px;
-
-border:none;
-
-outline:none;
-
-cursor:pointer;
-
-border-radius:
-var(--radius-full);
-
-background:
-rgba(255,255,255,.04);
-
-border:
-1px solid rgba(255,255,255,.06);
-
-color:
-rgba(255,255,255,.68);
-
-font-size:13px;
-
-font-weight:900;
-
-letter-spacing:.04em;
-
-transition:
-.25s var(--ease);
+gap:16px;
 
 }
 
-.pair-btn:hover{
+.market-logo{
+
+width:64px;
+
+height:64px;
+
+display:flex;
+
+align-items:center;
+
+justify-content:center;
+
+border-radius:20px;
 
 background:
-rgba(255,255,255,.08);
 
-}
-
-.pair-btn.active{
-
-background:
 linear-gradient(
 135deg,
 #00e0ff,
-#10b981
+#008cff
 );
 
-border-color:
-transparent;
+font-size:28px;
 
-color:#fff;
+font-weight:1000;
 
-box-shadow:
-0 16px 40px rgba(0,224,255,.18);
+color:#041019;
 
 }
 
-/* =========================================================
-GRID
-========================================================= */
+.market-title h2{
 
-.market-grid{
+margin:0;
 
-display:grid;
-
-grid-template-columns:
-1.4fr
-.9fr;
-
-gap:22px;
+font-size:28px;
 
 }
 
-/* =========================================================
-PANEL
-========================================================= */
+.market-title span{
 
-.market-panel{
+opacity:.55;
 
-position:relative;
+}
 
-overflow:hidden;
+.market-price-box{
 
-border-radius:
-var(--radius-xl);
+margin-top:24px;
+
+}
+
+.market-price{
+
+font-size:
+
+clamp(
+36px,
+7vw,
+60px
+);
+
+font-weight:1000;
+
+letter-spacing:-2px;
+
+}
+
+.market-change-badge{
+
+display:inline-flex;
+
+padding:8px 14px;
+
+border-radius:999px;
+
+font-weight:900;
+
+margin-top:10px;
+
+}
+
+.market-change-badge.is-up{
 
 background:
-rgba(255,255,255,.04);
 
-border:
-1px solid rgba(255,255,255,.06);
+rgba(0,255,150,.12);
 
-backdrop-filter:
-blur(22px);
-
-box-shadow:
-0 20px 60px rgba(0,0,0,.25);
+color:#00ff9c;
 
 }
 
-/* =========================================================
-PANEL HEADER
-========================================================= */
+.market-change-badge.is-down{
 
-.market-panel-head{
+background:
+
+rgba(255,80,80,.12);
+
+color:#ff6666;
+
+}
+
+/* =====================================================
+TOOLBAR
+===================================================== */
+
+.market-toolbar{
 
 display:flex;
 
-align-items:center;
-justify-content:space-between;
+flex-direction:column;
 
-gap:18px;
+gap:16px;
 
-padding:
-22px;
-
-border-bottom:
-1px solid rgba(255,255,255,.05);
+margin-top:24px;
 
 }
 
-.market-panel-title{
+.market-timeframes,
+.market-chart-modes{
+
+display:flex;
+
+gap:10px;
+
+flex-wrap:wrap;
+
+}
+
+.market-toolbar button{
+
+height:44px;
+
+padding:0 16px;
+
+border:none;
+
+border-radius:14px;
+
+cursor:pointer;
+
+background:
+
+rgba(255,255,255,.04);
+
+font-weight:800;
+
+color:white;
+
+}
+
+.market-toolbar button.active{
+
+background:
+
+rgba(0,224,255,.12);
+
+color:#00e0ff;
+
+}
+
+/* =====================================================
+CHART
+===================================================== */
+
+.market-chart-card{
+
+margin-top:22px;
+
+padding:20px;
+
+border-radius:28px;
+
+background:
+
+rgba(255,255,255,.03);
+
+border:
+
+1px solid
+rgba(255,255,255,.04);
+
+}
+
+.market-chart-shell{
+
+position:relative;
+
+height:320px;
+
+margin-top:18px;
+
+overflow:hidden;
+
+border-radius:22px;
+
+background:
+
+rgba(4,8,16,.8);
+
+}
+
+#marketChart{
+
+width:100%;
+
+height:100%;
+
+}
+
+.market-tooltip{
+
+position:absolute;
+
+top:12px;
+
+left:12px;
+
+padding:10px;
+
+border-radius:12px;
+
+background:
+
+rgba(10,16,26,.94);
+
+font-size:12px;
+
+pointer-events:none;
+
+}
+
+.market-crosshair{
+
+position:absolute;
+
+right:12px;
+
+top:12px;
 
 display:flex;
 
@@ -323,307 +515,123 @@ flex-direction:column;
 
 gap:6px;
 
-}
-
-.market-panel-title strong{
-
-font-size:18px;
-
-font-weight:1000;
-
-color:#fff;
-
-}
-
-.market-panel-title span{
-
-color:
-rgba(255,255,255,.42);
-
 font-size:12px;
 
-font-weight:700;
-
 }
 
-/* =========================================================
-LIVE PRICE
-========================================================= */
+/* =====================================================
+OHLC
+===================================================== */
 
-#marketPrice,
-#assetPrice,
-#chartLivePrice{
+.market-chart-footer,
+.market-ohlc{
 
-font-weight:1000;
+display:grid;
 
-letter-spacing:-.04em;
+grid-template-columns:
 
-color:#fff;
-
-}
-
-#marketPrice{
-
-font-size:
-clamp(42px,7vw,78px);
-
-}
-
-#assetPrice{
-
-font-size:28px;
-
-}
-
-#chartLivePrice{
-
-font-size:18px;
-
-}
-
-/* =========================================================
-PRICE PULSE
-========================================================= */
-
-#marketPrice.up,
-#assetPrice.up{
-
-color:#22c55e;
-
-text-shadow:
-0 0 24px rgba(34,197,94,.25);
-
-}
-
-#marketPrice.down,
-#assetPrice.down{
-
-color:#ff4d6d;
-
-text-shadow:
-0 0 24px rgba(255,77,109,.25);
-
-}
-
-/* =========================================================
-BADGES
-========================================================= */
-
-#assetChangeBadge,
-#chartLiveChange{
-
-display:inline-flex;
-
-align-items:center;
-justify-content:center;
-
-min-height:34px;
-
-padding:
-0 14px;
-
-border-radius:
-var(--radius-full);
-
-font-size:12px;
-
-font-weight:900;
-
-letter-spacing:.04em;
-
-}
-
-.is-up{
-
-background:
-rgba(34,197,94,.12);
-
-border:
-1px solid rgba(34,197,94,.18);
-
-color:#22c55e;
-
-}
-
-.is-down{
-
-background:
-rgba(255,77,109,.12);
-
-border:
-1px solid rgba(255,77,109,.18);
-
-color:#ff4d6d;
-
-}
-
-/* =========================================================
-CHART
-========================================================= */
-
-.market-chart{
-
-position:relative;
-
-height:520px;
-
-padding:
-18px;
-
-}
-
-#marketChart{
-
-width:100%;
-height:100%;
-
-border-radius:
-var(--radius-lg);
-
-background:
-linear-gradient(
-180deg,
-rgba(255,255,255,.02),
-rgba(255,255,255,.01)
+repeat(
+4,
+1fr
 );
 
+gap:12px;
+
+margin-top:18px;
+
 }
 
-/* =========================================================
-TOOLTIP
-========================================================= */
+.chart-footer-item,
+.ohlc-item{
 
-#marketTooltip{
+padding:14px;
 
-position:absolute;
-
-min-width:170px;
-
-padding:
-14px;
-
-border-radius:
-var(--radius-md);
+border-radius:18px;
 
 background:
-rgba(10,14,20,.94);
 
-border:
-1px solid rgba(255,255,255,.08);
+rgba(255,255,255,.03);
 
-backdrop-filter:
-blur(18px);
+text-align:center;
 
-box-shadow:
-0 18px 50px rgba(0,0,0,.35);
+}
 
-color:#fff;
+.chart-footer-item span,
+.ohlc-item span{
+
+display:block;
+
+font-size:11px;
+
+opacity:.55;
+
+margin-bottom:6px;
+
+}
+
+/* =====================================================
+STATS
+===================================================== */
+
+.market-stats-grid{
+
+display:grid;
+
+grid-template-columns:
+
+repeat(
+2,
+1fr
+);
+
+gap:14px;
+
+margin-top:22px;
+
+}
+
+.stat-card{
+
+padding:18px;
+
+border-radius:22px;
+
+background:
+
+rgba(255,255,255,.03);
+
+}
+
+.stat-card span{
+
+display:block;
 
 font-size:12px;
 
-line-height:1.8;
+opacity:.55;
 
-pointer-events:none;
-
-opacity:0;
-
-transform:
-translateY(8px);
-
-transition:
-.18s ease;
+margin-bottom:6px;
 
 }
 
-#marketTooltip.show{
+/* =====================================================
+TRADE
+===================================================== */
 
-opacity:1;
+.trade-box{
 
-transform:
-translateY(0);
+padding:24px;
 
-}
-
-/* =========================================================
-CONTROLS
-========================================================= */
-
-.market-timeframes,
-.market-chart-modes,
-.percent-row{
-
-display:flex;
-
-flex-wrap:wrap;
-
-gap:10px;
-
-}
-
-.market-timeframes button,
-.market-chart-modes button,
-.percent-row button{
-
-height:40px;
-
-padding:
-0 16px;
-
-border:none;
-
-outline:none;
-
-cursor:pointer;
-
-border-radius:
-var(--radius-full);
+border-radius:30px;
 
 background:
-rgba(255,255,255,.04);
+
+rgba(10,16,26,.95);
 
 border:
-1px solid rgba(255,255,255,.06);
 
-color:
-rgba(255,255,255,.68);
-
-font-size:12px;
-
-font-weight:900;
-
-transition:
-.25s ease;
-
-}
-
-.market-timeframes button.active,
-.market-chart-modes button.active,
-.percent-row button.active{
-
-background:
-rgba(0,224,255,.12);
-
-border-color:
-rgba(0,224,255,.18);
-
-color:#00e0ff;
-
-}
-
-/* =========================================================
-TRADE BOX
-========================================================= */
-
-#tradeBox{
-
-display:flex;
-
-flex-direction:column;
-
-gap:18px;
-
-padding:
-22px;
+1px solid
+rgba(255,255,255,.05);
 
 }
 
@@ -632,9 +640,10 @@ padding:
 display:grid;
 
 grid-template-columns:
+
 1fr 1fr;
 
-gap:12px;
+gap:10px;
 
 }
 
@@ -644,478 +653,195 @@ height:52px;
 
 border:none;
 
-outline:none;
+border-radius:16px;
 
 cursor:pointer;
-
-border-radius:
-var(--radius-lg);
-
-background:
-rgba(255,255,255,.04);
-
-border:
-1px solid rgba(255,255,255,.06);
-
-color:#fff;
-
-font-size:14px;
 
 font-weight:900;
 
-transition:
-.25s ease;
-
 }
 
-.trade-tabs button.active{
-
-box-shadow:
-0 18px 40px rgba(0,0,0,.18);
-
-}
-
-#buyTab.active{
+.trade-tabs .active{
 
 background:
-rgba(34,197,94,.14);
 
-border-color:
-rgba(34,197,94,.18);
+#00e0ff;
 
-color:#22c55e;
+color:#041019;
 
 }
 
-#sellTab.active{
-
-background:
-rgba(255,77,109,.14);
-
-border-color:
-rgba(255,77,109,.18);
-
-color:#ff4d6d;
-
-}
-
-/* =========================================================
-INPUTS
-========================================================= */
-
-.market-input{
+.trade-form{
 
 display:flex;
 
 flex-direction:column;
 
-gap:10px;
+gap:16px;
+
+margin-top:20px;
 
 }
 
-.market-input label{
+.trade-form input{
 
-color:
-rgba(255,255,255,.52);
+height:56px;
 
-font-size:12px;
-
-font-weight:800;
-
-text-transform:uppercase;
-
-}
-
-.market-input input{
-
-width:100%;
-
-height:58px;
+padding:0 18px;
 
 border:none;
 
-outline:none;
-
-padding:
-0 18px;
-
-border-radius:
-var(--radius-md);
+border-radius:18px;
 
 background:
+
 rgba(255,255,255,.04);
 
-border:
-1px solid rgba(255,255,255,.06);
-
-color:#fff;
-
-font-size:14px;
+color:white;
 
 }
 
-.market-input input:focus{
-
-border-color:
-rgba(0,224,255,.18);
-
-box-shadow:
-0 0 0 4px rgba(0,224,255,.08);
-
-}
-
-/* =========================================================
-EXECUTION
-========================================================= */
-
-.market-exec{
+.percent-row{
 
 display:grid;
 
 grid-template-columns:
-repeat(3,1fr);
 
-gap:12px;
-
-}
-
-.market-exec-card{
-
-padding:
-16px;
-
-border-radius:
-var(--radius-md);
-
-background:
-rgba(255,255,255,.03);
-
-border:
-1px solid rgba(255,255,255,.05);
-
-}
-
-.market-exec-card small{
-
-display:block;
-
-margin-bottom:8px;
-
-color:
-rgba(255,255,255,.42);
-
-font-size:11px;
-
-font-weight:800;
-
-text-transform:uppercase;
-
-}
-
-.market-exec-card strong{
-
-font-size:15px;
-
-font-weight:1000;
-
-color:#fff;
-
-}
-
-/* =========================================================
-ACTION BUTTON
-========================================================= */
-
-#actionBtn{
-
-width:100%;
-
-height:60px;
-
-border:none;
-
-outline:none;
-
-cursor:pointer;
-
-border-radius:
-var(--radius-lg);
-
-color:#fff;
-
-font-size:15px;
-
-font-weight:1000;
-
-letter-spacing:.04em;
-
-transition:
-.25s ease;
-
-}
-
-#actionBtn.buy{
-
-background:
-linear-gradient(
-135deg,
-#22c55e,
-#10b981
-);
-
-box-shadow:
-0 18px 50px rgba(34,197,94,.18);
-
-}
-
-#actionBtn.sell{
-
-background:
-linear-gradient(
-135deg,
-#ff4d6d,
-#ef4444
-);
-
-box-shadow:
-0 18px 50px rgba(255,77,109,.18);
-
-}
-
-#actionBtn:hover{
-
-transform:
-translateY(-2px);
-
-}
-
-/* =========================================================
-ORDER BOOK
-========================================================= */
-
-.orderbook{
-
-padding:
-22px;
-
-}
-
-#orderBookGrid{
-
-display:flex;
-
-flex-direction:column;
-
-gap:6px;
-
-}
-
-.ob-grid-row{
-
-display:grid;
-
-grid-template-columns:
+repeat(
+4,
 1fr
-.8fr
-1fr;
+);
 
 gap:8px;
 
 }
 
-.ob-cell{
+.percent-row button{
 
-position:relative;
+height:44px;
 
-overflow:hidden;
+border:none;
 
-min-height:38px;
-
-display:flex;
-
-align-items:center;
-
-padding:
-0 12px;
-
-border-radius:
-12px;
+border-radius:14px;
 
 background:
-rgba(255,255,255,.03);
+
+rgba(255,255,255,.04);
 
 }
 
-.ob-cell.center{
+.action-btn{
 
-justify-content:center;
+height:58px;
 
-}
+border:none;
 
-.ob-depth{
+border-radius:18px;
 
-position:absolute;
-
-top:0;
-bottom:0;
-
-opacity:.12;
-
-}
-
-.ob-depth.bid{
-
-left:0;
-
-background:#22c55e;
-
-}
-
-.ob-depth.ask{
-
-right:0;
-
-background:#ff4d6d;
-
-}
-
-.ob-bid{
-
-position:relative;
-
-z-index:2;
-
-color:#22c55e;
-
-font-size:12px;
-
-font-weight:900;
-
-}
-
-.ob-ask{
-
-position:relative;
-
-z-index:2;
-
-color:#ff4d6d;
-
-font-size:12px;
-
-font-weight:900;
-
-}
-
-.price{
-
-color:#fff;
-
-font-size:12px;
-
-font-weight:900;
-
-}
-
-.ob-click{
+font-weight:1000;
 
 cursor:pointer;
 
 }
 
-/* =========================================================
-METRICS
-========================================================= */
+.action-btn.buy{
 
-.market-metrics{
+background:
+
+linear-gradient(
+135deg,
+#00ff9c,
+#00d2ff
+);
+
+}
+
+/* =====================================================
+ORDERBOOK
+===================================================== */
+
+.orderbook-card{
+
+padding:24px;
+
+border-radius:30px;
+
+background:
+
+rgba(10,16,26,.95);
+
+border:
+
+1px solid
+rgba(255,255,255,.05);
+
+}
+
+.orderbook-head{
+
+display:flex;
+
+justify-content:space-between;
+
+margin-bottom:18px;
+
+}
+
+.ob-grid-head{
 
 display:grid;
 
 grid-template-columns:
-repeat(auto-fit,minmax(180px,1fr));
 
-gap:18px;
+1fr 1fr 1fr;
 
-}
+padding-bottom:10px;
 
-.metric-card{
-
-padding:
-22px;
-
-border-radius:
-var(--radius-lg);
-
-background:
-rgba(255,255,255,.04);
-
-border:
-1px solid rgba(255,255,255,.06);
-
-}
-
-.metric-card small{
-
-display:block;
-
-margin-bottom:10px;
-
-color:
-rgba(255,255,255,.42);
+opacity:.55;
 
 font-size:12px;
 
-font-weight:800;
+}
+
+.ob-grid-body{
+
+display:flex;
+
+flex-direction:column;
+
+gap:8px;
 
 }
 
-.metric-card strong{
-
-font-size:22px;
-
-font-weight:1000;
-
-color:#fff;
-
-}
-
-/* =========================================================
-MOBILE
-========================================================= */
-
-@media(max-width:980px){
-
-.market-grid{
-
-grid-template-columns:1fr;
-
-}
-
-}
+/* =====================================================
+RESPONSIVE
+===================================================== */
 
 @media(max-width:768px){
 
-.market-hero{
+.market-header{
 
-padding:26px;
+flex-direction:column;
 
-}
-
-.market-title{
-
-font-size:44px;
+align-items:flex-start;
 
 }
 
-.market-chart{
+.market-ohlc,
+.market-chart-footer{
 
-height:420px;
+grid-template-columns:
+
+repeat(
+2,
+1fr
+);
 
 }
 
-.market-exec{
+.market-chart-shell{
 
-grid-template-columns:1fr;
+height:240px;
 
 }
 
@@ -1123,33 +849,47 @@ grid-template-columns:1fr;
 
 @media(max-width:420px){
 
-.market-title{
+.market-price{
 
-font-size:36px;
-
-}
-
-#marketPrice{
-
-font-size:52px;
+font-size:38px;
 
 }
 
-.market-chart{
+.market-logo{
 
-height:340px;
+width:52px;
 
-padding:12px;
+height:52px;
 
 }
 
-.ob-grid-row{
+.pair-grid{
 
 grid-template-columns:
-  1fr
-  .7fr
-  1fr;
+
+repeat(
+2,
+1fr
+);
 
 }
+
+}
+
+/* =====================================================
+PERFORMANCE
+===================================================== */
+
+.market-chart-shell,
+.trade-box,
+.orderbook-card{
+
+transform:
+
+translateZ(0);
+
+backface-visibility:hidden;
+
+will-change:transform;
 
 }
