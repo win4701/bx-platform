@@ -1,221 +1,102 @@
-/* =======================================================
-   BLOXIO CSS ORCHESTRATOR
-   Enterprise Production Architecture
-======================================================= */
+/* ======================================================
+   BLOXIO CSS ENTRY SYSTEM
+   Stable Production Architecture
+====================================================== */
 
 
-/* =======================================================
-   CHARSET
-======================================================= */
+/* ======================================================
+CHARSET
+====================================================== */
 
 @charset "UTF-8";
 
 
-/* =======================================================
-   CASCADE LAYERS
-======================================================= */
+/* ======================================================
+CORE
+====================================================== */
 
-@layer reset,
-core,
-layout,
-components,
-pages,
-responsive,
-mobile,
-utilities,
-overrides;
-
-
-/* =======================================================
-   CORE
-======================================================= */
-
-@import
-url("./core/variables.css")
-layer(core);
-
-@import
-url("./core/reset.css")
-layer(reset);
-
-@import
-url("./core/typography.css")
-layer(core);
-
-@import
-url("./core/animations.css")
-layer(core);
-
-@import
-url("./core/utilities.css")
-layer(utilities);
-
-@import
-url("./core/responsive.css")
-layer(responsive);
-
-@import
-url("./core/themes.css")
-layer(core);
-
-@import
-url("./core/zindex.css")
-layer(core);
+@import "./core/variables.css";
+@import "./core/reset.css";
+@import "./core/typography.css";
+@import "./core/animations.css";
+@import "./core/utilities.css";
+@import "./core/responsive.css";
+@import "./core/themes.css";
+@import "./core/zindex.css";
 
 
-/* =======================================================
-   LAYOUT
-======================================================= */
+/* ======================================================
+LAYOUT
+====================================================== */
 
-@import
-url("./layout/app-shell.css")
-layer(layout);
-
-@import
-url("./layout/header.css")
-layer(layout);
-
-@import
-url("./layout/footer.css")
-layer(layout);
-
-@import
-url("./layout/nav.css")
-layer(layout);
-
-@import
-url("./layout/background.css")
-layer(layout);
-
-@import
-url("./layout/containers.css")
-layer(layout);
+@import "./layout/app-shell.css";
+@import "./layout/header.css";
+@import "./layout/footer.css";
+@import "./layout/nav.css";
+@import "./layout/background.css";
+@import "./layout/containers.css";
 
 
-/* =======================================================
-   COMPONENTS
-======================================================= */
+/* ======================================================
+COMPONENTS
+====================================================== */
 
-@import
-url("./components/buttons.css")
-layer(components);
+@import "./components/buttons.css";
+@import "./components/cards.css";
+@import "./components/forms.css";
+@import "./components/inputs.css";
 
-@import
-url("./components/cards.css")
-layer(components);
+@import "./components/modal.css";
+@import "./components/toast.css";
 
-@import
-url("./components/forms.css")
-layer(components);
+@import "./components/loaders.css";
+@import "./components/badges.css";
 
-@import
-url("./components/inputs.css")
-layer(components);
+@import "./components/progress.css";
+@import "./components/charts.css";
 
-@import
-url("./components/modal.css")
-layer(components);
+@import "./components/tooltip.css";
+@import "./components/tabs.css";
 
-@import
-url("./components/toast.css")
-layer(components);
+@import "./components/table.css";
+@import "./components/search.css";
 
-@import
-url("./components/loaders.css")
-layer(components);
+@import "./components/dropdown.css";
+@import "./components/glass.css";
 
-@import
-url("./components/badges.css")
-layer(components);
-
-@import
-url("./components/progress.css")
-layer(components);
-
-@import
-url("./components/charts.css")
-layer(components);
-
-@import
-url("./components/tooltip.css")
-layer(components);
-
-@import
-url("./components/tabs.css")
-layer(components);
-
-@import
-url("./components/table.css")
-layer(components);
-
-@import
-url("./components/search.css")
-layer(components);
-
-@import
-url("./components/dropdown.css")
-layer(components);
-
-@import
-url("./components/glass.css")
-layer(components);
-
-@import
-url("./components/status.css")
-layer(components);
+@import "./components/status.css";
 
 
-/* =======================================================
-   PAGES
-======================================================= */
+/* ======================================================
+PAGES
+====================================================== */
 
-@import
-url("./pages/auth.css")
-layer(pages);
+@import "./pages/auth.css";
 
-@import
-url("./pages/wallet.css")
-layer(pages);
+@import "./pages/wallet.css";
+@import "./pages/market.css";
 
-@import
-url("./pages/market.css")
-layer(pages);
+@import "./pages/mining.css";
+@import "./pages/casino.css";
 
-@import
-url("./pages/mining.css")
-layer(pages);
-
-@import
-url("./pages/casino.css")
-layer(pages);
-
-@import
-url("./pages/airdrop.css")
-layer(pages);
-
-@import
-url("./pages/settings.css")
-layer(pages);
+@import "./pages/airdrop.css";
+@import "./pages/settings.css";
 
 
-/* =======================================================
-   MOBILE
-======================================================= */
+/* ======================================================
+MOBILE
+====================================================== */
 
-@import
-url("./mobile.css")
-layer(mobile);
+@import "./mobile.css";
 
 
-/* =======================================================
-   ROOT APP
-======================================================= */
+/* ======================================================
+ROOT
+====================================================== */
 
 :root{
 
-color-scheme:
-
-dark;
+color-scheme:dark;
 
 accent-color:
 
@@ -224,15 +105,15 @@ var(--brand-primary);
 }
 
 
-/* =======================================================
-   APP
-======================================================= */
+/* ======================================================
+HTML
+====================================================== */
 
 html{
 
-scroll-behavior:
+font-size:16px;
 
-smooth;
+scroll-behavior:smooth;
 
 text-rendering:
 
@@ -246,10 +127,24 @@ antialiased;
 
 grayscale;
 
+overflow-x:hidden;
+
+height:100%;
+
 }
 
 
+/* ======================================================
+BODY
+====================================================== */
+
 body{
+
+margin:0;
+
+padding:0;
+
+min-height:100vh;
 
 background:
 
@@ -265,94 +160,271 @@ var(--font-primary);
 
 overflow-x:hidden;
 
-min-height:
+overflow-y:auto;
 
-100dvh;
+position:relative;
 
 }
 
 
-/* =======================================================
-   APP ROOT
-======================================================= */
+/* ======================================================
+APP ROOT
+====================================================== */
 
 #app{
 
 position:relative;
 
-min-height:
+display:block;
 
-100dvh;
+width:100%;
+
+min-height:100vh;
+
+overflow:visible;
+
+visibility:visible;
+
+opacity:1;
 
 isolation:isolate;
 
-overflow:hidden;
+}
+
+
+/* ======================================================
+MAIN
+====================================================== */
+
+main{
+
+display:block;
+
+width:100%;
+
+min-height:100%;
 
 }
 
 
-/* =======================================================
-   PERFORMANCE
-======================================================= */
+/* ======================================================
+MEDIA
+====================================================== */
 
 img{
 
-content-visibility:
+display:block;
 
-auto;
+max-width:100%;
 
-}
+height:auto;
 
-
-.card,
-.chart,
-.modal,
-.dropdown-menu{
-
-contain:
-
-layout paint;
+border:none;
 
 }
 
 
-/* =======================================================
-   LEGACY SAFE
-======================================================= */
+svg{
+
+display:block;
+
+flex-shrink:0;
+
+}
+
+
+/* ======================================================
+BUTTON
+====================================================== */
+
+button{
+
+font-family:inherit;
+
+}
+
+
+/* ======================================================
+LINK
+====================================================== */
+
+a{
+
+text-decoration:none;
+
+color:inherit;
+
+}
+
+
+/* ======================================================
+FORM
+====================================================== */
+
+input,
+textarea,
+select{
+
+font-family:inherit;
+
+}
+
+
+/* ======================================================
+HIDDEN
+====================================================== */
 
 .hidden{
 
-display:none!important;
+display:none !important;
 
 }
 
 
 .invisible{
 
-visibility:hidden!important;
+visibility:hidden !important;
 
 }
 
+
+.disabled{
+
+pointer-events:none;
+
+opacity:.5;
+
+}
+
+
+/* ======================================================
+LOADING
+====================================================== */
+
+.loading{
+
+pointer-events:none;
+
+}
+
+
+.loading::after{
+
+cursor:wait;
+
+}
+
+
+/* ======================================================
+APP READY
+====================================================== */
+
+.app-ready{
+
+opacity:1;
+
+visibility:visible;
+
+}
+
+
+/* ======================================================
+NO SCROLL
+====================================================== */
 
 .no-scroll{
 
-overflow:hidden!important;
+overflow:hidden;
 
 }
 
 
-/* =======================================================
-   PRINT
-======================================================= */
+/* ======================================================
+SCROLLBAR
+====================================================== */
+
+::-webkit-scrollbar{
+
+width:8px;
+
+height:8px;
+
+}
+
+
+::-webkit-scrollbar-thumb{
+
+background:
+
+rgba(
+255,
+255,
+255,
+.12
+);
+
+border-radius:999px;
+
+}
+
+
+::-webkit-scrollbar-track{
+
+background:transparent;
+
+}
+
+
+/* ======================================================
+SELECTION
+====================================================== */
+
+::selection{
+
+background:
+
+rgba(
+0,
+224,
+255,
+.25
+);
+
+color:white;
+
+}
+
+
+/* ======================================================
+FOCUS
+====================================================== */
+
+:focus-visible{
+
+outline:
+
+2px solid
+
+var(--brand-primary);
+
+outline-offset:
+
+2px;
+
+}
+
+
+/* ======================================================
+PRINT
+====================================================== */
 
 @media print{
 
 .bottom-nav,
-.toast,
 .modal,
-.dropdown-menu{
+.toast{
 
-display:none!important;
+display:none !important;
 
 }
 
@@ -367,56 +439,45 @@ color:black;
 }
 
 
-/* =======================================================
-   DEBUG
-======================================================= */
+/* ======================================================
+ACCESSIBILITY
+====================================================== */
 
-.debug-outline *{
-
-outline:
-
-1px solid red;
-
-}
-
-
-/* =======================================================
-   REDUCED MOTION
-======================================================= */
-
-@media
-(prefers-reduced-motion:reduce){
+@media(prefers-reduced-motion:reduce){
 
 *{
 
-animation:none!important;
+animation:none !important;
 
-transition:none!important;
+transition:none !important;
 
-scroll-behavior:auto!important;
-
-}
+scroll-behavior:auto !important;
 
 }
-
-
-/* =======================================================
-   GPU
-======================================================= */
-
-body{
-
-transform:
-
-translateZ(0);
-
-backface-visibility:
-
-hidden;
 
 }
 
 
-/* =======================================================
-   END
-======================================================= */
+/* ======================================================
+SAFE FALLBACK
+====================================================== */
+
+#wallet,
+#market,
+#mining,
+#casino,
+#airdrop,
+#settings{
+
+display:block;
+
+visibility:visible;
+
+opacity:1;
+
+}
+
+
+/* ======================================================
+END
+====================================================== */
