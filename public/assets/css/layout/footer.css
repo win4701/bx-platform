@@ -1,0 +1,568 @@
+/* =======================================================
+   BLOXIO FOOTER SYSTEM
+   Enterprise Production Footer
+======================================================= */
+
+
+/* =======================================================
+   ROOT
+======================================================= */
+
+.legal-footer{
+
+position:relative;
+
+width:100%;
+
+display:flex;
+
+flex-direction:column;
+
+align-items:center;
+
+justify-content:center;
+
+gap:
+
+12px;
+
+padding:
+
+24px
+
+20px
+
+calc(
+24px
++
+var(--safe-bottom)
+);
+
+margin-top:auto;
+
+background:
+
+linear-gradient(
+
+180deg,
+
+transparent,
+
+rgba(8,12,18,.88)
+
+);
+
+border-top:
+
+1px solid
+
+var(--border-soft);
+
+overflow:hidden;
+
+isolation:isolate;
+
+z-index:
+
+var(--z-content);
+
+}
+
+
+/* =======================================================
+   TOP GLOW
+======================================================= */
+
+.legal-footer::before{
+
+content:"";
+
+position:absolute;
+
+top:0;
+
+left:50%;
+
+transform:
+
+translateX(-50%);
+
+width:
+
+220px;
+
+height:
+
+1px;
+
+background:
+
+linear-gradient(
+
+90deg,
+
+transparent,
+
+var(--brand-primary),
+
+transparent
+
+);
+
+opacity:.55;
+
+pointer-events:none;
+
+}
+
+
+.legal-footer::after{
+
+content:"";
+
+position:absolute;
+
+inset:0;
+
+background:
+
+radial-gradient(
+
+circle at bottom,
+
+rgba(0,224,255,.05),
+
+transparent 72%
+
+);
+
+pointer-events:none;
+
+opacity:.75;
+
+}
+
+
+/* =======================================================
+   LINKS
+======================================================= */
+
+.footer-socials{
+
+display:flex;
+
+align-items:center;
+
+justify-content:center;
+
+gap:
+
+16px;
+
+flex-wrap:wrap;
+
+position:relative;
+
+z-index:2;
+
+}
+
+
+.footer-socials a{
+
+position:relative;
+
+display:flex;
+
+align-items:center;
+
+justify-content:center;
+
+min-height:38px;
+
+padding:
+
+0 14px;
+
+border-radius:
+
+var(--radius-round);
+
+font-size:.84rem;
+
+font-weight:700;
+
+letter-spacing:.02em;
+
+color:
+
+var(--text-secondary);
+
+background:
+
+rgba(255,255,255,.02);
+
+border:
+
+1px solid
+
+transparent;
+
+transition:
+
+transform .18s ease,
+
+color .18s ease,
+
+background .18s ease,
+
+border-color .18s ease,
+
+box-shadow .18s ease;
+
+}
+
+
+.footer-socials a:hover{
+
+color:
+
+var(--text-primary);
+
+background:
+
+rgba(255,255,255,.04);
+
+border-color:
+
+rgba(0,224,255,.18);
+
+transform:
+
+translateY(-2px);
+
+box-shadow:
+
+0 6px 18px
+
+rgba(0,224,255,.08);
+
+}
+
+
+.footer-socials a:active{
+
+transform:
+
+scale(.96);
+
+}
+
+
+/* =======================================================
+   COPYRIGHT
+======================================================= */
+
+.legal-footer p{
+
+position:relative;
+
+z-index:2;
+
+font-size:
+
+.78rem;
+
+font-weight:600;
+
+letter-spacing:.06em;
+
+text-transform:uppercase;
+
+color:
+
+var(--text-muted);
+
+text-align:center;
+
+margin:0;
+
+max-width:none;
+
+opacity:.92;
+
+}
+
+
+/* =======================================================
+   VERSION LABEL
+======================================================= */
+
+.footer-version{
+
+font-size:.70rem;
+
+font-weight:700;
+
+color:
+
+var(--text-dim);
+
+letter-spacing:.08em;
+
+opacity:.72;
+
+}
+
+
+/* =======================================================
+   COMPLIANCE
+======================================================= */
+
+.footer-compliance{
+
+display:flex;
+
+align-items:center;
+
+justify-content:center;
+
+gap:10px;
+
+flex-wrap:wrap;
+
+font-size:.72rem;
+
+color:
+
+var(--text-dim);
+
+opacity:.85;
+
+}
+
+
+/* =======================================================
+   BADGE
+======================================================= */
+
+.footer-badge{
+
+padding:
+
+5px 10px;
+
+border-radius:
+
+999px;
+
+background:
+
+rgba(255,255,255,.03);
+
+border:
+
+1px solid
+
+var(--border);
+
+font-size:.68rem;
+
+font-weight:700;
+
+color:
+
+var(--text-secondary);
+
+}
+
+
+/* =======================================================
+   LOADING
+======================================================= */
+
+.loading .legal-footer{
+
+pointer-events:none;
+
+opacity:.9;
+
+}
+
+
+/* =======================================================
+   AUTH
+======================================================= */
+
+.auth-loading .legal-footer{
+
+visibility:hidden;
+
+}
+
+
+/* =======================================================
+   TABLET
+======================================================= */
+
+@media(max-width:768px){
+
+.legal-footer{
+
+padding-inline:
+
+16px;
+
+gap:10px;
+
+}
+
+.footer-socials{
+
+gap:10px;
+
+}
+
+.footer-socials a{
+
+padding:
+
+0 12px;
+
+font-size:
+
+.80rem;
+
+}
+
+}
+
+
+/* =======================================================
+   MOBILE
+======================================================= */
+
+@media(max-width:576px){
+
+.legal-footer{
+
+padding-top:
+
+20px;
+
+}
+
+.footer-socials{
+
+width:100%;
+
+gap:8px;
+
+}
+
+.footer-socials a{
+
+flex:1;
+
+min-width:88px;
+
+}
+
+.legal-footer p{
+
+font-size:
+
+.72rem;
+
+}
+
+}
+
+
+/* =======================================================
+   SMALL MOBILE
+======================================================= */
+
+@media(max-width:420px){
+
+.footer-socials{
+
+flex-direction:column;
+
+}
+
+.footer-socials a{
+
+width:100%;
+
+}
+
+}
+
+
+/* =======================================================
+   LANDSCAPE
+======================================================= */
+
+@media
+(max-height:520px)
+and
+(orientation:landscape){
+
+.legal-footer{
+
+padding-top:14px;
+
+padding-bottom:
+
+14px;
+
+}
+
+}
+
+
+/* =======================================================
+   REDUCED MOTION
+======================================================= */
+
+@media
+(prefers-reduced-motion:reduce){
+
+.footer-socials a{
+
+transition:none;
+
+}
+
+}
+
+
+/* =======================================================
+   HIGH CONTRAST
+======================================================= */
+
+@media
+(prefers-contrast:more){
+
+.legal-footer{
+
+border-top:
+
+1px solid
+
+rgba(255,255,255,.18);
+
+}
+
+.footer-socials a{
+
+border:
+
+1px solid
+
+rgba(255,255,255,.12);
+
+}
+
+  }
