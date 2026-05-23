@@ -1,0 +1,638 @@
+/* =======================================================
+   BLOXIO TAB SYSTEM
+   Enterprise Production Tabs Layer
+======================================================= */
+
+
+/* =======================================================
+   ROOT
+======================================================= */
+
+.tabs{
+
+position:relative;
+
+display:flex;
+
+flex-direction:column;
+
+gap:
+
+var(--space-16);
+
+width:100%;
+
+min-width:0;
+
+}
+
+
+/* =======================================================
+   NAVIGATION
+======================================================= */
+
+.tabs-nav{
+
+position:relative;
+
+display:flex;
+
+align-items:center;
+
+gap:8px;
+
+width:100%;
+
+padding:6px;
+
+overflow:auto;
+
+scrollbar-width:none;
+
+border-radius:
+
+var(--radius-lg);
+
+background:
+
+rgba(255,255,255,.02);
+
+border:
+
+1px solid
+
+var(--border);
+
+isolation:isolate;
+
+}
+
+
+.tabs-nav::-webkit-scrollbar{
+
+display:none;
+
+}
+
+
+/* =======================================================
+   BUTTON
+======================================================= */
+
+.tab-btn{
+
+position:relative;
+
+display:flex;
+
+align-items:center;
+
+justify-content:center;
+
+gap:8px;
+
+min-height:42px;
+
+padding:
+
+0 16px;
+
+border:none;
+
+outline:none;
+
+background:none;
+
+border-radius:
+
+var(--radius-md);
+
+font-size:.84rem;
+
+font-weight:700;
+
+letter-spacing:.02em;
+
+white-space:nowrap;
+
+color:
+
+var(--text-muted);
+
+cursor:pointer;
+
+transition:
+
+background .18s ease,
+
+color .18s ease,
+
+transform .18s ease,
+
+box-shadow .18s ease;
+
+flex-shrink:0;
+
+overflow:hidden;
+
+transform:
+
+translateZ(0);
+
+}
+
+
+/* =======================================================
+   ACTIVE
+======================================================= */
+
+.tab-btn.active{
+
+background:
+
+rgba(255,255,255,.04);
+
+color:
+
+var(--text-primary);
+
+box-shadow:
+
+var(--shadow-sm);
+
+}
+
+
+.tab-btn.active::before{
+
+content:"";
+
+position:absolute;
+
+left:12px;
+
+right:12px;
+
+bottom:0;
+
+height:2px;
+
+border-radius:999px;
+
+background:
+
+var(--brand-primary);
+
+}
+
+
+/* =======================================================
+   HOVER
+======================================================= */
+
+@media(hover:hover){
+
+.tab-btn:hover{
+
+color:
+
+var(--text-primary);
+
+background:
+
+rgba(255,255,255,.03);
+
+}
+
+}
+
+
+/* =======================================================
+   ACTIVE PRESS
+======================================================= */
+
+.tab-btn:active{
+
+transform:
+
+scale(.96);
+
+}
+
+
+/* =======================================================
+   ICON
+======================================================= */
+
+.tab-icon{
+
+width:18px;
+
+height:18px;
+
+flex-shrink:0;
+
+opacity:.88;
+
+}
+
+
+/* =======================================================
+   BADGE
+======================================================= */
+
+.tab-badge{
+
+display:flex;
+
+align-items:center;
+
+justify-content:center;
+
+min-width:18px;
+
+height:18px;
+
+padding:
+
+0 6px;
+
+border-radius:999px;
+
+font-size:.64rem;
+
+font-weight:800;
+
+background:
+
+var(--brand-primary);
+
+color:#071018;
+
+}
+
+
+/* =======================================================
+   CONTENT
+======================================================= */
+
+.tabs-content{
+
+position:relative;
+
+width:100%;
+
+min-width:0;
+
+overflow:hidden;
+
+}
+
+
+.tab-panel{
+
+display:none;
+
+opacity:0;
+
+transform:
+
+translateY(4px);
+
+animation:
+
+tabFade
+
+.18s
+
+ease;
+
+}
+
+
+.tab-panel.active{
+
+display:block;
+
+opacity:1;
+
+transform:
+
+translateY(0);
+
+}
+
+
+@keyframes tabFade{
+
+from{
+
+opacity:0;
+
+transform:
+
+translateY(8px);
+
+}
+
+to{
+
+opacity:1;
+
+transform:
+
+translateY(0);
+
+}
+
+}
+
+
+/* =======================================================
+   VARIANTS
+======================================================= */
+
+.tabs-pill
+.tab-btn{
+
+border-radius:
+
+999px;
+
+}
+
+
+.tabs-line{
+
+background:none;
+
+border:none;
+
+padding:0;
+
+}
+
+
+.tabs-line
+.tab-btn{
+
+background:none;
+
+border-radius:0;
+
+padding:
+
+0 14px;
+
+min-height:48px;
+
+}
+
+
+.tabs-line
+.tab-btn.active{
+
+box-shadow:none;
+
+}
+
+
+.tabs-line
+.tab-btn.active::before{
+
+left:0;
+
+right:0;
+
+height:3px;
+
+}
+
+
+/* =======================================================
+   GLASS
+======================================================= */
+
+.tabs-glass{
+
+background:
+
+var(--glass-bg);
+
+backdrop-filter:
+
+blur(
+var(--glass-blur)
+);
+
+border:
+
+1px solid
+
+var(--glass-border);
+
+}
+
+
+/* =======================================================
+   MARKET
+======================================================= */
+
+.market-tabs
+.tab-btn.active::before{
+
+background:
+
+var(--market-buy);
+
+}
+
+
+/* =======================================================
+   MINING
+======================================================= */
+
+.mining-tabs
+.tab-btn.active::before{
+
+background:
+
+var(--success);
+
+}
+
+
+/* =======================================================
+   CASINO
+======================================================= */
+
+.casino-tabs
+.tab-btn.active::before{
+
+background:
+
+#FF0080;
+
+}
+
+
+/* =======================================================
+   AIRDROP
+======================================================= */
+
+.airdrop-tabs
+.tab-btn.active::before{
+
+background:
+
+#7C3AED;
+
+}
+
+
+/* =======================================================
+   WALLET
+======================================================= */
+
+.wallet-tabs
+.tab-btn{
+
+font-variant-numeric:
+
+tabular-nums;
+
+}
+
+
+/* =======================================================
+   LOADING
+======================================================= */
+
+.tabs-loading{
+
+pointer-events:none;
+
+opacity:.82;
+
+}
+
+
+/* =======================================================
+   MOBILE
+======================================================= */
+
+@media(max-width:768px){
+
+.tabs-nav{
+
+padding:4px;
+
+gap:6px;
+
+}
+
+.tab-btn{
+
+padding:
+
+0 14px;
+
+font-size:.80rem;
+
+}
+
+}
+
+
+/* =======================================================
+   SMALL MOBILE
+======================================================= */
+
+@media(max-width:420px){
+
+.tab-btn{
+
+padding:
+
+0 12px;
+
+font-size:.74rem;
+
+min-height:40px;
+
+}
+
+.tab-icon{
+
+width:16px;
+
+height:16px;
+
+}
+
+}
+
+
+/* =======================================================
+   TOUCH DEVICE
+======================================================= */
+
+@media(hover:none){
+
+.tabs-nav{
+
+scroll-snap-type:
+
+x proximity;
+
+}
+
+.tab-btn{
+
+scroll-snap-align:
+
+center;
+
+}
+
+}
+
+
+/* =======================================================
+   REDUCED MOTION
+======================================================= */
+
+@media
+(prefers-reduced-motion:reduce){
+
+.tab-btn,
+
+.tab-panel{
+
+transition:none;
+
+animation:none;
+
+}
+
+}
+
+
+/* =======================================================
+   GPU
+======================================================= */
+
+.tab-panel,
+.tab-btn{
+
+backface-visibility:hidden;
+
+transform:
+
+translateZ(0);
+
+will-change:
+
+transform;
+
+  }
