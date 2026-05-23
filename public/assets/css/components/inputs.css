@@ -1,0 +1,734 @@
+/* =======================================================
+   BLOXIO INPUT SYSTEM
+   Enterprise Production Inputs
+======================================================= */
+
+
+/* =======================================================
+   INPUT ROOT
+======================================================= */
+
+.input{
+
+position:relative;
+
+display:flex;
+
+align-items:center;
+
+width:100%;
+
+min-height:52px;
+
+padding-inline:16px;
+
+border-radius:
+
+var(--radius-md);
+
+background:
+
+var(--bg-panel);
+
+border:
+
+1px solid
+
+var(--border);
+
+color:
+
+var(--text-primary);
+
+overflow:hidden;
+
+isolation:isolate;
+
+transition:
+
+border-color .18s ease,
+
+background .18s ease,
+
+box-shadow .18s ease,
+
+transform .18s ease;
+
+transform:
+
+translateZ(0);
+
+backface-visibility:hidden;
+
+}
+
+
+/* =======================================================
+   INPUT GLOW
+======================================================= */
+
+.input::before{
+
+content:"";
+
+position:absolute;
+
+inset:0;
+
+background:
+
+linear-gradient(
+
+180deg,
+
+rgba(255,255,255,.02),
+
+transparent
+
+);
+
+pointer-events:none;
+
+opacity:.85;
+
+}
+
+
+.input::after{
+
+content:"";
+
+position:absolute;
+
+left:0;
+
+top:0;
+
+width:100%;
+
+height:1px;
+
+background:
+
+linear-gradient(
+
+90deg,
+
+transparent,
+
+rgba(255,255,255,.08),
+
+transparent
+
+);
+
+opacity:.6;
+
+pointer-events:none;
+
+}
+
+
+/* =======================================================
+   FIELD
+======================================================= */
+
+.input-field{
+
+width:100%;
+
+min-width:0;
+
+height:100%;
+
+background:none;
+
+border:none;
+
+outline:none;
+
+color:
+
+var(--text-primary);
+
+font-family:
+
+var(--font-primary);
+
+font-size:.92rem;
+
+font-weight:600;
+
+letter-spacing:.01em;
+
+}
+
+
+/* =======================================================
+   PLACEHOLDER
+======================================================= */
+
+.input-field::placeholder{
+
+color:
+
+var(--text-dim);
+
+font-weight:500;
+
+opacity:1;
+
+}
+
+
+/* =======================================================
+   FOCUS
+======================================================= */
+
+.input:focus-within{
+
+border-color:
+
+rgba(0,224,255,.26);
+
+background:
+
+rgba(255,255,255,.02);
+
+box-shadow:
+
+0 0 0 4px
+
+rgba(0,224,255,.08);
+
+}
+
+
+/* =======================================================
+   ICON
+======================================================= */
+
+.input-icon{
+
+width:18px;
+
+height:18px;
+
+flex-shrink:0;
+
+opacity:.72;
+
+pointer-events:none;
+
+}
+
+
+.input-end{
+
+display:flex;
+
+align-items:center;
+
+gap:8px;
+
+margin-left:auto;
+
+flex-shrink:0;
+
+}
+
+
+/* =======================================================
+   PASSWORD
+======================================================= */
+
+.password-toggle{
+
+display:flex;
+
+align-items:center;
+
+justify-content:center;
+
+width:32px;
+
+height:32px;
+
+border-radius:999px;
+
+cursor:pointer;
+
+opacity:.72;
+
+transition:
+
+opacity .18s ease,
+
+background .18s ease;
+
+}
+
+
+.password-toggle:hover{
+
+opacity:1;
+
+background:
+
+rgba(255,255,255,.04);
+
+}
+
+
+/* =======================================================
+   NUMBER
+======================================================= */
+
+.input-number{
+
+font-family:
+
+var(--font-mono);
+
+font-variant-numeric:
+
+tabular-nums;
+
+}
+
+
+/* =======================================================
+   SEARCH
+======================================================= */
+
+.input-search{
+
+padding-left:44px;
+
+}
+
+
+.input-search-icon{
+
+position:absolute;
+
+left:16px;
+
+top:50%;
+
+transform:
+
+translateY(-50%);
+
+opacity:.65;
+
+}
+
+
+/* =======================================================
+   TEXTAREA
+======================================================= */
+
+.textarea{
+
+min-height:120px;
+
+padding:14px 16px;
+
+resize:none;
+
+align-items:flex-start;
+
+}
+
+
+.textarea .input-field{
+
+line-height:1.6;
+
+padding-top:2px;
+
+}
+
+
+/* =======================================================
+   SELECT
+======================================================= */
+
+.select{
+
+cursor:pointer;
+
+padding-right:44px;
+
+}
+
+
+.select::before{
+
+content:"";
+
+position:absolute;
+
+right:16px;
+
+top:50%;
+
+width:8px;
+
+height:8px;
+
+border-right:
+
+2px solid
+
+var(--text-muted);
+
+border-bottom:
+
+2px solid
+
+var(--text-muted);
+
+transform:
+
+translateY(-70%)
+
+rotate(45deg);
+
+pointer-events:none;
+
+}
+
+
+/* =======================================================
+   STATES
+======================================================= */
+
+.input-success{
+
+border-color:
+
+rgba(34,197,94,.34);
+
+}
+
+
+.input-success:focus-within{
+
+box-shadow:
+
+0 0 0 4px
+
+rgba(34,197,94,.10);
+
+}
+
+
+.input-error{
+
+border-color:
+
+rgba(246,70,93,.34);
+
+}
+
+
+.input-error:focus-within{
+
+box-shadow:
+
+0 0 0 4px
+
+rgba(246,70,93,.10);
+
+}
+
+
+.input-warning{
+
+border-color:
+
+rgba(240,185,11,.34);
+
+}
+
+
+.input-disabled{
+
+opacity:.58;
+
+pointer-events:none;
+
+filter:
+
+grayscale(.12);
+
+}
+
+
+/* =======================================================
+   VARIANTS
+======================================================= */
+
+.input-soft{
+
+background:
+
+rgba(255,255,255,.02);
+
+}
+
+
+.input-glass{
+
+background:
+
+var(--glass-bg);
+
+backdrop-filter:
+
+blur(
+var(--glass-blur)
+);
+
+border:
+
+1px solid
+
+var(--glass-border);
+
+}
+
+
+.input-flat{
+
+background:
+
+transparent;
+
+border:
+
+1px solid
+
+var(--border-soft);
+
+}
+
+
+/* =======================================================
+   SIZE
+======================================================= */
+
+.input-sm{
+
+min-height:42px;
+
+font-size:.84rem;
+
+}
+
+
+.input-lg{
+
+min-height:58px;
+
+font-size:1rem;
+
+}
+
+
+.input-xl{
+
+min-height:64px;
+
+font-size:1.05rem;
+
+}
+
+
+/* =======================================================
+   WALLET
+======================================================= */
+
+.wallet-address-input{
+
+font-family:
+
+var(--font-mono);
+
+font-size:.84rem;
+
+letter-spacing:.02em;
+
+}
+
+
+.wallet-amount{
+
+font-family:
+
+var(--font-mono);
+
+font-size:1rem;
+
+font-weight:800;
+
+}
+
+
+/* =======================================================
+   MARKET
+======================================================= */
+
+.trade-input{
+
+font-variant-numeric:
+
+tabular-nums;
+
+font-family:
+
+var(--font-mono);
+
+font-weight:700;
+
+}
+
+
+/* =======================================================
+   AIRDROP
+======================================================= */
+
+.airdrop-referral{
+
+font-family:
+
+var(--font-mono);
+
+font-size:.84rem;
+
+}
+
+
+/* =======================================================
+   AUTH
+======================================================= */
+
+.auth-input{
+
+min-height:56px;
+
+}
+
+
+/* =======================================================
+   LOADING
+======================================================= */
+
+.input-loading{
+
+pointer-events:none;
+
+opacity:.82;
+
+}
+
+
+.input-loading::after{
+
+content:"";
+
+position:absolute;
+
+inset:0;
+
+background:
+
+linear-gradient(
+
+90deg,
+
+transparent,
+
+rgba(255,255,255,.04),
+
+transparent
+
+);
+
+animation:
+
+shimmer
+
+1.2s
+
+linear
+
+infinite;
+
+}
+
+
+/* =======================================================
+   MOBILE
+======================================================= */
+
+@media(max-width:768px){
+
+.input{
+
+min-height:50px;
+
+padding-inline:14px;
+
+}
+
+}
+
+
+/* =======================================================
+   SMALL MOBILE
+======================================================= */
+
+@media(max-width:420px){
+
+.input{
+
+min-height:48px;
+
+border-radius:
+
+var(--radius-sm);
+
+}
+
+.input-field{
+
+font-size:.88rem;
+
+}
+
+}
+
+
+/* =======================================================
+   REDUCED MOTION
+======================================================= */
+
+@media
+(prefers-reduced-motion:reduce){
+
+.input{
+
+transition:none;
+
+}
+
+.password-toggle{
+
+transition:none;
+
+}
+
+  }
