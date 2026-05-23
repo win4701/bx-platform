@@ -1,0 +1,679 @@
+/* =======================================================
+   BLOXIO APP SHELL
+   Enterprise Layout System
+======================================================= */
+
+
+/* =======================================================
+   ROOT SHELL
+======================================================= */
+
+#app-shell{
+
+position:relative;
+
+display:flex;
+
+flex-direction:column;
+
+min-height:100vh;
+
+min-height:100dvh;
+
+width:100%;
+
+max-width:100vw;
+
+overflow:hidden;
+
+isolation:isolate;
+
+background:
+
+var(--bg);
+
+contain:
+
+layout style;
+
+}
+
+
+/* =======================================================
+   MAIN APP
+======================================================= */
+
+#app{
+
+position:relative;
+
+flex:1;
+
+display:flex;
+
+flex-direction:column;
+
+width:100%;
+
+max-width:
+
+var(--container-width,1440px);
+
+margin-inline:auto;
+
+padding-inline:
+
+clamp(
+14px,
+2vw,
+24px
+);
+
+padding-top:
+
+calc(
+var(--header-height)
++
+12px
+);
+
+padding-bottom:
+
+calc(
+var(--nav-height)
++
+var(--safe-bottom)
++
+20px
+);
+
+z-index:
+
+var(--z-content);
+
+}
+
+
+/* =======================================================
+   VIEW SYSTEM
+======================================================= */
+
+.view{
+
+display:none;
+
+width:100%;
+
+min-height:100%;
+
+animation:
+
+fadeIn
+
+.22s
+
+ease;
+
+}
+
+.view.active{
+
+display:block;
+
+}
+
+
+/* =======================================================
+   PAGE FLOW
+======================================================= */
+
+.app-container{
+
+display:flex;
+
+flex-direction:column;
+
+gap:
+
+var(--space-20);
+
+width:100%;
+
+flex:1;
+
+position:relative;
+
+z-index:
+
+var(--z-content);
+
+}
+
+
+/* =======================================================
+   CONTAINER
+======================================================= */
+
+.container{
+
+width:100%;
+
+max-width:
+
+1280px;
+
+margin-inline:auto;
+
+padding-inline:
+
+clamp(
+12px,
+2vw,
+20px
+);
+
+}
+
+
+/* =======================================================
+   SECTION
+======================================================= */
+
+section{
+
+position:relative;
+
+width:100%;
+
+isolation:isolate;
+
+}
+
+
+/* =======================================================
+   STACK
+======================================================= */
+
+.stack{
+
+display:flex;
+
+flex-direction:column;
+
+gap:
+
+var(--space-16);
+
+}
+
+
+.stack-lg{
+
+gap:
+
+var(--space-24);
+
+}
+
+
+.stack-xl{
+
+gap:
+
+var(--space-32);
+
+}
+
+
+/* =======================================================
+   GRID SYSTEM
+======================================================= */
+
+.grid{
+
+display:grid;
+
+gap:
+
+var(--space-16);
+
+}
+
+
+.grid-2{
+
+grid-template-columns:
+
+repeat(2,1fr);
+
+}
+
+
+.grid-3{
+
+grid-template-columns:
+
+repeat(3,1fr);
+
+}
+
+
+.grid-4{
+
+grid-template-columns:
+
+repeat(4,1fr);
+
+}
+
+
+/* =======================================================
+   PAGE WIDTH
+======================================================= */
+
+.page-narrow{
+
+max-width:
+
+840px;
+
+margin-inline:auto;
+
+}
+
+
+.page-medium{
+
+max-width:
+
+1100px;
+
+margin-inline:auto;
+
+}
+
+
+.page-wide{
+
+max-width:
+
+1400px;
+
+margin-inline:auto;
+
+}
+
+
+/* =======================================================
+   SAFE AREA
+======================================================= */
+
+.safe-top{
+
+padding-top:
+
+var(--safe-top);
+
+}
+
+
+.safe-bottom{
+
+padding-bottom:
+
+var(--safe-bottom);
+
+}
+
+
+/* =======================================================
+   VIDEO BACKGROUND
+======================================================= */
+
+.bg-video{
+
+position:fixed;
+
+inset:0;
+
+width:100%;
+
+height:100%;
+
+object-fit:cover;
+
+opacity:.18;
+
+pointer-events:none;
+
+z-index:
+
+var(--z-negative);
+
+transform:
+
+translateZ(0);
+
+will-change:
+
+transform;
+
+}
+
+
+/* =======================================================
+   OVERLAY
+======================================================= */
+
+.bg-layer{
+
+position:fixed;
+
+inset:0;
+
+background:
+
+linear-gradient(
+
+180deg,
+
+rgba(8,12,18,.42),
+
+rgba(8,12,18,.88)
+
+);
+
+pointer-events:none;
+
+z-index:
+
+var(--z-floor);
+
+}
+
+
+.grid-overlay{
+
+position:fixed;
+
+inset:0;
+
+pointer-events:none;
+
+opacity:.12;
+
+background:
+
+linear-gradient(
+
+rgba(255,255,255,.03)
+
+1px,
+
+transparent
+
+1px
+
+),
+
+linear-gradient(
+
+90deg,
+
+rgba(255,255,255,.03)
+
+1px,
+
+transparent
+
+1px
+
+);
+
+background-size:
+
+24px 24px;
+
+z-index:
+
+var(--z-floor);
+
+}
+
+
+.ambient-glow{
+
+position:fixed;
+
+inset:0;
+
+pointer-events:none;
+
+background:
+
+radial-gradient(
+
+circle at top,
+
+rgba(0,224,255,.10),
+
+transparent 55%
+
+);
+
+z-index:
+
+var(--z-floor);
+
+filter:
+
+blur(40px);
+
+}
+
+
+/* =======================================================
+   CONTENT FLOW
+======================================================= */
+
+.content-shell{
+
+display:flex;
+
+flex-direction:column;
+
+gap:
+
+var(--space-20);
+
+min-width:0;
+
+}
+
+
+/* =======================================================
+   SHELL STATES
+======================================================= */
+
+.loading #app{
+
+opacity:.92;
+
+pointer-events:none;
+
+}
+
+
+.loading .view{
+
+filter:
+
+blur(2px);
+
+}
+
+
+.auth-loading #app{
+
+visibility:hidden;
+
+}
+
+
+/* =======================================================
+   LANDSCAPE
+======================================================= */
+
+@media
+(max-height:520px)
+and
+(orientation:landscape){
+
+#app{
+
+padding-top:
+
+72px;
+
+padding-bottom:
+
+72px;
+
+}
+
+}
+
+
+/* =======================================================
+   TABLET
+======================================================= */
+
+@media(max-width:992px){
+
+.grid-4{
+
+grid-template-columns:
+
+repeat(2,1fr);
+
+}
+
+.grid-3{
+
+grid-template-columns:
+
+repeat(2,1fr);
+
+}
+
+}
+
+
+/* =======================================================
+   MOBILE
+======================================================= */
+
+@media(max-width:768px){
+
+#app{
+
+padding-inline:
+
+14px;
+
+}
+
+.grid-2,
+.grid-3,
+.grid-4{
+
+grid-template-columns:
+
+1fr;
+
+}
+
+.container{
+
+padding-inline:
+
+0;
+
+}
+
+}
+
+
+/* =======================================================
+   SMALL MOBILE
+======================================================= */
+
+@media(max-width:420px){
+
+#app{
+
+padding-inline:
+
+10px;
+
+}
+
+.stack{
+
+gap:
+
+12px;
+
+}
+
+}
+
+
+/* =======================================================
+   FOLD DEVICES
+======================================================= */
+
+@media
+(horizontal-viewport-segments:2){
+
+#app{
+
+padding-inline:
+
+20px;
+
+}
+
+}
+
+
+/* =======================================================
+   REDUCED DATA
+======================================================= */
+
+@media
+(prefers-reduced-data:reduce){
+
+.bg-video{
+
+display:none;
+
+}
+
+}
+
+
+/* =======================================================
+   REDUCED MOTION
+======================================================= */
+
+@media
+(prefers-reduced-motion:reduce){
+
+.view{
+
+animation:none;
+
+}
+
+  }
