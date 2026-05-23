@@ -1,0 +1,141 @@
+/* ====================================================
+ROOT IMPORT ONLY
+KEEP OLD DESIGN DNA
+==================================================== */
+
+@charset "UTF-8";
+
+/* CORE */
+
+@import "./core/variables.css";
+@import "./core/reset.css";
+@import "./core/typography.css";
+@import "./core/animations.css";
+@import "./core/utilities.css";
+@import "./core/themes.css";
+@import "./core/responsive.css";
+
+/* LAYOUT */
+
+@import "./layout/app-shell.css";
+@import "./layout/header.css";
+@import "./layout/footer.css";
+@import "./layout/nav.css";
+@import "./layout/background.css";
+@import "./layout/containers.css";
+
+/* COMPONENTS */
+
+@import "./components/buttons.css";
+@import "./components/cards.css";
+@import "./components/forms.css";
+@import "./components/inputs.css";
+@import "./components/modal.css";
+@import "./components/toast.css";
+@import "./components/loaders.css";
+@import "./components/badges.css";
+@import "./components/progress.css";
+@import "./components/charts.css";
+@import "./components/tooltip.css";
+@import "./components/tabs.css";
+@import "./components/table.css";
+@import "./components/search.css";
+@import "./components/dropdown.css";
+@import "./components/glass.css";
+@import "./components/status.css";
+
+/* PAGES */
+
+@import "./pages/auth.css";
+@import "./pages/wallet.css";
+@import "./pages/market.css";
+@import "./pages/mining.css";
+@import "./pages/casino.css";
+@import "./pages/airdrop.css";
+@import "./pages/settings.css";
+
+/* MOBILE */
+
+@import "./mobile.css";
+
+/* SAFE ROOT */
+
+html{
+
+height:100%;
+
+scroll-behavior:smooth;
+
+}
+
+body{
+
+margin:0;
+
+padding:0;
+
+overflow-x:hidden;
+
+background:
+
+var(--bg-primary);
+
+color:
+
+var(--text-primary);
+
+font-family:
+
+var(--font-primary);
+
+}
+
+#app{
+
+min-height:100vh;
+
+position:relative;
+
+}
+
+/* KEEP OLD EFFECTS */
+
+.card,
+.wallet-card,
+.market-card,
+.mining-card,
+.casino-card{
+
+transition:
+
+transform .22s ease,
+
+box-shadow .22s ease,
+
+border-color .22s ease;
+
+}
+
+@media(hover:hover){
+
+.card:hover,
+.wallet-card:hover,
+.market-card:hover,
+.mining-card:hover{
+
+transform:
+
+translateY(-3px);
+
+}
+
+}
+
+/* AUTH */
+
+.app-ready
+#authOverlay{
+
+display:none!important;
+
+}
