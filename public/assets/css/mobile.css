@@ -1,0 +1,772 @@
+/* =====================================================
+   BLOXIO MOBILE SYSTEM
+   Enterprise Mobile Architecture
+===================================================== */
+
+
+/* =====================================================
+   ROOT MOBILE VARIABLES
+===================================================== */
+
+:root{
+
+--mobile-nav:
+
+72px;
+
+--mobile-gap:
+
+14px;
+
+--mobile-radius:
+
+18px;
+
+--safe-top:
+
+env(
+safe-area-inset-top,
+0px
+);
+
+--safe-bottom:
+
+env(
+safe-area-inset-bottom,
+0px
+);
+
+--safe-left:
+
+env(
+safe-area-inset-left,
+0px
+);
+
+--safe-right:
+
+env(
+safe-area-inset-right,
+0px
+);
+
+}
+
+
+/* =====================================================
+   GLOBAL TOUCH
+===================================================== */
+
+@media(max-width:768px){
+
+*{
+
+-webkit-tap-highlight-color:
+
+transparent;
+
+}
+
+html{
+
+font-size:15px;
+
+overflow-x:hidden;
+
+scroll-behavior:smooth;
+
+}
+
+body{
+
+overflow-x:hidden;
+
+touch-action:
+
+manipulation;
+
+overscroll-behavior-y:
+
+contain;
+
+padding-top:
+
+var(--safe-top);
+
+padding-left:
+
+var(--safe-left);
+
+padding-right:
+
+var(--safe-right);
+
+padding-bottom:
+
+var(--safe-bottom);
+
+}
+
+}
+
+
+/* =====================================================
+   MOBILE CONTAINER
+===================================================== */
+
+@media(max-width:768px){
+
+.container,
+.page-container,
+.app-shell{
+
+padding-inline:
+
+14px;
+
+max-width:100%;
+
+}
+
+}
+
+
+/* =====================================================
+   HEADER
+===================================================== */
+
+@media(max-width:768px){
+
+header,
+.header{
+
+height:64px;
+
+padding:
+
+0 14px;
+
+backdrop-filter:
+
+blur(18px);
+
+}
+
+}
+
+
+/* =====================================================
+   BOTTOM NAV
+===================================================== */
+
+@media(max-width:768px){
+
+.bottom-nav{
+
+position:fixed;
+
+left:0;
+
+right:0;
+
+bottom:0;
+
+height:
+
+calc(
+var(--mobile-nav)
++
+var(--safe-bottom)
+);
+
+padding-bottom:
+
+var(--safe-bottom);
+
+z-index:
+
+var(--z-nav);
+
+background:
+
+rgba(
+6,
+10,
+16,
+.95
+);
+
+backdrop-filter:
+
+blur(20px);
+
+border-top:
+
+1px solid
+rgba(
+255,
+255,
+255,
+.05
+);
+
+display:flex;
+
+align-items:center;
+
+justify-content:space-around;
+
+}
+
+}
+
+
+/* =====================================================
+   PAGE PADDING
+===================================================== */
+
+@media(max-width:768px){
+
+#wallet,
+#market,
+#mining,
+#casino,
+#airdrop,
+#settings{
+
+padding-bottom:
+
+calc(
+var(--mobile-nav)
++
+42px
+);
+
+}
+
+}
+
+
+/* =====================================================
+   TABLE
+===================================================== */
+
+@media(max-width:768px){
+
+.table-shell{
+
+overflow-x:auto;
+
+-webkit-overflow-scrolling:
+
+touch;
+
+}
+
+table{
+
+min-width:640px;
+
+}
+
+}
+
+
+/* =====================================================
+   CHART
+===================================================== */
+
+@media(max-width:768px){
+
+.chart-canvas,
+.market-chart-shell{
+
+height:
+
+280px;
+
+touch-action:
+
+pan-x
+pan-y;
+
+}
+
+}
+
+
+/* =====================================================
+   MODAL
+===================================================== */
+
+@media(max-width:768px){
+
+.modal{
+
+padding:
+
+16px;
+
+align-items:
+
+flex-end;
+
+}
+
+.modal-card{
+
+width:100%;
+
+max-width:none;
+
+border-radius:
+
+24px 24px 0 0;
+
+max-height:
+
+90dvh;
+
+overflow:auto;
+
+}
+
+}
+
+
+/* =====================================================
+   QUICK SHEET
+===================================================== */
+
+@media(max-width:768px){
+
+.wallet-quick-card{
+
+max-width:none;
+
+border-radius:
+
+24px 24px 0 0;
+
+padding:
+
+20px;
+
+}
+
+}
+
+
+/* =====================================================
+   INPUT
+===================================================== */
+
+@media(max-width:768px){
+
+input,
+select,
+textarea{
+
+font-size:
+
+16px;
+
+}
+
+}
+
+
+/* =====================================================
+   BUTTON
+===================================================== */
+
+@media(max-width:768px){
+
+button,
+.btn{
+
+min-height:
+
+48px;
+
+touch-action:
+
+manipulation;
+
+}
+
+}
+
+
+/* =====================================================
+   TOUCH TARGET
+===================================================== */
+
+@media(max-width:768px){
+
+.icon-btn,
+.nav-btn,
+.dropdown-item{
+
+min-height:
+
+46px;
+
+min-width:
+
+46px;
+
+}
+
+}
+
+
+/* =====================================================
+   GRID
+===================================================== */
+
+@media(max-width:768px){
+
+.grid-2,
+.grid-3,
+.grid-4{
+
+grid-template-columns:
+
+1fr;
+
+}
+
+}
+
+
+/* =====================================================
+   WALLET
+===================================================== */
+
+@media(max-width:768px){
+
+.wallet-actions{
+
+grid-template-columns:
+
+1fr;
+
+}
+
+.wallet-row{
+
+padding:
+
+14px;
+
+gap:12px;
+
+}
+
+}
+
+
+/* =====================================================
+   MARKET
+===================================================== */
+
+@media(max-width:768px){
+
+.market-stats-grid{
+
+grid-template-columns:
+
+1fr 1fr;
+
+}
+
+.market-toolbar{
+
+flex-direction:
+
+column;
+
+}
+
+.trade-tabs{
+
+grid-template-columns:
+
+1fr;
+
+}
+
+}
+
+
+/* =====================================================
+   MINING
+===================================================== */
+
+@media(max-width:768px){
+
+.mining-shell{
+
+grid-template-columns:
+
+1fr;
+
+}
+
+.mining-plans{
+
+grid-template-columns:
+
+1fr;
+
+}
+
+}
+
+
+/* =====================================================
+   CASINO
+===================================================== */
+
+@media(max-width:768px){
+
+#casinoGamesGrid{
+
+grid-template-columns:
+
+1fr;
+
+}
+
+.bet-quick-row{
+
+grid-template-columns:
+
+1fr 1fr;
+
+}
+
+}
+
+
+/* =====================================================
+   AIRDROP
+===================================================== */
+
+@media(max-width:768px){
+
+.airdrop-container{
+
+grid-template-columns:
+
+1fr;
+
+}
+
+.partners-grid{
+
+grid-template-columns:
+
+1fr 1fr;
+
+}
+
+}
+
+
+/* =====================================================
+   SETTINGS
+===================================================== */
+
+@media(max-width:768px){
+
+#settings{
+
+grid-template-columns:
+
+1fr;
+
+}
+
+}
+
+
+/* =====================================================
+   LANDSCAPE
+===================================================== */
+
+@media
+(max-width:950px)
+and
+(orientation:landscape){
+
+.bottom-nav{
+
+height:58px;
+
+}
+
+.chart-canvas{
+
+height:220px;
+
+}
+
+}
+
+
+/* =====================================================
+   SMALL DEVICE
+===================================================== */
+
+@media(max-width:420px){
+
+html{
+
+font-size:14px;
+
+}
+
+.page-title{
+
+font-size:
+
+1.8rem;
+
+}
+
+.chart-canvas{
+
+height:220px;
+
+}
+
+.market-chart-shell{
+
+height:240px;
+
+}
+
+}
+
+
+/* =====================================================
+   FOLDABLE
+===================================================== */
+
+@media
+(horizontal-viewport-segments:2){
+
+body{
+
+padding-left:
+
+max(
+14px,
+env(
+safe-area-inset-left
+)
+);
+
+padding-right:
+
+max(
+14px,
+env(
+safe-area-inset-right
+)
+);
+
+}
+
+}
+
+
+/* =====================================================
+   AMOLED
+===================================================== */
+
+@media(max-width:768px){
+
+[data-theme="amoled"]{
+
+background:
+
+#000;
+
+}
+
+}
+
+
+/* =====================================================
+   PWA
+===================================================== */
+
+@media(display-mode:standalone){
+
+body{
+
+user-select:none;
+
+}
+
+}
+
+
+/* =====================================================
+   PERFORMANCE
+===================================================== */
+
+@media(max-width:768px){
+
+.card,
+.chart-shell,
+.market-chart-shell,
+.wallet-row{
+
+contain:
+
+layout paint;
+
+}
+
+}
+
+
+/* =====================================================
+   REDUCED MOTION
+===================================================== */
+
+@media
+(prefers-reduced-motion:reduce){
+
+*{
+
+scroll-behavior:auto;
+
+animation:none!important;
+
+transition:none!important;
+
+}
+
+}
+
+
+/* =====================================================
+   GPU
+===================================================== */
+
+@media(max-width:768px){
+
+*{
+
+backface-visibility:
+
+hidden;
+
+}
+
+  }
