@@ -1,1 +1,837 @@
+/* =======================================================
+   BLOXIO AUTH PAGE
+   Enterprise Authentication Layer
+======================================================= */
 
+
+/* =======================================================
+   OVERLAY
+======================================================= */
+
+.auth{
+
+position:fixed;
+
+inset:0;
+
+display:none;
+
+align-items:center;
+
+justify-content:center;
+
+padding:
+
+24px;
+
+background:
+
+rgba(3,6,10,.82);
+
+backdrop-filter:
+
+blur(18px);
+
+-webkit-backdrop-filter:
+
+blur(18px);
+
+z-index:
+
+var(--z-auth,9000);
+
+overflow:auto;
+
+opacity:0;
+
+transition:
+
+opacity .22s ease;
+
+isolation:isolate;
+
+}
+
+
+/* =======================================================
+   ACTIVE
+======================================================= */
+
+.auth.visible{
+
+display:flex;
+
+opacity:1;
+
+}
+
+
+/* =======================================================
+   CONTAINER
+======================================================= */
+
+.auth-shell{
+
+position:relative;
+
+width:100%;
+
+max-width:460px;
+
+padding:
+
+28px;
+
+border-radius:
+
+var(--radius-xl);
+
+background:
+
+rgba(10,15,22,.92);
+
+border:
+
+1px solid
+
+rgba(255,255,255,.06);
+
+box-shadow:
+
+0 24px 64px
+
+rgba(0,0,0,.34);
+
+overflow:hidden;
+
+isolation:isolate;
+
+transform:
+
+translateY(12px);
+
+animation:
+
+authEnter
+
+.24s
+
+ease
+
+forwards;
+
+}
+
+
+/* =======================================================
+   GLOW
+======================================================= */
+
+.auth-shell::before{
+
+content:"";
+
+position:absolute;
+
+top:-120px;
+
+left:50%;
+
+width:220px;
+
+height:220px;
+
+transform:
+
+translateX(-50%);
+
+background:
+
+radial-gradient(
+
+circle,
+
+rgba(0,224,255,.12),
+
+transparent 70%
+
+);
+
+pointer-events:none;
+
+}
+
+
+/* =======================================================
+   LOGO
+======================================================= */
+
+.auth-logo{
+
+display:flex;
+
+justify-content:center;
+
+margin-bottom:22px;
+
+}
+
+
+.auth-logo img{
+
+width:74px;
+
+height:74px;
+
+object-fit:contain;
+
+}
+
+
+/* =======================================================
+   HEADER
+======================================================= */
+
+.auth-head{
+
+display:flex;
+
+flex-direction:column;
+
+gap:8px;
+
+text-align:center;
+
+margin-bottom:24px;
+
+}
+
+
+.auth-title{
+
+font-size:
+
+clamp(
+1.6rem,
+3vw,
+2rem
+);
+
+font-weight:900;
+
+letter-spacing:-.04em;
+
+color:
+
+var(--text-primary);
+
+}
+
+
+.auth-sub{
+
+font-size:.84rem;
+
+line-height:1.6;
+
+color:
+
+var(--text-muted);
+
+}
+
+
+/* =======================================================
+   FORM
+======================================================= */
+
+.auth-form{
+
+display:flex;
+
+flex-direction:column;
+
+gap:16px;
+
+}
+
+
+.auth-group{
+
+display:flex;
+
+flex-direction:column;
+
+gap:8px;
+
+}
+
+
+.auth-label{
+
+font-size:.76rem;
+
+font-weight:700;
+
+color:
+
+var(--text-secondary);
+
+}
+
+
+/* =======================================================
+   INPUT
+======================================================= */
+
+.auth-input{
+
+height:54px;
+
+padding:
+
+0 16px;
+
+border-radius:
+
+var(--radius-md);
+
+background:
+
+rgba(255,255,255,.03);
+
+border:
+
+1px solid
+
+var(--border);
+
+font-size:.92rem;
+
+font-weight:600;
+
+color:
+
+var(--text-primary);
+
+transition:
+
+all .18s ease;
+
+}
+
+
+.auth-input:focus{
+
+outline:none;
+
+border-color:
+
+rgba(0,224,255,.24);
+
+box-shadow:
+
+0 0 0 4px
+
+rgba(0,224,255,.08);
+
+}
+
+
+.auth-input::placeholder{
+
+color:
+
+var(--text-muted);
+
+}
+
+
+/* =======================================================
+   BUTTON
+======================================================= */
+
+.auth-btn{
+
+height:54px;
+
+border:none;
+
+border-radius:
+
+var(--radius-md);
+
+background:
+
+linear-gradient(
+
+135deg,
+
+var(--brand-primary),
+
+#00B8E6
+
+);
+
+font-weight:800;
+
+font-size:.92rem;
+
+color:#071018;
+
+cursor:pointer;
+
+transition:
+
+all .18s ease;
+
+overflow:hidden;
+
+position:relative;
+
+}
+
+
+.auth-btn:hover{
+
+transform:
+
+translateY(-1px);
+
+box-shadow:
+
+0 12px 28px
+
+rgba(0,224,255,.16);
+
+}
+
+
+.auth-btn:active{
+
+transform:
+
+scale(.98);
+
+}
+
+
+.auth-btn.loading{
+
+pointer-events:none;
+
+opacity:.82;
+
+}
+
+
+/* =======================================================
+   ERROR
+======================================================= */
+
+.auth-error{
+
+display:none;
+
+padding:
+
+12px;
+
+border-radius:
+
+var(--radius-md);
+
+background:
+
+rgba(246,70,93,.08);
+
+border:
+
+1px solid
+
+rgba(246,70,93,.18);
+
+font-size:.78rem;
+
+font-weight:700;
+
+color:
+
+var(--danger);
+
+text-align:center;
+
+}
+
+
+.auth-error.active{
+
+display:block;
+
+animation:
+
+shakeX
+
+.28s;
+
+}
+
+
+/* =======================================================
+   SWITCH
+======================================================= */
+
+.auth-switch{
+
+display:flex;
+
+justify-content:center;
+
+margin-top:18px;
+
+font-size:.82rem;
+
+color:
+
+var(--text-muted);
+
+}
+
+
+.auth-switch button{
+
+background:none;
+
+border:none;
+
+padding:0;
+
+margin-left:6px;
+
+font-weight:800;
+
+cursor:pointer;
+
+color:
+
+var(--brand-primary);
+
+}
+
+
+/* =======================================================
+   REFERRAL
+======================================================= */
+
+.auth-ref{
+
+padding:
+
+12px;
+
+border-radius:
+
+var(--radius-md);
+
+background:
+
+rgba(124,58,237,.06);
+
+border:
+
+1px solid
+
+rgba(124,58,237,.12);
+
+font-size:.76rem;
+
+font-weight:700;
+
+text-align:center;
+
+color:
+
+#A855F7;
+
+}
+
+
+/* =======================================================
+   TELEGRAM
+======================================================= */
+
+.auth-telegram{
+
+display:flex;
+
+align-items:center;
+
+justify-content:center;
+
+gap:10px;
+
+height:46px;
+
+border-radius:
+
+var(--radius-md);
+
+background:
+
+rgba(34,158,217,.08);
+
+border:
+
+1px solid
+
+rgba(34,158,217,.14);
+
+font-weight:700;
+
+color:
+
+#229ED9;
+
+}
+
+
+/* =======================================================
+   LOGIN REGISTER
+======================================================= */
+
+#loginBox,
+#registerBox{
+
+display:none;
+
+animation:
+
+fadeAuth
+
+.18s
+
+ease;
+
+}
+
+
+#loginBox.active,
+#registerBox.active{
+
+display:flex;
+
+flex-direction:column;
+
+gap:16px;
+
+}
+
+
+/* =======================================================
+   LOCK
+======================================================= */
+
+.auth-lock{
+
+overflow:hidden;
+
+touch-action:none;
+
+}
+
+
+/* =======================================================
+   READY
+======================================================= */
+
+.app-ready .auth{
+
+pointer-events:none;
+
+}
+
+
+/* =======================================================
+   LOADING
+======================================================= */
+
+.auth-loading{
+
+overflow:hidden;
+
+}
+
+
+.auth-loading #app{
+
+opacity:.45;
+
+filter:
+
+blur(3px);
+
+pointer-events:none;
+
+}
+
+
+/* =======================================================
+   ANIMATION
+======================================================= */
+
+@keyframes authEnter{
+
+to{
+
+transform:
+
+translateY(0);
+
+}
+
+}
+
+
+@keyframes fadeAuth{
+
+from{
+
+opacity:0;
+
+transform:
+
+translateY(6px);
+
+}
+
+to{
+
+opacity:1;
+
+transform:
+
+translateY(0);
+
+}
+
+}
+
+
+@keyframes shakeX{
+
+25%{
+
+transform:
+
+translateX(-5px);
+
+}
+
+50%{
+
+transform:
+
+translateX(5px);
+
+}
+
+75%{
+
+transform:
+
+translateX(-3px);
+
+}
+
+}
+
+
+/* =======================================================
+   MOBILE
+======================================================= */
+
+@media(max-width:768px){
+
+.auth{
+
+padding:18px;
+
+}
+
+.auth-shell{
+
+padding:22px;
+
+}
+
+}
+
+
+/* =======================================================
+   SMALL MOBILE
+======================================================= */
+
+@media(max-width:420px){
+
+.auth-shell{
+
+padding:18px;
+
+border-radius:
+
+24px;
+
+}
+
+.auth-input{
+
+height:50px;
+
+}
+
+.auth-btn{
+
+height:50px;
+
+}
+
+}
+
+
+/* =======================================================
+   ACCESSIBILITY
+======================================================= */
+
+@media(prefers-reduced-motion:reduce){
+
+.auth,
+.auth-shell,
+.auth-btn{
+
+transition:none;
+
+animation:none;
+
+}
+
+}
+
+
+/* =======================================================
+   GPU
+======================================================= */
+
+.auth,
+.auth-shell{
+
+transform:
+
+translateZ(0);
+
+backface-visibility:hidden;
+
+contain:
+
+layout paint;
+
+}
