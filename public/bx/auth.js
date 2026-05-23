@@ -1,9 +1,9 @@
 /* =====================================================
-BLOXIO AUTH ENGINE V5
-BROWSER FIRST
-OPTIONAL AUTH
-OPTIONAL TELEGRAM
-NO APP LOCK LOOP
+BLOXIO AUTH ENGINE V6
+STABLE AUTH
+ANDROID SAFE
+NO OVERLAY LOOP
+NO APP FREEZE
 ===================================================== */
 
 "use strict";
@@ -20,7 +20,9 @@ authenticated:false,
 
 token:null,
 
-browser:true
+browser:true,
+
+ready:false
 
 },
 
@@ -96,31 +98,41 @@ BOOT
 
 bootstrap(){
 
-const token=
+try{
+
+this.state.token=
 
 localStorage.getItem(
 "token"
 );
 
-this.state.token=token;
+}catch{
 
-/* Browser First */
-
-this.unlockApp();
-
-this.hideAuth();
-
-/* Existing Session */
-
-if(token){
-
-this.restore();
+this.state.token=null;
 
 }
 
-/* Optional Telegram */
+if(
+
+this.state.token
+
+){
+
+this.restore();
+
+this.enter();
+
+}else{
+
+this.unlockApp();
+
+this.hideAuth(true);
+
+}
 
 this.telegram();
+
+this.state.ready=true;
 
 },
 
@@ -143,25 +155,15 @@ return;
 
 try{
 
-window.Telegram
-.WebApp
-.ready();
+Telegram.WebApp.ready();
 
-window.Telegram
-.WebApp
-.expand();
-
-console.log(
-
-"Telegram Optional Ready"
-
-);
+Telegram.WebApp.expand();
 
 }catch(e){
 
 console.warn(
 
-"TG Optional",
+"TG",
 
 e
 
@@ -208,6 +210,18 @@ window.API?.on?.(
 ()=>{
 
 this.logout();
+
+}
+
+);
+
+window.addEventListener(
+
+"pageshow",
+
+()=>{
+
+this.unlockApp();
 
 }
 
@@ -291,36 +305,6 @@ this.state.mode==="login"
 },
 
 /* =====================================================
-REF
-===================================================== */
-
-injectReferral(){
-
-const ref=
-
-new URLSearchParams(
-
-location.search
-
-).get("ref");
-
-if(
-
-ref
-
-&&
-
-this.el.regRef
-
-){
-
-this.el.regRef.value=ref;
-
-}
-
-},
-
-/* =====================================================
 APP
 ===================================================== */
 
@@ -328,17 +312,11 @@ unlockApp(){
 
 document.body.classList.remove(
 
-"auth-lock"
+"auth-lock",
 
-);
+"auth-loading",
 
-document.body.classList.remove(
-
-"loading"
-
-);
-
-document.body.classList.remove(
+"loading",
 
 "app-preload"
 
@@ -357,6 +335,24 @@ this.el.app
 
 );
 
+if(
+
+this.el.app
+
+){
+
+this.el.app.style.opacity="1";
+
+this.el.app.style.visibility=
+
+"visible";
+
+this.el.app.style.pointerEvents=
+
+"auto";
+
+}
+
 },
 
 lockApp(){
@@ -370,7 +366,7 @@ document.body.classList.add(
 },
 
 /* =====================================================
-VIEW
+AUTH VIEW
 ===================================================== */
 
 showAuth(){
@@ -399,7 +395,7 @@ this.el.overlay.classList.add(
 
 },
 
-hideAuth(){
+hideAuth(force=false){
 
 if(
 
@@ -413,25 +409,47 @@ this.el.overlay.classList.remove(
 
 );
 
-setTimeout(()=>{
+if(
+
+force
+
+){
 
 this.el.overlay.style.display=
 
 "none";
 
-},200);
+return;
+
+}
+
+setTimeout(()=>{
+
+if(
+
+!this.el.overlay
+.classList
+.contains(
+"visible"
+)
+
+){
+
+this.el.overlay.style.display=
+
+"none";
+
+}
+
+},220);
 
 },
 
 toggle(){
 
-const login=
-
-this.state.mode==="login";
-
 this.state.mode=
 
-login
+this.state.mode==="login"
 
 ?"register"
 
@@ -461,7 +479,7 @@ return
 
 /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
-.test(v);
+.test(v||"");
 
 },
 
@@ -515,9 +533,7 @@ body
 
 if(
 
-!res
-
-||
+!res||
 
 res.error
 
@@ -527,7 +543,7 @@ throw new Error(
 
 res?.error||
 
-"Network Error"
+"Request Failed"
 
 );
 
@@ -583,7 +599,7 @@ if(
 
 return this.error(
 
-"Password Short"
+"Password Too Short"
 
 );
 
@@ -668,23 +684,19 @@ await this.request(
 
 email:
 
-this.el.regEmail
-?.value,
+this.el.regEmail?.value,
 
 password:
 
-this.el.regPass
-?.value,
+this.el.regPass?.value,
 
 phone:
 
-this.el.regPhone
-?.value,
+this.el.regPhone?.value,
 
 referral:
 
-this.el.regRef
-?.value
+this.el.regRef?.value
 
 }
 
@@ -757,6 +769,10 @@ data.user
 
 this.state.authenticated=true;
 
+this.state.token=
+
+data.token;
+
 },
 
 restore(){
@@ -777,21 +793,23 @@ localStorage.removeItem(
 
 this.state.authenticated=false;
 
+this.state.token=null;
+
+this.showAuth();
+
 },
 
 enter(){
 
 this.unlockApp();
 
-this.hideAuth();
+this.hideAuth(true);
 
 window.WS
-?.connect
-?.();
+?.connect?.();
 
 window.API
-?.syncAll
-?.();
+?.syncAll?.();
 
 },
 
@@ -826,7 +844,9 @@ return;
 this.el.error.innerText=msg;
 
 this.el.error.classList.add(
+
 "active"
+
 );
 
 },
@@ -840,8 +860,36 @@ return;
 this.el.error.innerText="";
 
 this.el.error.classList.remove(
+
 "active"
+
 );
+
+},
+
+injectReferral(){
+
+const ref=
+
+new URLSearchParams(
+
+location.search
+
+).get("ref");
+
+if(
+
+ref
+
+&&
+
+this.el.regRef
+
+){
+
+this.el.regRef.value=ref;
+
+}
 
 }
 
@@ -863,5 +911,4 @@ document.addEventListener(
 AUTH.init();
 
 }
-
 );
