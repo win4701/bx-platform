@@ -1,0 +1,729 @@
+/* =======================================================
+   BLOXIO DROPDOWN SYSTEM
+   Enterprise Production Dropdown Layer
+======================================================= */
+
+
+/* =======================================================
+   ROOT
+======================================================= */
+
+.dropdown{
+
+position:relative;
+
+display:inline-flex;
+
+flex-direction:column;
+
+min-width:0;
+
+isolation:isolate;
+
+}
+
+
+/* =======================================================
+   TRIGGER
+======================================================= */
+
+.dropdown-trigger{
+
+position:relative;
+
+display:flex;
+
+align-items:center;
+
+justify-content:space-between;
+
+gap:10px;
+
+min-height:46px;
+
+padding:
+
+0 14px;
+
+border-radius:
+
+var(--radius-md);
+
+background:
+
+var(--bg-panel);
+
+border:
+
+1px solid
+
+var(--border);
+
+font-size:.84rem;
+
+font-weight:700;
+
+color:
+
+var(--text-primary);
+
+cursor:pointer;
+
+transition:
+
+background .18s ease,
+
+border-color .18s ease,
+
+box-shadow .18s ease,
+
+transform .18s ease;
+
+overflow:hidden;
+
+min-width:0;
+
+-webkit-tap-highlight-color:
+
+transparent;
+
+}
+
+
+/* =======================================================
+   FOCUS
+======================================================= */
+
+.dropdown-trigger:focus-visible{
+
+outline:none;
+
+border-color:
+
+rgba(0,224,255,.24);
+
+box-shadow:
+
+0 0 0 4px
+
+rgba(0,224,255,.08);
+
+}
+
+
+/* =======================================================
+   ICON
+======================================================= */
+
+.dropdown-arrow{
+
+width:10px;
+
+height:10px;
+
+border-right:
+
+2px solid
+
+var(--text-muted);
+
+border-bottom:
+
+2px solid
+
+var(--text-muted);
+
+transform:
+
+rotate(45deg);
+
+transition:
+
+transform .18s ease;
+
+flex-shrink:0;
+
+}
+
+
+.dropdown.open
+.dropdown-arrow{
+
+transform:
+
+rotate(225deg);
+
+}
+
+
+/* =======================================================
+   MENU
+======================================================= */
+
+.dropdown-menu{
+
+position:absolute;
+
+top:
+
+calc(
+100%
++
+8px
+);
+
+left:0;
+
+min-width:220px;
+
+max-width:320px;
+
+max-height:420px;
+
+overflow:auto;
+
+padding:8px;
+
+border-radius:
+
+var(--radius-lg);
+
+background:
+
+rgba(10,15,22,.96);
+
+backdrop-filter:
+
+blur(16px);
+
+-webkit-backdrop-filter:
+
+blur(16px);
+
+border:
+
+1px solid
+
+var(--border);
+
+box-shadow:
+
+var(--shadow-xl);
+
+opacity:0;
+
+visibility:hidden;
+
+pointer-events:none;
+
+transform:
+
+translateY(8px);
+
+transition:
+
+opacity .18s ease,
+
+transform .18s ease,
+
+visibility .18s ease;
+
+z-index:
+
+var(--z-dropdown);
+
+overscroll-behavior:
+
+contain;
+
+scrollbar-width:
+
+thin;
+
+}
+
+
+/* =======================================================
+   OPEN
+======================================================= */
+
+.dropdown.open
+.dropdown-menu{
+
+opacity:1;
+
+visibility:visible;
+
+pointer-events:auto;
+
+transform:
+
+translateY(0);
+
+}
+
+
+/* =======================================================
+   ITEM
+======================================================= */
+
+.dropdown-item{
+
+position:relative;
+
+display:flex;
+
+align-items:center;
+
+gap:12px;
+
+width:100%;
+
+min-height:44px;
+
+padding:
+
+0 12px;
+
+border-radius:
+
+var(--radius-md);
+
+font-size:.82rem;
+
+font-weight:700;
+
+color:
+
+var(--text-secondary);
+
+cursor:pointer;
+
+transition:
+
+background .18s ease,
+
+color .18s ease,
+
+transform .18s ease;
+
+overflow:hidden;
+
+white-space:nowrap;
+
+text-overflow:ellipsis;
+
+}
+
+
+@media(hover:hover){
+
+.dropdown-item:hover{
+
+background:
+
+rgba(255,255,255,.04);
+
+color:
+
+var(--text-primary);
+
+}
+
+}
+
+
+/* =======================================================
+   ACTIVE
+======================================================= */
+
+.dropdown-item.active{
+
+background:
+
+rgba(0,224,255,.08);
+
+color:
+
+var(--brand-primary);
+
+}
+
+
+.dropdown-item.active::before{
+
+content:"";
+
+position:absolute;
+
+left:0;
+
+top:8px;
+
+bottom:8px;
+
+width:2px;
+
+border-radius:999px;
+
+background:
+
+var(--brand-primary);
+
+}
+
+
+/* =======================================================
+   ICON
+======================================================= */
+
+.dropdown-icon{
+
+width:18px;
+
+height:18px;
+
+display:flex;
+
+align-items:center;
+
+justify-content:center;
+
+flex-shrink:0;
+
+opacity:.82;
+
+}
+
+
+.dropdown-icon img,
+.dropdown-icon svg{
+
+width:100%;
+
+height:100%;
+
+}
+
+
+/* =======================================================
+   LABEL
+======================================================= */
+
+.dropdown-label{
+
+overflow:hidden;
+
+text-overflow:ellipsis;
+
+white-space:nowrap;
+
+flex:1;
+
+}
+
+
+/* =======================================================
+   BADGE
+======================================================= */
+
+.dropdown-badge{
+
+padding:
+
+2px 8px;
+
+border-radius:999px;
+
+font-size:.66rem;
+
+font-weight:800;
+
+background:
+
+rgba(255,255,255,.05);
+
+color:
+
+var(--text-muted);
+
+flex-shrink:0;
+
+}
+
+
+/* =======================================================
+   DIVIDER
+======================================================= */
+
+.dropdown-divider{
+
+height:1px;
+
+margin:6px 0;
+
+background:
+
+var(--border-soft);
+
+}
+
+
+/* =======================================================
+   HEADER
+======================================================= */
+
+.dropdown-header{
+
+padding:
+
+8px 12px;
+
+font-size:.70rem;
+
+font-weight:800;
+
+letter-spacing:.08em;
+
+text-transform:uppercase;
+
+color:
+
+var(--text-muted);
+
+}
+
+
+/* =======================================================
+   SEARCHABLE
+======================================================= */
+
+.dropdown-search{
+
+padding:
+
+8px;
+
+border-bottom:
+
+1px solid
+
+var(--border-soft);
+
+}
+
+
+/* =======================================================
+   POSITION
+======================================================= */
+
+.dropdown-right
+.dropdown-menu{
+
+right:0;
+
+left:auto;
+
+}
+
+
+.dropdown-up
+.dropdown-menu{
+
+bottom:
+
+calc(
+100%
++
+8px
+);
+
+top:auto;
+
+}
+
+
+/* =======================================================
+   GLASS
+======================================================= */
+
+.dropdown-glass
+.dropdown-menu{
+
+background:
+
+var(--glass-bg);
+
+backdrop-filter:
+
+blur(
+var(--glass-blur)
+);
+
+border:
+
+1px solid
+
+var(--glass-border);
+
+}
+
+
+/* =======================================================
+   MARKET
+======================================================= */
+
+.market-dropdown{
+
+font-variant-numeric:
+
+tabular-nums;
+
+font-family:
+
+var(--font-mono);
+
+}
+
+
+/* =======================================================
+   WALLET
+======================================================= */
+
+.wallet-network{
+
+min-width:180px;
+
+}
+
+
+/* =======================================================
+   PROFILE
+======================================================= */
+
+.profile-dropdown
+.dropdown-menu{
+
+min-width:240px;
+
+}
+
+
+/* =======================================================
+   LOADING
+======================================================= */
+
+.dropdown-loading{
+
+pointer-events:none;
+
+opacity:.82;
+
+}
+
+
+/* =======================================================
+   DISABLED
+======================================================= */
+
+.dropdown-item.disabled{
+
+opacity:.45;
+
+pointer-events:none;
+
+}
+
+
+/* =======================================================
+   MOBILE
+======================================================= */
+
+@media(max-width:768px){
+
+.dropdown-menu{
+
+min-width:100%;
+
+max-width:none;
+
+}
+
+.dropdown-item{
+
+min-height:48px;
+
+}
+
+}
+
+
+/* =======================================================
+   SMALL MOBILE
+======================================================= */
+
+@media(max-width:420px){
+
+.dropdown-trigger{
+
+padding:
+
+0 12px;
+
+font-size:.80rem;
+
+}
+
+}
+
+
+/* =======================================================
+   TOUCH
+======================================================= */
+
+@media(hover:none){
+
+.dropdown-item{
+
+min-height:50px;
+
+}
+
+}
+
+
+/* =======================================================
+   REDUCED MOTION
+======================================================= */
+
+@media
+(prefers-reduced-motion:reduce){
+
+.dropdown-menu,
+
+.dropdown-trigger{
+
+transition:none;
+
+}
+
+}
+
+
+/* =======================================================
+   GPU
+======================================================= */
+
+.dropdown-menu{
+
+transform:
+
+translateZ(0);
+
+backface-visibility:hidden;
+
+will-change:
+
+transform;
+
+  }
