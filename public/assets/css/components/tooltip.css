@@ -1,0 +1,630 @@
+/* =======================================================
+   BLOXIO TOOLTIP SYSTEM
+   Enterprise Production Tooltip Layer
+======================================================= */
+
+
+/* =======================================================
+   ROOT
+======================================================= */
+
+.tooltip-root{
+
+position:relative;
+
+display:inline-flex;
+
+min-width:0;
+
+}
+
+
+/* =======================================================
+   TOOLTIP
+======================================================= */
+
+.tooltip{
+
+position:absolute;
+
+left:50%;
+
+bottom:
+
+calc(
+100%
++
+10px
+);
+
+transform:
+
+translateX(-50%)
+translateY(8px);
+
+display:flex;
+
+flex-direction:column;
+
+gap:6px;
+
+min-width:120px;
+
+max-width:280px;
+
+padding:
+
+10px 12px;
+
+border-radius:
+
+var(--radius-md);
+
+background:
+
+rgba(8,12,18,.96);
+
+backdrop-filter:
+
+blur(14px);
+
+-webkit-backdrop-filter:
+
+blur(14px);
+
+border:
+
+1px solid
+
+var(--border);
+
+box-shadow:
+
+var(--shadow-lg);
+
+font-size:.74rem;
+
+font-weight:600;
+
+line-height:1.5;
+
+color:
+
+var(--text-primary);
+
+pointer-events:none;
+
+opacity:0;
+
+visibility:hidden;
+
+z-index:
+
+var(--z-tooltip,260);
+
+transition:
+
+opacity .18s ease,
+
+transform .18s ease,
+
+visibility .18s ease;
+
+overflow-wrap:
+
+break-word;
+
+word-break:
+
+break-word;
+
+contain:
+
+layout paint;
+
+isolation:isolate;
+
+}
+
+
+/* =======================================================
+   SHOW
+======================================================= */
+
+.tooltip-root:hover
+.tooltip,
+
+.tooltip-root:focus-within
+.tooltip,
+
+.tooltip.active{
+
+opacity:1;
+
+visibility:visible;
+
+transform:
+
+translateX(-50%)
+translateY(0);
+
+}
+
+
+/* =======================================================
+   ARROW
+======================================================= */
+
+.tooltip::after{
+
+content:"";
+
+position:absolute;
+
+left:50%;
+
+bottom:-6px;
+
+width:12px;
+
+height:12px;
+
+background:
+
+rgba(8,12,18,.96);
+
+border-right:
+
+1px solid
+
+var(--border);
+
+border-bottom:
+
+1px solid
+
+var(--border);
+
+transform:
+
+translateX(-50%)
+
+rotate(45deg);
+
+}
+
+
+/* =======================================================
+   HEADER
+======================================================= */
+
+.tooltip-title{
+
+font-size:.76rem;
+
+font-weight:800;
+
+color:
+
+var(--text-primary);
+
+letter-spacing:
+
+-.02em;
+
+}
+
+
+.tooltip-value{
+
+font-family:
+
+var(--font-mono);
+
+font-weight:800;
+
+font-variant-numeric:
+
+tabular-nums;
+
+color:
+
+var(--brand-primary);
+
+}
+
+
+.tooltip-text{
+
+color:
+
+var(--text-secondary);
+
+font-size:.72rem;
+
+}
+
+
+/* =======================================================
+   POSITION
+======================================================= */
+
+.tooltip-top{
+
+bottom:
+
+calc(
+100%
++
+10px
+);
+
+top:auto;
+
+}
+
+
+.tooltip-bottom{
+
+top:
+
+calc(
+100%
++
+10px
+);
+
+bottom:auto;
+
+}
+
+
+.tooltip-bottom::after{
+
+top:-6px;
+
+bottom:auto;
+
+transform:
+
+translateX(-50%)
+
+rotate(225deg);
+
+}
+
+
+.tooltip-left{
+
+left:0;
+
+transform:
+
+translateX(0)
+
+translateY(8px);
+
+}
+
+
+.tooltip-left.active,
+
+.tooltip-root:hover
+.tooltip-left{
+
+transform:
+
+translateX(0)
+
+translateY(0);
+
+}
+
+
+.tooltip-right{
+
+right:0;
+
+left:auto;
+
+transform:
+
+translateX(0)
+
+translateY(8px);
+
+}
+
+
+.tooltip-right.active,
+
+.tooltip-root:hover
+.tooltip-right{
+
+transform:
+
+translateX(0)
+
+translateY(0);
+
+}
+
+
+/* =======================================================
+   STATUS
+======================================================= */
+
+.tooltip-success{
+
+border-color:
+
+rgba(34,197,94,.24);
+
+}
+
+
+.tooltip-success
+.tooltip-value{
+
+color:
+
+var(--success);
+
+}
+
+
+.tooltip-danger{
+
+border-color:
+
+rgba(246,70,93,.24);
+
+}
+
+
+.tooltip-danger
+.tooltip-value{
+
+color:
+
+var(--danger);
+
+}
+
+
+.tooltip-warning{
+
+border-color:
+
+rgba(240,185,11,.24);
+
+}
+
+
+.tooltip-warning
+.tooltip-value{
+
+color:
+
+var(--warning);
+
+}
+
+
+.tooltip-info{
+
+border-color:
+
+rgba(0,224,255,.24);
+
+}
+
+
+/* =======================================================
+   GLASS
+======================================================= */
+
+.tooltip-glass{
+
+background:
+
+var(--glass-bg);
+
+backdrop-filter:
+
+blur(
+var(--glass-blur)
+);
+
+border:
+
+1px solid
+
+var(--glass-border);
+
+}
+
+
+/* =======================================================
+   MARKET
+======================================================= */
+
+.market-tooltip{
+
+font-family:
+
+var(--font-mono);
+
+min-width:140px;
+
+}
+
+
+/* =======================================================
+   WALLET
+======================================================= */
+
+.wallet-tooltip{
+
+min-width:160px;
+
+}
+
+
+/* =======================================================
+   MINING
+======================================================= */
+
+.mining-tooltip{
+
+border-left:
+
+3px solid
+
+var(--success);
+
+}
+
+
+/* =======================================================
+   AIRDROP
+======================================================= */
+
+.airdrop-tooltip{
+
+border-left:
+
+3px solid
+
+#7C3AED;
+
+}
+
+
+/* =======================================================
+   CASINO
+======================================================= */
+
+.casino-tooltip{
+
+border-left:
+
+3px solid
+
+#FF0080;
+
+}
+
+
+/* =======================================================
+   KPI
+======================================================= */
+
+.kpi-tooltip{
+
+min-width:180px;
+
+}
+
+
+/* =======================================================
+   MOBILE
+======================================================= */
+
+@media(max-width:768px){
+
+.tooltip{
+
+max-width:220px;
+
+font-size:.70rem;
+
+padding:
+
+8px 10px;
+
+}
+
+}
+
+
+/* =======================================================
+   TOUCH DEVICE
+======================================================= */
+
+@media(hover:none){
+
+.tooltip-root:hover
+.tooltip{
+
+opacity:0;
+
+visibility:hidden;
+
+}
+
+.tooltip.active{
+
+opacity:1;
+
+visibility:visible;
+
+}
+
+}
+
+
+/* =======================================================
+   REDUCED MOTION
+======================================================= */
+
+@media
+(prefers-reduced-motion:reduce){
+
+.tooltip{
+
+transition:none;
+
+}
+
+}
+
+
+/* =======================================================
+   HIGH CONTRAST
+======================================================= */
+
+@media
+(prefers-contrast:more){
+
+.tooltip{
+
+border:
+
+1px solid
+
+rgba(255,255,255,.20);
+
+}
+
+}
+
+
+/* =======================================================
+   GPU
+======================================================= */
+
+.tooltip{
+
+transform:
+
+translateZ(0);
+
+backface-visibility:hidden;
+
+will-change:
+
+opacity,
+transform;
+
+  }
