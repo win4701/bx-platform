@@ -1,0 +1,745 @@
+/* =======================================================
+   BLOXIO BUTTON SYSTEM
+   Enterprise Production Buttons
+======================================================= */
+
+
+/* =======================================================
+   BASE BUTTON
+======================================================= */
+
+.btn{
+
+position:relative;
+
+display:inline-flex;
+
+align-items:center;
+
+justify-content:center;
+
+gap:10px;
+
+min-height:44px;
+
+padding:
+
+0 18px;
+
+border:none;
+
+outline:none;
+
+cursor:pointer;
+
+user-select:none;
+
+overflow:hidden;
+
+white-space:nowrap;
+
+font-family:
+
+var(--font-primary);
+
+font-size:.92rem;
+
+font-weight:700;
+
+letter-spacing:.02em;
+
+line-height:1;
+
+border-radius:
+
+var(--radius-md);
+
+transition:
+
+transform .18s ease,
+
+background .18s ease,
+
+color .18s ease,
+
+border-color .18s ease,
+
+box-shadow .18s ease,
+
+opacity .18s ease;
+
+background:
+
+var(--bg-panel);
+
+color:
+
+var(--text-primary);
+
+border:
+
+1px solid
+
+var(--border);
+
+min-width:0;
+
+flex-shrink:0;
+
+-webkit-tap-highlight-color:
+
+transparent;
+
+transform:
+
+translateZ(0);
+
+backface-visibility:hidden;
+
+will-change:
+
+transform;
+
+}
+
+
+/* =======================================================
+   HOVER
+======================================================= */
+
+@media(hover:hover){
+
+.btn:hover{
+
+transform:
+
+translateY(-2px);
+
+}
+
+}
+
+
+/* =======================================================
+   ACTIVE
+======================================================= */
+
+.btn:active{
+
+transform:
+
+scale(.97);
+
+}
+
+
+/* =======================================================
+   FOCUS
+======================================================= */
+
+.btn:focus-visible{
+
+outline:
+
+2px solid
+
+var(--brand-primary);
+
+outline-offset:
+
+2px;
+
+}
+
+
+/* =======================================================
+   DISABLED
+======================================================= */
+
+.btn:disabled,
+.btn.disabled{
+
+opacity:.52;
+
+cursor:not-allowed;
+
+pointer-events:none;
+
+filter:
+
+grayscale(.15);
+
+}
+
+
+/* =======================================================
+   SHINE EFFECT
+======================================================= */
+
+.btn::before{
+
+content:"";
+
+position:absolute;
+
+top:0;
+
+left:-120%;
+
+width:70%;
+
+height:100%;
+
+background:
+
+linear-gradient(
+
+90deg,
+
+transparent,
+
+rgba(255,255,255,.14),
+
+transparent
+
+);
+
+transition:
+
+left .55s ease;
+
+pointer-events:none;
+
+}
+
+
+@media(hover:hover){
+
+.btn:hover::before{
+
+left:140%;
+
+}
+
+}
+
+
+/* =======================================================
+   PRIMARY
+======================================================= */
+
+.btn-primary{
+
+background:
+
+linear-gradient(
+
+180deg,
+
+var(--brand-primary),
+
+#00B6D2
+
+);
+
+color:#041014;
+
+border:none;
+
+box-shadow:
+
+0 8px 20px
+
+rgba(0,224,255,.16);
+
+}
+
+
+.btn-primary:hover{
+
+box-shadow:
+
+0 10px 24px
+
+rgba(0,224,255,.24);
+
+}
+
+
+/* =======================================================
+   SUCCESS
+======================================================= */
+
+.btn-success{
+
+background:
+
+linear-gradient(
+
+180deg,
+
+var(--success),
+
+#14A34A
+
+);
+
+border:none;
+
+color:white;
+
+}
+
+
+/* =======================================================
+   DANGER
+======================================================= */
+
+.btn-danger{
+
+background:
+
+linear-gradient(
+
+180deg,
+
+var(--danger),
+
+#C13246
+
+);
+
+border:none;
+
+color:white;
+
+}
+
+
+/* =======================================================
+   WARNING
+======================================================= */
+
+.btn-warning{
+
+background:
+
+linear-gradient(
+
+180deg,
+
+var(--warning),
+
+#D19B08
+
+);
+
+border:none;
+
+color:#111;
+
+}
+
+
+/* =======================================================
+   GLASS
+======================================================= */
+
+.btn-glass{
+
+background:
+
+rgba(255,255,255,.03);
+
+backdrop-filter:
+
+blur(
+12px
+);
+
+border:
+
+1px solid
+
+var(--glass-border);
+
+}
+
+
+/* =======================================================
+   GHOST
+======================================================= */
+
+.btn-ghost{
+
+background:transparent;
+
+border:
+
+1px solid
+
+var(--border);
+
+}
+
+
+/* =======================================================
+   OUTLINE
+======================================================= */
+
+.btn-outline{
+
+background:transparent;
+
+border:
+
+1px solid
+
+var(--brand-primary);
+
+color:
+
+var(--brand-primary);
+
+}
+
+
+/* =======================================================
+   SOFT
+======================================================= */
+
+.btn-soft{
+
+background:
+
+rgba(255,255,255,.03);
+
+border:
+
+1px solid
+
+transparent;
+
+}
+
+
+/* =======================================================
+   ICON BUTTON
+======================================================= */
+
+.btn-icon{
+
+width:44px;
+
+height:44px;
+
+padding:0;
+
+border-radius:
+
+999px;
+
+}
+
+
+.btn-icon img,
+.btn-icon svg{
+
+width:20px;
+
+height:20px;
+
+flex-shrink:0;
+
+}
+
+
+/* =======================================================
+   SIZE
+======================================================= */
+
+.btn-xs{
+
+min-height:30px;
+
+padding:
+
+0 10px;
+
+font-size:.72rem;
+
+}
+
+
+.btn-sm{
+
+min-height:36px;
+
+padding:
+
+0 14px;
+
+font-size:.84rem;
+
+}
+
+
+.btn-lg{
+
+min-height:52px;
+
+padding:
+
+0 22px;
+
+font-size:1rem;
+
+}
+
+
+.btn-xl{
+
+min-height:60px;
+
+padding:
+
+0 28px;
+
+font-size:1.05rem;
+
+}
+
+
+/* =======================================================
+   BLOCK
+======================================================= */
+
+.btn-block{
+
+width:100%;
+
+}
+
+
+/* =======================================================
+   LOADING
+======================================================= */
+
+.btn-loading{
+
+pointer-events:none;
+
+color:transparent;
+
+position:relative;
+
+}
+
+
+.btn-loading::after{
+
+content:"";
+
+position:absolute;
+
+width:18px;
+
+height:18px;
+
+border-radius:50%;
+
+border:
+
+2px solid
+
+rgba(255,255,255,.25);
+
+border-top:
+
+2px solid
+
+white;
+
+animation:
+
+spinLoader
+
+.8s
+
+linear
+
+infinite;
+
+}
+
+
+/* =======================================================
+   GROUP
+======================================================= */
+
+.btn-group{
+
+display:flex;
+
+gap:10px;
+
+flex-wrap:wrap;
+
+}
+
+
+/* =======================================================
+   WALLET
+======================================================= */
+
+.wallet-btn{
+
+width:100%;
+
+}
+
+
+/* =======================================================
+   MARKET
+======================================================= */
+
+.trade-buy{
+
+background:
+
+linear-gradient(
+
+180deg,
+
+#0ECB81,
+
+#0FA76C
+
+);
+
+}
+
+
+.trade-sell{
+
+background:
+
+linear-gradient(
+
+180deg,
+
+#F6465D,
+
+#D93C52
+
+);
+
+}
+
+
+/* =======================================================
+   AIRDROP
+======================================================= */
+
+.airdrop-claim{
+
+background:
+
+linear-gradient(
+
+180deg,
+
+#7C3AED,
+
+#5D28C9
+
+);
+
+color:white;
+
+}
+
+
+/* =======================================================
+   CASINO
+======================================================= */
+
+.casino-play{
+
+background:
+
+linear-gradient(
+
+180deg,
+
+#FF0080,
+
+#D6006C
+
+);
+
+color:white;
+
+}
+
+
+/* =======================================================
+   MOBILE
+======================================================= */
+
+@media(max-width:768px){
+
+.btn{
+
+min-height:46px;
+
+}
+
+.btn-group{
+
+flex-direction:column;
+
+}
+
+}
+
+
+/* =======================================================
+   SMALL MOBILE
+======================================================= */
+
+@media(max-width:420px){
+
+.btn{
+
+font-size:.84rem;
+
+padding:
+
+0 14px;
+
+}
+
+}
+
+
+/* =======================================================
+   REDUCED MOTION
+======================================================= */
+
+@media
+(prefers-reduced-motion:reduce){
+
+.btn{
+
+transition:none;
+
+}
+
+.btn::before{
+
+display:none;
+
+}
+
+ }
