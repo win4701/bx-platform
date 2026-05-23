@@ -1,18 +1,23 @@
 /* =======================================================
-   BLOXIO AUTH PAGE
-   Enterprise Authentication Layer
+   BLOXIO AUTH SYSTEM
+   Stable Enterprise Auth Layer
 ======================================================= */
 
 
 /* =======================================================
-   OVERLAY
+ROOT
 ======================================================= */
 
-.auth{
+.auth,
+#authOverlay{
 
 position:fixed;
 
 inset:0;
+
+z-index:
+
+9000;
 
 display:none;
 
@@ -26,48 +31,75 @@ padding:
 
 background:
 
-rgba(3,6,10,.82);
+rgba(
+4,
+8,
+14,
+.72
+);
 
 backdrop-filter:
 
-blur(18px);
+blur(14px);
 
 -webkit-backdrop-filter:
 
-blur(18px);
-
-z-index:
-
-var(--z-auth,9000);
-
-overflow:auto;
+blur(14px);
 
 opacity:0;
 
+visibility:hidden;
+
+pointer-events:none;
+
 transition:
 
-opacity .22s ease;
+opacity .22s ease,
+visibility .22s ease;
 
-isolation:isolate;
+overflow:auto;
 
 }
 
 
 /* =======================================================
-   ACTIVE
+ACTIVE
 ======================================================= */
 
-.auth.visible{
+.auth.visible,
+#authOverlay.visible{
 
 display:flex;
 
 opacity:1;
 
+visibility:visible;
+
+pointer-events:auto;
+
 }
 
 
 /* =======================================================
-   CONTAINER
+APP READY FIX
+======================================================= */
+
+.app-ready .auth,
+.app-ready #authOverlay{
+
+opacity:0 !important;
+
+visibility:hidden !important;
+
+pointer-events:none !important;
+
+display:none !important;
+
+}
+
+
+/* =======================================================
+SHELL
 ======================================================= */
 
 .auth-shell{
@@ -76,55 +108,51 @@ position:relative;
 
 width:100%;
 
-max-width:460px;
+max-width:440px;
 
-padding:
+padding:28px;
 
-28px;
-
-border-radius:
-
-var(--radius-xl);
+border-radius:28px;
 
 background:
 
-rgba(10,15,22,.92);
+linear-gradient(
+180deg,
+rgba(12,18,28,.98),
+rgba(8,12,18,.96)
+);
 
 border:
 
 1px solid
-
-rgba(255,255,255,.06);
+rgba(
+255,
+255,
+255,
+.06
+);
 
 box-shadow:
 
-0 24px 64px
-
-rgba(0,0,0,.34);
+0 18px 60px
+rgba(
+0,
+0,
+0,
+.45
+);
 
 overflow:hidden;
 
-isolation:isolate;
-
-transform:
-
-translateY(12px);
-
 animation:
 
-authEnter
-
-.24s
-
-ease
-
-forwards;
+authEnter .22s ease;
 
 }
 
 
 /* =======================================================
-   GLOW
+GLOW
 ======================================================= */
 
 .auth-shell::before{
@@ -133,17 +161,15 @@ content:"";
 
 position:absolute;
 
-top:-120px;
+top:-80px;
 
-left:50%;
+right:-80px;
 
-width:220px;
+width:180px;
 
-height:220px;
+height:180px;
 
-transform:
-
-translateX(-50%);
+border-radius:50%;
 
 background:
 
@@ -151,9 +177,14 @@ radial-gradient(
 
 circle,
 
-rgba(0,224,255,.12),
+rgba(
+0,
+224,
+255,
+.12
+),
 
-transparent 70%
+transparent
 
 );
 
@@ -163,21 +194,27 @@ pointer-events:none;
 
 
 /* =======================================================
-   LOGO
+HEAD
 ======================================================= */
 
-.auth-logo{
+.auth-head{
 
 display:flex;
 
-justify-content:center;
+flex-direction:column;
 
-margin-bottom:22px;
+align-items:center;
+
+gap:8px;
+
+margin-bottom:24px;
+
+text-align:center;
 
 }
 
 
-.auth-logo img{
+.auth-logo{
 
 width:74px;
 
@@ -188,61 +225,32 @@ object-fit:contain;
 }
 
 
-/* =======================================================
-   HEADER
-======================================================= */
-
-.auth-head{
-
-display:flex;
-
-flex-direction:column;
-
-gap:8px;
-
-text-align:center;
-
-margin-bottom:24px;
-
-}
-
-
 .auth-title{
 
 font-size:
 
 clamp(
-1.6rem,
-3vw,
+1.5rem,
+5vw,
 2rem
 );
 
 font-weight:900;
-
-letter-spacing:-.04em;
-
-color:
-
-var(--text-primary);
 
 }
 
 
 .auth-sub{
 
-font-size:.84rem;
+opacity:.75;
 
-line-height:1.6;
-
-color:
-
-var(--text-muted);
+font-size:.85rem;
 
 }
 
 
 /* =======================================================
-   FORM
+FORM
 ======================================================= */
 
 .auth-form{
@@ -269,19 +277,17 @@ gap:8px;
 
 .auth-label{
 
-font-size:.76rem;
+font-size:.78rem;
 
 font-weight:700;
 
-color:
-
-var(--text-secondary);
+opacity:.85;
 
 }
 
 
 /* =======================================================
-   INPUT
+INPUT
 ======================================================= */
 
 .auth-input{
@@ -292,102 +298,90 @@ padding:
 
 0 16px;
 
-border-radius:
+border:none;
 
-var(--radius-md);
+outline:none;
+
+border-radius:16px;
 
 background:
 
-rgba(255,255,255,.03);
+rgba(
+255,
+255,
+255,
+.04
+);
 
 border:
 
 1px solid
-
-var(--border);
-
-font-size:.92rem;
-
-font-weight:600;
+rgba(
+255,
+255,
+255,
+.06
+);
 
 color:
 
 var(--text-primary);
 
-transition:
+font-size:.92rem;
 
-all .18s ease;
+transition:.18s;
 
 }
 
 
 .auth-input:focus{
 
-outline:none;
-
 border-color:
 
-rgba(0,224,255,.24);
+var(--brand-primary);
 
 box-shadow:
 
-0 0 0 4px
-
-rgba(0,224,255,.08);
-
-}
-
-
-.auth-input::placeholder{
-
-color:
-
-var(--text-muted);
+0 0 0 3px
+rgba(
+0,
+224,
+255,
+.14
+);
 
 }
 
 
 /* =======================================================
-   BUTTON
+BUTTON
 ======================================================= */
 
 .auth-btn{
 
-height:54px;
+height:56px;
 
 border:none;
 
-border-radius:
+border-radius:18px;
 
-var(--radius-md);
+cursor:pointer;
+
+font-weight:900;
+
+font-size:.92rem;
 
 background:
 
 linear-gradient(
-
 135deg,
-
-var(--brand-primary),
-
+#00E0FF,
 #00B8E6
-
 );
 
-font-weight:800;
+color:#041017;
 
-font-size:.92rem;
-
-color:#071018;
-
-cursor:pointer;
-
-transition:
-
-all .18s ease;
-
-overflow:hidden;
-
-position:relative;
+transition:.18s;
 
 }
 
@@ -396,104 +390,80 @@ position:relative;
 
 transform:
 
-translateY(-1px);
-
-box-shadow:
-
-0 12px 28px
-
-rgba(0,224,255,.16);
+translateY(-2px);
 
 }
 
 
-.auth-btn:active{
+.auth-btn:disabled{
 
-transform:
-
-scale(.98);
-
-}
-
-
-.auth-btn.loading{
+opacity:.55;
 
 pointer-events:none;
-
-opacity:.82;
 
 }
 
 
 /* =======================================================
-   ERROR
+ERROR
 ======================================================= */
 
 .auth-error{
 
 display:none;
 
-padding:
+padding:14px;
 
-12px;
+border-radius:16px;
 
-border-radius:
+font-size:.82rem;
 
-var(--radius-md);
+font-weight:700;
 
 background:
 
-rgba(246,70,93,.08);
+rgba(
+255,
+70,
+70,
+.08
+);
 
 border:
 
 1px solid
-
-rgba(246,70,93,.18);
-
-font-size:.78rem;
-
-font-weight:700;
+rgba(
+255,
+70,
+70,
+.18
+);
 
 color:
 
-var(--danger);
-
-text-align:center;
+#FF5F5F;
 
 }
 
 
-.auth-error.active{
+.auth-error.show{
 
 display:block;
-
-animation:
-
-shakeX
-
-.28s;
 
 }
 
 
 /* =======================================================
-   SWITCH
+TOGGLE
 ======================================================= */
 
 .auth-switch{
 
-display:flex;
+text-align:center;
 
-justify-content:center;
+font-size:.84rem;
 
-margin-top:18px;
-
-font-size:.82rem;
-
-color:
-
-var(--text-muted);
+opacity:.8;
 
 }
 
@@ -504,11 +474,7 @@ background:none;
 
 border:none;
 
-padding:0;
-
-margin-left:6px;
-
-font-weight:800;
+font-weight:900;
 
 cursor:pointer;
 
@@ -520,97 +486,13 @@ var(--brand-primary);
 
 
 /* =======================================================
-   REFERRAL
-======================================================= */
-
-.auth-ref{
-
-padding:
-
-12px;
-
-border-radius:
-
-var(--radius-md);
-
-background:
-
-rgba(124,58,237,.06);
-
-border:
-
-1px solid
-
-rgba(124,58,237,.12);
-
-font-size:.76rem;
-
-font-weight:700;
-
-text-align:center;
-
-color:
-
-#A855F7;
-
-}
-
-
-/* =======================================================
-   TELEGRAM
-======================================================= */
-
-.auth-telegram{
-
-display:flex;
-
-align-items:center;
-
-justify-content:center;
-
-gap:10px;
-
-height:46px;
-
-border-radius:
-
-var(--radius-md);
-
-background:
-
-rgba(34,158,217,.08);
-
-border:
-
-1px solid
-
-rgba(34,158,217,.14);
-
-font-weight:700;
-
-color:
-
-#229ED9;
-
-}
-
-
-/* =======================================================
-   LOGIN REGISTER
+BOX STATE
 ======================================================= */
 
 #loginBox,
 #registerBox{
 
 display:none;
-
-animation:
-
-fadeAuth
-
-.18s
-
-ease;
 
 }
 
@@ -628,31 +510,7 @@ gap:16px;
 
 
 /* =======================================================
-   LOCK
-======================================================= */
-
-.auth-lock{
-
-overflow:hidden;
-
-touch-action:none;
-
-}
-
-
-/* =======================================================
-   READY
-======================================================= */
-
-.app-ready .auth{
-
-pointer-events:none;
-
-}
-
-
-/* =======================================================
-   LOADING
+LOADING FIX
 ======================================================= */
 
 .auth-loading{
@@ -668,7 +526,7 @@ opacity:.45;
 
 filter:
 
-blur(3px);
+blur(2px);
 
 pointer-events:none;
 
@@ -676,81 +534,41 @@ pointer-events:none;
 
 
 /* =======================================================
-   ANIMATION
+APP READY FIX
 ======================================================= */
 
-@keyframes authEnter{
-
-to{
-
-transform:
-
-translateY(0);
-
-}
-
-}
-
-
-@keyframes fadeAuth{
-
-from{
-
-opacity:0;
-
-transform:
-
-translateY(6px);
-
-}
-
-to{
+.app-ready #app{
 
 opacity:1;
 
-transform:
+filter:none;
 
-translateY(0);
-
-}
-
-}
-
-
-@keyframes shakeX{
-
-25%{
-
-transform:
-
-translateX(-5px);
-
-}
-
-50%{
-
-transform:
-
-translateX(5px);
-
-}
-
-75%{
-
-transform:
-
-translateX(-3px);
-
-}
+pointer-events:auto;
 
 }
 
 
 /* =======================================================
-   MOBILE
+SAFE FIX
 ======================================================= */
 
-@media(max-width:768px){
+body:not(.auth-loading)
+#app{
+
+opacity:1;
+
+visibility:visible;
+
+pointer-events:auto;
+
+}
+
+
+/* =======================================================
+MOBILE
+======================================================= */
+
+@media(max-width:640px){
 
 .auth{
 
@@ -762,13 +580,15 @@ padding:18px;
 
 padding:22px;
 
+border-radius:24px;
+
 }
 
 }
 
 
 /* =======================================================
-   SMALL MOBILE
+SMALL
 ======================================================= */
 
 @media(max-width:420px){
@@ -776,10 +596,6 @@ padding:22px;
 .auth-shell{
 
 padding:18px;
-
-border-radius:
-
-24px;
 
 }
 
@@ -791,7 +607,7 @@ height:50px;
 
 .auth-btn{
 
-height:50px;
+height:52px;
 
 }
 
@@ -799,39 +615,45 @@ height:50px;
 
 
 /* =======================================================
-   ACCESSIBILITY
+ANIMATION
+======================================================= */
+
+@keyframes authEnter{
+
+from{
+
+opacity:0;
+
+transform:
+
+translateY(12px);
+
+}
+
+to{
+
+opacity:1;
+
+transform:none;
+
+}
+
+}
+
+
+/* =======================================================
+ACCESSIBILITY
 ======================================================= */
 
 @media(prefers-reduced-motion:reduce){
 
 .auth,
-.auth-shell,
-.auth-btn{
-
-transition:none;
+.auth-shell{
 
 animation:none;
 
-}
+transition:none;
 
 }
 
-
-/* =======================================================
-   GPU
-======================================================= */
-
-.auth,
-.auth-shell{
-
-transform:
-
-translateZ(0);
-
-backface-visibility:hidden;
-
-contain:
-
-layout paint;
-
-}
+   }
