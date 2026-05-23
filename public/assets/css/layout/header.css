@@ -1,0 +1,701 @@
+/* =======================================================
+   BLOXIO HEADER SYSTEM
+   Enterprise Production Header
+======================================================= */
+
+
+/* =======================================================
+   HEADER ROOT
+======================================================= */
+
+.app-header{
+
+position:sticky;
+
+top:0;
+
+left:0;
+
+width:100%;
+
+height:
+
+var(--header-height);
+
+display:flex;
+
+align-items:center;
+
+justify-content:space-between;
+
+padding:
+
+0 clamp(
+14px,
+2vw,
+24px
+);
+
+background:
+
+linear-gradient(
+
+180deg,
+
+rgba(10,15,22,.92),
+
+rgba(10,15,22,.74)
+
+);
+
+backdrop-filter:
+
+blur(
+18px
+);
+
+-webkit-backdrop-filter:
+
+blur(
+18px
+);
+
+border-bottom:
+
+1px solid
+
+var(--border-soft);
+
+z-index:
+
+var(--z-header);
+
+overflow:hidden;
+
+isolation:isolate;
+
+transition:
+
+background-color .25s ease,
+
+border-color .25s ease,
+
+transform .24s ease;
+
+padding-top:
+
+max(
+0px,
+var(--safe-top)
+);
+
+min-height:
+
+calc(
+
+var(--header-height)
+
++
+
+var(--safe-top)
+
+);
+
+}
+
+
+/* =======================================================
+   HEADER GLOW
+======================================================= */
+
+.app-header::before{
+
+content:"";
+
+position:absolute;
+
+left:0;
+
+top:0;
+
+width:100%;
+
+height:1px;
+
+background:
+
+linear-gradient(
+
+90deg,
+
+transparent,
+
+var(--brand-primary),
+
+transparent
+
+);
+
+opacity:.55;
+
+pointer-events:none;
+
+}
+
+
+.app-header::after{
+
+content:"";
+
+position:absolute;
+
+inset:0;
+
+background:
+
+radial-gradient(
+
+circle at top,
+
+rgba(0,224,255,.06),
+
+transparent 70%
+
+);
+
+pointer-events:none;
+
+opacity:.75;
+
+}
+
+
+/* =======================================================
+   HEADER SCROLL MODE
+======================================================= */
+
+.header-scrolled{
+
+background:
+
+rgba(10,15,22,.97);
+
+backdrop-filter:
+
+blur(
+22px
+);
+
+box-shadow:
+
+0 8px 24px
+
+rgba(0,0,0,.24);
+
+}
+
+
+/* =======================================================
+   LOGO
+======================================================= */
+
+.logo{
+
+display:flex;
+
+align-items:center;
+
+gap:
+
+14px;
+
+position:relative;
+
+z-index:
+
+2;
+
+flex-shrink:0;
+
+min-width:0;
+
+}
+
+
+.logo img{
+
+width:42px;
+
+height:42px;
+
+object-fit:contain;
+
+flex-shrink:0;
+
+filter:
+
+drop-shadow(
+
+0 0 12px
+
+rgba(0,224,255,.18)
+
+);
+
+transition:
+
+transform .22s ease,
+
+filter .22s ease;
+
+}
+
+
+.logo:hover img{
+
+transform:
+
+scale(1.04);
+
+filter:
+
+drop-shadow(
+
+0 0 18px
+
+rgba(0,224,255,.30)
+
+);
+
+}
+
+
+/* =======================================================
+   LOGO TEXT
+======================================================= */
+
+.logo-text{
+
+display:flex;
+
+flex-direction:column;
+
+min-width:0;
+
+gap:2px;
+
+}
+
+
+.logo-text span{
+
+font-family:
+
+var(--font-title);
+
+font-weight:
+
+900;
+
+font-size:
+
+1rem;
+
+line-height:1;
+
+letter-spacing:
+
+-.04em;
+
+color:
+
+var(--text-primary);
+
+white-space:nowrap;
+
+overflow:hidden;
+
+text-overflow:ellipsis;
+
+}
+
+
+.logo-text small{
+
+font-size:.68rem;
+
+font-weight:700;
+
+letter-spacing:.12em;
+
+text-transform:uppercase;
+
+color:
+
+var(--text-muted);
+
+white-space:nowrap;
+
+}
+
+
+/* =======================================================
+   SOCIAL LINKS
+======================================================= */
+
+.social-links{
+
+display:flex;
+
+align-items:center;
+
+gap:10px;
+
+flex-shrink:0;
+
+z-index:2;
+
+}
+
+
+.social-btn{
+
+position:relative;
+
+width:42px;
+
+height:42px;
+
+display:flex;
+
+align-items:center;
+
+justify-content:center;
+
+border-radius:
+
+var(--radius-round);
+
+background:
+
+rgba(255,255,255,.03);
+
+border:
+
+1px solid
+
+var(--border);
+
+backdrop-filter:
+
+blur(
+12px
+);
+
+transition:
+
+transform .18s ease,
+
+background .18s ease,
+
+border-color .18s ease,
+
+box-shadow .18s ease;
+
+overflow:hidden;
+
+}
+
+
+.social-btn img{
+
+width:20px;
+
+height:20px;
+
+object-fit:contain;
+
+opacity:.92;
+
+transition:
+
+opacity .18s ease,
+
+transform .18s ease;
+
+}
+
+
+.social-btn:hover{
+
+transform:
+
+translateY(-2px);
+
+border-color:
+
+rgba(0,224,255,.22);
+
+background:
+
+rgba(255,255,255,.05);
+
+box-shadow:
+
+0 6px 18px
+
+rgba(0,224,255,.12);
+
+}
+
+
+.social-btn:hover img{
+
+opacity:1;
+
+transform:
+
+scale(1.06);
+
+}
+
+
+.social-btn:active{
+
+transform:
+
+scale(.96);
+
+}
+
+
+/* =======================================================
+   HEADER ACTIONS
+======================================================= */
+
+.header-actions{
+
+display:flex;
+
+align-items:center;
+
+gap:10px;
+
+margin-left:auto;
+
+}
+
+
+/* =======================================================
+   LOADER STATE
+======================================================= */
+
+.loading .app-header{
+
+pointer-events:none;
+
+opacity:.94;
+
+}
+
+
+/* =======================================================
+   AUTH STATE
+======================================================= */
+
+.auth-loading .app-header{
+
+visibility:hidden;
+
+}
+
+
+/* =======================================================
+   TABLET
+======================================================= */
+
+@media(max-width:768px){
+
+.app-header{
+
+padding-inline:
+
+14px;
+
+}
+
+.logo{
+
+gap:10px;
+
+}
+
+.logo img{
+
+width:38px;
+
+height:38px;
+
+}
+
+.logo-text span{
+
+font-size:.95rem;
+
+}
+
+.social-btn{
+
+width:38px;
+
+height:38px;
+
+}
+
+}
+
+
+/* =======================================================
+   MOBILE
+======================================================= */
+
+@media(max-width:576px){
+
+.app-header{
+
+padding-inline:
+
+12px;
+
+}
+
+.logo-text small{
+
+font-size:.60rem;
+
+}
+
+.social-links{
+
+gap:8px;
+
+}
+
+.social-btn{
+
+width:34px;
+
+height:34px;
+
+}
+
+.social-btn img{
+
+width:18px;
+
+height:18px;
+
+}
+
+}
+
+
+/* =======================================================
+   SMALL MOBILE
+======================================================= */
+
+@media(max-width:420px){
+
+.logo-text small{
+
+display:none;
+
+}
+
+.logo img{
+
+width:34px;
+
+height:34px;
+
+}
+
+.logo{
+
+gap:8px;
+
+}
+
+.social-btn{
+
+width:32px;
+
+height:32px;
+
+}
+
+}
+
+
+/* =======================================================
+   LANDSCAPE
+======================================================= */
+
+@media
+(max-height:520px)
+and
+(orientation:landscape){
+
+.app-header{
+
+min-height:58px;
+
+}
+
+.logo img{
+
+width:30px;
+
+height:30px;
+
+}
+
+}
+
+
+/* =======================================================
+   REDUCED MOTION
+======================================================= */
+
+@media
+(prefers-reduced-motion:reduce){
+
+.logo img,
+
+.social-btn{
+
+transition:none;
+
+}
+
+}
+
+
+/* =======================================================
+   HIGH CONTRAST
+======================================================= */
+
+@media
+(prefers-contrast:more){
+
+.app-header{
+
+border-bottom:
+
+1px solid
+
+rgba(255,255,255,.16);
+
+}
+
+  }
