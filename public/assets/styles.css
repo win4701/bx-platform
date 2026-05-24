@@ -3375,3 +3375,2495 @@ code{
   white;
 
   }
+/* ==========================================================================
+   07 LAYOUT
+   COMPLETE LAYOUT FOUNDATION
+   Enterprise Crypto Exchange / PWA / Mobile Architecture
+   ========================================================================== */
+
+/* ======================================================
+   APPLICATION ROOT
+====================================================== */
+
+#app-shell{
+
+  position:relative;
+
+  width:100%;
+
+  min-height:100vh;
+
+  overflow:hidden;
+
+  isolation:isolate;
+
+}
+
+/* ======================================================
+   MAIN APPLICATION
+====================================================== */
+
+#app{
+
+  position:relative;
+
+  z-index:
+
+  var(--layer-content);
+
+}
+
+/* ======================================================
+   MAIN CONTAINER
+====================================================== */
+
+.app-container{
+
+  position:relative;
+
+  width:100%;
+
+  max-width:100%;
+
+  min-height:
+
+  calc(
+  100vh -
+  var(--header-height)
+  );
+
+  margin:0 auto;
+
+  padding:
+
+  var(--space-14);
+
+  padding-bottom:
+
+  calc(
+  var(--mobile-nav-height)
+  +
+  28px
+  );
+
+}
+
+/* ======================================================
+   VIEW SYSTEM
+====================================================== */
+
+.view{
+
+  position:relative;
+
+  display:none;
+
+  width:100%;
+
+  min-height:
+
+  calc(
+  100vh -
+  var(--header-height)
+  );
+
+}
+
+.view.active{
+
+  display:block;
+
+}
+
+/* ======================================================
+   PAGE SPACING
+====================================================== */
+
+#wallet,
+#market,
+#casino,
+#mining,
+#airdrop,
+#settings{
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:
+
+  var(--space-14);
+
+}
+
+/* ======================================================
+   PAGE LIMITER
+====================================================== */
+
+.page-wrapper{
+
+  width:100%;
+
+  max-width:1480px;
+
+  margin:0 auto;
+
+}
+
+/* ======================================================
+   SECTION SYSTEM
+====================================================== */
+
+.section{
+
+  position:relative;
+
+  width:100%;
+
+}
+
+.section-title{
+
+  margin-bottom:
+
+  var(--space-14);
+
+}
+
+/* ======================================================
+   GRID CORE
+====================================================== */
+
+.grid{
+
+  display:grid;
+
+}
+
+.grid-auto{
+
+  display:grid;
+
+  grid-template-columns:
+
+  repeat(
+  auto-fit,
+  minmax(
+  160px,
+  1fr
+  )
+  );
+
+  gap:
+
+  var(--space-14);
+
+}
+
+.grid-2{
+
+  display:grid;
+
+  grid-template-columns:
+
+  repeat(
+  2,
+  minmax(
+  0,
+  1fr
+  )
+  );
+
+  gap:
+
+  var(--space-14);
+
+}
+
+.grid-3{
+
+  display:grid;
+
+  grid-template-columns:
+
+  repeat(
+  3,
+  minmax(
+  0,
+  1fr
+  )
+  );
+
+  gap:
+
+  var(--space-14);
+
+}
+
+/* ======================================================
+   FLEX CORE
+====================================================== */
+
+.flex{
+
+  display:flex;
+
+}
+
+.flex-column{
+
+  display:flex;
+
+  flex-direction:column;
+
+}
+
+.flex-center{
+
+  display:flex;
+
+  align-items:center;
+
+  justify-content:center;
+
+}
+
+.flex-between{
+
+  display:flex;
+
+  align-items:center;
+
+  justify-content:space-between;
+
+}
+
+.flex-wrap{
+
+  flex-wrap:wrap;
+
+}
+
+/* ======================================================
+   STACK SYSTEM
+====================================================== */
+
+.stack-xs{
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:
+
+  var(--space-6);
+
+}
+
+.stack-sm{
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:
+
+  var(--space-10);
+
+}
+
+.stack-md{
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:
+
+  var(--space-14);
+
+}
+
+.stack-lg{
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:
+
+  var(--space-20);
+
+}
+
+/* ======================================================
+   CARD GRID
+====================================================== */
+
+.market-cards{
+
+  display:grid;
+
+  gap:
+
+  var(--space-14);
+
+}
+
+.wallet-panels{
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:
+
+  var(--space-14);
+
+}
+
+/* ======================================================
+   MARKET FOUNDATION
+====================================================== */
+
+.market-header{
+
+  display:flex;
+
+  align-items:flex-start;
+
+  justify-content:space-between;
+
+  gap:
+
+  var(--space-12);
+
+}
+
+.market-toolbar{
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:
+
+  var(--space-10);
+
+}
+
+/* ======================================================
+   MINING FOUNDATION
+====================================================== */
+
+.mining-shell{
+
+  display:grid;
+
+  gap:
+
+  var(--space-14);
+
+}
+
+.mining-main-col{
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:
+
+  var(--space-14);
+
+}
+
+.mining-side-col{
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:
+
+  var(--space-14);
+
+}
+
+/* ======================================================
+   CASINO FOUNDATION
+====================================================== */
+
+#casinoGamesGrid{
+
+  display:grid;
+
+  gap:
+
+  var(--space-14);
+
+}
+
+/* ======================================================
+   AIRDROP FOUNDATION
+====================================================== */
+
+.airdrop-container{
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:
+
+  var(--space-14);
+
+}
+
+.airdrop-partners{
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:
+
+  var(--space-12);
+
+}
+
+/* ======================================================
+   WALLET FOUNDATION
+====================================================== */
+
+.wallet-actions{
+
+  display:grid;
+
+  grid-template-columns:
+
+  repeat(
+  3,
+  minmax(
+  0,
+  1fr
+  )
+  );
+
+  gap:
+
+  var(--space-10);
+
+}
+
+.wallet-row{
+
+  display:flex;
+
+  align-items:center;
+
+  justify-content:space-between;
+
+}
+
+.wallet-row .left{
+
+  display:flex;
+
+  align-items:center;
+
+  gap:
+
+  var(--space-12);
+
+}
+
+/* ======================================================
+   OVERFLOW SAFETY
+====================================================== */
+
+.market-chart-shell,
+.orderbook-card,
+.wallet-balances{
+
+  overflow:hidden;
+
+}
+
+.market-chart-shell{
+
+  position:relative;
+
+}
+
+/* ======================================================
+   POSITION HELPERS
+====================================================== */
+
+.relative{
+
+  position:relative;
+
+}
+
+.absolute{
+
+  position:absolute;
+
+}
+
+.fixed{
+
+  position:fixed;
+
+}
+
+/* ======================================================
+   WIDTH HELPERS
+====================================================== */
+
+.w-full{
+
+  width:100%;
+
+}
+
+.h-full{
+
+  height:100%;
+
+}
+
+/* ======================================================
+   IOS SAFE AREA
+====================================================== */
+
+.app-container{
+
+  padding-left:
+
+  max(
+  var(--space-14),
+  var(--safe-left)
+  );
+
+  padding-right:
+
+  max(
+  var(--space-14),
+  var(--safe-right)
+  );
+
+}
+
+/* ======================================================
+   DESKTOP GRID
+====================================================== */
+
+@media(
+min-width:1100px
+){
+
+  .mining-shell{
+
+    grid-template-columns:
+
+    minmax(
+    0,
+    2fr
+    )
+
+    minmax(
+    360px,
+    1fr
+    );
+
+  }
+
+}
+
+/* ======================================================
+   LARGE SCREEN
+====================================================== */
+
+@media(
+min-width:1440px
+){
+
+  .app-container{
+
+    max-width:
+
+    1500px;
+
+  }
+
+}
+
+/* ======================================================
+   LANDSCAPE
+====================================================== */
+
+@media(
+orientation:landscape
+){
+
+  .view{
+
+    min-height:auto;
+
+  }
+
+}
+
+/* ======================================================
+   PWA SAFE HEIGHT
+====================================================== */
+
+@supports(
+height:100dvh
+){
+
+  .view{
+
+    min-height:
+
+    calc(
+    100dvh -
+    var(--header-height)
+    );
+
+  }
+
+}
+
+/* ======================================================
+   FINAL FOUNDATION
+====================================================== */
+
+canvas{
+
+  max-width:100%;
+
+}
+
+img{
+
+  max-width:100%;
+
+ }
+/* ==========================================================================
+   08 HEADER
+   COMPLETE HEADER SYSTEM
+   Enterprise Crypto Exchange / PWA / Mobile Architecture
+   ========================================================================== */
+
+/* ======================================================
+   HEADER FOUNDATION
+====================================================== */
+
+.app-header{
+
+  position:sticky;
+
+  top:0;
+
+  left:0;
+
+  right:0;
+
+  z-index:
+
+  var(--layer-header);
+
+  width:100%;
+
+  min-height:
+
+  var(--header-height);
+
+  display:flex;
+
+  align-items:center;
+
+  justify-content:space-between;
+
+  gap:
+
+  var(--space-14);
+
+  padding:
+
+  14px
+  16px;
+
+  padding-top:
+
+  max(
+  14px,
+  var(--safe-top)
+  );
+
+  background:
+
+  linear-gradient(
+  180deg,
+  rgba(
+  6,
+  11,
+  18,
+  .96
+  ),
+
+  rgba(
+  6,
+  11,
+  18,
+  .88
+  )
+  );
+
+  border-bottom:
+
+  1px solid
+  var(--border-base);
+
+  backdrop-filter:
+
+  blur(
+  var(--blur-base)
+  );
+
+  -webkit-backdrop-filter:
+
+  blur(
+  var(--blur-base)
+  );
+
+}
+
+/* ======================================================
+   HEADER OVERLAY
+====================================================== */
+
+.app-header::before{
+
+  content:"";
+
+  position:absolute;
+
+  inset:0;
+
+  pointer-events:none;
+
+  background:
+
+  linear-gradient(
+  180deg,
+
+  rgba(
+  255,
+ 255,
+ 255,
+ .02
+ ),
+
+ transparent
+
+ );
+
+}
+
+/* ======================================================
+   HEADER BORDER EFFECT
+====================================================== */
+
+.app-header::after{
+
+  content:"";
+
+  position:absolute;
+
+  left:0;
+
+  right:0;
+
+  bottom:0;
+
+  height:1px;
+
+  background:
+
+  linear-gradient(
+  90deg,
+
+  transparent,
+
+  rgba(
+  54,
+ 226,
+ 123,
+ .18
+ ),
+
+ transparent
+
+ );
+
+}
+
+/* ======================================================
+   LOGO FOUNDATION
+====================================================== */
+
+.logo{
+
+  display:flex;
+
+  align-items:center;
+
+  gap:
+
+  12px;
+
+  min-width:0;
+
+  flex-shrink:0;
+
+}
+
+/* ======================================================
+   LOGO ICON
+====================================================== */
+
+.logo img{
+
+  width:42px;
+
+  height:42px;
+
+  object-fit:contain;
+
+  flex-shrink:0;
+
+  border-radius:
+
+  var(--radius-sm);
+
+}
+
+/* ======================================================
+   LOGO TEXT WRAPPER
+====================================================== */
+
+.logo-text{
+
+  display:flex;
+
+  flex-direction:column;
+
+  justify-content:center;
+
+  gap:2px;
+
+  min-width:0;
+
+}
+
+/* ======================================================
+   BRAND TITLE
+====================================================== */
+
+.logo-text span{
+
+  display:block;
+
+  overflow:hidden;
+
+  text-overflow:ellipsis;
+
+  white-space:nowrap;
+
+  color:
+
+  var(--token-text-main);
+
+}
+
+/* ======================================================
+   BRAND SUBTITLE
+====================================================== */
+
+.logo-text small{
+
+  display:block;
+
+  overflow:hidden;
+
+  text-overflow:ellipsis;
+
+  white-space:nowrap;
+
+  color:
+
+  var(--token-text-soft);
+
+}
+
+/* ======================================================
+   SOCIAL FOUNDATION
+====================================================== */
+
+.social-links{
+
+  display:flex;
+
+  align-items:center;
+
+  justify-content:flex-end;
+
+  gap:
+
+  10px;
+
+  flex-shrink:0;
+
+}
+
+/* ======================================================
+   SOCIAL BUTTON
+====================================================== */
+
+.social-btn{
+
+  position:relative;
+
+  width:42px;
+
+  height:42px;
+
+  display:flex;
+
+  align-items:center;
+
+  justify-content:center;
+
+  overflow:hidden;
+
+  border:
+
+  1px solid
+  var(--border-soft);
+
+  border-radius:
+
+  var(--radius-sm);
+
+  background:
+
+  var(--surface-soft);
+
+  transition:
+
+  background
+  var(--motion-base),
+
+  border-color
+  var(--motion-base),
+
+  opacity
+  var(--motion-base);
+
+}
+
+/* ======================================================
+   SOCIAL ICON
+====================================================== */
+
+.social-btn img{
+
+  width:18px;
+
+  height:18px;
+
+  object-fit:contain;
+
+}
+
+/* ======================================================
+   SOCIAL ACTIVE
+====================================================== */
+
+.social-btn:active{
+
+  opacity:.85;
+
+}
+
+/* ======================================================
+   HEADER STATUS BAR
+====================================================== */
+
+.header-status{
+
+  display:flex;
+
+  align-items:center;
+
+  gap:
+
+  var(--space-8);
+
+}
+
+/* ======================================================
+   HEADER BADGE
+====================================================== */
+
+.header-badge{
+
+  min-height:28px;
+
+  display:flex;
+
+  align-items:center;
+
+  justify-content:center;
+
+  padding:
+
+  0
+  10px;
+
+  border-radius:
+
+  var(--radius-pill);
+
+  background:
+
+  rgba(
+  54,
+ 226,
+ 123,
+ .12
+ );
+
+  border:
+
+  1px solid
+  rgba(
+  54,
+ 226,
+ 123,
+ .16
+ );
+
+}
+
+/* ======================================================
+   HEADER ACTION
+====================================================== */
+
+.header-action{
+
+  display:flex;
+
+  align-items:center;
+
+  justify-content:center;
+
+}
+
+/* ======================================================
+   HEADER UTILITIES
+====================================================== */
+
+.header-right{
+
+  display:flex;
+
+  align-items:center;
+
+  gap:
+
+  var(--space-10);
+
+}
+
+/* ======================================================
+   MOBILE SAFE
+====================================================== */
+
+@media(
+max-width:520px
+){
+
+  .app-header{
+
+    padding-left:
+
+    max(
+    14px,
+    var(--safe-left)
+    );
+
+    padding-right:
+
+    max(
+    14px,
+    var(--safe-right)
+    );
+
+  }
+
+  .logo img{
+
+    width:38px;
+
+    height:38px;
+
+  }
+
+  .social-btn{
+
+    width:40px;
+
+    height:40px;
+
+  }
+
+}
+
+/* ======================================================
+   TABLET SAFE
+====================================================== */
+
+@media(
+min-width:768px
+){
+
+  .app-header{
+
+    padding-left:
+
+    22px;
+
+    padding-right:
+
+    22px;
+
+  }
+
+}
+
+/* ======================================================
+   DESKTOP SAFE
+====================================================== */
+
+@media(
+min-width:1200px
+){
+
+  .app-header{
+
+    padding-left:
+
+    28px;
+
+    padding-right:
+
+    28px;
+
+  }
+
+}
+
+/* ======================================================
+   LANDSCAPE SAFE
+====================================================== */
+
+@media(
+orientation:landscape
+){
+
+  .app-header{
+
+    min-height:
+
+    70px;
+
+  }
+
+}
+
+/* ======================================================
+   PWA SAFE AREA
+====================================================== */
+
+@supports(
+padding:max(0px)
+){
+
+  .app-header{
+
+    padding-top:
+
+    max(
+    14px,
+    var(--safe-top)
+    );
+
+  }
+
+}
+
+/* ======================================================
+   FINAL SAFETY
+====================================================== */
+
+.app-header *{
+
+  position:relative;
+
+  z-index:1;
+
+ }
+/* ==========================================================================
+   09 BUTTONS
+   COMPLETE BUTTON SYSTEM
+   Enterprise Crypto Exchange / PWA / Mobile Architecture
+   ========================================================================== */
+
+/* ======================================================
+   BUTTON FOUNDATION
+====================================================== */
+
+button,
+.btn,
+.wallet-intel-btn,
+.action-btn,
+.nav-btn,
+.airdrop-action,
+.pair-btn,
+.casino-filter-tab,
+.casino-icon-btn{
+
+  position:relative;
+
+  overflow:hidden;
+
+  display:inline-flex;
+
+  align-items:center;
+
+  justify-content:center;
+
+  gap:
+
+  var(--space-8);
+
+  min-width:0;
+
+  flex-shrink:0;
+
+  user-select:none;
+
+  cursor:pointer;
+
+  border:none;
+
+  outline:none;
+
+  white-space:nowrap;
+
+  text-align:center;
+
+  text-decoration:none;
+
+  font-family:
+
+  inherit;
+
+  transition:
+
+  background
+  var(--motion-base),
+
+  border-color
+  var(--motion-base),
+
+  opacity
+  var(--motion-base),
+
+  color
+  var(--motion-base),
+
+  box-shadow
+  var(--motion-base);
+
+}
+
+/* ======================================================
+   BASE BUTTON
+====================================================== */
+
+.btn{
+
+  min-height:
+
+  var(--button-height);
+
+  padding:
+
+  0
+  18px;
+
+  border-radius:
+
+  var(--radius-md);
+
+  background:
+
+  var(--token-button-secondary);
+
+  color:
+
+  var(--token-text-main);
+
+  border:
+
+  1px solid
+  var(--border-base);
+
+}
+
+/* ======================================================
+   PRIMARY BUTTON
+====================================================== */
+
+.btn.primary{
+
+  background:
+
+  var(--token-button-primary);
+
+  color:
+
+  var(--text-inverse);
+
+  border:none;
+
+  box-shadow:
+
+  var(--token-shadow-green);
+
+}
+
+/* ======================================================
+   SECONDARY BUTTON
+====================================================== */
+
+.btn.secondary{
+
+  background:
+
+  var(--token-button-secondary);
+
+}
+
+/* ======================================================
+   CONFIRM BUTTON
+====================================================== */
+
+.btn.confirm{
+
+  background:
+
+  var(--token-button-primary);
+
+  color:
+
+  var(--text-inverse);
+
+}
+
+/* ======================================================
+   DANGER BUTTON
+====================================================== */
+
+.btn.danger{
+
+  background:
+
+  var(--token-button-danger);
+
+  color:white;
+
+}
+
+/* ======================================================
+   DISABLED
+====================================================== */
+
+.btn:disabled,
+button:disabled{
+
+  opacity:
+
+  var(--opacity-disabled);
+
+  cursor:not-allowed;
+
+}
+
+/* ======================================================
+   WALLET BUTTONS
+====================================================== */
+
+.wallet-intel-btn{
+
+  min-height:
+
+  50px;
+
+  padding:
+
+  0
+  16px;
+
+  border-radius:
+
+  var(--radius-md);
+
+  background:
+
+  var(--surface-soft);
+
+  color:
+
+  var(--token-text-main);
+
+  border:
+
+  1px solid
+  var(--border-soft);
+
+}
+
+.wallet-intel-btn.primary{
+
+  background:
+
+  var(--token-button-primary);
+
+  color:
+
+  var(--text-inverse);
+
+}
+
+/* ======================================================
+   ACTION BUTTON
+====================================================== */
+
+.action-btn{
+
+  width:100%;
+
+  min-height:
+
+  56px;
+
+  border-radius:
+
+  var(--radius-md);
+
+  font-weight:
+
+  var(--weight-black);
+
+}
+
+.action-btn.buy{
+
+  background:
+
+  var(--token-button-primary);
+
+  color:
+
+  var(--text-inverse);
+
+}
+
+.action-btn.sell{
+
+  background:
+
+  var(--token-button-danger);
+
+  color:white;
+
+}
+
+/* ======================================================
+   NAVIGATION BUTTON
+====================================================== */
+
+.nav-btn{
+
+  flex-direction:column;
+
+  min-height:
+
+  58px;
+
+  padding:
+
+  6px;
+
+  border-radius:
+
+  var(--radius-sm);
+
+  background:transparent;
+
+  color:
+
+  var(--token-text-muted);
+
+  font-size:
+
+  var(--font-sm);
+
+  font-weight:
+
+  var(--weight-bold);
+
+}
+
+.nav-btn.active{
+
+  color:
+
+  var(--brand-primary);
+
+}
+
+/* ======================================================
+   MARKET PAIR BUTTON
+====================================================== */
+
+.pair-btn{
+
+  min-height:
+
+  42px;
+
+  padding:
+
+  0
+  14px;
+
+  border-radius:
+
+  var(--radius-pill);
+
+  background:
+
+  var(--surface-soft);
+
+  border:
+
+  1px solid
+  var(--border-soft);
+
+  color:
+
+  var(--token-text-secondary);
+
+}
+
+.pair-btn.active{
+
+  color:
+
+  var(--brand-primary);
+
+  border-color:
+
+  var(--border-active);
+
+}
+
+/* ======================================================
+   MARKET RANGE BUTTON
+====================================================== */
+
+.market-timeframes button,
+.market-chart-modes button{
+
+  min-height:
+
+  38px;
+
+  padding:
+
+  0
+  12px;
+
+  border-radius:
+
+  var(--radius-pill);
+
+  color:
+
+  var(--token-text-muted);
+
+}
+
+.market-timeframes button.active,
+.market-chart-modes button.active{
+
+  color:
+
+  var(--token-text-main);
+
+}
+
+/* ======================================================
+   CASINO FILTER BUTTON
+====================================================== */
+
+.casino-filter-tab{
+
+  min-height:
+
+  42px;
+
+  padding:
+
+  0
+  16px;
+
+  border-radius:
+
+  var(--radius-pill);
+
+  background:
+
+  var(--surface-soft);
+
+  border:
+
+  1px solid
+  var(--border-soft);
+
+}
+
+.casino-filter-tab.active{
+
+  border-color:
+
+  var(--border-active);
+
+  color:
+
+  var(--brand-primary);
+
+}
+
+/* ======================================================
+   ICON BUTTON
+====================================================== */
+
+.casino-icon-btn,
+.social-btn{
+
+  width:42px;
+
+  height:42px;
+
+  border-radius:
+
+  var(--radius-sm);
+
+}
+
+/* ======================================================
+   MINING QUICK
+====================================================== */
+
+.mining-quick-row button{
+
+  flex:1;
+
+  min-height:
+
+  42px;
+
+  border-radius:
+
+  var(--radius-sm);
+
+  background:
+
+  var(--surface-soft);
+
+  border:
+
+  1px solid
+  var(--border-soft);
+
+}
+
+/* ======================================================
+   PANEL CLOSE
+====================================================== */
+
+.wallet-panel-close,
+.mining-panel-close{
+
+  width:38px;
+
+  height:38px;
+
+  border-radius:
+
+  var(--radius-pill);
+
+  background:
+
+  rgba(
+  255,
+ 255,
+ 255,
+ .04
+ );
+
+}
+
+/* ======================================================
+   AIRDROP
+====================================================== */
+
+.airdrop-action{
+
+  width:100%;
+
+  min-height:
+
+  56px;
+
+  border-radius:
+
+  var(--radius-md);
+
+  background:
+
+  var(--token-button-primary);
+
+  color:
+
+  var(--text-inverse);
+
+}
+
+/* ======================================================
+   TOUCH SYSTEM
+====================================================== */
+
+button{
+
+  touch-action:
+
+  manipulation;
+
+}
+
+/* ======================================================
+   ACTIVE
+====================================================== */
+
+button:active{
+
+  opacity:.92;
+
+}
+
+/* ======================================================
+   LOADING
+====================================================== */
+
+.btn.loading{
+
+  pointer-events:none;
+
+}
+
+/* ======================================================
+   BUTTON CONTENT
+====================================================== */
+
+.btn img,
+button img{
+
+  flex-shrink:0;
+
+}
+
+/* ======================================================
+   MOBILE
+====================================================== */
+
+@media(
+max-width:520px
+){
+
+  .btn{
+
+    padding:
+
+    0
+    14px;
+
+  }
+
+}
+
+/* ======================================================
+   TABLET
+====================================================== */
+
+@media(
+min-width:768px
+){
+
+  .btn{
+
+    min-width:
+
+    120px;
+
+  }
+
+}
+
+/* ======================================================
+   SAFE FOUNDATION
+====================================================== */
+
+.wallet-actions .btn{
+
+  width:100%;
+
+}
+
+.trade-tabs button{
+
+  flex:1;
+
+}
+
+.market-timeframes{
+
+  display:flex;
+
+  flex-wrap:wrap;
+
+  gap:
+
+  var(--space-8);
+
+}
+
+.market-chart-modes{
+
+  display:flex;
+
+  gap:
+
+  var(--space-8);
+
+}
+/* ==========================================================================
+   10 INPUTS
+   COMPLETE INPUT SYSTEM
+   Enterprise Crypto Exchange / PWA / Mobile Architecture
+   ========================================================================== */
+
+/* ======================================================
+   INPUT FOUNDATION
+====================================================== */
+
+input,
+textarea,
+select{
+
+  width:100%;
+
+  min-width:0;
+
+  display:block;
+
+  font-family:
+
+  inherit;
+
+  font-size:
+
+  var(--font-md);
+
+  font-weight:
+
+  var(--weight-medium);
+
+  line-height:
+
+  1.4;
+
+  color:
+
+  var(--token-text-main);
+
+  background:
+
+  var(--token-input-bg);
+
+  border:
+
+  1px solid
+  var(--token-input-border);
+
+  border-radius:
+
+  var(--radius-md);
+
+  outline:none;
+
+  box-shadow:none;
+
+  transition:
+
+  background
+  var(--motion-base),
+
+  border-color
+  var(--motion-base),
+
+  color
+  var(--motion-base);
+
+}
+
+/* ======================================================
+   DEFAULT INPUT SIZE
+====================================================== */
+
+input,
+select{
+
+  min-height:
+
+  var(--input-height);
+
+  padding:
+
+  0
+  16px;
+
+}
+
+/* ======================================================
+   TEXTAREA
+====================================================== */
+
+textarea{
+
+  min-height:
+
+  120px;
+
+  padding:
+
+  14px
+  16px;
+
+  resize:none;
+
+}
+
+/* ======================================================
+   PLACEHOLDER
+====================================================== */
+
+input::placeholder,
+textarea::placeholder{
+
+  color:
+
+  var(
+  --token-input-placeholder
+  );
+
+  opacity:1;
+
+}
+
+/* ======================================================
+   FOCUS
+====================================================== */
+
+input:focus,
+textarea:focus,
+select:focus{
+
+  border-color:
+
+  var(
+  --token-input-focus
+  );
+
+  background:
+
+  rgba(
+  255,
+ 255,
+ 255,
+ .03
+ );
+
+}
+
+/* ======================================================
+   DISABLED
+====================================================== */
+
+input:disabled,
+textarea:disabled,
+select:disabled{
+
+  opacity:
+
+  var(
+  --opacity-disabled
+  );
+
+  cursor:not-allowed;
+
+}
+
+/* ======================================================
+   READONLY
+====================================================== */
+
+input[readonly],
+textarea[readonly]{
+
+  color:
+
+  var(
+  --token-text-muted
+  );
+
+}
+
+/* ======================================================
+   NUMBER INPUT
+====================================================== */
+
+input[type="number"]{
+
+  font-variant-numeric:
+
+  tabular-nums;
+
+}
+
+/* ======================================================
+   SEARCH INPUT
+====================================================== */
+
+input[type="search"]{
+
+  appearance:none;
+
+}
+
+/* ======================================================
+   SELECT FOUNDATION
+====================================================== */
+
+select{
+
+  cursor:pointer;
+
+  padding-right:
+
+  42px;
+
+  background-image:
+
+  linear-gradient(
+  45deg,
+  transparent 50%,
+  var(--token-text-muted) 50%
+  ),
+
+  linear-gradient(
+  135deg,
+  var(--token-text-muted) 50%,
+  transparent 50%
+  );
+
+  background-position:
+
+  calc(
+  100% - 18px
+  )
+  50%,
+
+  calc(
+  100% - 12px
+  )
+  50%;
+
+  background-size:
+
+  6px 6px;
+
+  background-repeat:
+
+  no-repeat;
+
+}
+
+/* ======================================================
+   LABEL FOUNDATION
+====================================================== */
+
+label{
+
+  display:block;
+
+  margin-bottom:
+
+  8px;
+
+}
+
+/* ======================================================
+   INPUT GROUP
+====================================================== */
+
+.input-group{
+
+  position:relative;
+
+  width:100%;
+
+}
+
+/* ======================================================
+   WALLET INPUT
+====================================================== */
+
+.wallet-input{
+
+  background:
+
+  rgba(
+  255,
+ 255,
+ 255,
+ .025
+ );
+
+}
+
+/* ======================================================
+   WALLET SEARCH
+====================================================== */
+
+#walletAssetSearch{
+
+  min-height:
+
+  48px;
+
+}
+
+/* ======================================================
+   TOPUP SYSTEM
+====================================================== */
+
+#topup-country,
+#topup-phone,
+#topup-amount{
+
+  width:100%;
+
+}
+
+/* ======================================================
+   MINING INPUT
+====================================================== */
+
+#miningAmountInput{
+
+  text-align:left;
+
+}
+
+/* ======================================================
+   MARKET INPUT
+====================================================== */
+
+#orderAmount{
+
+  font-weight:
+
+  var(--weight-bold);
+
+}
+
+/* ======================================================
+   WITHDRAW INPUT
+====================================================== */
+
+#withdrawAddress{
+
+  letter-spacing:
+
+  -.01em;
+
+}
+
+/* ======================================================
+   DEPOSIT ADDRESS
+====================================================== */
+
+.wallet-address-box{
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:
+
+  8px;
+
+  padding:
+
+  14px;
+
+  border-radius:
+
+  var(--radius-md);
+
+  background:
+
+  rgba(
+  255,
+ 255,
+ 255,
+ .02
+ );
+
+  border:
+
+  1px solid
+  var(--border-soft);
+
+}
+
+.wallet-address-box code{
+
+  overflow:hidden;
+
+  text-overflow:ellipsis;
+
+  white-space:nowrap;
+
+}
+
+/* ======================================================
+   INPUT STATUS
+====================================================== */
+
+.input-error{
+
+  border-color:
+
+  var(
+  --token-market-down
+  );
+
+}
+
+.input-success{
+
+  border-color:
+
+  var(
+  --token-market-up
+  );
+
+}
+
+/* ======================================================
+   INLINE INPUTS
+====================================================== */
+
+.wallet-inline-actions{
+
+  display:flex;
+
+  gap:
+
+  var(--space-10);
+
+}
+
+.wallet-inline-actions button{
+
+  flex:1;
+
+}
+
+/* ======================================================
+   REFERRAL INPUT
+====================================================== */
+
+.ref-input{
+
+  overflow:hidden;
+
+  text-overflow:ellipsis;
+
+}
+
+/* ======================================================
+   TOPUP INPUT GROUP
+====================================================== */
+
+.topup-body{
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:
+
+  var(--space-12);
+
+}
+
+/* ======================================================
+   MOBILE
+====================================================== */
+
+@media(
+max-width:520px
+){
+
+  input,
+  select{
+
+    padding-left:
+
+    14px;
+
+    padding-right:
+
+    14px;
+
+  }
+
+}
+
+/* ======================================================
+   TABLET
+====================================================== */
+
+@media(
+min-width:768px
+){
+
+  input,
+  textarea,
+  select{
+
+    font-size:
+
+    15px;
+
+  }
+
+}
+
+/* ======================================================
+   IOS SAFETY
+====================================================== */
+
+@supports(
+-webkit-touch-callout:none
+){
+
+  input,
+  textarea,
+  select{
+
+    font-size:
+
+    16px;
+
+  }
+
+}
+
+/* ======================================================
+   AUTOFILL
+====================================================== */
+
+input:-webkit-autofill{
+
+  -webkit-text-fill-color:
+
+  var(
+  --token-text-main
+  );
+
+  transition:
+
+  background-color
+  999999s;
+
+}
+
+/* ======================================================
+   SAFE FOUNDATION
+====================================================== */
+
+input,
+textarea{
+
+  overflow:hidden;
+
+}
+
+select option{
+
+  background:
+
+  var(
+  --color-surface
+  );
+
+  color:
+
+  var(
+  --token-text-main
+  );
+
+}
