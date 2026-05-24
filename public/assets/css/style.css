@@ -1,0 +1,2309 @@
+/* =======================================================
+   01 ROOT SYSTEM
+   BLOXIO MASTER DESIGN ENGINE
+======================================================= */
+
+:root{
+
+/* =======================================================
+   BRAND
+======================================================= */
+
+--brand-primary:#0B0F14;
+
+--brand-secondary:#111827;
+
+--brand-surface:#161D27;
+
+--brand-surface-2:#1B2430;
+
+--brand-card:#1A222E;
+
+
+/* =======================================================
+   ACCENT
+======================================================= */
+
+--gold:#FFD700;
+
+--gold-soft:#E6C15A;
+
+--gold-deep:#A57A00;
+
+--green:#00FF99;
+
+--green-soft:#5DFFB5;
+
+--green-dark:#00C97A;
+
+--red:#FF4D4F;
+
+--orange:#FF9F43;
+
+--blue:#3B82F6;
+
+--purple:#8B5CF6;
+
+
+/* =======================================================
+   TEXT
+======================================================= */
+
+--text-primary:#FFFFFF;
+
+--text-secondary:#B9C2D0;
+
+--text-muted:#7A8699;
+
+--text-gold:#FFD86A;
+
+--text-success:#47FF9A;
+
+--text-danger:#FF7070;
+
+
+/* =======================================================
+   BORDER
+======================================================= */
+
+--border-primary:
+
+rgba(
+255,
+255,
+255,
+0.08
+);
+
+--border-soft:
+
+rgba(
+255,
+255,
+255,
+0.04
+);
+
+--border-gold:
+
+rgba(
+255,
+215,
+0,
+0.28
+);
+
+
+/* =======================================================
+   SHADOW
+======================================================= */
+
+--shadow-xs:
+
+0 1px 2px
+rgba(
+0,
+0,
+0,
+0.15
+);
+
+--shadow-sm:
+
+0 4px 12px
+rgba(
+0,
+0,
+0,
+0.22
+);
+
+--shadow-md:
+
+0 10px 30px
+rgba(
+0,
+0,
+0,
+0.28
+);
+
+--shadow-lg:
+
+0 18px 60px
+rgba(
+0,
+0,
+0,
+0.40
+);
+
+--shadow-gold:
+
+0 0 25px
+rgba(
+255,
+215,
+0,
+0.22
+);
+
+--shadow-green:
+
+0 0 22px
+rgba(
+0,
+255,
+153,
+0.22
+);
+
+
+/* =======================================================
+   GRADIENT
+======================================================= */
+
+--gradient-primary:
+
+linear-gradient(
+135deg,
+#111827,
+#0B0F14
+);
+
+--gradient-card:
+
+linear-gradient(
+180deg,
+#1A222E,
+#111827
+);
+
+--gradient-gold:
+
+linear-gradient(
+135deg,
+#FFD700,
+#D5A021
+);
+
+--gradient-green:
+
+linear-gradient(
+135deg,
+#00FF99,
+#00D17D
+);
+
+
+/* =======================================================
+   FONT
+======================================================= */
+
+--font-ui:
+
+"Inter",
+sans-serif;
+
+--font-title:
+
+"SpaceGrotesk",
+sans-serif;
+
+--font-code:
+
+"JetBrainsMono",
+monospace;
+
+
+/* =======================================================
+   RADIUS
+======================================================= */
+
+--radius-xs:6px;
+
+--radius-sm:10px;
+
+--radius-md:14px;
+
+--radius-lg:20px;
+
+--radius-xl:28px;
+
+--radius-full:999px;
+
+
+/* =======================================================
+   SPACING
+======================================================= */
+
+--space-1:4px;
+
+--space-2:8px;
+
+--space-3:12px;
+
+--space-4:16px;
+
+--space-5:20px;
+
+--space-6:24px;
+
+--space-7:32px;
+
+--space-8:40px;
+
+
+/* =======================================================
+   Z INDEX
+======================================================= */
+
+--z-base:1;
+
+--z-dropdown:100;
+
+--z-sticky:300;
+
+--z-modal:700;
+
+--z-toast:900;
+
+--z-loader:1200;
+
+
+/* =======================================================
+   TRANSITION
+======================================================= */
+
+--speed-fast:.18s;
+
+--speed-normal:.28s;
+
+--speed-slow:.42s;
+
+--ease:
+
+cubic-bezier(
+0.4,
+0,
+0.2,
+1
+);
+
+
+/* =======================================================
+   HEADER
+======================================================= */
+
+--header-height:72px;
+
+--bottom-nav:82px;
+
+
+/* =======================================================
+   MOBILE
+======================================================= */
+
+--mobile-xs:320px;
+
+--mobile-sm:480px;
+
+--tablet:768px;
+
+--desktop:1200px;
+
+
+/* =======================================================
+   SAFE AREA
+======================================================= */
+
+--safe-top:
+
+env(
+safe-area-inset-top
+);
+
+--safe-bottom:
+
+env(
+safe-area-inset-bottom
+);
+
+
+/* =======================================================
+   GLASS EFFECT
+======================================================= */
+
+--glass:
+
+rgba(
+255,
+255,
+255,
+0.03
+);
+
+--glass-border:
+
+rgba(
+255,
+255,
+255,
+0.08
+);
+
+--blur:
+
+18px;
+
+
+/* =======================================================
+   PERFORMANCE
+======================================================= */
+
+--gpu:
+
+translateZ(0);
+
+}
+
+
+/* =======================================================
+   COLOR SCHEME
+======================================================= */
+
+html{
+
+color-scheme:dark;
+
+}
+
+
+/* =======================================================
+   BODY SYSTEM
+======================================================= */
+
+body{
+
+background:
+
+var(
+--brand-primary
+);
+
+color:
+
+var(
+--text-primary
+);
+
+font-family:
+
+var(
+--font-ui
+);
+
+min-height:
+
+100vh;
+
+overflow-x:hidden;
+
+-webkit-font-smoothing:
+
+antialiased;
+
+text-rendering:
+
+optimizeLegibility;
+
+}
+
+
+/* =======================================================
+   GPU ENGINE
+======================================================= */
+
+.gpu{
+
+transform:
+
+var(
+--gpu
+);
+
+will-change:
+
+transform;
+
+}
+
+
+/* =======================================================
+   SELECTION
+======================================================= */
+
+::selection{
+
+background:
+
+var(
+--gold
+);
+
+color:
+
+#000;
+}
+/* =======================================================
+   02 FONT ENGINE
+   BLOXIO TYPOGRAPHY SYSTEM
+======================================================= */
+
+
+/* =======================================================
+   INTER
+   UI FONT
+======================================================= */
+
+@font-face{
+
+font-family:
+
+"Inter";
+
+src:
+
+url(
+"/assets/fonts/Inter/Inter-Regular.woff2"
+)
+
+format(
+"woff2"
+);
+
+font-weight:400;
+
+font-style:normal;
+
+font-display:swap;
+
+}
+
+
+@font-face{
+
+font-family:
+
+"Inter";
+
+src:
+
+url(
+"/assets/fonts/Inter/Inter-Medium.woff2"
+)
+
+format(
+"woff2"
+);
+
+font-weight:500;
+
+font-style:normal;
+
+font-display:swap;
+
+}
+
+
+@font-face{
+
+font-family:
+
+"Inter";
+
+src:
+
+url(
+"/assets/fonts/Inter/Inter-Bold.woff2"
+)
+
+format(
+"woff2"
+);
+
+font-weight:700;
+
+font-style:normal;
+
+font-display:swap;
+
+}
+
+
+@font-face{
+
+font-family:
+
+"Inter";
+
+src:
+
+url(
+"/assets/fonts/Inter/Inter-Black.woff2"
+)
+
+format(
+"woff2"
+);
+
+font-weight:900;
+
+font-style:normal;
+
+font-display:swap;
+
+}
+
+
+/* =======================================================
+   SPACE GROTESK
+   TITLES
+======================================================= */
+
+@font-face{
+
+font-family:
+
+"SpaceGrotesk";
+
+src:
+
+url(
+"/assets/fonts/SpaceGrotesk/SpaceGrotesk-Regular.ttf"
+)
+
+format(
+"truetype"
+);
+
+font-weight:400;
+
+font-display:swap;
+
+}
+
+
+@font-face{
+
+font-family:
+
+"SpaceGrotesk";
+
+src:
+
+url(
+"/assets/fonts/SpaceGrotesk/SpaceGrotesk-Bold.ttf"
+)
+
+format(
+"truetype"
+);
+
+font-weight:700;
+
+font-display:swap;
+
+}
+
+
+/* =======================================================
+   JETBRAINS MONO
+   CRYPTO / PRICE / HASHRATE
+======================================================= */
+
+@font-face{
+
+font-family:
+
+"JetBrainsMono";
+
+src:
+
+url(
+"/assets/fonts/JetBrainsMono/JetBrainsMono-Regular.woff2"
+)
+
+format(
+"woff2"
+);
+
+font-weight:400;
+
+font-display:swap;
+
+}
+
+
+@font-face{
+
+font-family:
+
+"JetBrainsMono";
+
+src:
+
+url(
+"/assets/fonts/JetBrainsMono/JetBrainsMono-Bold.woff2"
+)
+
+format(
+"woff2"
+);
+
+font-weight:700;
+
+font-display:swap;
+
+}
+
+
+/* =======================================================
+   FONT TOKENS
+======================================================= */
+
+:root{
+
+--font-ui:
+
+"Inter",
+sans-serif;
+
+--font-title:
+
+"SpaceGrotesk",
+sans-serif;
+
+--font-mono:
+
+"JetBrainsMono",
+monospace;
+
+
+/* WEIGHT */
+
+--fw-light:300;
+
+--fw-normal:400;
+
+--fw-medium:500;
+
+--fw-bold:700;
+
+--fw-black:900;
+
+
+/* SIZE */
+
+--fs-xxs:.70rem;
+
+--fs-xs:.80rem;
+
+--fs-sm:.92rem;
+
+--fs-md:1rem;
+
+--fs-lg:1.15rem;
+
+--fs-xl:1.35rem;
+
+--fs-2xl:1.8rem;
+
+--fs-3xl:2.3rem;
+
+--fs-hero:3rem;
+
+
+/* LINE */
+
+--lh-tight:1.1;
+
+--lh-normal:1.5;
+
+--lh-loose:1.8;
+
+
+/* LETTER */
+
+--ls-tight:-0.03em;
+
+--ls-normal:0;
+
+--ls-wide:0.04em;
+
+}
+
+
+/* =======================================================
+   BODY
+======================================================= */
+
+html{
+
+font-size:16px;
+
+text-size-adjust:100%;
+
+-webkit-text-size-adjust:100%;
+
+}
+
+
+body{
+
+font-family:
+
+var(
+--font-ui
+);
+
+font-weight:
+
+var(
+--fw-normal
+);
+
+line-height:
+
+var(
+--lh-normal
+);
+
+font-size:
+
+var(
+--fs-md
+);
+
+font-feature-settings:
+
+"liga" 1,
+"calt" 1;
+
+font-synthesis:none;
+
+text-rendering:
+
+optimizeLegibility;
+
+font-kerning:auto;
+
+}
+
+
+/* =======================================================
+   HEADINGS
+======================================================= */
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6{
+
+font-family:
+
+var(
+--font-title
+);
+
+font-weight:
+
+700;
+
+line-height:
+
+1.15;
+
+letter-spacing:
+
+-.03em;
+
+margin:0;
+
+color:
+
+var(
+--text-primary
+);
+
+}
+
+
+h1{
+
+font-size:
+
+clamp(
+2rem,
+5vw,
+3rem
+);
+
+}
+
+
+h2{
+
+font-size:
+
+clamp(
+1.7rem,
+4vw,
+2.2rem
+);
+
+}
+
+
+h3{
+
+font-size:
+
+1.35rem;
+
+}
+
+
+h4{
+
+font-size:
+
+1.12rem;
+
+}
+
+
+/* =======================================================
+   PARAGRAPH
+======================================================= */
+
+p{
+
+margin:0;
+
+color:
+
+var(
+--text-secondary
+);
+
+line-height:
+
+1.65;
+
+}
+
+
+/* =======================================================
+   CRYPTO VALUES
+======================================================= */
+
+.price,
+.balance,
+.hashrate,
+.wallet-amount,
+.market-price,
+.coin-value,
+.crypto-number{
+
+font-family:
+
+var(
+--font-mono
+);
+
+font-weight:
+
+700;
+
+font-variant-numeric:
+
+tabular-nums;
+
+letter-spacing:
+
+-0.03em;
+
+}
+
+
+/* =======================================================
+   SMALL LABELS
+======================================================= */
+
+.label,
+.badge,
+.small-text{
+
+font-size:
+
+var(
+--fs-xs
+);
+
+font-weight:
+
+600;
+
+letter-spacing:
+
+0.03em;
+
+text-transform:
+
+uppercase;
+
+}
+
+
+/* =======================================================
+   BUTTON TYPOGRAPHY
+======================================================= */
+
+button{
+
+font-family:
+
+inherit;
+
+font-weight:
+
+700;
+
+letter-spacing:
+
+-.02em;
+
+}
+
+
+/* =======================================================
+   INPUT TYPOGRAPHY
+======================================================= */
+
+input,
+textarea,
+select{
+
+font-family:
+
+var(
+--font-ui
+);
+
+font-size:
+
+1rem;
+
+}
+
+
+/* =======================================================
+   MOBILE
+======================================================= */
+
+@media(
+max-width:768px
+){
+
+:root{
+
+--fs-md:.95rem;
+
+--fs-lg:1.05rem;
+
+--fs-xl:1.2rem;
+
+--fs-hero:2.3rem;
+
+}
+
+}
+
+
+/* =======================================================
+   FONT OPTIMIZATION
+======================================================= */
+
+*{
+
+font-smooth:always;
+
+-webkit-font-smoothing:
+
+antialiased;
+
+-moz-osx-font-smoothing:
+
+grayscale;
+}
+/* =======================================================
+   03 RESET ENGINE
+   BLOXIO RESET CORE
+======================================================= */
+
+
+/* =======================================================
+   UNIVERSAL
+======================================================= */
+
+*,
+*::before,
+*::after{
+
+margin:0;
+
+padding:0;
+
+box-sizing:border-box;
+
+min-width:0;
+
+border:0;
+
+outline:0;
+
+}
+
+
+/* =======================================================
+   HTML
+======================================================= */
+
+html{
+
+scroll-behavior:smooth;
+
+overflow-x:hidden;
+
+-webkit-tap-highlight-color:
+
+transparent;
+
+text-size-adjust:100%;
+
+-webkit-text-size-adjust:100%;
+
+font-synthesis:none;
+
+touch-action:manipulation;
+
+height:100%;
+
+}
+
+
+/* =======================================================
+   BODY
+======================================================= */
+
+body{
+
+min-height:100vh;
+
+min-height:100dvh;
+
+overflow-x:hidden;
+
+overscroll-behavior:none;
+
+-webkit-overflow-scrolling:touch;
+
+text-rendering:
+
+optimizeLegibility;
+
+position:relative;
+
+isolation:isolate;
+
+}
+
+
+/* =======================================================
+   ROOT APP
+======================================================= */
+
+#root,
+#__next,
+#app{
+
+min-height:100%;
+
+isolation:isolate;
+
+}
+
+
+/* =======================================================
+   MEDIA
+======================================================= */
+
+img,
+picture,
+video,
+canvas,
+svg{
+
+display:block;
+
+max-width:100%;
+
+height:auto;
+
+user-select:none;
+
+-webkit-user-drag:none;
+
+}
+
+
+/* =======================================================
+   VIDEO ENGINE
+======================================================= */
+
+video{
+
+object-fit:cover;
+
+pointer-events:none;
+
+background:
+
+transparent;
+
+}
+
+
+/* =======================================================
+   SVG
+======================================================= */
+
+svg{
+
+overflow:visible;
+
+flex-shrink:0;
+
+}
+
+
+/* =======================================================
+   FORM ENGINE
+======================================================= */
+
+input,
+button,
+textarea,
+select{
+
+font:inherit;
+
+color:inherit;
+
+background:none;
+
+border:none;
+
+outline:none;
+
+appearance:none;
+
+-webkit-appearance:none;
+
+border-radius:0;
+
+}
+
+
+/* =======================================================
+   BUTTON
+======================================================= */
+
+button{
+
+cursor:pointer;
+
+user-select:none;
+
+touch-action:manipulation;
+
+-webkit-user-select:none;
+
+transition:
+
+transform .18s ease,
+opacity .18s ease;
+
+}
+
+
+button:active{
+
+transform:
+
+scale(.98);
+
+}
+
+
+/* =======================================================
+   INPUT
+======================================================= */
+
+input{
+
+min-width:0;
+
+}
+
+
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button{
+
+-webkit-appearance:none;
+
+margin:0;
+
+}
+
+
+input[type=number]{
+
+appearance:textfield;
+
+}
+
+
+/* =======================================================
+   TEXTAREA
+======================================================= */
+
+textarea{
+
+resize:none;
+
+overflow:auto;
+
+}
+
+
+/* =======================================================
+   LINK
+======================================================= */
+
+a{
+
+color:inherit;
+
+text-decoration:none;
+
+cursor:pointer;
+
+}
+
+
+/* =======================================================
+   LIST
+======================================================= */
+
+ul,
+ol{
+
+list-style:none;
+
+}
+
+
+/* =======================================================
+   TABLE
+======================================================= */
+
+table{
+
+border-collapse:collapse;
+
+border-spacing:0;
+
+width:100%;
+
+}
+
+
+/* =======================================================
+   HR
+======================================================= */
+
+hr{
+
+height:1px;
+
+background:
+
+var(
+--border-soft
+);
+
+}
+
+
+/* =======================================================
+   QUOTES
+======================================================= */
+
+blockquote,
+q{
+
+quotes:none;
+
+}
+
+
+blockquote::before,
+blockquote::after,
+q::before,
+q::after{
+
+content:"";
+
+}
+
+
+/* =======================================================
+   HEADING
+======================================================= */
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6{
+
+font:inherit;
+
+font-weight:inherit;
+
+overflow-wrap:break-word;
+
+}
+
+
+/* =======================================================
+   PARAGRAPH
+======================================================= */
+
+p{
+
+overflow-wrap:break-word;
+
+text-wrap:pretty;
+
+}
+
+
+/* =======================================================
+   CRYPTO NUMBERS
+======================================================= */
+
+.price,
+.balance,
+.coin,
+.amount,
+.market-value,
+.wallet-value{
+
+font-variant-numeric:
+
+tabular-nums;
+
+}
+
+
+/* =======================================================
+   SELECTION
+======================================================= */
+
+::selection{
+
+background:
+
+var(
+--green
+);
+
+color:
+
+#000;
+
+}
+
+
+/* =======================================================
+   PLACEHOLDER
+======================================================= */
+
+::placeholder{
+
+color:
+
+var(
+--text-muted
+);
+
+opacity:1;
+
+}
+
+
+/* =======================================================
+   SCROLLBAR
+======================================================= */
+
+*{
+
+scrollbar-width:thin;
+
+scrollbar-color:
+
+var(
+--green-dark
+)
+
+transparent;
+
+}
+
+
+::-webkit-scrollbar{
+
+width:6px;
+
+height:6px;
+
+}
+
+
+::-webkit-scrollbar-track{
+
+background:
+
+transparent;
+
+}
+
+
+::-webkit-scrollbar-thumb{
+
+background:
+
+rgba(
+0,
+255,
+153,
+.35
+);
+
+border-radius:999px;
+
+}
+
+
+::-webkit-scrollbar-thumb:hover{
+
+background:
+
+rgba(
+0,
+255,
+153,
+.65
+);
+
+}
+
+
+/* =======================================================
+   DISABLED
+======================================================= */
+
+:disabled{
+
+opacity:.55;
+
+pointer-events:none;
+
+}
+
+
+/* =======================================================
+   HIDDEN
+======================================================= */
+
+[hidden]{
+
+display:none !important;
+
+}
+
+
+/* =======================================================
+   FOCUS ENGINE
+======================================================= */
+
+:focus-visible{
+
+box-shadow:
+
+0 0 0 2px
+
+rgba(
+0,
+255,
+153,
+0.45
+);
+
+border-radius:
+
+10px;
+
+}
+
+
+/* =======================================================
+   MOBILE FIX
+======================================================= */
+
+@media(
+hover:none
+){
+
+button:hover{
+
+transform:none;
+
+}
+
+}
+
+
+/* =======================================================
+   PERFORMANCE
+======================================================= */
+
+*{
+
+backface-visibility:hidden;
+
+-webkit-backface-visibility:hidden;
+
+}
+
+
+/* =======================================================
+   REDUCE MOTION
+======================================================= */
+
+@media(
+prefers-reduced-motion:reduce
+){
+
+*{
+
+animation:none !important;
+
+transition:none !important;
+
+scroll-behavior:auto;
+
+}
+ }
+/* =======================================================
+   04 APP CORE
+   BLOXIO APPLICATION ENGINE
+======================================================= */
+
+
+/* =======================================================
+   APP ROOT
+======================================================= */
+
+.app{
+
+position:relative;
+
+min-height:100vh;
+
+min-height:100dvh;
+
+background:
+
+var(--brand-primary);
+
+overflow-x:hidden;
+
+isolation:isolate;
+
+padding-top:
+
+calc(
+var(--safe-top)
++
+var(--header-height)
+);
+
+padding-bottom:
+
+calc(
+var(--bottom-nav)
++
+var(--safe-bottom)
+);
+
+}
+
+
+/* =======================================================
+   MAIN ENGINE
+======================================================= */
+
+main{
+
+position:relative;
+
+display:flex;
+
+flex-direction:column;
+
+width:100%;
+
+min-height:100%;
+
+z-index:var(--z-base);
+
+}
+
+
+/* =======================================================
+   PAGE WRAPPER
+======================================================= */
+
+.page{
+
+position:relative;
+
+width:100%;
+
+padding:
+
+var(--space-5);
+
+max-width:
+
+1400px;
+
+margin-inline:auto;
+
+animation:
+
+pageFade
+
+.35s
+
+var(--ease);
+
+}
+
+
+/* =======================================================
+   CONTENT
+======================================================= */
+
+.content{
+
+display:flex;
+
+flex-direction:column;
+
+gap:
+
+var(--space-5);
+
+width:100%;
+
+position:relative;
+
+z-index:2;
+
+}
+
+
+/* =======================================================
+   GRID ENGINE
+======================================================= */
+
+.grid{
+
+display:grid;
+
+gap:
+
+var(--space-5);
+
+}
+
+
+.grid-2{
+
+grid-template-columns:
+
+repeat(
+2,
+minmax(
+0,
+1fr
+)
+);
+
+}
+
+
+.grid-3{
+
+grid-template-columns:
+
+repeat(
+3,
+minmax(
+0,
+1fr
+)
+);
+
+}
+
+
+.grid-auto{
+
+grid-template-columns:
+
+repeat(
+
+auto-fit,
+
+minmax(
+260px,
+1fr
+)
+
+);
+
+}
+
+
+/* =======================================================
+   CONTAINER
+======================================================= */
+
+.container{
+
+width:100%;
+
+max-width:1280px;
+
+margin-inline:auto;
+
+padding-inline:
+
+var(--space-5);
+
+}
+
+
+/* =======================================================
+   SECTION
+======================================================= */
+
+.section{
+
+display:flex;
+
+flex-direction:column;
+
+gap:
+
+var(--space-4);
+
+margin-bottom:
+
+var(--space-7);
+
+}
+
+
+/* =======================================================
+   CARD WRAPPER
+======================================================= */
+
+.stack{
+
+display:flex;
+
+flex-direction:column;
+
+gap:
+
+var(--space-4);
+
+}
+
+
+.row{
+
+display:flex;
+
+align-items:center;
+
+gap:
+
+var(--space-3);
+
+}
+
+
+.column{
+
+display:flex;
+
+flex-direction:column;
+
+}
+
+
+/* =======================================================
+   BACKGROUND ENGINE
+======================================================= */
+
+.app-bg{
+
+position:fixed;
+
+inset:0;
+
+pointer-events:none;
+
+overflow:hidden;
+
+z-index:-5;
+
+background:
+
+linear-gradient(
+
+180deg,
+
+#081019,
+
+#0B0F14
+
+);
+
+}
+
+
+/* =======================================================
+   PARTICLES
+======================================================= */
+
+.bg-particles{
+
+position:absolute;
+
+inset:0;
+
+opacity:.22;
+
+mix-blend-mode:screen;
+
+object-fit:cover;
+
+}
+
+
+/* =======================================================
+   GRID VIDEO
+======================================================= */
+
+.bg-grid{
+
+position:absolute;
+
+inset:0;
+
+opacity:.06;
+
+mix-blend-mode:screen;
+
+object-fit:cover;
+
+}
+
+
+/* =======================================================
+   AMBIENT
+======================================================= */
+
+.bg-ambient{
+
+position:absolute;
+
+inset:0;
+
+opacity:.14;
+
+mix-blend-mode:screen;
+
+filter:
+
+blur(
+6px
+);
+
+}
+
+
+/* =======================================================
+   LIGHT SYSTEM
+======================================================= */
+
+.glow{
+
+position:absolute;
+
+border-radius:50%;
+
+filter:
+
+blur(
+100px
+);
+
+pointer-events:none;
+
+opacity:.10;
+
+}
+
+
+.glow-green{
+
+background:
+
+#00FF99;
+
+}
+
+
+.glow-gold{
+
+background:
+
+#FFD700;
+
+}
+
+
+.glow-blue{
+
+background:
+
+#3B82F6;
+
+}
+
+
+/* =======================================================
+   OVERLAY
+======================================================= */
+
+.overlay{
+
+position:absolute;
+
+inset:0;
+
+background:
+
+linear-gradient(
+
+180deg,
+
+transparent,
+
+rgba(
+0,
+0,
+0,
+.20
+)
+
+);
+
+pointer-events:none;
+
+}
+
+
+/* =======================================================
+   APP LOADER
+======================================================= */
+
+.app-loader{
+
+position:fixed;
+
+inset:0;
+
+display:flex;
+
+align-items:center;
+
+justify-content:center;
+
+background:
+
+var(--brand-primary);
+
+z-index:
+
+var(--z-loader);
+
+transition:
+
+opacity
+
+.30s
+
+ease;
+
+}
+
+
+.app-loader.hide{
+
+opacity:0;
+
+pointer-events:none;
+
+}
+
+
+/* =======================================================
+   SAFE ENGINE
+======================================================= */
+
+.safe{
+
+padding-left:
+
+max(
+var(--space-4),
+env(
+safe-area-inset-left
+)
+);
+
+padding-right:
+
+max(
+var(--space-4),
+env(
+safe-area-inset-right
+)
+);
+
+}
+
+
+/* =======================================================
+   SCROLL
+======================================================= */
+
+.scroll-y{
+
+overflow-y:auto;
+
+overflow-x:hidden;
+
+}
+
+
+.no-scroll{
+
+overflow:hidden;
+
+height:100vh;
+
+}
+
+
+/* =======================================================
+   FLEX HELPERS
+======================================================= */
+
+.center{
+
+display:flex;
+
+align-items:center;
+
+justify-content:center;
+
+}
+
+
+.between{
+
+display:flex;
+
+align-items:center;
+
+justify-content:space-between;
+
+}
+
+
+.end{
+
+display:flex;
+
+justify-content:flex-end;
+
+}
+
+
+/* =======================================================
+   MOBILE ENGINE
+======================================================= */
+
+@media(
+
+max-width:768px
+
+){
+
+.page{
+
+padding:
+
+var(--space-4);
+
+}
+
+
+.grid-2{
+
+grid-template-columns:
+
+1fr;
+
+}
+
+
+.grid-3{
+
+grid-template-columns:
+
+1fr;
+
+}
+
+
+.container{
+
+padding-inline:
+
+var(--space-4);
+
+}
+
+}
+
+
+/* =======================================================
+   TABLET
+======================================================= */
+
+@media(
+
+min-width:769px
+
+)
+
+and
+
+(
+
+max-width:1100px
+
+)
+
+{
+
+.grid-3{
+
+grid-template-columns:
+
+repeat(
+2,
+1fr
+);
+
+}
+
+}
+
+
+/* =======================================================
+   APP ANIMATION
+======================================================= */
+
+@keyframes pageFade{
+
+from{
+
+opacity:0;
+
+transform:
+
+translateY(
+10px
+);
+
+}
+
+to{
+
+opacity:1;
+
+transform:
+
+translateY(
+0
+);
+
+}
+ }
