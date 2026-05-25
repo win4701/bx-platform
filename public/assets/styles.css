@@ -7543,3 +7543,1365 @@ prefers-reduced-motion:reduce
 
   }
  }
+
+/* ==========================================================================
+   16 ANIMATIONS
+   Global Motion Engine
+   Wallet + Market + Casino + Mining + Airdrop
+   ========================================================================== */
+
+:root{
+
+  --motion-fast:.16s;
+
+  --motion-normal:.28s;
+
+  --motion-slow:.45s;
+
+  --motion-extra:.70s;
+
+  --ease-standard:
+
+    cubic-bezier(
+      .22,
+      .61,
+      .36,
+      1
+    );
+
+  --ease-soft:
+
+    cubic-bezier(
+      .25,
+      .10,
+      .25,
+      1
+    );
+
+  --ease-bounce:
+
+    cubic-bezier(
+      .34,
+      1.56,
+      .64,
+      1
+    );
+
+}
+
+
+/* ==========================================================
+   FADE
+========================================================== */
+
+.anim-fade-in{
+
+  animation:
+
+    fadeIn
+
+    var(--motion-normal)
+
+    var(--ease-standard)
+
+    both;
+
+}
+
+
+.anim-fade-out{
+
+  animation:
+
+    fadeOut
+
+    var(--motion-fast)
+
+    ease
+
+    both;
+
+}
+
+
+@keyframes fadeIn{
+
+  from{
+
+    opacity:0;
+
+  }
+
+  to{
+
+    opacity:1;
+
+  }
+
+}
+
+
+@keyframes fadeOut{
+
+  from{
+
+    opacity:1;
+
+  }
+
+  to{
+
+    opacity:0;
+
+  }
+
+}
+
+
+/* ==========================================================
+   SLIDE
+========================================================== */
+
+.anim-slide-up{
+
+  animation:
+
+    slideUp
+
+    .32s
+
+    var(--ease-standard)
+
+    both;
+
+}
+
+
+.anim-slide-down{
+
+  animation:
+
+    slideDown
+
+    .28s
+
+    var(--ease-standard)
+
+    both;
+
+}
+
+
+@keyframes slideUp{
+
+  from{
+
+    opacity:0;
+
+    transform:
+
+      translateY(16px);
+
+  }
+
+  to{
+
+    opacity:1;
+
+    transform:none;
+
+  }
+
+}
+
+
+@keyframes slideDown{
+
+  from{
+
+    opacity:0;
+
+    transform:
+
+      translateY(-12px);
+
+  }
+
+  to{
+
+    opacity:1;
+
+    transform:none;
+
+  }
+
+}
+
+
+/* ==========================================================
+   SCALE
+========================================================== */
+
+.anim-scale{
+
+  animation:
+
+    scaleIn
+
+    .22s
+
+    var(--ease-bounce)
+
+    both;
+
+}
+
+
+@keyframes scaleIn{
+
+  from{
+
+    opacity:0;
+
+    transform:
+
+      scale(.94);
+
+  }
+
+  to{
+
+    opacity:1;
+
+    transform:
+
+      scale(1);
+
+  }
+
+}
+
+
+/* ==========================================================
+   FLOAT
+========================================================== */
+
+.anim-float{
+
+  animation:
+
+    floatMove
+
+    4s
+
+    ease-in-out
+
+    infinite;
+
+}
+
+
+@keyframes floatMove{
+
+  0%{
+
+    transform:
+
+      translateY(0px);
+
+  }
+
+  50%{
+
+    transform:
+
+      translateY(-6px);
+
+  }
+
+  100%{
+
+    transform:
+
+      translateY(0px);
+
+  }
+
+}
+
+
+/* ==========================================================
+   PULSE
+========================================================== */
+
+.anim-pulse{
+
+  animation:
+
+    pulse
+
+    2s
+
+    infinite;
+
+}
+
+
+@keyframes pulse{
+
+  0%{
+
+    opacity:1;
+
+  }
+
+  50%{
+
+    opacity:.65;
+
+  }
+
+  100%{
+
+    opacity:1;
+
+  }
+
+}
+
+
+/* ==========================================================
+   GLOW
+========================================================== */
+
+.anim-glow{
+
+  animation:
+
+    glowPulse
+
+    2.5s
+
+    ease-in-out
+
+    infinite;
+
+}
+
+
+@keyframes glowPulse{
+
+  0%{
+
+    box-shadow:
+
+      0 0 0
+
+      rgba(
+        0,
+        224,
+        255,
+        0
+      );
+
+  }
+
+  50%{
+
+    box-shadow:
+
+      0 0 24px
+
+      rgba(
+        0,
+        224,
+        255,
+        .18
+      );
+
+  }
+
+  100%{
+
+    box-shadow:
+
+      0 0 0
+
+      rgba(
+        0,
+        224,
+        255,
+        0
+      );
+
+  }
+
+}
+
+
+/* ==========================================================
+   LOADER
+========================================================== */
+
+.anim-spin{
+
+  animation:
+
+    spin
+
+    1s
+
+    linear
+
+    infinite;
+
+}
+
+
+@keyframes spin{
+
+  from{
+
+    transform:
+
+      rotate(0deg);
+
+  }
+
+  to{
+
+    transform:
+
+      rotate(360deg);
+
+  }
+
+}
+
+
+/* ==========================================================
+   SHIMMER
+========================================================== */
+
+.anim-shimmer{
+
+  position:relative;
+
+  overflow:hidden;
+
+}
+
+
+.anim-shimmer::after{
+
+  content:"";
+
+  position:absolute;
+
+  inset:0;
+
+  transform:
+
+    translateX(-100%);
+
+  background:
+
+    linear-gradient(
+
+      90deg,
+
+      transparent,
+
+      rgba(
+        255,
+        255,
+        255,
+        .08
+      ),
+
+      transparent
+
+    );
+
+  animation:
+
+    shimmer
+
+    1.5s
+
+    linear
+
+    infinite;
+
+}
+
+
+@keyframes shimmer{
+
+  to{
+
+    transform:
+
+      translateX(100%);
+
+  }
+
+}
+
+
+/* ==========================================================
+   TOAST
+========================================================== */
+
+.toast-enter{
+
+  animation:
+
+    toastShow
+
+    .22s
+
+    var(--ease-bounce)
+
+    both;
+
+}
+
+
+.toast-exit{
+
+  animation:
+
+    toastHide
+
+    .18s
+
+    ease
+
+    both;
+
+}
+
+
+@keyframes toastShow{
+
+  from{
+
+    opacity:0;
+
+    transform:
+
+      translateY(18px)
+
+      scale(.96);
+
+  }
+
+  to{
+
+    opacity:1;
+
+    transform:none;
+
+  }
+
+}
+
+
+@keyframes toastHide{
+
+  to{
+
+    opacity:0;
+
+    transform:
+
+      translateY(12px);
+
+  }
+
+}
+
+
+/* ==========================================================
+   NUMBER UPDATE
+========================================================== */
+
+.anim-flash-green{
+
+  animation:
+
+    flashGreen
+
+    .45s
+
+    ease;
+
+}
+
+
+.anim-flash-red{
+
+  animation:
+
+    flashRed
+
+    .45s
+
+    ease;
+
+}
+
+
+@keyframes flashGreen{
+
+  50%{
+
+    color:
+
+      var(--green);
+
+  }
+
+}
+
+
+@keyframes flashRed{
+
+  50%{
+
+    color:
+
+      var(--red);
+
+  }
+
+}
+
+
+/* ==========================================================
+   VIEW SWITCH
+========================================================== */
+
+.view.active{
+
+  animation:
+
+    viewOpen
+
+    .24s
+
+    var(--ease-standard);
+
+}
+
+
+@keyframes viewOpen{
+
+  from{
+
+    opacity:0;
+
+  }
+
+  to{
+
+    opacity:1;
+
+  }
+
+}
+
+
+/* ==========================================================
+   CARD HOVER
+========================================================== */
+
+.card,
+
+.wallet-row,
+
+.casino-game-card,
+
+.mining-plan{
+
+  transition:
+
+    transform
+
+    var(--motion-fast)
+
+    var(--ease-standard),
+
+    box-shadow
+
+    var(--motion-fast)
+
+    var(--ease-standard);
+
+}
+
+
+/* ==========================================================
+   ACCESSIBILITY
+========================================================== */
+
+@media(prefers-reduced-motion:reduce){
+
+  *,
+
+  *::before,
+
+  *::after{
+
+    animation:none !important;
+
+    transition:none !important;
+
+    scroll-behavior:auto !important;
+
+  }
+}
+
+/* ==========================================================================
+   17 UTILITIES
+   Atomic Utility Engine
+   Reusable Helpers Layer
+   ========================================================================== */
+
+.d-none{
+
+  display:none !important;
+
+}
+
+.d-block{
+
+  display:block !important;
+
+}
+
+.d-inline{
+
+  display:inline !important;
+
+}
+
+.d-inline-block{
+
+  display:inline-block !important;
+
+}
+
+.d-flex{
+
+  display:flex !important;
+
+}
+
+.d-grid{
+
+  display:grid !important;
+
+}
+
+
+/* ==========================================================
+   FLEX
+========================================================== */
+
+.flex-col{
+
+  flex-direction:column !important;
+
+}
+
+.flex-wrap{
+
+  flex-wrap:wrap !important;
+
+}
+
+.items-center{
+
+  align-items:center !important;
+
+}
+
+.items-start{
+
+  align-items:flex-start !important;
+
+}
+
+.items-end{
+
+  align-items:flex-end !important;
+
+}
+
+.justify-center{
+
+  justify-content:center !important;
+
+}
+
+.justify-between{
+
+  justify-content:space-between !important;
+
+}
+
+.justify-end{
+
+  justify-content:flex-end !important;
+
+}
+
+.flex-1{
+
+  flex:1 !important;
+
+}
+
+.shrink-0{
+
+  flex-shrink:0 !important;
+
+}
+
+.gap-1{
+
+  gap:4px !important;
+
+}
+
+.gap-2{
+
+  gap:8px !important;
+
+}
+
+.gap-3{
+
+  gap:12px !important;
+
+}
+
+.gap-4{
+
+  gap:16px !important;
+
+}
+
+
+/* ==========================================================
+   GRID
+========================================================== */
+
+.grid-2{
+
+  grid-template-columns:
+
+    repeat(
+      2,
+      1fr
+    );
+
+}
+
+.grid-3{
+
+  grid-template-columns:
+
+    repeat(
+      3,
+      1fr
+    );
+
+}
+
+.grid-4{
+
+  grid-template-columns:
+
+    repeat(
+      4,
+      1fr
+    );
+
+}
+
+
+/* ==========================================================
+   WIDTH
+========================================================== */
+
+.w-full{
+
+  width:100% !important;
+
+}
+
+.h-full{
+
+  height:100% !important;
+
+}
+
+.min-w-0{
+
+  min-width:0 !important;
+
+}
+
+
+/* ==========================================================
+   SPACING
+========================================================== */
+
+.p-1{
+
+  padding:4px !important;
+
+}
+
+.p-2{
+
+  padding:8px !important;
+
+}
+
+.p-3{
+
+  padding:12px !important;
+
+}
+
+.p-4{
+
+  padding:16px !important;
+
+}
+
+.p-5{
+
+  padding:20px !important;
+
+}
+
+.m-0{
+
+  margin:0 !important;
+
+}
+
+.mt-1{
+
+  margin-top:4px !important;
+
+}
+
+.mt-2{
+
+  margin-top:8px !important;
+
+}
+
+.mt-3{
+
+  margin-top:12px !important;
+
+}
+
+.mt-4{
+
+  margin-top:16px !important;
+
+}
+
+.mb-2{
+
+  margin-bottom:8px !important;
+
+}
+
+.mb-3{
+
+  margin-bottom:12px !important;
+
+}
+
+.mx-auto{
+
+  margin-inline:auto !important;
+
+}
+
+
+/* ==========================================================
+   TYPOGRAPHY
+========================================================== */
+
+.text-center{
+
+  text-align:center !important;
+
+}
+
+.text-left{
+
+  text-align:left !important;
+
+}
+
+.text-right{
+
+  text-align:right !important;
+
+}
+
+.text-xs{
+
+  font-size:12px !important;
+
+}
+
+.text-sm{
+
+  font-size:14px !important;
+
+}
+
+.text-md{
+
+  font-size:16px !important;
+
+}
+
+.text-lg{
+
+  font-size:20px !important;
+
+}
+
+.text-xl{
+
+  font-size:28px !important;
+
+}
+
+.font-700{
+
+  font-weight:700 !important;
+
+}
+
+.font-900{
+
+  font-weight:900 !important;
+
+}
+
+.uppercase{
+
+  text-transform:uppercase !important;
+
+}
+
+.nowrap{
+
+  white-space:nowrap !important;
+
+}
+
+.break-all{
+
+  word-break:break-all !important;
+
+}
+
+
+/* ==========================================================
+   COLORS
+========================================================== */
+
+.text-primary{
+
+  color:var(--color-primary) !important;
+
+}
+
+.text-success{
+
+  color:var(--green) !important;
+
+}
+
+.text-danger{
+
+  color:var(--red) !important;
+
+}
+
+.text-muted{
+
+  color:var(--text-muted) !important;
+
+}
+
+.bg-surface{
+
+  background:var(--surface-3) !important;
+
+}
+
+.bg-glass{
+
+  background:var(--glass) !important;
+
+}
+
+
+/* ==========================================================
+   BORDER
+========================================================== */
+
+.border{
+
+  border:
+
+    1px solid
+
+    var(--border) !important;
+
+}
+
+.border-soft{
+
+  border:
+
+    1px solid
+
+    var(--border-soft) !important;
+
+}
+
+.rounded-sm{
+
+  border-radius:
+
+    var(--radius-sm) !important;
+
+}
+
+.rounded-lg{
+
+  border-radius:
+
+    var(--radius-lg) !important;
+
+}
+
+.rounded-xl{
+
+  border-radius:
+
+    var(--radius-xl) !important;
+
+}
+
+.round-full{
+
+  border-radius:
+
+    999px !important;
+
+}
+
+
+/* ==========================================================
+   SHADOW
+========================================================== */
+
+.shadow-sm{
+
+  box-shadow:
+
+    var(--shadow-sm) !important;
+
+}
+
+.shadow-md{
+
+  box-shadow:
+
+    var(--shadow-md) !important;
+
+}
+
+.shadow-lg{
+
+  box-shadow:
+
+    var(--shadow-lg) !important;
+
+}
+
+
+/* ==========================================================
+   POSITION
+========================================================== */
+
+.relative{
+
+  position:relative !important;
+
+}
+
+.absolute{
+
+  position:absolute !important;
+
+}
+
+.fixed{
+
+  position:fixed !important;
+
+}
+
+
+/* ==========================================================
+   OVERFLOW
+========================================================== */
+
+.overflow-hidden{
+
+  overflow:hidden !important;
+
+}
+
+.overflow-auto{
+
+  overflow:auto !important;
+
+}
+
+.scroll-x{
+
+  overflow-x:auto !important;
+
+}
+
+.scroll-y{
+
+  overflow-y:auto !important;
+
+}
+
+
+/* ==========================================================
+   VISIBILITY
+========================================================== */
+
+.hidden{
+
+  display:none !important;
+
+}
+
+.invisible{
+
+  visibility:hidden !important;
+
+}
+
+.opacity-0{
+
+  opacity:0 !important;
+
+}
+
+.opacity-50{
+
+  opacity:.5 !important;
+
+}
+
+.opacity-100{
+
+  opacity:1 !important;
+
+}
+
+
+/* ==========================================================
+   INTERACTION
+========================================================== */
+
+.pointer{
+
+  cursor:pointer !important;
+
+}
+
+.no-select{
+
+  user-select:none !important;
+
+}
+
+.no-pointer{
+
+  pointer-events:none !important;
+
+}
+
+
+/* ==========================================================
+   PERFORMANCE
+========================================================== */
+
+.gpu{
+
+  transform:
+
+    translateZ(0);
+
+}
+
+.contain{
+
+  contain:
+
+    layout
+
+    paint;
+
+}
+
+
+/* ==========================================================
+   MOBILE
+========================================================== */
+
+@media(max-width:768px){
+
+  .mobile-hidden{
+
+    display:none !important;
+
+  }
+
+}
+
+
+@media(min-width:769px){
+
+  .desktop-hidden{
+
+    display:none !important;
+
+  }
+ }
