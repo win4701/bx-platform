@@ -7279,3 +7279,1761 @@ min-width:1200px
   min-width:0;
 
 }
+/* ==========================================================================
+   13 MARKET
+   COMPLETE MARKET SYSTEM
+   Enterprise Crypto Exchange / PWA / Mobile Architecture
+   ========================================================================== */
+
+/* ======================================================
+   MARKET FOUNDATION
+====================================================== */
+
+#market{
+
+  position:relative;
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:
+
+  var(--space-14);
+
+  width:100%;
+
+  min-height:100%;
+
+}
+
+/* ======================================================
+   MARKET HEADER
+====================================================== */
+
+.market-header{
+
+  display:flex;
+
+  align-items:flex-start;
+
+  justify-content:space-between;
+
+  gap:
+
+  var(--space-12);
+
+}
+
+.pair-title{
+
+  display:flex;
+
+  align-items:center;
+
+  gap:
+
+  6px;
+
+}
+
+.base{
+
+  font-weight:
+
+  var(--weight-black);
+
+}
+
+.arrow{
+
+  color:
+
+  var(--token-text-muted);
+
+}
+
+.quote{
+
+  color:
+
+  var(--brand-primary);
+
+}
+
+.price-box{
+
+  text-align:right;
+
+}
+
+.price-main{
+
+  line-height:1;
+
+}
+
+.approx{
+
+  color:
+
+  var(--token-text-muted);
+
+  font-size:
+
+  var(--font-sm);
+
+}
+
+/* ======================================================
+   WALLET BOX
+====================================================== */
+
+.wallet-box{
+
+  display:flex;
+
+  align-items:center;
+
+  justify-content:space-between;
+
+  gap:
+
+  var(--space-10);
+
+  padding:
+
+  14px;
+
+  border-radius:
+
+  var(--radius-md);
+
+  background:
+
+  rgba(
+  255,
+ 255,
+ 255,
+ .02
+ );
+
+  border:
+
+  1px solid
+  var(--border-soft);
+
+}
+
+.wallet-box.compact{
+
+  min-height:
+
+  58px;
+
+}
+
+/* ======================================================
+   PAIRS
+====================================================== */
+
+.pair-grid{
+
+  display:grid;
+
+  grid-template-columns:
+
+  repeat(
+  5,
+  minmax(
+  0,
+  1fr
+  )
+  );
+
+  gap:
+
+  8px;
+
+}
+
+/* ======================================================
+   HERO
+====================================================== */
+
+.market-hero{
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:
+
+  18px;
+
+}
+
+.market-identity{
+
+  display:flex;
+
+  align-items:center;
+
+  gap:
+
+  12px;
+
+}
+
+.market-logo{
+
+  width:52px;
+
+  height:52px;
+
+  display:flex;
+
+  align-items:center;
+
+  justify-content:center;
+
+  border-radius:
+
+  50%;
+
+  background:
+
+  rgba(
+  54,
+ 226,
+ 123,
+ .10
+ );
+
+}
+
+.market-title{
+
+  display:flex;
+
+  flex-direction:column;
+
+}
+
+.market-title span{
+
+  color:
+
+  var(--token-text-muted);
+
+}
+
+.market-price-box{
+
+  display:flex;
+
+  align-items:flex-end;
+
+  justify-content:space-between;
+
+  gap:
+
+  var(--space-10);
+
+}
+
+.market-change-badge{
+
+  min-height:
+
+  34px;
+
+  display:flex;
+
+  align-items:center;
+
+  padding:
+
+  0
+  12px;
+
+  border-radius:
+
+  var(--radius-pill);
+
+}
+
+.market-change-badge.is-up{
+
+  color:
+
+  var(--token-market-up);
+
+}
+
+.market-change-badge.is-down{
+
+  color:
+
+  var(--token-market-down);
+
+}
+
+/* ======================================================
+   TOOLBAR
+====================================================== */
+
+.market-toolbar{
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:
+
+  12px;
+
+}
+
+.market-timeframes{
+
+  display:flex;
+
+  flex-wrap:wrap;
+
+  gap:
+
+  8px;
+
+}
+
+.market-chart-modes{
+
+  display:flex;
+
+  gap:
+
+  8px;
+
+}
+
+/* ======================================================
+   CHART
+====================================================== */
+
+.market-chart-card{
+
+  position:relative;
+
+  overflow:hidden;
+
+  border-radius:
+
+  var(--radius-lg);
+
+}
+
+.market-chart-card--pro{
+
+  background:
+
+  rgba(
+  255,
+ 255,
+ 255,
+ .02
+ );
+
+  border:
+
+  1px solid
+  var(--border-soft);
+
+}
+
+.market-chart-topbar{
+
+  display:flex;
+
+  justify-content:space-between;
+
+  padding:
+
+  16px;
+
+}
+
+.chart-top-left{
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:
+
+  6px;
+
+}
+
+.chart-top-right{
+
+  display:flex;
+
+  align-items:flex-start;
+
+}
+
+.market-chart-shell{
+
+  position:relative;
+
+  overflow:hidden;
+
+}
+
+.market-chart-shell--full{
+
+  min-height:
+
+  300px;
+
+}
+
+#marketChart{
+
+  width:100%;
+
+  height:300px;
+
+}
+
+.chart-glow{
+
+  position:absolute;
+
+  inset:auto 0 0 0;
+
+  height:90px;
+
+  pointer-events:none;
+
+}
+
+.chart-overlay{
+
+  position:absolute;
+
+  inset:0;
+
+  pointer-events:none;
+
+}
+
+.market-tooltip{
+
+  position:absolute;
+
+  z-index:
+
+  3;
+
+  padding:
+
+  8px
+  10px;
+
+  border-radius:
+
+  var(--radius-sm);
+
+  background:
+
+  rgba(
+  6,
+ 11,
+ 18,
+ .95
+ );
+
+  border:
+
+  1px solid
+  var(--border-base);
+
+}
+
+.market-crosshair{
+
+  position:absolute;
+
+  left:14px;
+
+  bottom:14px;
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:
+
+  4px;
+
+}
+
+.market-chart-footer{
+
+  display:grid;
+
+  grid-template-columns:
+
+  repeat(
+  4,
+  minmax(
+  0,
+  1fr
+  )
+  );
+
+  gap:
+
+  10px;
+
+  padding:
+
+  14px
+  16px;
+
+}
+
+.chart-footer-item{
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:
+
+  4px;
+
+}
+
+.chart-footer-item span{
+
+  color:
+
+  var(--token-text-muted);
+
+}
+
+/* ======================================================
+   STATS
+====================================================== */
+
+.market-stats-grid{
+
+  display:grid;
+
+  grid-template-columns:
+
+  repeat(
+  2,
+  minmax(
+  0,
+  1fr
+  )
+  );
+
+  gap:
+
+  10px;
+
+}
+
+.stat-card{
+
+  padding:
+
+  14px;
+
+  border-radius:
+
+  var(--radius-md);
+
+  background:
+
+  rgba(
+  255,
+ 255,
+ 255,
+ .02
+ );
+
+  border:
+
+  1px solid
+  var(--border-soft);
+
+}
+
+.stat-card span{
+
+  display:block;
+
+  margin-bottom:
+
+  8px;
+
+  color:
+
+  var(--token-text-muted);
+
+}
+
+/* ======================================================
+   OHLC
+====================================================== */
+
+.market-ohlc{
+
+  display:grid;
+
+  grid-template-columns:
+
+  repeat(
+  5,
+  minmax(
+  0,
+  1fr
+  )
+  );
+
+  gap:
+
+  10px;
+
+}
+
+.ohlc-item{
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:
+
+  5px;
+
+}
+
+/* ======================================================
+   TRADE
+====================================================== */
+
+.trade-box{
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:
+
+  16px;
+
+}
+
+.trade-tabs{
+
+  display:grid;
+
+  grid-template-columns:
+
+  repeat(
+  2,
+  1fr
+  );
+
+  gap:
+
+  8px;
+
+}
+
+.trade-form{
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:
+
+  14px;
+
+}
+
+.percent-row{
+
+  display:grid;
+
+  grid-template-columns:
+
+  repeat(
+  4,
+  1fr
+  );
+
+  gap:
+
+  8px;
+
+}
+
+.trade-stats{
+
+  display:grid;
+
+  gap:
+
+  8px;
+
+}
+
+/* ======================================================
+   ORDERBOOK
+====================================================== */
+
+.orderbook-card{
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:
+
+  14px;
+
+}
+
+.orderbook-head{
+
+  display:flex;
+
+  justify-content:space-between;
+
+}
+
+.ob-grid-head{
+
+  display:grid;
+
+  grid-template-columns:
+
+  repeat(
+  3,
+  1fr
+  );
+
+  padding-bottom:
+
+  10px;
+
+}
+
+.ob-grid-body{
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:
+
+  8px;
+
+}
+
+.ob-grid-row{
+
+  display:grid;
+
+  grid-template-columns:
+
+  repeat(
+  3,
+  1fr
+  );
+
+}
+
+/* ======================================================
+   COLORS
+====================================================== */
+
+.buy{
+
+  color:
+
+  var(--token-market-up);
+
+}
+
+.sell{
+
+  color:
+
+  var(--token-market-down);
+
+}
+
+/* ======================================================
+   MOBILE
+====================================================== */
+
+@media(
+max-width:520px
+){
+
+  .pair-grid{
+
+    grid-template-columns:
+
+    repeat(
+    3,
+    1fr
+    );
+
+  }
+
+  .market-ohlc{
+
+    grid-template-columns:
+
+    repeat(
+    2,
+    1fr
+    );
+
+  }
+
+}
+
+/* ======================================================
+   TABLET
+====================================================== */
+
+@media(
+min-width:768px
+){
+
+  .market-stats-grid{
+
+    grid-template-columns:
+
+    repeat(
+    4,
+    1fr
+    );
+
+  }
+
+}
+
+/* ======================================================
+   DESKTOP
+====================================================== */
+
+@media(
+min-width:1100px
+){
+
+  .market-cards{
+
+    display:grid;
+
+    grid-template-columns:
+
+    minmax(
+    0,
+    1fr
+    );
+
+  }
+
+}
+
+/* ======================================================
+   SAFE
+====================================================== */
+
+#market *{
+
+  min-width:0;
+
+}
+/* ==========================================================================
+   14 MINING
+   COMPLETE MINING SYSTEM
+   Enterprise Crypto Exchange / PWA / Mobile Architecture
+   ========================================================================== */
+
+/* ======================================================
+   FOUNDATION
+====================================================== */
+
+#mining{
+
+  position:relative;
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:
+
+  var(--space-14);
+
+  width:100%;
+
+  min-height:100%;
+
+}
+
+/* ======================================================
+   HERO
+====================================================== */
+
+.mining-top{
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:
+
+  18px;
+
+}
+
+.mining-top-head{
+
+  display:flex;
+
+  align-items:flex-start;
+
+  justify-content:space-between;
+
+  gap:
+
+  14px;
+
+}
+
+.mining-top-head p{
+
+  color:
+
+  var(--token-text-muted);
+
+}
+
+.mining-overview-grid{
+
+  display:grid;
+
+  grid-template-columns:
+
+  repeat(
+  2,
+  minmax(
+  0,
+  1fr
+  )
+  );
+
+  gap:
+
+  10px;
+
+}
+
+.mining-stat{
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:
+
+  8px;
+
+  padding:
+
+  14px;
+
+  border-radius:
+
+  var(--radius-md);
+
+  background:
+
+  rgba(
+  255,
+ 255,
+ 255,
+ .02
+ );
+
+  border:
+
+  1px solid
+  var(--border-soft);
+
+}
+
+.mining-stat span{
+
+  color:
+
+  var(--token-text-muted);
+
+}
+
+.mining-stat strong{
+
+  color:
+
+  var(--token-mining-profit);
+
+}
+
+/* ======================================================
+   TABS
+====================================================== */
+
+.mining-tabs{
+
+  display:grid;
+
+  grid-template-columns:
+
+  repeat(
+  3,
+  1fr
+  );
+
+  gap:
+
+  10px;
+
+}
+
+.mining-tabs button{
+
+  min-height:
+
+  64px;
+
+  display:flex;
+
+  align-items:center;
+
+  justify-content:center;
+
+  gap:
+
+  10px;
+
+  border-radius:
+
+  var(--radius-md);
+
+  background:
+
+  var(--surface-soft);
+
+  border:
+
+  1px solid
+  var(--border-soft);
+
+}
+
+.mining-tabs button.active{
+
+  border-color:
+
+  var(--border-active);
+
+}
+
+.mining-tabs img{
+
+  width:22px;
+
+  height:22px;
+
+  object-fit:contain;
+
+}
+
+/* ======================================================
+   SHELL
+====================================================== */
+
+.mining-shell{
+
+  display:grid;
+
+  gap:
+
+  var(--space-14);
+
+}
+
+.mining-main-col{
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:
+
+  14px;
+
+}
+
+.mining-side-col{
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:
+
+  14px;
+
+}
+
+/* ======================================================
+   PLAN HEADER
+====================================================== */
+
+.mining-plans-head{
+
+  display:flex;
+
+  align-items:flex-start;
+
+  justify-content:space-between;
+
+  gap:
+
+  14px;
+
+}
+
+.mining-plans-head p{
+
+  color:
+
+  var(--token-text-muted);
+
+}
+
+.mining-section-kicker{
+
+  display:block;
+
+}
+
+/* ======================================================
+   PLAN GRID
+====================================================== */
+
+.mining-plans{
+
+  display:grid;
+
+  gap:
+
+  14px;
+
+}
+
+.mining-plans--classic{
+
+  grid-template-columns:
+
+  repeat(
+  auto-fit,
+  minmax(
+  240px,
+  1fr
+  )
+  );
+
+}
+
+.mining-plan-card{
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:
+
+  14px;
+
+}
+
+.mining-plan-top{
+
+  display:flex;
+
+  justify-content:space-between;
+
+  gap:
+
+  12px;
+
+}
+
+.mining-plan-yield{
+
+  color:
+
+  var(--token-mining-profit);
+
+}
+
+.mining-plan-cycle{
+
+  color:
+
+  var(--token-text-muted);
+
+}
+
+.mining-plan-grid{
+
+  display:grid;
+
+  grid-template-columns:
+
+  repeat(
+  2,
+  1fr
+  );
+
+  gap:
+
+  10px;
+
+}
+
+.mining-plan-grid div{
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:
+
+  4px;
+
+}
+
+.mining-plan-grid span{
+
+  color:
+
+  var(--token-text-muted);
+
+}
+
+.mining-plan-actions{
+
+  display:flex;
+
+}
+
+/* ======================================================
+   ACTIVE PANEL
+====================================================== */
+
+.mining-active-card{
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:
+
+  16px;
+
+}
+
+.mining-active-head{
+
+  display:flex;
+
+  align-items:flex-start;
+
+  justify-content:space-between;
+
+  gap:
+
+  12px;
+
+}
+
+.mining-badge{
+
+  min-width:
+
+  92px;
+
+  min-height:
+
+  32px;
+
+  display:flex;
+
+  align-items:center;
+
+  justify-content:center;
+
+  border-radius:
+
+  var(--radius-pill);
+
+}
+
+.mining-badge.idle{
+
+  background:
+
+  rgba(
+  255,
+ 255,
+ 255,
+ .04
+ );
+
+}
+
+.mining-badge.active{
+
+  background:
+
+  rgba(
+  54,
+ 226,
+ 123,
+ .12
+ );
+
+  color:
+
+  var(--token-mining-profit);
+
+}
+
+.mining-active-main{
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:
+
+  12px;
+
+}
+
+.mining-active-row{
+
+  display:flex;
+
+  justify-content:space-between;
+
+  gap:
+
+  12px;
+
+}
+
+.mining-active-row span{
+
+  color:
+
+  var(--token-text-muted);
+
+}
+
+.mining-active-row strong{
+
+  text-align:right;
+
+}
+
+/* ======================================================
+   PROGRESS
+====================================================== */
+
+.mining-progress-wrap{
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:
+
+  10px;
+
+}
+
+.mining-progress-top{
+
+  display:flex;
+
+  justify-content:space-between;
+
+}
+
+.mining-progress-bar{
+
+  overflow:hidden;
+
+  height:
+
+  8px;
+
+  border-radius:
+
+  999px;
+
+  background:
+
+  rgba(
+  255,
+ 255,
+ 255,
+ .05
+ );
+
+}
+
+#miningProgressFill{
+
+  width:0;
+
+  height:100%;
+
+  background:
+
+  linear-gradient(
+  90deg,
+
+  var(--token-mining-profit),
+
+  var(--token-mining-progress)
+
+  );
+
+}
+
+.mining-progress-hint{
+
+  color:
+
+  var(--token-text-muted);
+
+}
+
+/* ======================================================
+   ACTIONS
+====================================================== */
+
+.mining-active-actions{
+
+  display:grid;
+
+  grid-template-columns:
+
+  repeat(
+  2,
+  1fr
+  );
+
+  gap:
+
+  10px;
+
+}
+
+/* ======================================================
+   SUBSCRIBE
+====================================================== */
+
+.mining-sub-panel{
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:
+
+  16px;
+
+  padding:
+
+  18px;
+
+  border-radius:
+
+  var(--radius-lg);
+
+  background:
+
+  var(--surface-base);
+
+  border:
+
+  1px solid
+  var(--border-base);
+
+}
+
+.mining-sub-head{
+
+  display:flex;
+
+  justify-content:space-between;
+
+  gap:
+
+  12px;
+
+}
+
+.mining-sub-body{
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:
+
+  14px;
+
+}
+
+.mining-balance-info{
+
+  color:
+
+  var(--token-text-muted);
+
+}
+
+.mining-quick-row{
+
+  display:grid;
+
+  grid-template-columns:
+
+  repeat(
+  3,
+  1fr
+  );
+
+  gap:
+
+  8px;
+
+}
+
+.mining-sub-summary{
+
+  padding:
+
+  14px;
+
+  border-radius:
+
+  var(--radius-md);
+
+  background:
+
+  rgba(
+  255,
+ 255,
+ 255,
+ .02
+ );
+
+}
+
+/* ======================================================
+   HISTORY
+====================================================== */
+
+.mining-history-card{
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:
+
+  14px;
+
+}
+
+.mining-history-head{
+
+  display:flex;
+
+  justify-content:space-between;
+
+  gap:
+
+  12px;
+
+}
+
+.mining-history-list{
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:
+
+  10px;
+
+}
+
+.mining-history-item{
+
+  padding:
+
+  14px;
+
+  border-radius:
+
+  var(--radius-md);
+
+  background:
+
+  rgba(
+  255,
+ 255,
+ 255,
+ .02
+ );
+
+}
+
+.mining-history-empty{
+
+  text-align:center;
+
+  color:
+
+  var(--token-text-muted);
+
+  padding:
+
+  20px;
+
+}
+
+/* ======================================================
+   PANEL CLOSE
+====================================================== */
+
+.mining-panel-close{
+
+  width:38px;
+
+  height:38px;
+
+  display:flex;
+
+  align-items:center;
+
+  justify-content:center;
+
+  border-radius:
+
+  var(--radius-pill);
+
+}
+
+/* ======================================================
+   MOBILE
+====================================================== */
+
+@media(
+max-width:640px
+){
+
+  .mining-top-head{
+
+    flex-direction:column;
+
+  }
+
+  .mining-plans-head{
+
+    flex-direction:column;
+
+  }
+
+}
+
+/* ======================================================
+   DESKTOP
+====================================================== */
+
+@media(
+min-width:1100px
+){
+
+  .mining-shell{
+
+    grid-template-columns:
+
+    minmax(
+    0,
+    2fr
+    )
+
+    minmax(
+    340px,
+    1fr
+    );
+
+  }
+
+}
+
+/* ======================================================
+   SAFE
+====================================================== */
+
+#mining *{
+
+  min-width:0;
+
+}
+
+/* ======================================================
+   COMPATIBILITY
+====================================================== */
+
+.mining-hidden{
+
+  display:none !important;
+
+   }
