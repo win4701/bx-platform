@@ -13350,3 +13350,251 @@ code{
   display:none !important;
 
 }
+/* =====================================
+SCROLL FIX
+===================================== */
+
+html{
+
+overflow-x:hidden;
+
+overflow-y:auto;
+
+height:auto;
+
+scroll-behavior:smooth;
+
+}
+
+body{
+
+overflow-x:hidden;
+
+overflow-y:auto;
+
+height:auto;
+
+min-height:100dvh;
+
+-webkit-overflow-scrolling:touch;
+
+touch-action:pan-y;
+
+}
+
+/* =====================================
+APP FIX
+===================================== */
+
+#app-shell,
+#app{
+
+min-height:100dvh;
+
+overflow:visible;
+
+position:relative;
+
+}
+
+/* =====================================
+VIEW FIX
+===================================== */
+
+.view{
+
+display:none;
+
+width:100%;
+
+min-height:auto;
+
+overflow:visible;
+
+}
+
+.view.active{
+
+display:block;
+
+}
+
+/* =====================================
+CONTAINER FIX
+===================================== */
+
+.app-container{
+
+overflow:visible;
+
+padding-bottom:
+
+calc(
+var(--mobile-nav-height)
++ 120px
+);
+
+}
+
+/* =====================================
+CARD CLICK FIX
+===================================== */
+
+.card,
+.wallet-panel,
+.wallet-top,
+.wallet-balances,
+.wallet-intelligence,
+.market-hero,
+.trade-box,
+.orderbook-card,
+.mining-top,
+.airdrop-box,
+.casino-game-card,
+.mining-plan-card{
+
+pointer-events:auto;
+
+cursor:pointer;
+
+position:relative;
+
+z-index:5;
+
+}
+
+/* =====================================
+PSEUDO BLOCK FIX
+===================================== */
+
+.card::before,
+.card::after,
+.wallet-panel::before,
+.wallet-panel::after,
+.wallet-top::before,
+.wallet-top::after,
+.market-hero::before,
+.market-hero::after{
+
+pointer-events:none;
+
+}
+
+/* =====================================
+BACKGROUND BLOCK FIX
+===================================== */
+
+.bg-layer,
+.grid-overlay,
+.ambient-glow,
+.bg-video{
+
+pointer-events:none;
+
+}
+
+/* =====================================
+HEADER FIX
+===================================== */
+
+.app-header{
+
+position:sticky;
+
+top:0;
+
+z-index:200;
+
+}
+
+/* =====================================
+BOTTOM NAV FIX
+===================================== */
+
+.bottom-nav{
+
+position:fixed;
+
+bottom:0;
+
+left:0;
+
+right:0;
+
+z-index:300;
+
+}
+
+/* =====================================
+MOBILE TAP FIX
+===================================== */
+
+button,
+a,
+.card{
+
+touch-action:manipulation;
+
+}
+
+/* =====================================
+IOS / ANDROID FIX
+===================================== */
+
+*{
+
+-webkit-tap-highlight-color:
+
+transparent;
+
+}
+
+/* =====================================
+FORCE SCROLL
+===================================== */
+
+#wallet,
+#market,
+#casino,
+#mining,
+#airdrop{
+
+overflow:visible;
+
+min-height:auto;
+
+padding-bottom:120px;
+
+}
+
+/* =====================================
+BLOCK LAYER BUG FIX
+===================================== */
+
+.loading{
+
+pointer-events:none;
+
+}
+
+.app-ready{
+
+pointer-events:auto;
+
+}
+
+/* =====================================
+SAFE FIX
+===================================== */
+
+canvas{
+
+pointer-events:none;
+
+}
+
+video{
+
+pointer-events:none;
+
+}
