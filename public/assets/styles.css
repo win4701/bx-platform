@@ -1158,3 +1158,847 @@ body.app-ready .bg-layer{
 
   }
 }
+/* ==========================================================================
+   04 HEADER
+   App Shell Header System
+   Sticky + Blur + Mobile Safe + Brand Identity
+   ========================================================================== */
+
+
+/* ==========================================================
+   HEADER ROOT
+========================================================== */
+
+.app-header{
+
+  position:sticky;
+
+  top:0;
+
+  z-index:var(--z-header);
+
+  width:100%;
+
+  min-height:var(--header-height);
+
+  display:flex;
+
+  align-items:center;
+
+  justify-content:space-between;
+
+  gap:12px;
+
+  padding:
+
+    calc(
+      12px +
+      var(--safe-top)
+    )
+
+    16px
+
+    12px;
+
+  background:
+
+    linear-gradient(
+
+      180deg,
+
+      rgba(11,15,20,.96),
+
+      rgba(11,15,20,.92)
+
+    );
+
+  backdrop-filter:
+
+    blur(
+      var(--blur-md)
+    );
+
+  -webkit-backdrop-filter:
+
+    blur(
+      var(--blur-md)
+    );
+
+  border-bottom:
+
+    1px solid
+
+    var(--border);
+
+  box-shadow:
+
+    0 8px 24px
+    rgba(0,0,0,.18);
+
+  isolation:isolate;
+
+  overflow:hidden;
+
+}
+
+
+/* ==========================================================
+   HEADER FX
+========================================================== */
+
+.app-header::before{
+
+  content:"";
+
+  position:absolute;
+
+  inset:-1px;
+
+  background:
+
+    linear-gradient(
+
+      90deg,
+
+      transparent,
+
+      rgba(0,224,255,.08),
+
+      transparent
+
+    );
+
+  opacity:.7;
+
+  pointer-events:none;
+
+}
+
+
+.app-header::after{
+
+  content:"";
+
+  position:absolute;
+
+  bottom:-40px;
+
+  left:50%;
+
+  transform:
+
+    translateX(-50%);
+
+  width:220px;
+
+  height:90px;
+
+  border-radius:50%;
+
+  background:
+
+    radial-gradient(
+
+      circle,
+
+      rgba(0,224,255,.08),
+
+      transparent 70%
+
+    );
+
+  filter:
+
+    blur(
+      24px
+    );
+
+  pointer-events:none;
+
+}
+
+
+/* ==========================================================
+   LOGO ROOT
+========================================================== */
+
+.logo{
+
+  display:flex;
+
+  align-items:center;
+
+  gap:12px;
+
+  min-width:0;
+
+  flex:1;
+
+}
+
+
+/* ==========================================================
+   LOGO IMAGE
+========================================================== */
+
+.logo img{
+
+  width:40px;
+
+  height:40px;
+
+  flex-shrink:0;
+
+  object-fit:contain;
+
+  padding:4px;
+
+  border-radius:
+
+    var(--radius-md);
+
+  background:
+
+    linear-gradient(
+
+      180deg,
+
+      rgba(255,255,255,.04),
+
+      rgba(255,255,255,.02)
+
+    );
+
+  border:
+
+    1px solid
+
+    rgba(255,255,255,.06);
+
+  box-shadow:
+
+    var(--shadow-sm);
+
+}
+
+
+/* ==========================================================
+   BRAND TEXT
+========================================================== */
+
+.logo-text{
+
+  display:flex;
+
+  flex-direction:column;
+
+  min-width:0;
+
+}
+
+
+.logo-text span{
+
+  font-size:17px;
+
+  font-weight:900;
+
+  line-height:1;
+
+  letter-spacing:-.03em;
+
+  color:
+
+    var(--text);
+
+  white-space:nowrap;
+
+}
+
+
+.logo-text small{
+
+  margin-top:4px;
+
+  font-size:10px;
+
+  font-weight:800;
+
+  letter-spacing:.12em;
+
+  text-transform:uppercase;
+
+  color:
+
+    var(--text-muted);
+
+  white-space:nowrap;
+
+}
+
+
+/* ==========================================================
+   SOCIAL ROOT
+========================================================== */
+
+.social-links{
+
+  display:flex;
+
+  align-items:center;
+
+  gap:8px;
+
+  flex-shrink:0;
+
+}
+
+
+/* ==========================================================
+   SOCIAL BUTTON
+========================================================== */
+
+.social-btn{
+
+  width:42px;
+
+  height:42px;
+
+  display:flex;
+
+  align-items:center;
+
+  justify-content:center;
+
+  border-radius:
+
+    var(--radius-md);
+
+  background:
+
+    linear-gradient(
+
+      180deg,
+
+      rgba(255,255,255,.04),
+
+      rgba(255,255,255,.02)
+
+    );
+
+  border:
+
+    1px solid
+
+    rgba(255,255,255,.06);
+
+  box-shadow:
+
+    var(--shadow-sm);
+
+  transition:
+
+    transform
+    var(--speed-fast)
+    var(--ease),
+
+    border-color
+    var(--speed-fast)
+    var(--ease),
+
+    background
+    var(--speed-fast)
+    var(--ease);
+
+}
+
+
+.social-btn:hover{
+
+  transform:
+
+    translateY(-1px);
+
+  border-color:
+
+    var(--border-active);
+
+  background:
+
+    rgba(
+      0,
+      224,
+      255,
+      .06
+    );
+
+}
+
+
+.social-btn:active{
+
+  transform:
+
+    scale(.96);
+
+}
+
+
+.social-btn img{
+
+  width:18px;
+
+  height:18px;
+
+  object-fit:contain;
+
+}
+
+
+/* ==========================================================
+   HEADER COMPACT
+========================================================== */
+
+body.header-compact .app-header{
+
+  min-height:56px;
+
+  padding-top:
+
+    calc(
+      8px +
+      var(--safe-top)
+    );
+
+  padding-bottom:8px;
+
+}
+
+
+/* ==========================================================
+   MOBILE
+========================================================== */
+
+@media (max-width:480px){
+
+  .app-header{
+
+    padding-left:14px;
+
+    padding-right:14px;
+
+  }
+
+  .logo img{
+
+    width:36px;
+
+    height:36px;
+
+  }
+
+  .logo-text span{
+
+    font-size:16px;
+
+  }
+
+  .social-btn{
+
+    width:38px;
+
+    height:38px;
+
+  }
+
+}
+
+
+/* ==========================================================
+   REDUCED MOTION
+========================================================== */
+
+@media (prefers-reduced-motion:reduce){
+
+  .social-btn{
+
+    transition:none;
+
+  }
+ }
+
+/* ==========================================================================
+   05 APP CONTAINER
+   Application Shell Layout System
+   Main Container + Safe Area + Responsive Bounds
+   ========================================================================== */
+
+
+/* ==========================================================
+   APP ROOT
+========================================================== */
+
+#app{
+
+  position:relative;
+
+  width:100%;
+
+  min-height:100vh;
+
+  min-height:100dvh;
+
+  isolation:isolate;
+
+  z-index:var(--z-base);
+
+}
+
+
+/* ==========================================================
+   APP CONTAINER
+========================================================== */
+
+.app-container{
+
+  position:relative;
+
+  width:100%;
+
+  max-width:var(--content-max);
+
+  min-height:100%;
+
+  margin-inline:auto;
+
+  padding:
+
+    var(--space-3)
+
+    var(--space-4)
+
+    calc(
+      var(--mobile-nav-height)
+      +
+      var(--safe-bottom)
+      +
+      28px
+    );
+
+  overflow:visible;
+
+  isolation:isolate;
+
+}
+
+
+/* ==========================================================
+   APP VIEW STACK
+========================================================== */
+
+.app-container > .view{
+
+  position:relative;
+
+  width:100%;
+
+  min-height:
+
+    calc(
+
+      100dvh
+
+      -
+
+      var(--header-height)
+
+      -
+
+      var(--mobile-nav-height)
+
+    );
+
+  z-index:1;
+
+}
+
+
+/* ==========================================================
+   CONTENT FLOW
+========================================================== */
+
+.app-container > *{
+
+  min-width:0;
+
+}
+
+
+/* ==========================================================
+   OVERFLOW PROTECTION
+========================================================== */
+
+.app-container,
+
+.app-container *{
+
+  overflow-wrap:break-word;
+
+  word-break:normal;
+
+}
+
+
+.app-container code{
+
+  word-break:break-all;
+
+}
+
+
+/* ==========================================================
+   VIEW ISOLATION
+========================================================== */
+
+.view{
+
+  position:relative;
+
+  width:100%;
+
+  display:none;
+
+  opacity:0;
+
+  visibility:hidden;
+
+  pointer-events:none;
+
+  transition:
+
+    opacity
+
+    var(--speed-normal)
+
+    var(--ease),
+
+    visibility
+
+    var(--speed-normal)
+
+    var(--ease);
+
+}
+
+
+.view.active{
+
+  display:block;
+
+  opacity:1;
+
+  visibility:visible;
+
+  pointer-events:auto;
+
+}
+
+
+/* ==========================================================
+   SCROLL SYSTEM
+========================================================== */
+
+.view{
+
+  overflow-x:hidden;
+
+  overflow-y:auto;
+
+  -webkit-overflow-scrolling:touch;
+
+  overscroll-behavior-y:contain;
+
+}
+
+
+/* ==========================================================
+   APP MAX WIDTH MODES
+========================================================== */
+
+body[data-ui="enterprise"] .app-container{
+
+  max-width:1600px;
+
+}
+
+
+body[data-ui="compact"] .app-container{
+
+  max-width:1180px;
+
+}
+
+
+body[data-ui="mobile"] .app-container{
+
+  max-width:640px;
+
+}
+
+
+/* ==========================================================
+   SAFE AREA SYSTEM
+========================================================== */
+
+.app-container{
+
+  padding-left:
+
+    max(
+
+      var(--space-4),
+
+      var(--safe-left)
+
+    );
+
+  padding-right:
+
+    max(
+
+      var(--space-4),
+
+      var(--safe-right)
+
+    );
+
+}
+
+
+/* ==========================================================
+   PWA STANDALONE FIX
+========================================================== */
+
+@media (display-mode:standalone){
+
+  .app-container{
+
+    padding-bottom:
+
+      calc(
+
+        var(--mobile-nav-height)
+
+        +
+
+        var(--safe-bottom)
+
+        +
+
+        36px
+
+      );
+
+  }
+
+}
+
+
+/* ==========================================================
+   LOADER LOCK
+========================================================== */
+
+body.app-preload .app-container{
+
+  opacity:0;
+
+  pointer-events:none;
+
+}
+
+
+body.app-ready .app-container{
+
+  opacity:1;
+
+  transition:
+
+    opacity
+
+    .30s
+
+    ease;
+
+}
+
+
+/* ==========================================================
+   AUTH LOCK
+========================================================== */
+
+body.auth-loading .app-container{
+
+  user-select:none;
+
+}
+
+
+/* ==========================================================
+   MOBILE
+========================================================== */
+
+@media (max-width:768px){
+
+  .app-container{
+
+    padding-top:
+
+      var(--space-3);
+
+  }
+
+}
+
+
+@media (max-width:480px){
+
+  .app-container{
+
+    padding-left:14px;
+
+    padding-right:14px;
+
+    padding-top:12px;
+
+  }
+
+}
+
+
+/* ==========================================================
+   LARGE SCREENS
+========================================================== */
+
+@media (min-width:1800px){
+
+  .app-container{
+
+    max-width:1800px;
+
+  }
+
+}
+
+
+/* ==========================================================
+   REDUCED MOTION
+========================================================== */
+
+@media (prefers-reduced-motion:reduce){
+
+  .view{
+
+    transition:none;
+
+  }
+ }
