@@ -4303,3 +4303,1868 @@ body.auth-loading .view{
 
   }
  }
+
+/* ==========================================================================
+   10 CASINO
+   Casino Engine UI
+   Lobby + Games + Filters + Feed + Big Wins
+   ========================================================================== */
+
+#casino{
+
+  --casino-gap:12px;
+
+  --casino-card-min:150px;
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:var(--casino-gap);
+
+}
+
+
+/* ==========================================================
+   LOBBY
+========================================================== */
+
+#casinoLobby{
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:12px;
+
+}
+
+
+/* ==========================================================
+   TOPBAR
+========================================================== */
+
+.casino-topbar{
+
+  display:flex;
+
+  align-items:center;
+
+  justify-content:space-between;
+
+  gap:12px;
+
+}
+
+
+.casino-brand-wrap{
+
+  display:flex;
+
+  align-items:center;
+
+  gap:12px;
+
+}
+
+
+.casino-brand-badge{
+
+  width:58px;
+
+  height:58px;
+
+  border-radius:50%;
+
+  display:grid;
+
+  place-items:center;
+
+  font-size:26px;
+
+  background:
+
+    linear-gradient(
+      180deg,
+      rgba(255,255,255,.05),
+      rgba(255,255,255,.02)
+    );
+
+  border:
+
+    1px solid
+
+    var(--border-soft);
+
+}
+
+
+.casino-title{
+
+  font-size:24px;
+
+  font-weight:900;
+
+}
+
+
+.casino-subtitle{
+
+  color:
+
+    var(--text-muted);
+
+}
+
+
+.casino-icon-btn{
+
+  width:44px;
+
+  height:44px;
+
+}
+
+
+/* ==========================================================
+   STATS
+========================================================== */
+
+.casino-stats-strip{
+
+  display:grid;
+
+  grid-template-columns:
+
+    repeat(
+      3,
+      1fr
+    );
+
+  gap:10px;
+
+}
+
+
+.casino-stat-card{
+
+  padding:14px;
+
+  border-radius:
+
+    var(--radius-lg);
+
+}
+
+
+.casino-stat-label{
+
+  display:block;
+
+  font-size:12px;
+
+  color:
+
+    var(--text-muted);
+
+}
+
+
+.casino-stat-card strong{
+
+  font-size:18px;
+
+  font-weight:900;
+
+}
+
+
+/* ==========================================================
+   LIVE FEED
+========================================================== */
+
+.ticker-pulse-wrap{
+
+  overflow:hidden;
+
+  border-radius:
+
+    var(--radius-lg);
+
+}
+
+
+.ticker-pulse-label{
+
+  font-size:11px;
+
+  font-weight:800;
+
+  margin-bottom:8px;
+
+}
+
+
+.ticker-pulse-track{
+
+  display:flex;
+
+  gap:10px;
+
+  overflow:auto;
+
+  scrollbar-width:none;
+
+}
+
+
+.ticker-pulse-track::-webkit-scrollbar{
+
+  display:none;
+
+}
+
+
+/* ==========================================================
+   FILTERS
+========================================================== */
+
+.casino-filter-tabs{
+
+  display:flex;
+
+  gap:8px;
+
+  overflow:auto;
+
+  scrollbar-width:none;
+
+}
+
+
+.casino-filter-tabs::-webkit-scrollbar{
+
+  display:none;
+
+}
+
+
+.casino-filter-tab{
+
+  min-height:40px;
+
+  padding:
+
+    0
+
+    14px;
+
+  border-radius:
+
+    var(--radius-full);
+
+  white-space:nowrap;
+
+}
+
+
+.casino-filter-tab.active{
+
+  background:
+
+    rgba(
+      0,
+      224,
+      255,
+      .12
+    );
+
+  border:
+
+    1px solid
+
+    var(--border-active);
+
+}
+
+
+/* ==========================================================
+   GAMES GRID
+========================================================== */
+
+#casinoGamesGrid{
+
+  display:grid;
+
+  grid-template-columns:
+
+    repeat(
+      auto-fill,
+      minmax(
+        var(--casino-card-min),
+        1fr
+      )
+    );
+
+  gap:12px;
+
+}
+
+
+.casino-game-card{
+
+  position:relative;
+
+  overflow:hidden;
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:10px;
+
+  padding:10px;
+
+  min-height:190px;
+
+  border-radius:
+
+    var(--radius-xl);
+
+  transition:
+
+    transform
+
+    var(--speed-fast)
+
+    var(--ease);
+
+}
+
+
+.casino-game-card:hover{
+
+  transform:
+
+    translateY(-2px);
+
+}
+
+
+.casino-game-card:active{
+
+  transform:
+
+    scale(.98);
+
+}
+
+
+.casino-game-thumb{
+
+  position:relative;
+
+  overflow:hidden;
+
+  border-radius:
+
+    var(--radius-lg);
+
+  aspect-ratio:
+
+    1/.78;
+
+}
+
+
+.casino-game-thumb img{
+
+  width:100%;
+
+  height:100%;
+
+  object-fit:cover;
+
+}
+
+
+.casino-game-meta{
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:4px;
+
+}
+
+
+.casino-game-name{
+
+  font-weight:900;
+
+}
+
+
+.casino-game-type{
+
+  color:
+
+    var(--text-muted);
+
+  font-size:12px;
+
+}
+
+
+/* ==========================================================
+   BIG WINS
+========================================================== */
+
+.big-wins{
+
+  overflow:hidden;
+
+}
+
+
+.big-wins-title{
+
+  margin-bottom:10px;
+
+  font-weight:900;
+
+}
+
+
+.big-wins-track{
+
+  display:flex;
+
+  gap:10px;
+
+  overflow:auto;
+
+  scrollbar-width:none;
+
+}
+
+
+.big-wins-track::-webkit-scrollbar{
+
+  display:none;
+
+}
+
+
+/* ==========================================================
+   GAME VIEW
+========================================================== */
+
+#casinoGameView{
+
+  width:100%;
+
+  min-height:
+
+    520px;
+
+}
+
+
+#casinoGameView.hidden{
+
+  display:none;
+
+}
+
+
+/* ==========================================================
+   GAME LOADING
+========================================================== */
+
+.casino-loading{
+
+  opacity:.6;
+
+  pointer-events:none;
+
+}
+
+
+/* ==========================================================
+   GAME ERROR
+========================================================== */
+
+.casino-error{
+
+  color:
+
+    var(--red);
+
+}
+
+
+/* ==========================================================
+   PERFORMANCE
+========================================================== */
+
+.casino-game-card,
+
+.casino-stat-card{
+
+  contain:
+
+    layout
+
+    paint;
+
+}
+
+
+.casino-game-thumb img{
+
+  content-visibility:auto;
+
+}
+
+
+/* ==========================================================
+   MOBILE
+========================================================== */
+
+@media(max-width:768px){
+
+  .casino-stats-strip{
+
+    grid-template-columns:
+
+      1fr;
+
+  }
+
+}
+
+
+@media(max-width:480px){
+
+  #casinoGamesGrid{
+
+    grid-template-columns:
+
+      repeat(
+        2,
+        1fr
+      );
+
+  }
+
+  .casino-game-card{
+
+    min-height:170px;
+
+  }
+
+}
+
+
+/* ==========================================================
+   REDUCED MOTION
+========================================================== */
+
+@media(prefers-reduced-motion:reduce){
+
+  .casino-game-card{
+
+    transition:none;
+
+  }
+}
+
+/* ==========================================================================
+   11 MINING
+   Mining Engine UI
+   Dashboard + Plans + Active Position + Subscribe + History
+   ========================================================================== */
+
+#mining{
+
+  --mining-gap:12px;
+
+  --plan-card-min:220px;
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:var(--mining-gap);
+
+}
+
+
+/* ==========================================================
+   HERO
+========================================================== */
+
+.mining-top{
+
+  padding:18px;
+
+}
+
+
+.mining-top-head{
+
+  display:flex;
+
+  align-items:flex-start;
+
+  justify-content:space-between;
+
+  gap:16px;
+
+}
+
+
+.mining-top h2{
+
+  font-size:28px;
+
+  font-weight:900;
+
+}
+
+
+.mining-top p{
+
+  color:var(--text-muted);
+
+  margin-top:6px;
+
+}
+
+
+/* ==========================================================
+   OVERVIEW
+========================================================== */
+
+.mining-overview-grid{
+
+  display:grid;
+
+  grid-template-columns:
+
+    repeat(
+      4,
+      1fr
+    );
+
+  gap:10px;
+
+  margin-top:18px;
+
+}
+
+
+.mining-stat{
+
+  padding:14px;
+
+  border-radius:
+
+    var(--radius-lg);
+
+  background:
+
+    rgba(
+      255,
+      255,
+      255,
+      .02
+    );
+
+}
+
+
+.mining-stat span{
+
+  display:block;
+
+  font-size:12px;
+
+  color:
+
+    var(--text-muted);
+
+}
+
+
+.mining-stat strong{
+
+  display:block;
+
+  margin-top:6px;
+
+  font-size:18px;
+
+  font-weight:900;
+
+}
+
+
+/* ==========================================================
+   COINS
+========================================================== */
+
+.mining-tabs{
+
+  display:flex;
+
+  gap:10px;
+
+  overflow:auto;
+
+  scrollbar-width:none;
+
+}
+
+
+.mining-tabs::-webkit-scrollbar{
+
+  display:none;
+
+}
+
+
+.mining-tabs button{
+
+  min-width:90px;
+
+  min-height:58px;
+
+  display:flex;
+
+  align-items:center;
+
+  justify-content:center;
+
+  gap:8px;
+
+  border-radius:
+
+    var(--radius-lg);
+
+}
+
+
+.mining-tabs button img{
+
+  width:22px;
+
+  height:22px;
+
+}
+
+
+.mining-tabs button.active{
+
+  background:
+
+    rgba(
+      0,
+      224,
+      255,
+      .10
+    );
+
+  border:
+
+    1px solid
+
+    var(--border-active);
+
+}
+
+
+/* ==========================================================
+   SHELL
+========================================================== */
+
+.mining-shell{
+
+  display:grid;
+
+  grid-template-columns:
+
+    2fr
+
+    1fr;
+
+  gap:12px;
+
+}
+
+
+.mining-main-col,
+
+.mining-side-col{
+
+  min-width:0;
+
+}
+
+
+/* ==========================================================
+   PLANS
+========================================================== */
+
+.mining-plans{
+
+  display:grid;
+
+  grid-template-columns:
+
+    repeat(
+      auto-fill,
+      minmax(
+        var(--plan-card-min),
+        1fr
+      )
+    );
+
+  gap:12px;
+
+}
+
+
+.mining-plan{
+
+  padding:16px;
+
+  border-radius:
+
+    var(--radius-xl);
+
+}
+
+
+.mining-plan-title{
+
+  font-weight:900;
+
+}
+
+
+.mining-plan-apr{
+
+  color:
+
+    var(--green);
+
+  font-weight:900;
+
+}
+
+
+.mining-plan button{
+
+  width:100%;
+
+  margin-top:12px;
+
+}
+
+
+/* ==========================================================
+   ACTIVE
+========================================================== */
+
+.mining-active-card{
+
+  padding:16px;
+
+}
+
+
+.mining-active-head{
+
+  display:flex;
+
+  justify-content:space-between;
+
+  gap:12px;
+
+}
+
+
+.mining-badge{
+
+  padding:
+
+    6px
+
+    10px;
+
+  border-radius:
+
+    var(--radius-full);
+
+  font-size:12px;
+
+}
+
+
+.mining-badge.idle{
+
+  background:
+
+    rgba(
+      255,
+      255,
+      255,
+      .06
+    );
+
+}
+
+
+.mining-active-main{
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:12px;
+
+  margin-top:16px;
+
+}
+
+
+.mining-active-row{
+
+  display:flex;
+
+  justify-content:space-between;
+
+}
+
+
+.mining-active-row span{
+
+  color:
+
+    var(--text-muted);
+
+}
+
+
+.mining-active-row strong{
+
+  font-weight:900;
+
+}
+
+
+/* ==========================================================
+   PROGRESS
+========================================================== */
+
+.mining-progress-wrap{
+
+  margin-top:18px;
+
+}
+
+
+.mining-progress-top{
+
+  display:flex;
+
+  justify-content:space-between;
+
+}
+
+
+.mining-progress-bar{
+
+  height:10px;
+
+  overflow:hidden;
+
+  margin-top:8px;
+
+  border-radius:
+
+    var(--radius-full);
+
+  background:
+
+    rgba(
+      255,
+      255,
+      255,
+      .05
+    );
+
+}
+
+
+#miningProgressFill{
+
+  width:0%;
+
+  height:100%;
+
+  background:
+
+    linear-gradient(
+
+      90deg,
+
+      #00e0ff,
+
+      #22c55e
+
+    );
+
+  transition:
+
+    width
+
+    .4s
+
+    ease;
+
+}
+
+
+.mining-progress-hint{
+
+  margin-top:8px;
+
+  color:
+
+    var(--text-muted);
+
+}
+
+
+/* ==========================================================
+   ACTIONS
+========================================================== */
+
+.mining-active-actions{
+
+  display:grid;
+
+  grid-template-columns:
+
+    1fr
+
+    1fr;
+
+  gap:8px;
+
+  margin-top:18px;
+
+}
+
+
+/* ==========================================================
+   SUBSCRIBE
+========================================================== */
+
+.mining-sub-panel{
+
+  padding:16px;
+
+  border-radius:
+
+    var(--radius-xl);
+
+}
+
+
+.mining-hidden{
+
+  display:none !important;
+
+}
+
+
+.mining-sub-head{
+
+  display:flex;
+
+  justify-content:space-between;
+
+}
+
+
+.mining-panel-close{
+
+  width:40px;
+
+  height:40px;
+
+}
+
+
+.mining-sub-body{
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:12px;
+
+  margin-top:14px;
+
+}
+
+
+.mining-quick-row{
+
+  display:grid;
+
+  grid-template-columns:
+
+    repeat(
+      3,
+      1fr
+    );
+
+  gap:8px;
+
+}
+
+
+.mining-sub-summary{
+
+  padding:12px;
+
+  border-radius:
+
+    var(--radius-lg);
+
+}
+
+
+/* ==========================================================
+   HISTORY
+========================================================== */
+
+.mining-history-card{
+
+  padding:16px;
+
+}
+
+
+.mining-history-head{
+
+  display:flex;
+
+  justify-content:space-between;
+
+}
+
+
+.mining-history-list{
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:10px;
+
+  margin-top:14px;
+
+}
+
+
+.mining-history-item{
+
+  padding:12px;
+
+  border-radius:
+
+    var(--radius-lg);
+
+}
+
+
+.mining-history-empty{
+
+  color:
+
+    var(--text-muted);
+
+}
+
+
+/* ==========================================================
+   TOAST
+========================================================== */
+
+#miningToast{
+
+  position:fixed;
+
+  left:50%;
+
+  bottom:
+
+    calc(
+
+      var(--safe-bottom)
+
+      +
+
+      90px
+
+    );
+
+  transform:
+
+    translateX(-50%);
+
+}
+
+
+/* ==========================================================
+   PERFORMANCE
+========================================================== */
+
+.mining-plan,
+
+.mining-active-card,
+
+.mining-history-card{
+
+  contain:
+
+    layout
+
+    paint;
+
+}
+
+
+/* ==========================================================
+   MOBILE
+========================================================== */
+
+@media(max-width:980px){
+
+  .mining-shell{
+
+    grid-template-columns:
+
+      1fr;
+
+  }
+
+}
+
+
+@media(max-width:768px){
+
+  .mining-overview-grid{
+
+    grid-template-columns:
+
+      repeat(
+        2,
+        1fr
+      );
+
+  }
+
+}
+
+
+@media(max-width:480px){
+
+  .mining-active-actions{
+
+    grid-template-columns:
+
+      1fr;
+
+  }
+
+  .mining-overview-grid{
+
+    grid-template-columns:
+
+      1fr;
+
+  }
+
+}
+
+
+/* ==========================================================
+   REDUCED MOTION
+========================================================== */
+
+@media(prefers-reduced-motion:reduce){
+
+  #miningProgressFill{
+
+    transition:none;
+
+  }
+ }
+
+/* ==========================================================================
+   12 AIRDROP
+   Reward + Referral + Tasks + TopUp + Partners
+   ========================================================================== */
+
+#airdrop{
+
+  --airdrop-gap:12px;
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:var(--airdrop-gap);
+
+}
+
+
+/* ==========================================================
+   CONTAINER
+========================================================== */
+
+.airdrop-container{
+
+  display:grid;
+
+  gap:12px;
+
+}
+
+
+/* ==========================================================
+   HERO
+========================================================== */
+
+.airdrop-box{
+
+  position:relative;
+
+  overflow:hidden;
+
+  display:flex;
+
+  flex-direction:column;
+
+  align-items:center;
+
+  text-align:center;
+
+  gap:14px;
+
+  padding:22px;
+
+}
+
+
+.airdrop-box img{
+
+  width:82px;
+
+  height:82px;
+
+  object-fit:contain;
+
+}
+
+
+.airdrop-reward{
+
+  font-size:
+
+    clamp(
+      28px,
+      5vw,
+      44px
+    );
+
+  font-weight:900;
+
+  color:
+
+    var(--color-primary);
+
+}
+
+
+.airdrop-status{
+
+  color:
+
+    var(--text-muted);
+
+  font-size:13px;
+
+}
+
+
+.airdrop-action{
+
+  min-width:220px;
+
+  min-height:48px;
+
+}
+
+
+/* ==========================================================
+   TASKS
+========================================================== */
+
+.airdrop-tasks{
+
+  width:100%;
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:10px;
+
+}
+
+
+.airdrop-task{
+
+  display:flex;
+
+  align-items:center;
+
+  justify-content:space-between;
+
+  gap:10px;
+
+  padding:12px;
+
+  border-radius:
+
+    var(--radius-lg);
+
+  background:
+
+    rgba(
+      255,
+      255,
+      255,
+      .02
+    );
+
+}
+
+
+.airdrop-task.done{
+
+  border:
+
+    1px solid
+
+    rgba(
+      34,
+      197,
+      94,
+      .20
+    );
+
+}
+
+
+.airdrop-task-title{
+
+  font-weight:700;
+
+}
+
+
+.airdrop-task-reward{
+
+  color:
+
+    var(--green);
+
+  font-weight:900;
+
+}
+
+
+/* ==========================================================
+   REFERRAL
+========================================================== */
+
+.airdrop-referral{
+
+  padding:16px;
+
+}
+
+
+.airdrop-referral h3{
+
+  margin-bottom:12px;
+
+}
+
+
+.referral-box{
+
+  display:flex;
+
+  gap:10px;
+
+}
+
+
+.ref-input{
+
+  flex:1;
+
+  min-height:48px;
+
+}
+
+
+#copyRefBtn{
+
+  min-width:100px;
+
+}
+
+
+/* ==========================================================
+   WHITEPAPER
+========================================================== */
+
+.airdrop-whitepaper{
+
+  display:flex;
+
+  justify-content:center;
+
+}
+
+
+.whitepaper-btn{
+
+  min-width:220px;
+
+}
+
+
+/* ==========================================================
+   PARTNERS
+========================================================== */
+
+.airdrop-partners{
+
+  padding:16px;
+
+}
+
+
+.partners-grid{
+
+  display:grid;
+
+  grid-template-columns:
+
+    repeat(
+      auto-fit,
+      minmax(
+        100px,
+        1fr
+      )
+    );
+
+  gap:12px;
+
+}
+
+
+.partner-item{
+
+  display:flex;
+
+  align-items:center;
+
+  justify-content:center;
+
+  padding:16px;
+
+  border-radius:
+
+    var(--radius-lg);
+
+  background:
+
+    rgba(
+      255,
+      255,
+      255,
+      .02
+    );
+
+}
+
+
+.partner-item img{
+
+  max-width:80px;
+
+  max-height:40px;
+
+  object-fit:contain;
+
+}
+
+
+/* ==========================================================
+   MINING CARD
+========================================================== */
+
+.min-card{
+
+  overflow:hidden;
+
+  text-align:center;
+
+  padding:18px;
+
+}
+
+
+.min-card img{
+
+  width:100%;
+
+  max-height:180px;
+
+  object-fit:cover;
+
+  border-radius:
+
+    var(--radius-lg);
+
+}
+
+
+.min-card h3{
+
+  margin-top:14px;
+
+}
+
+
+.min-card p{
+
+  color:
+
+    var(--text-muted);
+
+  margin-top:8px;
+
+}
+
+
+/* ==========================================================
+   TOPUP
+========================================================== */
+
+.topup-card{
+
+  padding:18px;
+
+}
+
+
+.topup-header{
+
+  margin-bottom:14px;
+
+}
+
+
+.topup-header span{
+
+  color:
+
+    var(--text-muted);
+
+}
+
+
+.topup-body{
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:10px;
+
+}
+
+
+.input-group{
+
+  display:flex;
+
+}
+
+
+.input-group input{
+
+  width:100%;
+
+  min-height:48px;
+
+}
+
+
+.btn-confirm{
+
+  min-height:50px;
+
+}
+
+
+.topup-message{
+
+  min-height:22px;
+
+  font-size:13px;
+
+}
+
+
+.topup-success{
+
+  color:
+
+    var(--green);
+
+}
+
+
+.topup-error{
+
+  color:
+
+    var(--red);
+
+}
+
+
+/* ==========================================================
+   LOADING
+========================================================== */
+
+.airdrop-loading{
+
+  opacity:.55;
+
+  pointer-events:none;
+
+}
+
+
+/* ==========================================================
+   EMPTY
+========================================================== */
+
+.airdrop-empty{
+
+  text-align:center;
+
+  color:
+
+    var(--text-muted);
+
+  padding:24px;
+
+}
+
+
+/* ==========================================================
+   PERFORMANCE
+========================================================== */
+
+.airdrop-box,
+
+.airdrop-referral,
+
+.topup-card{
+
+  contain:
+
+    layout
+
+    paint;
+
+}
+
+
+/* ==========================================================
+   MOBILE
+========================================================== */
+
+@media(max-width:768px){
+
+  .referral-box{
+
+    flex-direction:column;
+
+  }
+
+}
+
+
+@media(max-width:480px){
+
+  .partners-grid{
+
+    grid-template-columns:
+
+      repeat(
+        2,
+        1fr
+      );
+
+  }
+
+  .airdrop-action{
+
+    width:100%;
+
+  }
+
+}
+
+
+/* ==========================================================
+   REDUCED MOTION
+========================================================== */
+
+@media(prefers-reduced-motion:reduce){
+
+  .airdrop-box{
+
+    animation:none;
+
+  }
+ }
