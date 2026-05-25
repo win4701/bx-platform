@@ -9037,3 +9037,4403 @@ min-width:1100px
   display:none !important;
 
    }
+/* ==========================================================================
+   15 CASINO
+   COMPLETE CASINO SYSTEM
+   Enterprise Crypto Exchange / PWA / Mobile Architecture
+   ========================================================================== */
+
+/* ======================================================
+   FOUNDATION
+====================================================== */
+
+#casino{
+
+  position:relative;
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:
+
+  var(--space-14);
+
+  width:100%;
+
+  min-height:100%;
+
+}
+
+/* ======================================================
+   LOBBY
+====================================================== */
+
+#casinoLobby{
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:
+
+  14px;
+
+}
+
+/* ======================================================
+   TOPBAR
+====================================================== */
+
+.casino-topbar{
+
+  display:flex;
+
+  align-items:flex-start;
+
+  justify-content:space-between;
+
+  gap:
+
+  14px;
+
+}
+
+.casino-brand-wrap{
+
+  display:flex;
+
+  align-items:center;
+
+  gap:
+
+  12px;
+
+}
+
+.casino-brand-badge{
+
+  width:58px;
+
+  height:58px;
+
+  display:flex;
+
+  align-items:center;
+
+  justify-content:center;
+
+  border-radius:
+
+  50%;
+
+  font-size:
+
+  24px;
+
+  background:
+
+  rgba(
+  255,
+ 190,
+ 40,
+ .10
+ );
+
+  border:
+
+  1px solid
+  rgba(
+  255,
+ 190,
+ 40,
+ .18
+ );
+
+}
+
+.casino-title{
+
+  line-height:1.1;
+
+}
+
+.casino-subtitle{
+
+  color:
+
+  var(--token-text-muted);
+
+}
+
+.casino-icon-btn{
+
+  width:42px;
+
+  height:42px;
+
+  display:flex;
+
+  align-items:center;
+
+  justify-content:center;
+
+  border-radius:
+
+  var(--radius-pill);
+
+  background:
+
+  rgba(
+  255,
+ 255,
+ 255,
+ .04
+ );
+
+  border:
+
+  1px solid
+  var(--border-soft);
+
+}
+
+/* ======================================================
+   STATS
+====================================================== */
+
+.casino-stats-strip{
+
+  display:grid;
+
+  grid-template-columns:
+
+  repeat(
+  3,
+  minmax(
+  0,
+  1fr
+  )
+  );
+
+  gap:
+
+  10px;
+
+}
+
+.casino-stat-card{
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:
+
+  8px;
+
+  padding:
+
+  14px;
+
+  border-radius:
+
+  var(--radius-md);
+
+  background:
+
+  rgba(
+  255,
+ 255,
+ 255,
+ .02
+ );
+
+  border:
+
+  1px solid
+  var(--border-soft);
+
+}
+
+.casino-stat-label{
+
+  color:
+
+  var(--token-text-muted);
+
+}
+
+.casino-stat-card strong{
+
+  font-variant-numeric:
+
+  tabular-nums;
+
+}
+
+/* ======================================================
+   TICKER
+====================================================== */
+
+.ticker-pulse-wrap{
+
+  overflow:hidden;
+
+  position:relative;
+
+  border-radius:
+
+  var(--radius-lg);
+
+  padding:
+
+  14px;
+
+  background:
+
+  rgba(
+  255,
+ 255,
+ 255,
+ .02
+ );
+
+  border:
+
+  1px solid
+  var(--border-soft);
+
+}
+
+.ticker-pulse-label{
+
+  margin-bottom:
+
+  10px;
+
+  color:
+
+  var(--token-text-muted);
+
+}
+
+.ticker-pulse-track{
+
+  display:flex;
+
+  align-items:center;
+
+  gap:
+
+  14px;
+
+  min-height:
+
+  26px;
+
+}
+
+/* ======================================================
+   FILTERS
+====================================================== */
+
+.casino-filter-tabs{
+
+  display:flex;
+
+  flex-wrap:wrap;
+
+  gap:
+
+  8px;
+
+}
+
+.casino-filter-tab{
+
+  min-height:
+
+  40px;
+
+  padding:
+
+  0
+  14px;
+
+  border-radius:
+
+  var(--radius-pill);
+
+  background:
+
+  rgba(
+  255,
+ 255,
+ 255,
+ .03
+ );
+
+  border:
+
+  1px solid
+  var(--border-soft);
+
+}
+
+.casino-filter-tab.active{
+
+  border-color:
+
+  var(--border-active);
+
+}
+
+/* ======================================================
+   GRID
+====================================================== */
+
+#casinoGamesGrid{
+
+  display:grid;
+
+  grid-template-columns:
+
+  repeat(
+  auto-fill,
+  minmax(
+  150px,
+  1fr
+  )
+  );
+
+  gap:
+
+  12px;
+
+}
+
+/* ======================================================
+   CARD
+====================================================== */
+
+.casino-game-card{
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:
+
+  12px;
+
+  padding:
+
+  12px;
+
+  text-align:left;
+
+  cursor:pointer;
+
+}
+
+.casino-game-thumb{
+
+  overflow:hidden;
+
+  aspect-ratio:
+
+  1;
+
+  border-radius:
+
+  var(--radius-md);
+
+  background:
+
+  rgba(
+  255,
+ 255,
+ 255,
+ .03
+ );
+
+}
+
+.casino-game-thumb img{
+
+  width:100%;
+
+  height:100%;
+
+  object-fit:cover;
+
+}
+
+.casino-game-meta{
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:
+
+  4px;
+
+}
+
+.casino-game-name{
+
+  font-weight:
+
+  var(--weight-bold);
+
+}
+
+.casino-game-type{
+
+  color:
+
+  var(--token-text-muted);
+
+}
+
+/* ======================================================
+   BIG WINS
+====================================================== */
+
+.big-wins{
+
+  overflow:hidden;
+
+  border-radius:
+
+  var(--radius-lg);
+
+  padding:
+
+  14px;
+
+  background:
+
+  rgba(
+  255,
+ 255,
+ 255,
+ .02
+ );
+
+  border:
+
+  1px solid
+  var(--border-soft);
+
+}
+
+.big-wins-title{
+
+  margin-bottom:
+
+  12px;
+
+}
+
+.big-wins-track{
+
+  display:flex;
+
+  gap:
+
+  12px;
+
+  min-height:
+
+  34px;
+
+}
+
+/* ======================================================
+   GAME VIEW
+====================================================== */
+
+#casinoGameView{
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:
+
+  14px;
+
+}
+
+#casinoGameView.hidden{
+
+  display:none;
+
+}
+
+.casino-game-shell{
+
+  overflow:hidden;
+
+  border-radius:
+
+  var(--radius-lg);
+
+  background:
+
+  var(--surface-base);
+
+  border:
+
+  1px solid
+  var(--border-base);
+
+}
+
+.casino-game-header{
+
+  display:flex;
+
+  align-items:center;
+
+  justify-content:space-between;
+
+  gap:
+
+  12px;
+
+  padding:
+
+  16px;
+
+}
+
+.casino-game-stage{
+
+  overflow:hidden;
+
+  min-height:
+
+  240px;
+
+  border-radius:
+
+  var(--radius-md);
+
+  background:
+
+  rgba(
+  255,
+ 255,
+ 255,
+ .02
+ );
+
+}
+
+.casino-game-controls{
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:
+
+  12px;
+
+  padding:
+
+  16px;
+
+}
+
+/* ======================================================
+   BET PANEL
+====================================================== */
+
+.casino-bet-row{
+
+  display:grid;
+
+  grid-template-columns:
+
+  1fr
+  auto;
+
+  gap:
+
+  10px;
+
+}
+
+.casino-bet-actions{
+
+  display:grid;
+
+  grid-template-columns:
+
+  repeat(
+  2,
+  1fr
+  );
+
+  gap:
+
+  10px;
+
+}
+
+.casino-bet-hint{
+
+  color:
+
+  var(--token-text-muted);
+
+}
+
+/* ======================================================
+   LIVE STATUS
+====================================================== */
+
+.casino-live-dot{
+
+  width:8px;
+
+  height:8px;
+
+  border-radius:
+
+  50%;
+
+  background:
+
+  var(--token-market-up);
+
+}
+
+.casino-online{
+
+  display:flex;
+
+  align-items:center;
+
+  gap:
+
+  6px;
+
+}
+
+/* ======================================================
+   EMPTY
+====================================================== */
+
+.casino-empty{
+
+  text-align:center;
+
+  padding:
+
+  28px;
+
+  color:
+
+  var(--token-text-muted);
+
+}
+
+/* ======================================================
+   MOBILE
+====================================================== */
+
+@media(
+max-width:640px
+){
+
+  .casino-topbar{
+
+    flex-direction:column;
+
+  }
+
+  .casino-stats-strip{
+
+    grid-template-columns:
+
+    1fr;
+
+  }
+
+  #casinoGamesGrid{
+
+    grid-template-columns:
+
+    repeat(
+    2,
+    1fr
+    );
+
+  }
+
+}
+
+/* ======================================================
+   TABLET
+====================================================== */
+
+@media(
+min-width:768px
+){
+
+  #casinoGamesGrid{
+
+    grid-template-columns:
+
+    repeat(
+    3,
+    1fr
+    );
+
+  }
+
+}
+
+/* ======================================================
+   DESKTOP
+====================================================== */
+
+@media(
+min-width:1200px
+){
+
+  #casinoGamesGrid{
+
+    grid-template-columns:
+
+    repeat(
+    4,
+    1fr
+    );
+
+  }
+
+}
+
+/* ======================================================
+   SAFE
+====================================================== */
+
+#casino *{
+
+  min-width:0;
+
+}
+
+#casino img{
+
+  display:block;
+
+  max-width:100%;
+
+}
+
+/* ======================================================
+   COMPATIBILITY
+====================================================== */
+
+#casino .hidden{
+
+  display:none !important;
+
+}
+
+/* ==========================================================================
+     16 AIRDROP COMPLETE AIRDROP SYSTEM
+   Enterprise Crypto Exchange / PWA / Mobile Architecture
+========================================================================== */
+
+#airdrop{
+
+  position:relative;
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:
+
+  var(--space-14);
+
+  width:100%;
+
+  min-height:100%;
+
+}
+
+/* ======================================================
+   CONTAINER
+====================================================== */
+
+.airdrop-container{
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:
+
+  14px;
+
+}
+
+/* ======================================================
+   MAIN BOX
+====================================================== */
+
+.airdrop-box{
+
+  display:flex;
+
+  flex-direction:column;
+
+  align-items:center;
+
+  text-align:center;
+
+  gap:
+
+  14px;
+
+}
+
+.airdrop-box img{
+
+  width:
+
+  84px;
+
+  height:
+
+  84px;
+
+  object-fit:contain;
+
+}
+
+.airdrop-reward{
+
+  font-size:
+
+  clamp(
+  28px,
+  5vw,
+  40px
+  );
+
+  font-weight:
+
+  var(--weight-black);
+
+  line-height:1;
+
+  color:
+
+  var(--brand-primary);
+
+}
+
+.airdrop-status{
+
+  color:
+
+  var(--token-text-muted);
+
+}
+
+/* ======================================================
+   TASKS
+====================================================== */
+
+.airdrop-tasks{
+
+  width:100%;
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:
+
+  10px;
+
+}
+
+.airdrop-task{
+
+  display:flex;
+
+  align-items:center;
+
+  justify-content:space-between;
+
+  gap:
+
+  12px;
+
+  padding:
+
+  14px;
+
+  border-radius:
+
+  var(--radius-md);
+
+  background:
+
+  rgba(
+  255,
+ 255,
+ 255,
+ .02
+ );
+
+  border:
+
+  1px solid
+  var(--border-soft);
+
+}
+
+.airdrop-task-left{
+
+  display:flex;
+
+  align-items:center;
+
+  gap:
+
+  12px;
+
+}
+
+.airdrop-task-icon{
+
+  width:42px;
+
+  height:42px;
+
+  display:flex;
+
+  align-items:center;
+
+  justify-content:center;
+
+  border-radius:
+
+  50%;
+
+  background:
+
+  rgba(
+  0,
+ 224,
+ 255,
+ .10
+ );
+
+}
+
+.airdrop-task-meta{
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:
+
+  4px;
+
+}
+
+.airdrop-task-meta span{
+
+  color:
+
+  var(--token-text-muted);
+
+}
+
+.airdrop-task-reward{
+
+  color:
+
+  var(--token-market-up);
+
+}
+
+/* ======================================================
+   CLAIM
+====================================================== */
+
+.airdrop-action{
+
+  width:100%;
+
+  min-height:
+
+  52px;
+
+}
+
+.airdrop-action[disabled]{
+
+  opacity:.6;
+
+}
+
+/* ======================================================
+   REFERRAL
+====================================================== */
+
+.airdrop-referral{
+
+  padding:
+
+  18px;
+
+  border-radius:
+
+  var(--radius-lg);
+
+  background:
+
+  var(--surface-base);
+
+  border:
+
+  1px solid
+  var(--border-base);
+
+}
+
+.airdrop-referral h3{
+
+  margin-bottom:
+
+  14px;
+
+}
+
+.referral-box{
+
+  display:grid;
+
+  grid-template-columns:
+
+  1fr
+  auto;
+
+  gap:
+
+  10px;
+
+}
+
+.ref-input{
+
+  overflow:hidden;
+
+  text-overflow:ellipsis;
+
+  white-space:nowrap;
+
+}
+
+.ref-link{
+
+  display:block;
+
+  overflow-wrap:anywhere;
+
+}
+
+/* ======================================================
+   WHITEPAPER
+====================================================== */
+
+.airdrop-whitepaper{
+
+  display:flex;
+
+}
+
+.whitepaper-btn{
+
+  width:100%;
+
+  min-height:
+
+  52px;
+
+  display:flex;
+
+  align-items:center;
+
+  justify-content:center;
+
+  padding:
+
+  0
+  18px;
+
+  border-radius:
+
+  var(--radius-md);
+
+  border:
+
+  1px solid
+  var(--border-soft);
+
+  background:
+
+  rgba(
+  255,
+ 255,
+ 255,
+ .03
+ );
+
+}
+
+/* ======================================================
+   PARTNERS
+====================================================== */
+
+.airdrop-partners{
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:
+
+  14px;
+
+}
+
+.partners-grid{
+
+  display:grid;
+
+  grid-template-columns:
+
+  repeat(
+  2,
+  minmax(
+  0,
+  1fr
+  )
+  );
+
+  gap:
+
+  12px;
+
+}
+
+.partner-item{
+
+  display:flex;
+
+  align-items:center;
+
+  justify-content:center;
+
+  min-height:
+
+  84px;
+
+  padding:
+
+  12px;
+
+  border-radius:
+
+  var(--radius-lg);
+
+  background:
+
+  rgba(
+  255,
+ 255,
+ 255,
+ .02
+ );
+
+  border:
+
+  1px solid
+  var(--border-soft);
+
+}
+
+.partner-item img{
+
+  max-width:
+
+  100px;
+
+  max-height:
+
+  42px;
+
+  object-fit:contain;
+
+}
+
+/* ======================================================
+   MINING PROMO
+====================================================== */
+
+.min-card{
+
+  overflow:hidden;
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:
+
+  14px;
+
+  padding:
+
+  16px;
+
+  border-radius:
+
+  var(--radius-lg);
+
+  background:
+
+  var(--surface-base);
+
+  border:
+
+  1px solid
+  var(--border-base);
+
+}
+
+.min-card img{
+
+  width:100%;
+
+  border-radius:
+
+  var(--radius-md);
+
+  object-fit:cover;
+
+}
+
+.min-card p{
+
+  color:
+
+  var(--token-text-muted);
+
+}
+
+/* ======================================================
+   TOPUP
+====================================================== */
+
+.topup-card{
+
+  overflow:hidden;
+
+  border-radius:
+
+  var(--radius-lg);
+
+  background:
+
+  var(--surface-base);
+
+  border:
+
+  1px solid
+  var(--border-base);
+
+}
+
+.topup-header{
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:
+
+  6px;
+
+  padding:
+
+  18px;
+
+}
+
+.topup-header span{
+
+  color:
+
+  var(--token-text-muted);
+
+}
+
+.topup-body{
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:
+
+  12px;
+
+  padding:
+
+  0
+  18px
+  18px;
+
+}
+
+.input-group{
+
+  width:100%;
+
+}
+
+.topup-message{
+
+  min-height:
+
+  24px;
+
+  color:
+
+  var(--token-text-muted);
+
+}
+
+.btn-confirm{
+
+  width:100%;
+
+}
+
+/* ======================================================
+   STATES
+====================================================== */
+
+.airdrop-loading{
+
+  opacity:.7;
+
+}
+
+.airdrop-success{
+
+  color:
+
+  var(--token-market-up);
+
+}
+
+.airdrop-error{
+
+  color:
+
+  var(--token-market-down);
+
+}
+
+/* ======================================================
+   MOBILE
+====================================================== */
+
+@media(
+max-width:640px
+){
+
+  .referral-box{
+
+    grid-template-columns:
+
+    1fr;
+
+  }
+
+}
+
+/* ======================================================
+   TABLET
+====================================================== */
+
+@media(
+min-width:768px
+){
+
+  .partners-grid{
+
+    grid-template-columns:
+
+    repeat(
+    4,
+    1fr
+    );
+
+  }
+
+}
+
+/* ======================================================
+   DESKTOP
+====================================================== */
+
+@media(
+min-width:1200px
+){
+
+  .airdrop-container{
+
+    max-width:
+
+    100%;
+
+  }
+
+}
+
+/* ======================================================
+   SAFE
+====================================================== */
+
+#airdrop *{
+
+  min-width:0;
+
+}
+
+#airdrop img{
+
+  display:block;
+
+  max-width:100%;
+
+}
+
+/* ======================================================
+   COMPATIBILITY
+====================================================== */
+
+#airdrop .hidden{
+
+  display:none !important;
+
+ }
+
+/* ==========================================================================
+   17 MODALS COMPLETE MODAL SYSTEM
+   Enterprise Crypto Exchange / PWA / Mobile Architecture
+   ========================================================================== */
+
+.auth,
+.modal,
+.sheet,
+.overlay{
+
+  position:fixed;
+
+  inset:0;
+
+  z-index:
+
+  var(--layer-modal);
+
+}
+
+/* ======================================================
+   BACKDROP
+====================================================== */
+
+.modal-backdrop,
+.sheet-backdrop,
+.wallet-quick-backdrop,
+.auth-overlay{
+
+  position:absolute;
+
+  inset:0;
+
+  background:
+
+  rgba(
+  2,
+  6,
+  12,
+  .72
+  );
+
+  backdrop-filter:
+
+  blur(
+  var(--blur-soft)
+  );
+
+  -webkit-backdrop-filter:
+
+  blur(
+  var(--blur-soft)
+  );
+
+}
+
+/* ======================================================
+   CENTER MODAL
+====================================================== */
+
+.modal{
+
+  display:flex;
+
+  align-items:center;
+
+  justify-content:center;
+
+  padding:
+
+  18px;
+
+}
+
+.modal.hidden{
+
+  display:none !important;
+
+}
+
+/* ======================================================
+   MODAL CARD
+====================================================== */
+
+.modal-card{
+
+  position:relative;
+
+  overflow:hidden;
+
+  width:100%;
+
+  max-width:
+
+  460px;
+
+  border-radius:
+
+  var(--radius-lg);
+
+  background:
+
+  var(--surface-base);
+
+  border:
+
+  1px solid
+  var(--border-base);
+
+  box-shadow:
+
+  var(--token-shadow-modal);
+
+}
+
+.modal-card::before{
+
+  content:"";
+
+  position:absolute;
+
+  inset:0;
+
+  pointer-events:none;
+
+  background:
+
+  linear-gradient(
+
+  180deg,
+
+  rgba(
+  255,
+ 255,
+ 255,
+ .02
+ ),
+
+ transparent
+
+ );
+
+}
+
+/* ======================================================
+   HEADER
+====================================================== */
+
+.modal-header{
+
+  display:flex;
+
+  align-items:flex-start;
+
+  justify-content:space-between;
+
+  gap:
+
+  12px;
+
+  padding:
+
+  18px;
+
+  border-bottom:
+
+  1px solid
+  rgba(
+  255,
+ 255,
+ 255,
+ .04
+ );
+
+}
+
+.modal-header h3{
+
+  line-height:1.2;
+
+}
+
+.modal-subtitle{
+
+  margin-top:
+
+  4px;
+
+  color:
+
+  var(--token-text-muted);
+
+}
+
+/* ======================================================
+   BODY
+====================================================== */
+
+.modal-body{
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:
+
+  14px;
+
+  padding:
+
+  18px;
+
+}
+
+/* ======================================================
+   FOOTER
+====================================================== */
+
+.modal-footer{
+
+  display:flex;
+
+  gap:
+
+  10px;
+
+  padding:
+
+  0
+  18px
+  18px;
+
+}
+
+.modal-footer button{
+
+  flex:1;
+
+}
+
+/* ======================================================
+   CLOSE
+====================================================== */
+
+.modal-close,
+.sheet-close,
+.wallet-panel-close,
+.mining-panel-close{
+
+  width:38px;
+
+  height:38px;
+
+  display:flex;
+
+  align-items:center;
+
+  justify-content:center;
+
+  flex-shrink:0;
+
+  border-radius:
+
+  999px;
+
+  background:
+
+  rgba(
+  255,
+ 255,
+ 255,
+ .04
+ );
+
+  border:
+
+  1px solid
+  rgba(
+  255,
+ 255,
+ 255,
+ .04
+ );
+
+}
+
+/* ======================================================
+   SHEET
+====================================================== */
+
+.sheet{
+
+  display:flex;
+
+  align-items:flex-end;
+
+  justify-content:center;
+
+}
+
+.sheet.hidden{
+
+  display:none !important;
+
+}
+
+.sheet-card{
+
+  position:relative;
+
+  overflow:hidden;
+
+  width:100%;
+
+  border-radius:
+
+  var(--radius-xl)
+  var(--radius-xl)
+  0
+  0;
+
+  background:
+
+  var(--surface-base);
+
+  border-top:
+
+  1px solid
+  var(--border-base);
+
+  box-shadow:
+
+  var(--token-shadow-modal);
+
+}
+
+.sheet-handle{
+
+  width:
+
+  52px;
+
+  height:
+
+  5px;
+
+  margin:
+
+  10px auto;
+
+  border-radius:
+
+  999px;
+
+  background:
+
+  rgba(
+  255,
+ 255,
+ 255,
+ .10
+ );
+
+}
+
+.sheet-header{
+
+  display:flex;
+
+  justify-content:space-between;
+
+  gap:
+
+  12px;
+
+  padding:
+
+  8px
+  18px
+  18px;
+
+}
+
+.sheet-body{
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:
+
+  14px;
+
+  padding:
+
+  0
+  18px
+  20px;
+
+}
+
+/* ======================================================
+   AUTH
+====================================================== */
+
+.auth{
+
+  display:none;
+
+  align-items:center;
+
+  justify-content:center;
+
+}
+
+.auth.active{
+
+  display:flex;
+
+}
+
+.auth-card{
+
+  overflow:hidden;
+
+  width:100%;
+
+  max-width:
+
+  420px;
+
+  border-radius:
+
+  var(--radius-lg);
+
+  background:
+
+  var(--surface-base);
+
+  border:
+
+  1px solid
+  var(--border-base);
+
+}
+
+.auth-body{
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:
+
+  14px;
+
+  padding:
+
+  20px;
+
+}
+
+.auth-logo{
+
+  display:flex;
+
+  justify-content:center;
+
+}
+
+.auth-logo img{
+
+  width:72px;
+
+  height:72px;
+
+}
+
+.auth-status{
+
+  min-height:
+
+  22px;
+
+  text-align:center;
+
+  color:
+
+  var(--token-text-muted);
+
+}
+
+/* ======================================================
+   WALLET QUICK
+====================================================== */
+
+.wallet-quick-sheet{
+
+  display:flex;
+
+  align-items:flex-end;
+
+  justify-content:center;
+
+}
+
+.wallet-quick-sheet.wallet-hidden{
+
+  display:none !important;
+
+}
+
+.wallet-quick-card{
+
+  width:100%;
+
+  max-width:
+
+  560px;
+
+}
+
+.wallet-quick-body{
+
+  display:grid;
+
+  gap:
+
+  10px;
+
+}
+
+/* ======================================================
+   TOAST
+====================================================== */
+
+.wallet-toast{
+
+  position:fixed;
+
+  left:50%;
+
+  bottom:
+
+  calc(
+  var(--mobile-nav-height)
+  +
+  18px
+  );
+
+  z-index:
+
+  calc(
+  var(--layer-modal)
+  +
+  5
+  );
+
+  min-height:
+
+  48px;
+
+  display:flex;
+
+  align-items:center;
+
+  justify-content:center;
+
+  padding:
+
+  0
+  18px;
+
+  border-radius:
+
+  var(--radius-pill);
+
+  background:
+
+  rgba(
+  4,
+ 10,
+ 18,
+ .96
+ );
+
+  border:
+
+  1px solid
+  var(--border-base);
+
+  transform:
+
+  translateX(-50%);
+
+}
+
+.wallet-toast.hidden{
+
+  display:none !important;
+
+}
+
+/* ======================================================
+   LOADER
+====================================================== */
+
+#globalLoader{
+
+  position:fixed;
+
+  inset:0;
+
+  z-index:
+
+  var(--layer-loader);
+
+}
+
+.loader-ring{
+
+  width:
+
+  72px;
+
+  height:
+
+  72px;
+
+  border-radius:
+
+  50%;
+
+  border:
+
+  3px solid
+  rgba(
+  255,
+ 255,
+ 255,
+ .06
+ );
+
+  border-top-color:
+
+  var(--brand-primary);
+
+}
+
+.loader-progress{
+
+  overflow:hidden;
+
+}
+
+.loader-progress-fill{
+
+  height:100%;
+
+}
+
+/* ======================================================
+   MOBILE
+====================================================== */
+
+@media(
+max-width:640px
+){
+
+  .modal{
+
+    padding:
+
+    14px;
+
+  }
+
+  .modal-footer{
+
+    flex-direction:column;
+
+  }
+
+}
+
+/* ======================================================
+   TABLET
+====================================================== */
+
+@media(
+min-width:768px
+){
+
+  .sheet-card{
+
+    max-width:
+
+    680px;
+
+  }
+
+}
+
+/* ======================================================
+   SAFE AREA
+====================================================== */
+
+@supports(
+padding:max(0px)
+){
+
+  .sheet-card{
+
+    padding-bottom:
+
+    max(
+    0px,
+    var(--safe-bottom)
+    );
+
+  }
+
+}
+
+/* ======================================================
+   VISIBILITY
+====================================================== */
+
+.hidden{
+
+  display:none !important;
+
+}
+
+/* ======================================================
+   SAFETY
+====================================================== */
+
+.modal *,
+.sheet *,
+.auth *{
+
+  min-width:0;
+
+}
+
+/* ==========================================================================
+   18 MOBILE
+   Enterprise Crypto Exchange / PWA / Mobile Architecture
+   Mobile First • Safe Refactor • No Visual Redesign
+========================================================================== */
+
+@media(
+max-width:767px
+){
+
+  html{
+
+    overflow-x:hidden;
+
+  }
+
+  body{
+
+    overflow-x:hidden;
+
+    overscroll-behavior-y:
+
+    contain;
+
+  }
+
+}
+
+/* ======================================================
+   MOBILE APP
+====================================================== */
+
+@media(
+max-width:767px
+){
+
+  .app-container{
+
+    width:100%;
+
+    max-width:100%;
+
+    min-height:
+
+    calc(
+    100vh -
+    var(--mobile-nav-height)
+    );
+
+    padding-top:
+
+    14px;
+
+    padding-bottom:
+
+    calc(
+    var(--mobile-nav-height)
+    +
+    20px
+    );
+
+  }
+
+}
+
+/* ======================================================
+   HEADER
+====================================================== */
+
+@media(
+max-width:767px
+){
+
+  .app-header{
+
+    min-height:
+
+    var(--header-height);
+
+  }
+
+  .header-right{
+
+    gap:
+
+    8px;
+
+  }
+
+  .social-links{
+
+    gap:
+
+    8px;
+
+  }
+
+}
+
+/* ======================================================
+   MOBILE NAVIGATION
+====================================================== */
+
+@media(
+max-width:767px
+){
+
+  .mobile-nav{
+
+    position:fixed;
+
+    left:0;
+
+    right:0;
+
+    bottom:0;
+
+    z-index:
+
+    var(--layer-navigation);
+
+    min-height:
+
+    var(--mobile-nav-height);
+
+    display:grid;
+
+    grid-template-columns:
+
+    repeat(
+    5,
+    1fr
+    );
+
+    align-items:center;
+
+    padding-bottom:
+
+    max(
+    8px,
+    var(--safe-bottom)
+    );
+
+    background:
+
+    rgba(
+    5,
+    10,
+    18,
+    .96
+    );
+
+    border-top:
+
+    1px solid
+    var(--border-base);
+
+    backdrop-filter:
+
+    blur(
+    var(--blur-base)
+    );
+
+  }
+
+  .mobile-nav .nav-btn{
+
+    min-height:
+
+    60px;
+
+  }
+
+}
+
+/* ======================================================
+   WALLET
+====================================================== */
+
+@media(
+max-width:767px
+){
+
+  .wallet-actions{
+
+    grid-template-columns:
+
+    repeat(
+    3,
+    1fr
+    );
+
+  }
+
+  .wallet-inline-actions{
+
+    flex-direction:
+
+    row;
+
+  }
+
+  .wallet-top{
+
+    min-height:
+
+    140px;
+
+  }
+
+}
+
+/* ======================================================
+   MARKET
+====================================================== */
+
+@media(
+max-width:767px
+){
+
+  .market-header{
+
+    gap:
+
+    12px;
+
+  }
+
+  .market-chart-shell{
+
+    width:100%;
+
+  }
+
+  .market-chart-footer{
+
+    grid-template-columns:
+
+    repeat(
+    2,
+    1fr
+    );
+
+  }
+
+  .pair-grid{
+
+    overflow-x:auto;
+
+  }
+
+}
+
+/* ======================================================
+   MINING
+====================================================== */
+
+@media(
+max-width:767px
+){
+
+  .mining-shell{
+
+    grid-template-columns:
+
+    1fr;
+
+  }
+
+  .mining-active-actions{
+
+    grid-template-columns:
+
+    repeat(
+    2,
+    1fr
+    );
+
+  }
+
+  .mining-plan-grid{
+
+    grid-template-columns:
+
+    repeat(
+    2,
+    1fr
+    );
+
+  }
+
+}
+
+/* ======================================================
+   CASINO
+====================================================== */
+
+@media(
+max-width:767px
+){
+
+  #casinoGamesGrid{
+
+    grid-template-columns:
+
+    repeat(
+    2,
+    1fr
+    );
+
+  }
+
+  .casino-filter-tabs{
+
+    overflow-x:auto;
+
+  }
+
+}
+
+/* ======================================================
+   AIRDROP
+====================================================== */
+
+@media(
+max-width:767px
+){
+
+  .partners-grid{
+
+    grid-template-columns:
+
+    repeat(
+    2,
+    1fr
+    );
+
+  }
+
+  .referral-box{
+
+    grid-template-columns:
+
+    1fr;
+
+  }
+
+}
+
+/* ======================================================
+   MODALS
+====================================================== */
+
+@media(
+max-width:767px
+){
+
+  .modal{
+
+    padding:
+
+    14px;
+
+  }
+
+  .modal-card{
+
+    max-width:
+
+    100%;
+
+  }
+
+  .sheet-card{
+
+    width:100%;
+
+  }
+
+}
+
+/* ======================================================
+   SMALL MOBILE
+====================================================== */
+
+@media(
+max-width:480px
+){
+
+  .wallet-actions{
+
+    gap:
+
+    8px;
+
+  }
+
+  .market-stats-grid{
+
+    grid-template-columns:
+
+    1fr
+    1fr;
+
+  }
+
+  .casino-stats-strip{
+
+    grid-template-columns:
+
+    1fr;
+
+  }
+
+}
+
+/* ======================================================
+   IOS SAFE AREA
+====================================================== */
+
+@supports(
+padding:max(0px)
+){
+
+  @media(
+  max-width:767px
+  ){
+
+    .app-container{
+
+      padding-left:
+
+      max(
+      14px,
+      var(--safe-left)
+      );
+
+      padding-right:
+
+      max(
+      14px,
+      var(--safe-right)
+      );
+
+    }
+
+  }
+
+}
+
+/* ======================================================
+   TOUCH SYSTEM
+====================================================== */
+
+@media(
+pointer:coarse
+){
+
+  button,
+  .btn,
+  input,
+  select{
+
+    touch-action:
+
+    manipulation;
+
+  }
+
+}
+
+/* ======================================================
+   MOBILE LANDSCAPE
+====================================================== */
+
+@media(
+max-width:920px
+)
+and
+(
+orientation:landscape
+){
+
+  .mobile-nav{
+
+    min-height:
+
+    66px;
+
+  }
+
+  .wallet-top{
+
+    min-height:
+
+    120px;
+
+  }
+
+}
+
+/* ======================================================
+   SAFE FOUNDATION
+====================================================== */
+
+@media(
+max-width:767px
+){
+
+  img,
+  svg,
+  canvas{
+
+    max-width:100%;
+
+  }
+
+  *{
+
+    min-width:0;
+
+  }
+   }
+
+/* ==========================================================================
+   19 TABLET
+   Enterprise Crypto Exchange / PWA / Tablet Architecture
+   Safe Refactor • Maintain Existing UI • No Visual Redesign
+   ========================================================================== */
+
+@media(
+min-width:768px
+)
+and
+(
+max-width:1199px
+){
+
+  html{
+
+    overflow-x:hidden;
+
+  }
+
+  body{
+
+    overflow-x:hidden;
+
+  }
+
+}
+
+/* ======================================================
+   APP CONTAINER
+====================================================== */
+
+@media(
+min-width:768px
+)
+and
+(
+max-width:1199px
+){
+
+  .app-container{
+
+    width:100%;
+
+    max-width:
+
+    100%;
+
+    margin:0 auto;
+
+    padding-left:
+
+    20px;
+
+    padding-right:
+
+    20px;
+
+    padding-bottom:
+
+    calc(
+    var(--mobile-nav-height)
+    +
+    26px
+    );
+
+  }
+
+}
+
+/* ======================================================
+   HEADER
+====================================================== */
+
+@media(
+min-width:768px
+)
+and
+(
+max-width:1199px
+){
+
+  .app-header{
+
+    padding-left:
+
+    20px;
+
+    padding-right:
+
+    20px;
+
+  }
+
+  .header-right{
+
+    gap:
+
+    12px;
+
+  }
+
+}
+
+/* ======================================================
+   WALLET
+====================================================== */
+
+@media(
+min-width:768px
+)
+and
+(
+max-width:1199px
+){
+
+  .wallet-top{
+
+    min-height:
+
+    170px;
+
+  }
+
+  .wallet-actions{
+
+    max-width:
+
+    560px;
+
+  }
+
+  .wallet-balances{
+
+    gap:
+
+    14px;
+
+  }
+
+  .wallet-inline-actions{
+
+    flex-direction:
+
+    row;
+
+  }
+
+  .wallet-quick-card{
+
+    max-width:
+
+    640px;
+
+  }
+
+}
+
+/* ======================================================
+   MARKET
+====================================================== */
+
+@media(
+min-width:768px
+)
+and
+(
+max-width:1199px
+){
+
+  .market-header{
+
+    align-items:
+
+    flex-start;
+
+  }
+
+  .market-stats-grid{
+
+    grid-template-columns:
+
+    repeat(
+    4,
+    1fr
+    );
+
+  }
+
+  .market-chart-footer{
+
+    grid-template-columns:
+
+    repeat(
+    4,
+    1fr
+    );
+
+  }
+
+  .pair-grid{
+
+    grid-template-columns:
+
+    repeat(
+    5,
+    1fr
+    );
+
+  }
+
+}
+
+/* ======================================================
+   TRADING
+====================================================== */
+
+@media(
+min-width:768px
+)
+and
+(
+max-width:1199px
+){
+
+  .trade-tabs{
+
+    grid-template-columns:
+
+    repeat(
+    2,
+    1fr
+    );
+
+  }
+
+  .trade-form{
+
+    gap:
+
+    14px;
+
+  }
+
+  .percent-row{
+
+    grid-template-columns:
+
+    repeat(
+    4,
+    1fr
+    );
+
+  }
+
+}
+
+/* ======================================================
+   ORDERBOOK
+====================================================== */
+
+@media(
+min-width:768px
+)
+and
+(
+max-width:1199px
+){
+
+  .orderbook-card{
+
+    gap:
+
+    14px;
+
+  }
+
+  .ob-grid-row{
+
+    min-height:
+
+    28px;
+
+  }
+
+}
+
+/* ======================================================
+   MINING
+====================================================== */
+
+@media(
+min-width:768px
+)
+and
+(
+max-width:1199px
+){
+
+  .mining-shell{
+
+    grid-template-columns:
+
+    1fr;
+
+  }
+
+  .mining-plan-grid{
+
+    grid-template-columns:
+
+    repeat(
+    2,
+    1fr
+    );
+
+  }
+
+  .mining-quick-row{
+
+    grid-template-columns:
+
+    repeat(
+    3,
+    1fr
+    );
+
+  }
+
+  .mining-active-actions{
+
+    grid-template-columns:
+
+    repeat(
+    2,
+    1fr
+    );
+
+  }
+
+}
+
+/* ======================================================
+   CASINO
+====================================================== */
+
+@media(
+min-width:768px
+)
+and
+(
+max-width:1199px
+){
+
+  #casinoGamesGrid{
+
+    grid-template-columns:
+
+    repeat(
+    3,
+    1fr
+    );
+
+  }
+
+  .casino-stats-strip{
+
+    grid-template-columns:
+
+    repeat(
+    3,
+    1fr
+    );
+
+  }
+
+}
+
+/* ======================================================
+   AIRDROP
+====================================================== */
+
+@media(
+min-width:768px
+)
+and
+(
+max-width:1199px
+){
+
+  .partners-grid{
+
+    grid-template-columns:
+
+    repeat(
+    4,
+    1fr
+    );
+
+  }
+
+  .referral-box{
+
+    grid-template-columns:
+
+    1fr
+    auto;
+
+  }
+
+}
+
+/* ======================================================
+   MODALS
+====================================================== */
+
+@media(
+min-width:768px
+)
+and
+(
+max-width:1199px
+){
+
+  .modal-card{
+
+    max-width:
+
+    520px;
+
+  }
+
+  .sheet-card{
+
+    max-width:
+
+    720px;
+
+  }
+
+}
+
+/* ======================================================
+   NAVIGATION
+====================================================== */
+
+@media(
+min-width:768px
+)
+and
+(
+max-width:1199px
+){
+
+  .mobile-nav{
+
+    min-height:
+
+    var(--mobile-nav-height);
+
+  }
+
+  .mobile-nav .nav-btn{
+
+    min-height:
+
+    62px;
+
+  }
+
+}
+
+/* ======================================================
+   LANDSCAPE TABLET
+====================================================== */
+
+@media(
+min-width:768px
+)
+and
+(
+max-width:1199px
+)
+and
+(
+orientation:landscape
+){
+
+  .wallet-top{
+
+    min-height:
+
+    150px;
+
+  }
+
+  .app-container{
+
+    padding-bottom:
+
+    calc(
+    var(--mobile-nav-height)
+    +
+    18px
+    );
+
+  }
+
+}
+
+/* ======================================================
+   SAFE AREA
+====================================================== */
+
+@supports(
+padding:max(0px)
+){
+
+@media(
+min-width:768px
+)
+and
+(
+max-width:1199px
+){
+
+  .app-container{
+
+    padding-left:
+
+    max(
+    20px,
+    var(--safe-left)
+    );
+
+    padding-right:
+
+    max(
+    20px,
+    var(--safe-right)
+    );
+
+  }
+
+}
+
+}
+
+/* ======================================================
+   TOUCH DEVICES
+====================================================== */
+
+@media(
+pointer:coarse
+)
+and
+(
+min-width:768px
+){
+
+  button,
+  .btn{
+
+    touch-action:
+
+    manipulation;
+
+  }
+
+}
+
+/* ======================================================
+   SAFE FOUNDATION
+====================================================== */
+
+@media(
+min-width:768px
+)
+and
+(
+max-width:1199px
+){
+
+  *{
+
+    min-width:0;
+
+  }
+
+  img,
+  svg,
+  canvas{
+
+    max-width:100%;
+
+  }
+   }
+/* ==========================================================================
+   20 PWA
+   Enterprise Crypto Exchange / PWA / Mobile Architecture
+   Install Safe • Offline Safe • Standalone Safe
+   ========================================================================== */
+
+html{
+
+  min-height:
+
+  100%;
+
+}
+
+body{
+
+  min-height:
+
+  100vh;
+
+  min-height:
+
+  100dvh;
+
+}
+
+/* ======================================================
+   STANDALONE MODE
+====================================================== */
+
+@media(
+display-mode:standalone
+){
+
+  body{
+
+    overscroll-behavior:
+
+    none;
+
+  }
+
+  .app-container{
+
+    padding-top:
+
+    max(
+    14px,
+    var(--safe-top)
+    );
+
+  }
+
+}
+
+/* ======================================================
+   IOS PWA
+====================================================== */
+
+@supports(
+padding:max(0px)
+){
+
+  body{
+
+    padding-top:
+
+    max(
+    0px,
+    var(--safe-top)
+    );
+
+    padding-left:
+
+    max(
+    0px,
+    var(--safe-left)
+    );
+
+    padding-right:
+
+    max(
+    0px,
+    var(--safe-right)
+    );
+
+  }
+
+}
+
+/* ======================================================
+   SAFE HEIGHT
+====================================================== */
+
+@supports(
+height:100dvh
+){
+
+  .view{
+
+    min-height:
+
+    calc(
+    100dvh -
+    var(--header-height)
+    );
+
+  }
+
+  #wallet,
+  #market,
+  #mining,
+  #casino,
+  #airdrop{
+
+    min-height:
+
+    calc(
+    100dvh -
+    var(--header-height)
+    -
+    var(--mobile-nav-height)
+    );
+
+  }
+
+}
+
+/* ======================================================
+   APP READY
+====================================================== */
+
+body.app-ready{
+
+  visibility:
+
+  visible;
+
+}
+
+body.app-preload{
+
+  overflow:hidden;
+
+}
+
+body.app-preload #app{
+
+  opacity:0;
+
+  visibility:hidden;
+
+  pointer-events:none;
+
+}
+
+body.app-ready #app{
+
+  opacity:1;
+
+  visibility:visible;
+
+  pointer-events:auto;
+
+  transition:
+
+  opacity
+  .24s ease,
+
+  visibility
+  .24s ease;
+
+}
+
+/* ======================================================
+   OFFLINE
+====================================================== */
+
+.offline-banner{
+
+  position:fixed;
+
+  top:
+
+  calc(
+  var(--safe-top)
+  +
+  10px
+  );
+
+  left:50%;
+
+  z-index:
+
+  calc(
+  var(--layer-loader)
+  -
+  1
+  );
+
+  transform:
+
+  translateX(-50%);
+
+  min-height:
+
+  44px;
+
+  display:flex;
+
+  align-items:center;
+
+  justify-content:center;
+
+  padding:
+
+  0
+  18px;
+
+  border-radius:
+
+  var(--radius-pill);
+
+  background:
+
+  rgba(
+  255,
+ 86,
+ 111,
+ .95
+ );
+
+  color:white;
+
+}
+
+.offline-banner.hidden{
+
+  display:none !important;
+
+}
+
+/* ======================================================
+   UPDATE SYSTEM
+====================================================== */
+
+.pwa-update-banner{
+
+  position:fixed;
+
+  left:14px;
+
+  right:14px;
+
+  bottom:
+
+  calc(
+  var(--mobile-nav-height)
+  +
+  14px
+  );
+
+  z-index:
+
+  calc(
+  var(--layer-modal)
+  +
+  10
+  );
+
+  display:flex;
+
+  align-items:center;
+
+  justify-content:space-between;
+
+  gap:
+
+  12px;
+
+  padding:
+
+  14px;
+
+  border-radius:
+
+  var(--radius-lg);
+
+  background:
+
+  rgba(
+  8,
+ 15,
+ 25,
+ .98
+ );
+
+  border:
+
+  1px solid
+  var(--border-base);
+
+}
+
+.pwa-update-banner.hidden{
+
+  display:none !important;
+
+}
+
+.pwa-update-actions{
+
+  display:flex;
+
+  gap:
+
+  8px;
+
+}
+
+/* ======================================================
+   SPLASH SAFE
+====================================================== */
+
+#globalLoader{
+
+  background:
+
+  var(--color-bg);
+
+}
+
+.loader-logo{
+
+  position:relative;
+
+}
+
+.loader-logo img{
+
+  object-fit:contain;
+
+}
+
+/* ======================================================
+   PULL SAFE
+====================================================== */
+
+body{
+
+  overscroll-behavior-y:
+
+  contain;
+
+}
+
+/* ======================================================
+   TOUCH SAFE
+====================================================== */
+
+button,
+.btn,
+input,
+select{
+
+  touch-action:
+
+  manipulation;
+
+}
+
+/* ======================================================
+   KEYBOARD SAFE
+====================================================== */
+
+input,
+textarea{
+
+  scroll-margin-bottom:
+
+  140px;
+
+}
+
+/* ======================================================
+   MOBILE APP FEEL
+====================================================== */
+
+.mobile-nav{
+
+  padding-bottom:
+
+  max(
+  8px,
+  var(--safe-bottom)
+  );
+
+}
+
+.wallet-quick-card{
+
+  margin-bottom:
+
+  max(
+  0px,
+  var(--safe-bottom)
+  );
+
+}
+
+.sheet-card{
+
+  padding-bottom:
+
+  max(
+  0px,
+  var(--safe-bottom)
+  );
+
+}
+
+/* ======================================================
+   STANDALONE HEADER
+====================================================== */
+
+@media(
+display-mode:standalone
+){
+
+  .app-header{
+
+    padding-top:
+
+    max(
+    14px,
+    var(--safe-top)
+    );
+
+  }
+
+}
+
+/* ======================================================
+   INSTALL PROMPT
+====================================================== */
+
+.pwa-install-card{
+
+  overflow:hidden;
+
+  border-radius:
+
+  var(--radius-lg);
+
+  background:
+
+  var(--surface-base);
+
+  border:
+
+  1px solid
+  var(--border-base);
+
+}
+
+.pwa-install-card.hidden{
+
+  display:none !important;
+
+}
+
+.pwa-install-body{
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:
+
+  14px;
+
+  padding:
+
+  18px;
+
+}
+
+/* ======================================================
+   VIEWPORT SAFE
+====================================================== */
+
+@supports(
+height:100svh
+){
+
+  body{
+
+    min-height:
+
+    100svh;
+
+  }
+
+}
+
+/* ======================================================
+   LANDSCAPE SAFE
+====================================================== */
+
+@media(
+orientation:landscape
+){
+
+  .mobile-nav{
+
+    min-height:
+
+    68px;
+
+  }
+
+}
+
+/* ======================================================
+   TABLET SAFE
+====================================================== */
+
+@media(
+min-width:768px
+){
+
+  .pwa-update-banner{
+
+    max-width:
+
+    520px;
+
+    margin:auto;
+
+  }
+
+}
+
+/* ======================================================
+   SAFE FOUNDATION
+====================================================== */
+
+body,
+#app{
+
+  isolation:isolate;
+
+}
+
+*{
+
+  -webkit-touch-callout:
+
+  none;
+
+}
+
+img{
+
+  user-select:none;
+
+  -webkit-user-drag:none;
+
+}
+
+/* ==========================================================================
+   21 PERFORMANCE
+   Enterprise Crypto Exchange / PWA / Mobile Architecture
+   Safe Optimization • No UI Changes • No Aggressive Rendering
+   ========================================================================== */
+
+html{
+
+  text-rendering:
+
+  optimizeLegibility;
+
+  -webkit-font-smoothing:
+
+  antialiased;
+
+  -moz-osx-font-smoothing:
+
+  grayscale;
+
+}
+
+/* ======================================================
+   IMAGE PIPELINE
+====================================================== */
+
+img{
+
+  max-width:100%;
+
+  height:auto;
+
+  image-rendering:auto;
+
+  backface-visibility:hidden;
+
+}
+
+img[loading="lazy"]{
+
+  opacity:1;
+
+}
+
+/* ======================================================
+   SVG
+====================================================== */
+
+svg{
+
+  shape-rendering:
+
+  geometricPrecision;
+
+}
+
+svg *{
+
+  vector-effect:
+
+  non-scaling-stroke;
+
+}
+
+/* ======================================================
+   VIDEO
+====================================================== */
+
+video{
+
+  max-width:100%;
+
+  object-fit:cover;
+
+}
+
+.bg-video{
+
+  pointer-events:none;
+
+}
+
+/* ======================================================
+   CANVAS
+====================================================== */
+
+canvas{
+
+  display:block;
+
+  max-width:100%;
+
+}
+
+#marketChart{
+
+  touch-action:none;
+
+}
+
+/* ======================================================
+   INPUT PIPELINE
+====================================================== */
+
+input,
+textarea,
+select{
+
+  caret-color:
+
+  var(--brand-primary);
+
+}
+
+input::placeholder{
+
+  opacity:1;
+
+}
+
+/* ======================================================
+   SCROLL SYSTEM
+====================================================== */
+
+html{
+
+  scroll-padding-top:
+
+  calc(
+  var(--header-height)
+  +
+  12px
+  );
+
+}
+
+body{
+
+  overflow-x:hidden;
+
+}
+
+/* ======================================================
+   OVERFLOW SAFETY
+====================================================== */
+
+.wallet-row,
+.card,
+.market-hero,
+.wallet-top,
+.wallet-panel,
+.trade-box,
+.orderbook-card,
+.airdrop-box{
+
+  overflow-wrap:
+
+  break-word;
+
+}
+
+.wallet-address-box code{
+
+  overflow:hidden;
+
+  text-overflow:ellipsis;
+
+  white-space:nowrap;
+
+}
+
+/* ======================================================
+   NUMERIC RENDER
+====================================================== */
+
+.market-price,
+.trade-price,
+.wallet-balance,
+.wallet-value,
+.asset-value,
+.mining-profit,
+.casino-win{
+
+  font-variant-numeric:
+
+  tabular-nums;
+
+}
+
+/* ======================================================
+   APP PIPELINE
+====================================================== */
+
+#app{
+
+  isolation:isolate;
+
+}
+
+#wallet,
+#market,
+#casino,
+#mining,
+#airdrop{
+
+  min-width:0;
+
+}
+
+/* ======================================================
+   CHART PIPELINE
+====================================================== */
+
+.market-chart-shell{
+
+  overflow:hidden;
+
+}
+
+.market-chart-shell canvas{
+
+  max-width:100%;
+
+}
+
+/* ======================================================
+   MOBILE NAV
+====================================================== */
+
+.mobile-nav{
+
+  user-select:none;
+
+}
+
+.mobile-nav img{
+
+  -webkit-user-drag:none;
+
+}
+
+/* ======================================================
+   BUTTON PIPELINE
+====================================================== */
+
+button,
+.btn{
+
+  user-select:none;
+
+}
+
+button img{
+
+  pointer-events:none;
+
+}
+
+/* ======================================================
+   QR / CRYPTO ADDRESS
+====================================================== */
+
+.wallet-qr canvas{
+
+  max-width:100%;
+
+}
+
+.wallet-address-box{
+
+  overflow:hidden;
+
+}
+
+/* ======================================================
+   TABLE SAFETY
+====================================================== */
+
+table{
+
+  width:100%;
+
+}
+
+td,
+th{
+
+  overflow:hidden;
+
+}
+
+/* ======================================================
+   CASINO
+====================================================== */
+
+.casino-game-thumb{
+
+  overflow:hidden;
+
+}
+
+.casino-game-thumb img{
+
+  display:block;
+
+}
+
+/* ======================================================
+   MINING
+====================================================== */
+
+#miningProgressFill{
+
+  min-width:0;
+
+}
+
+/* ======================================================
+   AIRDROP
+====================================================== */
+
+.partner-item img{
+
+  object-fit:contain;
+
+}
+
+/* ======================================================
+   TOUCH PIPELINE
+====================================================== */
+
+@media(
+pointer:coarse
+){
+
+  button,
+  .btn,
+  input,
+  select{
+
+    touch-action:
+
+    manipulation;
+
+  }
+
+}
+
+/* ======================================================
+   LOW MEMORY
+====================================================== */
+
+@media(
+prefers-reduced-motion:reduce
+){
+
+  *{
+
+    animation-duration:
+
+    .01ms !important;
+
+    animation-iteration-count:
+
+    1 !important;
+
+    transition-duration:
+
+    .01ms !important;
+
+  }
+
+}
+
+/* ======================================================
+   HIGH DPI
+====================================================== */
+
+@media(
+min-resolution:2dppx
+){
+
+  img{
+
+    image-rendering:auto;
+
+  }
+
+}
+
+/* ======================================================
+   PRINT SAFE
+====================================================== */
+
+@media print{
+
+  .mobile-nav,
+  .bg-video,
+  .wallet-toast{
+
+    display:none;
+
+  }
+
+}
+
+/* ======================================================
+   SAFE FOUNDATION
+====================================================== */
+
+*{
+
+  min-width:0;
+
+}
+
+img,
+svg,
+canvas{
+
+  max-width:100%;
+
+}
+
+code{
+
+  overflow-wrap:anywhere;
+
+}
+
+/* ======================================================
+   FINAL COMPATIBILITY
+====================================================== */
+
+.hidden{
+
+  display:none !important;
+
+}
+
+.wallet-hidden{
+
+  display:none !important;
+
+}
+
+.mining-hidden{
+
+  display:none !important;
+
+}
