@@ -1624,8 +1624,8 @@ body.header-compact .app-header{
 
 /* ==========================================================================
    05 APP CONTAINER
-   Application Shell Layout System
-   Main Container + Safe Area + Responsive Bounds
+   Application Shell Layout Engine
+   Safe Bounds + Content Flow + PWA Stability
    ========================================================================== */
 
 #app{
@@ -1634,19 +1634,14 @@ body.header-compact .app-header{
 
   width:100%;
 
-  min-height:100vh;
-
-  min-height:100dvh;
-
   isolation:isolate;
 
   z-index:var(--z-base);
 
 }
 
-
 /* ==========================================================
-   APP CONTAINER
+   MAIN CONTAINER
 ========================================================== */
 
 .app-container{
@@ -1657,190 +1652,15 @@ body.header-compact .app-header{
 
   max-width:var(--content-max);
 
-  min-height:100%;
-
   margin-inline:auto;
-
-  padding:
-
-    var(--space-3)
-
-    var(--space-4)
-
-    calc(
-      var(--mobile-nav-height)
-      +
-      var(--safe-bottom)
-      +
-      28px
-    );
-
-  overflow:visible;
 
   isolation:isolate;
 
-}
+  overflow:visible;
 
+  padding-top:
 
-/* ==========================================================
-   APP VIEW STACK
-========================================================== */
-
-.app-container > .view{
-
-  position:relative;
-
-  width:100%;
-
-  min-height:
-
-    calc(
-
-      100dvh
-
-      -
-
-      var(--header-height)
-
-      -
-
-      var(--mobile-nav-height)
-
-    );
-
-  z-index:1;
-
-}
-
-
-/* ==========================================================
-   CONTENT FLOW
-========================================================== */
-
-.app-container > *{
-
-  min-width:0;
-
-}
-
-
-/* ==========================================================
-   OVERFLOW PROTECTION
-========================================================== */
-
-.app-container,
-
-.app-container *{
-
-  overflow-wrap:break-word;
-
-  word-break:normal;
-
-}
-
-
-.app-container code{
-
-  word-break:break-all;
-
-}
-
-
-/* ==========================================================
-   VIEW ISOLATION
-========================================================== */
-
-.view{
-
-  position:relative;
-
-  width:100%;
-
-  display:none;
-
-  opacity:0;
-
-  visibility:hidden;
-
-  pointer-events:none;
-
-  transition:
-
-    opacity
-
-    var(--speed-normal)
-
-    var(--ease),
-
-    visibility
-
-    var(--speed-normal)
-
-    var(--ease);
-
-}
-
-
-.view.active{
-
-  display:block;
-
-  opacity:1;
-
-  visibility:visible;
-
-  pointer-events:auto;
-
-}
-
-
-/* ==========================================================
-   SCROLL SYSTEM
-========================================================== */
-
-.view{
-
-  overflow-x:hidden;
-
-  overflow-y:auto;
-
-  -webkit-overflow-scrolling:touch;
-
-  overscroll-behavior-y:contain;
-
-}
-
-
-/* ==========================================================
-   APP MAX WIDTH MODES
-========================================================== */
-
-body[data-ui="enterprise"] .app-container{
-
-  max-width:1600px;
-
-}
-
-
-body[data-ui="compact"] .app-container{
-
-  max-width:1180px;
-
-}
-
-
-body[data-ui="mobile"] .app-container{
-
-  max-width:640px;
-
-}
-
-
-/* ==========================================================
-   SAFE AREA SYSTEM
-========================================================== */
-
-.app-container{
+    var(--space-3);
 
   padding-left:
 
@@ -1862,34 +1682,80 @@ body[data-ui="mobile"] .app-container{
 
     );
 
+  padding-bottom:
+
+    calc(
+
+      var(--mobile-nav-height)
+
+      +
+
+      var(--safe-bottom)
+
+      +
+
+      20px
+
+    );
+}
+
+/* ==========================================================
+   CHILD FLOW
+========================================================== */
+
+.app-container>*{
+
+  min-width:0;
+
+  max-width:100%;
+
 }
 
 
 /* ==========================================================
-   PWA STANDALONE FIX
+   CONTENT SAFETY
 ========================================================== */
 
-@media (display-mode:standalone){
+.app-container *{
 
-  .app-container{
+  min-width:0;
 
-    padding-bottom:
+  overflow-wrap:break-word;
 
-      calc(
+}
 
-        var(--mobile-nav-height)
 
-        +
+.app-container code{
 
-        var(--safe-bottom)
+  word-break:break-all;
 
-        +
+}
 
-        36px
 
-      );
+/* ==========================================================
+   SAFE MEDIA
+========================================================== */
 
-  }
+.app-container img,
+
+.app-container canvas,
+
+.app-container svg,
+
+.app-container video{
+
+  max-width:100%;
+
+}
+
+
+/* ==========================================================
+   PAGE FLOW
+========================================================== */
+
+.app-container .view{
+
+  width:100%;
 
 }
 
@@ -1915,7 +1781,7 @@ body.app-ready .app-container{
 
     opacity
 
-    .30s
+    .28s
 
     ease;
 
@@ -1934,31 +1800,32 @@ body.auth-loading .app-container{
 
 
 /* ==========================================================
-   MOBILE
+   STANDALONE PWA
 ========================================================== */
 
-@media (max-width:768px){
+@media(
+
+display-mode:standalone
+
+){
 
   .app-container{
 
-    padding-top:
+    padding-bottom:
 
-      var(--space-3);
+      calc(
 
-  }
+        var(--mobile-nav-height)
 
-}
+        +
 
+        var(--safe-bottom)
 
-@media (max-width:480px){
+        +
 
-  .app-container{
+        28px
 
-    padding-left:14px;
-
-    padding-right:14px;
-
-    padding-top:12px;
+      );
 
   }
 
@@ -1966,10 +1833,104 @@ body.auth-loading .app-container{
 
 
 /* ==========================================================
-   LARGE SCREENS
+   MOBILE
 ========================================================== */
 
-@media (min-width:1800px){
+@media(
+
+max-width:768px
+
+){
+
+  .app-container{
+
+    padding-top:
+
+      12px;
+
+  }
+
+}
+
+
+@media(
+
+max-width:480px
+
+){
+
+  .app-container{
+
+    padding-left:
+
+      max(
+
+        14px,
+
+        var(--safe-left)
+
+      );
+
+    padding-right:
+
+      max(
+
+        14px,
+
+        var(--safe-right)
+
+      );
+
+  }
+
+}
+
+
+/* ==========================================================
+   TABLET
+========================================================== */
+
+@media(
+
+min-width:768px
+
+){
+
+  .app-container{
+
+    padding-left:
+
+      max(
+
+        20px,
+
+        var(--safe-left)
+
+      );
+
+    padding-right:
+
+      max(
+
+        20px,
+
+        var(--safe-right)
+
+      );
+
+  }
+
+}
+
+/* ==========================================================
+   LARGE SCREEN
+========================================================== */
+
+@media(
+
+min-width:1800px
+
+){
 
   .app-container{
 
@@ -1979,23 +1940,27 @@ body.auth-loading .app-container{
 
 }
 
-
 /* ==========================================================
-   REDUCED MOTION
+   ACCESSIBILITY
 ========================================================== */
 
-@media (prefers-reduced-motion:reduce){
+@media(
 
-  .view{
+prefers-reduced-motion:reduce
+
+){
+
+  .app-container{
 
     transition:none;
 
   }
  }
+
 /* ==========================================================================
    06 VIEW SYSTEM
-   Application View Engine
-   Navigation + State + Visibility + Animation + Isolation
+   Application View State Engine
+   Navigation + Visibility + Isolation
    ========================================================================== */
 
 .view{
@@ -2006,67 +1971,17 @@ body.auth-loading .app-container{
 
   min-width:0;
 
-  min-height:
-
-    calc(
-
-      100dvh
-
-      -
-
-      var(--header-height)
-
-      -
-
-      var(--mobile-nav-height)
-
-    );
-
   display:none;
-
-  opacity:0;
 
   visibility:hidden;
 
+  opacity:0;
+
   pointer-events:none;
 
-  overflow-x:hidden;
-
-  overflow-y:auto;
+  overflow:visible;
 
   isolation:isolate;
-
-  z-index:1;
-
-  transform:
-
-    translateY(8px);
-
-  transition:
-
-    opacity
-
-    var(--speed-normal)
-
-    var(--ease),
-
-    transform
-
-    var(--speed-normal)
-
-    var(--ease),
-
-    visibility
-
-    var(--speed-normal)
-
-    var(--ease);
-
-  will-change:
-
-    opacity,
-
-    transform;
 
 }
 
@@ -2077,23 +1992,29 @@ body.auth-loading .app-container{
 
 .view.active{
 
-  display:block;
+  display:flex;
 
-  opacity:1;
+  flex-direction:column;
 
   visibility:visible;
 
+  opacity:1;
+
   pointer-events:auto;
 
-  transform:none;
+  animation:
 
-  z-index:2;
+    viewFade
+
+    .22s
+
+    ease;
 
 }
 
 
 /* ==========================================================
-   HIDDEN VIEW
+   HIDDEN STATE
 ========================================================== */
 
 .view:not(.active){
@@ -2104,97 +2025,32 @@ body.auth-loading .app-container{
 
 
 /* ==========================================================
-   VIEW STACK FIX
+   ROOT MODULES
 ========================================================== */
 
-#wallet.view,
+#wallet,
 
-#market.view,
+#market,
 
-#mining.view,
+#casino,
 
-#casino.view,
+#mining,
 
-#airdrop.view{
+#airdrop{
 
-  contain:
+  width:100%;
 
-    layout
+  display:flex;
 
-    style;
+  flex-direction:column;
+
+  gap:12px;
 
 }
 
 
 /* ==========================================================
-   SCROLL SYSTEM
-========================================================== */
-
-.view{
-
-  scroll-behavior:smooth;
-
-  overscroll-behavior-y:contain;
-
-  -webkit-overflow-scrolling:touch;
-
-}
-
-
-.view::-webkit-scrollbar{
-
-  width:8px;
-
-}
-
-
-.view::-webkit-scrollbar-thumb{
-
-  border-radius:
-
-    var(--radius-full);
-
-  background:
-
-    rgba(
-
-      255,
-
-      255,
-
-      255,
-
-      .10
-
-    );
-
-}
-
-
-/* ==========================================================
-   PAGE TRANSITIONS
-========================================================== */
-
-body.page-switching .view.active{
-
-  opacity:.75;
-
-  transform:
-
-    translateY(4px);
-
-}
-
-
-body.page-loading .view.active{
-
-  pointer-events:none;
-
-}
-
-
-/* ==========================================================
-   PERFORMANCE
+   OVERFLOW SAFETY
 ========================================================== */
 
 .view *{
@@ -2204,12 +2060,11 @@ body.page-loading .view.active{
 }
 
 
-.view img{
+.view img,
 
-  content-visibility:auto;
+.view canvas,
 
-}
-
+.view svg,
 
 .view video{
 
@@ -2219,66 +2074,7 @@ body.page-loading .view.active{
 
 
 /* ==========================================================
-   VIEW EMPTY
-========================================================== */
-
-.view:empty{
-
-  display:none;
-
-}
-
-
-/* ==========================================================
-   MOBILE FIX
-========================================================== */
-
-@media (max-width:768px){
-
-  .view{
-
-    min-height:
-
-      calc(
-
-        100dvh
-
-        -
-
-        var(--header-height)
-
-        -
-
-        var(--mobile-nav-height)
-
-      );
-
-  }
-
-}
-
-
-/* ==========================================================
-   SAFE AREA
-========================================================== */
-
-.view{
-
-  padding-bottom:
-
-    max(
-
-      20px,
-
-      var(--safe-bottom)
-
-    );
-
-}
-
-
-/* ==========================================================
-   PRELOAD LOCK
+   PRELOAD
 ========================================================== */
 
 body.app-preload .view{
@@ -2290,13 +2086,13 @@ body.app-preload .view{
 
 body.app-ready .view.active{
 
-  display:block;
+  display:flex;
 
 }
 
 
 /* ==========================================================
-   AUTH LOCK
+   AUTH
 ========================================================== */
 
 body.auth-loading .view{
@@ -2307,18 +2103,36 @@ body.auth-loading .view{
 
 
 /* ==========================================================
-   REDUCED MOTION
+   PAGE SWITCH
 ========================================================== */
 
-@media (prefers-reduced-motion:reduce){
+body.page-switching .view.active{
+
+  opacity:.75;
+
+}
+
+
+/* ==========================================================
+   EMPTY VIEW
+========================================================== */
+
+.view:empty{
+
+  display:none;
+
+}
+
+
+/* ==========================================================
+   SAFE MOBILE
+========================================================== */
+
+@media(max-width:768px){
 
   .view{
 
-    transition:none;
-
-    transform:none;
-
-    scroll-behavior:auto;
+    width:100%;
 
   }
 
@@ -2326,31 +2140,42 @@ body.auth-loading .view{
 
 
 /* ==========================================================
-   FALLBACK
+   ANIMATION
 ========================================================== */
 
-@supports not (height:100dvh){
+@keyframes viewFade{
 
-  .view{
+  from{
 
-    min-height:
-
-      calc(
-
-        100vh
-
-        -
-
-        var(--header-height)
-
-        -
-
-        var(--mobile-nav-height)
-
-      );
+    opacity:0;
 
   }
- }
+
+  to{
+
+    opacity:1;
+
+  }
+
+}
+
+
+/* ==========================================================
+   ACCESSIBILITY
+========================================================== */
+
+@media(prefers-reduced-motion:reduce){
+
+  .view,
+
+  .view.active{
+
+    animation:none;
+
+    transition:none;
+
+  }
+}
 
 /* ==========================================================================
    07 GLOBAL CARD SYSTEM
@@ -2425,7 +2250,6 @@ body.auth-loading .view{
 
 }
 
-
 /* ==========================================================
    CARD FX
 ========================================================== */
@@ -2476,7 +2300,6 @@ body.auth-loading .view{
 
 }
 
-
 /* ==========================================================
    CARD GLOW
 ========================================================== */
@@ -2518,7 +2341,6 @@ body.auth-loading .view{
   pointer-events:none;
 
 }
-
 
 /* ==========================================================
    INTERACTIVE CARD
@@ -2568,7 +2390,6 @@ body.auth-loading .view{
 
 }
 
-
 /* ==========================================================
    COMPACT CARD
 ========================================================== */
@@ -2598,7 +2419,6 @@ body.auth-loading .view{
 
 }
 
-
 /* ==========================================================
    GLASS CARD
 ========================================================== */
@@ -2622,7 +2442,6 @@ body.auth-loading .view{
     );
 
 }
-
 
 /* ==========================================================
    STATUS CARD
@@ -2684,7 +2503,6 @@ body.auth-loading .view{
 
 }
 
-
 /* ==========================================================
    PANEL CARD
 ========================================================== */
@@ -2696,7 +2514,6 @@ body.auth-loading .view{
     var(--space-4);
 
 }
-
 
 /* ==========================================================
    STAT CARD
@@ -2729,7 +2546,6 @@ body.auth-loading .view{
 
 }
 
-
 .stat-card strong{
 
   font-size:18px;
@@ -2741,7 +2557,6 @@ body.auth-loading .view{
     var(--text);
 
 }
-
 
 /* ==========================================================
    DISABLED
@@ -2759,7 +2574,6 @@ body.auth-loading .view{
 
 }
 
-
 /* ==========================================================
    LOADING CARD
 ========================================================== */
@@ -2769,7 +2583,6 @@ body.auth-loading .view{
   overflow:hidden;
 
 }
-
 
 .card-loading::before{
 
@@ -2809,7 +2622,6 @@ body.auth-loading .view{
 
 }
 
-
 @keyframes cardLoading{
 
   to{
@@ -2821,7 +2633,6 @@ body.auth-loading .view{
   }
 
 }
-
 
 /* ==========================================================
    SKELETON
@@ -2865,7 +2676,6 @@ body.auth-loading .view{
 
 }
 
-
 @keyframes skeletonMove{
 
   from{
@@ -2885,11 +2695,9 @@ body.auth-loading .view{
       -100%
 
       0;
-
   }
 
 }
-
 
 /* ==========================================================
    RESPONSIVE
@@ -2908,7 +2716,6 @@ body.auth-loading .view{
   }
 
 }
-
 
 /* ==========================================================
    REDUCED MOTION
@@ -2957,7 +2764,6 @@ body.auth-loading .view{
   gap:var(--wallet-gap);
 
 }
-
 
 /* ==========================================================
    HERO
@@ -3013,7 +2819,6 @@ body.auth-loading .view{
 
 }
 
-
 #wallet .label{
 
   font-size:11px;
@@ -3041,7 +2846,6 @@ body.auth-loading .view{
 
 }
 
-
 #walletTotal{
 
   font-size:
@@ -3062,7 +2866,6 @@ body.auth-loading .view{
   margin-top:10px;
 
 }
-
 
 /* ==========================================================
    SMART BLOCK
@@ -3096,7 +2899,6 @@ body.auth-loading .view{
 
 }
 
-
 .wallet-intelligence-head{
 
   display:flex;
@@ -3106,7 +2908,6 @@ body.auth-loading .view{
   gap:12px;
 
 }
-
 
 .wallet-intel-actions{
 
@@ -3123,7 +2924,6 @@ body.auth-loading .view{
 
 }
 
-
 .wallet-intel-btn{
 
   min-height:
@@ -3131,7 +2931,6 @@ body.auth-loading .view{
     var(--wallet-action-height);
 
 }
-
 
 /* ==========================================================
    MAIN ACTIONS
@@ -3152,7 +2951,6 @@ body.auth-loading .view{
 
 }
 
-
 .wallet-actions .btn{
 
   min-height:
@@ -3160,7 +2958,6 @@ body.auth-loading .view{
     var(--wallet-action-height);
 
 }
-
 
 /* ==========================================================
    PANEL SYSTEM
@@ -3175,7 +2972,6 @@ body.auth-loading .view{
   gap:10px;
 
 }
-
 
 .wallet-panel{
 
@@ -3205,13 +3001,11 @@ body.auth-loading .view{
 
 }
 
-
 .wallet-hidden{
 
   display:none !important;
 
 }
-
 
 .wallet-panel-head{
 
@@ -3225,7 +3019,6 @@ body.auth-loading .view{
 
 }
 
-
 .wallet-panel-close{
 
   width:40px;
@@ -3233,7 +3026,6 @@ body.auth-loading .view{
   height:40px;
 
 }
-
 
 /* ==========================================================
    INPUTS
@@ -3249,7 +3041,6 @@ body.auth-loading .view{
 
 }
 
-
 .wallet-input,
 
 .wallet-panel select,
@@ -3259,7 +3050,6 @@ body.auth-loading .view{
   min-height:46px;
 
 }
-
 
 /* ==========================================================
    ADDRESS
@@ -3275,7 +3065,6 @@ body.auth-loading .view{
 
 }
 
-
 .wallet-address-box code{
 
   word-break:
@@ -3283,7 +3072,6 @@ body.auth-loading .view{
     break-all;
 
 }
-
 
 /* ==========================================================
    BALANCES
@@ -3299,13 +3087,11 @@ body.auth-loading .view{
 
 }
 
-
 .wallet-assets-toolbar{
 
   margin-bottom:10px;
 
 }
-
 
 .wallet-row{
 
@@ -3337,7 +3123,6 @@ body.auth-loading .view{
 
 }
 
-
 .wallet-row:hover{
 
   transform:
@@ -3346,7 +3131,6 @@ body.auth-loading .view{
 
 }
 
-
 .wallet-row img{
 
   width:34px;
@@ -3354,7 +3138,6 @@ body.auth-loading .view{
   height:34px;
 
 }
-
 
 .wallet-row .left{
 
@@ -3366,13 +3149,11 @@ body.auth-loading .view{
 
 }
 
-
 .wallet-row .amount{
 
   font-weight:900;
 
 }
-
 
 .wallet-row.main{
 
@@ -3389,7 +3170,6 @@ body.auth-loading .view{
 
 }
 
-
 /* ==========================================================
    QUICK SHEET
 ========================================================== */
@@ -3405,7 +3185,6 @@ body.auth-loading .view{
     var(--z-modal);
 
 }
-
 
 .wallet-quick-card{
 
@@ -3425,7 +3204,6 @@ body.auth-loading .view{
 
 }
 
-
 /* ==========================================================
    EMPTY STATE
 ========================================================== */
@@ -3439,7 +3217,6 @@ body.auth-loading .view{
   place-items:center;
 
 }
-
 
 /* ==========================================================
    TOAST
@@ -3469,7 +3246,6 @@ body.auth-loading .view{
 
 }
 
-
 /* ==========================================================
    MOBILE
 ========================================================== */
@@ -3496,7 +3272,6 @@ body.auth-loading .view{
 
 }
 
-
 /* ==========================================================
    VERY SMALL DEVICES
 ========================================================== */
@@ -3510,7 +3285,6 @@ body.auth-loading .view{
   }
 
 }
-
 
 /* ==========================================================
    PERFORMANCE
@@ -3529,7 +3303,6 @@ body.auth-loading .view{
     paint;
 
 }
-
 
 /* ==========================================================
    ACCESSIBILITY
@@ -3566,7 +3339,6 @@ body.auth-loading .view{
 
 }
 
-
 /* ==========================================================
    HEADER
 ========================================================== */
@@ -3583,7 +3355,6 @@ body.auth-loading .view{
 
 }
 
-
 .pair-title{
 
   display:flex;
@@ -3594,7 +3365,6 @@ body.auth-loading .view{
 
 }
 
-
 .base{
 
   font-size:26px;
@@ -3602,7 +3372,6 @@ body.auth-loading .view{
   font-weight:900;
 
 }
-
 
 .quote{
 
@@ -3617,7 +3386,6 @@ body.auth-loading .view{
 
 }
 
-
 .price-main{
 
   font-size:24px;
@@ -3626,7 +3394,6 @@ body.auth-loading .view{
 
 }
 
-
 .approx{
 
   color:var(--text-muted);
@@ -3634,7 +3401,6 @@ body.auth-loading .view{
   font-size:12px;
 
 }
-
 
 /* ==========================================================
    WALLET BOX
@@ -3651,7 +3417,6 @@ body.auth-loading .view{
   padding:12px;
 
 }
-
 
 /* ==========================================================
    PAIRS
@@ -3671,7 +3436,6 @@ body.auth-loading .view{
   gap:8px;
 
 }
-
 
 .pair-btn{
 
@@ -3710,7 +3474,6 @@ body.auth-loading .view{
 
 }
 
-
 .pair-btn.active{
 
   background:
@@ -3728,7 +3491,6 @@ body.auth-loading .view{
 
 }
 
-
 .pair-btn:hover{
 
   transform:
@@ -3736,7 +3498,6 @@ body.auth-loading .view{
     translateY(-1px);
 
 }
-
 
 /* ==========================================================
    HERO
@@ -3752,7 +3513,6 @@ body.auth-loading .view{
 
 }
 
-
 .market-identity{
 
   display:flex;
@@ -3762,7 +3522,6 @@ body.auth-loading .view{
   gap:12px;
 
 }
-
 
 .market-logo{
 
@@ -3782,7 +3541,6 @@ body.auth-loading .view{
 
 }
 
-
 .market-price{
 
   font-size:
@@ -3796,7 +3554,6 @@ body.auth-loading .view{
   font-weight:900;
 
 }
-
 
 .market-change-badge{
 
@@ -3812,7 +3569,6 @@ body.auth-loading .view{
 
 }
 
-
 .is-up{
 
   color:
@@ -3821,7 +3577,6 @@ body.auth-loading .view{
 
 }
 
-
 .is-down{
 
   color:
@@ -3829,7 +3584,6 @@ body.auth-loading .view{
     var(--red);
 
 }
-
 
 /* ==========================================================
    TOOLBAR
@@ -3847,7 +3601,6 @@ body.auth-loading .view{
 
 }
 
-
 .market-timeframes,
 
 .market-chart-modes{
@@ -3857,7 +3610,6 @@ body.auth-loading .view{
   gap:8px;
 
 }
-
 
 .market-timeframes button,
 
@@ -3872,7 +3624,6 @@ body.auth-loading .view{
     12px;
 
 }
-
 
 /* ==========================================================
    CHART
@@ -3900,7 +3651,6 @@ body.auth-loading .view{
 
 }
 
-
 .market-chart-shell{
 
   position:relative;
@@ -3919,7 +3669,6 @@ body.auth-loading .view{
 
 }
 
-
 #marketChart{
 
   width:100%;
@@ -3930,7 +3679,6 @@ body.auth-loading .view{
 
 }
 
-
 .chart-overlay{
 
   position:absolute;
@@ -3940,7 +3688,6 @@ body.auth-loading .view{
   pointer-events:none;
 
 }
-
 
 .chart-glow{
 
@@ -3981,7 +3728,6 @@ body.auth-loading .view{
 
 }
 
-
 .market-crosshair{
 
   position:absolute;
@@ -3991,7 +3737,6 @@ body.auth-loading .view{
   top:12px;
 
 }
-
 
 /* ==========================================================
    CHART FOOTER
@@ -4012,13 +3757,11 @@ body.auth-loading .view{
 
 }
 
-
 .chart-footer-item{
 
   text-align:center;
 
 }
-
 
 /* ==========================================================
    STATS
@@ -4039,7 +3782,6 @@ body.auth-loading .view{
 
 }
 
-
 /* ==========================================================
    OHLC
 ========================================================== */
@@ -4059,13 +3801,11 @@ body.auth-loading .view{
 
 }
 
-
 .ohlc-item{
 
   padding:10px;
 
 }
-
 
 /* ==========================================================
    TRADE BOX
@@ -4076,7 +3816,6 @@ body.auth-loading .view{
   padding:14px;
 
 }
-
 
 .trade-tabs{
 
@@ -4092,7 +3831,6 @@ body.auth-loading .view{
 
 }
 
-
 .trade-tabs button.active{
 
   background:
@@ -4106,7 +3844,6 @@ body.auth-loading .view{
 
 }
 
-
 .trade-form{
 
   display:flex;
@@ -4116,7 +3853,6 @@ body.auth-loading .view{
   gap:12px;
 
 }
-
 
 .percent-row{
 
@@ -4133,7 +3869,6 @@ body.auth-loading .view{
 
 }
 
-
 .trade-stats{
 
   display:grid;
@@ -4142,13 +3877,11 @@ body.auth-loading .view{
 
 }
 
-
 .action-btn{
 
   min-height:48px;
 
 }
-
 
 /* ==========================================================
    ORDERBOOK
@@ -4160,7 +3893,6 @@ body.auth-loading .view{
 
 }
 
-
 .orderbook-head{
 
   display:flex;
@@ -4168,7 +3900,6 @@ body.auth-loading .view{
   justify-content:space-between;
 
 }
-
 
 .ob-grid-head,
 
@@ -4186,7 +3917,6 @@ body.auth-loading .view{
 
 }
 
-
 .ob-grid-body{
 
   max-height:360px;
@@ -4194,7 +3924,6 @@ body.auth-loading .view{
   overflow:auto;
 
 }
-
 
 /* ==========================================================
    PERFORMANCE
@@ -4213,7 +3942,6 @@ body.auth-loading .view{
     paint;
 
 }
-
 
 #marketChart{
 
