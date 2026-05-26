@@ -755,6 +755,10 @@ body.app-ready #app{
   opacity:1;
 
   visibility:visible;
+ 
+  overflow:auto;
+
+  touch-action:auto;
 
   pointer-events:auto;
 
