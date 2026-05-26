@@ -331,13 +331,9 @@ body{
 
     grayscale;
 
-  overscroll-behavior-y:
+  overscroll-behavior-y:auto;
 
-    contain;
-
-  touch-action:
-
-    manipulation;
+  touch-action:auto;
 
   -webkit-tap-highlight-color:
 
