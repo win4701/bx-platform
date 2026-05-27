@@ -47,31 +47,20 @@ data-sound="on">
 <!-- GLOBAL LOADER -->
 
 <div id="globalLoader">
-
 <div class="loader-logo">
-
 <img src="/assets/images/branding/logo.svg" alt="Bloxio"/>
-
 </div>
-
 <div class="loader-ring"></div>
 
 <h1 class="loader-title">Bloxio</h1>
-
 <div class="loader-progress">
-
 <div
 class="loader-progress-fill" id="loaderProgress">
 
 </div>
-
 </div>
-
 </div>
-
-
 <!-- VIDEO -->
-
 <video
 class="bg-video bg-ambient"
 autoplay
@@ -83,7 +72,6 @@ playsinline>
 src="/assets/video/ambient.mp4" type="video/mp4"/>
 
 </video>
-
 <video
 class="bg-video bg-particles"
 autoplay
@@ -107,17 +95,13 @@ src="/assets/video/grid-loop.mp4" type="video/mp4"/>
 </video>
    
 <div class="bg-layer"></div>
-
 <div class="grid-overlay"></div>
-
 <div class="ambient-glow"></div>
-
 <div id="app-shell">
 
 <header class="app-header enterprise-header">
 
 <div class="header-left">
-
 <a href="#" class="enterprise-brand" aria-label="Bloxio Home">
 
 <img src="/assets/images/branding/logo.svg" alt="Bloxio" class="brand-logo">
@@ -126,28 +110,20 @@ src="/assets/video/grid-loop.mp4" type="video/mp4"/>
 <strong>Bloxio</strong>
 <small>WEB3 EXCHANGE • CASINO • MINING</small>
 </div>
-
 </a>
-
 <div class="system-status" id="systemStatus">
-
 <span class="status-dot"></span>
 
 <div class="status-meta">
 <strong>SYSTEM ONLINE</strong>
 <small id="networkLatency">Latency 42ms</small>
 </div>
-
 </div>
-
 </div>
 
 <nav class="header-center" aria-label="Global Navigation">
-
 <div class="locale-box">
-
 <button id="localeTrigger" class="locale-trigger" aria-expanded="false" aria-controls="localeMenu" type="button">
-
 <span id="currentLocale">EN</span>
 
 <svg viewBox="0 0 24 24" width="14" height="14">
@@ -155,7 +131,6 @@ src="/assets/video/grid-loop.mp4" type="video/mp4"/>
 </svg>
 
 </button>
-
 <ul id="localeMenu" class="locale-menu">
 
 <li><button data-lang="EN">🇺🇸 EN</button></li>
@@ -173,32 +148,23 @@ src="/assets/video/grid-loop.mp4" type="video/mp4"/>
 </div>
 
 </nav>
-
 <div class="header-right">
-
 <div id="guestToolbar" class="auth-toolbar">
-
 <button id="headerLoginBtn" class="header-btn secondary" type="button">Login</button>
-
 <button id="headerRegisterBtn" class="header-btn primary" type="button">Register</button>
 
 </div>
 <div id="userToolbar" class="user-toolbar hidden">
-
 <button id="userMenuTrigger" class="user-trigger" aria-expanded="false" aria-controls="userDropdown" type="button">
 
 <div class="user-avatar">BX</div>
-
 <div class="user-meta">
 
 <strong id="vipTier">VIP 1</strong>
-
 <small>✔ VERIFIED</small>
 
 </div>
-
 <div class="session-pill"> 1 ACTIVE
-
 </div>
 
 </button>
@@ -211,7 +177,6 @@ src="/assets/video/grid-loop.mp4" type="video/mp4"/>
 <li><button id="logoutBtn" type="button">Logout</button></li>
 
 </ul>
-
 </div>
 </div>
 
@@ -223,63 +188,47 @@ id="app" class="app-container">
 <section id="wallet" class="view active">
 
 <div class="wallet-top">
-
 <div class="wallet-balance">
 
 <span class="wallet-caption">EST TOTAL VALUE</span>
-
 <h1><span id="walletTotal">$0.00</span><small>USD</small></h1>
 
 <div id="walletStatus" class="wallet-status hidden">Portfolio Syncing</div>
 
 </div>
-
 <div class="wallet-intelligence" id="walletIntelligence">
-
 <div class="wallet-intel-head">
 
 <div>
-
 <span class="wallet-kicker">SMART WALLET</span>
 
 <h3 id="walletIntelTitle">Ready To Fund Wallet</h3>
 
 </div>
-
 <span id="walletIntelBadge" class="wallet-intel-badge">START</span>
 
 </div>
-
 <p id="walletIntelText">Deposit assets to unlock Market • Mining • Casino</p>
-
 <div class="wallet-intel-actions">
 
 <button id="walletIntelPrimary" class="wallet-intel-btn primary">Deposit Now</button>
-
 <button id="walletIntelSecondary" class="wallet-intel-btn">Explore Market</button>
 
 </div>
-
 </div>
-
 </div>
 
 <div class="wallet-actions">
-
 <button id="openDepositBtn" class="btn primary" data-wallet-open="depositPanel">Deposit</button>
-
 <button id="openWithdrawBtn" class="btn" data-wallet-open="withdrawPanel">Withdraw</button>
-
 <button id="openTransferBtn" class="btn" data-wallet-open="transferPanel">Transfer</button>
 
 </div>
 
 <section class="wallet-swap-engine">
-
 <div class="wallet-section-head">
 
 <h3>BX Swap Engine</h3>
-
 <span>BX ONLY</span>
 
 </div>
@@ -287,29 +236,18 @@ id="app" class="app-container">
 <div class="wallet-swap-grid">
 
 <select id="swapFromAsset">
-
 <option>USDT</option>
-
 <option>USDC</option>
-
 <option>BTC</option>
-
 <option>BNB</option>
-
 <option>ETH</option>
-
 <option>AVAX</option>
-
 <option>ZEC</option>
-
 <option>TON</option>
-
 <option>SOL</option>
-
 <option>LTC</option>
 
 </select>
-
 <select id="swapToAsset">
 
 <option>BX</option>
@@ -317,15 +255,11 @@ id="app" class="app-container">
 </select>
 
 </div>
-
 <input id="swapAmount" class="wallet-input" placeholder="Amount">
-
 <div class="wallet-swap-meta">
 
 <div>Receive <strong id="estimatedReceive">0 BX</strong></div>
-
 <div>Slippage <strong id="slippage">0.5%</strong></div>
-
 </div>
 
 <button id="swapButton" class="btn primary">Swap To BX</button>
@@ -333,41 +267,31 @@ id="app" class="app-container">
 </section>
 
 <div class="wallet-panels">
-
 <section id="depositPanel" class="wallet-panel wallet-hidden">
 
 <div class="wallet-panel-head">
-
 <h4>Deposit</h4>
 
 <button class="wallet-panel-close" data-wallet-close="depositPanel">✕</button>
-
 </div>
 
 <div class="wallet-panel-grid">
 
 <select id="depositAsset">
-
 <option>USDT</option>
-
 <option>BTC</option>
-
 <option>BX</option>
 
 </select>
-
 <select id="depositNetwork">
 
 <option>TRC20</option>
-
 <option>ERC20</option>
-
 <option>BEP20</option>
 
 </select>
 
 <input id="depositMemo" class="wallet-input" placeholder="Memo Optional">
-
 <input id="depositDestination" class="wallet-input" placeholder="Destination Tag">
 
 <button id="generateDepositBtn" class="btn primary">Generate Address</button>
@@ -375,7 +299,6 @@ id="app" class="app-container">
 </div>
 
 <div class="wallet-address-box">
-
 <div class="wallet-address-top">
 
 <span>Deposit Address</span>
@@ -387,19 +310,14 @@ id="app" class="app-container">
 <code id="depositAddressText">—</code>
 
 </div>
-
 <div id="depositQR" class="wallet-qr hidden"></div>
-
 <div class="wallet-network-box">
 
 <div>Fee <strong>0.1 USDT</strong></div>
-
 <div>ETA <strong>1-3 Min</strong></div>
-
 <div>Minimum <strong>10 USDT</strong></div>
 
 </div>
-
 <div id="depositStatus" class="wallet-status hidden"></div>
 
 </section>
@@ -413,19 +331,14 @@ id="app" class="app-container">
 <button class="wallet-panel-close" data-wallet-close="withdrawPanel">✕</button>
 
 </div>
-
 <div class="wallet-panel-grid">
 
 <select id="withdrawAsset">
 
 <option>USDT</option>
-
 <option>USDC</option>
-
 <option>BTC</option>
-
 <option>BNB</option>
-
 <option>ETH</option>
 
 </select>
@@ -433,17 +346,13 @@ id="app" class="app-container">
 <select id="withdrawNetwork">
 
 <option>TRC20</option>
-
 <option>ERC20</option>
-
 <option>BEP20</option>
 
 </select>
 
 <input id="withdrawAmount" class="wallet-input" placeholder="Amount">
-
 <input id="withdrawAddress" class="wallet-input" placeholder="Wallet Address">
-
 <input id="withdrawMemo" class="wallet-input" placeholder="Memo Optional">
 
 <button id="submitWithdrawBtn" class="btn primary">Confirm Withdraw</button>
@@ -451,11 +360,8 @@ id="app" class="app-container">
 </div>
 
 <div class="wallet-network-box">
-
 <div>Fee <strong>1 BX</strong></div>
-
 <div>ETA <strong>3 Min</strong></div>
-
 </div>
 
 <div id="withdrawStatus" class="wallet-status hidden"></div>
@@ -477,15 +383,12 @@ id="app" class="app-container">
 <select id="transferAsset">
 
 <option>BX</option>
-
 <option>USDT</option>
-
 <option>USDC</option>
 
 </select>
 
 <input id="transferUser" class="wallet-input" placeholder="Email Or UID">
-
 <input id="transferTo" hidden>
 
 <input id="transferAmount" class="wallet-input" placeholder="Amount">
@@ -493,11 +396,9 @@ id="app" class="app-container">
 <button id="submitTransferBtn" class="btn confirm">Confirm Transfer</button>
 
 </div>
-
 <div class="wallet-network-box">
 
 <div>Network <strong>BX Internal</strong></div>
-
 <div>Fee <strong>0 BX</strong></div>
 
 </div>
@@ -509,7 +410,6 @@ id="app" class="app-container">
 </div>
 
 <div class="wallet-assets">
-
 <div class="wallet-assets-head">
 
 <h3>Balances</h3>
@@ -517,61 +417,46 @@ id="app" class="app-container">
 <input id="walletAssetSearch" class="wallet-input" placeholder="Search Asset">
 
 </div>
-
 <div id="walletBX" hidden></div>
 
 <div id="walletUSDT" hidden></div>
-
 <div class="wallet-assets-grid">
-
 <div class="wallet-row main" data-asset="BX">
-
 <div class="wallet-left">
 
 <img src="/assets/images/bx.png" alt="BX">
 
 <div><strong>BX</strong><span>Bloxio</span></div>
-
 </div>
 
 <strong id="bal-bx">0.00</strong>
 
 </div>
-
 <div class="wallet-row" data-asset="BTC">
-
 <div class="wallet-left">
-
 <img src="/assets/images/btc.png" alt="BTC">
 
 <div><strong>BTC</strong><span>Bitcoin</span></div>
-
 </div>
 
 <strong id="bal-btc">0.00</strong>
 
 </div>
-
 <div class="wallet-row" data-asset="USDT">
-
 <div class="wallet-left">
 
 <img src="/assets/images/usdt.png" alt="USDT">
 
 <div><strong>USDT</strong><span>Tether</span></div>
-
 </div>
 
 <strong id="bal-usdt">0.00</strong>
 
 </div>
-
 </div>
-
 </div>
 
 <div id="walletQuickSheet" class="wallet-quick-sheet wallet-hidden">
-
 <div class="wallet-quick-card">
 
 <h4 id="walletQuickAssetName">Asset</h4>
@@ -579,9 +464,7 @@ id="app" class="app-container">
 <div class="wallet-quick-actions">
 
 <button id="walletQuickDeposit" class="btn primary">Deposit</button>
-
 <button id="walletQuickWithdraw" class="btn">Withdraw</button>
-
 <button id="walletQuickTransfer" class="btn">Transfer</button>
 
 </div>
@@ -593,11 +476,8 @@ id="app" class="app-container">
 <section id="market" class="view market-view">
 
 <div class="market-shell">
-
 <div class="market-left">
-
 <div class="market-card orderbook-zone">
-
 <div class="market-card-head">
 
 <h3>Order Book</h3>
@@ -607,11 +487,8 @@ id="app" class="app-container">
 BX/<span id="orderbookQuote">USDT</span>
 
 </div>
-
 </div>
-
 <div class="depth-panel">
-
 <div class="depth-row">
 
 <span>Spread</span>
@@ -619,14 +496,11 @@ BX/<span id="orderbookQuote">USDT</span>
 <strong id="spread">0.00%</strong>
 
 </div>
-
 <div class="depth-bar">
 <div id="spreadVisual"></div>
 
 </div>
-
 </div>
-
 <div class="ob-grid-head">
 
 <span>Bid</span>
@@ -634,11 +508,8 @@ BX/<span id="orderbookQuote">USDT</span>
 <span>Ask</span>
 
 </div>
-
 <div id="orderBookGrid" class="ob-grid-body"></div>
-
 </div>
-
 </div>
 
 <div class="market-center">
@@ -649,27 +520,21 @@ BX/<span id="orderbookQuote">USDT</span>
 <img src="/assets/images/bx.png" alt="BX">
 
 </div>
-
 <div>
 
 <h2>BX /<span id="quoteAsset">USDT</span></h2>
 <small>BLOXIO TOKEN</small>
 
 </div>
-
 </div>
-
 <div class="market-live">
 
 <strong id="marketPrice">0.000000</strong>
 <small id="marketApprox">≈0.000000 USDT</small>
 
 </div>
-
 </div>
-
 <div class="market-toolbar">
-
 <div class="market-timeframes">
 
 <button data-range="1H">1H</button>
@@ -686,7 +551,6 @@ BX/<span id="orderbookQuote">USDT</span>
 <button data-chart-mode="candles">Candles</button>
 
 </div>
-
 </div>
 
 <div class="market-chart-shell">
@@ -695,24 +559,16 @@ BX/<span id="orderbookQuote">USDT</span>
 <div id="marketTooltip"></div>
 <div class="chart-overlay"></div>
 <div class="chart-cross">
-<div id="crosshairPrice">
-
---
+<div id="crosshairPrice">--
 
 </div>
-
-<div id="crosshairTime">
-
---
+<div id="crosshairTime">--
 
 </div>
-
 </div>
-
 </div>
 
 <div class="market-metrics">
-
 <div>
 
 <span>Open</span>
@@ -720,7 +576,6 @@ BX/<span id="orderbookQuote">USDT</span>
 <strong id="metricOpen">0</strong>
 
 </div>
-
 <div>
 
 <span>High</span>
@@ -728,7 +583,6 @@ BX/<span id="orderbookQuote">USDT</span>
 <strong id="metricHigh">0</strong>
 
 </div>
-
 <div>
 
 <span>Low</span>
@@ -736,7 +590,6 @@ BX/<span id="orderbookQuote">USDT</span>
 <strong id="metricLow">0</strong>
 
 </div>
-
 <div>
 
 <span>Close</span>
@@ -744,37 +597,27 @@ BX/<span id="orderbookQuote">USDT</span>
 <strong id="metricClose">0</strong>
 
 </div>
-
 <div>
 
 <span>Volume</span>
-
 <strong id="metricVol">0</strong>
 
 </div>
-
 </div>
-
 </div>
-
 <div class="market-card market-stats">
-
 <div class="market-stat">
 
 <span>24H High</span>
-
 <strong id="statHigh">0</strong>
 
 </div>
-
 <div class="market-stat">
 
 <span>24H Low</span>
-
 <strong id="statLow">0</strong>
 
 </div>
-
 <div class="market-stat">
 
 <span>Volume</span>
@@ -782,7 +625,6 @@ BX/<span id="orderbookQuote">USDT</span>
 <strong id="statVolume">0</strong>
 
 </div>
-
 <div class="market-stat">
 
 <span>Market Cap</span>
@@ -790,9 +632,7 @@ BX/<span id="orderbookQuote">USDT</span>
 <strong id="statMarketCap">0</strong>
 
 </div>
-
 </div>
-
 </div>
 
 <div class="market-right">
@@ -803,17 +643,13 @@ BX/<span id="orderbookQuote">USDT</span>
 <button id="sellTab">Sell</button>
 
 </div>
-
 <div class="wallet-box compact">
-
 <div>
-
 BX
 
 <strong id="walletBX">0</strong>
 
 </div>
-
 <div>
 
 USDT
@@ -821,7 +657,6 @@ USDT
 <strong id="walletUSDT">0</strong>
 
 </div>
-
 </div>
 <label>Amount BX</label>
 
@@ -843,7 +678,6 @@ Price
 <span id="execPrice">—</span>
 
 </div>
-
 <div>
 
 Spread
@@ -851,7 +685,6 @@ Spread
 <span id="spreadMirror">—</span>
 
 </div>
-
 <div>
 
 Slippage
@@ -859,19 +692,16 @@ Slippage
 <span id="slippage">0.5%</span>
 
 </div>
-
 </div>
 
 <button id="actionBtn" class="action-btn buy">Buy BX</button>
 
 </div>
-
 <div class="market-card liquidity-card">
 
 <h4>Liquidity</h4>
 
 <div class="liquidity-grid">
-
 <div>
 
 Available
@@ -879,7 +709,6 @@ Available
 <strong>$2.4M</strong>
 
 </div>
-
 <div>
 
 Orders
@@ -887,7 +716,6 @@ Orders
 <strong>18K</strong>
 
 </div>
-
 <div>
 
 Depth
@@ -895,7 +723,6 @@ Depth
 <strong>Strong</strong>
 
 </div>
-
 <div>
 
 Execution
@@ -903,9 +730,7 @@ Execution
 <strong>Fast</strong>
 
 </div>
-
 </div>
-
 </div>
 </div>
 </div>
