@@ -1,182 +1,262 @@
-<section id="airdrop" class="view">
+<section id="settings" class="view">
 
-<div class="airdrop-shell">
-<div class="airdrop-top">
-<div class="airdrop-hero">
-<div class="hero-left">
-<img src="/assets/images/bx.png" alt="BX">
+<div class="settings-shell">
+<div class="settings-top">
+<div class="settings-hero">
+<div class="settings-hero-left">
+<img src="/assets/images/branding/logo.svg" alt="Bloxio">
 <div>
-<h2>BX Airdrop Center</h2>
+<h2>Enterprise Settings</h2>
 
-<p>Referral • Utility • Rewards • Partner Missions</p>
+<p>PWA • Security • Performance • System Control</p>
 </div>
 </div>
-<div class="hero-right">
-<div class="hero-stat">
-<span>Reward</span>
-<strong id="airdropReward">+0 BX</strong>
-</div>
-<div class="hero-stat">
+<div class="settings-hero-right">
+<div class="settings-stat">
+<span>Version</span>
 
+<strong id="appVersion">v2.6.0</strong>
+</div>
+<div class="settings-stat">
+<span>Environment</span>
+
+<strong id="systemEnvironment">Production</strong>
+</div>
+<div class="settings-stat">
 <span>Status</span>
 
-<strong id="airdrop-ref-stats">Loading</strong>
-</div>
-<div class="hero-stat">
-
-<span>Tasks</span>
-
-<strong id="taskCounter">0</strong>
+<strong id="systemHealth">Healthy</strong>
 </div>
 </div>
 </div>
-<button id="claimAirdropBtn" class="btn primary">Claim BX Reward</button>
 </div>
-<div class="airdrop-layout">
-<div class="airdrop-main">
+<div class="settings-layout">
+<div class="settings-main">
 <div class="enterprise-card">
 <div class="card-head">
+<h3>Appearance</h3>
 
-<h3>Task Center</h3>
-
-<span>BX Missions</span>
-
+<span>UI Controls</span>
 </div>
-<div id="airdropTasks" class="task-grid">
-</div>
-</div>
-<div class="enterprise-card">
-<div class="card-head">
-
-<h3>Referral Engine</h3>
-
-<span>Invite System</span>
-</div>
-<div class="ref-box">
-<input id="ref-link-airdrop" readonly>
-<button id="copyRefBtn" class="btn">Copy</button>
-
-</div>
-<div class="ref-stats">
+<div class="settings-grid">
+<div class="setting-row">
 <div>
-<span>Invites</span>
+<strong>Theme</strong>
 
-<strong id="refCount">0</strong>
+<small>Dark Enterprise UI</small>
+</div>
+<button id="themeToggle" class="toggle active">ON</button>
+</div>
+<div class="setting-row">
+<div>
+<strong>Motion</strong>
+
+<small>GPU Accelerated Motion</small>
+</div>
+<button id="motionToggle" class="toggle active">ON</button>
+</div>
+<div class="setting-row">
+<div>
+<strong>Sound</strong>
+
+<small>UI Feedback Sounds</small>
+</div>
+<button id="soundToggle" class="toggle active">ON</button>
+</div>
+<div class="setting-row">
+<div>
+<strong>Compact Mode</strong>
+
+<small>High Density Interface</small>
+</div>
+<button id="compactToggle" class="toggle">OFF</button>
+</div>
+</div>
+</div>
+<div class="enterprise-card">
+<div class="card-head">
+<h3>Language</h3>
+
+<span>Localization</span>
+</div>
+<div class="locale-grid">
+<button data-lang="EN">🇺🇸 EN</button>
+<button data-lang="AR">🇸🇦 AR</button>
+<button data-lang="FR">🇫🇷 FR</button>
+<button data-lang="ES">🇪🇸 ES</button>
+<button data-lang="DE">🇩🇪 DE</button>
+<button data-lang="ZH">🇨🇳 ZH</button>
+<button data-lang="RU">🇷🇺 RU</button>
+<button data-lang="JA">🇯🇵 JA</button>
+<button data-lang="TR">🇹🇷 TR</button>
+</div>
+</div>
+<div class="enterprise-card">
+<div class="card-head">
+<h3>Security Center</h3>
+
+<span>Protection</span>
+</div>
+<div class="security-grid">
+<div class="security-box">
+<span>2FA</span>
+
+<strong>Disabled</strong>
+
+<button class="btn primary">Enable</button>
+</div>
+<div class="security-box">
+<span>Device Trust</span>
+
+<strong>1 Active</strong>
+
+<button class="btn">Manage</button>
+</div>
+<div class="security-box">
+<span>Sessions</span>
+
+<strong>Protected</strong>
+
+<button class="btn">View</button>
+</div>
+</div>
+</div>
+<div class="enterprise-card">
+<div class="card-head">
+<h3>PWA Status</h3>
+
+<span>Offline Engine</span>
+</div>
+<div class="pwa-grid">
+<div>
+<span>Install</span>
+
+<strong id="pwaInstallState">Ready</strong>
 </div>
 <div>
-<span>Earned BX</span>
+<span>Offline Cache</span>
 
-<strong id="earnedBX">0 BX</strong>
+<strong id="pwaCacheState">Enabled</strong>
 </div>
 <div>
-<span>Rank</span>
+<span>Background Sync</span>
 
-<strong id="refRank">Starter</strong>
+<strong id="pwaSyncState">Active</strong>
+</div>
+<div>
+<span>Push Notifications</span>
+
+<strong id="pwaPushState">Ready</strong>
+</div>
+</div>
+<button id="installPwaBtn" class="btn primary">Install BLOXIO</button>
+</div>
+</div>
+<div class="settings-side">
+<div class="enterprise-card">
+<div class="card-head">
+<h3>System Health</h3>
+
+<span>Infrastructure</span>
+
+</div>
+<div class="system-grid">
+<div>
+API
+
+<strong id="apiStatus">ONLINE</strong>
+
+</div>
+<div>
+WS
+
+<strong id="wsStatus">CONNECTED</strong>
+
+</div>
+<div>
+Market
+
+<strong id="marketEngineStatus">LIVE</strong>
+</div>
+
+<div>
+Wallet
+
+<strong id="walletEngineStatus">READY</strong>
+
+</div>
+<div>
+Mining
+
+<strong id="miningEngineStatus">ACTIVE</strong>
+
+</div>
+<div>
+Casino
+
+<strong id="casinoEngineStatus">ONLINE</strong>
+
 </div>
 </div>
 </div>
 <div class="enterprise-card">
 <div class="card-head">
 
-<h3>Whitepaper</h3>
+<h3>Performance</h3>
+<span>Optimization</span>
 
-<span>Documentation</span>
 </div>
-<a href="/assets/bloxio.pdf" target="_blank" rel="noopener" class="btn primary">Read Whitepaper</a>
+<div class="performance-grid">
+<div class="perf-row">
+
+<span>Video Background</span>
+
+<button id="videoToggle" class="toggle active">ON</button>
+</div>
+<div class="perf-row">
+<span>Particles</span>
+
+<button id="particlesToggle" class="toggle active">ON</button>
+</div>
+<div class="perf-row">
+<span>Blur Effects</span>
+
+<button id="blurToggle" class="toggle active">ON</button>
+
+</div>
+<div class="perf-row">
+<span>Reduced Motion</span>
+
+<button id="reduceMotionToggle" class="toggle">OFF</button>
+</div>
+</div>
 </div>
 <div class="enterprise-card">
 <div class="card-head">
+<h3>Storage</h3>
 
-<h3>Partners</h3>
-
-<span>Enterprise Network</span>
+<span>Local Cache</span>
 </div>
-<div class="partners-grid">
-<img src="/assets/images/aliexpress.png" alt="AliExpress">
-<img src="/assets/images/xiaomi.png" alt="Xiaomi">
-<img src="/assets/images/nike.png" alt="Nike">
-<img src="/assets/images/samsung.png" alt="Samsung">
-</div>
-</div>
-</div>
-<div class="airdrop-side">
-<div class="enterprise-card">
-<div class="card-head">
-
-<h3>Mobile Top Up</h3>
-
-<span>USDT Gateway</span>
-</div>
-<input id="topup-country" placeholder="Country">
-<input id="topup-phone" placeholder="+1">
-<input id="topup-amount" min="5" type="number" placeholder="USDT Amount">
-<div class="topup-preview">
+<div class="storage-grid">
 <div>
-Fee
+<span>Cache Size</span>
 
-<strong>0.5 USDT</strong>
-
+<strong>42MB</strong>
 </div>
 <div>
-Delivery
-
-<strong>1-5 Min</strong>
-
-</div>
-</div>
-
-<button id="topup-confirm" class="btn primary">Confirm Payment</button>
-
-<div id="topup-message">
-</div>
-</div>
-<div class="enterprise-card">
-<div class="card-head">
-
-<h3>Mining Utility</h3>
-<span>BX Boost</span>
-
-</div>
-<img src="/assets/images/min.jpg" alt="Mining">
-
-<p>Stake Mining BX BNB SOL</p>
-
-<button class="btn secondary" data-action="go-mining">Start Mining</button>
-
-</div>
-<div class="enterprise-card">
-<div class="card-head">
-
-<h3>Utility Status</h3>
-
-<span>Network</span>
-
-</div>
-<div class="utility-grid">
-<div>
-Referral
+<span>Assets</span>
 
 <strong>Ready</strong>
-
 </div>
 <div>
-Gateway
-
-<strong>Online</strong>
-</div>
-<div>
-Payment
-
-<strong>Ready</strong>
-</div>
-<div>
-BX Sync
+<span>Sync</span>
 
 <strong>Healthy</strong>
 </div>
 </div>
+<button id="clearCacheBtn" class="btn">Clear Cache</button>
 </div>
 </div>
 </div>
 </div>
-</section>
+ </section>
