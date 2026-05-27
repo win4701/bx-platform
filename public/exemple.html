@@ -591,7 +591,6 @@ BX/<span id="orderbookQuote">USDT</span>
 
 </div>
 </div>
-
 <div class="market-chart-shell">
 
 <canvas id="marketChart"></canvas>
@@ -602,11 +601,9 @@ BX/<span id="orderbookQuote">USDT</span>
 
 </div>
 <div id="crosshairTime">--
-
 </div>
 </div>
 </div>
-
 <div class="market-metrics">
 <div>
 
@@ -775,158 +772,373 @@ Execution
 </div>
  </section>
 <!-- ================= CASINO ================= -->
-    <section id="casino" class="view">
 
-      <div id="casinoLobby">
-        <div class="casino-topbar">
-          <div class="casino-brand-wrap">
-            <div class="casino-brand-badge">🎰</div>
-            <div>
-              <h2 class="casino-title">Bloxio Casino</h2>
-              <p class="casino-subtitle">Provably fair • Live gameplay</p>
-            </div>
-          </div>
-          <button class="casino-icon-btn" id="casinoRefreshBtn" type="button">⟳</button>
-        </div>
+<section id="casino" class="view">
 
-        <div class="casino-stats-strip">
-          <div class="casino-stat-card">
-            <span class="casino-stat-label">Wallet</span>
-            <strong id="casinoWalletText">0 BX</strong>
-          </div>
-          <div class="casino-stat-card">
-            <span class="casino-stat-label">Players</span>
-            <strong id="casinoOnlineText">0</strong>
-          </div>
-          <div class="casino-stat-card">
-            <span class="casino-stat-label">Volume</span>
-            <strong id="casinoVolumeText">0 BX</strong>
-          </div>
-        </div>
+<div class="casino-shell">
+<div class="casino-top">
+<div class="casino-brand">
+<div class="casino-brand-icon">🎰</div>
 
-        <div class="ticker-pulse-wrap">
-          <div class="ticker-pulse-label">LIVE FEED</div>
-          <div class="ticker-pulse-track" id="casinoTickerTrack"></div>
-        </div>
+<div>
 
-        <div class="casino-filter-tabs" id="casinoFilterTabs">
-          <button class="casino-filter-tab active" data-tab="all" type="button">All</button>
-          <button class="casino-filter-tab" data-tab="popular" type="button">Popular</button>
-          <button class="casino-filter-tab" data-tab="classic" type="button">Classic</button>
-          <button class="casino-filter-tab" data-tab="slots" type="button">Slots</button>
-          <button class="casino-filter-tab" data-tab="strategy" type="button">Strategy</button>
-          <button class="casino-filter-tab" data-tab="cards" type="button">Cards</button>
-          <button class="casino-filter-tab" data-tab="instant" type="button">Instant</button>
-        </div>
+<h2>BLOXIO CASINO</h2>
 
-        <div id="casinoGamesGrid">
+<p>Provably Fair • BX Economy • Enterprise Gaming</p>
 
-          <button type="button" class="casino-game-card" data-game="coinflip" data-image="assets/casino/coinflip.png">
-            <div class="casino-game-thumb"><img src="assets/casino/coinflip.png" alt="Coinflip"></div>
-            <div class="casino-game-meta">
-              <div class="casino-game-name">🪙 Coinflip</div>
-              <div class="casino-game-type">Classic</div>
-            </div>
-          </button>
+</div>
+</div>
 
-          <button type="button" class="casino-game-card" data-game="limbo" data-image="assets/casino/limbo.png">
-            <div class="casino-game-thumb"><img src="assets/casino/limbo.png" alt="Limbo"></div>
-            <div class="casino-game-meta">
-              <div class="casino-game-name">🎯 Limbo</div>
-              <div class="casino-game-type">Instant</div>
-            </div>
-          </button>
+<div class="casino-top-stats">
+<div class="casino-stat"><span>Wallet</span><strong id="casinoWalletText">0 BX</strong></div>
+<div class="casino-stat"><span>Players</span><strong id="casinoOnlineText">0</strong></div>
+<div class="casino-stat"><span>Volume</span><strong id="casinoVolumeText">0 BX</strong></div>
 
-          <button type="button" class="casino-game-card" data-game="dice" data-image="assets/casino/dice.png">
-            <div class="casino-game-thumb"><img src="assets/casino/dice.png" alt="Dice"></div>
-            <div class="casino-game-meta">
-              <div class="casino-game-name">🎲 Dice</div>
-              <div class="casino-game-type">Classic</div>
-            </div>
-          </button>
+</div>
+</div>
 
-          <button type="button" class="casino-game-card" data-game="crash" data-image="assets/casino/crash.png">
-            <div class="casino-game-thumb"><img src="assets/casino/crash.png" alt="Crash"></div>
-            <div class="casino-game-meta">
-              <div class="casino-game-name">📈 Crash</div>
-              <div class="casino-game-type">Popular</div>
-            </div>
-          </button>
+<div class="casino-ledger">
+<div class="ledger-head">
 
-          <button type="button" class="casino-game-card" data-game="plinko" data-image="assets/casino/plinko.png">
-            <div class="casino-game-thumb"><img src="assets/casino/plinko.png" alt="Plinko"></div>
-            <div class="casino-game-meta">
-              <div class="casino-game-name">🔻 Plinko</div>
-              <div class="casino-game-type">Popular</div>
-            </div>
-          </button>
+<h3>Provably Fair Ledger</h3>
 
-          <button type="button" class="casino-game-card" data-game="blackjack" data-image="assets/casino/blackjack.png">
-            <div class="casino-game-thumb"><img src="assets/casino/blackjack.png" alt="Blackjack"></div>
-            <div class="casino-game-meta">
-              <div class="casino-game-name">🃏 Blackjack</div>
-              <div class="casino-game-type">Cards</div>
-            </div>
-          </button>
+<span class="fair-badge">VERIFIED</span>
+</div>
+<div class="ledger-grid">
 
-          <button type="button" class="casino-game-card" data-game="hilo" data-image="assets/casino/hilo.png">
-            <div class="casino-game-thumb"><img src="assets/casino/hilo.png" alt="Hi-Lo"></div>
-            <div class="casino-game-meta">
-              <div class="casino-game-name">⬆️ Hi-Lo</div>
-              <div class="casino-game-type">Cards</div>
-            </div>
-          </button>
+<div><span>Server Seed</span><strong id="serverSeed">Encrypted</strong></div>
+<div><span>Client Seed</span><strong id="clientSeed">BX-CLIENT</strong></div>
+<div><span>Nonce</span><strong id="nonceSeed">0</strong></div>
+<div><span>Hash</span><strong id="hashSeed">SHA256</strong></div>
 
-          <button type="button" class="casino-game-card" data-game="slots" data-image="assets/casino/slot.png">
-            <div class="casino-game-thumb"><img src="assets/casino/slot.png" alt="Slots"></div>
-            <div class="casino-game-meta">
-              <div class="casino-game-name">🎰 Slots</div>
-              <div class="casino-game-type">Slots</div>
-            </div>
-          </button>
+</div>
+</div>
+<div class="casino-feed">
 
-          <button type="button" class="casino-game-card" data-game="mines" data-image="assets/casino/mines.png">
-            <div class="casino-game-thumb"><img src="assets/casino/mines.png" alt="Mines"></div>
-            <div class="casino-game-meta">
-              <div class="casino-game-name">💣 Mines </div>
-              <div class="casino-game-type">Strategy</div>
-            </div>
-          </button>
+<span>LIVE FEED</span>
 
-          <button type="button" class="casino-game-card" data-game="fruitparty" data-image="assets/casino/fruitparty.png">
-            <div class="casino-game-thumb"><img src="assets/casino/fruitparty.png" alt="FruitParty"></div>
-            <div class="casino-game-meta">
-              <div class="casino-game-name">🍉 FruitParty</div>
-              <div class="casino-game-type">Slots</div>
-            </div>
-          </button>
+<div id="casinoTickerTrack"></div>
+</div>
+<div class="casino-filter">
 
-          <button type="button" class="casino-game-card" data-game="bananafarm" data-image="assets/casino/bananafarm.png">
-            <div class="casino-game-thumb"><img src="assets/casino/bananafarm.png" alt="BananaFarm"></div>
-            <div class="casino-game-meta">
-              <div class="casino-game-name">🍌 BananaFarm</div>
-              <div class="casino-game-type">Slots</div>
-            </div>
-          </button>
+<button class="casino-filter-btn active" data-tab="all">All</button>
+<button class="casino-filter-btn" data-tab="originals">Originals</button>
+<button class="casino-filter-btn" data-tab="crash">Crash</button>
+<button class="casino-filter-btn" data-tab="slots">Slots</button>
+<button class="casino-filter-btn" data-tab="cards">Cards</button>
+<button class="casino-filter-btn" data-tab="instant">Instant</button>
+<button class="casino-filter-btn" data-tab="highrtp">High RTP</button
+</div>
+<div id="casinoGamesGrid">
 
-          <button type="button" class="casino-game-card" data-game="airboss" data-image="assets/casino/airboss.png">
-            <div class="casino-game-thumb"><img src="assets/casino/airboss.png" alt="AirBoss"></div>
-            <div class="casino-game-meta">
-              <div class="casino-game-name">✈️ AirBoss</div>
-              <div class="casino-game-type">Popular</div>
-            </div>
-          </button>
+<button class="casino-game-card" type="button" data-game="coinflip" data-image="/assets/casino/coinflip.png">
 
-        </div>
+<img src="/assets/casino/coinflip.png" alt="Coinflip">
 
-        <div class="big-wins">
-          <div class="big-wins-title">Big Wins</div>
-          <div class="big-wins-track" id="bigWinsTrack"></div>
-        </div>
-      </div>
+<div class="casino-game-main">
 
-      <div id="casinoGameView" class="hidden"></div>
-    </section>
+<h3>Coinflip</h3>
+
+<div class="casino-chip-row">
+
+<span>Edge 1%</span>
+<span>RTP 99%</span>
+
+</div>
+<div class="casino-live">
+
+<span>412 Live</span>
+<span>1280 BX</span>
+
+</div>
+</div>
+<div class="provably-badge">
+
+FAIR
+</div>
+</button>
+<button class="casino-game-card" type="button" data-game="limbo" data-image="/assets/casino/limbo.png">
+
+<img src="/assets/casino/limbo.png" alt="Limbo">
+
+<div class="casino-game-main">
+
+<h3>Limbo</h3>
+<div class="casino-chip-row">
+
+<span>Edge 1%</span>
+<span>RTP 99%</span>
+
+</div>
+<div class="casino-live">
+
+<span>380 Live</span>
+<span>902 BX</span>
+
+</div>
+</div>
+<div class="provably-badge">
+
+FAIR
+</div>
+</button>
+<button class="casino-game-card" type="button" data-game="dice" data-image="/assets/casino/dice.png">
+
+<img src="/assets/casino/dice.png" alt="Dice">
+
+<div class="casino-game-main">
+
+<h3>Dice</h3>
+<div class="casino-chip-row">
+
+<span>Edge 1%</span>
+<span>RTP 99%</span>
+
+</div>
+<div class="casino-live">
+
+<span>210 Live</span>
+<span>540 BX</span>
+
+</div>
+</div>
+<div class="provably-badge">
+
+FAIR
+</div>
+</button>
+<button class="casino-game-card" type="button" data-game="crash" data-image="/assets/casino/crash.png">
+
+<img src="/assets/casino/crash.png" alt="Crash">
+
+<div class="casino-game-main">
+<h3>Crash</h3>
+<div class="casino-chip-row">
+
+<span>Edge 1%</span>
+<span>RTP 98%</span>
+
+</div>
+<div class="casino-live">
+
+<span>1020 Live</span>
+<span>9200 BX</span>
+</div>
+</div>
+<div class="provably-badge">
+
+FAIR
+</div>
+</button>
+<button class="casino-game-card" type="button" data-game="plinko" data-image="/assets/casino/plinko.png">
+
+<img src="/assets/casino/plinko.png" alt="Plinko">
+
+<div class="casino-game-main">
+
+<h3>Plinko</h3>
+<div class="casino-chip-row">
+
+<span>Edge 1%</span>
+<span>RTP 98%</span>
+
+</div>
+<div class="casino-live">
+
+<span>390 Live</span>
+<span>1820 BX</span>
+
+</div>
+</div>
+<div class="provably-badge">
+
+FAIR
+</div>
+</button>
+<button class="casino-game-card" type="button" data-game="blackjack" data-image="/assets/casino/blackjack.png">
+
+<img src="/assets/casino/blackjack.png" alt="Blackjack">
+<div class="casino-game-main">
+
+<h3>Blackjack</h3>
+<div class="casino-chip-row">
+
+<span>Edge 0.5%</span>
+<span>RTP 99.5%</span>
+
+</div>
+<div class="casino-live">
+<span>180 Live</span>
+<span>720 BX</span>
+
+</div>
+</div>
+<div class="provably-badge">
+
+FAIR
+
+</div>
+</button>
+<button class="casino-game-card" type="button" data-game="hilo" data-image="/assets/casino/hilo.png">
+
+<img src="/assets/casino/hilo.png" alt="HiLo">
+
+<div class="casino-game-main">
+
+<h3>Hi-Lo</h3>
+<div class="casino-chip-row">
+
+<span>Edge 1%</span>
+<span>RTP 99%</span>
+
+</div>
+<div class="casino-live">
+
+<span>80 Live</span>
+<span>220 BX</span>
+
+</div>
+</div>
+<div class="provably-badge">
+FAIR
+</div>
+
+</button>
+<button class="casino-game-card" type="button" data-game="slots" data-image="/assets/casino/slot.png">
+<img src="/assets/casino/slot.png" alt="Slots">
+
+<div class="casino-game-main">
+
+<h3>Slots</h3>
+
+<div class="casino-chip-row">
+<span>Edge 3%</span>
+<span>RTP 96%</span>
+
+</div>
+<div class="casino-live">
+
+<span>920 Live</span>
+<span>4800 BX</span>
+
+</div>
+</div>
+<div class="provably-badge">
+
+FAIR
+</div>
+
+</button>
+<button class="casino-game-card" type="button" data-game="mines" data-image="/assets/casino/mines.png">
+
+<img src="/assets/casino/mines.png" alt="Mines">
+
+<div class="casino-game-main">
+
+<h3>Mines</h3>
+<div class="casino-chip-row">
+
+<span>Edge 1%</span>
+<span>RTP 99%</span>
+
+</div>
+<div class="casino-live">
+
+<span>610 Live</span>
+<span>2120 BX</span>
+</div>
+
+</div>
+<div class="provably-badge">
+
+FAIR
+
+</div>
+</button>
+<button class="casino-game-card" type="button" data-game="fruitparty" data-image="/assets/casino/fruitparty.png">
+
+<img src="/assets/casino/fruitparty.png" alt="FruitParty">
+
+<div class="casino-game-main">
+
+<h3>FruitParty</h3>
+
+<div class="casino-chip-row">
+
+<span>Edge 4%</span>
+<span>RTP 95%</span>
+
+</div>
+<div class="casino-live">
+
+<span>170 Live</span>
+<span>640 BX</span>
+</div>
+</div>
+
+<div class="provably-badge">
+
+FAIR
+
+</div>
+</button>
+
+<button class="casino-game-card" type="button" data-game="bananafarm" data-image="/assets/casino/bananafarm.png">
+
+<img src="/assets/casino/bananafarm.png" alt="BananaFarm">
+
+<div class="casino-game-main">
+
+<h3>BananaFarm</h3>
+
+<div class="casino-chip-row">
+
+<span>Edge 3%</span>
+<span>RTP 96%</span>
+
+</div>
+<div class="casino-live">
+<span>140 Live</span>
+<span>880 BX</span>
+</div>
+</div>
+
+<div class="provably-badge">
+
+FAIR
+</div>
+</button>
+<button class="casino-game-card" type="button" data-game="airboss" data-image="/assets/casino/airboss.png">
+<img src="/assets/casino/airboss.png" alt="AirBoss">
+
+<div class="casino-game-main">
+<h3>AirBoss</h3>
+<div class="casino-chip-row">
+<span>Edge 2%</span>
+<span>RTP 97%</span>
+</div>
+
+<div class="casino-live">
+<span>550 Live</span>
+<span>4100 BX</span>
+</div>
+</div>
+<div class="provably-badge">
+FAIR
+
+</div>
+</button>
+</div>
+<div class="casino-bottom">
+<div class="casino-bigwins">
+
+<h3>BIG WINS</h3>
+<div id="bigWinsTrack"></div>
+</div>
+</div>
+</div>
+<div id="casinoGameView" class="hidden"></div>
+</section>
 
 <!-- ================= MINING ================= -->
    <section id="mining" class="view">
