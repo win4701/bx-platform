@@ -590,166 +590,326 @@ id="app" class="app-container">
 </section>
    
 <!-- ================= MARKET ================= -->
-    <section id="market" class="view market-view">
-      <!-- خليت market كما هو لأن بنيته سليمة مع js الحالي -->
-      <!-- (أبقيت نفس DOM IDs حتى لا نكسر market.js) -->
+<section id="market" class="view market-view">
 
-      <div class="market-header">
-        <div class="pair-title">
-          <span class="base">BX</span>
-          <span class="arrow">/</span>
-          <span class="quote" id="quoteAsset">USDT</span>
-        </div>
+<div class="market-shell">
 
-        <div class="price-box">
-          <div id="marketPrice" class="price-main">0.000000</div>
-          <div id="marketApprox" class="approx">≈ 0.000000 USDT</div>
-        </div>
-      </div>
+<div class="market-left">
 
-      <div class="wallet-box compact">
-        <div>BX <strong id="walletBX">0.00</strong></div>
-        <div><span id="walletQuoteLabel">USDT</span> <strong id="walletUSDT">0.00</strong></div>
-      </div>
+<div class="market-card orderbook-zone">
 
-      <div class="pair-grid">
-        <button class="pair-btn active" data-quote="USDT" type="button">USDT</button>
-        <button class="pair-btn" data-quote="USDC" type="button">USDC</button>
-        <button class="pair-btn" data-quote="BTC" type="button">BTC</button>
-        <button class="pair-btn" data-quote="BNB" type="button">BNB</button>
-        <button class="pair-btn" data-quote="ETH" type="button">ETH</button>
-        <button class="pair-btn" data-quote="AVAX" type="button">AVAX</button>
-        <button class="pair-btn" data-quote="ZEC" type="button">ZEC</button>
-        <button class="pair-btn" data-quote="TON" type="button">TON</button>
-        <button class="pair-btn" data-quote="SOL" type="button">SOL</button>
-        <button class="pair-btn" data-quote="LTC" type="button">LTC</button>
-      </div>
+<div class="market-card-head">
 
-      <div class="market-hero">
-        <div class="market-identity">
-          <div class="market-logo">™</div>
-          <div class="market-title">
-            <h2 id="assetName">Bloxio</h2>
-            <span id="assetSymbol">BX</span>
-          </div>
-        </div>
+<h3>Order Book</h3>
 
-        <div class="market-price-box">
-          <div id="assetPrice" class="market-price">$0.00000</div>
-          <div id="assetChangeBadge" class="market-change-badge is-up">▲ 0.00%</div>
-        </div>
+<div class="pair-chip">
 
-        <div class="market-toolbar">
-          <div class="market-timeframes">
-            <button class="active" data-range="1H" type="button">1H</button>
-            <button data-range="24H" type="button">24H</button>
-            <button data-range="7D" type="button">7D</button>
-            <button data-range="30D" type="button">30D</button>
-            <button data-range="90D" type="button">90D</button>
-          </div>
+BX/<span id="orderbookQuote">USDT</span>
 
-          <div class="market-chart-modes">
-            <button class="active" data-chart-mode="area" type="button">Area</button>
-            <button data-chart-mode="line" type="button">Line</button>
-            <button data-chart-mode="candles" type="button">Candles</button>
-          </div>
-        </div>
+</div>
 
-        <div class="market-chart-card market-chart-card--pro">
-          <div class="market-chart-topbar">
-            <div class="chart-top-left">
-              <span class="chart-mini-label">BX / <span id="chartQuoteLabel">USDT</span></span>
-              <strong id="chartLivePrice">$0.00000</strong>
-            </div>
-            <div class="chart-top-right">
-              <span id="chartLiveChange" class="chart-live-change is-up">▲ 0.00%</span>
-            </div>
-          </div>
+</div>
 
-          <div class="market-chart-shell market-chart-shell--full">
-            <canvas id="marketChart"></canvas>
-            <div class="chart-glow"></div>
-            <div class="chart-overlay"></div>
-            <div id="marketTooltip" class="market-tooltip"></div>
-            <div class="market-crosshair">
-              <span id="crosshairPrice">--</span>
-              <span id="crosshairTime">--</span>
-            </div>
-          </div>
+<div class="depth-panel">
 
-          <div class="market-chart-footer">
-            <div class="chart-footer-item"><span>Open</span><strong id="metricOpen">0.00000</strong></div>
-            <div class="chart-footer-item"><span>High</span><strong id="metricHigh">0.00000</strong></div>
-            <div class="chart-footer-item"><span>Low</span><strong id="metricLow">0.00000</strong></div>
-            <div class="chart-footer-item"><span>Close</span><strong id="metricClose">0.00000</strong></div>
-          </div>
-        </div>
+<div class="depth-row">
 
-        <div class="market-stats-grid">
-          <div class="stat-card"><span>24H High</span><strong id="statHigh">$0.00000</strong></div>
-          <div class="stat-card"><span>24H Low</span><strong id="statLow">$0.00000</strong></div>
-          <div class="stat-card"><span>Volume</span><strong id="statVolume">0 BX</strong></div>
-          <div class="stat-card"><span>Market</span><strong id="statMarketCap">$0</strong></div>
-        </div>
+<span>Spread</span>
 
-        <div class="market-ohlc">
-          <div class="ohlc-item"><span>Open</span><strong id="metricOpenPanel">0.00000</strong></div>
-          <div class="ohlc-item"><span>High</span><strong id="metricHighPanel">0.00000</strong></div>
-          <div class="ohlc-item"><span>Low</span><strong id="metricLowPanel">0.00000</strong></div>
-          <div class="ohlc-item"><span>Close</span><strong id="metricClosePanel">0.00000</strong></div>
-          <div class="ohlc-item"><span>Volume</span><strong id="metricVol">0</strong></div>
-        </div>
-      </div>
+<strong id="spread">0.00%</strong>
 
-      <div class="trade-box buy" id="tradeBox">
-        <div class="trade-tabs">
-          <button id="buyTab" class="active" type="button">Buy</button>
-          <button id="sellTab" type="button">Sell</button>
-        </div>
+</div>
 
-        <div class="trade-form">
-          <label for="orderAmount">Amount BX</label>
-          <input id="orderAmount" type="number" placeholder="0.00" inputmode="decimal" step="0.0001" min="0">
+<div class="depth-bar">
+<div id="spreadVisual"></div>
 
-          <div class="percent-row">
-            <button type="button" data-percent="10">10%</button>
-            <button type="button" data-percent="25">25%</button>
-            <button type="button" data-percent="50">50%</button>
-            <button type="button" data-percent="100">MAX</button>
-          </div>
+</div>
 
-          <div class="trade-stats">
-            <div>Price: <span id="execPrice">—</span></div>
-            <div>Slippage: <span id="slippage">—%</span></div>
-            <div>Spread: <span id="spread">—</span></div>
-          </div>
+</div>
 
-          <button class="action-btn buy" id="actionBtn" type="button">Buy BX</button>
-        </div>
-      </div>
-    <div class="market-cards">
-    <!-- ================= ORDER BOOK GRID ================= -->
-<div class="orderbook-card">
+<div class="ob-grid-head">
 
-  <!-- HEADER -->
-  <div class="orderbook-head">
-    <h3>Order Book</h3>
-    <div class="orderbook-pair">
-      BX / <span id="orderbookQuote">USDT</span>
-    </div>
-  </div>
+<span>Bid</span>
+<span>Price</span>
+<span>Ask</span>
 
-  <!-- TABLE HEADER -->
-  <div class="ob-grid-head">
-    <span>Amount</span>
-    <span>Price</span>
-    <span>Amount</span>
-  </div>
+</div>
 
-  <!-- BODY -->
-   <div id="orderBookGrid" class="ob-grid-body"></div>
-      </div>
-    </section>
+<div id="orderBookGrid" class="ob-grid-body"></div>
+
+</div>
+
+</div>
+
+<div class="market-center">
+<div class="market-card market-hero-card">
+<div class="market-top">
+<div class="market-pair">
+<div class="pair-logo">
+<img src="/assets/images/bx.png" alt="BX">
+
+</div>
+
+<div>
+
+<h2>BX /<span id="quoteAsset">USDT</span></h2>
+<small>BLOXIO TOKEN</small>
+
+</div>
+
+</div>
+
+<div class="market-live">
+
+<strong id="marketPrice">0.000000</strong>
+<small id="marketApprox">≈0.000000 USDT</small>
+
+</div>
+
+</div>
+
+<div class="market-toolbar">
+
+<div class="market-timeframes">
+
+<button data-range="1H">1H</button>
+<button data-range="24H">24H</button>
+<button data-range="7D">7D</button>
+<button data-range="30D">30D</button>
+<button data-range="90D">90D</button>
+
+</div>
+
+<div class="market-chart-modes">
+<button data-chart-mode="area">Area</button>
+<button data-chart-mode="line">Line</button>
+<button data-chart-mode="candles">Candles</button>
+
+</div>
+
+</div>
+
+<div class="market-chart-shell">
+
+<canvas id="marketChart"></canvas>
+<div id="marketTooltip"></div>
+<div class="chart-overlay"></div>
+<div class="chart-cross">
+<div id="crosshairPrice">
+
+--
+
+</div>
+
+<div id="crosshairTime">
+
+--
+
+</div>
+
+</div>
+
+</div>
+
+<div class="market-metrics">
+
+<div>
+
+<span>Open</span>
+
+<strong id="metricOpen">0</strong>
+
+</div>
+
+<div>
+
+<span>High</span>
+
+<strong id="metricHigh">0</strong>
+
+</div>
+
+<div>
+
+<span>Low</span>
+
+<strong id="metricLow">0</strong>
+
+</div>
+
+<div>
+
+<span>Close</span>
+
+<strong id="metricClose">0</strong>
+
+</div>
+
+<div>
+
+<span>Volume</span>
+
+<strong id="metricVol">0</strong>
+
+</div>
+
+</div>
+
+</div>
+
+<div class="market-card market-stats">
+
+<div class="market-stat">
+
+<span>24H High</span>
+
+<strong id="statHigh">0</strong>
+
+</div>
+
+<div class="market-stat">
+
+<span>24H Low</span>
+
+<strong id="statLow">0</strong>
+
+</div>
+
+<div class="market-stat">
+
+<span>Volume</span>
+
+<strong id="statVolume">0</strong>
+
+</div>
+
+<div class="market-stat">
+
+<span>Market Cap</span>
+
+<strong id="statMarketCap">0</strong>
+
+</div>
+
+</div>
+
+</div>
+
+<div class="market-right">
+<div id="tradeBox" class="market-card trade-shell">
+<div class="trade-tabs">
+
+<button id="buyTab">Buy</button>
+<button id="sellTab">Sell</button>
+
+</div>
+
+<div class="wallet-box compact">
+
+<div>
+
+BX
+
+<strong id="walletBX">0</strong>
+
+</div>
+
+<div>
+
+USDT
+
+<strong id="walletUSDT">0</strong>
+
+</div>
+
+</div>
+<label>Amount BX</label>
+
+<input id="orderAmount" type="number" placeholder="0.00">
+
+<div class="percent-row">
+
+<button data-percent="10">10%</button>
+<button data-percent="25">25%</button>
+<button data-percent="50">50%</button>
+<button data-percent="100">MAX</button>
+
+</div>
+<div class="trade-stats">
+<div>
+
+Price
+
+<span id="execPrice">—</span>
+
+</div>
+
+<div>
+
+Spread
+
+<span id="spreadMirror">—</span>
+
+</div>
+
+<div>
+
+Slippage
+
+<span id="slippage">0.5%</span>
+
+</div>
+
+</div>
+
+<button id="actionBtn" class="action-btn buy">Buy BX</button>
+
+</div>
+
+<div class="market-card liquidity-card">
+
+<h4>Liquidity</h4>
+
+<div class="liquidity-grid">
+
+<div>
+
+Available
+
+<strong>$2.4M</strong>
+
+</div>
+
+<div>
+
+Orders
+
+<strong>18K</strong>
+
+</div>
+
+<div>
+
+Depth
+
+<strong>Strong</strong>
+
+</div>
+
+<div>
+
+Execution
+
+<strong>Fast</strong>
+
+</div>
+
+</div>
+
+</div>
+</div>
+</div>
+ </section>
 <!-- ================= CASINO ================= -->
     <section id="casino" class="view">
 
