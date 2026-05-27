@@ -132,18 +132,17 @@ src="/assets/video/grid-loop.mp4" type="video/mp4"/>
 </button>
 <ul id="localeMenu" class="locale-menu">
 
-<li><button data-lang="EN">🇺🇸 EN</button></li>
-<li><button data-lang="AR">🇸🇦 AR</button></li>
-<li><button data-lang="FR">🇫🇷 FR</button></li>
-<li><button data-lang="ES">🇪🇸 ES</button></li>
-<li><button data-lang="DE">🇩🇪 DE</button></li>
-<li><button data-lang="ZH">🇨🇳 ZH</button></li>
-<li><button data-lang="RU">🇷🇺 RU</button></li>
-<li><button data-lang="JA">🇯🇵 JA</button></li>
-<li><button data-lang="TR">🇹🇷 TR</button></li>
+<li><button data-lang="EN"> EN</button></li>
+<li><button data-lang="AR"> AR</button></li>
+<li><button data-lang="FR"> FR</button></li>
+<li><button data-lang="ES"> ES</button></li>
+<li><button data-lang="DE"> DE</button></li>
+<li><button data-lang="ZH"> ZH</button></li>
+<li><button data-lang="RU"> RU</button></li>
+<li><button data-lang="JA"> JA</button></li>
+<li><button data-lang="TR"> TR</button></li>
 
 </ul>
-
 </div>
 
 </nav>
@@ -216,12 +215,10 @@ id="app" class="app-container">
 </div>
 </div>
 </div>
-
 <div class="wallet-actions">
 <button id="openDepositBtn" class="btn primary" data-wallet-open="depositPanel">Deposit</button>
 <button id="openWithdrawBtn" class="btn" data-wallet-open="withdrawPanel">Withdraw</button>
 <button id="openTransferBtn" class="btn" data-wallet-open="transferPanel">Transfer</button>
-
 </div>
 
 <section class="wallet-swap-engine">
@@ -229,9 +226,7 @@ id="app" class="app-container">
 
 <h3>BX Swap Engine</h3>
 <span>BX ONLY</span>
-
 </div>
-
 <div class="wallet-swap-grid">
 
 <select id="swapFromAsset">
@@ -252,7 +247,6 @@ id="app" class="app-container">
 <option>BX</option>
 
 </select>
-
 </div>
 <input id="swapAmount" class="wallet-input" placeholder="Amount">
 <div class="wallet-swap-meta">
@@ -273,7 +267,6 @@ id="app" class="app-container">
 
 <button class="wallet-panel-close" data-wallet-close="depositPanel">✕</button>
 </div>
-
 <div class="wallet-panel-grid">
 
 <select id="depositAsset">
@@ -294,20 +287,16 @@ id="app" class="app-container">
 <input id="depositDestination" class="wallet-input" placeholder="Destination Tag">
 
 <button id="generateDepositBtn" class="btn primary">Generate Address</button>
-
 </div>
-
 <div class="wallet-address-box">
 <div class="wallet-address-top">
 
 <span>Deposit Address</span>
 
 <button id="copyDepositBtn" class="btn secondary">Copy</button>
-
 </div>
 
 <code id="depositAddressText">—</code>
-
 </div>
 <div id="depositQR" class="wallet-qr hidden"></div>
 <div class="wallet-network-box">
@@ -324,7 +313,6 @@ id="app" class="app-container">
 <section id="withdrawPanel" class="wallet-panel wallet-hidden">
 
 <div class="wallet-panel-head">
-
 <h4>Withdraw</h4>
 
 <button class="wallet-panel-close" data-wallet-close="withdrawPanel">✕</button>
@@ -355,9 +343,7 @@ id="app" class="app-container">
 <input id="withdrawMemo" class="wallet-input" placeholder="Memo Optional">
 
 <button id="submitWithdrawBtn" class="btn primary">Confirm Withdraw</button>
-
 </div>
-
 <div class="wallet-network-box">
 <div>Fee <strong>1 BX</strong></div>
 <div>ETA <strong>3 Min</strong></div>
@@ -370,13 +356,10 @@ id="app" class="app-container">
 <section id="transferPanel" class="wallet-panel wallet-hidden">
 
 <div class="wallet-panel-head">
-
 <h4>Transfer</h4>
 
 <button class="wallet-panel-close" data-wallet-close="transferPanel">X</button>
-
 </div>
-
 <div class="wallet-panel-grid">
 
 <select id="transferAsset">
@@ -401,11 +384,8 @@ id="app" class="app-container">
 <div>Fee <strong>0 BX</strong></div>
 
 </div>
-
 <div id="transferStatus" class="wallet-status hidden"></div>
-
 </section>
-
 </div>
 
 <div class="wallet-assets">
@@ -427,9 +407,7 @@ id="app" class="app-container">
 
 <div><strong>BX</strong><span>Bloxio</span></div>
 </div>
-
 <strong id="bal-bx">0.00</strong>
-
 </div>
 <div class="wallet-row" data-asset="BTC">
 <div class="wallet-left">
@@ -437,9 +415,7 @@ id="app" class="app-container">
 
 <div><strong>BTC</strong><span>Bitcoin</span></div>
 </div>
-
 <strong id="bal-btc">0.00</strong>
-
 </div>
 <div class="wallet-row" data-asset="USDT">
 <div class="wallet-left">
@@ -450,7 +426,6 @@ id="app" class="app-container">
 </div>
 
 <strong id="bal-usdt">0.00</strong>
-
 </div>
 </div>
 </div>
@@ -460,7 +435,6 @@ id="app" class="app-container">
 <h4 id="walletQuickAssetName">Asset</h4>
 
 <div class="wallet-quick-actions">
-
 <button id="walletQuickDeposit" class="btn primary">Deposit</button>
 <button id="walletQuickWithdraw" class="btn">Withdraw</button>
 <button id="walletQuickTransfer" class="btn">Transfer</button>
@@ -478,11 +452,9 @@ id="app" class="app-container">
 <div class="market-card-head">
 
 <h3>Order Book</h3>
-
 <div class="pair-chip">
 
 BX/<span id="orderbookQuote">USDT</span>
-
 </div>
 </div>
 <div class="depth-panel">
@@ -494,7 +466,6 @@ BX/<span id="orderbookQuote">USDT</span>
 </div>
 <div class="depth-bar">
 <div id="spreadVisual"></div>
-
 </div>
 </div>
 <div class="ob-grid-head">
@@ -587,7 +558,6 @@ BX/<span id="orderbookQuote">USDT</span>
 <button data-chart-mode="area">Area</button>
 <button data-chart-mode="line">Line</button>
 <button data-chart-mode="candles">Candles</button>
-
 </div>
 </div>
 <div class="market-chart-shell">
@@ -597,7 +567,6 @@ BX/<span id="orderbookQuote">USDT</span>
 <div class="chart-overlay"></div>
 <div class="chart-cross">
 <div id="crosshairPrice">--
-
 </div>
 <div id="crosshairTime">--
 </div>
@@ -605,165 +574,122 @@ BX/<span id="orderbookQuote">USDT</span>
 </div>
 <div class="market-metrics">
 <div>
-
 <span>Open</span>
 
 <strong id="metricOpen">0</strong>
-
 </div>
 <div>
-
 <span>High</span>
 
 <strong id="metricHigh">0</strong>
-
 </div>
 <div>
-
 <span>Low</span>
 
 <strong id="metricLow">0</strong>
-
 </div>
 <div>
-
 <span>Close</span>
 
 <strong id="metricClose">0</strong>
-
 </div>
 <div>
-
 <span>Volume</span>
 <strong id="metricVol">0</strong>
-
 </div>
 </div>
 </div>
 <div class="market-card market-stats">
 <div class="market-stat">
-
 <span>24H High</span>
 <strong id="statHigh">0</strong>
-
 </div>
 <div class="market-stat">
 
 <span>24H Low</span>
 <strong id="statLow">0</strong>
-
 </div>
 <div class="market-stat">
-
 <span>Volume</span>
 
 <strong id="statVolume">0</strong>
-
 </div>
 <div class="market-stat">
 
 <span>Market Cap</span>
 
 <strong id="statMarketCap">0</strong>
-
 </div>
 </div>
 </div>
-
 <div class="market-right">
 <div id="tradeBox" class="market-card trade-shell">
 <div class="trade-tabs">
-
 <button id="buyTab">Buy</button>
 <button id="sellTab">Sell</button>
-
 </div>
 <div class="wallet-box compact">
 <div>
 BX
-
 <strong id="walletBX">0</strong>
-
 </div>
 <div>
-
 USDT
-
 <strong id="walletUSDT">0</strong>
-
 </div>
 </div>
 <label>Amount BX</label>
 
 <input id="orderAmount" type="number" placeholder="0.00">
-
 <div class="percent-row">
 
 <button data-percent="10">10%</button>
 <button data-percent="25">25%</button>
 <button data-percent="50">50%</button>
 <button data-percent="100">MAX</button>
-
 </div>
 <div class="trade-stats">
 <div>
-
 Price
-
 <span id="execPrice">—</span>
-
 </div>
 <div>
-
 Spread
 
 <span id="spreadMirror">—</span>
-
 </div>
 <div>
-
 Slippage
 
 <span id="slippage">0.5%</span>
-
 </div>
 </div>
 
 <button id="actionBtn" class="action-btn buy">Buy BX</button>
-
 </div>
 <div class="market-card liquidity-card">
 
 <h4>Liquidity</h4>
-
 <div class="liquidity-grid">
 <div>
-
 Available
 
 <strong>$2.4M</strong>
-
 </div>
 <div>
-
 Orders
 
 <strong>18K</strong>
-
 </div>
 <div>
-
 Depth
 
 <strong>Strong</strong>
-
 </div>
 <div>
-
 Execution
 
 <strong>Fast</strong>
-
 </div>
 </div>
 </div>
@@ -778,42 +704,33 @@ Execution
 <div class="casino-top">
 <div class="casino-brand">
 <div class="casino-brand-icon">🎰</div>
-
 <div>
 
 <h2>BLOXIO CASINO</h2>
 
 <p>Provably Fair • BX Economy • Enterprise Gaming</p>
-
 </div>
 </div>
-
 <div class="casino-top-stats">
 <div class="casino-stat"><span>Wallet</span><strong id="casinoWalletText">0 BX</strong></div>
 <div class="casino-stat"><span>Players</span><strong id="casinoOnlineText">0</strong></div>
 <div class="casino-stat"><span>Volume</span><strong id="casinoVolumeText">0 BX</strong></div>
-
 </div>
 </div>
-
 <div class="casino-ledger">
 <div class="ledger-head">
-
 <h3>Provably Fair Ledger</h3>
 
 <span class="fair-badge">VERIFIED</span>
 </div>
 <div class="ledger-grid">
-
 <div><span>Server Seed</span><strong id="serverSeed">Encrypted</strong></div>
 <div><span>Client Seed</span><strong id="clientSeed">BX-CLIENT</strong></div>
 <div><span>Nonce</span><strong id="nonceSeed">0</strong></div>
 <div><span>Hash</span><strong id="hashSeed">SHA256</strong></div>
-
 </div>
 </div>
 <div class="casino-feed">
-
 <span>LIVE FEED</span>
 
 <div id="casinoTickerTrack"></div>
@@ -835,9 +752,7 @@ Execution
 <img src="/assets/casino/coinflip.png" alt="Coinflip">
 
 <div class="casino-game-main">
-
 <h3>Coinflip</h3>
-
 <div class="casino-chip-row">
 
 <span>Edge 1%</span>
@@ -845,10 +760,8 @@ Execution
 
 </div>
 <div class="casino-live">
-
 <span>412 Live</span>
 <span>1280 BX</span>
-
 </div>
 </div>
 <div class="provably-badge">
@@ -861,23 +774,19 @@ FAIR
 <img src="/assets/casino/limbo.png" alt="Limbo">
 
 <div class="casino-game-main">
-
 <h3>Limbo</h3>
 <div class="casino-chip-row">
 
 <span>Edge 1%</span>
 <span>RTP 99%</span>
-
 </div>
 <div class="casino-live">
 
 <span>380 Live</span>
 <span>902 BX</span>
-
 </div>
 </div>
 <div class="provably-badge">
-
 FAIR
 </div>
 </button>
@@ -886,23 +795,19 @@ FAIR
 <img src="/assets/casino/dice.png" alt="Dice">
 
 <div class="casino-game-main">
-
 <h3>Dice</h3>
 <div class="casino-chip-row">
 
 <span>Edge 1%</span>
 <span>RTP 99%</span>
-
 </div>
 <div class="casino-live">
 
 <span>210 Live</span>
 <span>540 BX</span>
-
 </div>
 </div>
 <div class="provably-badge">
-
 FAIR
 </div>
 </button>
@@ -913,10 +818,8 @@ FAIR
 <div class="casino-game-main">
 <h3>Crash</h3>
 <div class="casino-chip-row">
-
 <span>Edge 1%</span>
 <span>RTP 98%</span>
-
 </div>
 <div class="casino-live">
 
@@ -925,7 +828,6 @@ FAIR
 </div>
 </div>
 <div class="provably-badge">
-
 FAIR
 </div>
 </button>
@@ -934,23 +836,19 @@ FAIR
 <img src="/assets/casino/plinko.png" alt="Plinko">
 
 <div class="casino-game-main">
-
 <h3>Plinko</h3>
 <div class="casino-chip-row">
 
 <span>Edge 1%</span>
 <span>RTP 98%</span>
-
 </div>
 <div class="casino-live">
 
 <span>390 Live</span>
 <span>1820 BX</span>
-
 </div>
 </div>
 <div class="provably-badge">
-
 FAIR
 </div>
 </button>
@@ -958,18 +856,15 @@ FAIR
 
 <img src="/assets/casino/blackjack.png" alt="Blackjack">
 <div class="casino-game-main">
-
 <h3>Blackjack</h3>
 <div class="casino-chip-row">
 
 <span>Edge 0.5%</span>
 <span>RTP 99.5%</span>
-
 </div>
 <div class="casino-live">
 <span>180 Live</span>
 <span>720 BX</span>
-
 </div>
 </div>
 <div class="provably-badge">
@@ -982,15 +877,12 @@ FAIR
 <img src="/assets/casino/hilo.png" alt="HiLo">
 
 <div class="casino-game-main">
-
 <h3>Hi-Lo</h3>
 <div class="casino-chip-row">
-
 <span>Edge 1%</span>
 <span>RTP 99%</span>
 </div>
 <div class="casino-live">
-
 <span>80 Live</span>
 <span>220 BX</span>
 </div>
@@ -1004,16 +896,12 @@ FAIR
 <img src="/assets/casino/slot.png" alt="Slots">
 
 <div class="casino-game-main">
-
 <h3>Slots</h3>
-
 <div class="casino-chip-row">
 <span>Edge 3%</span>
 <span>RTP 96%</span>
-
 </div>
 <div class="casino-live">
-
 <span>920 Live</span>
 <span>4800 BX</span>
 </div>
@@ -1021,32 +909,26 @@ FAIR
 <div class="provably-badge">
 FAIR
 </div>
-
 </button>
 <button class="casino-game-card" type="button" data-game="mines" data-image="/assets/casino/mines.png">
 
 <img src="/assets/casino/mines.png" alt="Mines">
 
 <div class="casino-game-main">
-
 <h3>Mines</h3>
 <div class="casino-chip-row">
 
 <span>Edge 1%</span>
 <span>RTP 99%</span>
-
 </div>
 <div class="casino-live">
-
 <span>610 Live</span>
 <span>2120 BX</span>
 </div>
-
 </div>
 <div class="provably-badge">
 
 FAIR
-
 </div>
 </button>
 <button class="casino-game-card" type="button" data-game="fruitparty" data-image="/assets/casino/fruitparty.png">
@@ -1054,22 +936,17 @@ FAIR
 <img src="/assets/casino/fruitparty.png" alt="FruitParty">
 
 <div class="casino-game-main">
-
 <h3>FruitParty</h3>
-
 <div class="casino-chip-row">
 
 <span>Edge 4%</span>
 <span>RTP 95%</span>
-
 </div>
 <div class="casino-live">
-
 <span>170 Live</span>
 <span>640 BX</span>
 </div>
 </div>
-
 <div class="provably-badge">
 FAIR
 </div>
@@ -1080,21 +957,17 @@ FAIR
 <img src="/assets/casino/bananafarm.png" alt="BananaFarm">
 
 <div class="casino-game-main">
-
 <h3>BananaFarm</h3>
-
 <div class="casino-chip-row">
 
 <span>Edge 3%</span>
 <span>RTP 96%</span>
-
 </div>
 <div class="casino-live">
 <span>140 Live</span>
 <span>880 BX</span>
 </div>
 </div>
-
 <div class="provably-badge">
 
 FAIR
@@ -1109,7 +982,6 @@ FAIR
 <span>Edge 2%</span>
 <span>RTP 97%</span>
 </div>
-
 <div class="casino-live">
 <span>550 Live</span>
 <span>4100 BX</span>
@@ -1117,7 +989,6 @@ FAIR
 </div>
 <div class="provably-badge">
 FAIR
-
 </div>
 </button>
 </div>
