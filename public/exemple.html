@@ -1,239 +1,76 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#07111F">
-<meta name="description" content="BLOXIO Enterprise Exchange Wallet Market Mining Casino">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="BLOXIO">
-<title>BLOXIO Enterprise</title>
-<link rel="manifest" href="/manifest.json">
-<link rel="icon" href="/assets/images/branding/favicon.png">
-<link rel="stylesheet" href="/assets/css/styles.css">
-</head>
-
-<body
-class="loading auth-loading"
-data-theme="dark"
-data-ui="enterprise"
-data-motion="on"
-data-sound="on">
-
-<!-- ================================================= -->
-<!-- GLOBAL LOADER -->
-<!-- ================================================= -->
-
-<div id="globalLoader">
-
-<div class="loader-logo">
-<img src="/assets/images/branding/logo.svg" alt="Bloxio">
-</div>
-
-<div class="loader-ring"></div>
-
-<h1 class="loader-title">
-BLOXIO
-</h1>
-
-<div class="loader-progress">
-<div id="loaderProgress" class="loader-progress-fill"></div>
-</div>
-
-</div>
-
-<!-- ================================================= -->
-<!-- BACKGROUND -->
-<!-- ================================================= -->
-
-<div class="background-system">
-
-<video
-class="bg-video bg-ambient"
-autoplay
-muted
-loop
-playsinline>
-
-<source
-src="/assets/video/ambient.mp4"
-type="video/mp4">
-
-</video>
-
-<video
-class="bg-video bg-grid"
-autoplay
-muted
-loop
-playsinline>
-
-<source
-src="/assets/video/grid-loop.mp4"
-type="video/mp4">
-
-</video>
-
-<div class="bg-layer"></div>
-
-<div class="grid-overlay"></div>
-
-<div class="ambient-glow"></div>
-
-</div>
-
-<!-- ================================================= -->
-<!-- AUTH -->
-<!-- ================================================= -->
-
-<div
-id="authOverlay"
-class="auth-overlay">
-
-</div>
-
-<!-- ================================================= -->
-<!-- APP SHELL -->
-<!-- ================================================= -->
-
-<div id="app-shell">
-
-<!-- ================================================= -->
-<!-- ENTERPRISE HEADER -->
-<!-- ================================================= -->
-
-<header class="enterprise-header">
+<header class="app-header enterprise-header">
 
 <div class="header-left">
 
-<div class="enterprise-logo">
+<a href="#" class="enterprise-brand" aria-label="Bloxio Home">
 
-<img
-src="/assets/images/branding/logo.svg"
-alt="Bloxio">
+<img src="/assets/images/branding/logo.svg" alt="Bloxio" class="brand-logo">
 
-<div>
-
-<h1>
-BLOXIO
-</h1>
-
-<small>
-ENTERPRISE EXCHANGE
-</small>
-
+<div class="brand-text">
+<strong>BLOXIO</strong>
+<small>WEB3 EXCHANGE • CASINO • MINING</small>
 </div>
 
-</div>
+</a>
 
-<div class="enterprise-status">
+<div class="system-status" id="systemStatus">
 
 <span class="status-dot"></span>
 
-<span>
-SYSTEM ONLINE
-</span>
-
+<div class="status-meta">
+<strong>SYSTEM ONLINE</strong>
+<small id="networkLatency">Latency 42ms</small>
 </div>
 
 </div>
 
-<nav
-class="enterprise-nav"
-aria-label="Primary">
+</div>
 
-<ul>
+<nav class="header-center" aria-label="Global Navigation">
 
-<li>
-<button
-data-view="wallet"
-aria-label="Wallet">
-Wallet
+<div class="locale-box">
+
+<button id="localeTrigger" class="locale-trigger" aria-expanded="false" aria-controls="localeMenu" type="button">
+
+<span id="currentLocale">EN</span>
+
+<svg viewBox="0 0 24 24" width="14" height="14">
+<path fill="currentColor" d="M7 10l5 5l5-5z"/>
+</svg>
+
 </button>
-</li>
 
-<li>
-<button
-data-view="market"
-aria-label="Market">
-Market
-</button>
-</li>
+<ul id="localeMenu" class="locale-menu">
 
-<li>
-<button
-data-view="casino"
-aria-label="Casino">
-Casino
-</button>
-</li>
-
-<li>
-<button
-data-view="mining"
-aria-label="Mining">
-Mining
-</button>
-</li>
-
-<li>
-<button
-data-view="airdrop"
-aria-label="Airdrop">
-Airdrop
-</button>
-</li>
+<li><button data-lang="EN">🇺🇸 EN</button></li>
+<li><button data-lang="AR">🇸🇦 AR</button></li>
+<li><button data-lang="FR">🇫🇷 FR</button></li>
+<li><button data-lang="ES">🇪🇸 ES</button></li>
+<li><button data-lang="DE">🇩🇪 DE</button></li>
+<li><button data-lang="ZH">🇨🇳 ZH</button></li>
+<li><button data-lang="RU">🇷🇺 RU</button></li>
+<li><button data-lang="JA">🇯🇵 JA</button></li>
+<li><button data-lang="TR">🇹🇷 TR</button></li>
 
 </ul>
+
+</div>
 
 </nav>
 
 <div class="header-right">
 
-<div class="language-dropdown">
+<div id="guestToolbar" class="auth-toolbar">
 
-<button
-id="languageButton"
-aria-expanded="false"
-aria-controls="languageMenu">
-
-EN
-
-</button>
-
-<ul
-id="languageMenu"
-class="language-menu">
-
-<li>EN</li>
-<li>AR</li>
-<li>FR</li>
-<li>ES</li>
-<li>DE</li>
-<li>ZH</li>
-<li>RU</li>
-<li>JA</li>
-<li>TR</li>
-
-</ul>
-
-</div>
-
-<div class="auth-toolbar">
-
-<button
-id="headerLogin"
-class="auth-btn">
+<button id="headerLoginBtn" class="header-btn secondary" type="button">
 
 Login
 
 </button>
 
-<button
-id="headerRegister"
-class="auth-btn primary">
+<button id="headerRegisterBtn" class="header-btn primary" type="button">
 
 Register
 
@@ -241,494 +78,683 @@ Register
 
 </div>
 
+<div id="userToolbar" class="user-toolbar hidden">
+
+<button id="userMenuTrigger" class="user-trigger" aria-expanded="false" aria-controls="userDropdown" type="button">
+
+<div class="user-avatar">BX</div>
+
+<div class="user-meta">
+
+<strong id="vipTier">VIP 1</strong>
+
+<small>✔ VERIFIED</small>
+
+</div>
+
+<div class="session-pill">
+
+1 ACTIVE
+
+</div>
+
+</button>
+
+<ul id="userDropdown" class="user-dropdown">
+
+<li><button type="button">Profile</button></li>
+<li><button type="button">Security</button></li>
+<li><button type="button">Sessions</button></li>
+<li><button id="logoutBtn" type="button">Logout</button></li>
+
+</ul>
+
+</div>
+
+</div>
+
+</header>
+<body
+class="loading auth-loading"
+data-theme="dark"
+data-ui="enterprise"
+data-motion="on"
+data-sound="on">
+
+<!-- GLOBAL LOADER -->
+
+<div id="globalLoader">
+
+<div class="loader-logo">
+
+<img
+src="/assets/images/branding/logo.svg"
+alt="Bloxio"/>
+
+</div>
+
+<div class="loader-ring"></div>
+
+<h1 class="loader-title">
+
+Bloxio 
+
+</h1>
+
+<div class="loader-progress">
+
+<div
+class="
+loader-progress-fill
+"
+id="loaderProgress">
+
+</div>
+
+</div>
+
+</div>
+
+
+<!-- VIDEO -->
+
+<video
+class="
+bg-video
+bg-ambient
+"
+autoplay
+muted
+loop
+playsinline>
+
+<source
+src="/assets/video/ambient.mp4"
+type="video/mp4"/>
+
+</video>
+
+<video
+class="
+bg-video
+bg-particles
+"
+autoplay
+muted
+loop
+playsinline>
+
+<source
+src="/assets/video/particles.mp4"
+type="video/mp4"/>
+
+</video>
+
+<video
+class="
+bg-video
+bg-grid
+"
+autoplay
+muted
+loop
+playsinline>
+
+<source
+src="/assets/video/grid-loop.mp4"
+type="video/mp4"/>
+
+</video>
+
+
+<div class="bg-layer"></div>
+
+<div class="grid-overlay"></div>
+
+<div class="ambient-glow"></div>
+
+
+<div id="app-shell">
+
+
+<header class="app-header">
+
+<div class="logo">
+
+<img
+src="
+/assets/images/branding/logo.svg
+"
+alt="Bloxio"/>
+
+<div class="logo-text">
+
+<span>
+
+Bloxio 
+
+</span>
+
+<small>
+
+CRYPTO PLATFORM
+
+</small>
+
+</div>
+
+</div>
+
+
+<div class="social-links">
+
+<a
+class="social-btn"
+href="#"
+id="facebookLink">
+
+<img
+src="
+/assets/images/social/facebook.svg
+"
+alt="Facebook"/>
+
+</a>
+
+<a
+class="social-btn"
+href="#"
+id="telegramLink">
+
+<img
+src="
+/assets/images/social/telegram.svg
+"
+alt="Telegram"/>
+
+</a>
+
 </div>
 
 </header>
 
-<!-- ================================================= -->
-<!-- APP -->
-<!-- ================================================= -->
-
 <main
 id="app"
-class="app-container">
+class="
+app-container">
 
-<!-- ================================================= -->
-<!-- WALLET -->
-<!-- ================================================= -->
+<!-- ================= WALLET ================= -->
+   
+    <section id="wallet" class="view active">
 
-<section
-id="wallet"
-class="view active">
+  <!-- ================= HERO ================= -->
+  <div class="wallet-top">
+    <span class="label">Est. Total Value</span>
+    <h1>
+      <span id="walletTotal">$0.00</span>
+      <small>USD</small>
+    </h1>
+    <div id="walletStatus" class="wallet-status hidden">Portfolio syncing</div>
+  </div>
 
-<div class="wallet-shell">
+  <!-- ================= INTELLIGENCE ================= -->
+  <div class="wallet-intelligence" id="walletIntelligence">
+    <div class="wallet-intelligence-head">
+      <div>
+        <span class="wallet-kicker">Smart Wallet</span>
+        <h3 id="walletIntelTitle">Ready to fund your wallet</h3>
+      </div>
+      <span id="walletIntelBadge" class="wallet-intel-badge">START</span>
+    </div>
 
-<!-- ================================================= -->
-<!-- WALLET HERO -->
-<!-- ================================================= -->
+    <p id="walletIntelText">
+      Deposit crypto to activate trading, mining and casino features.
+    </p>
 
-<div class="wallet-top">
+    <div class="wallet-intel-actions" id="walletIntelActions">
+      <button id="walletIntelPrimary" class="wallet-intel-btn primary" type="button">
+        Deposit Now
+      </button>
+      <button id="walletIntelSecondary" class="wallet-intel-btn" type="button">
+        Explore Market
+      </button>
+    </div>
+  </div>
 
-<span class="wallet-label">
-Portfolio Value
-</span>
+  <!-- ================= MAIN ACTIONS ================= -->
+  <div class="wallet-actions">
+    <!-- أبقينا data-wallet-open حتى لا ينكسر wallet.js -->
+    <button class="btn primary" id="openDepositBtn" type="button" data-wallet-open="depositPanel">Deposit</button>
+    <button class="btn" id="openWithdrawBtn" type="button" data-wallet-open="withdrawPanel">Withdraw</button>
+    <button class="btn" id="openTransferBtn" type="button" data-wallet-open="transferPanel">Transfer</button>
+  </div>
 
-<h1>
+  <!-- ================= PANELS ================= -->
+  <div class="wallet-panels">
 
-<span id="walletTotal">
-$0.00
-</span>
+    <!-- ===== DEPOSIT ===== -->
+<div class="wallet-panel wallet-hidden" id="depositPanel">
+  <div class="wallet-panel-head">
+    <h4>Deposit Crypto</h4>
+    <button type="button" class="wallet-panel-close" data-wallet-close="depositPanel">✕</button>
+  </div>
 
-<small>
-USD
-</small>
+  <div class="wallet-panel-body">
 
-</h1>
+    <!-- ASSET -->
+    <label for="depositAsset">Asset</label>
+    <select id="depositAsset">
+      <option value="USDT">USDT</option>
+      <option value="USDC">USDC</option>
+      <option value="BTC">BTC</option>
+      <option value="BNB">BNB</option>
+      <option value="ETH">ETH</option>
+      <option value="AVAX">AVAX</option>
+      <option value="ZEC">ZEC</option>
+      <option value="TON">TON</option>
+      <option value="SOL">SOL</option>
+      <option value="LTC">LTC</option>
+    </select>
 
-<div
-id="walletStatus"
-class="wallet-status hidden">
+    <!-- ✅ OPTIONAL AMOUNT (بدون كسر) -->
+    <label for="depositAmount">Amount (optional)</label>
+    <input 
+      id="depositAmount"
+      type="number"
+      min="0"
+      step="0.0001"
+      placeholder="Optional (USD)"
+      class="wallet-input"
+    >
 
-Portfolio Syncing
+    <!-- ACTION -->
+    <button class="btn primary" id="generateDepositBtn" type="button">
+      Generate Address
+    </button>
 
+    <!-- ADDRESS -->
+    <div class="wallet-address-box">
+      <span class="wallet-address-label">Deposit Address</span>
+      <code id="depositAddressText">—</code>
+    </div>
+
+    <!-- QR (اختياري — ما يكسر حتى شيء) -->
+    <div id="depositQR" class="wallet-qr hidden"></div>
+
+    <!-- ACTIONS -->
+    <div class="wallet-inline-actions">
+      <button id="copyDepositBtn" class="btn secondary" type="button">
+        Copy Address
+      </button>
+    </div>
+    <!-- STATUS -->
+    <div id="depositStatus" class="wallet-status hidden"></div>
+  </div>
+</div>
+    
+
+    <!-- ===== WITHDRAW ===== -->
+    <div class="wallet-panel wallet-hidden" id="withdrawPanel">
+      <div class="wallet-panel-head">
+        <h4>Withdraw Crypto</h4>
+        <button type="button" class="wallet-panel-close" id="closeWithdrawPanel" data-wallet-close="withdrawPanel">✕</button>
+      </div>
+
+      <div class="wallet-panel-body">
+        <label for="withdrawAsset">Asset</label>
+        <select id="withdrawAsset">
+          <option value="USDT">USDT</option>
+          <option value="USDC">USDC</option>
+          <option value="BTC">BTC</option>
+          <option value="BNB">BNB</option>
+          <option value="ETH">ETH</option>
+          <option value="AVAX">AVAX</option>
+          <option value="ZEC">ZEC</option>
+          <option value="TON">TON</option>
+          <option value="SOL">SOL</option>
+          <option value="LTC">LTC</option>
+        </select>
+
+        <label for="withdrawAmount">Amount</label>
+        <input id="withdrawAmount" type="number" min="0" step="0.0001" placeholder="0.00">
+
+        <label for="withdrawAddress">Wallet Address</label>
+        <input id="withdrawAddress" type="text" placeholder="Enter wallet address">
+
+        <button class="btn primary" id="submitWithdrawBtn" type="button">Confirm Withdraw</button>
+
+        <div id="withdrawStatus" class="wallet-status hidden"></div>
+      </div>
+    </div>
+    <!-- ===== TRANSFER ===== -->
+<div class="wallet-panel wallet-hidden" id="transferPanel">
+  <div class="wallet-panel-head">
+    <h4>Transfer Assets</h4>
+    <button type="button" class="wallet-panel-close" data-wallet-close="transferPanel">✕</button>
+  </div>
+
+  <div class="wallet-panel-body">
+
+    <!-- ASSET -->
+    <label for="transferAsset">Asset</label>
+    <select id="transferAsset">
+      <option value="BX">BX (Internal)</option>
+      <option value="USDT">USDT</option>
+      <option value="USDC">USDC</option>
+      <option value="BNB">BNB</option>
+      <option value="SOL">SOL</option>
+    </select>
+
+    <!-- ✅ NEW: USER IDENTIFIER -->
+    <label for="transferUser">Recipient (Email or User ID)</label>
+    <input 
+      id="transferUser"
+      type="text"
+      placeholder="user@email.com or ID"
+      autocomplete="off"
+      class="wallet-input"
+    >
+
+    <!-- ⚠️ fallback compatibility -->
+    <input id="transferTo" type="hidden">
+
+    <!-- AMOUNT -->
+    <label for="transferAmount">Amount</label>
+    <input 
+      id="transferAmount"
+      type="number"
+      min="0"
+      step="0.0001"
+      placeholder="0.00"
+      class="wallet-input"
+    >
+
+    <!-- QUICK INFO -->
+    <div class="wallet-hint">
+      Transfers are instant inside Bloxio network.
+    </div>
+
+    <!-- ACTION -->
+    <button class="btn confirm" id="submitTransferBtn" type="button">
+      Confirm Transfer
+    </button>
+
+    <!-- STATUS -->
+    <div id="transferStatus" class="wallet-status hidden"></div>
+
+  </div>
 </div>
 
-</div>
-
-<!-- ================================================= -->
-<!-- WALLET INTELLIGENCE -->
-<!-- ================================================= -->
-
-<div
-id="walletIntelligence"
-class="wallet-intelligence">
-
-<div>
-
-<span class="wallet-kicker">
-
-Smart Wallet
-
-</span>
-
-<h3
-id="walletIntelTitle">
-
-Portfolio Ready
-
-</h3>
-
-<p
-id="walletIntelText">
-
-Deposit assets to unlock market mining casino and rewards.
-
-</p>
-
-</div>
-
-<div
-id="walletIntelActions">
-
-<button
-id="walletIntelPrimary"
-class="wallet-intel-btn primary">
-
-Deposit
-
-</button>
-
-<button
-id="walletIntelSecondary"
-class="wallet-intel-btn">
-
-Explore Market
-
-</button>
-
-</div>
-
-</div>
-
-<!-- ================================================= -->
-<!-- WALLET ACTIONS -->
-<!-- ================================================= -->
-
-<div class="wallet-actions">
-
-<button
-id="openDepositBtn"
-class="btn primary"
-type="button"
-data-wallet-open="depositPanel">
-
-Deposit
-
-</button>
-
-<button
-id="openWithdrawBtn"
-class="btn"
-type="button"
-data-wallet-open="withdrawPanel">
-
-Withdraw
-
-</button>
-
-<button
-id="openTransferBtn"
-class="btn"
-type="button"
-data-wallet-open="transferPanel">
-
-Transfer
-
-</button>
-
-</div>
-
-<!-- ================================================= -->
-<!-- PANELS -->
-<!-- ================================================= -->
-
-<div class="wallet-panels">
-
-<!-- ================================================= -->
-<!-- DEPOSIT -->
-<!-- ================================================= -->
-
-<div
-id="depositPanel"
-class="wallet-panel wallet-hidden">
-
-<div class="wallet-panel-head">
-
-<h4>
-Deposit Crypto
-</h4>
-
-<button
-type="button"
-data-wallet-close="depositPanel">
-
-✕
-
-</button>
-
-</div>
-
-<div class="wallet-panel-body">
-
-<label>Asset</label>
-
-<select id="depositAsset">
-
-<option>USDT</option>
-<option>USDC</option>
-<option>BTC</option>
-<option>ETH</option>
-<option>BNB</option>
-<option>SOL</option>
-<option>AVAX</option>
-<option>ZEC</option>
-<option>TON</option>
-<option>LTC</option>
-
-</select>
-
-<label>Network</label>
-
-<select id="depositNetwork">
-
-<option>TRC20</option>
-<option>ERC20</option>
-<option>BEP20</option>
-
-</select>
-
-<label>Amount</label>
-
-<input
-id="depositAmount"
-type="number"
-placeholder="0.00">
-
-<label>Memo</label>
-
-<input
-id="depositMemo"
-type="text">
-
-<label>Destination Tag</label>
-
-<input
-id="depositTag"
-type="text">
-
-<div class="wallet-network-meta">
-
-<div>
-Fee:0.5 USDT
-</div>
-
-<div>
-Min:10 USD
-</div>
-
-<div>
-ETA:1-5 min
-</div>
-
-</div>
-
-<button
-id="generateDepositBtn"
-class="btn primary">
-
-Generate Address
-
-</button>
-
-<div class="wallet-address-box">
-
-<code
-id="depositAddressText">
-
-—
-
-</code>
-
-</div>
-
-<div
-id="depositQR"
-class="wallet-qr hidden">
-
-</div>
-
-<button
-id="copyDepositBtn"
-class="btn">
-
-Copy Address
-
-</button>
-
-<div
-id="depositStatus"
-class="wallet-status hidden">
-
-</div>
-
-</div>
-
-</div>
-
-<!-- ================================================= -->
-<!-- WITHDRAW -->
-<!-- ================================================= -->
-
-<div
-id="withdrawPanel"
-class="wallet-panel wallet-hidden">
-
-<div class="wallet-panel-head">
-
-<h4>
-Withdraw
-</h4>
-
-<button
-data-wallet-close="withdrawPanel">
-
-✕
-
-</button>
-
-</div>
-
-<div class="wallet-panel-body">
-
-<select id="withdrawAsset">
-
-<option>USDT</option>
-<option>BTC</option>
-<option>ETH</option>
-<option>BNB</option>
-
-</select>
-
-<input
-id="withdrawAmount"
-type="number"
-placeholder="0.00">
-
-<input
-id="withdrawAddress"
-type="text"
-placeholder="Wallet Address">
-
-<button
-id="submitWithdrawBtn"
-class="btn primary">
-
-Confirm Withdraw
-
-</button>
-
-<div
-id="withdrawStatus"
-class="wallet-status hidden">
-
-</div>
-
-</div>
-
-</div>
-
-<!-- ================================================= -->
-<!-- TRANSFER -->
-<!-- ================================================= -->
-
-<div
-id="transferPanel"
-class="wallet-panel wallet-hidden">
-
-<div class="wallet-panel-head">
-
-<h4>
-Transfer
-
-</h4>
-
-<button
-data-wallet-close="transferPanel">
-
-✕
-
-</button>
-
-</div>
-
-<div class="wallet-panel-body">
-
-<select id="transferAsset">
-
-<option>BX</option>
-<option>USDT</option>
-
-</select>
-
-<input
-id="transferUser"
-type="text"
-placeholder="Email Or User ID">
-
-<input
-id="transferTo"
-type="hidden">
-
-<input
-id="transferAmount"
-type="number"
-placeholder="0.00">
-
-<button
-id="submitTransferBtn"
-class="btn primary">
-
-Transfer
-
-</button>
-
-<div
-id="transferStatus"
-class="wallet-status hidden">
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-<!-- ================================================= -->
-<!-- BALANCES -->
-<!-- ================================================= -->
-
-<div class="wallet-balances">
-
-<div class="wallet-toolbar">
-
-<input
-id="walletAssetSearch"
-placeholder="Search Asset">
-
-</div>
-
-<div id="walletQuickSheet"></div>
-
-<div class="wallet-shortcuts">
-
-<button id="walletQuickDeposit">
-Deposit
-</button>
-
-<button id="walletQuickWithdraw">
-Withdraw
-</button>
-
-<button id="walletQuickTransfer">
-Transfer
-</button>
-
-</div>
-
-<div
-class="wallet-row"
-data-asset="BX">
-
-<strong>
-BX
-</strong>
-
-<span id="bal-bx">
-0.00
-</span>
-
-</div>
-
-<div
-class="wallet-row"
-data-asset="USDT">
-
-<strong>
-USDT
-</strong>
-
-<span id="bal-usdt">
-0.00
-</span>
-
-</div>
-
-<div
-class="wallet-row"
-data-asset="BTC">
-
-<strong>
-BTC
-</strong>
-
-<span id="bal-btc">
-0.00
-</span>
-
-</div>
-
-</div>
-
-</div>
+  <!-- ================= BALANCES ================= -->
+  <div class="wallet-balances">
+    <h3>Asset Balances</h3>
+
+    <!-- Search -->
+    <div class="wallet-assets-toolbar">
+      <input id="walletAssetSearch" type="text" placeholder="Search asset...">
+    </div>
+
+    <!-- Empty State -->
+    <div id="walletEmptyState" class="wallet-empty hidden">
+      No assets found
+    </div>
+
+    <!-- ===== ASSET ROWS ===== -->
+
+    <div class="wallet-row main" data-asset="BX">
+      <div class="left">
+        <img src="assets/images/bx.png" alt="BX">
+        <div class="info"><strong>BX</strong><span>Bloxio</span></div>
+      </div>
+      <div class="amount"><strong id="bal-bx">0.00</strong></div>
+    </div>
+
+    <div class="wallet-row" data-asset="USDT">
+      <div class="left">
+        <img src="assets/images/usdt.png" alt="USDT">
+        <div class="info"><strong>USDT</strong><span>Tether</span></div>
+      </div>
+      <div class="amount"><strong id="bal-usdt">0.00</strong></div>
+    </div>
+
+    <div class="wallet-row" data-asset="USDC">
+      <div class="left">
+        <img src="assets/images/usdc.png" alt="USDC">
+        <div class="info"><strong>USDC</strong><span>USD Coin</span></div>
+      </div>
+      <div class="amount"><strong id="bal-usdc">0.00</strong></div>
+    </div>
+
+    <div class="wallet-row" data-asset="BTC">
+      <div class="left">
+        <img src="assets/images/btc.png" alt="BTC">
+        <div class="info"><strong>BTC</strong><span>Bitcoin</span></div>
+      </div>
+      <div class="amount"><strong id="bal-btc">0.00</strong></div>
+    </div>
+
+    <div class="wallet-row" data-asset="BNB">
+      <div class="left">
+        <img src="assets/images/bnb.png" alt="BNB">
+        <div class="info"><strong>BNB</strong><span>Binance</span></div>
+      </div>
+      <div class="amount"><strong id="bal-bnb">0.00</strong></div>
+    </div>
+
+    <div class="wallet-row" data-asset="ETH">
+      <div class="left">
+        <img src="assets/images/eth.png" alt="ETH">
+        <div class="info"><strong>ETH</strong><span>Ethereum</span></div>
+      </div>
+      <div class="amount"><strong id="bal-eth">0.00</strong></div>
+    </div>
+
+    <div class="wallet-row" data-asset="AVAX">
+      <div class="left">
+        <img src="assets/images/avax.png" alt="AVAX">
+        <div class="info"><strong>AVAX</strong><span>Avalanche</span></div>
+      </div>
+      <div class="amount"><strong id="bal-avax">0.00</strong></div>
+    </div>
+
+    <div class="wallet-row" data-asset="ZEC">
+      <div class="left">
+        <img src="assets/images/zec.png" alt="ZEC">
+        <div class="info"><strong>ZEC</strong><span>Zcash</span></div>
+      </div>
+      <div class="amount"><strong id="bal-zec">0.00</strong></div>
+    </div>
+
+    <div class="wallet-row" data-asset="TON">
+      <div class="left">
+        <img src="assets/images/ton.png" alt="TON">
+        <div class="info"><strong>TON</strong><span>Toncoin</span></div>
+      </div>
+      <div class="amount"><strong id="bal-ton">0.00</strong></div>
+    </div>
+
+    <div class="wallet-row" data-asset="SOL">
+      <div class="left">
+        <img src="assets/images/sol.png" alt="SOL">
+        <div class="info"><strong>SOL</strong><span>Solana</span></div>
+      </div>
+      <div class="amount"><strong id="bal-sol">0.00</strong></div>
+    </div>
+
+    <div class="wallet-row" data-asset="LTC">
+      <div class="left">
+        <img src="assets/images/ltc.png" alt="LTC">
+        <div class="info"><strong>LTC</strong><span>Litecoin</span></div>
+      </div>
+      <div class="amount"><strong id="bal-ltc">0.00</strong></div>
+    </div>
+  </div>
+  <!-- ================= QUICK ASSET SHEET ================= -->
+  <div id="walletQuickSheet" class="wallet-quick-sheet wallet-hidden">
+    <div class="wallet-quick-backdrop" id="walletQuickBackdrop"></div>
+
+    <div class="wallet-quick-card">
+      <div class="wallet-quick-head">
+        <div>
+          <span class="wallet-kicker">Quick Actions</span>
+          <h4 id="walletQuickAssetName">Asset</h4>
+        </div>
+        <button id="walletQuickClose" class="wallet-panel-close" type="button">✕</button>
+      </div>
+
+      <div class="wallet-quick-body">
+        <button id="walletQuickDeposit" class="wallet-intel-btn primary" type="button">Deposit</button>
+        <button id="walletQuickWithdraw" class="wallet-intel-btn" type="button">Withdraw</button>
+        <button id="walletQuickTransfer" class="wallet-intel-btn" type="button">Transfer</button>
+      </div>
+    </div>
+  </div>
  </section>
+    
+<!-- ================= MARKET ================= -->
+    <section id="market" class="view market-view">
+      <!-- خليت market كما هو لأن بنيته سليمة مع js الحالي -->
+      <!-- (أبقيت نفس DOM IDs حتى لا نكسر market.js) -->
+
+      <div class="market-header">
+        <div class="pair-title">
+          <span class="base">BX</span>
+          <span class="arrow">/</span>
+          <span class="quote" id="quoteAsset">USDT</span>
+        </div>
+
+        <div class="price-box">
+          <div id="marketPrice" class="price-main">0.000000</div>
+          <div id="marketApprox" class="approx">≈ 0.000000 USDT</div>
+        </div>
+      </div>
+
+      <div class="wallet-box compact">
+        <div>BX <strong id="walletBX">0.00</strong></div>
+        <div><span id="walletQuoteLabel">USDT</span> <strong id="walletUSDT">0.00</strong></div>
+      </div>
+
+      <div class="pair-grid">
+        <button class="pair-btn active" data-quote="USDT" type="button">USDT</button>
+        <button class="pair-btn" data-quote="USDC" type="button">USDC</button>
+        <button class="pair-btn" data-quote="BTC" type="button">BTC</button>
+        <button class="pair-btn" data-quote="BNB" type="button">BNB</button>
+        <button class="pair-btn" data-quote="ETH" type="button">ETH</button>
+        <button class="pair-btn" data-quote="AVAX" type="button">AVAX</button>
+        <button class="pair-btn" data-quote="ZEC" type="button">ZEC</button>
+        <button class="pair-btn" data-quote="TON" type="button">TON</button>
+        <button class="pair-btn" data-quote="SOL" type="button">SOL</button>
+        <button class="pair-btn" data-quote="LTC" type="button">LTC</button>
+      </div>
+
+      <div class="market-hero">
+        <div class="market-identity">
+          <div class="market-logo">™</div>
+          <div class="market-title">
+            <h2 id="assetName">Bloxio</h2>
+            <span id="assetSymbol">BX</span>
+          </div>
+        </div>
+
+        <div class="market-price-box">
+          <div id="assetPrice" class="market-price">$0.00000</div>
+          <div id="assetChangeBadge" class="market-change-badge is-up">▲ 0.00%</div>
+        </div>
+
+        <div class="market-toolbar">
+          <div class="market-timeframes">
+            <button class="active" data-range="1H" type="button">1H</button>
+            <button data-range="24H" type="button">24H</button>
+            <button data-range="7D" type="button">7D</button>
+            <button data-range="30D" type="button">30D</button>
+            <button data-range="90D" type="button">90D</button>
+          </div>
+
+          <div class="market-chart-modes">
+            <button class="active" data-chart-mode="area" type="button">Area</button>
+            <button data-chart-mode="line" type="button">Line</button>
+            <button data-chart-mode="candles" type="button">Candles</button>
+          </div>
+        </div>
+
+        <div class="market-chart-card market-chart-card--pro">
+          <div class="market-chart-topbar">
+            <div class="chart-top-left">
+              <span class="chart-mini-label">BX / <span id="chartQuoteLabel">USDT</span></span>
+              <strong id="chartLivePrice">$0.00000</strong>
+            </div>
+            <div class="chart-top-right">
+              <span id="chartLiveChange" class="chart-live-change is-up">▲ 0.00%</span>
+            </div>
+          </div>
+
+          <div class="market-chart-shell market-chart-shell--full">
+            <canvas id="marketChart"></canvas>
+            <div class="chart-glow"></div>
+            <div class="chart-overlay"></div>
+            <div id="marketTooltip" class="market-tooltip"></div>
+            <div class="market-crosshair">
+              <span id="crosshairPrice">--</span>
+              <span id="crosshairTime">--</span>
+            </div>
+          </div>
+
+          <div class="market-chart-footer">
+            <div class="chart-footer-item"><span>Open</span><strong id="metricOpen">0.00000</strong></div>
+            <div class="chart-footer-item"><span>High</span><strong id="metricHigh">0.00000</strong></div>
+            <div class="chart-footer-item"><span>Low</span><strong id="metricLow">0.00000</strong></div>
+            <div class="chart-footer-item"><span>Close</span><strong id="metricClose">0.00000</strong></div>
+          </div>
+        </div>
+
+        <div class="market-stats-grid">
+          <div class="stat-card"><span>24H High</span><strong id="statHigh">$0.00000</strong></div>
+          <div class="stat-card"><span>24H Low</span><strong id="statLow">$0.00000</strong></div>
+          <div class="stat-card"><span>Volume</span><strong id="statVolume">0 BX</strong></div>
+          <div class="stat-card"><span>Market</span><strong id="statMarketCap">$0</strong></div>
+        </div>
+
+        <div class="market-ohlc">
+          <div class="ohlc-item"><span>Open</span><strong id="metricOpenPanel">0.00000</strong></div>
+          <div class="ohlc-item"><span>High</span><strong id="metricHighPanel">0.00000</strong></div>
+          <div class="ohlc-item"><span>Low</span><strong id="metricLowPanel">0.00000</strong></div>
+          <div class="ohlc-item"><span>Close</span><strong id="metricClosePanel">0.00000</strong></div>
+          <div class="ohlc-item"><span>Volume</span><strong id="metricVol">0</strong></div>
+        </div>
+      </div>
+
+      <div class="trade-box buy" id="tradeBox">
+        <div class="trade-tabs">
+          <button id="buyTab" class="active" type="button">Buy</button>
+          <button id="sellTab" type="button">Sell</button>
+        </div>
+
+        <div class="trade-form">
+          <label for="orderAmount">Amount BX</label>
+          <input id="orderAmount" type="number" placeholder="0.00" inputmode="decimal" step="0.0001" min="0">
+
+          <div class="percent-row">
+            <button type="button" data-percent="10">10%</button>
+            <button type="button" data-percent="25">25%</button>
+            <button type="button" data-percent="50">50%</button>
+            <button type="button" data-percent="100">MAX</button>
+          </div>
+
+          <div class="trade-stats">
+            <div>Price: <span id="execPrice">—</span></div>
+            <div>Slippage: <span id="slippage">—%</span></div>
+            <div>Spread: <span id="spread">—</span></div>
+          </div>
+
+          <button class="action-btn buy" id="actionBtn" type="button">Buy BX</button>
+        </div>
+      </div>
+    <div class="market-cards">
+    <!-- ================= ORDER BOOK GRID ================= -->
+<div class="orderbook-card">
+
+  <!-- HEADER -->
+  <div class="orderbook-head">
+    <h3>Order Book</h3>
+    <div class="orderbook-pair">
+      BX / <spa
