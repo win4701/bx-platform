@@ -692,11 +692,10 @@ select {
     font-weight: 700;
 }
 
-.wallet-actions {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
-    margin-bottom: 32px;
+.wallet-actions{
+display:grid;
+grid-template-columns:repeat(3,0.96fr);
+gap:12px;
 }
 
 /* --- ADVANCED WALLET TRANSACTION PANELS --- */
@@ -878,6 +877,7 @@ select {
 }
 
 /* --- WALLET ASSETS DISPLAY & BALANCES --- */
+
 .wallet-assets {
     background-color: var(--bg-card);
     border: 1px solid var(--gold-border);
@@ -997,6 +997,7 @@ select {
 /* ==========================================================================
    4. 3-COLUMN TRADING MARKET TRADERS TERMINAL
    ========================================================================== */
+
 .market-shell {
     display: grid;
     grid-template-columns: 320px 1fr 340px;
@@ -1100,6 +1101,7 @@ select {
 }
 
 /* --- CENTER CORE CHART TERMINAL --- */
+
 .market-center {
     display: flex;
     flex-direction: column;
@@ -1382,6 +1384,7 @@ select {
 /* ==========================================================================
    5. BC.GAME COMPLIANT CASINO HUB ($BX Dedicated Economy)
    ========================================================================== */
+
 .casino-shell {
     display: flex;
     flex-direction: column;
@@ -1413,6 +1416,7 @@ select {
 .casino-stat strong { display: block; font-size: 1.3rem; font-family: var(--font-mono); color: var(--text-platinum); margin-top: 4px; }
 
 /* --- PROVABLY FAIR VERIFICATION ENGINE --- */
+
 .casino-ledger {
     background-color: var(--bg-card);
     border: 1px solid rgba(255,255,255,0.03);
@@ -1449,6 +1453,7 @@ select {
 }
 
 /* --- GAMIFIED COMPACT NAVIGATION --- */
+
 .casino-filter {
     display: flex;
     gap: 8px;
@@ -1473,9 +1478,9 @@ select {
 
 /* --- THE 12 GEOMETRIC CARD GRID MATRIX --- */
 #casinoGamesGrid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 16px;
+display:grid;
+grid-template-columns:repeat(3,1fr);
+gap:16px;
 }
 
 .casino-game-card {
@@ -1551,6 +1556,7 @@ select {
 /* ==========================================================================
    6. ACTIVE MINING MATRIX AND COMPATIBILITY
    ========================================================================== */
+
 .mining-shell { display: flex; flex-direction: column; gap: 24px; }
 
 .mining-hero {
@@ -1593,6 +1599,7 @@ select {
 .mining-head h3 { font-size: 1.2rem; font-weight: 700; }
 
 /* --- 6 MATRIX CARD WRAPPER DISTRIBUTION --- */
+
 .mining-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -1657,6 +1664,7 @@ select {
 /* ==========================================================================
    7. REWARD UTILITIES & INTEGRATED GATEWAYS
    ========================================================================== */
+
 .airdrop-shell { display: flex; flex-direction: column; gap: 24px; }
 
 .airdrop-top {
@@ -1707,6 +1715,7 @@ select {
 .partners-grid img:hover { opacity: 0.6; }
 
 /* --- INTERFACING DEPOSIT NETWORKS & MOBILE GATEWAY --- */
+
 .airdrop-side input { background-color: var(--bg-base-deep); border: 1px solid rgba(255,255,255,0.06); color: var(--text-platinum); padding: 12px; border-radius: var(--radius-md); font-family: var(--font-mono); outline: none; margin-bottom: 12px; width: 100%; }
 
 .topup-preview { display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-metadata); margin: 4px 0 16px 0; }
@@ -1920,15 +1929,25 @@ select {
 /* ==========================================================================
    11. DATA-THEME IMPLEMENTATIONS & MEDIA COMPLIANCE KEYS
    ========================================================================== */
-@media (max-width: 1200px) {
-    .market-shell {
-        grid-template-columns: 1fr;
-        height: auto;
-        max-height: none;
-    }
-    .market-center { order: 1; }
+@media(max-width:768px){
+   
+   .market-shell{
+    display:flex;
+    flex-direction:column;
+   }
+   .market-center{
+    order:1;
+   }
+
+    .market-right{
+     order:2;
+   }
+
+    .market-left{
+       order:3;
+   }
     .orderbook-zone { order: 2; height: 400px; }
-    .market-right { order: 3; }
+    }
     
     .mining-layout, .airdrop-layout, .settings-layout {
         grid-template-columns: 1fr;
