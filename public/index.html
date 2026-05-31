@@ -428,258 +428,274 @@ id="app" class="app-container">
  </section>
    
 <!-- ================= MARKET ================= -->
-<section id="market" class="view market-view">
+
+<section id="market" class="view">
 
 <div class="market-shell">
-<div class="market-left">
-<div class="market-card orderbook-zone">
-<div class="market-card-head">
 
-<h3>Order Book</h3>
-<div class="pair-chip">
+<div class="market-header">
 
-BX/<span id="orderbookQuote">USDT</span>
+<div class="market-header-left">
+
+<span class="market-kicker">BX EXCHANGE</span>
+
+<h2>Institutional Market</h2>
+
 </div>
+
+<div class="market-header-right">
+
+<div class="market-live-dot"></div>
+
+<span>Live Market</span>
+
 </div>
-<div class="depth-panel">
-<div class="depth-row">
+
+</div>
+
+<div class="market-assets-selector">
+
+<div class="market-assets-scroll">
+
+<button class="market-asset active" data-pair="BX/BTC"><img src="/assets/images/coins/btc.png" alt="BTC"><span>BTC</span></button>
+<button class="market-asset" data-pair="BX/ETH"><img src="/assets/images/coins/eth.png" alt="ETH"><span>ETH</span></button>
+<button class="market-asset" data-pair="BX/BNB"><img src="/assets/images/coins/bnb.png" alt="BNB"><span>BNB</span></button>
+<button class="market-asset" data-pair="BX/SOL"><img src="/assets/images/coins/sol.png" alt="SOL"><span>SOL</span></button>
+<button class="market-asset" data-pair="BX/TON"><img src="/assets/images/coins/ton.png" alt="TON"><span>TON</span></button>
+<button class="market-asset" data-pair="BX/LTC"><img src="/assets/images/coins/ltc.png" alt="LTC"><span>LTC</span></button>
+<button class="market-asset" data-pair="BX/BCH"><img src="/assets/images/coins/bch.png" alt="BCH"><span>BCH</span></button>
+<button class="market-asset" data-pair="BX/USDT"><img src="/assets/images/coins/usdt.png" alt="USDT"><span>USDT</span></button>
+<button class="market-asset" data-pair="BX/USDC"><img src="/assets/images/coins/usdc.png" alt="USDC"><span>USDC</span></button>
+<button class="market-asset" data-pair="BX/ZEC"><img src="/assets/images/coins/zec.png" alt="ZEC"><span>ZEC</span></button>
+<button class="market-asset" data-pair="BX/AAVE"><img src="/assets/images/coins/aave.png" alt="AAVE"><span>AAVE</span></button>
+<button class="market-asset" data-pair="BX/AVAX"><img src="/assets/images/coins/avax.png" alt="AVAX"><span>AVAX</span></button>
+<button class="market-asset" data-pair="BX/DOT"><img src="/assets/images/coins/dot.png" alt="DOT"><span>DOT</span></button>
+<button class="market-asset" data-pair="BX/LINK"><img src="/assets/images/coins/link.png" alt="LINK"><span>LINK</span></button>
+<button class="market-asset" data-pair="BX/DASH"><img src="/assets/images/coins/dash.png" alt="DASH"><span>DASH</span></button>
+<button class="market-asset" data-pair="BX/XMR"><img src="/assets/images/coins/xmr.png" alt="XMR"><span>XMR</span></button>
+
+</div>
+
+</div>
+
+<div class="market-stats-bar">
+
+<div class="market-stat">
+
+<span>Pair</span>
+
+<strong id="marketPair">BX/BTC</strong>
+
+</div>
+
+<div class="market-stat">
+
+<span>Price</span>
+
+<strong id="marketPrice">0.00000000</strong>
+
+</div>
+
+<div class="market-stat">
+
+<span>24H Change</span>
+
+<strong id="marketChange">0.00%</strong>
+
+</div>
+
+<div class="market-stat">
+
+<span>24H Volume</span>
+
+<strong id="marketVolume">$0</strong>
+
+</div>
+
+<div class="market-stat">
 
 <span>Spread</span>
+
 <strong id="spread">0.00%</strong>
 
 </div>
-<div class="depth-bar">
-<div id="spreadVisual"></div>
-</div>
-</div>
-<div class="ob-grid-head">
-<span>Bid</span>
-<span>Price</span>
-<span>Ask</span>
-</div>
-<div id="orderBookGrid" class="ob-grid-body"></div>
-</div>
-</div>
-<div class="market-center">
-<div class="market-card market-hero-card">
-<div class="market-top">
-<div class="market-pair">
-<div class="pair-logo">
-<img src="/assets/images/bx.png" alt="BX">
-</div>
-<div>
-<h2>BX /<span id="quoteAsset">USDT</span></h2>
-<small>BLOXIO TOKEN</small>
-</div>
-</div>
-<div class="market-live">
-<div class="market-assets-bar">
 
-<button class="pair-btn active" data-quote="USDT" type="button">
-<img src="/assets/images/usdt.png" alt="USDT">
-<span>USDT</span>
-</button>
-<button class="pair-btn" data-quote="USDC" type="button">
+<div class="market-stat">
 
-<img src="/assets/images/usdc.png" alt="USDC">
-<span>USDC</span>
-</button>
-<button class="pair-btn" data-quote="BTC" type="button">
+<span>Liquidity</span>
 
-<img src="/assets/images/btc.png" alt="BTC">
-<span>BTC</span>
-</button>
-<button class="pair-btn" data-quote="BNB" type="button">
+<strong id="marketLiquidity">A</strong>
 
-<img src="/assets/images/bnb.png" alt="BNB">
-<span>BNB</span>
-</button>
-<button class="pair-btn" data-quote="ETH" type="button">
-
-<img src="/assets/images/eth.png" alt="ETH">
-<span>ETH</span>
-</button>
-<button class="pair-btn" data-quote="AVAX" type="button">
-<img src="/assets/images/avax.png" alt="AVAX">
-<span>AVAX</span>
-</button>
-
-<button class="pair-btn" data-quote="ZEC" type="button">
-
-<img src="/assets/images/zec.png" alt="ZEC">
-<span>ZEC</span>
-</button>
-<button class="pair-btn" data-quote="TON" type="button">
-
-<img src="/assets/images/ton.png" alt="TON">
-<span>TON</span>
-</button>
-<button class="pair-btn" data-quote="SOL" type="button">
-<img src="/assets/images/sol.png" alt="SOL">
-
-<span>SOL</span>
-</button>
-<button class="pair-btn" data-quote="LTC" type="button">
-<img src="/assets/images/ltc.png" alt="LTC">
-<span>LTC</span>
-</button>
-</div>
-<strong id="marketPrice">0.000000</strong>
-<small id="marketApprox">≈0.000000 USDT</small>
-</div>
-</div>
-<div class="market-toolbar">
-<div class="market-timeframes">
-
-<button data-range="1H">1H</button>
-<button data-range="24H">24H</button>
-<button data-range="7D">7D</button>
-<button data-range="30D">30D</button>
-<button data-range="90D">90D</button>
 </div>
 
-<div class="market-chart-modes">
-<button data-chart-mode="area">Area</button>
-<button data-chart-mode="line">Line</button>
-<button data-chart-mode="candles">Candles</button>
 </div>
+
+<div class="market-pair-engine">
+
+<div class="market-pair-left">
+
+<h3 id="marketCurrentPair">BX/BTC</h3>
+
+<span id="marketPairStatus">Trading Active</span>
+
 </div>
+
+<div class="market-pair-right">
+
+<input id="marketSearch" class="market-search" placeholder="Search Pair">
+
+</div>
+
+</div>
+
 <div class="market-chart-shell">
 
-<canvas id="marketChart"></canvas>
-<div id="marketTooltip"></div>
-<div class="chart-overlay"></div>
-<div class="chart-cross">
-<div id="crosshairPrice">--
-</div>
-<div id="crosshairTime">--
-</div>
-</div>
-</div>
-<div class="market-metrics">
-<div>
-<span>Open</span>
+<div class="market-chart-toolbar">
 
-<strong id="metricOpen">0</strong>
-</div>
-<div>
-<span>High</span>
+<button class="chart-time active">1m</button>
+<button class="chart-time">5m</button>
+<button class="chart-time">15m</button>
+<button class="chart-time">1H</button>
+<button class="chart-time">4H</button>
+<button class="chart-time">1D</button>
+<button class="chart-time">1W</button>
 
-<strong id="metricHigh">0</strong>
 </div>
-<div>
-<span>Low</span>
 
-<strong id="metricLow">0</strong>
-</div>
-<div>
-<span>Close</span>
+<div id="marketChart" class="market-chart"></div>
 
-<strong id="metricClose">0</strong>
-</div>
-<div>
-<span>Volume</span>
-<strong id="metricVol">0</strong>
-</div>
-</div>
-</div>
-<div class="market-card market-stats">
-<div class="market-stat">
-<span>24H High</span>
-<strong id="statHigh">0</strong>
-</div>
-<div class="market-stat">
+<div id="marketTooltip" class="market-tooltip hidden"></div>
 
-<span>24H Low</span>
-<strong id="statLow">0</strong>
 </div>
-<div class="market-stat">
-<span>Volume</span>
 
-<strong id="statVolume">0</strong>
-</div>
-<div class="market-stat">
+<div class="market-mobile-tabs">
 
-<span>Market Cap</span>
+<button class="market-mobile-tab active" data-tab="trade">Trade</button>
 
-<strong id="statMarketCap">0</strong>
+<button class="market-mobile-tab" data-tab="book">Book</button>
+
+<button class="market-mobile-tab" data-tab="history">History</button>
+
+<button class="market-mobile-tab" data-tab="intel">Intel</button>
+
 </div>
+
+<div class="market-desktop-grid">
+
+<div class="market-left-column">
+
+<section id="tradeBox" class="market-card">
+
+<div class="market-card-head">
+
+<h3>Trade BX</h3>
+
 </div>
-</div>
-<div class="market-right">
-<div id="tradeBox" class="market-card trade-shell">
+
 <div class="trade-tabs">
-<button id="buyTab">Buy</button>
-<button id="sellTab">Sell</button>
-</div>
-<div class="wallet-box compact">
-<div>
-BX
-<strong id="walletBXBalance">0</strong>
-</div>
-<div>
-USDT
-<strong id="walletUSDT">0</strong>
-</div>
-</div>
-<label>Amount BX</label>
 
-<input id="orderAmount" type="number" placeholder="0.00">
-<div class="percent-row">
+<button id="buyTab" class="trade-tab active">BUY</button>
 
-<button data-percent="10">10%</button>
-<button data-percent="25">25%</button>
-<button data-percent="50">50%</button>
-<button data-percent="100">MAX</button>
-</div>
-<div class="trade-stats">
-<div>
-Price
-<span id="execPrice">—</span>
-</div>
-<div>
-Spread
+<button id="sellTab" class="trade-tab">SELL</button>
 
-<span id="spreadMirror">—</span>
-</div>
-<div>
-Slippage
-
-<span id="slippage">0.5%</span>
-</div>
 </div>
 
-<button id="actionBtn" class="action-btn buy">Buy BX</button>
-</div>
-<div class="market-card liquidity-card">
+<div class="trade-form">
 
-<h4>Liquidity</h4>
-<div class="liquidity-grid">
-<div>
-Available
+<input id="orderAmount" class="market-input" placeholder="Amount">
 
-<strong>$2.4M</strong>
-</div>
-<div>
-Orders
+<input id="execPrice" class="market-input" placeholder="Price">
 
-<strong>18K</strong>
-</div>
-<div>
-Depth
+<input id="orderTotal" class="market-input" placeholder="Total" readonly>
 
-<strong>Strong</strong>
-</div>
-<div>
-Execution
+<button id="actionBtn" class="btn primary">Execute Order</button>
 
-<strong>Fast</strong>
 </div>
+
+</section>
+
 </div>
+
+<div class="market-right-column">
+
+<section class="market-card">
+
+<div class="market-card-head">
+
+<h3>Order Book</h3>
+
 </div>
+
+<div id="orderBookGrid" class="order-book-grid"></div>
+
+</section>
+
 </div>
+
 </div>
- </section>
+
+<section class="market-history-section market-card">
+
+<div class="market-card-head">
+
+<h3>Trade History</h3>
+
+</div>
+
+<div id="tradeHistoryGrid" class="trade-history-grid"></div>
+
+</section>
+
+<section class="market-intel-section market-card">
+
+<div class="market-card-head">
+
+<h3>Market Intel</h3>
+
+</div>
+
+<div class="market-intel-grid">
+
+<div class="market-intel-item">
+
+<span>Trend</span>
+
+<strong id="marketTrend">Bullish</strong>
+
+</div>
+
+<div class="market-intel-item">
+
+<span>Sentiment</span>
+
+<strong id="marketSentiment">Positive</strong>
+
+</div>
+
+<div class="market-intel-item">
+
+<span>Volatility</span>
+
+<strong id="marketVolatility">Medium</strong>
+
+</div>
+
+<div class="market-intel-item">
+
+<span>Liquidity</span>
+
+<strong id="marketLiquidityIntel">Strong</strong>
+
+</div>
+
+</div>
+
+</section>
+
+</div>
+
+</section>
+   
 <!-- ================= CASINO ================= -->
 
 <section id="casino" class="view">
