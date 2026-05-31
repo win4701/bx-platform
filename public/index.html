@@ -185,27 +185,32 @@ id="app" class="app-container">
 <section id="wallet" class="view active">
 
 <div class="wallet-top">
+
 <div class="wallet-balance">
 
 <span class="wallet-caption">EST TOTAL VALUE</span>
+
 <h1><span id="walletTotal">$0.00</span><small>USD</small></h1>
 
 <div id="walletStatus" class="wallet-status hidden">Portfolio Syncing</div>
-
 </div>
+
 <div class="wallet-intelligence" id="walletIntelligence">
 <div class="wallet-intel-head">
-
 <div>
+
 <span class="wallet-kicker">SMART WALLET</span>
 
 <h3 id="walletIntelTitle">Ready To Fund Wallet</h3>
 
 </div>
+
 <span id="walletIntelBadge" class="wallet-intel-badge">START</span>
 
 </div>
+
 <p id="walletIntelText">Deposit assets to unlock Market • Mining • Casino</p>
+
 <div class="wallet-intel-actions">
 
 <button id="walletIntelPrimary" class="wallet-intel-btn primary">Deposit Now</button>
@@ -214,44 +219,45 @@ id="app" class="app-container">
 </div>
 </div>
 </div>
+
 <div class="wallet-actions">
+
 <button id="openDepositBtn" class="btn primary" data-wallet-open="depositPanel">Deposit</button>
 <button id="openWithdrawBtn" class="btn" data-wallet-open="withdrawPanel">Withdraw</button>
 <button id="openTransferBtn" class="btn" data-wallet-open="transferPanel">Transfer</button>
+
 </div>
 
 <section class="wallet-swap-engine">
+
 <div class="wallet-section-head">
 
 <h3>BX Swap Engine</h3>
-<span>BX ONLY</span>
+
+<span>BX = 45 USDT</span>
+
 </div>
+
 <div class="wallet-swap-grid">
 
-<select id="swapFromAsset">
-<option>USDT</option>
-<option>USDC</option>
-<option>BTC</option>
-<option>BNB</option>
-<option>ETH</option>
-<option>AVAX</option>
-<option>ZEC</option>
-<option>TON</option>
-<option>SOL</option>
-<option>LTC</option>
-
-</select>
+<select id="swapFromAsset"></select>
 <select id="swapToAsset">
 
-<option>BX</option>
+<option value="BX">BX</option>
 
 </select>
+
 </div>
+
 <input id="swapAmount" class="wallet-input" placeholder="Amount">
+
 <div class="wallet-swap-meta">
 
-<div>Receive <strong id="estimatedReceive">0 BX</strong></div>
-<div>Slippage <strong id="slippage">0.5%</strong></div>
+<div>Market Price <strong id="marketPrice">0</strong></div>
+<div>BX Price <strong id="execPrice">45.00 USDT</strong></div>
+<div>Receive <strong id="estimatedReceive">0</strong></div>
+<div>Spread <strong id="spread">0.50%</strong></div>
+
 </div>
 
 <button id="swapButton" class="btn primary">Swap To BX</button>
@@ -259,52 +265,50 @@ id="app" class="app-container">
 </section>
 
 <div class="wallet-panels">
+
 <section id="depositPanel" class="wallet-panel wallet-hidden">
 
 <div class="wallet-panel-head">
+
 <h4>Deposit</h4>
 
 <button class="wallet-panel-close" data-wallet-close="depositPanel">✕</button>
+
 </div>
+
 <div class="wallet-panel-grid">
 
-<select id="depositAsset">
-<option>USDT</option>
-<option>BTC</option>
-<option>BX</option>
-
-</select>
-<select id="depositNetwork">
-
-<option>TRC20</option>
-<option>ERC20</option>
-<option>BEP20</option>
-
-</select>
+<select id="depositAsset"></select>
+<select id="depositNetwork"></select>
 
 <input id="depositMemo" class="wallet-input" placeholder="Memo Optional">
 <input id="depositDestination" class="wallet-input" placeholder="Destination Tag">
 
 <button id="generateDepositBtn" class="btn primary">Generate Address</button>
+
 </div>
+
 <div class="wallet-address-box">
 <div class="wallet-address-top">
 
 <span>Deposit Address</span>
 
 <button id="copyDepositBtn" class="btn secondary">Copy</button>
+
 </div>
 
 <code id="depositAddressText">—</code>
+
 </div>
+
 <div id="depositQR" class="wallet-qr hidden"></div>
 <div class="wallet-network-box">
-
-<div>Fee <strong>0.1 USDT</strong></div>
-<div>ETA <strong>1-3 Min</strong></div>
-<div>Minimum <strong>10 USDT</strong></div>
+<div>Fee <strong>Dynamic</strong></div>
+<div>ETA <strong>Live</strong></div>
+<div>Minimum <strong>Network Based</strong></div>
 
 </div>
+
 <div id="depositStatus" class="wallet-status hidden"></div>
 
 </section>
@@ -312,40 +316,30 @@ id="app" class="app-container">
 <section id="withdrawPanel" class="wallet-panel wallet-hidden">
 
 <div class="wallet-panel-head">
+
 <h4>Withdraw</h4>
 
 <button class="wallet-panel-close" data-wallet-close="withdrawPanel">✕</button>
 
 </div>
+
 <div class="wallet-panel-grid">
 
-<select id="withdrawAsset">
+<select id="withdrawAsset"></select>
 
-<option>USDT</option>
-<option>USDC</option>
-<option>BTC</option>
-<option>BNB</option>
-<option>ETH</option>
-
-</select>
-
-<select id="withdrawNetwork">
-
-<option>TRC20</option>
-<option>ERC20</option>
-<option>BEP20</option>
-
-</select>
+<select id="withdrawNetwork"></select>
 
 <input id="withdrawAmount" class="wallet-input" placeholder="Amount">
 <input id="withdrawAddress" class="wallet-input" placeholder="Wallet Address">
 <input id="withdrawMemo" class="wallet-input" placeholder="Memo Optional">
 
 <button id="submitWithdrawBtn" class="btn primary">Confirm Withdraw</button>
+
 </div>
+
 <div class="wallet-network-box">
-<div>Fee <strong>1 BX</strong></div>
-<div>ETA <strong>3 Min</strong></div>
+<div>Fee <strong>Dynamic</strong></div>
+<div>ETA <strong>Live</strong></div>
 </div>
 
 <div id="withdrawStatus" class="wallet-status hidden"></div>
@@ -355,36 +349,35 @@ id="app" class="app-container">
 <section id="transferPanel" class="wallet-panel wallet-hidden">
 
 <div class="wallet-panel-head">
+
 <h4>Transfer</h4>
 
-<button class="wallet-panel-close" data-wallet-close="transferPanel">X</button>
+<button class="wallet-panel-close" data-wallet-close="transferPanel">✕</button>
+
 </div>
+
 <div class="wallet-panel-grid">
 
-<select id="transferAsset">
-
-<option>BX</option>
-<option>USDT</option>
-<option>USDC</option>
-
-</select>
+<select id="transferAsset"></select>
 
 <input id="transferUser" class="wallet-input" placeholder="Email Or UID">
 <input id="transferTo" hidden>
-
 <input id="transferAmount" class="wallet-input" placeholder="Amount">
 
 <button id="submitTransferBtn" class="btn confirm">Confirm Transfer</button>
 
 </div>
-<div class="wallet-network-box">
 
+<div class="wallet-network-box">
 <div>Network <strong>BX Internal</strong></div>
 <div>Fee <strong>0 BX</strong></div>
 
 </div>
+
 <div id="transferStatus" class="wallet-status hidden"></div>
+
 </section>
+
 </div>
 
 <div class="wallet-assets">
@@ -394,58 +387,45 @@ id="app" class="app-container">
 
 <input id="walletAssetSearch" class="wallet-input" placeholder="Search Asset">
 
+<div class="wallet-category-switch">
+
+<button class="wallet-category-btn active" data-group="main">Main</button>
+<button class="wallet-category-btn" data-group="secondary">Secondary</button>
+<button class="wallet-category-btn" data-group="extended">Extended</button>
+
+</div>
 </div>
 <div id="walletBX" hidden></div>
-
 <div id="walletUSDT" hidden></div>
-<div class="wallet-assets-grid">
-<div class="wallet-row main" data-asset="BX">
-<div class="wallet-left">
-
-<img src="/assets/images/bx.png" alt="BX">
-<div>
-<strong>BX</strong>
-<span>Bloxio</span>
-</div>
-</div>
-<strong id="bal-bx">0.00</strong>
-</div>
-<div class="wallet-row" data-asset="BTC">
-<div class="wallet-left">
-<img src="/assets/images/btc.png" alt="BTC">
-
-<div><strong>BTC</strong>
-<span>Bitcoin</span>
-</div>
-</div>
-<strong id="bal-btc">0.00</strong>
-</div>
-<div class="wallet-row" data-asset="USDT">
-<div class="wallet-left">
-
-<img src="/assets/images/usdt.png" alt="USDT">
-
-<div><strong>USDT</strong>
-<span>Tether</span></div>
+<div id="walletAssetsContainer" class="wallet-assets-grid"></div>
 </div>
 
-<strong id="bal-usdt">0.00</strong>
-</div>
-</div>
-</div>
 <div id="walletQuickSheet" class="wallet-quick-sheet wallet-hidden">
 <div class="wallet-quick-card">
+<div class="wallet-quick-head">
+
+<img id="assetSheetIcon" src="/assets/images/coins/bx.png" alt="asset">
+
+<div>
 
 <h4 id="walletQuickAssetName">Asset</h4>
 
+<div id="assetSheetSymbol">BX</div>
+<div id="assetSheetName">Bloxio</div>
+
+</div>
+</div>
 <div class="wallet-quick-actions">
+
 <button id="walletQuickDeposit" class="btn primary">Deposit</button>
 <button id="walletQuickWithdraw" class="btn">Withdraw</button>
 <button id="walletQuickTransfer" class="btn">Transfer</button>
+<button id="walletQuickSwap" class="btn primary">Swap To BX</button>
+
 </div>
 </div>
 </div>
-</section>
+ </section>
    
 <!-- ================= MARKET ================= -->
 <section id="market" class="view market-view">
