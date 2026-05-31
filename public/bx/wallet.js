@@ -1,412 +1,761 @@
 /* =========================================================
-   BLOXIO WALLET — FINAL ULTIMATE SYSTEM
+   BLOXIO WALLET ENTERPRISE 2026
+   Requires:
+   - public/bx/data/coins.js
+   - walletAssetsContainer
+   - walletAssetSearch
+   - walletTotal
+   - walletStatus
 ========================================================= */
+
+import {
+COINS,
+MAIN_ASSETS,
+SECONDARY_ASSETS,
+EXTENDED_ASSETS
+} from "./data/coins.js";
 
 (function(){
-'use strict';
 
-const $ = id => document.getElementById(id);
-const safe = n => Number(n)||0;
+"use strict";
 
-/* =========================================================
-📊 ASSETS SYSTEM
-========================================================= */
+const $=id=>document.getElementById(id);
+const safe=n=>Number(n)||0;
 
-const ASSETS = {
-  BX:{name:"Bloxio",d:4},
-  USDT:{name:"Tether",d:2},
-  USDC:{name:"USD Coin",d:2},
-  BTC:{name:"Bitcoin",d:8},
-  ETH:{name:"Ethereum",d:6},
-  BNB:{name:"BNB",d:4},
-  SOL:{name:"Solana",d:4},
-  TON:{name:"Toncoin",d:4},
-  AVAX:{name:"Avalanche",d:4},
-  LTC:{name:"Litecoin",d:4},
-  ZEC:{name:"Zcash",d:4}
+const state={
+balances:{},
+prices:{},
+ws:null,
+syncing:false,
+activeGroup:"main",
+activeAsset:null
 };
 
-/* =========================================================
-📦 STATE
-========================================================= */
-
-const state = {
-  balances:{},
-  ws:null,
-  syncing:false
-};
-
-/* =========================================================
-🌐 API
-========================================================= */
-
-async function api(url, body){
-  const res = await fetch(url,{
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body: JSON.stringify(body)
-  });
-  return await res.json();
+async function api(url,body={}){
+const res=await fetch(url,{
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify(body)
+});
+return await res.json();
 }
 
-/* =========================================================
-⚡ WEBSOCKET ENGINE
-========================================================= */
+function getGroupAssets(){
 
-function connectWS(){
+if(state.activeGroup==="main"){
+return MAIN_ASSETS;
+}
 
-  try{
+if(state.activeGroup==="secondary"){
+return SECONDARY_ASSETS;
+}
 
-    const ws = new WebSocket(`wss://${location.host}/ws`);
-    state.ws = ws;
-
-    ws.onopen = ()=> console.log("⚡ WS CONNECTED");
-
-    ws.onmessage = (e)=>{
-
-      const msg = JSON.parse(e.data);
-
-      /* WALLET */
-      if(msg.type==="wallet_update"){
-        state.balances = msg.balances || state.balances;
-        renderBalances();
-      }
-
-      /* CASINO */
-      if(msg.type==="casino_balance"){
-        state.balances.BX = msg.balance;
-        renderBalances();
-      }
-
-      /* MINING */
-      if(msg.type==="mining_reward"){
-        WALLET.BX += msg.amount;
-        renderBalances();
-      }
-      /* MARKET */
-      if(msg.type==="market_balance"){
-        state.balances = msg.balances;
-        renderBalances();
-      }
-      /* Airdrop */
-       if(msg.type === "airdrop_claim"){
-         WALLET.BX += msg.amount;
-         renderWallet();
-       }
-      /* DEPOSIT */
-      if(msg.type==="deposit_pending"){
-        setStatus("depositStatus","Pending...");
-      }
-
-      if(msg.type==="deposit_confirmed"){
-        toast("Deposit confirmed 💰");
-        syncWallet();
-      }
-
-      /* TRANSFER */
-      if(msg.type==="transfer_in"){
-        toast("Received funds 💸");
-        syncWallet();
-      }
-
-      /* FRAUD */
-      if(msg.type==="fraud_alert"){
-        toast("Security alert ⚠️");
-      }
-
-    };
-
-    ws.onclose = ()=>{
-      setTimeout(connectWS,2000);
-    };
-
-  }catch{
-    setInterval(syncWallet,5000);
-  }
+return EXTENDED_ASSETS;
 
 }
 
-/* =========================================================
-🔁 SYNC FALLBACK
-========================================================= */
-
-async function syncWallet(){
-
-  if(state.syncing) return;
-  state.syncing = true;
-
-  try{
-    const res = await fetch("/api/wallet");
-    const data = await res.json();
-
-    if(data.balances){
-      state.balances = data.balances;
-      renderBalances();
-    }
-
-  }catch{}
-
-  state.syncing = false;
+function getBalance(symbol){
+return safe(
+state.balances[symbol]
+);
 }
 
-/* =========================================================
-💰 RENDER
-========================================================= */
+function buildAssetCard(asset){
+
+const balance=
+getBalance(asset.symbol);
+
+return `
+<div
+class="wallet-asset-card"
+data-symbol="${asset.symbol}"
+data-group="${asset.group}">
+
+<img
+src="${asset.icon}"
+alt="${asset.symbol}"
+loading="lazy">
+
+<div class="asset-meta">
+
+<strong>
+${asset.symbol}
+</strong>
+
+<span>
+${asset.name}
+</span>
+
+</div>
+
+<div class="asset-balance">
+
+${balance.toFixed(4)}
+
+</div>
+
+</div>
+`;
+
+}
+
+function renderAssets(){
+
+const container=
+$("walletAssetsContainer");
+
+if(!container){
+return;
+}
+
+container.innerHTML=
+getGroupAssets()
+.map(buildAssetCard)
+.join("");
+
+}
+
+function renderWalletTotal(){
+
+let total=0;
+
+Object.entries(
+state.balances
+).forEach(([symbol,balance])=>{
+
+const price=
+safe(
+state.prices[symbol]
+);
+
+total+=
+safe(balance)*price;
+
+});
+
+if($("walletTotal")){
+$("walletTotal").textContent=
+"$"+
+total.toFixed(2);
+}
+
+}
 
 function renderBalances(){
 
-  let total = 0;
-
-  Object.entries(state.balances).forEach(([asset,val])=>{
-
-    const meta = ASSETS[asset] || {d:4};
-    const value = safe(val);
-
-    const el = $(`bal-${asset.toLowerCase()}`);
-    if(el) el.textContent = value.toFixed(meta.d);
-
-    total += value;
-
-  });
-
-  if($("walletTotal")){
-    $("walletTotal").textContent = "$"+total.toFixed(2);
-  }
+renderAssets();
+renderWalletTotal();
 
 }
 
-/* =========================================================
-💰 DEPOSIT
-========================================================= */
+function openAssetSheet(symbol){
 
-async function handleDeposit(){
+const asset=
+COINS.find(
+c=>c.symbol===symbol
+);
 
-  const asset = $("depositAsset")?.value;
-  const amount = safe($("depositAmount")?.value || 0);
+if(!asset){
+return;
+}
 
-  setStatus("depositStatus","Generating address...");
+state.activeAsset=
+asset;
 
-  const data = await api("/api/payments/create",{
-    asset,
-    amount: amount || undefined
-  });
+if($("assetSheetIcon")){
+$("assetSheetIcon").src=
+asset.icon;
+}
 
-  if(data?.address){
+if($("assetSheetSymbol")){
+$("assetSheetSymbol").textContent=
+asset.symbol;
+}
 
-    $("depositAddressText").textContent = data.address;
+if($("assetSheetName")){
+$("assetSheetName").textContent=
+asset.name;
+}
 
-    if(window.QRCode && $("depositQR")){
-      $("depositQR").classList.remove("hidden");
-      $("depositQR").innerHTML = "";
-      new QRCode($("depositQR"), data.address);
-    }
-
-    toast("Send crypto to address");
-
-  }else{
-    toast("Deposit error");
-  }
+renderNetworks(
+asset.symbol
+);
 
 }
 
-/* =========================================================
-💸 WITHDRAW
-========================================================= */
+function renderNetworks(symbol){
 
-async function handleWithdraw(){
+const asset=
+COINS.find(
+c=>c.symbol===symbol
+);
 
-  const asset = $("withdrawAsset")?.value;
-  const amount = safe($("withdrawAmount")?.value);
-  const address = $("withdrawAddress")?.value;
+if(!asset){
+return;
+}
 
-  if(!amount || !address) return toast("Invalid input");
+const select=
+$("depositNetwork");
 
-  setStatus("withdrawStatus","Processing...");
+if(
+!select ||
+!asset.networks
+){
+return;
+}
 
-  const data = await api("/api/payments/withdraw",{ asset, amount, address });
-
-  if(data?.error){
-    toast(data.error);
-  }else{
-    toast("Withdraw sent");
-    syncWallet();
-  }
+select.innerHTML=
+asset.networks
+.map(network=>
+`<option value="${network}">${network}</option>`
+)
+.join("");
 
 }
 
-/* =========================================================
-💸 TRANSFER PRO
-========================================================= */
+function bindCategories(){
 
-async function handleTransfer(){
+document
+.querySelectorAll(
+".wallet-category-btn"
+)
+.forEach(btn=>{
 
-  const asset = $("transferAsset")?.value || "BX";
-  const amount = safe($("transferAmount")?.value);
-  const to = $("transferUser")?.value?.trim();
+btn.addEventListener(
+"click",
+()=>{
 
-  if(!amount) return toast("Invalid amount");
-  if(!to) return toast("Enter user ID or email");
+document
+.querySelectorAll(
+".wallet-category-btn"
+)
+.forEach(el=>
+el.classList.remove(
+"active"
+));
 
-  setStatus("transferStatus","Processing...");
+btn.classList.add(
+"active"
+);
 
-  const data = await api("/api/finance/transfer",{ asset, amount, to });
+state.activeGroup=
+btn.dataset.group;
 
-  if(data?.error){
-    toast(data.error);
-  }else{
-    toast("Transfer sent 💸");
-    syncWallet();
-    resetTransfer();
-  }
+renderAssets();
 
-}
+});
 
-function resetTransfer(){
-  if($("transferAmount")) $("transferAmount").value="";
-  if($("transferUser")) $("transferUser").value="";
-}
-
-/* =========================================================
-📋 COPY
-========================================================= */
-
-function copyDeposit(){
-
-  const txt = $("depositAddressText")?.textContent;
-  if(!txt || txt==="—") return;
-
-  navigator.clipboard.writeText(txt);
-  toast("Copied");
+});
 
 }
-
-/* =========================================================
-🔐 ANTI-FRAUD UI
-========================================================= */
-
-function antiFraud(){
-
-  window.addEventListener("blur",()=>console.warn("focus lost"));
-
-  document.addEventListener("visibilitychange",()=>{
-    if(document.hidden){
-      console.warn("tab hidden");
-    }
-  });
-
-}
-
-/* =========================================================
-🔍 SEARCH
-========================================================= */
 
 function bindSearch(){
 
-  const input = $("walletAssetSearch");
-  if(!input) return;
+const input=
+$("walletAssetSearch");
 
-  input.addEventListener("input",()=>{
+if(!input){
+return;
+}
 
-    const val = input.value.toLowerCase();
+input.addEventListener(
+"input",
+()=>{
 
-    document.querySelectorAll(".wallet-row").forEach(row=>{
-      const asset = row.dataset.asset.toLowerCase();
-      row.style.display = asset.includes(val) ? "" : "none";
-    });
+const q=
+input.value
+.toLowerCase()
+.trim();
 
-  });
+const container=
+$("walletAssetsContainer");
+
+if(!container){
+return;
+}
+
+const results=
+COINS.filter(asset=>{
+
+return (
+asset.symbol
+.toLowerCase()
+.includes(q)
+
+||
+
+asset.name
+.toLowerCase()
+.includes(q)
+
+);
+
+});
+
+container.innerHTML=
+results
+.map(buildAssetCard)
+.join("");
+
+});
 
 }
 
-/* =========================================================
-🎯 EVENTS
-========================================================= */
+async function syncWallet(){
 
-function bind(){
+if(state.syncing){
+return;
+}
 
-  document.addEventListener("click",(e)=>{
+state.syncing=true;
 
-    /* PANELS */
-    if(e.target.dataset.walletOpen){
-      document.querySelectorAll(".wallet-panel")
-        .forEach(p=>p.classList.add("wallet-hidden"));
+try{
 
-      $(e.target.dataset.walletOpen)?.classList.remove("wallet-hidden");
-    }
+const res=
+await fetch(
+"/api/wallet"
+);
 
-    if(e.target.dataset.walletClose){
-      $(e.target.dataset.walletClose)?.classList.add("wallet-hidden");
-    }
+const data=
+await res.json();
 
-    /* QUICK ACTIONS */
-    if(e.target.id==="depositNowBtn" || e.target.id==="openDepositBtn"){
-      $("depositPanel")?.classList.remove("wallet-hidden");
-    }
+if(data.balances){
 
-    if(e.target.id==="exploreMarketBtn"){
-      document.querySelectorAll(".view")
-        .forEach(v=>v.classList.remove("active"));
-
-      $("market")?.classList.add("active");
-    }
-
-    /* ACTIONS */
-    if(e.target.id==="generateDepositBtn") handleDeposit();
-    if(e.target.id==="copyDepositBtn") copyDeposit();
-    if(e.target.id==="submitWithdrawBtn") handleWithdraw();
-    if(e.target.id==="submitTransferBtn") handleTransfer();
-
-  });
+state.balances=
+data.balances;
 
 }
 
-/* =========================================================
-🔔 UI
-========================================================= */
+if(data.prices){
+
+state.prices=
+data.prices;
+
+}
+
+renderBalances();
+
+}catch(err){
+
+console.error(err);
+
+}
+
+state.syncing=false;
+
+}
+
+function connectWS(){
+
+try{
+
+const ws=
+new WebSocket(
+`wss://${location.host}/ws`
+);
+
+state.ws=ws;
+
+ws.onmessage=(e)=>{
+
+const msg=
+JSON.parse(
+e.data
+);
+
+switch(msg.type){
+
+case "wallet_update":
+
+state.balances=
+msg.balances ||
+state.balances;
+
+renderBalances();
+
+break;
+
+case "market_prices":
+
+state.prices=
+msg.prices ||
+state.prices;
+
+renderWalletTotal();
+
+break;
+
+case "deposit_confirmed":
+
+toast(
+"Deposit Confirmed"
+);
+
+syncWallet();
+
+break;
+
+case "transfer_in":
+
+toast(
+"Transfer Received"
+);
+
+syncWallet();
+
+break;
+
+case "airdrop_claim":
+
+state.balances.BX=
+safe(
+state.balances.BX
+)+
+safe(
+msg.amount
+);
+
+renderBalances();
+
+break;
+
+}
+
+};
+
+ws.onclose=()=>{
+
+setTimeout(
+connectWS,
+3000
+);
+
+};
+
+}catch{
+
+setInterval(
+syncWallet,
+5000
+);
+
+}
+
+}
+
+async function handleDeposit(){
+
+const asset=
+$("depositAsset")
+?.value;
+
+const amount=
+safe(
+$("depositAmount")
+?.value
+);
+
+setStatus(
+"depositStatus",
+"Generating..."
+);
+
+const data=
+await api(
+"/api/payments/create",
+{
+asset,
+amount
+}
+);
+
+if(data?.address){
+
+$("depositAddressText")
+.textContent=
+data.address;
+
+toast(
+"Address Generated"
+);
+
+}else{
+
+toast(
+"Deposit Error"
+);
+
+}
+
+}
+
+async function handleWithdraw(){
+
+const asset=
+$("withdrawAsset")
+?.value;
+
+const amount=
+safe(
+$("withdrawAmount")
+?.value
+);
+
+const address=
+$("withdrawAddress")
+?.value;
+
+if(
+!amount ||
+!address
+){
+return;
+}
+
+setStatus(
+"withdrawStatus",
+"Processing..."
+);
+
+const data=
+await api(
+"/api/payments/withdraw",
+{
+asset,
+amount,
+address
+}
+);
+
+if(data?.error){
+
+toast(
+data.error
+);
+
+return;
+
+}
+
+toast(
+"Withdraw Sent"
+);
+
+syncWallet();
+
+}
+
+async function handleTransfer(){
+
+const asset=
+$("transferAsset")
+?.value ||
+"BX";
+
+const amount=
+safe(
+$("transferAmount")
+?.value
+);
+
+const to=
+$("transferUser")
+?.value
+?.trim();
+
+if(
+!amount ||
+!to
+){
+return;
+}
+
+setStatus(
+"transferStatus",
+"Processing..."
+);
+
+const data=
+await api(
+"/api/finance/transfer",
+{
+asset,
+amount,
+to
+}
+);
+
+if(data?.error){
+
+toast(
+data.error
+);
+
+return;
+
+}
+
+toast(
+"Transfer Sent"
+);
+
+syncWallet();
+
+}
+
+function launchSwap(){
+
+if(
+!state.activeAsset
+){
+return;
+}
+
+if(
+state.activeAsset.symbol==="BX"
+){
+return;
+}
+
+if($("swapFromAsset")){
+$("swapFromAsset").value=
+state.activeAsset.symbol;
+}
+
+if($("swapToAsset")){
+$("swapToAsset").value=
+"BX";
+}
+
+}
 
 function toast(msg){
 
-  const el = $("walletStatus");
-  if(!el) return;
+const el=
+$("walletStatus");
 
-  el.textContent = msg;
-  el.classList.remove("hidden");
+if(!el){
+return;
+}
 
-  setTimeout(()=>el.classList.add("hidden"),2000);
+el.textContent=
+msg;
+
+el.classList.remove(
+"hidden"
+);
+
+setTimeout(()=>{
+
+el.classList.add(
+"hidden"
+);
+
+},2500);
 
 }
 
 function setStatus(id,msg){
 
-  const el = $(id);
-  if(el){
-    el.textContent = msg;
-    el.classList.remove("hidden");
-  }
+const el=$(id);
+
+if(!el){
+return;
+}
+
+el.textContent=msg;
+
+el.classList.remove(
+"hidden"
+);
 
 }
 
-/* =========================================================
-🚀 INIT
-========================================================= */
+function bind(){
+
+document.addEventListener(
+"click",
+e=>{
+
+const card=
+e.target.closest(
+".wallet-asset-card"
+);
+
+if(card){
+
+openAssetSheet(
+card.dataset.symbol
+);
+
+}
+
+if(
+e.target.id===
+"generateDepositBtn"
+){
+handleDeposit();
+}
+
+if(
+e.target.id===
+"submitWithdrawBtn"
+){
+handleWithdraw();
+}
+
+if(
+e.target.id===
+"submitTransferBtn"
+){
+handleTransfer();
+}
+
+if(
+e.target.id===
+"walletQuickSwap"
+){
+launchSwap();
+}
+
+}
+);
+
+}
 
 function init(){
 
-  bind();
-  bindSearch();
+bind();
+bindSearch();
+bindCategories();
 
-  connectWS();
-  syncWallet();
-  antiFraud();
+renderAssets();
 
-  console.log("🚀 WALLET FINAL SYSTEM READY");
+connectWS();
+syncWallet();
+
+console.log(
+"🚀 BLOXIO WALLET ENTERPRISE READY"
+);
 
 }
 
-if(document.readyState==="loading"){
-  document.addEventListener("DOMContentLoaded",init);
+if(
+document.readyState===
+"loading"
+){
+
+document.addEventListener(
+"DOMContentLoaded",
+init
+);
+
 }else{
-  init();
+
+init();
+
 }
 
 })();
