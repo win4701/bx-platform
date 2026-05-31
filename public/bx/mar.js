@@ -1,19 +1,765 @@
 /* =========================================================
-   MARKET.JS ENTERPRISE 2026
-   COMPATIBLE WITH CURRENT market.html
+   BLOXIO MARKET ENTERPRISE 2026
+   Binance WebSocket Edition
+   Compatible With market.html
+   HTML Reference: 0
 ========================================================= */
 
-const BX_USDT_REFERENCE=45;
-const MARKET_PAIRS=["BX/BTC","BX/ETH","BX/BNB","BX/SOL","BX/TON","BX/LTC","BX/BCH","BX/USDT","BX/USDC","BX/ZEC","BX/AAVE","BX/AVAX","BX/DOT","BX/LINK","BX/DASH","BX/XMR"];
-
-const QUOTES={USDT:null,USDC:null,BTC:"btcusdt",ETH:"ethusdt",BNB:"bnbusdt",SOL:"solusdt",TON:"tonusdt",LTC:"ltcusdt",BCH:"bchusdt",ZEC:"zecusdt",AAVE:"aaveusdt",AVAX:"avaxusdt",DOT:"dotusdt",LINK:"linkusdt",DASH:"dashusdt",XMR:"xmrusdt"};
-
-const FALLBACK={USDT:1,USDC:1,BTC:65000,ETH:3200,BNB:600,SOL:140,TON:5.4,LTC:90,BCH:520,ZEC:28,AAVE:180,AVAX:38,DOT:11,LINK:18,DASH:35,XMR:165};
-
+const BX_USDT_PRICE=45;
 const $=id=>document.getElementById(id);
 const safe=v=>Number(v)||0;
 
-const Market={pair:"BX/BTC",quote:"BTC",marketPrice:0,lastPrice:0,quotePrice:65000,tradeSide:"buy",ws:null,depthWs:null,trades:[],volume24h:0,init(){this.cache();this.bind();this.connectPair("BTC");this.startLoop();},cache(){this.marketPriceEl=$("marketPrice");this.marketPairEl=$("marketPair");this.marketChangeEl=$("marketChange");this.marketVolumeEl=$("marketVolume");this.spreadEl=$("spread");this.orderBookEl=$("orderBookGrid");this.tradeHistoryEl=$("tradeHistoryGrid");this.orderAmountEl=$("orderAmount");this.execPriceEl=$("execPrice");this.orderTotalEl=$("orderTotal");},bind(){document.querySelectorAll(".market-asset").forEach(btn=>btn.addEventListener("click",()=>{document.querySelectorAll(".market-asset").forEach(x=>x.classList.remove("active"));btn.classList.add("active");this.connectPair(btn.dataset.pair.replace("BX/",""));}));$("marketSearch")?.addEventListener("input",e=>{const q=e.target.value.toLowerCase();document.querySelectorAll(".market-asset").forEach(asset=>asset.style.display=asset.textContent.toLowerCase().includes(q)?"flex":"none");});$("buyTab")?.addEventListener("click",()=>{this.tradeSide="buy";$("buyTab").classList.add("active");$("sellTab").classList.remove("active");$("actionBtn").textContent="BUY BX";});$("sellTab")?.addEventListener("click",()=>{this.tradeSide="sell";$("sellTab").classList.add("active");$("buyTab").classList.remove("active");$("actionBtn").textContent="SELL BX";});$("orderAmount")?.addEventListener("input",()=>this.updateOrderTotal());$("actionBtn")?.addEventListener("click",()=>this.executeTrade());document.querySelectorAll(".chart-time").forEach(btn=>btn.addEventListener("click",()=>{document.querySelectorAll(".chart-time").forEach(x=>x.classList.remove("active"));btn.classList.add("active");}));document.querySelectorAll(".market-mobile-tab").forEach(btn=>btn.addEventListener("click",()=>{document.querySelectorAll(".market-mobile-tab").forEach(x=>x.classList.remove("active"));btn.classList.add("active");}));},connectPair(quote){this.quote=quote;this.pair=`BX/${quote}`;this.marketPairEl&&(this.marketPairEl.textContent=this.pair);this.connectTicker();this.connectDepth();},connectTicker(){if(this.ws){this.ws.close();this.ws=null;}const symbol=QUOTES[this.quote];if(!symbol){this.quotePrice=1;this.computeBX();return;}this.ws=new WebSocket(`wss://stream.binance.com:9443/ws/${symbol}@miniTicker`);this.ws.onmessage=e=>{const data=JSON.parse(e.data);this.quotePrice=safe(data.c);this.volume24h=safe(data.q);this.computeBX();};this.ws.onerror=()=>{this.quotePrice=FALLBACK[this.quote]||1;this.computeBX();};},connectDepth(){if(this.depthWs){this.depthWs.close();this.depthWs=null;}const symbol=QUOTES[this.quote];if(!symbol)return;this.depthWs=new WebSocket(`wss://stream.binance.com:9443/ws/${symbol}@depth20@100ms`);this.depthWs.onmessage=e=>{const data=JSON.parse(e.data);this.renderOrderBook(data);};},computeBX(){this.lastPrice=this.marketPrice||0;if(this.quote==="USDT"||this.quote==="USDC"){this.marketPrice=BX_USDT_REFERENCE;}else{this.marketPrice=BX_USDT_REFERENCE/(this.quotePrice||1);}this.updateUI();},updateUI(){if(this.marketPriceEl)this.marketPriceEl.textContent=this.marketPrice.toFixed(8);if(this.execPriceEl)this.execPriceEl.value=this.marketPrice.toFixed(8);const change=this.lastPrice?((this.marketPrice-this.lastPrice)/this.lastPrice)*100:0;if(this.marketChangeEl){this.marketChangeEl.textContent=`${change.toFixed(2)}%`;this.marketChangeEl.className=change>=0?"positive":"negative";}if(this.marketVolumeEl)this.marketVolumeEl.textContent=`$${Math.round(this.volume24h).toLocaleString()}`;if(this.spreadEl)this.spreadEl.textContent="0.05%";this.updateIntel();this.updateOrderTotal();this.updateTooltip();},updateTooltip(){const tooltip=$("marketTooltip");if(!tooltip)return;tooltip.innerHTML=`<strong>${this.pair}</strong> ${this.marketPrice.toFixed(8)}`;},updateOrderTotal(){const amount=safe(this.orderAmountEl?.value);const total=amount*this.marketPrice;if(this.orderTotalEl)this.orderTotalEl.value=total.toFixed(8);},renderOrderBook(data){if(!this.orderBookEl||!data)return;const asks=(data.asks||[]).slice(0,10).map(row=>`<div class="orderbook-row ask"><span>${Number(row[0]).toFixed(8)}</span><span>${Number(row[1]).toFixed(4)}</span></div>`).join("");const bids=(data.bids||[]).slice(0,10).map(row=>`<div class="orderbook-row bid"><span>${Number(row[0]).toFixed(8)}</span><span>${Number(row[1]).toFixed(4)}</span></div>`).join("");this.orderBookEl.innerHTML=asks+bids;},executeTrade(){const amount=safe(this.orderAmountEl?.value);if(amount<=0)return;const trade={time:new Date().toLocaleTimeString(),side:this.tradeSide,amount,price:this.marketPrice};this.trades.unshift(trade);if(this.trades.length>25)this.trades.pop();this.renderTrades();window.dispatchEvent(new CustomEvent("market-order",{detail:{pair:this.pair,side:this.tradeSide,amount,price:this.marketPrice}}));},renderTrades(){if(!this.tradeHistoryEl)return;this.tradeHistoryEl.innerHTML=this.trades.map(t=>`<div class="trade-row"><span>${t.time}</span><span>${t.side.toUpperCase()}</span><span>${t.price.toFixed(8)}</span><span>${t.amount}</span></div>`).join("");},updateIntel(){const trend=this.marketPrice>=this.lastPrice?"Bullish":"Bearish";const sentiment=Math.abs(this.marketPrice-this.lastPrice)<0.001?"Stable":"Active";const volatility=Math.abs(this.marketPrice-this.lastPrice)<0.001?"Low":Math.abs(this.marketPrice-this.lastPrice)<0.01?"Medium":"High";$("marketTrend")&&($("marketTrend").textContent=trend);$("marketSentiment")&&($("marketSentiment").textContent=sentiment);$("marketVolatility")&&($("marketVolatility").textContent=volatility);$("marketLiquidity")&&($("marketLiquidity").textContent="Strong");},startLoop(){setInterval(()=>{if(this.ws&&this.ws.readyState===1){document.querySelector(".market-live-dot")?.classList.add("online");}else{document.querySelector(".market-live-dot")?.classList.remove("online");}},3000);window.addEventListener("beforeunload",()=>{this.ws?.close();this.depthWs?.close();});}}
-;
+const Market={
+pair:"BX/BTC",
+quote:"BTC",
+tradeSide:"buy",
+marketPrice:0,
+previousPrice:0,
+quotePrice:65000,
+volume24h:0,
+tickerWS:null,
+depthWS:null,
+heartbeat:null,
+trades:[],
+depth:{bids:[],asks:[]},
 
-document.readyState==="loading"?document.addEventListener("DOMContentLoaded",()=>Market.init()):Market.init();
+quotes:{
+BTC:"btcusdt",
+ETH:"ethusdt",
+BNB:"bnbusdt",
+SOL:"solusdt",
+TON:"tonusdt",
+LTC:"ltcusdt",
+BCH:"bchusdt",
+USDT:null,
+USDC:null,
+ZEC:"zecusdt",
+AAVE:"aaveusdt",
+AVAX:"avaxusdt",
+DOT:"dotusdt",
+LINK:"linkusdt",
+DASH:"dashusdt",
+XMR:"xmrusdt"
+},
+
+fallback:{
+BTC:65000,
+ETH:3500,
+BNB:700,
+SOL:180,
+TON:6,
+LTC:90,
+BCH:500,
+USDT:1,
+USDC:1,
+ZEC:35,
+AAVE:180,
+AVAX:45,
+DOT:10,
+LINK:20,
+DASH:40,
+XMR:170
+},
+
+init(){
+
+this.bindAssets();
+this.bindSearch();
+this.bindTradeTabs();
+this.bindOrderInputs();
+this.bindTimeframes();
+this.bindMobileTabs();
+this.bindTradeButton();
+
+this.connectPair("BTC");
+
+this.startHeartbeat();
+
+},
+
+/* =========================================================
+   PAIRS
+========================================================= */
+
+connectPair(symbol){
+
+this.quote=symbol;
+
+this.pair=`BX/${symbol}`;
+
+if($("marketPair")){
+$("marketPair").textContent=this.pair;
+}
+
+this.connectTicker();
+
+this.connectDepth();
+
+},
+
+/* =========================================================
+   BINANCE TICKER
+========================================================= */
+
+connectTicker(){
+
+if(this.tickerWS){
+
+this.tickerWS.close();
+
+}
+
+const stream=this.quotes[this.quote];
+
+if(!stream){
+
+this.quotePrice=1;
+
+this.calculateBX();
+
+return;
+
+}
+
+this.tickerWS=
+new WebSocket(
+`wss://stream.binance.com:9443/ws/${stream}@miniTicker`
+);
+
+this.tickerWS.onmessage=e=>{
+
+const data=
+JSON.parse(
+e.data
+);
+
+this.quotePrice=
+safe(data.c);
+
+this.volume24h=
+safe(data.q);
+
+this.calculateBX();
+
+};
+
+this.tickerWS.onerror=()=>{
+
+this.quotePrice=
+this.fallback[
+this.quote
+]||1;
+
+this.calculateBX();
+
+};
+
+},
+
+/* =========================================================
+   BINANCE DEPTH
+========================================================= */
+
+connectDepth(){
+
+if(this.depthWS){
+
+this.depthWS.close();
+
+}
+
+const stream=
+this.quotes[
+this.quote
+];
+
+if(!stream){
+return;
+}
+
+this.depthWS=
+new WebSocket(
+`wss://stream.binance.com:9443/ws/${stream}@depth20@100ms`
+);
+
+this.depthWS.onmessage=e=>{
+
+const data=
+JSON.parse(
+e.data
+);
+
+this.depth.bids=
+data.bids||[];
+
+this.depth.asks=
+data.asks||[];
+
+this.renderOrderBook();
+
+};
+
+},
+
+/* =========================================================
+   BX PRICE
+========================================================= */
+
+calculateBX(){
+
+this.previousPrice=
+this.marketPrice;
+
+if(
+this.quote==="USDT"||
+this.quote==="USDC"
+){
+
+this.marketPrice=
+BX_USDT_PRICE;
+
+}else{
+
+this.marketPrice=
+BX_USDT_PRICE/
+(this.quotePrice||1);
+
+}
+
+this.updateMarket();
+
+},
+
+/* =========================================================
+   UI
+========================================================= */
+
+updateMarket(){
+
+if($("marketPrice")){
+$("marketPrice").textContent=
+this.marketPrice.toFixed(8);
+}
+
+if($("execPrice")){
+$("execPrice").value=
+this.marketPrice.toFixed(8);
+}
+
+if($("marketVolume")){
+$("marketVolume").textContent=
+"$"+
+Math.round(
+this.volume24h
+).toLocaleString();
+}
+
+this.updateChange();
+
+this.updateOrderTotal();
+
+this.updateIntel();
+
+this.updateTooltip();
+
+},
+
+updateChange(){
+
+const el=
+$("marketChange");
+
+if(!el){
+return;
+}
+
+const change=
+this.previousPrice
+?
+(
+(
+this.marketPrice-
+this.previousPrice
+)
+/
+this.previousPrice
+)*100
+:0;
+
+el.textContent=
+`${change.toFixed(2)}%`;
+
+el.classList.toggle(
+"positive",
+change>=0
+);
+
+el.classList.toggle(
+"negative",
+change<0
+);
+
+},
+
+updateTooltip(){
+
+const tooltip=
+$("marketTooltip");
+
+if(!tooltip){
+return;
+}
+
+tooltip.innerHTML=
+`<strong>${this.pair}</strong> ${this.marketPrice.toFixed(8)}`;
+
+},
+
+/* =========================================================
+   ORDERBOOK
+========================================================= */
+
+renderOrderBook(){
+
+const grid=
+$("orderBookGrid");
+
+if(!grid){
+return;
+}
+
+const asks=
+this.depth.asks
+.slice(0,10)
+.map(row=>`
+<div class="orderbook-row ask">
+<span>${Number(row[0]).toFixed(8)}</span>
+<span>${Number(row[1]).toFixed(4)}</span>
+</div>
+`).join("");
+
+const bids=
+this.depth.bids
+.slice(0,10)
+.map(row=>`
+<div class="orderbook-row bid">
+<span>${Number(row[0]).toFixed(8)}</span>
+<span>${Number(row[1]).toFixed(4)}</span>
+</div>
+`).join("");
+
+grid.innerHTML=
+asks+bids;
+
+},
+
+/* =========================================================
+   TRADE
+========================================================= */
+
+bindTradeTabs(){
+
+$("buyTab")?.addEventListener(
+"click",
+()=>{
+
+this.tradeSide="buy";
+
+$("buyTab")?.classList.add(
+"active"
+);
+
+$("sellTab")?.classList.remove(
+"active"
+);
+
+$("actionBtn").textContent=
+"BUY BX";
+
+}
+);
+
+$("sellTab")?.addEventListener(
+"click",
+()=>{
+
+this.tradeSide="sell";
+
+$("sellTab")?.classList.add(
+"active"
+);
+
+$("buyTab")?.classList.remove(
+"active"
+);
+
+$("actionBtn").textContent=
+"SELL BX";
+
+}
+);
+
+},
+
+bindTradeButton(){
+
+$("actionBtn")?.addEventListener(
+"click",
+()=>this.executeTrade()
+);
+
+},
+
+executeTrade(){
+
+const amount=
+safe(
+$("orderAmount")?.value
+);
+
+if(amount<=0){
+return;
+}
+
+const trade={
+time:new Date()
+.toLocaleTimeString(),
+side:this.tradeSide,
+price:this.marketPrice,
+amount
+};
+
+this.trades.unshift(
+trade
+);
+
+if(
+this.trades.length>25
+){
+
+this.trades.pop();
+
+}
+
+this.renderHistory();
+
+window.dispatchEvent(
+new CustomEvent(
+"market-order",
+{
+detail:{
+pair:this.pair,
+side:this.tradeSide,
+amount,
+price:this.marketPrice
+}
+}
+)
+);
+
+},
+
+/* =========================================================
+   HISTORY
+========================================================= */
+
+renderHistory(){
+
+const grid=
+$("tradeHistoryGrid");
+
+if(!grid){
+return;
+}
+
+grid.innerHTML=
+this.trades.map(t=>`
+<div class="trade-row">
+<span>${t.time}</span>
+<span>${t.side.toUpperCase()}</span>
+<span>${t.price.toFixed(8)}</span>
+<span>${t.amount}</span>
+</div>
+`).join("");
+
+},
+
+/* =========================================================
+   TOTAL
+========================================================= */
+
+bindOrderInputs(){
+
+$("orderAmount")?.addEventListener(
+"input",
+()=>this.updateOrderTotal()
+);
+
+},
+
+updateOrderTotal(){
+
+const amount=
+safe(
+$("orderAmount")?.value
+);
+
+const total=
+amount*
+this.marketPrice;
+
+if($("orderTotal")){
+
+$("orderTotal").value=
+total.toFixed(8);
+
+}
+
+},
+
+/* =========================================================
+   INTEL
+========================================================= */
+
+updateIntel(){
+
+const trend=
+this.marketPrice>=this.previousPrice
+?"Bullish"
+:"Bearish";
+
+const diff=
+Math.abs(
+this.marketPrice-
+this.previousPrice
+);
+
+const volatility=
+diff<0.001
+?"Low"
+:diff<0.01
+?"Medium"
+:"High";
+
+const sentiment=
+diff<0.001
+?"Stable"
+:"Active";
+
+if($("marketTrend")){
+$("marketTrend").textContent=
+trend;
+}
+
+if($("marketSentiment")){
+$("marketSentiment").textContent=
+sentiment;
+}
+
+if($("marketVolatility")){
+$("marketVolatility").textContent=
+volatility;
+}
+
+if($("marketLiquidity")){
+$("marketLiquidity").textContent=
+"Strong";
+}
+
+},
+
+/* =========================================================
+   SEARCH
+========================================================= */
+
+bindSearch(){
+
+$("marketSearch")?.addEventListener(
+"input",
+e=>{
+
+const q=
+e.target.value
+.toLowerCase();
+
+document
+.querySelectorAll(
+".market-asset"
+)
+.forEach(asset=>{
+
+asset.style.display=
+asset.textContent
+.toLowerCase()
+.includes(q)
+?"flex"
+:"none";
+
+});
+
+}
+);
+
+},
+
+/* =========================================================
+   ASSETS
+========================================================= */
+
+bindAssets(){
+
+document
+.querySelectorAll(
+".market-asset"
+)
+.forEach(asset=>{
+
+asset.addEventListener(
+"click",
+()=>{
+
+document
+.querySelectorAll(
+".market-asset"
+)
+.forEach(x=>
+x.classList.remove(
+"active"
+));
+
+asset.classList.add(
+"active"
+);
+
+const pair=
+asset.dataset.pair;
+
+this.connectPair(
+pair.replace(
+"BX/",
+""
+)
+);
+
+}
+);
+
+});
+
+},
+
+/* =========================================================
+   TIMEFRAMES
+========================================================= */
+
+bindTimeframes(){
+
+document
+.querySelectorAll(
+".chart-time"
+)
+.forEach(btn=>{
+
+btn.addEventListener(
+"click",
+()=>{
+
+document
+.querySelectorAll(
+".chart-time"
+)
+.forEach(x=>
+x.classList.remove(
+"active"
+));
+
+btn.classList.add(
+"active"
+);
+
+}
+);
+
+});
+
+},
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+bindMobileTabs(){
+
+document
+.querySelectorAll(
+".market-mobile-tab"
+)
+.forEach(tab=>{
+
+tab.addEventListener(
+"click",
+()=>{
+
+document
+.querySelectorAll(
+".market-mobile-tab"
+)
+.forEach(x=>
+x.classList.remove(
+"active"
+));
+
+tab.classList.add(
+"active"
+);
+
+}
+);
+
+});
+
+},
+
+/* =========================================================
+   HEARTBEAT
+========================================================= */
+
+startHeartbeat(){
+
+clearInterval(
+this.heartbeat
+);
+
+this.heartbeat=
+setInterval(
+()=>{
+
+const dot=
+document.querySelector(
+".market-live-dot"
+);
+
+if(dot){
+
+dot.classList.toggle(
+"online",
+this.tickerWS &&
+this.tickerWS.readyState===1
+);
+
+}
+
+},
+3000
+);
+
+}
+
+};
+
+document.readyState==="loading"
+?document.addEventListener(
+"DOMContentLoaded",
+()=>Market.init()
+)
+:Market.init();
