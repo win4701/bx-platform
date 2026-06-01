@@ -1,0 +1,165 @@
+<div id="authOverlay" class="auth auth-overlay hidden">
+<div class="auth-backdrop"></div>
+
+<section class="auth-shell">
+
+<div class="auth-left">
+<div class="auth-brand">
+<img src="/assets/images/branding/logo.svg" alt="Bloxio">
+
+<h1 id="authTitle"> Welcome To BLOXIO</h1>
+
+<p>Enterprise Web3 Exchange • Casino • Mining • Wallet</p>
+
+</div>
+
+<div class="auth-metrics">
+<div class="auth-metric">
+
+<strong>100K+</strong>
+<span>Users</span>
+
+</div>
+<div class="auth-metric">
+
+<strong>24/7</strong>
+<span>Markets</span>
+
+</div>
+<div class="auth-metric">
+
+<strong>BX</strong>
+<span>Ecosystem</span>
+
+</div>
+</div>
+</div>
+<div class="auth-right">
+<div class="auth-card">
+<div class="auth-topbar">
+
+<button id="loginBtn" class="auth-tab active" type="button">Login</button>
+<button id="registerBtn" class="auth-tab" type="button">Register</button>
+
+</div>
+<div id="loginBox" class="auth-box">
+<form id="loginForm" novalidate>
+<div class="auth-field">
+
+<label>Email</label>
+
+<input
+id="loginEmail"
+type="email"
+autocomplete="email"
+placeholder="name@example.com"
+required>
+
+</div>
+<div class="auth-field">
+
+<label>Password</label>
+<input
+id="loginPassword"
+type="password"
+autocomplete="current-password"
+placeholder="••••••••"
+required>
+
+</div>
+<div class="auth-row">
+<label class="remember-box">
+
+<input
+id="rememberDevice" type="checkbox">
+
+<span>Remember Device</span>
+</label>
+<button type="button" class="auth-link">Forgot Password</button>
+
+</div>
+<button type="submit" class="auth-submit">Login Securely</button>
+
+</form>
+</div>
+<div id="registerBox" class="auth-box hidden">
+<form id="registerForm" novalidate>
+
+<div class="auth-grid">
+<div class="auth-field">
+
+<label>Email</label>
+<input
+id="registerEmail"
+type="email" placeholder="Email" required>
+
+</div>
+<div class="auth-field">
+
+<label>Phone</label>
+
+<input
+id="registerPhone" type="tel" placeholder="+1" required>
+</div>
+</div>
+<div class="auth-field">
+
+<label>Password</label>
+<input
+id="registerPassword"
+type="password" placeholder="Password" required>
+
+</div>
+<div class="auth-field">
+<label>Confirm Password</label>
+
+<input
+id="registerConfirm"
+type="password"
+placeholder="Confirm Password"
+required>
+
+</div>
+<div class="auth-field">
+
+<label>Invite Code</label>
+<input
+id="inviteCode" type="text" placeholder="Optional">
+
+</div>
+<label class="terms-box">
+<input
+id="agreeTerms" type="checkbox"required>
+
+<span>Accept Terms & Privacy</span>
+</label>
+
+<button
+type="submit" class="auth-submit">Create Account</button>
+
+</form>
+</div>
+<div class="auth-footer">
+
+<p id="switchText">Need account?</p>
+
+<button
+id="toggleAuth" type="button" class="auth-switch">Register</button>
+
+</div>
+<div class="auth-security">
+<div>🔒 Encrypted
+</div>
+<div>🛡 2FA Ready
+</div>
+<div>⚡ PWA Secure
+</div>
+</div>
+</div>
+</div>
+
+<button id="authClose" class="auth-close"
+type="button" aria-label="Close">X</button>
+
+</section>
+
