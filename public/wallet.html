@@ -1,264 +1,763 @@
 <section id="wallet" class="view active">
 
-<div class="wallet-top">
-<div class="wallet-balance">
+    <!-- =====================================================
+    PORTFOLIO OVERVIEW
+    ====================================================== -->
 
-<span class="wallet-caption">EST TOTAL VALUE</span>
-<h1><span id="walletTotal">$0.00</span><small>USD</small></h1>
+    <section class="wallet-overview">
 
-<div id="walletStatus" class="wallet-status hidden">Portfolio Syncing</div>
+        <div class="wallet-balance-card">
 
-</div>
-<div class="wallet-intelligence" id="walletIntelligence">
-<div class="wallet-intel-head">
+            <span class="wallet-caption">
+                EST TOTAL VALUE
+            </span>
 
-<div>
-<span class="wallet-kicker">SMART WALLET</span>
+            <h1>
+                <span id="walletTotal">
+                    $0.00
+                </span>
+                <small>USD</small>
+            </h1>
 
-<h3 id="walletIntelTitle">Ready To Fund Wallet</h3>
+            <div
+                id="walletStatus"
+                class="wallet-status hidden">
 
-</div>
-<span id="walletIntelBadge" class="wallet-intel-badge">START</span>
+                Portfolio Syncing
 
-</div>
-<p id="walletIntelText">Deposit assets to unlock Market • Mining • Casino</p>
-<div class="wallet-intel-actions">
+            </div>
 
-<button id="walletIntelPrimary" class="wallet-intel-btn primary">Deposit Now</button>
-<button id="walletIntelSecondary" class="wallet-intel-btn">Explore Market</button>
+        </div>
 
-</div>
-</div>
-</div>
-<div class="wallet-actions">
-<button id="openDepositBtn" class="btn primary" data-wallet-open="depositPanel">Deposit</button>
-<button id="openWithdrawBtn" class="btn" data-wallet-open="withdrawPanel">Withdraw</button>
-<button id="openTransferBtn" class="btn" data-wallet-open="transferPanel">Transfer</button>
-</div>
+        <div class="wallet-overview-grid">
 
-<section class="wallet-swap-engine">
-<div class="wallet-section-head">
+            <div class="wallet-stat-card">
 
-<h3>BX Swap Engine</h3>
-<span>BX ONLY</span>
-</div>
-<div class="wallet-swap-grid">
+                <span>Today's PnL</span>
 
-<select id="swapFromAsset">
-<option>USDT</option>
-<option>USDC</option>
-<option>BTC</option>
-<option>BNB</option>
-<option>ETH</option>
-<option>AVAX</option>
-<option>ZEC</option>
-<option>TON</option>
-<option>SOL</option>
-<option>LTC</option>
+                <strong id="walletPnL">
+                    +$0.00
+                </strong>
 
-</select>
-<select id="swapToAsset">
+            </div>
 
-<option>BX</option>
+            <div class="wallet-stat-card">
 
-</select>
-</div>
-<input id="swapAmount" class="wallet-input" placeholder="Amount">
-<div class="wallet-swap-meta">
+                <span>Assets</span>
 
-<div>Receive <strong id="estimatedReceive">0 BX</strong></div>
-<div>Slippage <strong id="slippage">0.5%</strong></div>
-</div>
+                <strong id="walletAssetCount">
+                    0
+                </strong>
 
-<button id="swapButton" class="btn primary">Swap To BX</button>
+            </div>
 
-</section>
+            <div class="wallet-stat-card">
 
-<div class="wallet-panels">
-<section id="depositPanel" class="wallet-panel wallet-hidden">
+                <span>Active</span>
 
-<div class="wallet-panel-head">
-<h4>Deposit</h4>
+                <strong id="walletActiveAssets">
+                    0
+                </strong>
 
-<button class="wallet-panel-close" data-wallet-close="depositPanel">✕</button>
-</div>
-<div class="wallet-panel-grid">
+            </div>
 
-<select id="depositAsset">
-<option>USDT</option>
-<option>BTC</option>
-<option>BX</option>
+            <div class="wallet-stat-card">
 
-</select>
-<select id="depositNetwork">
+                <span>Health</span>
 
-<option>TRC20</option>
-<option>ERC20</option>
-<option>BEP20</option>
+                <strong id="walletHealth">
+                    100%
+                </strong>
 
-</select>
+            </div>
 
-<input id="depositMemo" class="wallet-input" placeholder="Memo Optional">
-<input id="depositDestination" class="wallet-input" placeholder="Destination Tag">
+            <div class="wallet-stat-card">
 
-<button id="generateDepositBtn" class="btn primary">Generate Address</button>
-</div>
-<div class="wallet-address-box">
-<div class="wallet-address-top">
+                <span>Last Sync</span>
 
-<span>Deposit Address</span>
+                <strong id="walletLastSync">
+                    --
+                </strong>
 
-<button id="copyDepositBtn" class="btn secondary">Copy</button>
-</div>
+            </div>
 
-<code id="depositAddressText">—</code>
-</div>
-<div id="depositQR" class="wallet-qr hidden"></div>
-<div class="wallet-network-box">
+        </div>
 
-<div>Fee <strong>0.1 USDT</strong></div>
-<div>ETA <strong>1-3 Min</strong></div>
-<div>Minimum <strong>10 USDT</strong></div>
+    </section>
 
-</div>
-<div id="depositStatus" class="wallet-status hidden"></div>
+    <!-- =====================================================
+    SMART WALLET INTELLIGENCE
+    ====================================================== -->
 
-</section>
+    <section
+        class="wallet-intelligence"
+        id="walletIntelligence">
 
-<section id="withdrawPanel" class="wallet-panel wallet-hidden">
+        <div class="wallet-intel-head">
 
-<div class="wallet-panel-head">
-<h4>Withdraw</h4>
+            <div>
 
-<button class="wallet-panel-close" data-wallet-close="withdrawPanel">✕</button>
+                <span class="wallet-kicker">
 
-</div>
-<div class="wallet-panel-grid">
+                    SMART WALLET
 
-<select id="withdrawAsset">
+                </span>
 
-<option>USDT</option>
-<option>USDC</option>
-<option>BTC</option>
-<option>BNB</option>
-<option>ETH</option>
+                <h3 id="walletIntelTitle">
 
-</select>
+                    Ready To Fund Wallet
 
-<select id="withdrawNetwork">
+                </h3>
 
-<option>TRC20</option>
-<option>ERC20</option>
-<option>BEP20</option>
+            </div>
 
-</select>
+            <span
+                id="walletIntelBadge"
+                class="wallet-intel-badge">
 
-<input id="withdrawAmount" class="wallet-input" placeholder="Amount">
-<input id="withdrawAddress" class="wallet-input" placeholder="Wallet Address">
-<input id="withdrawMemo" class="wallet-input" placeholder="Memo Optional">
+                START
 
-<button id="submitWithdrawBtn" class="btn primary">Confirm Withdraw</button>
-</div>
-<div class="wallet-network-box">
-<div>Fee <strong>1 BX</strong></div>
-<div>ETA <strong>3 Min</strong></div>
-</div>
+            </span>
 
-<div id="withdrawStatus" class="wallet-status hidden"></div>
+        </div>
 
-</section>
+        <p id="walletIntelText">
 
-<section id="transferPanel" class="wallet-panel wallet-hidden">
+            Deposit assets to unlock Market • Mining • Casino
 
-<div class="wallet-panel-head">
-<h4>Transfer</h4>
+        </p>
 
-<button class="wallet-panel-close" data-wallet-close="transferPanel">X</button>
-</div>
-<div class="wallet-panel-grid">
+        <div class="wallet-intel-actions">
 
-<select id="transferAsset">
+            <button
+                id="walletIntelPrimary"
+                class="wallet-intel-btn primary">
 
-<option>BX</option>
-<option>USDT</option>
-<option>USDC</option>
+                Deposit Now
 
-</select>
+            </button>
 
-<input id="transferUser" class="wallet-input" placeholder="Email Or UID">
-<input id="transferTo" hidden>
+            <button
+                id="walletIntelSecondary"
+                class="wallet-intel-btn">
 
-<input id="transferAmount" class="wallet-input" placeholder="Amount">
+                Explore Market
 
-<button id="submitTransferBtn" class="btn confirm">Confirm Transfer</button>
+            </button>
 
-</div>
-<div class="wallet-network-box">
+        </div>
 
-<div>Network <strong>BX Internal</strong></div>
-<div>Fee <strong>0 BX</strong></div>
+    </section>
 
-</div>
-<div id="transferStatus" class="wallet-status hidden"></div>
-</section>
-</div>
+    <!-- =====================================================
+    QUICK ACTIONS
+    ====================================================== -->
 
-<div class="wallet-assets">
-<div class="wallet-assets-head">
+    <section class="wallet-actions">
 
-<h3>Balances</h3>
+        <button
+            id="openDepositBtn"
+            class="btn primary"
+            data-wallet-open="depositPanel">
 
-<input id="walletAssetSearch" class="wallet-input" placeholder="Search Asset">
+            Deposit
 
-</div>
-<div id="walletBX" hidden></div>
+        </button>
 
-<div id="walletUSDT" hidden></div>
-<div class="wallet-assets-grid">
-<div class="wallet-row main" data-asset="BX">
-<div class="wallet-left">
+        <button
+            id="openWithdrawBtn"
+            class="btn"
+            data-wallet-open="withdrawPanel">
 
-<img src="/assets/images/bx.png" alt="BX">
-<div>
-<strong>BX</strong>
-<span>Bloxio</span>
-</div>
-</div>
-<strong id="bal-bx">0.00</strong>
-</div>
-<div class="wallet-row" data-asset="BTC">
-<div class="wallet-left">
-<img src="/assets/images/btc.png" alt="BTC">
+            Withdraw
 
-<div><strong>BTC</strong>
-<span>Bitcoin</span>
-</div>
-</div>
-<strong id="bal-btc">0.00</strong>
-</div>
-<div class="wallet-row" data-asset="USDT">
-<div class="wallet-left">
+        </button>
 
-<img src="/assets/images/usdt.png" alt="USDT">
+        <button
+            id="openTransferBtn"
+            class="btn"
+            data-wallet-open="transferPanel">
 
-<div><strong>USDT</strong>
-<span>Tether</span></div>
-</div>
+            Transfer
 
-<strong id="bal-usdt">0.00</strong>
-</div>
-</div>
-</div>
-<div id="walletQuickSheet" class="wallet-quick-sheet wallet-hidden">
-<div class="wallet-quick-card">
+        </button>
 
-<h4 id="walletQuickAssetName">Asset</h4>
+        <button
+            id="openSwapBtn"
+            class="btn">
 
-<div class="wallet-quick-actions">
-<button id="walletQuickDeposit" class="btn primary">Deposit</button>
-<button id="walletQuickWithdraw" class="btn">Withdraw</button>
-<button id="walletQuickTransfer" class="btn">Transfer</button>
-</div>
-</div>
-</div>
+            Swap
+
+        </button>
+
+        <button
+            id="walletBuyBtn"
+            class="btn">
+
+            Buy
+
+        </button>
+
+        <button
+            id="walletSellBtn"
+            class="btn">
+
+            Sell
+
+        </button>
+
+    </section>
+
+    <!-- =====================================================
+    SWAP ENGINE
+    ====================================================== -->
+
+    <section class="wallet-swap-engine">
+
+        <div class="wallet-section-head">
+
+            <h3>
+                Swap Engine
+            </h3>
+
+            <span>
+                BX • XBC
+            </span>
+
+        </div>
+
+        <div class="wallet-swap-grid">
+
+            <select id="swapFromAsset"></select>
+
+            <select id="swapToAsset">
+
+                <option>BX</option>
+                <option>XBC</option>
+
+            </select>
+
+        </div>
+
+        <input
+            id="swapAmount"
+            class="wallet-input"
+            placeholder="Amount">
+
+        <div class="wallet-swap-meta">
+
+            <div>
+
+                Receive
+
+                <strong id="estimatedReceive">
+
+                    0
+
+                </strong>
+
+            </div>
+
+            <div>
+
+                Rate
+
+                <strong id="swapRate">
+
+                    --
+
+                </strong>
+
+            </div>
+
+            <div>
+
+                Slippage
+
+                <strong id="slippage">
+
+                    0.5%
+
+                </strong>
+
+            </div>
+
+        </div>
+
+        <button
+            id="swapButton"
+            class="btn primary">
+
+            Execute Swap
+
+        </button>
+
+    </section>
+
+    <!-- =====================================================
+    PANELS
+    ====================================================== -->
+
+    <div class="wallet-panels">
+
+        <!-- DEPOSIT -->
+
+        <section
+            id="depositPanel"
+            class="wallet-panel wallet-hidden">
+
+            <div class="wallet-panel-head">
+
+                <h4>Deposit</h4>
+
+                <button
+                    class="wallet-panel-close"
+                    data-wallet-close="depositPanel">
+
+                    ✕
+
+                </button>
+
+            </div>
+
+            <div class="wallet-panel-grid">
+
+                <select id="depositAsset"></select>
+
+                <select id="depositNetwork"></select>
+
+                <input
+                    id="depositMemo"
+                    class="wallet-input"
+                    placeholder="Memo Optional">
+
+                <input
+                    id="depositDestination"
+                    class="wallet-input"
+                    placeholder="Destination Tag">
+
+                <button
+                    id="generateDepositBtn"
+                    class="btn primary">
+
+                    Generate Address
+
+                </button>
+
+            </div>
+
+            <div class="wallet-address-box">
+
+                <div class="wallet-address-top">
+
+                    <span>
+                        Deposit Address
+                    </span>
+
+                    <button
+                        id="copyDepositBtn"
+                        class="btn secondary">
+
+                        Copy
+
+                    </button>
+
+                </div>
+
+                <code id="depositAddressText">
+
+                    —
+
+                </code>
+
+            </div>
+
+            <div
+                id="depositQR"
+                class="wallet-qr hidden">
+
+            </div>
+
+            <div
+                id="depositStatus"
+                class="wallet-status hidden">
+
+            </div>
+
+        </section>
+
+        <!-- WITHDRAW -->
+
+        <section
+            id="withdrawPanel"
+            class="wallet-panel wallet-hidden">
+
+            <div class="wallet-panel-head">
+
+                <h4>Withdraw</h4>
+
+                <button
+                    class="wallet-panel-close"
+                    data-wallet-close="withdrawPanel">
+
+                    ✕
+
+                </button>
+
+            </div>
+
+            <div class="wallet-panel-grid">
+
+                <select id="withdrawAsset"></select>
+
+                <select id="withdrawNetwork"></select>
+
+                <input
+                    id="withdrawAmount"
+                    class="wallet-input"
+                    placeholder="Amount">
+
+                <input
+                    id="withdrawAddress"
+                    class="wallet-input"
+                    placeholder="Wallet Address">
+
+                <input
+                    id="withdrawMemo"
+                    class="wallet-input"
+                    placeholder="Memo Optional">
+
+                <button
+                    id="submitWithdrawBtn"
+                    class="btn primary">
+
+                    Confirm Withdraw
+
+                </button>
+
+            </div>
+
+            <div
+                id="withdrawStatus"
+                class="wallet-status hidden">
+
+            </div>
+
+        </section>
+
+        <!-- TRANSFER -->
+
+        <section
+            id="transferPanel"
+            class="wallet-panel wallet-hidden">
+
+            <div class="wallet-panel-head">
+
+                <h4>Transfer</h4>
+
+                <button
+                    class="wallet-panel-close"
+                    data-wallet-close="transferPanel">
+
+                    ✕
+
+                </button>
+
+            </div>
+
+            <div class="wallet-panel-grid">
+
+                <select id="transferAsset"></select>
+
+                <input
+                    id="transferUser"
+                    class="wallet-input"
+                    placeholder="Email Or UID">
+
+                <input
+                    id="transferAmount"
+                    class="wallet-input"
+                    placeholder="Amount">
+
+                <button
+                    id="submitTransferBtn"
+                    class="btn primary">
+
+                    Confirm Transfer
+
+                </button>
+
+            </div>
+
+            <div
+                id="transferStatus"
+                class="wallet-status hidden">
+
+            </div>
+
+        </section>
+
+    </div>
+
+    <!-- =====================================================
+    MAIN ASSETS
+    ====================================================== -->
+
+    <section class="wallet-main-assets">
+
+        <div class="wallet-section-head">
+
+            <h3>
+                Main Assets
+            </h3>
+
+        </div>
+
+        <div class="wallet-main-grid">
+
+            <div
+                class="wallet-row featured"
+                data-asset="BX">
+
+                <div class="wallet-left">
+
+                    <img
+                        src="/assets/images/coins/bx.png"
+                        alt="BX">
+
+                    <div>
+
+                        <strong>BX</strong>
+
+                        <span>Bloxio</span>
+
+                    </div>
+
+                </div>
+
+                <strong id="bal-bx">
+                    0.00
+                </strong>
+
+            </div>
+
+            <div
+                class="wallet-row featured"
+                data-asset="XBC">
+
+                <div class="wallet-left">
+
+                    <img
+                        src="/assets/images/coins/xbc.png"
+                        alt="XBC">
+
+                    <div>
+
+                        <strong>XBC</strong>
+
+                        <span>Bloxio Casino</span>
+
+                    </div>
+
+                </div>
+
+                <strong id="bal-xbc">
+                    0.00
+                </strong>
+
+            </div>
+
+        </div>
+
+    </section>
+
+    <!-- =====================================================
+    ASSET FILTER + SEARCH
+    ====================================================== -->
+
+    <section class="wallet-assets">
+
+        <div class="wallet-assets-head">
+
+            <h3>
+                Assets
+            </h3>
+
+            <input
+                id="walletAssetSearch"
+                class="wallet-input"
+                placeholder="Search BTC, ETH, USDT ...">
+
+        </div>
+
+        <div class="wallet-filters">
+
+            <button id="walletTabMain" class="wallet-filter active">
+                Main
+            </button>
+
+            <button id="walletTabMarket" class="wallet-filter">
+                Market
+            </button>
+
+            <button id="walletTabStable" class="wallet-filter">
+                Stable
+            </button>
+
+            <button id="walletTabDefi" class="wallet-filter">
+                DeFi
+            </button>
+
+            <button id="walletTabGaming" class="wallet-filter">
+                Gaming
+            </button>
+
+            <button id="walletTabAll" class="wallet-filter">
+                All
+            </button>
+
+        </div>
+
+        <!-- GENERATED BY wallet.js -->
+
+        <div
+            id="walletAssetsContainer"
+            class="wallet-assets-grid">
+
+        </div>
+
+    </section>
+
+    <!-- =====================================================
+    RECENT ACTIVITY
+    ====================================================== -->
+
+    <section class="wallet-activity">
+
+        <div class="wallet-section-head">
+
+            <h3>
+
+                Recent Activity
+
+            </h3>
+
+            <span>
+
+                Live
+
+            </span>
+
+        </div>
+
+        <div id="walletTransactions">
+
+        </div>
+
+    </section>
+
+    <!-- =====================================================
+    WALLET ANALYTICS
+    ====================================================== -->
+
+    <section class="wallet-analytics">
+
+        <div class="wallet-section-head">
+
+            <h3>
+
+                Wallet Analytics
+
+            </h3>
+
+        </div>
+
+        <div class="wallet-analytics-grid">
+
+            <div class="wallet-analytics-card">
+
+                <span>
+                    Asset Allocation
+                </span>
+
+                <canvas id="walletAllocationChart"></canvas>
+
+            </div>
+
+            <div class="wallet-analytics-card">
+
+                <span>
+                    Portfolio Distribution
+                </span>
+
+                <canvas id="walletDistributionChart"></canvas>
+
+            </div>
+
+            <div class="wallet-analytics-card">
+
+                <span>
+                    Activity Score
+                </span>
+
+                <strong id="walletActivityScore">
+                    0
+                </strong>
+
+            </div>
+
+        </div>
+
+    </section>
+
+    <!-- =====================================================
+    QUICK SHEET
+    ====================================================== -->
+
+    <div
+        id="walletQuickSheet"
+        class="wallet-quick-sheet wallet-hidden">
+
+        <div class="wallet-quick-card">
+
+            <h4 id="walletQuickAssetName">
+
+                Asset
+
+            </h4>
+
+            <div class="wallet-quick-actions">
+
+                <button
+                    id="walletQuickDeposit"
+                    class="btn primary">
+
+                    Deposit
+
+                </button>
+
+                <button
+                    id="walletQuickWithdraw"
+                    class="btn">
+
+                    Withdraw
+
+                </button>
+
+                <button
+                    id="walletQuickTransfer"
+                    class="btn">
+
+                    Transfer
+
+                </button>
+
+                <button id="walletQuickSwap class="btn secondary">Swap
+
+                </button>
+
+            </div>
+        </div>
+    </div>
+
 </section>
