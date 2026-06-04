@@ -80,16 +80,6 @@ category:"original"
 },
 
 {
-id:"tower",
-name:"Tower",
-provider:"Bloxio Originals",
-image:"/assets/images/casino/tower-rush.webp",
-currency:["BX","XBC"],
-status:"active",
-category:"original"
-},
-
-{
 id:"keno",
 name:"Keno",
 provider:"Bloxio Originals",
