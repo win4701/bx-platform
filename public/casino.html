@@ -1,160 +1,617 @@
-<section class="casino-economy">
-<div class="casino-economy-card"><span>BX Balance</span><strong id="casinoBXBalance">0.0000</strong></div>
-<div class="casino-economy-card"><span>XBC Balance</span><strong id="casinoXBCBalance">0.00</strong></div>
-<div class="casino-economy-card"><span>Online</span><strong id="casinoOnlinePlayers">0</strong></div>
-<div class="casino-economy-card"><span>Games</span><strong>18</strong></div>
-</section>
+<section id="casino" class="view">
 
-<section class="casino-featured">
-<div class="casino-section-head"><h3>Featured Games</h3></div>
-<div class="casino-featured-grid">
-<div class="casino-featured-item">Crash</div>
-<div class="casino-featured-item">Mines</div>
-<div class="casino-featured-item">Plinko</div>
-<div class="casino-featured-item">Tower Rush</div>
-<div class="casino-featured-item">Chicken Road</div>
-</div>
-</section>
+    <div class="casino-shell">
 
-<div class="casino-search">
-<input id="casinoSearch" type="search" placeholder="Search Games">
-</div>
+        <!-- ========================================= -->
+        <!-- CASINO TOP                               -->
+        <!-- ========================================= -->
 
-<div class="casino-filter">
-<button class="casino-filter-btn active" data-tab="all">All</button>
-<button class="casino-filter-btn" data-tab="originals">Originals</button>
-<button class="casino-filter-btn" data-tab="arcade">Arcade</button>
-<button class="casino-filter-btn" data-tab="slots">Slots</button>
-<button class="casino-filter-btn" data-tab="cards">Cards</button>
-<button class="casino-filter-btn" data-tab="roulette">Roulette</button>
-</div>
+        <header class="casino-top">
 
-<div id="casinoGamesGrid">
+            <div class="casino-brand">
 
-<button class="casino-game-card" data-category="originals" data-game="crash">
-<img src="/assets/images/casino/crash.webp" alt="Crash">
-<div class="casino-game-main">
-<h3>Crash</h3>
-<div class="casino-chip-row">
-<span>RTP 98%</span>
-<span>BX / XBC</span>
-</div>
-</div>
-</button>
+                <div class="casino-brand-icon">
 
-<button class="casino-game-card" data-category="originals" data-game="mines">
-<img src="/assets/images/casino/mines.webp" alt="Mines">
-<div class="casino-game-main">
-<h3>Mines</h3>
-<div class="casino-chip-row">
-<span>RTP 99%</span>
-<span>BX / XBC</span>
-</div>
-</div>
-</button>
+                    🎰
 
-<button class="casino-game-card" data-category="originals" data-game="plinko">
-<img src="/assets/images/casino/plinko.webp" alt="Plinko">
-<div class="casino-game-main"><h3>Plinko</h3></div>
-</button>
+                </div>
 
-<button class="casino-game-card" data-category="originals" data-game="dice">
-<img src="/assets/images/casino/dice.webp" alt="Dice">
-<div class="casino-game-main"><h3>Dice</h3></div>
-</button>
+                <div>
 
-<button class="casino-game-card" data-category="originals" data-game="limbo">
-<img src="/assets/images/casino/limbo.webp" alt="Limbo">
-<div class="casino-game-main"><h3>Limbo</h3></div>
-</button>
+                    <h2>
 
-<button class="casino-game-card" data-category="originals" data-game="coinflip">
-<img src="/assets/images/casino/coinflip.webp" alt="Coinflip">
-<div class="casino-game-main"><h3>Coinflip</h3></div>
-</button>
+                        BLOXIO CASINO
 
-<button class="casino-game-card" data-category="originals" data-game="hilo">
-<img src="/assets/images/casino/hilo.webp" alt="HiLo">
-<div class="casino-game-main"><h3>Hi-Lo</h3></div>
-</button>
+                    </h2>
 
-<button class="casino-game-card" data-category="originals" data-game="tower-rush">
-<img src="/assets/images/casino/tower-rush.webp" alt="Tower Rush">
-<div class="casino-game-main"><h3>Tower Rush</h3></div>
-</button>
+                    <p>
 
-<button class="casino-game-card" data-category="arcade" data-game="chicken-road">
-<img src="/assets/images/casino/chicken-road.webp" alt="Chicken Road">
-<div class="casino-game-main"><h3>Chicken Road</h3></div>
-</button>
+                        Provably Fair • BX • XBC • Enterprise Gaming
 
-<button class="casino-game-card" data-category="arcade" data-game="chix">
-<img src="/assets/images/casino/chix.webp" alt="Chix">
-<div class="casino-game-main"><h3>Chix</h3></div>
-</button>
+                    </p>
 
-<button class="casino-game-card" data-category="arcade" data-game="wheel">
-<img src="/assets/images/casino/wheel.webp" alt="Wheel">
-<div class="casino-game-main"><h3>Wheel</h3></div>
-</button>
+                </div>
 
-<button class="casino-game-card" data-category="arcade" data-game="keno">
-<img src="/assets/images/casino/keno.webp" alt="Keno">
-<div class="casino-game-main"><h3>Keno</h3></div>
-</button>
+            </div>
 
-<button class="casino-game-card" data-category="cards" data-game="blackjack">
-<img src="/assets/images/casino/blackjack.webp" alt="Blackjack">
-<div class="casino-game-main"><h3>Blackjack</h3></div>
-</button>
+            <div class="casino-top-stats">
 
-<button class="casino-game-card" data-category="cards" data-game="baccarat">
-<img src="/assets/images/casino/baccarat.webp" alt="Baccarat">
-<div class="casino-game-main"><h3>Baccarat</h3></div>
-</button>
+                <div class="casino-stat">
 
-<button class="casino-game-card" data-category="roulette" data-game="roue">
-<img src="/assets/images/casino/roue.webp" alt="Roue">
-<div class="casino-game-main"><h3>Roue</h3></div>
-</button>
+                    <span>Wallet</span>
 
-<button class="casino-game-card" data-category="slots" data-game="chilli-respin">
-<img src="/assets/images/casino/chilli-respin.webp" alt="Chilli Respin">
-<div class="casino-game-main"><h3>Chilli Respin</h3></div>
-</button>
+                    <strong id="casinoWalletText">
 
-<button class="casino-game-card" data-category="slots" data-game="mighty-masks">
-<img src="/assets/images/casino/mighty-masks.webp" alt="Mighty Masks">
-<div class="casino-game-main"><h3>Mighty Masks</h3></div>
-</button>
+                        0 BX
 
-<button class="casino-game-card" data-category="slots" data-game="sugar-rush">
-<img src="/assets/images/casino/sugar-rush.webp" alt="Sugar Rush">
-<div class="casino-game-main"><h3>Sugar Rush</h3></div>
-</button>
+                    </strong>
 
-</div>
+                </div>
 
-<section class="casino-tournaments">
-<div class="casino-section-head"><h3>Tournaments</h3></div>
-<div id="casinoTournamentList"></div>
-</section>
+                <div class="casino-stat">
 
-<section class="casino-rain">
-<div class="casino-section-head"><h3>Rain & Tips</h3></div>
-<div class="casino-rain-grid">
-<button id="joinRainBtn">Join Rain</button>
-<button id="claimRainBtn">Claim Rain</button>
-<button id="sendTipBtn">Send Tip</button>
-</div>
-</section>
+                    <span>Players</span>
 
-<section class="casino-leaderboard">
-<div class="casino-section-head"><h3>Leaderboard</h3></div>
-<div id="casinoLeaderboard"></div>
-</section>
+                    <strong id="casinoOnlineText">
 
-<div class="casino-bigwins">
-<h3>BIG WINS</h3>
-<div id="bigWinsTrack"></div>
+                        0
+
+                    </strong>
+
+                </div>
+
+                <div class="casino-stat">
+
+                    <span>Volume</span>
+
+                    <strong id="casinoVolumeText">
+
+                        0 BX
+
+                    </strong>
+
+                </div>
+
+                <div class="casino-stat">
+
+                    <span>Games</span>
+
+                    <strong id="casinoGamesCount">
+
+                        18
+
+                    </strong>
+
+                </div>
+
+            </div>
+
+        </header>
+
+        <!-- ========================================= -->
+        <!-- CASINO ECONOMY                           -->
+        <!-- ========================================= -->
+
+        <section class="casino-economy">
+
+            <div class="casino-economy-card">
+
+                <span>BX Balance</span>
+
+                <strong id="casinoBXBalance">
+
+                    0.0000
+
+                </strong>
+
+            </div>
+
+            <div class="casino-economy-card">
+
+                <span>XBC Balance</span>
+
+                <strong id="casinoXBCBalance">
+
+                    0.00
+
+                </strong>
+
+            </div>
+
+            <div class="casino-economy-card">
+
+                <span>BX Min Bet</span>
+
+                <strong>
+
+                    0.1 BX
+
+                </strong>
+
+            </div>
+
+            <div class="casino-economy-card">
+
+                <span>XBC Min Bet</span>
+
+                <strong>
+
+                    10 XBC
+
+                </strong>
+
+            </div>
+
+        </section>
+
+        <!-- ========================================= -->
+        <!-- CURRENCY SWITCHER                        -->
+        <!-- ========================================= -->
+
+        <section class="casino-currency-switcher">
+
+            <button
+                class="casino-currency active"
+                data-currency="BX">
+
+                BX
+
+            </button>
+
+            <button
+                class="casino-currency"
+                data-currency="XBC">
+
+                XBC
+
+            </button>
+
+        </section>
+
+        <!-- ========================================= -->
+        <!-- PROVABLY FAIR LEDGER                     -->
+        <!-- ========================================= -->
+
+        <section class="casino-ledger">
+
+            <div class="ledger-head">
+
+                <h3>
+
+                    Provably Fair Ledger
+
+                </h3>
+
+                <span class="fair-badge">
+
+                    VERIFIED
+
+                </span>
+
+            </div>
+
+            <div class="ledger-grid">
+
+                <div>
+
+                    <span>Server Seed</span>
+
+                    <strong id="serverSeed">
+
+                        Encrypted
+
+                    </strong>
+
+                </div>
+
+                <div>
+
+                    <span>Client Seed</span>
+
+                    <strong id="clientSeed">
+
+                        BX-CLIENT
+
+                    </strong>
+
+                </div>
+
+                <div>
+
+                    <span>Nonce</span>
+
+                    <strong id="nonceSeed">
+
+                        0
+
+                    </strong>
+
+                </div>
+
+                <div>
+
+                    <span>Hash</span>
+
+                    <strong id="hashSeed">
+
+                        SHA256
+
+                    </strong>
+
+                </div>
+
+            </div>
+
+        </section>
+
+        <!-- ========================================= -->
+        <!-- LIVE FEED                                -->
+        <!-- ========================================= -->
+
+        <section class="casino-feed">
+
+            <span>
+
+                LIVE FEED
+
+            </span>
+
+            <div id="casinoTickerTrack"></div>
+
+        </section>
+
+        <!-- ========================================= -->
+        <!-- JACKPOTS                                 -->
+        <!-- ========================================= -->
+
+        <section class="casino-jackpots">
+
+            <div class="casino-section-head">
+
+                <h3>
+
+                    Progressive Jackpots
+
+                </h3>
+
+            </div>
+
+            <div class="casino-jackpot-grid">
+
+                <div class="casino-jackpot-card">
+
+                    <span>Crash</span>
+
+                    <strong id="jackpotCrash">
+
+                        0 BX
+
+                    </strong>
+
+                </div>
+
+                <div class="casino-jackpot-card">
+
+                    <span>Mines</span>
+
+                    <strong id="jackpotMines">
+
+                        0 BX
+
+                    </strong>
+
+                </div>
+
+                <div class="casino-jackpot-card">
+
+                    <span>Plinko</span>
+
+                    <strong id="jackpotPlinko">
+
+                        0 BX
+
+                    </strong>
+
+                </div>
+
+            </div>
+
+        </section>
+
+        <!-- ========================================= -->
+        <!-- FEATURED GAMES                           -->
+        <!-- ========================================= -->
+
+        <section class="casino-featured">
+
+            <div class="casino-section-head">
+
+                <h3>
+
+                    Featured Games
+
+                </h3>
+
+            </div>
+
+            <div
+                id="casinoFeaturedTrack"
+                class="casino-featured-track">
+
+            </div>
+
+        </section>
+
+        <!-- ========================================= -->
+        <!-- SEARCH                                   -->
+        <!-- ========================================= -->
+
+        <section class="casino-search">
+
+            <input
+                id="casinoSearch"
+                type="search"
+                placeholder="Search Games">
+
+        </section>
+
+        <!-- ========================================= -->
+        <!-- CATEGORY STATS                           -->
+        <!-- ========================================= -->
+
+        <section class="casino-category-stats">
+
+            <div>
+
+                <span>Originals</span>
+
+                <strong>8</strong>
+
+            </div>
+
+            <div>
+
+                <span>Arcade</span>
+
+                <strong>4</strong>
+
+            </div>
+
+            <div>
+
+                <span>Cards</span>
+
+                <strong>2</strong>
+
+            </div>
+
+            <div>
+
+                <span>Slots</span>
+
+                <strong>3</strong>
+
+            </div>
+
+            <div>
+
+                <span>Roulette</span>
+
+                <strong>1</strong>
+
+            </div>
+
+        </section>
+
+        <!-- ========================================= -->
+        <!-- FILTERS                                  -->
+        <!-- ========================================= -->
+
+        <div class="casino-filter">
+
+            <button
+                class="casino-filter-btn active"
+                data-tab="all">
+
+                All
+
+            </button>
+
+            <button
+                class="casino-filter-btn"
+                data-tab="originals">
+
+                Originals
+
+            </button>
+
+            <button
+                class="casino-filter-btn"
+                data-tab="arcade">
+
+                Arcade
+
+            </button>
+
+            <button
+                class="casino-filter-btn"
+                data-tab="slots">
+
+                Slots
+
+            </button>
+
+            <button
+                class="casino-filter-btn"
+                data-tab="cards">
+
+                Cards
+
+            </button>
+
+            <button
+                class="casino-filter-btn"
+                data-tab="roulette">
+
+                Roulette
+
+            </button>
+
+        </div>
+
+        <!-- ========================================= -->
+        <!-- GAMES GRID                               -->
+        <!-- GENERATED BY casino.js                   -->
+        <!-- ========================================= -->
+
+        <div
+            id="casinoGamesGrid"
+            class="casino-games-grid">
+
+        </div>
+
+        <!-- ========================================= -->
+        <!-- TOURNAMENTS                              -->
+        <!-- ========================================= -->
+
+        <section class="casino-tournaments">
+
+            <div class="casino-section-head">
+
+                <h3>
+
+                    Tournaments
+
+                </h3>
+
+                <span id="tournamentPlayers">
+
+                    0 Players
+
+                </span>
+
+            </div>
+
+            <div id="casinoTournamentList"></div>
+
+        </section>
+
+        <!-- ========================================= -->
+        <!-- LIVE WINNERS                             -->
+        <!-- ========================================= -->
+
+        <section class="casino-live-winners">
+
+            <div class="casino-section-head">
+
+                <h3>
+
+                    Live Winners
+
+                </h3>
+
+            </div>
+
+            <div id="casinoLiveWinners"></div>
+
+        </section>
+
+        <!-- ========================================= -->
+        <!-- RAIN & TIPS                              -->
+        <!-- ========================================= -->
+
+        <section class="casino-rain">
+
+            <div class="casino-section-head">
+
+                <h3>
+
+                    Rain & Tips
+
+                </h3>
+
+            </div>
+
+            <div class="casino-rain-grid">
+
+                <button id="joinRainBtn">
+
+                    Join Rain
+
+                </button>
+
+                <button id="claimRainBtn">
+
+                    Claim Rain
+
+                </button>
+
+                <button id="sendTipBtn">
+
+                    Send Tip
+
+                </button>
+
+            </div>
+
+        </section>
+
+        <!-- ========================================= -->
+        <!-- LEADERBOARD                              -->
+        <!-- ========================================= -->
+
+        <section class="casino-leaderboard">
+
+            <div class="casino-section-head">
+
+                <h3>
+
+                    Leaderboard
+
+                </h3>
+
+                <span>
+
+                    Top 100
+
+                </span>
+
+            </div>
+
+            <div id="casinoLeaderboard"></div>
+
+        </section>
+
+        <!-- ========================================= -->
+        <!-- BIG WINS                                 -->
+        <!-- ========================================= -->
+
+        <section class="casino-bigwins">
+
+            <div class="casino-section-head">
+
+                <h3>
+
+                    Big Wins
+
+                </h3>
+
+            </div>
+
+            <div id="bigWinsTrack"></div>
+
+        </section>
+
+        <!-- ========================================= -->
+        <!-- GAME VIEW                                -->
+        <!-- ========================================= -->
+
+        <div
+            id="casinoGameView"
+            class="hidden">
+
+        </div>
+
     </div>
+
+    </section>
