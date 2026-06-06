@@ -78,10 +78,7 @@ online:false,
 activeGame:null,
 activeView:"lobby",
 
-wallet:{
-BX:0,
-XBC:0
-},
+wallet:{BX:0,XBC:0},
 
 user:{
 id:null,
@@ -128,8 +125,7 @@ socket:false,
 pixi:false,
 audio:false,
 charts:false
-}
-};
+}};
 
 /*=========================================================
 SETTINGS
@@ -157,9 +153,7 @@ localStorage.getItem(STORAGE.SETTINGS)||"{}"
 );
 Object.assign(this,data);
 }catch(error){
-console.warn("[SETTINGS]",error);}
-}
-};
+console.warn("[SETTINGS]",error);}}};
 
 /*=========================================================
 PERSISTENCE
@@ -176,40 +170,32 @@ analytics:STATE.analytics}));
 loadState(){
 try{
 const data=JSON.parse(
-localStorage.getItem(STORAGE.STATE)||"{}"
-);
+localStorage.getItem(STORAGE.STATE)||"{}");
 
 if(data.currency){
-STATE.currency=data.currency;
-}
+STATE.currency=data.currency;}
 
 if(data.analytics){
 STATE.analytics=data.analytics;}
 
 }catch(error){
-console.warn("[STATE]",error);}
-},
+console.warn("[STATE]",error);}},
 
 saveWallet(){
 localStorage.setItem(
 STORAGE.WALLET,
-JSON.stringify(STATE.wallet)
-);
-},
+JSON.stringify(STATE.wallet));},
 
 loadWallet(){
 try{
 const data=JSON.parse(
-localStorage.getItem(STORAGE.WALLET)||"{}"
-);
+localStorage.getItem(STORAGE.WALLET)||"{}");
 
 STATE.wallet.BX=Number(data.BX||0);
 STATE.wallet.XBC=Number(data.XBC||0);
 
 }catch(error){
-console.warn("[WALLET]",error);}
-}
-};
+console.warn("[WALLET]",error);}}};
 
 /*=========================================================
 WALLET ENGINE
@@ -218,8 +204,7 @@ export const Wallet={
 
 get(currency=STATE.currency){
 return Number(
-STATE.wallet[currency]||0);
-},
+STATE.wallet[currency]||0);},
 
 set(currency,value){
 STATE.wallet[currency]=Number(
@@ -229,8 +214,7 @@ Persistence.saveWallet();
 
 BUS.emit("wallet:update",STATE.wallet);
 
-return true;
-},
+return true;},
 
 credit(currency,amount){
 amount=Number(amount||0);
@@ -239,20 +223,15 @@ STATE.wallet[currency]+=amount;
 
 Persistence.saveWallet();
 
-BUS.emit(
-"wallet:update",
-STATE.wallet
-);
+BUS.emit("wallet:update",STATE.wallet);
 
-return true;
-},
+return true;},
 
 debit(currency,amount){
 amount=Number(amount||0);
 
 if(STATE.wallet[currency]<amount){
-return false;
-}
+return false;}
 
 STATE.wallet[currency]-=amount;
 
@@ -260,8 +239,7 @@ Persistence.saveWallet();
 
 BUS.emit("wallet:update",STATE.wallet);
 return true;
-}
-};
+}};
 
 /*=========================================================
 CURRENCY ENGINE
@@ -288,11 +266,7 @@ return true;},
 get(){return STATE.currency;},
 
 minBet(){
-return STATE.currency==="XBC"
-?10
-:0.1;
-}
-};
+return STATE.currency==="XBC"?10:0.1;}};
 
 /*=========================================================
 GAME REGISTRY
@@ -304,24 +278,18 @@ games:[],
 init(){
 
 this.games=
-Array.isArray(CASINO_GAMES)
-?CASINO_GAMES
-:[];
+Array.isArray(CASINO_GAMES)?CASINO_GAMES:[];
 
 STATE.casino.games=this.games;
 
 STATE.casino.featured=
 this.games.filter(game=>game.featured);
 
-STATE.casino.providers=[
-...new Set(
-this.games.map(g=>g.provider||"BLOXIO"))
-];
+STATE.casino.providers=[...new Set(
+this.games.map(g=>g.provider||"BLOXIO"))];
 },
 
-all(){
-return this.games;
-},
+all(){return this.games;},
 
 featured(){
 return STATE.casino.featured;
@@ -332,33 +300,27 @@ return this.games.find(
 game=>game.id===id);
 },
 
-search(term=""){
-term=term.toLowerCase();
+search(term=""){term=term.toLowerCase();
 
 return this.games.filter(game=>
 game.name?.toLowerCase().includes(term)||
 game.category?.toLowerCase().includes(term)||
 game.provider?.toLowerCase().includes(term)
-);
-},
+);},
 
 category(category){
 
 if(category==="all"){
-return this.games;
-}
+return this.games;}
 
 return this.games.filter(
-game=>game.category===category
-);
-},
+game=>game.category===category);},
 
 provider(provider){
 
 if(provider==="all"){return this.games;}
 
-return this.games.filter(game=>game.provider===provider);}
-};
+return this.games.filter(game=>game.provider===provider);}};
 
 /*=========================================================
 ANALYTICS
@@ -368,8 +330,7 @@ export const Analytics={
 bet(amount){
 STATE.analytics.bets++;
 STATE.analytics.wagered+=
-Number(amount||0);
-},
+Number(amount||0);},
 
 win(amount){
 STATE.analytics.wins++;
@@ -389,9 +350,7 @@ STATE.analytics.profit=
 STATE.analytics.won-
 STATE.analytics.lost;
 
-Persistence.saveState();
-}
-};
+Persistence.saveState();}};
 
 /*=========================================================
 CASINO CORE
@@ -413,8 +372,7 @@ Settings.currency||"BX";
 
 STATE.booted=true;
 BUS.emit("core:booted",STATE);
-console.log("[CASINO V3.1] BOOTED");
-},
+console.log("[CASINO V3.1] BOOTED");},
 
 start(){
 
@@ -423,20 +381,15 @@ if(STATE.ready){return;}
 this.boot();
 
 STATE.ready=true;
-
 BUS.emit("casino:ready",STATE);
-
-console.log("[CASINO V3.1] READY");
-},
+console.log("[CASINO V3.1] READY");},
 
 destroy(){
 
 BUS.clear();
-
 STATE.ready=false;
 STATE.booted=false;
-}
-};
+}};
 
 /*=========================================================
 GLOBALS
@@ -516,9 +469,7 @@ alt="${game.name}">
 </div>
 </div>
 
-</button>
-`;
-},
+</button>`;},
 
 featured(game){
 return`
@@ -539,9 +490,7 @@ alt="${game.name}">
 
 </div>
 
-</button>
-`;
-},
+</button>`;},
 
 feed(row){
 return`
@@ -550,11 +499,7 @@ return`
 <span>${row.user}</span>
 <span>${row.game}</span>
 
-<strong>
-${row.amount}
-${row.currency||"BX"}
-</strong>
-
+<strong>${row.amount}${row.currency||"BX"}</strong>
 </div>
 `;
 },
@@ -566,10 +511,7 @@ return`
 <span>${row.user}</span>
 <span>${row.game}</span>
 
-<strong>
-${row.amount}
-${row.currency||"BX"}
-</strong>
+<strong>${row.amount}${row.currency||"BX"}</strong>
 </div>
 `;
 },
@@ -606,11 +548,7 @@ VIRTUAL LIST
 =========================================================*/
 export const VirtualList={
 
-render(
-root,
-items,
-renderer
-){
+render(root,items,renderer){
 
 if(!root)return;
 
@@ -632,8 +570,7 @@ update(){
 
 if(DOM.bxBalance){
 
-DOM.bxBalance.textContent=
-Wallet
+DOM.bxBalance.textContent=Wallet
 .get("BX")
 .toFixed(4);
 
@@ -641,18 +578,13 @@ Wallet
 
 if(DOM.xbcBalance){
 
-DOM.xbcBalance.textContent=
-Wallet
+DOM.xbcBalance.textContent=Wallet
 .get("XBC")
 .toFixed(2);
 
-}}
+}}};
 
-};
-
-BUS.on(
-"wallet:update",
-()=>WalletUI.update());
+BUS.on("wallet:update",()=>WalletUI.update());
 
 /*=========================================================
 CATEGORY UI
@@ -672,38 +604,23 @@ g=>g.category===name
 
 if(DOM.catOriginals){
 
-DOM.catOriginals.textContent=
-count("originals");
-
-}
+DOM.catOriginals.textContent=count("originals");}
 
 if(DOM.catArcade){
 
-DOM.catArcade.textContent=
-count("arcade");
-
-}
+DOM.catArcade.textContent=count("arcade");}
 
 if(DOM.catCards){
 
-DOM.catCards.textContent=
-count("cards");
-
-}
+DOM.catCards.textContent=count("cards");}
 
 if(DOM.catSlots){
 
-DOM.catSlots.textContent= 
-count("slots");
-
-}
+DOM.catSlots.textContent= count("slots");}
 
 if(DOM.catRoulette){
 
-DOM.catRoulette.textContent=
-count("roulette");
-
-}}
+DOM.catRoulette.textContent=count("roulette");}}
 
 };
 
@@ -715,8 +632,7 @@ export const GamesUI={
 render(
 games=Registry.all()){
 
-VirtualList.render(
-DOM.gamesGrid,games,Templates.game);
+VirtualList.render(DOM.gamesGrid,games,Templates.game);
 
 },
 
@@ -761,10 +677,7 @@ event.target
 STATE.filters.search=value;
 
 GamesUI.render(
-Registry.search(value)
-);}
-
-);}
+Registry.search(value));});}
 
 };
 
@@ -780,19 +693,15 @@ init() {$$(".casino-filter-btn")
 btn.addEventListener("click",()=>{
 $$(".casino-filter-btn")
 
-.forEach(
-b=>b.classList.remove("active"));
+.forEach(b=>b.classList.remove("active"));
 
 btn.classList.add("active");
 
-const category=
-btn.dataset.tab;
+const category=btn.dataset.tab;
 
-STATE.filters.category=
-category;
+STATE.filters.category=category;
 
-GamesUI.render(
-Registry.category(category));}
+GamesUI.render(Registry.category(category));}
 
 );});
 
@@ -813,8 +722,7 @@ return;
 
 STATE.activeGame=game.id;
 
-DOM.gameView?.classList
-.remove("hidden");
+DOM.gameView?.classList.remove("hidden");
 
 DOM.gameContainer.innerHTML=`
 
@@ -833,20 +741,14 @@ DOM.gameContainer.innerHTML=`
 
 `;
 
-BUS.emit(
-"game:open",
-game);
-
-},
+BUS.emit("game:open",game);},
 
 close(){
 
 STATE.activeGame=
 null;
 
-DOM.gameView
-?.classList
-.add("hidden");
+DOM.gameView?.classList.add("hidden");
 
 if(DOM.gameContainer){
 
@@ -867,8 +769,7 @@ event=>{
 
 const game=
 
-event.target.closest(
-".casino-game-card");
+event.target.closest(".casino-game-card");
 
 if(game){
 
@@ -879,8 +780,7 @@ game.dataset.game);
 
 const featured=
 
-event.target.closest(
-".casino-featured-card");
+event.target.closest(".casino-featured-card");
 
 if(featured){
 
@@ -890,9 +790,7 @@ featured.dataset.game);}
 if(event.target.id==="closeGame"
 ){GameView.close();}}
 
-);}
-
-};
+);}};
 
 /*=========================================================
 LIVE FEED UI
@@ -904,14 +802,9 @@ render(){
 VirtualList.render(
 DOM.liveFeed,
 STATE.feeds.live,
-Templates.feed);}
+Templates.feed);}};
 
-};
-
-BUS.on(
-"feed:update",
-()=>FeedUI.render()
-);
+BUS.on("feed:update",()=>FeedUI.render());
 
 /*=========================================================
 WINNERS UI
@@ -923,14 +816,9 @@ render(){
 VirtualList.render(
 DOM.liveWinners,
 STATE.feeds.winners,
-Templates.winner);}
+Templates.winner);}};
 
-};
-
-BUS.on(
-"winner:update",
-()=>WinnersUI.render()
-);
+BUS.on("winner:update",()=>WinnersUI.render());
 
 /*=========================================================
 LEADERBOARD UI
@@ -965,9 +853,7 @@ Templates.tournament);}
 
 };
 
-BUS.on("tournament:update",
-()=>TournamentUI.render()
-);
+BUS.on("tournament:update",()=>TournamentUI.render());
 
 /*=========================================================
 JACKPOT UI
@@ -1005,16 +891,11 @@ if(DOM.jackpotWheel){
 DOM.jackpotWheel.textContent=
 (jp.wheel||0).toFixed(0);
 
-}
-
-}
+}}
 
 };
 
-BUS.on(
-"jackpot:update",
-()=>JackpotUI.update()
-);
+BUS.on("jackpot:update",()=>JackpotUI.update());
 
 /*=========================================================
 STATS UI
@@ -1025,8 +906,7 @@ update(){
 
 if(DOM.gamesCount){
 
-DOM.gamesCount.textContent=
-Registry.all().length;
+DOM.gamesCount.textContent=Registry.all().length;
 
 }
 
@@ -1042,38 +922,31 @@ GSAP BRIDGE
 =========================================================*/
 export const AnimationUI={
 
-enabled(){
-return typeof gsap!=="undefined";
-},
+enabled(){return typeof gsap!=="undefined";},
 
 cards(){
 
 if(!this.enabled())
 return;
 
-gsap.from(
-".casino-game-card",
+gsap.from(".casino-game-card",
 {
 opacity:0,y:30,
 duration:0.4,
-stagger:0.02});
-},
+stagger:0.02});},
 
 featured(){
 
 if(!this.enabled())
 return;
 
-gsap.from(
-".casino-featured-card",
+gsap.from(".casino-featured-card",
 {
 opacity:0,
 scale:0.9,
 duration:0.5,
 stagger:0.05
-});}
-
-};
+});}};
 
 /*=========================================================
 PIXI BRIDGE
@@ -1082,8 +955,7 @@ export const PixiBridge={
 
 create(container){
 
-if(typeof PIXI==="undefined"
-){return null;}
+if(typeof PIXI==="undefined"){return null;}
 
 const app=
 new PIXI.Application({
@@ -1134,11 +1006,7 @@ return;
 }
 
 this.socket=io({
-transports:[
-"websocket",
-"polling"
-]
-});
+transports:["websocket","polling"]});
 
 this.bind();
 
@@ -1153,113 +1021,65 @@ this.socket.on(
 ()=>{
 this.connected=true;
 STATE.runtime.socket=true;
-BUS.emit("socket:connected");
-}
-);
+BUS.emit("socket:connected");});
 
-this.socket.on(
-"disconnect",
-()=>{
+this.socket.on("disconnect",()=>{
 this.connected=false;
 STATE.runtime.socket=false;
-BUS.emit("socket:disconnected");
-}
-);
+BUS.emit("socket:disconnected");});
 
-this.socket.on(
-"casino:online",
-count=>{
+this.socket.on("casino:online",count=>{
 STATE.casino.onlinePlayers=count;
-BUS.emit("online:update",count);
-}
-);
+BUS.emit("online:update",count);});
 
-this.socket.on(
-"casino:feed",
-payload=>{
+this.socket.on("casino:feed",payload=>{
 
 STATE.feeds.live.unshift(payload);
-
 STATE.feeds.live=
 STATE.feeds.live.slice(0,100);
 
 BUS.emit("feed:update",payload);
 
-}
-);
+});
 
-this.socket.on(
-"casino:winner",
-payload=>{
+this.socket.on("casino:winner",payload=>{
 
 STATE.feeds.winners.unshift(payload);
-
 STATE.feeds.winners=
 STATE.feeds.winners.slice(0,100);
 
-BUS.emit("winner:update",payload);
+BUS.emit("winner:update",payload);});
 
-}
-);
-
-this.socket.on(
-"casino:bigwin",
-payload=>{
+this.socket.on("casino:bigwin",payload=>{
 
 STATE.feeds.bigWins.unshift(payload);
-
 STATE.feeds.bigWins=
 STATE.feeds.bigWins.slice(0,50);
 
-BUS.emit("bigwin:update",payload);
+BUS.emit("bigwin:update",payload);});
 
-}
-);
-
-this.socket.on(
-"casino:leaderboard",
-rows=>{
+this.socket.on("casino:leaderboard",rows=>{
 
 STATE.casino.leaderboard=
 rows;
 
-BUS.emit("leaderboard:update",rows);
+BUS.emit("leaderboard:update",rows);});
 
-}
-);
+this.socket.on("casino:jackpot",payload=>{
 
-this.socket.on(
-"casino:jackpot",
-payload=>{
+Object.assign(STATE.casino.jackpots,payload);
 
-Object.assign(
-STATE.casino.jackpots,
-payload
-);
+BUS.emit("jackpot:update",payload);});
 
-BUS.emit("jackpot:update",payload);
+this.socket.on("casino:tournaments",payload=>{
 
-}
-);
+STATE.casino.tournaments=payload;
 
-this.socket.on(
-"casino:tournaments",
-payload=>{
+BUS.emit("tournament:update",payload);});
 
-STATE.casino.tournaments=
-payload;
+this.socket.on("casino:rain",payload=>{
 
-BUS.emit("tournament:update",payload);
-
-});
-
-this.socket.on(
-"casino:rain",
-payload=>{
-
-BUS.emit("rain:update",payload);
-
-});
+BUS.emit("rain:update",payload);});
 
 },
 
@@ -1268,14 +1088,7 @@ emit(event,data={}){
 if(!this.connected)
 return;
 
-this.socket.emit(
-event,
-data
-);
-
-}
-
-};
+this.socket.emit(event,data);}};
 
 /*=========================================================
 LIVE FEED RUNTIME
@@ -1298,35 +1111,24 @@ return;
 
 const game=
 
-games[
-randomInt(0,games.length-1)
-];
+games[randomInt(0,games.length-1)];
 
 STATE.feeds.live.unshift({
 
-user:
-"Player"+
-randomInt(1000,9999),
+user:"Player"+randomInt(1000,9999),
 
-game:
-game.name,
+game:game.name,
 
-amount:
-randomInt(10,5000),
+amount:randomInt(10,5000),
 
-currency:
-randomInt(0,1)?"BX":"XBC"});
+currency:randomInt(0,1)?"BX":"XBC"});
 
 STATE.feeds.live=
 STATE.feeds.live.slice(0,50);
 
-BUS.emit("feed:update");
+BUS.emit("feed:update");},3000);
 
-},3000);
-
-}
-
-};
+}};
 
 /*=========================================================
 BIG WINS RUNTIME
@@ -1345,39 +1147,25 @@ return;
 
 const game=
 
-games[
-randomInt(0,games.length-1)
-];
+games[randomInt(0,games.length-1)];
 
 const payload={
 
-user:"Whale"+
-randomInt(100,999),
+user:"Whale"+randomInt(100,999),
 
-game:
-game.name,
+game:game.name,
 
-amount:
-randomInt(1000,50000),
+amount:randomInt(1000,50000),
 
-multiplier:
-random(5,150).toFixed(2)
-
-};
+multiplier:random(5,150).toFixed(2)};
 
 STATE.feeds.bigWins.unshift(payload);
-
 STATE.feeds.bigWins=
-STATE.feeds.bigWins.slice(
-0,20);
+STATE.feeds.bigWins.slice(0,20);
 
 BUS.emit("bigwin:update",payload);
 
-},12000);
-
-}
-
-};
+},12000);}};
 
 /*=========================================================
 JACKPOT RUNTIME
@@ -1405,15 +1193,9 @@ STATE.casino.jackpots
 
 STATE.casino.jackpots[key]+=
 
-randomInt(1,25);
+randomInt(1,25);}
 
-}
-
-BUS.emit("jackpot:update");
-
-},5000);}
-
-};
+BUS.emit("jackpot:update");},5000);}};
 
 /*=========================================================
 TOURNAMENT RUNTIME
@@ -1463,19 +1245,15 @@ create(){
 
 this.current={
 
-amount:
-randomInt(100,10000),
+amount:randomInt(100,10000),
 
-currency:
-randomInt(0,1)?"BX":"XBC",
+currency:randomInt(0,1)?"BX":"XBC",
 
 players:0,
 
 expires:Date.now()+300000};
 
-BUS.emit("rain:update",this.current);
-
-},
+BUS.emit("rain:update",this.current);},
 
 join(){
 
@@ -1484,9 +1262,7 @@ return;
 
 this.current.players++;
 
-BUS.emit("rain:joined",this.current);}
-
-};
+BUS.emit("rain:joined",this.current);}};
 
 /*=========================================================
 LEADERBOARD RUNTIME
@@ -1502,18 +1278,13 @@ let i=1; i<=100; i++){
 
 rows.push({ rank:i,
 
-username:
-"Player"+
-randomInt(1000,9999),
+username:"Player"+randomInt(1000,9999),
 
-profit:
-randomInt(1000,1000000),
+profit:randomInt(1000,1000000),
 
-wagered:
-randomInt(10000,10000000)});}
+wagered:randomInt(10000,10000000)});}
 
-STATE.casino.leaderboard=
-rows;
+STATE.casino.leaderboard=rows;
 
 BUS.emit("leaderboard:update",rows);},
 
@@ -1523,9 +1294,7 @@ this.generate();
 
 setInterval(
 ()=>this.generate(),
-60000);
-
-}};
+60000);}};
 
 /*=========================================================
 CRASH GAME
@@ -1563,11 +1332,7 @@ return this.multiplier;
 
 stop(){
 
-this.running=false;
-
-}
-
-};
+this.running=false;}};
 
 /*=========================================================
 MINES GAME
@@ -1589,9 +1354,7 @@ continue;
 
 board[index]=true; count++;}
 
-return board;
-
-}};
+return board;}};
 
 /*=========================================================
 PLINKO GAME
@@ -1626,9 +1389,7 @@ export const CoinflipGame={
 
 flip(){
 
-return Math.random()>0.5?"heads":"tails";}
-
-};
+return Math.random()>0.5?"heads":"tails";}};
 
 /*=========================================================
 LIMBO GAME
@@ -1682,9 +1443,7 @@ return HiloGame;
 default:
 return null;
 
-}}
-
-};
+}}};
 
 /*=========================================================
 BET ENGINE
@@ -1696,14 +1455,11 @@ place(amount){
 amount=Number(amount);
 
 if(
-amount<
-Currency.minBet()
-){
+amount<Currency.minBet()){
 return false;}
 
 if(
-!Wallet.debit(STATE.currency,amount)
-){
+!Wallet.debit(STATE.currency,amount)){
 return false;}
 
 Analytics.bet(amount);
@@ -1719,17 +1475,13 @@ Wallet.credit(STATE.currency,amount);
 
 Analytics.win(amount);
 
-BUS.emit("bet:won",amount);
-
-},
+BUS.emit("bet:won",amount);},
 
 lose(amount){
 
 Analytics.loss(amount);
 
-BUS.emit("bet:lost",amount);}
-
-};
+BUS.emit("bet:lost",amount);}};
 
 /*=========================================================
 REALTIME RUNTIME
@@ -1761,8 +1513,7 @@ init(){
 
 if(typeof PIXI==="undefined"){
 console.warn("[PIXI] Missing");
-return;
-}
+return;}
 
 this.enabled=true;
 STATE.runtime.pixi=true;
@@ -1771,16 +1522,11 @@ console.log("[PIXI] Ready");},
 
 create(id,container){
 
-if(
-!this.enabled||
-!container
-){
-return null;
-}
+if(!this.enabled||!container){
+return null;}
 
 if(this.apps.has(id)){
-return this.apps.get(id);
-}
+return this.apps.get(id);}
 
 const app=new PIXI.Application({
 resizeTo:container,
@@ -1788,8 +1534,7 @@ antialias:true,
 backgroundAlpha:0,
 autoDensity:true,
 resolution:
-window.devicePixelRatio||1
-});
+window.devicePixelRatio||1});
 
 container.appendChild(app.view);
 
@@ -1816,9 +1561,7 @@ destroyAll(){
 
 for(const id of this.apps.keys()){
 
-this.destroy(id);}
-
-}};
+this.destroy(id);}}};
 
 /*=========================================================
 PARTICLE FX
@@ -1859,9 +1602,7 @@ duration:1.2,onComplete(){
 
 app.stage.removeChild(particle);}});
 
-}}
-
-};
+}}};
 
 /*=========================================================
 CRASH PIXI
