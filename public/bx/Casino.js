@@ -2425,7 +2425,6 @@ PerformanceEngine.start();
 Hotkeys.init();
 VisibilityEngine.init();
 MobileEngine.init();
-MobileEngine.init();
 
 $("#joinRainBtn")?.addEventListener(
 "click",()=>RainRuntime.join());
