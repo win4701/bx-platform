@@ -448,12 +448,6 @@ window.CasinoRegistry=Registry;
 window.CasinoBus=BUS;
 
 /*=========================================================
-AUTO START
-=========================================================*/
-document.addEventListener(
-"DOMContentLoaded",()=>{CasinoCore.start();});
-
-/*=========================================================
 BLOXIO CASINO V3.2 - UI RENDERER
 Requires: V3.1 Core Foundation
 =========================================================*/
@@ -910,7 +904,7 @@ render(){
 VirtualList.render(
 DOM.liveFeed,
 STATE.feeds.live,
-Templates.fee);}
+Templates.feed);}
 
 };
 
