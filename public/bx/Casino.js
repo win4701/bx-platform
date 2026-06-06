@@ -1448,14 +1448,9 @@ name:"VIP Championship",
 prize:50000,
 players:0,
 endsAt:
-Date.now()+259200000
-}
+Date.now()+259200000}];
 
-];
-
-BUS.emit("tournament:update");}
-
-};
+BUS.emit("tournament:update");}};
 
 /*=========================================================
 RAIN RUNTIME
@@ -1503,14 +1498,9 @@ generate(){
 const rows=[];
 
 for(
-let i=1;
-i<=100;
-i++
-){
+let i=1; i<=100; i++){
 
-rows.push({
-
-rank:i,
+rows.push({ rank:i,
 
 username:
 "Player"+
@@ -1520,16 +1510,12 @@ profit:
 randomInt(1000,1000000),
 
 wagered:
-randomInt(10000,10000000)});
-
-}
+randomInt(10000,10000000)});}
 
 STATE.casino.leaderboard=
 rows;
 
-BUS.emit("leaderboard:update",rows);
-
-},
+BUS.emit("leaderboard:update",rows);},
 
 start(){
 
@@ -1537,12 +1523,9 @@ this.generate();
 
 setInterval(
 ()=>this.generate(),
-60000
-);
+60000);
 
-}
-
-};
+}};
 
 /*=========================================================
 CRASH GAME
@@ -1564,20 +1547,11 @@ return;
 
 this.multiplier+=0.01;
 
-BUS.emit(
-"crash:update",
-this.multiplier
-);
+BUS.emit("crash:update",this.multiplier);
 
-requestAnimationFrame(
-tick
-);
+requestAnimationFrame(tick);};
 
-};
-
-tick();
-
-},
+tick();},
 
 cashout(){
 
@@ -1606,66 +1580,44 @@ const board=Array(tiles).fill(false);
 
 let count=0;
 
-while(
-count<mines
-){
+while(count<mines){
 
 const index=randomInt(0,tiles-1);
 
 if(board[index])
 continue;
 
-board[index]=true;
-count++;
-
-}
+board[index]=true; count++;}
 
 return board;
 
-}
-
-};
+}};
 
 /*=========================================================
 PLINKO GAME
 =========================================================*/
+
 export const PlinkoGame={
 
-drop(){
+drop(){const payouts=[0.2,0.5,1,2,5,10,25];
 
-const payouts=[0.2,0.5,1,2,5,10,25];
-
-return payouts[randomInt(0,payouts.length-1)];}
-
-};
+return payouts[randomInt(0,payouts.length-1)];}};
 
 /*=========================================================
 WHEEL GAME
 =========================================================*/
 export const WheelGame={
 
-spin(){
+spin(){const sectors=[1,2,3,5,10,25];
 
-const sectors=[1,2,3,5,10,25];
-
-return sectors[randomInt(0,sectors.length-1)];
-
-}
-
-};
+return sectors[randomInt(0,sectors.length-1)];}};
 
 /*=========================================================
 DICE GAME
 =========================================================*/
 export const DiceGame={
 
-roll(){
-
-return randomInt(1,100);
-
-}
-
-};
+roll(){return randomInt(1,100);}};
 
 /*=========================================================
 COINFLIP GAME
@@ -1685,25 +1637,14 @@ export const LimboGame={
 
 roll(){
 
-return Number(
-random(1,1000).toFixed(2));
-
-}
-
-};
+return Number(random(1,1000).toFixed(2));}};
 
 /*=========================================================
 HILO GAME
 =========================================================*/
-export const HiloGame={
+export const HiloGame={draw(){
 
-draw(){
-
-return randomInt(1,13);
-
-}
-
-};
+return randomInt(1,13);}};
 
 /*=========================================================
 GAME FACTORY
@@ -1758,23 +1699,19 @@ if(
 amount<
 Currency.minBet()
 ){
-return false;
-}
+return false;}
 
 if(
 !Wallet.debit(STATE.currency,amount)
 ){
-return false;
-}
+return false;}
 
 Analytics.bet(amount);
 
 BUS.emit("bet:placed",
 {amount,currency:STATE.currency});
 
-return true;
-
-},
+return true;},
 
 win(amount){
 
@@ -1800,7 +1737,6 @@ REALTIME RUNTIME
 export const RealtimeRuntime={
 
 start(){
-
 SocketEngine.connect();
 FeedRuntime.start();
 BigWinsRuntime.start();
@@ -1814,9 +1750,6 @@ console.log(
 /*=========================================================
 BLOXIO CASINO V3.4 - PIXI + GSAP + HOWLER
 Requires:
-V3.1 Core
-V3.2 Renderer
-V3.3 Runtime
 =========================================================*/
 
 export const PixiEngine={
@@ -1834,11 +1767,7 @@ return;
 this.enabled=true;
 STATE.runtime.pixi=true;
 
-console.log(
-"[PIXI] Ready"
-);
-
-},
+console.log("[PIXI] Ready");},
 
 create(id,container){
 
@@ -1862,24 +1791,15 @@ resolution:
 window.devicePixelRatio||1
 });
 
-container.appendChild(
-app.view
-);
+container.appendChild(app.view);
 
-this.apps.set(
-id,
-app
-);
+this.apps.set(id,app);
 
-return app;
-
-},
+return app;},
 
 get(id){
 
-return this.apps.get(id);
-
-},
+return this.apps.get(id);},
 
 destroy(id){
 
@@ -1888,26 +1808,17 @@ this.apps.get(id);
 
 if(!app)return;
 
-app.destroy(
-true,
-true
-);
+app.destroy(true,true);
 
-this.apps.delete(id);
-
-},
+this.apps.delete(id);},
 
 destroyAll(){
 
 for(const id of this.apps.keys()){
 
-this.destroy(id);
+this.destroy(id);}
 
-}
-
-}
-
-};
+}};
 
 /*=========================================================
 PARTICLE FX
@@ -1933,13 +1844,9 @@ const particle=
 new PIXI.Graphics();
 
 particle.beginFill(Math.random()*0xffffff);
-
 particle.drawCircle(0,0,3);
-
 particle.endFill();
-
 particle.x=container.clientWidth/2;
-
 particle.y=container.clientHeight/2;
 
 app.stage.addChild(particle);
@@ -1950,8 +1857,7 @@ y:particle.y+random(-300,300),alpha:0,
 
 duration:1.2,onComplete(){
 
-app.stage.removeChild(particle);
-}});
+app.stage.removeChild(particle);}});
 
 }}
 
@@ -1972,42 +1878,22 @@ if(!container)return;
 
 this.app=
 
-PixiEngine.create(
-"crash",
-container
-);
+PixiEngine.create("crash",container);
 
 this.line=
 new PIXI.Graphics();
 
 this.app.stage.addChild(
-this.line
-);
-
-},
+this.line);},
 
 render(multiplier){
 
 if(!this.line)return;
 
 this.line.clear();
-
-this.line.lineStyle(
-4,
-0x00ff99
-);
-
-this.line.moveTo(
-0,
-300
-);
-
-this.line.lineTo(
-multiplier*10,
-300-(multiplier*5)
-);
-
-},
+this.line.lineStyle(4,0x00ff99);
+this.line.moveTo(0,300);
+this.line.lineTo(multiplier*10,300-(multiplier*5));},
 
 start(){
 
@@ -2018,27 +1904,17 @@ const tick=()=>{
 if(!this.running)
 return;
 
-this.render(
-CrashGame.multiplier
-);
+this.render(CrashGame.multiplier);
 
-requestAnimationFrame(
-tick
-);
+requestAnimationFrame(tick);};
 
-};
-
-tick();
-
-},
+tick();},
 
 stop(){
 
 this.running=false;
 
-}
-
-};
+}};
 
 /*=========================================================
 PLINKO PIXI
@@ -2052,63 +1928,31 @@ mount(container){
 
 if(!container)return;
 
-this.app=
-
-PixiEngine.create(
-"plinko",
-container
-);
-
-this.ball=
-new PIXI.Graphics();
-
-this.ball.beginFill(
-0xffff00
-);
-
-this.ball.drawCircle(
-0,
-0,
-10
-);
-
+this.app=PixiEngine.create("plinko",container);
+this.ball=new PIXI.Graphics();
+this.ball.beginFill(0xffff00);
+this.ball.drawCircle(0,0,10);
 this.ball.endFill();
-
 this.ball.x=250;
 this.ball.y=30;
-
 this.app.stage.addChild(
-this.ball
-);
-
-},
+this.ball);},
 
 drop(){
 
 if(!this.ball)
 return;
 
-gsap.to(
-this.ball,
+gsap.to(this.ball,
 {
 y:500,
-
-x:
-250+
-random(
--120,
-120
-),
+x:250+
+random(-120,120),
 
 duration:2,
+ease:"bounce.out"});
 
-ease:"bounce.out"
-}
-);
-
-}
-
-};
+}};
 
 /*=========================================================
 ROULETTE PIXI
@@ -2124,23 +1968,14 @@ if(!container)return;
 
 this.app=
 
-PixiEngine.create(
-"roulette",
-container
-);
+PixiEngine.create("roulette",container);
 
 this.wheel=
 new PIXI.Graphics();
 
-this.wheel.beginFill(
-0xff0000
-);
+this.wheel.beginFill(0xff0000);
 
-this.wheel.drawCircle(
-0,
-0,
-150
-);
+this.wheel.drawCircle(0,0,150);
 
 this.wheel.endFill();
 
@@ -2163,20 +1998,11 @@ this.wheel,
 {
 rotation:
 Math.PI*10+
-random(
-0,
-10
-),
+random(0,10),
 
-duration:5,
+duration:5,ease:"power4.out"});
 
-ease:"power4.out"
-}
-);
-
-}
-
-};
+}};
 
 /*=========================================================
 GSAP ENGINE
@@ -2194,26 +2020,15 @@ return;
 
 this.enabled=true;
 
-console.log(
-"[GSAP] Ready"
-);
-
-},
+console.log("[GSAP] Ready");},
 
 cards(){
 
 if(!this.enabled)
 return;
 
-gsap.from(
-".casino-game-card",
-{
-opacity:0,
-y:40,
-duration:0.4,
-stagger:0.03
-}
-);
+gsap.from(".casino-game-card",
+{opacity:0,y:40,duration:0.4,stagger:0.03});
 
 },
 
@@ -2222,16 +2037,8 @@ featured(){
 if(!this.enabled)
 return;
 
-gsap.from(
-".casino-featured-card",
-{
-opacity:0,
-scale:0.9,
-duration:0.5,
-stagger:0.05
-}
-);
-
+gsap.from(".casino-featured-card",
+{opacity:0,scale:0.9,duration:0.5,stagger:0.05});
 },
 
 winner(element){
@@ -2243,18 +2050,8 @@ if(
 
 gsap.fromTo(
 element,
-{
-scale:0.8,
-opacity:0
-},
-{
-scale:1,
-opacity:1,
-duration:0.4
-}
-);
-
-},
+{scale:0.8,opacity:0},
+{scale:1,opacity:1,duration:0.4});},
 
 jackpot(element){
 
@@ -2285,22 +2082,10 @@ if(
 !element
 )return;
 
-gsap.fromTo(
-element,
-{
-x:-8
-},
-{
-x:8,
-repeat:4,
-yoyo:true,
-duration:0.05
-}
-);
+gsap.fromTo(element,{x:-8},
+{x:8,repeat:4,yoyo:true,duration:0.05});
 
-}
-
-};
+}};
 
 /*=========================================================
 HOWLER AUDIO
@@ -2321,43 +2106,18 @@ STATE.runtime.audio=true;
 
 this.sounds={
 
-click:new Howl({
-src:["/audio/click.mp3"]
-}),
-
-win:new Howl({
-src:["/audio/win.mp3"]
-}),
-
-lose:new Howl({
-src:["/audio/lose.mp3"]
-}),
-
-jackpot:new Howl({
-src:["/audio/jackpot.mp3"]
-}),
-
-rain:new Howl({
-src:["/audio/rain.mp3"]
-}),
-
-tip:new Howl({
-src:["/audio/tip.mp3"]
-}),
-
-spin:new Howl({
-src:["/audio/spin.mp3"]
-}),
-
-crash:new Howl({
-src:["/audio/crash.mp3"]
-})
+click:new Howl({src:["/audio/click.mp3"]}),
+win:new Howl({src:["/audio/win.mp3"]}),
+lose:new Howl({src:["/audio/lose.mp3"]}),
+jackpot:new Howl({src:["/audio/jackpot.mp3"]}),
+rain:new Howl({src:["/audio/rain.mp3"]}),
+tip:new Howl({src:["/audio/tip.mp3"]}),
+spin:new Howl({src:["/audio/spin.mp3"]}),
+crash:new Howl({src:["/audio/crash.mp3"]})
 
 };
 
-console.log(
-"[HOWLER] Ready"
-);
+console.log("[HOWLER] Ready");
 
 },
 
@@ -2366,16 +2126,9 @@ play(name){
 if(!this.enabled)
 return;
 
-const sound=
-this.sounds[name];
+const sound= this.sounds[name];
 
-if(sound){
-
-sound.play();
-
-}
-
-},
+if(sound) {sound.play();}},
 
 stop(name){
 
@@ -2386,46 +2139,36 @@ if(sound){
 
 sound.stop();
 
-}
-
-},
+}},
 
 toggle(){
 
-this.enabled=
-!this.enabled;
+this.enabled= !this.enabled;
 
-}
-
-};
+}};
 
 /*=========================================================
 AUDIO EVENTS
 =========================================================*/
 BUS.on(
 "bet:placed",
-()=>AudioEngine.play("click")
-);
+()=>AudioEngine.play("click"));
 
 BUS.on(
 "bet:won",
-()=>AudioEngine.play("win")
-);
+()=>AudioEngine.play("win"));
 
 BUS.on(
 "bet:lost",
-()=>AudioEngine.play("lose")
-);
+()=>AudioEngine.play("lose"));
 
 BUS.on(
 "rain:update",
-()=>AudioEngine.play("rain")
-);
+()=>AudioEngine.play("rain"));
 
 BUS.on(
 "jackpot:update",
-()=>AudioEngine.play("jackpot")
-);
+()=>AudioEngine.play("jackpot"));
 
 /*=========================================================
 LIGHTWEIGHT CHARTS
@@ -2444,22 +2187,16 @@ return;
 }
 
 const root=
-document.getElementById(
-"casinoBigWinStats"
-);
+document.getElementById("casinoBigWinStats");
 
 if(!root)
 return;
 
 this.chart=
-LightweightCharts.createChart(
-root,
+LightweightCharts.createChart(root,
 {
 width:
-root.clientWidth,
-height:250
-}
-);
+root.clientWidth,height:250});
 
 this.series=
 this.chart.addAreaSeries();
@@ -2485,10 +2222,7 @@ time:
 Math.floor(Date.now()/1000),
 value
 });
-
-}
-
-};
+}};
 
 /*=========================================================
 EFFECTS ENGINE
@@ -2497,31 +2231,21 @@ export const EffectsEngine={
 
 bigWin(){
 
-ParticlesEngine.explode(
-document.body,
-100
-);
-
-},
+ParticlesEngine.explode(document.body,100);},
 
 jackpot(){
 
-ParticlesEngine.explode(
-document.body,200);
+ParticlesEngine.explode(document.body,200);
 
 AudioEngine.play("jackpot");
 
-}
-
-};
+}};
 
 BUS.on("bigwin:update",
-()=>EffectsEngine.bigWin()
-);
+()=>EffectsEngine.bigWin());
 
 BUS.on("jackpot:update",
-()=>EffectsEngine.jackpot()
-);
+()=>EffectsEngine.jackpot());
 
 /*=========================================================
 GAME OPEN EVENTS
@@ -2568,17 +2292,12 @@ CRASH MULTIPLIER UI
 =========================================================*/
 BUS.on("crash:update",value=>{
 
-const el=
-document.getElementById("crashMultiplier");
+const el=document.getElementById("crashMultiplier");
 
 if(!el)
-return;
+  return;
 
-el.textContent=
-value.toFixed(2)+"x";
-
-}
-);
+el.textContent=value.toFixed(2)+"x";});
 
 /*=========================================================
 VISUAL ENGINE
@@ -2600,10 +2319,6 @@ console.log("[CASINO V3.4] VISUAL READY");
 /*=========================================================
 BLOXIO CASINO V3.5 - FINAL BOOTSTRAP
 Requires:
-V3.1 Core Foundation
-V3.2 UI Renderer
-V3.3 Realtime Runtime
-V3.4 Pixi/GSAP/Howler
 =========================================================*/
 
 export const VERSION={
@@ -2636,8 +2351,7 @@ try{
 
 report.push({
 name:check.name,
-status:check.callback()
-});
+status:check.callback()});
 
 }catch(error){
 
@@ -2650,33 +2364,25 @@ status:false,error});
 
 return report;
 
-}
-
-};
+}};
 
 HealthEngine.add("Wallet",
-()=>typeof Wallet!=="undefined"
-);
+()=>typeof Wallet!=="undefined");
 
 HealthEngine.add("Registry",
-()=>typeof Registry!=="undefined"
-);
+()=>typeof Registry!=="undefined");
 
 HealthEngine.add("SocketEngine",
-()=>typeof SocketEngine!=="undefined"
-);
+()=>typeof SocketEngine!=="undefined");
 
 HealthEngine.add("PixiEngine",
-()=>typeof PixiEngine!=="undefined"
-);
+()=>typeof PixiEngine!=="undefined");
 
 HealthEngine.add("AudioEngine",
-()=>typeof AudioEngine!=="undefined"
-);
+()=>typeof AudioEngine!=="undefined");
 
 HealthEngine.add("ChartsEngine",
-()=>typeof ChartsEngine!=="undefined"
-);
+()=>typeof ChartsEngine!=="undefined");
 
 /*=========================================================
 PROVIDER ENGINE
@@ -2690,20 +2396,13 @@ register(provider){
 if(!provider?.id)
 return;
 
-this.providers.set(
-provider.id,
-provider
-);
-
-},
+this.providers.set(provider.id,provider);},
 
 get(id){return this.providers.get(id);},
 
 all(){
 
-return[...this.providers.values()];
-
-}
+return[...this.providers.values()];}
 
 };
 
@@ -2721,15 +2420,8 @@ for(const game of games){
 
 if(!game.provider){
 
-game.provider="BLOXIO";
-
-}
-
-}
-
-console.log(
-`[CASINO] ${games.length} Games Loaded`
-);
+game.provider="BLOXIO";}}
+console.log(`[CASINO] ${games.length} Games Loaded`);
 
 return games.length;
 
@@ -2748,9 +2440,7 @@ WalletUI.update();
 
 BUS.emit("wallet:sync",STATE.wallet);
 
-}
-
-};
+}};
 
 export const FeedSync={
 
@@ -2760,9 +2450,7 @@ BUS.emit("feed:update",STATE.feeds.live);
 
 BUS.emit("winner:update",STATE.feeds.winners);
 
-}
-
-};
+}};
 
 export const JackpotSync={
 
@@ -2770,9 +2458,7 @@ start(){
 
 BUS.emit("jackpot:update",STATE.casino.jackpots);
 
-}
-
-};
+}};
 
 export const TournamentSync={
 
@@ -2780,9 +2466,7 @@ start(){
 
 BUS.emit("tournament:update",STATE.casino.tournaments);
 
-}
-
-};
+}};
 
 export const LeaderboardSync={
 
@@ -2810,9 +2494,7 @@ const loop=time=>{
 
 this.frames++;
 
-if(
-time-this.last>=1000
-){
+if(time-this.last>=1000){
 
 this.fps=
 this.frames;
@@ -2823,27 +2505,10 @@ this.last=time;
 
 }
 
-this.raf=
-requestAnimationFrame(
-loop
-);
+this.raf=requestAnimationFrame(loop);};
+this.raf=requestAnimationFrame(loop);},
 
-};
-
-this.raf=
-requestAnimationFrame(
-loop
-);
-
-},
-
-stop(){
-
-cancelAnimationFrame(
-this.raf
-);
-
-}
+stop(){cancelAnimationFrame(this.raf);}
 
 };
 
@@ -2855,28 +2520,21 @@ export const MemoryEngine={
 usage(){
 
 if(
-!performance.memory
-){
-return null;
-}
+!performance.memory){return null;}
 
 return{
 
 used:
 Math.round(
 performance.memory.usedJSHeapSize
-/1024/1024
-),
+/1024/1024),
 
 limit:
 Math.round(
 performance.memory.jsHeapSizeLimit
-/1024/1024
-)
+/1024/1024)
 
-};
-
-}
+};}
 
 };
 
@@ -2885,17 +2543,11 @@ CASINO ANALYTICS
 =========================================================*/
 export const CasinoAnalytics={
 
-sessionStart:
-Date.now(),
+sessionStart:Date.now(),
 
 sessionDuration(){
 
-return Math.floor(
-(
-Date.now()-
-this.sessionStart
-)/1000
-);
+return Math.floor((Date.now()-this.sessionStart)/1000);
 
 },
 
@@ -2909,11 +2561,7 @@ wallet:STATE.wallet,
 analytics:STATE.analytics,
 online:STATE.casino.onlinePlayers,
 games:Registry.all().length,
-fps:PerformanceEngine.fps
-
-};
-
-}
+fps:PerformanceEngine.fps};}
 
 };
 
@@ -2924,42 +2572,26 @@ export const Hotkeys={
 
 init(){
 
-document.addEventListener(
-
-"keydown",
-
-event=>{
+document.addEventListener("keydown",event=>{
 
 if(event.key==="Escape"){
 
-GameView.close();
-
-}
+GameView.close();}
 
 if(event.key==="/"){
 
 event.preventDefault();
 
-document.getElementById("casinoSearch"
-)
-?.focus();
+document.getElementById("casinoSearch")?.focus();}}
 
-}
-
-}
-
-);
-
-}
+);}
 
 };
 
 /*=========================================================
 VISIBILITY ENGINE
 =========================================================*/
-export const VisibilityEngine={
-
-init(){
+export const VisibilityEngine={ init(){
 
 document.addEventListener("visibilitychange",()=>{
 
@@ -2987,18 +2619,14 @@ document.getElementById("mobileCasinoSearch")
 
 document.getElementById("casinoSearch")?.focus();
 
-}
-
-);
+});
 
 document.getElementById("mobileCasinoWallet")
 ?.addEventListener("click",()=>{
 
 BUS.emit("wallet:open");
 
-}
-
-);
+});
 
 document.getElementById("mobileCasinoLeaderboard")
 ?.addEventListener("click",()=>{
@@ -3025,9 +2653,7 @@ Registry,Analytics,
 
 SocketEngine,AudioEngine,CasinoAnalytics
 
-};
-
-}
+};}
 
 };
 
@@ -3037,7 +2663,6 @@ APP ENGINE
 export const CasinoApp={
 
 started:false,
-
 start(){
 
 if(this.started)
@@ -3059,13 +2684,22 @@ PerformanceEngine.start();
 Hotkeys.init();
 VisibilityEngine.init();
 MobileEngine.init();
+MobileEngine.init();
+
+$("#joinRainBtn")?.addEventListener(
+"click",()=>RainRuntime.join());
+
+$("#claimRainBtn")?.addEventListener(
+"click",()=>RainRuntime.claim?.());
+
+$("#sendTipBtn")?.addEventListener(
+"click",()=>TipsEngine.open?.());
 DevTools.mount();
 
 const report=
 HealthEngine.run();
 
 console.table(report);
-
 console.groupEnd();
 
 this.started=true;
