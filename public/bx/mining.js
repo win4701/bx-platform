@@ -35,19 +35,33 @@
   const clamp = (n, min, max) => Math.min(Math.max(n, min), max);
 
   const STORAGE_KEY = 'bx:mining:clean:final:v6';
-  const ALLOWED_COINS = ['BX', 'BNB', 'SOL'];
+  const ALLOWED_COINS=['BX','ETC','LTC','TRX','BNB','SOL','XRP','USDC','DOGE','TON'];
 
-  const ASSET_META = {
-    BX:  { decimals: 2,  usd: 45,  name: 'Bloxio' },
-    BNB: { decimals: 6,  usd: 620,   name: 'BNB' },
-    SOL: { decimals: 6,  usd: 180,   name: 'Solana' }
-  };
+const ASSET_META={
+BX:{decimals:2,usd:45,name:'Bloxio',tier:1},
+ETC:{decimals:4,usd:35,name:'Ethereum Classic',tier:3},
+LTC:{decimals:4,usd:85,name:'Litecoin',tier:2},
+TRX:{decimals:2,usd:0.15,name:'Tron',tier:2},
+BNB:{decimals:6,usd:620,name:'BNB',tier:1},
+SOL:{decimals:6,usd:180,name:'Solana',tier:1},
+XRP:{decimals:2,usd:0.65,name:'XRP',tier:2},
+USDC:{decimals:2,usd:1,name:'USD Coin',tier:3},
+DOGE:{decimals:2,usd:0.18,name:'Dogecoin',tier:2},
+TON:{decimals:4,usd:7,name:'Toncoin',tier:2}
+};
 
-  const COIN_ICONS = {
-    BX: 'assets/images/bx.png',
-    BNB: 'assets/images/bnb.png',
-    SOL: 'assets/images/sol.png'
-  };
+const COIN_ICONS={
+BX:'assets/images/coins/bx.svg',
+ETC:'assets/images/coins/etc.png',
+LTC:'assets/images/coins/ltc.png',
+TRX:'assets/images/coins/trx.png',
+BNB:'assets/images/coins/bnb.png',
+SOL:'assets/images/coins/sol.png',
+XRP:'assets/images/coins/xrp.png',
+USDC:'assets/images/coins/usdc.png',
+DOGE:'assets/images/coins/doge.png',
+TON:'assets/images/coins/ton.png'
+ };
 
   const fmt = (value, asset = 'BX') => {
     const decimals = ASSET_META[asset]?.decimals ?? 4;
