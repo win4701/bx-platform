@@ -1240,19 +1240,14 @@ RAIN RUNTIME
 export const RainRuntime={
 
 current:null,
-
 create(){
 
 this.current={
 
 amount:randomInt(100,10000),
-
-currency:randomInt(0,1)?"BX":"XBC",
-
-players:0,
+currency:randomInt(0,1)?"BX":"XBC",players:0,
 
 expires:Date.now()+300000};
-
 BUS.emit("rain:update",this.current);},
 
 join(){
@@ -1261,8 +1256,16 @@ if(!this.current)
 return;
 
 this.current.players++;
-
 BUS.emit("rain:joined",this.current);}};
+
+export const TipsEngine={
+
+open()
+{BUS.emit("tips:open");},
+
+send(user,amount,currency){
+
+BUS.emit("tips:send",{user,amount,currency});}};
 
 /*=========================================================
 LEADERBOARD RUNTIME
