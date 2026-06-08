@@ -135,62 +135,58 @@ TON:'assets/images/coins/ton.png'
   /* =========================================================
      6 PLANS PER COIN
   ========================================================= */
-  const PLANS = [
-    {
-      id: 'starter',
-      name: 'Starter ',
-      hash: '18 GH/s',
-      daily: 1.15,
-      days: 10,
-      boost: 0.29,
-      min: { BX: 50,  BNB: 0.1, SOL: 0.3 }
-    },
-    {
-      id: 'basic',
-      name: 'Basic ',
-      hash: '42 GH/s',
-      daily: 1.21,
-      days: 21,
-      boost: 0.30,
-      min: { BX: 200,  BNB: 0.5, SOL: 1.5 }
-    },
-    {
-      id: 'pro',
-      name: 'Pro ',
-      hash: '90 GH/s',
-      daily: 1.45,
-      days: 30,
-      boost: 0.32,
-      min: { BX: 500,  BNB: 2, SOL: 5 }
-    },
-    {
-      id: 'elite',
-      name: 'Elite ',
-      hash: '240 GH/s',
-      daily: 1.55,
-      days: 45,
-      boost: 0.35,
-      min: { BX: 1200, BNB: 5, SOL: 20 }
-    },
-    {
-      id: 'ultra',
-      name: 'Ultra ',
-      hash: '540 GH/s',
-      daily: 1.85,
-      days: 60,
-      boost: 0.40,
-      min: { BX: 2500, BNB: 15, SOL: 40 }
-    },
-    {
-      id: 'legend',
-      name: 'Legend ',
-      hash: '1200 GH/s',
-      daily: 2.05,
-      days: 90,
-      boost: 0.48,
-      min: { BX: 4500, BNB: 50, SOL: 100 }
-    }
-  ];
+const PLANS=[
+{
+id:"starter",
+name:"Starter",
+hash:"18 GH/s",
+daily:1.15,
+days:10,
+boost:0.29,
+min:{BX:50,ETC:10,LTC:2,TRX:500,BNB:0.1,SOL:0.3,XRP:300,USDC:100,DOGE:1000,TON:20}},
+{
+id:"basic",
+name:"Basic",
+hash:"42 GH/s",
+daily:1.21,
+days:21,
+boost:0.30,
+min:{BX:200,ETC:25,LTC:5,TRX:1500,BNB:0.5,SOL:1.5,XRP:1000,USDC:300,DOGE:3000,TON:50}},
+{
+id:"pro",
+name:"Pro",
+hash:"90 GH/s",
+daily:1.45,
+days:30,
+boost:0.32,
+min:{BX:500,ETC:75,LTC:15,TRX:5000,BNB:2,SOL:5,XRP:3000,USDC:1000,DOGE:10000,TON:150}},
+{
+id:"elite",
+name:"Elite",
+hash:"240 GH/s",
+daily:1.55,
+days:45,
+boost:0.35,
+min:{BX:1200,ETC:150,LTC:35,TRX:12000,BNB:5,SOL:20,XRP:7500,USDC:2500,DOGE:25000,TON:350}},
+{
+id:"ultra",
+name:"Ultra",
+hash:"540 GH/s",
+daily:1.85,
+days:60,
+boost:0.40,
+min:{
+BX:2500,ETC:350,LTC:75,TRX:25000,BNB:15,SOL:40,XRP:15000,USDC:5000,DOGE:50000,TON:700}},
+{
+id:"legend",
+name:"Legend",
+hash:"1200 GH/s",
+daily:2.05,
+days:90,
+boost:0.48,
+min:{
+BX:4500,ETC:750,LTC:150,TRX:50000,BNB:50,SOL:100,XRP:30000,USDC:10000,DOGE:100000,TON:1500}}
+]; 
 
   function getPlanVisual(plan) {
     const map = {
