@@ -1223,42 +1223,43 @@ BUS.emit("tournament:update");}};
 /*=========================================================
 RAIN RUNTIME
 =========================================================*/
+
 export const RainRuntime={
 
 current:null,
+
 create(){
 
 this.current={
-
 amount:randomInt(100,10000),
-currency:randomInt(0,1)?"BX":"XBC",players:0,
-
+currency:randomInt(0,1)?"BX":"XBC",
+players:0,
 expires:Date.now()+300000};
-BUS.emit("rain:update",this.current);},
 
+BUS.emit("rain:update",this.current);},
 join(){
 
 if(!this.current)
 return;
 
 this.current.players++;
-BUS.emit("rain:joined",this.current);}};
 
+BUS.emit("rain:joined",this.current);},
 claim(){
 
 if(!this.current)
 return false;
+
 BUS.emit("rain:claim",this.current);
 return true;
-}
+
+}};
 
 export const TipsEngine={
 
 open()
 {BUS.emit("tips:open");},
-
 send(user,amount,currency){
-
 BUS.emit("tips:send",{user,amount,currency});}};
 
 /*=========================================================
@@ -1276,22 +1277,17 @@ let i=1; i<=100; i++){
 rows.push({ rank:i,
 
 username:"Player"+randomInt(1000,9999),
-
 profit:randomInt(1000,1000000),
-
 wagered:randomInt(10000,10000000)});}
 
 STATE.casino.leaderboard=rows;
-
 BUS.emit("leaderboard:update",rows);},
 
 start(){
 
 this.generate();
 
-setInterval(
-()=>this.generate(),
-60000);}};
+setInterval(()=>this.generate(),60000);}};
 
 /*=========================================================
 CRASH GAME
@@ -1358,50 +1354,38 @@ PLINKO GAME
 =========================================================*/
 
 export const PlinkoGame={
-
 drop(){const payouts=[0.2,0.5,1,2,5,10,25];
-
 return payouts[randomInt(0,payouts.length-1)];}};
 
 /*=========================================================
 WHEEL GAME
 =========================================================*/
 export const WheelGame={
-
 spin(){const sectors=[1,2,3,5,10,25];
-
 return sectors[randomInt(0,sectors.length-1)];}};
 
 /*=========================================================
 DICE GAME
 =========================================================*/
 export const DiceGame={
-
 roll(){return randomInt(1,100);}};
 
 /*=========================================================
 COINFLIP GAME
 =========================================================*/
-export const CoinflipGame={
-
-flip(){
-
+export const CoinflipGame={flip(){
 return Math.random()>0.5?"heads":"tails";}};
 
 /*=========================================================
 LIMBO GAME
 =========================================================*/
-export const LimboGame={
-
-roll(){
-
+export const LimboGame={roll(){
 return Number(random(1,1000).toFixed(2));}};
 
 /*=========================================================
 HILO GAME
 =========================================================*/
 export const HiloGame={draw(){
-
 return randomInt(1,13);}};
 
 /*=========================================================
@@ -1493,8 +1477,7 @@ JackpotRuntime.start();
 TournamentRuntime.start();
 LeaderboardRuntime.start();
 console.log(
-"[CASINO V3.3] REALTIME READY"
-);}};
+"[CASINO V3.3] REALTIME READY");}};
 
 /*=========================================================
 BLOXIO CASINO V3.4 - PIXI + GSAP + HOWLER
@@ -1514,7 +1497,6 @@ return;}
 
 this.enabled=true;
 STATE.runtime.pixi=true;
-
 console.log("[PIXI] Ready");},
 
 create(id,container){
@@ -1532,7 +1514,6 @@ backgroundAlpha:0,
 autoDensity:true,
 resolution:
 window.devicePixelRatio||1});
-
 container.appendChild(app.view);
 
 this.apps.set(id,app);
@@ -1567,10 +1548,7 @@ export const ParticlesEngine={
 
 explode(container,count=50){
 
-if(
-!PixiEngine.enabled||
-!container
-){return;}
+if(!PixiEngine.enabled||!container){return;}
 
 const app=
 
@@ -1596,7 +1574,6 @@ random(-300,300),
 y:particle.y+random(-300,300),alpha:0,
 
 duration:1.2,onComplete(){
-
 app.stage.removeChild(particle);}});
 
 }}};
@@ -1712,19 +1689,13 @@ this.wheel=
 new PIXI.Graphics();
 
 this.wheel.beginFill(0xff0000);
-
 this.wheel.drawCircle(0,0,150);
-
 this.wheel.endFill();
-
 this.wheel.x=250;
 this.wheel.y=250;
-
 this.app.stage.addChild(
 this.wheel
-);
-
-},
+);},
 
 spin(){
 
@@ -1803,13 +1774,7 @@ element,
 {
 scale:1
 },
-{
-scale:1.15,
-repeat:1,
-yoyo:true,
-duration:0.4
-}
-);
+{scale:1.15,repeat:1,yoyo:true,duration:0.4});
 
 },
 
@@ -1888,25 +1853,11 @@ this.enabled= !this.enabled;
 /*=========================================================
 AUDIO EVENTS
 =========================================================*/
-BUS.on(
-"bet:placed",
-()=>AudioEngine.play("click"));
-
-BUS.on(
-"bet:won",
-()=>AudioEngine.play("win"));
-
-BUS.on(
-"bet:lost",
-()=>AudioEngine.play("lose"));
-
-BUS.on(
-"rain:update",
-()=>AudioEngine.play("rain"));
-
-BUS.on(
-"jackpot:update",
-()=>AudioEngine.play("jackpot"));
+BUS.on("bet:placed",()=>AudioEngine.play("click"));
+BUS.on("bet:won",()=>AudioEngine.play("win"));
+BUS.on("bet:lost",()=>AudioEngine.play("lose"));
+BUS.on("rain:update",()=>AudioEngine.play("rain"));
+BUS.on("jackpot:update",()=>AudioEngine.play("jackpot"));
 
 /*=========================================================
 LIGHTWEIGHT CHARTS
@@ -1940,11 +1891,8 @@ this.series=
 this.chart.addAreaSeries();
 
 this.series.setData([
-{time:1,value:10},
-{time:2,value:15},
-{time:3,value:8},
-{time:4,value:25}
-]);
+{time:1,value:10},{time:2,value:15},
+{time:3,value:8},{time:4,value:25}]);
 
 STATE.runtime.charts=true;
 
@@ -1975,15 +1923,10 @@ jackpot(){
 
 ParticlesEngine.explode(document.body,200);
 
-AudioEngine.play("jackpot");
+AudioEngine.play("jackpot");}};
 
-}};
-
-BUS.on("bigwin:update",
-()=>EffectsEngine.bigWin());
-
-BUS.on("jackpot:update",
-()=>EffectsEngine.jackpot());
+BUS.on("bigwin:update",()=>EffectsEngine.bigWin());
+BUS.on("jackpot:update",()=>EffectsEngine.jackpot());
 
 /*=========================================================
 GAME OPEN EVENTS
@@ -2033,7 +1976,7 @@ BUS.on("crash:update",value=>{
 const el=document.getElementById("crashMultiplier");
 
 if(!el)
-  return;
+return;
 
 el.textContent=value.toFixed(2)+"x";});
 
