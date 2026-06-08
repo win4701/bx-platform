@@ -453,19 +453,12 @@ loading="lazy"
 src="${game.image}"
 alt="${game.name}">
 </div>
-
 <div class="casino-game-body">
-
 <h3>${game.name}</h3>
-
 <p>${game.provider||"BLOXIO"}</p>
-
 <div class="casino-game-meta">
-
 <span>${game.category||"casino"}</span>
-
 <span>RTP ${game.rtp||99}%</span>
-
 </div>
 </div>
 
@@ -476,29 +469,20 @@ return`
 <button
 class="casino-featured-card"
 data-game="${game.id}">
-
-<img
-loading="lazy"
+<img loading="lazy"
 src="${game.image}"
 alt="${game.name}">
-
 <div>
-
 <h4>${game.name}</h4>
-
 <p>${game.provider||"BLOXIO"}</p>
-
 </div>
-
 </button>`;},
 
 feed(row){
 return`
 <div class="feed-row">
-
 <span>${row.user}</span>
 <span>${row.game}</span>
-
 <strong>${row.amount}${row.currency||"BX"}</strong>
 </div>
 `;
@@ -507,10 +491,8 @@ return`
 winner(row){
 return`
 <div class="winner-row">
-
 <span>${row.user}</span>
 <span>${row.game}</span>
-
 <strong>${row.amount}${row.currency||"BX"}</strong>
 </div>
 `;
@@ -519,12 +501,9 @@ return`
 leaderboard(row){
 return`
 <div class="leaderboard-row">
-
 <span>#${row.rank}</span>
 <span>${row.username}</span>
-
 <strong>${row.profit}</strong>
-
 </div>
 `;
 },
@@ -532,12 +511,9 @@ return`
 tournament(row){
 return`
 <div class="tournament-card">
-
 <h4>${row.name}</h4>
-
 <p>Prize: ${row.prize}</p>
 <p>Players: ${row.players||0}</p>
-
 </div>
 `;}
 
@@ -552,14 +528,9 @@ render(root,items,renderer){
 
 if(!root)return;
 
-root.innerHTML=
-items
+root.innerHTML=items
 .map(renderer)
-.join("");
-
-}
-
-};
+.join("");}};
 
 /*=========================================================
 WALLET UI
@@ -570,19 +541,19 @@ update(){
 
 if(DOM.bxBalance){
 
-DOM.bxBalance.textContent=Wallet
-.get("BX")
-.toFixed(4);
-
-}
+DOM.bxBalance.textContent=Wallet.get("BX").toFixed(4);}
 
 if(DOM.xbcBalance){
 
-DOM.xbcBalance.textContent=Wallet
-.get("XBC")
-.toFixed(2);
+DOM.xbcBalance.textContent=Wallet.get("XBC").toFixed(2);}
 
-}}};
+const walletText= $("#casinoWalletText");
+
+if(walletText){
+
+walletText.textContent=`${Wallet.get().toFixed(2)} ${STATE.currency}`;}}
+
+};
 
 BUS.on("wallet:update",()=>WalletUI.update());
 
@@ -598,31 +569,22 @@ Registry.all();
 
 const count=name=>
 
-games.filter(
-g=>g.category===name
-).length;
+games.filter(g=>g.category===name).length;
 
 if(DOM.catOriginals){
-
 DOM.catOriginals.textContent=count("originals");}
 
 if(DOM.catArcade){
-
 DOM.catArcade.textContent=count("arcade");}
 
 if(DOM.catCards){
-
 DOM.catCards.textContent=count("cards");}
 
 if(DOM.catSlots){
-
 DOM.catSlots.textContent= count("slots");}
 
 if(DOM.catRoulette){
-
-DOM.catRoulette.textContent=count("roulette");}}
-
-};
+DOM.catRoulette.textContent=count("roulette");}}};
 
 /*=========================================================
 GAMES UI
@@ -631,14 +593,11 @@ export const GamesUI={
 
 render(
 games=Registry.all()){
-
 VirtualList.render(DOM.gamesGrid,games,Templates.game);
 
 },
 
-refresh(){this.render();}
-
-};
+refresh(){this.render();}};
 
 /*=========================================================
 FEATURED UI
@@ -670,10 +629,7 @@ DOM.searchInput.addEventListener("input",
 event=>{
 
 const value=
-event.target
-.value
-.trim();
-
+event.target.value.trim();
 STATE.filters.search=value;
 
 GamesUI.render(
@@ -700,7 +656,6 @@ btn.classList.add("active");
 const category=btn.dataset.tab;
 
 STATE.filters.category=category;
-
 GamesUI.render(Registry.category(category));}
 
 );});
@@ -723,18 +678,13 @@ return;
 STATE.activeGame=game.id;
 
 DOM.gameView?.classList.remove("hidden");
-
 DOM.gameContainer.innerHTML=`
 
 <div class="casino-active-view">
 <div class="casino-active-header">
-
 <h2>${game.name}</h2>
-
 <button id="closeGame">Close</button>
-
 </div>
-
 <div id="casinoRuntime">
 </div>
 </div>
@@ -752,9 +702,7 @@ DOM.gameView?.classList.add("hidden");
 
 if(DOM.gameContainer){
 
-DOM.gameContainer.innerHTML="";}}
-
-};
+DOM.gameContainer.innerHTML="";}}};
 
 /*=========================================================
 CLICK ROUTER
@@ -763,9 +711,7 @@ export const ClickRouter={
 
 init(){
 
-document.addEventListener("click",
-
-event=>{
+document.addEventListener("click",event=>{
 
 const game=
 
@@ -773,10 +719,7 @@ event.target.closest(".casino-game-card");
 
 if(game){
 
-GameView.open(
-game.dataset.game);
-
-}
+GameView.open(game.dataset.game);}
 
 const featured=
 
@@ -784,8 +727,7 @@ event.target.closest(".casino-featured-card");
 
 if(featured){
 
-GameView.open(
-featured.dataset.game);}
+GameView.open(featured.dataset.game);}
 
 if(event.target.id==="closeGame"
 ){GameView.close();}}
