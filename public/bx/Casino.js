@@ -1037,7 +1037,6 @@ this.socket.on("casino:feed",payload=>{
 STATE.feeds.live.unshift(payload);
 STATE.feeds.live=
 STATE.feeds.live.slice(0,100);
-
 BUS.emit("feed:update",payload);
 
 });
@@ -1047,7 +1046,6 @@ this.socket.on("casino:winner",payload=>{
 STATE.feeds.winners.unshift(payload);
 STATE.feeds.winners=
 STATE.feeds.winners.slice(0,100);
-
 BUS.emit("winner:update",payload);});
 
 this.socket.on("casino:bigwin",payload=>{
@@ -1055,26 +1053,21 @@ this.socket.on("casino:bigwin",payload=>{
 STATE.feeds.bigWins.unshift(payload);
 STATE.feeds.bigWins=
 STATE.feeds.bigWins.slice(0,50);
-
 BUS.emit("bigwin:update",payload);});
 
 this.socket.on("casino:leaderboard",rows=>{
 
-STATE.casino.leaderboard=
-rows;
-
+STATE.casino.leaderboard=rows;
 BUS.emit("leaderboard:update",rows);});
 
 this.socket.on("casino:jackpot",payload=>{
 
 Object.assign(STATE.casino.jackpots,payload);
-
 BUS.emit("jackpot:update",payload);});
 
 this.socket.on("casino:tournaments",payload=>{
 
 STATE.casino.tournaments=payload;
-
 BUS.emit("tournament:update",payload);});
 
 this.socket.on("casino:rain",payload=>{
@@ -1112,7 +1105,6 @@ return;
 const game=
 
 games[randomInt(0,games.length-1)];
-
 STATE.feeds.live.unshift({
 
 user:"Player"+randomInt(1000,9999),
@@ -1125,10 +1117,7 @@ currency:randomInt(0,1)?"BX":"XBC"});
 
 STATE.feeds.live=
 STATE.feeds.live.slice(0,50);
-
-BUS.emit("feed:update");},3000);
-
-}};
+BUS.emit("feed:update");},3000);}};
 
 /*=========================================================
 BIG WINS RUNTIME
@@ -1162,10 +1151,7 @@ multiplier:random(5,150).toFixed(2)};
 STATE.feeds.bigWins.unshift(payload);
 STATE.feeds.bigWins=
 STATE.feeds.bigWins.slice(0,20);
-
-BUS.emit("bigwin:update",payload);
-
-},12000);}};
+BUS.emit("bigwin:update",payload);},12000);}};
 
 /*=========================================================
 JACKPOT RUNTIME
@@ -1257,6 +1243,14 @@ return;
 
 this.current.players++;
 BUS.emit("rain:joined",this.current);}};
+
+claim(){
+
+if(!this.current)
+return false;
+BUS.emit("rain:claim",this.current);
+return true;
+}
 
 export const TipsEngine={
 
@@ -2428,6 +2422,16 @@ PerformanceEngine.start();
 Hotkeys.init();
 VisibilityEngine.init();
 MobileEngine.init();
+
+$$(".casino-currency").forEach(btn=>{
+btn.addEventListener("click",()=>{
+$$(".casino-currency").forEach(x=>
+x.classList.remove("active"));
+btn.classList.add("active");
+Currency.set(btn.dataset.currency);
+WalletUI.update();
+
+});});
 
 $("#joinRainBtn")?.addEventListener(
 "click",()=>RainRuntime.join());
