@@ -1,0 +1,637 @@
+<section id="rewards" class="view">
+
+<div class="rewards-shell">
+
+<!-- ===================================================== -->
+<!-- HERO -->
+<!-- ===================================================== -->
+
+<header class="rewards-hero">
+
+<div class="rewards-hero-left">
+
+<span class="rewards-kicker">
+BLOXIO REWARDS HUB
+</span>
+
+<h2>
+Earn BX & XBC Every Day
+</h2>
+
+<p>
+Complete missions, collect rewards, level up and unlock exclusive ecosystem benefits.
+</p>
+
+</div>
+
+<div class="rewards-hero-right">
+
+<div class="rewards-balance-card">
+
+<div class="reward-balance-item">
+
+<span>Total BX Earned</span>
+
+<strong id="rewardBX">
+0.00
+</strong>
+
+</div>
+
+<div class="reward-balance-item">
+
+<span>Total XBC Earned</span>
+
+<strong id="rewardXBC">
+0.00
+</strong>
+
+</div>
+
+</div>
+
+</div>
+
+</header>
+
+<!-- ===================================================== -->
+<!-- XP CENTER -->
+<!-- ===================================================== -->
+
+<section class="reward-card">
+
+<div class="reward-head">
+
+<h3>Loyalty Progress</h3>
+
+<span id="rewardLevel">
+Level 1
+</span>
+
+</div>
+
+<div class="reward-progress">
+
+<div
+id="rewardProgress"
+class="reward-progress-fill">
+</div>
+
+</div>
+
+<div class="reward-stats">
+
+<div>
+
+<span>XP</span>
+
+<strong id="rewardXP">
+0
+</strong>
+
+</div>
+
+<div>
+
+<span>Streak</span>
+
+<strong id="rewardStreak">
+0
+</strong>
+
+</div>
+
+<div>
+
+<span>Achievements</span>
+
+<strong id="rewardAchievements">
+0
+</strong>
+
+</div>
+
+</div>
+
+</section>
+
+<!-- ===================================================== -->
+<!-- DAILY -->
+<!-- ===================================================== -->
+
+<section class="reward-card">
+
+<div class="reward-head">
+
+<h3>Daily Rewards</h3>
+
+<span>
+24H Reset
+</span>
+
+</div>
+
+<div class="reward-grid">
+
+<div class="reward-box">
+
+<span>BX Reward</span>
+
+<strong>
+5 BX
+</strong>
+
+<button
+id="rewardClaimDaily"
+class="btn primary">
+
+Claim
+
+</button>
+
+</div>
+
+<div class="reward-box">
+
+<span>XBC Reward</span>
+
+<strong>
+10 XBC
+</strong>
+
+<button
+id="rewardClaimDailyXBC"
+class="btn secondary">
+
+Claim
+
+</button>
+
+</div>
+
+</div>
+
+</section>
+
+<!-- ===================================================== -->
+<!-- WEEKLY -->
+<!-- ===================================================== -->
+
+<section class="reward-card">
+
+<div class="reward-head">
+
+<h3>Weekly Rewards</h3>
+
+<span>
+7 Day Cycle
+</span>
+
+</div>
+
+<div class="reward-grid">
+
+<div class="reward-box">
+
+<span>BX Reward</span>
+
+<strong>
+50 BX
+</strong>
+
+<button
+id="rewardClaimWeekly"
+class="btn primary">
+
+Claim
+
+</button>
+
+</div>
+
+<div class="reward-box">
+
+<span>XBC Reward</span>
+
+<strong>
+100 XBC
+</strong>
+
+<button
+id="rewardClaimWeeklyXBC"
+class="btn secondary">
+
+Claim
+
+</button>
+
+</div>
+
+</div>
+
+</section>
+
+<!-- ===================================================== -->
+<!-- MONTHLY -->
+<!-- ===================================================== -->
+
+<section class="reward-card">
+
+<div class="reward-head">
+
+<h3>Monthly Rewards</h3>
+
+<span>
+30 Day Cycle
+</span>
+
+</div>
+
+<div class="reward-grid">
+
+<div class="reward-box">
+
+<span>BX Reward</span>
+
+<strong>
+250 BX
+</strong>
+
+<button
+id="rewardClaimMonthly"
+class="btn primary">
+
+Claim
+
+</button>
+
+</div>
+
+<div class="reward-box">
+
+<span>XBC Reward</span>
+
+<strong>
+500 XBC
+</strong>
+
+<button
+id="rewardClaimMonthlyXBC"
+class="btn secondary">
+
+Claim
+
+</button>
+
+</div>
+
+</div>
+
+</section>
+
+<!-- ===================================================== -->
+<!-- MISSIONS -->
+<!-- ===================================================== -->
+
+<section class="reward-card">
+
+<div class="reward-head">
+
+<h3>Missions</h3>
+
+<span>
+Complete & Earn
+</span>
+
+</div>
+
+<div id="rewardMissionGrid"
+class="reward-mission-grid">
+
+<div class="mission-card">
+
+<h4>Complete Swap</h4>
+
+<p>Execute one swap.</p>
+
+<strong>
++5 BX
+</strong>
+
+<button
+class="btn ghost">
+Track
+</button>
+
+</div>
+
+<div class="mission-card">
+
+<h4>Mining Claim</h4>
+
+<p>Claim mining reward.</p>
+
+<strong>
++10 BX
+</strong>
+
+<button
+class="btn ghost">
+Track
+</button>
+
+</div>
+
+<div class="mission-card">
+
+<h4>Casino Winner</h4>
+
+<p>Win any game.</p>
+
+<strong>
++20 XBC
+</strong>
+
+<button
+class="btn ghost">
+Track
+</button>
+
+</div>
+
+<div class="mission-card">
+
+<h4>Invite Friend</h4>
+
+<p>One successful referral.</p>
+
+<strong>
++25 BX
+</strong>
+
+<button
+class="btn ghost">
+Track
+</button>
+
+</div>
+
+</div>
+
+</section>
+
+<!-- ===================================================== -->
+<!-- ACHIEVEMENTS -->
+<!-- ===================================================== -->
+
+<section class="reward-card">
+
+<div class="reward-head">
+
+<h3>Achievements</h3>
+
+<span>
+Permanent Rewards
+</span>
+
+</div>
+
+<div
+id="rewardAchievementGrid"
+class="reward-achievement-grid">
+
+<div class="achievement-card">
+
+<strong>
+First Deposit
+</strong>
+
+<span>
++25 BX
+</span>
+
+</div>
+
+<div class="achievement-card">
+
+<strong>
+First Swap
+</strong>
+
+<span>
++10 BX
+</span>
+
+</div>
+
+<div class="achievement-card">
+
+<strong>
+100 BX Holder
+</strong>
+
+<span>
++50 BX
+</span>
+
+</div>
+
+<div class="achievement-card">
+
+<strong>
+VIP Member
+</strong>
+
+<span>
++100 BX
+</span>
+
+</div>
+
+</div>
+
+</section>
+
+<!-- ===================================================== -->
+<!-- CASHBACK -->
+<!-- ===================================================== -->
+
+<section class="reward-card">
+
+<div class="reward-head">
+
+<h3>Cashback Center</h3>
+
+<span>
+Ecosystem Rewards
+</span>
+
+</div>
+
+<div class="reward-grid">
+
+<div class="reward-box">
+
+<span>Casino Cashback</span>
+
+<strong id="casinoCashback">
+0 BX
+</strong>
+
+</div>
+
+<div class="reward-box">
+
+<span>Mining Cashback</span>
+
+<strong id="miningCashback">
+0 BX
+</strong>
+
+</div>
+
+<div class="reward-box">
+
+<span>Swap Cashback</span>
+
+<strong id="swapCashback">
+0 BX
+</strong>
+
+</div>
+
+</div>
+
+</section>
+
+<!-- ===================================================== -->
+<!-- VIP -->
+<!-- ===================================================== -->
+
+<section class="reward-card">
+
+<div class="reward-head">
+
+<h3>VIP Benefits</h3>
+
+<span>
+VIP0 → VIP10
+</span>
+
+</div>
+
+<div class="reward-grid">
+
+<div class="reward-box">
+
+<span>VIP Level</span>
+
+<strong id="vipRewardLevel">
+VIP0
+</strong>
+
+</div>
+
+<div class="reward-box">
+
+<span>Cashback</span>
+
+<strong id="vipRewardCashback">
+0%
+</strong>
+
+</div>
+
+<div class="reward-box">
+
+<span>Mining Boost</span>
+
+<strong id="vipRewardMining">
+1x
+</strong>
+
+</div>
+
+</div>
+
+</section>
+
+<!-- ===================================================== -->
+<!-- DAO -->
+<!-- ===================================================== -->
+
+<section class="reward-card">
+
+<div class="reward-head">
+
+<h3>DAO Rewards</h3>
+
+<span>
+Governance
+</span>
+
+</div>
+
+<div class="reward-grid">
+
+<div class="reward-box">
+
+<span>Votes Cast</span>
+
+<strong id="daoVotes">
+0
+</strong>
+
+</div>
+
+<div class="reward-box">
+
+<span>Proposals</span>
+
+<strong id="daoProposals">
+0
+</strong>
+
+</div>
+
+<div class="reward-box">
+
+<span>DAO Rewards</span>
+
+<strong id="daoRewards">
+0 BX
+</strong>
+
+</div>
+
+</div>
+
+</section>
+
+<!-- ===================================================== -->
+<!-- HISTORY -->
+<!-- ===================================================== -->
+
+<section class="reward-card">
+
+<div class="reward-head">
+
+<h3>Reward History</h3>
+
+<span>
+Latest Activity
+</span>
+
+</div>
+
+<div
+id="rewardHistory"
+class="reward-history">
+
+</div>
+
+</section>
+
+</div>
+
+</section>
