@@ -1,50 +1,78 @@
-/* =========================================================
-   FILE: public/bx/vip.js
-   BLOXIO VIP ENGINE 2026
-========================================================= */
+/*=========================================================
+VIP ENGINE V3
+BX + XBC ECOSYSTEM
+10 LEVELS
+=========================================================*/
 
 window.BXVIP=(function(){
 
 const listeners=new Set();
+const history=[];
 
-const state={
-level:0,
-name:"Bronze",
-xp:0,
-nextXP:1000,
-cashback:0,
-rakeback:0,
-dailyBonus:0,
-weeklyBonus:0,
-monthlyBonus:0,
-multiplier:1,
-updatedAt:0
-};
+const STORAGE_KEY="bx_vip_v3";
 
 const LEVELS=[
 
-{id:0,name:"Bronze",xp:0,cashback:0.25,rakeback:0.25,multiplier:1},
+{id:0,name:"VIP0",xp:0,cashback:0.25,rakeback:0.25,mining:1.00},
 
-{id:1,name:"Silver",xp:1000,cashback:0.50,rakeback:0.50,multiplier:1.1},
+{id:1,name:"VIP1",xp:1000,cashback:0.50,rakeback:0.50,mining:1.05},
 
-{id:2,name:"Gold",xp:5000,cashback:1,rakeback:1,multiplier:1.25},
+{id:2,name:"VIP2",xp:5000,cashback:0.75,rakeback:0.75,mining:1.10},
 
-{id:3,name:"Platinum",xp:15000,cashback:2,rakeback:2,multiplier:1.5},
+{id:3,name:"VIP3",xp:15000,cashback:1.00,rakeback:1.00,mining:1.20},
 
-{id:4,name:"Diamond",xp:50000,cashback:3,rakeback:3,multiplier:2},
+{id:4,name:"VIP4",xp:35000,cashback:1.50,rakeback:1.50,mining:1.35},
 
-{id:5,name:"Master",xp:100000,cashback:4,rakeback:4,multiplier:3},
+{id:5,name:"VIP5",xp:75000,cashback:2.00,rakeback:2.00,mining:1.50},
 
-{id:6,name:"Legend",xp:250000,cashback:5,rakeback:5,multiplier:5}
+{id:6,name:"VIP6",xp:150000,cashback:3.00,rakeback:3.00,mining:1.75},
+
+{id:7,name:"VIP7",xp:300000,cashback:4.00,rakeback:4.00,mining:2.00},
+
+{id:8,name:"VIP8",xp:600000,cashback:5.00,rakeback:5.00,mining:2.50},
+
+{id:9,name:"VIP9",xp:1200000,cashback:7.00,rakeback:7.00,mining:3.00},
+
+{id:10,name:"VIP10",xp:2500000,cashback:10.00,rakeback:10.00,mining:5.00}
 
 ];
 
-const history=[];
+const state={
 
-/* =========================================================
-   HELPERS
-========================================================= */
+level:0,
+name:"VIP0",
 
+xp:0,
+
+nextXP:1000,
+
+cashback:0.25,
+
+rakeback:0.25,
+
+miningBoost:1,
+
+dailyBX:5,
+
+weeklyBX:25,
+
+monthlyBX:100,
+
+dailyXBC:2,
+
+weeklyXBC:10,
+
+monthlyXBC:50,
+
+totalRewards:0,
+
+updatedAt:0
+
+};
+
+/*=========================================================
+HELPERS
+=========================================================*/
 function emit(){
 
 state.updatedAt=
@@ -75,16 +103,28 @@ save();
 
 }
 
+function uuid(){
+
+return crypto.randomUUID
+?crypto.randomUUID()
+:Math.random().toString(36).slice(2);
+
+}
+
+/*=========================================================
+STORAGE
+=========================================================*/
 function save(){
 
 localStorage.setItem(
-"bx_vip",
-JSON.stringify(
-{
-level:state.level,
-xp:state.xp
-}
-)
+STORAGE_KEY,
+JSON.stringify({
+
+xp:state.xp,
+
+level:state.level
+
+})
 );
 
 }
@@ -93,32 +133,28 @@ function load(){
 
 const raw=
 localStorage.getItem(
-"bx_vip"
+STORAGE_KEY
 );
 
-if(!raw){
-return;
-}
+if(!raw)return;
 
 try{
 
 const data=
 JSON.parse(raw);
 
-state.level=
-data.level||0;
-
 state.xp=
-data.xp||0;
+Number(
+data.xp||0
+);
 
 }catch(error){}
 
 }
 
-/* =========================================================
-   LEVEL
-========================================================= */
-
+/*=========================================================
+LEVEL
+=========================================================*/
 function updateLevel(){
 
 let current=
@@ -136,7 +172,7 @@ current=level;
 
 });
 
-const oldLevel=
+const old=
 state.level;
 
 state.level=
@@ -151,8 +187,8 @@ current.cashback;
 state.rakeback=
 current.rakeback;
 
-state.multiplier=
-current.multiplier;
+state.miningBoost=
+current.mining;
 
 const next=
 LEVELS[
@@ -164,8 +200,10 @@ next
 ?next.xp
 :current.xp;
 
+calculateRewards();
+
 if(
-oldLevel!==state.level
+old!==state.level
 ){
 
 levelUp();
@@ -174,14 +212,16 @@ levelUp();
 
 }
 
-/* =========================================================
-   XP
-========================================================= */
-
+/*=========================================================
+XP
+=========================================================*/
 function addXP(amount){
 
 amount=
 Number(amount)||0;
+
+if(amount<=0)
+return;
 
 state.xp+=amount;
 
@@ -194,7 +234,10 @@ emit();
 function setXP(amount){
 
 state.xp=
-Number(amount)||0;
+Math.max(
+0,
+Number(amount)||0
+);
 
 updateLevel();
 
@@ -202,92 +245,123 @@ emit();
 
 }
 
-/* =========================================================
-   LEVEL UP
-========================================================= */
-
+/*=========================================================
+LEVEL UP
+=========================================================*/
 function levelUp(){
 
 history.unshift({
-id:crypto.randomUUID(),
+
+id:uuid(),
+
 type:"level-up",
+
 level:state.name,
+
 time:Date.now()
+
 });
 
-if(
-window.NotificationFeed
-){
+if(window.BXChat){
 
-NotificationFeed.add({
-type:"vip",
-title:"VIP LEVEL UP",
-message:`${state.name}`
+BXChat.receive?.({
+
+system:true,
+
+room:"global",
+
+user:"VIP",
+
+vip:"SYSTEM",
+
+text:
+`${state.name} unlocked`,
+
+time:Date.now()
+
 });
-
-}
-
-if(
-window.AuthFeed
-){
-
-AuthFeed.setVIP(
-state.name
-);
 
 }
 
 window.dispatchEvent(
+
 new CustomEvent(
 "bx:vip-upgrade",
 {
 detail:getState()
 }
 )
+
 );
 
 }
 
-/* =========================================================
-   REWARDS
-========================================================= */
-
+/*=========================================================
+REWARDS
+=========================================================*/
 function calculateRewards(){
 
-state.dailyBonus=
-Number(
-(
-state.level*2+
-5
-).toFixed(2)
-);
+state.dailyBX=
+5+
+(state.level*2);
 
-state.weeklyBonus=
-Number(
-(
-state.level*15+
-25
-).toFixed(2)
-);
+state.weeklyBX=
+25+
+(state.level*15);
 
-state.monthlyBonus=
-Number(
-(
-state.level*100+
-100
-).toFixed(2)
+state.monthlyBX=
+100+
+(state.level*100);
+
+state.dailyXBC=
+2+
+(state.level);
+
+state.weeklyXBC=
+10+
+(state.level*5);
+
+state.monthlyXBC=
+50+
+(state.level*25);
+
+}
+
+/*=========================================================
+PAY
+=========================================================*/
+function credit(
+coin,
+amount
+){
+
+if(window.Wallet){
+
+Wallet.credit?.(
+coin,
+amount
 );
 
 }
 
-/* =========================================================
-   CLAIM
-========================================================= */
+}
 
+/*=========================================================
+CLAIMS
+=========================================================*/
 function claimDaily(){
 
-reward(
-state.dailyBonus,
+credit(
+"BX",
+state.dailyBX
+);
+
+credit(
+"XBC",
+state.dailyXBC
+);
+
+rewardHistory(
 "Daily"
 );
 
@@ -295,8 +369,17 @@ state.dailyBonus,
 
 function claimWeekly(){
 
-reward(
-state.weeklyBonus,
+credit(
+"BX",
+state.weeklyBX
+);
+
+credit(
+"XBC",
+state.weeklyXBC
+);
+
+rewardHistory(
 "Weekly"
 );
 
@@ -304,104 +387,81 @@ state.weeklyBonus,
 
 function claimMonthly(){
 
-reward(
-state.monthlyBonus,
+credit(
+"BX",
+state.monthlyBX
+);
+
+credit(
+"XBC",
+state.monthlyXBC
+);
+
+rewardHistory(
 "Monthly"
 );
 
 }
 
-function reward(
-amount,
-type
-){
+function rewardHistory(type){
 
-if(
-window.WalletFeed
-){
-
-const asset=
-WalletFeed.getAsset(
-"BX"
-);
-
-if(asset){
-
-WalletFeed.updateBalance(
-"BX",
-asset.balance+amount
-);
-
-}
-
-}
+state.totalRewards++;
 
 history.unshift({
-id:crypto.randomUUID(),
+
+id:uuid(),
+
 type,
-amount,
+
+bx:
+state[`${type.toLowerCase()}BX`],
+
+xbc:
+state[`${type.toLowerCase()}XBC`],
+
 time:Date.now()
+
 });
 
-if(
-window.NotificationFeed
-){
-
-NotificationFeed.add({
-type:"vip",
-title:`${type} VIP Bonus`,
-message:`+${amount} BX`
-});
+emit();
 
 }
 
-}
-
-/* =========================================================
-   EVENTS
-========================================================= */
-
+/*=========================================================
+EVENTS
+=========================================================*/
 function bindEvents(){
 
 window.addEventListener(
 "bx:swap-complete",
-()=>{
-
-addXP(15);
-
-}
-);
-
-window.addEventListener(
-"bx:airdrop-claimed",
-()=>{
-
-addXP(10);
-
-}
+()=>addXP(15)
 );
 
 window.addEventListener(
 "bx:mining-claim",
-()=>{
+()=>addXP(25)
+);
 
-addXP(25);
-
-}
+window.addEventListener(
+"bx:casino-bet",
+()=>addXP(3)
 );
 
 window.addEventListener(
 "bx:casino-win",
 e=>{
 
-const profit=
+const amount=
 Number(
 e.detail?.amount||0
 );
 
 addXP(
+Math.max(
+1,
 Math.floor(
-profit/10
+amount/10
+)
 )
 );
 
@@ -428,10 +488,9 @@ amount/5
 
 }
 
-/* =========================================================
-   UI
-========================================================= */
-
+/*=========================================================
+UI
+=========================================================*/
 function updateUI(){
 
 const level=
@@ -444,11 +503,6 @@ document.getElementById(
 "vipXP"
 );
 
-const progress=
-document.getElementById(
-"vipProgress"
-);
-
 const cashback=
 document.getElementById(
 "vipCashback"
@@ -457,6 +511,16 @@ document.getElementById(
 const rakeback=
 document.getElementById(
 "vipRakeback"
+);
+
+const progress=
+document.getElementById(
+"vipProgress"
+);
+
+const mining=
+document.getElementById(
+"vipMiningBoost"
 );
 
 if(level){
@@ -469,7 +533,7 @@ state.name;
 if(xp){
 
 xp.textContent=
-state.xp;
+state.xp.toLocaleString();
 
 }
 
@@ -487,28 +551,46 @@ rakeback.textContent=
 
 }
 
+if(mining){
+
+mining.textContent=
+`${state.miningBoost}x`;
+
+}
+
 if(progress){
 
+const current=
+LEVELS[state.level];
+
+const start=
+current.xp;
+
+const end=
+state.nextXP;
+
 const value=
-Math.min(
-100,
+end>start
+?(
 (
-state.xp/
-state.nextXP
+state.xp-start
+)/
+(
+end-start
+)
 )*100
-);
+:100;
 
 progress.style.width=
-`${value}%`;
+`${Math.min(100,value)}%`;
 
 }
 
 }
 
-/* =========================================================
-   BUTTONS
-========================================================= */
-
+/*=========================================================
+BUTTONS
+=========================================================*/
 function bindButtons(){
 
 document
@@ -540,10 +622,9 @@ claimMonthly
 
 }
 
-/* =========================================================
-   SUBSCRIBE
-========================================================= */
-
+/*=========================================================
+SUBSCRIBE
+=========================================================*/
 function subscribe(callback){
 
 listeners.add(
@@ -564,35 +645,24 @@ callback
 
 }
 
-/* =========================================================
-   HISTORY
-========================================================= */
-
-function getHistory(){
-
-return[
-...history
-];
-
-}
-
-/* =========================================================
-   STATE
-========================================================= */
-
+/*=========================================================
+STATE
+=========================================================*/
 function getState(){
 
 return{
+
 ...state,
-history:getHistory()
+
+history:[...history]
+
 };
 
 }
 
-/* =========================================================
-   MOCK
-========================================================= */
-
+/*=========================================================
+MOCK
+=========================================================*/
 function startMock(){
 
 setInterval(()=>{
@@ -607,10 +677,9 @@ Math.random()*5
 
 }
 
-/* =========================================================
-   INIT
-========================================================= */
-
+/*=========================================================
+INIT
+=========================================================*/
 function init(){
 
 load();
@@ -628,15 +697,14 @@ startMock();
 emit();
 
 console.log(
-"👑 BLOXIO VIP READY"
+"👑 BLOXIO VIP V3 READY"
 );
 
 }
 
-/* =========================================================
-   EXPORTS
-========================================================= */
-
+/*=========================================================
+EXPORTS
+=========================================================*/
 return{
 
 init,
@@ -655,21 +723,15 @@ subscribe,
 
 getState,
 
-getHistory
+levels:LEVELS
 
 };
 
 })();
 
-/* =========================================================
-   AUTO INIT
-========================================================= */
-
 document.readyState==="loading"
-
 ?document.addEventListener(
 "DOMContentLoaded",
 ()=>BXVIP.init()
 )
-
 :BXVIP.init();
