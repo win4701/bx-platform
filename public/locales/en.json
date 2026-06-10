@@ -1,29 +1,99 @@
 {
-  "app_name":"Bloxio",
-  "wallet":"Wallet",
-  "market":"Market",
-  "casino":"Casino",
-  "mining":"Mining",
-  "rewards":"Rewards",
-  "dao":"DAO",
-  "vip":"VIP",
-  "chat":"Chat",
-  "deposit":"Deposit",
-  "withdraw":"Withdraw",
-  "swap":"Swap",
-  "claim":"Claim",
-  "cancel":"Cancel",
-  "confirm":"Confirm",
-  "save":"Save",
-  "settings":"Settings",
-  "online":"Online",
-  "offline":"Offline",
-  "coming_soon":"Coming Soon",
-  "loading":"Loading...",
-  "search":"Search",
-  "leaderboard":"Leaderboard",
-  "tournament":"Tournament",
-  "jackpot":"Jackpot",
-  "balance":"Balance",
-  "history":"History"
+  "common":{
+    "save":"Save",
+    "cancel":"Cancel",
+    "confirm":"Confirm",
+    "loading":"Loading...",
+    "search":"Search",
+    "back":"Back",
+    "next":"Next",
+    "close":"Close"
+  },
+
+  "navigation":{
+    "wallet":"Wallet",
+    "market":"Market",
+    "casino":"Casino",
+    "mining":"Mining",
+    "rewards":"Rewards",
+    "dao":"DAO",
+    "vip":"VIP",
+    "chat":"Chat",
+    "settings":"Settings"
+  },
+
+  "wallet":{
+    "title":"Wallet",
+    "deposit":"Deposit",
+    "withdraw":"Withdraw",
+    "swap":"Swap",
+    "history":"History",
+    "balance":"Balance",
+    "assets":"Assets"
+  },
+
+  "market":{
+    "title":"Market",
+    "buy":"Buy",
+    "sell":"Sell",
+    "price":"Price",
+    "volume":"Volume",
+    "holders":"Holders",
+    "dao_countdown":"Market Opens Soon"
+  },
+
+  "casino":{
+    "title":"Casino",
+    "jackpot":"Jackpot",
+    "leaderboard":"Leaderboard",
+    "tournament":"Tournament",
+    "provably_fair":"Provably Fair",
+    "big_win":"Big Win"
+  },
+
+  "mining":{
+    "title":"Mining",
+    "plans":"Mining Plans",
+    "active":"Active Mining",
+    "claim":"Claim Reward",
+    "close":"Close Plan",
+    "hashrate":"Hash Rate",
+    "profit":"Profit"
+  },
+
+  "rewards":{
+    "title":"Rewards Hub",
+    "daily":"Daily Rewards",
+    "weekly":"Weekly Rewards",
+    "monthly":"Monthly Rewards",
+    "missions":"Missions",
+    "achievements":"Achievements"
+  },
+
+  "vip":{
+    "title":"VIP Center",
+    "cashback":"Cashback",
+    "rakeback":"Rakeback",
+    "boost":"Mining Boost"
+  },
+
+  "dao":{
+    "title":"DAO Governance",
+    "vote":"Vote",
+    "proposal":"Proposal",
+    "rewards":"DAO Rewards"
+  },
+
+  "chat":{
+    "title":"Global Chat",
+    "send":"Send",
+    "online":"Online Users"
+  },
+
+  "notifications":{
+    "deposit_success":"Deposit Successful",
+    "withdraw_success":"Withdrawal Successful",
+    "reward_claimed":"Reward Claimed",
+    "vip_upgraded":"VIP Upgraded"
+  }
 }
