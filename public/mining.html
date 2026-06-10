@@ -1,0 +1,180 @@
+<section id="mining" class="view">
+
+<div class="mining-shell">
+<div class="mining-hero">
+<div class="mining-hero-left">
+<h2>Mining Matrix</h2>
+
+<p>Enterprise BX • BNB • SOL Yield Engine</p>
+
+</div>
+<div class="mining-hero-right">
+<div class="mining-stat"><span>Coin</span><strong id="miningActiveCoin">BX</strong></div>
+<div class="mining-stat"><span>Available</span><strong id="miningAvailableBalanceTop">0.00 BX</strong></div>
+<div class="mining-stat"><span>Yield</span><strong id="miningDailyYieldTop">0%</strong></div>
+<div class="mining-stat"><span>Cycle</span><strong id="miningCycleTop">—</strong></div>
+</div>
+</div>
+<div class="mining-tabs" id="miningTabs">
+
+<button type="button" data-coin="BX" class="active">
+<img src="assets/images/coins/bx.webp" alt="BX">
+<span>BX</span>
+</button>
+<button type="button" data-coin="BNB">
+<img src="assets/images/coins/bnb.webp" alt="BNB">
+<span>BNB</span>
+</button>
+<button type="button" data-coin="SOL">
+<img src="assets/images/coins/sol.webp" alt="SOL">
+<span>SOL</span>
+</button>
+<button type="button" data-coin="TON">
+<img src="assets/images/coins/ton.webp" alt="TON">
+<span>TON</span>
+</button>
+<button type="button" data-coin="XRP">
+<img src="assets/images/coins/xrp.webp" alt="XRP">
+<span>XRP</span>
+</button>
+<button type="button" data-coin="LTC">
+<img src="assets/images/coins/ltc.webp" alt="LTC">
+<span>LTC</span>
+</button>
+<button type="button" data-coin="TRX">
+<img src="assets/images/coins/trx.webp" alt="TRX">
+<span>TRX</span>
+</button>
+<button type="button" data-coin="DOGE">
+<img src="assets/images/coins/doge.webp" alt="DOGE">
+<span>DOGE</span>
+</button>
+<button type="button" data-coin="USDC">
+<img src="assets/images/coins/usdc.webp" alt="USDC">
+<span>USDC</span>
+</button>
+<button type="button" data-coin="ETC">
+<img src="assets/images/coins/etc.webp" alt="ETC">
+<span>ETC</span>
+</button>
+
+</div>
+<div class="mining-layout">
+<div class="mining-main">
+<div class="mining-head">
+<div>
+
+<span>Enterprise Plans</span>
+
+<h3>Mining Portfolio</h3>
+</div>
+<button class="btn primary" data-mining-open="miningSubscribePanel">Subscribe</button>
+</div>
+
+<div id="miningGrid" class="mining-grid"></div>
+</div>
+<div class="mining-side">
+<div class="mining-active card">
+<div class="mining-active-top">
+<div>
+<span>Active Position</span>
+
+<h3>Current Mining</h3>
+</div>
+<span id="miningActiveStatusBadge" class="mining-badge idle">No Active</span>
+</div>
+<div class="mining-active-box">
+
+<div><span>Plan</span><strong id="miningActivePlanName">—</strong></div>
+<div><span>Amount</span><strong id="miningActiveAmount">0 BX</strong></div>
+<div><span>Profit</span><strong id="miningActiveProfit">0 BX</strong></div>
+<div><span>Time Left</span><strong id="miningActiveTimeLeft">—</strong></div>
+
+</div>
+<div class="mining-progress-wrap">
+<div class="mining-progress-row">
+
+<span>Progress</span>
+
+<strong id="miningProgressText">0%</strong>
+
+</div>
+<div class="mining-progress-bar">
+<div id="miningProgressFill"></div>
+</div>
+<div id="miningCycleHint">
+
+No Active Cycle
+
+</div>
+</div>
+<div class="mining-actions">
+
+<button id="miningClaimBtn" class="btn primary" disabled>Claim Profit</button>
+<button id="miningCancelBtn" class="btn" disabled>Close</button>
+
+</div>
+</div>
+<div id="miningSubscribePanel" class="mining-sub-panel mining-hidden">
+<div class="mining-sub-head">
+<div>
+
+<h3 id="miningSelectedPlanTitle">Subscription</h3>
+
+<p id="miningSelectedPlanMeta">Choose Mining Plan</p>
+
+</div>
+<button data-mining-close="miningSubscribePanel" class="mining-close">X</button>
+
+</div>
+<div class="mining-sub-body">
+<div>
+
+Balance
+
+<strong id="miningAvailableBalance">0 BX</strong>
+
+</div>
+<input id="miningAmountInput" type="number" min="0" step="0.0001" placeholder="Mining Amount">
+
+<div class="mining-quick">
+
+<button data-mining-percent="25">25%</button>
+<button data-mining-percent="50">50%</button>
+<button data-mining-percent="100">MAX</button>
+
+</div>
+<div id="miningSubSummary">
+Choose Plan
+</div>
+
+<button id="confirmMiningSubscribeBtn" class="btn primary">Confirm</button>
+
+</div>
+</div>
+<div class="mining-history card">
+<div class="mining-history-top">
+<div>
+<span>Activity</span>
+
+<h3>Mining History</h3>
+</div>
+
+<strong id="miningHistoryCount">0 Records</strong>
+
+</div>
+<div id="miningHistoryList">
+<div class="mining-history-empty">
+
+No Mining Activity
+
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div id="miningStatus" class="wallet-status hidden"></div>
+
+<div id="miningToast" class="wallet-toast hidden"></div>
+</section>
