@@ -1,0 +1,89 @@
+{
+  "common": {
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "confirm": "Bestätigen",
+    "loading": "Wird geladen...",
+    "search": "Suchen",
+    "back": "Zurück",
+    "next": "Weiter",
+    "close": "Schließen"
+  },
+  "navigation": {
+    "wallet": "Wallet",
+    "market": "Markt",
+    "casino": "Casino",
+    "mining": "Mining",
+    "rewards": "Belohnungen",
+    "dao": "DAO",
+    "vip": "VIP",
+    "chat": "Chat",
+    "settings": "Einstellungen"
+  },
+  "wallet": {
+    "title": "Wallet",
+    "deposit": "Einzahlung",
+    "withdraw": "Auszahlung",
+    "swap": "Tauschen",
+    "history": "Verlauf",
+    "balance": "Guthaben",
+    "assets": "Vermögenswerte"
+  },
+  "market": {
+    "title": "Markt",
+    "buy": "Kaufen",
+    "sell": "Verkaufen",
+    "price": "Preis",
+    "volume": "Volumen",
+    "holders": "Inhaber",
+    "dao_countdown": "Markt öffnet bald"
+  },
+  "casino": {
+    "title": "Casino",
+    "jackpot": "Jackpot",
+    "leaderboard": "Bestenliste",
+    "tournament": "Turnier",
+    "provably_fair": "Nachweislich fair",
+    "big_win": "Großer Gewinn"
+  },
+  "mining": {
+    "title": "Mining",
+    "plans": "Mining-Pläne",
+    "active": "Aktives Mining",
+    "claim": "Belohnung abholen",
+    "close": "Plan schließen",
+    "hashrate": "Hashrate",
+    "profit": "Gewinn"
+  },
+  "rewards": {
+    "title": "Belohnungszentrum",
+    "daily": "Tägliche Belohnungen",
+    "weekly": "Wöchentliche Belohnungen",
+    "monthly": "Monatliche Belohnungen",
+    "missions": "Missionen",
+    "achievements": "Erfolge"
+  },
+  "vip": {
+    "title": "VIP-Zentrum",
+    "cashback": "Cashback",
+    "rakeback": "Rakeback",
+    "boost": "Mining-Boost"
+  },
+  "dao": {
+    "title": "DAO-Governance",
+    "vote": "Abstimmen",
+    "proposal": "Vorschlag",
+    "rewards": "DAO-Belohnungen"
+  },
+  "chat": {
+    "title": "Globaler Chat",
+    "send": "Senden",
+    "online": "Online-Benutzer"
+  },
+  "notifications": {
+    "deposit_success": "Einzahlung erfolgreich",
+    "withdraw_success": "Auszahlung erfolgreich",
+    "reward_claimed": "Belohnung abgeholt",
+    "vip_upgraded": "VIP-Stufe erhöht"
+  }
+}
