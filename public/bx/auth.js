@@ -1,11 +1,11 @@
 
-/* =====================================================
-   BLOXIO AUTH ENGINE V7
-   STABLE AUTHENTICATION
-   API COMPATIBLE
-   ANDROID SAFE
+/* =========================================================
+   BLOXIO AUTH ENGINE V8
+   SECURE SESSION MANAGEMENT
+   API V7 COMPATIBLE
+   ROUTES V8 COMPATIBLE
    UI PRESERVED
-===================================================== */
+========================================================= */
 
 "use strict";
 
@@ -16,6 +16,8 @@ const AUTH = {
     mode: "login",
     authenticated: false,
     token: null,
+    refreshToken: null,
+    user: null,
     browser: true,
     ready: false
   },
@@ -31,10 +33,16 @@ const AUTH = {
     if (this.state.ready) return;
 
     this.cache();
+
     this.bind();
+
     this.bindGlobal();
+
     this.injectReferral();
+
     this.bootstrap();
+
+    this.state.ready = true;
 
   },
 
@@ -73,9 +81,7 @@ const AUTH = {
 
       registerForm: this.getElement("registerForm"),
 
-      email: this.getElement(
-        "loginEmail"
-      ),
+      email: this.getElement("loginEmail"),
 
       pass: this.getElement(
         "loginPassword",
@@ -102,35 +108,82 @@ const AUTH = {
         "regRef"
       ),
 
-      loginBtn: this.getElement(
-        "loginBtn"
-      ),
+      loginBtn: this.getElement("loginBtn"),
 
-      registerBtn: this.getElement(
-        "registerBtn"
-      ),
+      registerBtn: this.getElement("registerBtn"),
 
-      toggle: this.getElement(
-        "toggleAuth"
-      ),
+      toggle: this.getElement("toggleAuth"),
 
-      error: this.getElement(
-        "authError"
-      ),
+      error: this.getElement("authError"),
 
-      title: this.getElement(
-        "authTitle"
-      ),
+      title: this.getElement("authTitle"),
 
-      sub: this.getElement(
-        "authSub"
-      ),
+      sub: this.getElement("authSub"),
 
-      switch: this.getElement(
-        "switchText"
-      )
+      switch: this.getElement("switchText")
 
     };
+
+  },
+
+  /* =====================================================
+     STORAGE
+  ===================================================== */
+
+  readStorage(key) {
+
+    try {
+
+      return localStorage.getItem(key);
+
+    } catch (error) {
+
+      console.warn("[AUTH STORAGE]", error);
+
+      return null;
+
+    }
+
+  },
+
+  writeStorage(key, value) {
+
+    try {
+
+      localStorage.setItem(key, value);
+
+      return true;
+
+    } catch (error) {
+
+      console.warn("[AUTH STORAGE]", error);
+
+      return false;
+
+    }
+
+  },
+
+  removeStorage(key) {
+
+    try {
+
+      localStorage.removeItem(key);
+
+    } catch (error) {
+
+      console.warn("[AUTH STORAGE]", error);
+
+    }
+
+  },
+
+  getToken() {
+
+    return (
+      this.readStorage("accessToken") ||
+      this.readStorage("token")
+    );
 
   },
 
@@ -138,33 +191,45 @@ const AUTH = {
      BOOTSTRAP
   ===================================================== */
 
-  bootstrap() {
+  async bootstrap() {
 
-    let token = null;
+    const accessToken = this.getToken();
 
-    try {
+    const refreshToken =
+      this.readStorage("refreshToken");
 
-      token = localStorage.getItem("token");
+    const storedUser =
+      this.readStorage("user");
 
-    } catch (error) {
+    if (storedUser) {
 
-      console.warn(
-        "AUTH STORAGE:",
-        error
-      );
+      try {
+
+        this.state.user = JSON.parse(storedUser);
+
+      } catch {
+
+        this.removeStorage("user");
+
+      }
 
     }
 
     if (
-      token &&
-      !this.isTokenExpired(token)
+      accessToken &&
+      !this.isTokenExpired(accessToken)
     ) {
 
-      this.state.token = token;
-
-      this.state.authenticated = true;
+      this.setSession(
+        accessToken,
+        refreshToken,
+        this.state.user
+      );
 
       this.enter();
+
+      // Verify session against the server.
+      this.verifySession();
 
     } else {
 
@@ -174,20 +239,16 @@ const AUTH = {
 
       this.unlockApp();
 
-      this.hideAuth(true);
+      this.showAuth();
 
     }
 
     this.telegram();
 
-    this.state.ready = true;
-
   },
 
   /* =====================================================
-     TOKEN CHECK
-     Client-side expiry check only.
-     Server must verify JWT signature.
+     TOKEN EXPIRY
   ===================================================== */
 
   isTokenExpired(token) {
@@ -197,24 +258,27 @@ const AUTH = {
       const parts = token.split(".");
 
       if (parts.length !== 3) {
+
         return true;
+
       }
 
+      const base64 = parts[1]
+        .replace(/-/g, "+")
+        .replace(/_/g, "/");
+
       const payload = JSON.parse(
-        atob(
-          parts[1]
-            .replace(/-/g, "+")
-            .replace(/_/g, "/")
-        )
+        atob(base64)
       );
 
       if (!payload.exp) {
+
         return false;
+
       }
 
       return (
-        Number(payload.exp) * 1000
-        <= Date.now()
+        Number(payload.exp) * 1000 <= Date.now()
       );
 
     } catch {
@@ -226,14 +290,70 @@ const AUTH = {
   },
 
   /* =====================================================
+     VERIFY SESSION
+  ===================================================== */
+
+  async verifySession() {
+
+    if (!this.state.token) return false;
+
+    try {
+
+      const response = await window.API.get(
+        "/auth/me"
+      );
+
+      if (
+        !response ||
+        response.error ||
+        response.success === false
+      ) {
+
+        throw new Error(
+          response?.error || "session_invalid"
+        );
+
+      }
+
+      const data = response.data || response;
+
+      if (data.user) {
+
+        this.state.user = data.user;
+
+        this.writeStorage(
+          "user",
+          JSON.stringify(data.user)
+        );
+
+      }
+
+      this.state.authenticated = true;
+
+      return true;
+
+    } catch (error) {
+
+      console.warn(
+        "[AUTH VERIFY]",
+        error.message
+      );
+
+      this.logout(false);
+
+      return false;
+
+    }
+
+  },
+
+  /* =====================================================
      TELEGRAM
   ===================================================== */
 
   telegram() {
 
-    if (!window.Telegram?.WebApp) {
-      return;
-    }
+    if (!window.Telegram?.WebApp) return;
 
     try {
 
@@ -244,7 +364,7 @@ const AUTH = {
     } catch (error) {
 
       console.warn(
-        "AUTH TELEGRAM:",
+        "[AUTH TELEGRAM]",
         error
       );
 
@@ -263,11 +383,19 @@ const AUTH = {
       event => {
 
         if (
-          event.key === "token" &&
-          !event.newValue
+          event.key === "token" ||
+          event.key === "accessToken"
         ) {
 
-          this.logout(false);
+          if (!event.newValue) {
+
+            this.logout(false);
+
+          } else {
+
+            this.state.token = event.newValue;
+
+          }
 
         }
 
@@ -278,7 +406,11 @@ const AUTH = {
       "auth:logout",
       () => {
 
-        this.logout(false);
+        if (this.state.authenticated) {
+
+          this.logout(false);
+
+        }
 
       }
     );
@@ -375,19 +507,35 @@ const AUTH = {
           event.key !== "Enter" ||
           this.state.loading
         ) {
+
           return;
+
         }
 
         if (
           event.target?.tagName === "TEXTAREA"
         ) {
+
           return;
+
+        }
+
+        if (
+          event.target?.tagName === "BUTTON"
+        ) {
+
+          return;
+
         }
 
         if (this.state.mode === "login") {
+
           this.login();
+
         } else {
+
           this.register();
+
         }
 
       }
@@ -408,13 +556,9 @@ const AUTH = {
       "app-preload"
     );
 
-    document.body.classList.add(
-      "app-ready"
-    );
+    document.body.classList.add("app-ready");
 
-    this.el.app?.classList.remove(
-      "app-hidden"
-    );
+    this.el.app?.classList.remove("app-hidden");
 
     if (this.el.app) {
 
@@ -430,9 +574,7 @@ const AUTH = {
 
   lockApp() {
 
-    document.body.classList.add(
-      "auth-lock"
-    );
+    document.body.classList.add("auth-lock");
 
   },
 
@@ -450,9 +592,7 @@ const AUTH = {
 
     requestAnimationFrame(() => {
 
-      this.el.overlay.classList.add(
-        "visible"
-      );
+      this.el.overlay.classList.add("visible");
 
     });
 
@@ -462,9 +602,7 @@ const AUTH = {
 
     if (!this.el.overlay) return;
 
-    this.el.overlay.classList.remove(
-      "visible"
-    );
+    this.el.overlay.classList.remove("visible");
 
     if (force) {
 
@@ -477,9 +615,7 @@ const AUTH = {
     setTimeout(() => {
 
       if (
-        !this.el.overlay.classList.contains(
-          "visible"
-        )
+        !this.el.overlay.classList.contains("visible")
       ) {
 
         this.el.overlay.style.display = "none";
@@ -556,7 +692,10 @@ const AUTH = {
 
     const response = await window.API.post(
       url,
-      body
+      body,
+      {
+        auth: false
+      }
     );
 
     if (
@@ -592,8 +731,15 @@ const AUTH = {
     return {
 
       token:
+        data?.accessToken ||
         data?.token ||
+        response?.accessToken ||
         response?.token ||
+        null,
+
+      refreshToken:
+        data?.refreshToken ||
+        response?.refreshToken ||
         null,
 
       user:
@@ -655,9 +801,7 @@ const AUTH = {
 
     } catch (error) {
 
-      this.error(
-        this.message(error)
-      );
+      this.error(this.message(error));
 
     } finally {
 
@@ -725,9 +869,7 @@ const AUTH = {
 
     } catch (error) {
 
-      this.error(
-        this.message(error)
-      );
+      this.error(this.message(error));
 
     } finally {
 
@@ -743,67 +885,93 @@ const AUTH = {
 
   session(response) {
 
-    const data =
-      this.normalizeResponse(response);
+    const data = this.normalizeResponse(response);
 
     if (!data.token) {
 
-      throw new Error(
-        "Token Missing"
-      );
+      throw new Error("Token Missing");
 
     }
 
-    try {
-
-      localStorage.setItem(
-        "token",
-        data.token
-      );
-
-      if (data.user) {
-
-        localStorage.setItem(
-          "user",
-          JSON.stringify(data.user)
-        );
-
-      }
-
-    } catch {
-
-      throw new Error(
-        "Unable to save session"
-      );
-
-    }
-
-    this.state.authenticated = true;
-
-    this.state.token = data.token;
+    this.setSession(
+      data.token,
+      data.refreshToken,
+      data.user
+    );
 
   },
 
-  clearSession() {
+  setSession(token, refreshToken, user) {
 
-    try {
+    const saved = window.API?.setToken
+      ? (window.API.setToken(token), true)
+      : this.writeStorage("token", token);
 
-      localStorage.removeItem("token");
+    if (!saved) {
 
-      localStorage.removeItem("user");
+      throw new Error("Unable to save session");
 
-    } catch (error) {
+    }
 
-      console.warn(
-        "AUTH STORAGE:",
-        error
+    this.writeStorage("accessToken", token);
+
+    if (refreshToken) {
+
+      this.writeStorage(
+        "refreshToken",
+        refreshToken
       );
 
     }
+
+    if (user) {
+
+      this.writeStorage(
+        "user",
+        JSON.stringify(user)
+      );
+
+    }
+
+    this.state.token = token;
+
+    this.state.refreshToken = refreshToken || null;
+
+    this.state.user = user || null;
+
+    this.state.authenticated = true;
+
+  },
+
+  /* =====================================================
+     CLEAR SESSION
+  ===================================================== */
+
+  clearSession() {
+
+    if (window.API?.setToken) {
+
+      window.API.setToken(null);
+
+    } else {
+
+      this.removeStorage("token");
+
+      this.removeStorage("accessToken");
+
+    }
+
+    this.removeStorage("refreshToken");
+
+    this.removeStorage("user");
 
     this.state.authenticated = false;
 
     this.state.token = null;
+
+    this.state.refreshToken = null;
+
+    this.state.user = null;
 
   },
 
@@ -811,15 +979,36 @@ const AUTH = {
      LOGOUT
   ===================================================== */
 
-  logout(notify = true) {
+  async logout(notify = true) {
+
+    const hadSession = Boolean(
+      this.state.token || this.getToken()
+    );
+
+    if (notify && hadSession) {
+
+      try {
+
+        await window.API?.post?.(
+          "/auth/logout",
+          {},
+          { auth: true }
+        );
+
+      } catch (error) {
+
+        console.warn(
+          "[AUTH LOGOUT]",
+          error
+        );
+
+      }
+
+    }
 
     this.clearSession();
 
-    if (notify) {
-
-      window.WS?.disconnect?.();
-
-    }
+    window.WS?.disconnect?.();
 
     this.showAuth();
 
@@ -867,13 +1056,14 @@ const AUTH = {
   },
 
   /* =====================================================
-     ERROR
+     ERROR MESSAGES
   ===================================================== */
 
   message(error) {
 
-    const message =
-      String(error?.message || "");
+    const message = String(
+      error?.message || ""
+    );
 
     const known = {
 
@@ -889,23 +1079,40 @@ const AUTH = {
 
       request_failed: "Request failed",
 
+      email_exists: "Email already registered",
+
+      weak_password: "Password is too weak",
+
+      invalid_credentials: "Invalid email or password",
+
+      session_invalid: "Session expired. Please log in again",
+
       "API service unavailable":
         "Connection service unavailable",
 
       "Token Missing":
-        "Authentication response is incomplete"
+        "Authentication response is incomplete",
+
+      "Unable to save session":
+        "Unable to save login session"
 
     };
 
-    return known[message] || message || "Authentication failed";
+    return known[message] ||
+      message ||
+      "Authentication failed";
 
   },
+
+  /* =====================================================
+     ERROR UI
+  ===================================================== */
 
   error(message) {
 
     if (!this.el.error) {
 
-      console.warn("AUTH:", message);
+      console.warn("[AUTH]", message);
 
       return;
 
@@ -913,9 +1120,7 @@ const AUTH = {
 
     this.el.error.innerText = message;
 
-    this.el.error.classList.add(
-      "active"
-    );
+    this.el.error.classList.add("active");
 
   },
 
@@ -925,9 +1130,7 @@ const AUTH = {
 
     this.el.error.innerText = "";
 
-    this.el.error.classList.remove(
-      "active"
-    );
+    this.el.error.classList.remove("active");
 
   },
 
@@ -938,9 +1141,7 @@ const AUTH = {
   injectReferral() {
 
     const referral =
-      new URLSearchParams(
-        location.search
-      ).get("ref");
+      new URLSearchParams(location.search).get("ref");
 
     if (
       referral &&
@@ -956,15 +1157,15 @@ const AUTH = {
 
 };
 
-/* =====================================================
+/* =========================================================
    GLOBAL EXPORT
-===================================================== */
+========================================================= */
 
 window.AUTH = AUTH;
 
-/* =====================================================
+/* =========================================================
    BOOT
-===================================================== */
+========================================================= */
 
 if (document.readyState === "loading") {
 
