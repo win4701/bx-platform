@@ -703,3 +703,188 @@ BX:0.1,
 XBC:10
 
 };
+
+/* =========================================================
+   BLOXIO COINS REGISTRY — EXTENDED API
+   Compatible with existing exports
+========================================================= */
+
+/* ASSET GROUPS */
+
+export const MAIN_ASSETS = COINS.filter(
+    coin => coin.category === "main"
+);
+
+export const SECONDARY_ASSETS = COINS.filter(
+    coin => coin.category === "secondary"
+);
+
+/* Compatibility alias:
+   Extended assets are the secondary asset collection. */
+
+export const EXTENDED_ASSETS = SECONDARY_ASSETS;
+
+/* WALLET ASSETS */
+
+export const WALLET_COINS = COINS.filter(
+    coin => coin.wallet === true
+);
+
+/* SWAP ASSETS */
+
+export const SWAP_COINS = COINS.filter(
+    coin => coin.swap === true
+);
+
+/* MARKET ASSETS */
+
+export const MARKET_ASSETS = COINS.filter(
+    coin => coin.market === true
+);
+
+/* CASINO ASSETS */
+
+export const CASINO_ASSETS = COINS.filter(
+    coin => coin.casino === true
+);
+
+/* STABLECOINS */
+
+export const STABLECOINS = COINS.filter(
+    coin => coin.type === "stable"
+);
+
+/* PLATFORM ASSETS */
+
+export const PLATFORM_ASSETS = COINS.filter(
+    coin =>
+        coin.type === "platform" ||
+        coin.type === "casino"
+);
+
+/* =========================================================
+   COIN LOOKUP
+========================================================= */
+
+export const getCoin = symbol => {
+    if (!symbol) return null;
+
+    const key = String(symbol).trim().toUpperCase();
+
+    return COINS.find(
+        coin => coin.symbol === key
+    ) || null;
+};
+
+/* =========================================================
+   FILTER HELPERS
+========================================================= */
+
+export const getCoinsByCategory = category => {
+    return COINS.filter(
+        coin => coin.category === category
+    );
+};
+
+export const getCoinsByType = type => {
+    return COINS.filter(
+        coin => coin.type === type
+    );
+};
+
+export const getWalletCoins = () => WALLET_COINS;
+
+export const getMarketCoins = () => MARKET_ASSETS;
+
+export const getSwapCoins = () => SWAP_COINS;
+
+export const getCasinoCoins = () => CASINO_ASSETS;
+
+/* =========================================================
+   PRICE HELPERS
+========================================================= */
+
+export const getCoinPrice = symbol => {
+    const coin = getCoin(symbol);
+
+    if (!coin || !Number.isFinite(Number(coin.price))) {
+        return null;
+    }
+
+    return Number(coin.price);
+};
+
+export const getMinimumBet = symbol => {
+    const key = String(symbol || "").trim().toUpperCase();
+
+    return Number(MIN_BETS[key] || getCoin(key)?.minBet || 0);
+};
+
+/* =========================================================
+   REGISTRY INDEX
+========================================================= */
+
+export const COIN_INDEX = Object.freeze(
+    Object.fromEntries(
+        COINS.map(coin => [coin.symbol, coin])
+    )
+);
+
+/* =========================================================
+   REGISTRY METADATA
+========================================================= */
+
+export const COIN_STATS = Object.freeze({
+    total: COINS.length,
+    wallet: WALLET_COINS.length,
+    market: MARKET_ASSETS.length,
+    swap: SWAP_COINS.length,
+    casino: CASINO_ASSETS.length,
+    stablecoins: STABLECOINS.length,
+    main: MAIN_ASSETS.length,
+    secondary: SECONDARY_ASSETS.length
+});
+
+/* =========================================================
+   REGISTRY VALIDATION
+========================================================= */
+
+export const validateCoins = () => {
+    const symbols = new Set();
+    const errors = [];
+
+    COINS.forEach((coin, index) => {
+        if (!coin.symbol) {
+            errors.push(`Coin at index ${index} has no symbol`);
+            return;
+        }
+
+        if (symbols.has(coin.symbol)) {
+            errors.push(`Duplicate coin: ${coin.symbol}`);
+        }
+
+        symbols.add(coin.symbol);
+
+        if (!coin.name) {
+            errors.push(`${coin.symbol} has no name`);
+        }
+
+        if (!["main", "secondary"].includes(coin.category)) {
+            errors.push(`${coin.symbol} has invalid category`);
+        }
+
+        if (
+            coin.price !== undefined &&
+            (!Number.isFinite(Number(coin.price)) ||
+             Number(coin.price) < 0)
+        ) {
+            errors.push(`${coin.symbol} has invalid price`);
+        }
+    });
+
+    return {
+        valid: errors.length === 0,
+        errors,
+        total: COINS.length
+    };
+};
