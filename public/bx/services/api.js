@@ -1,899 +1,1009 @@
+
 /* =========================================================
-BLOXIO API ENGINE V6
-ENTERPRISE NETWORK LAYER
+   BLOXIO API ENGINE V7
+   SECURE NETWORK LAYER
+   Compatible with routes.js V8
 ========================================================= */
 
 "use strict";
 
-(function(){
+(function () {
 
-/* =====================================================
-CONFIG
-===================================================== */
+/* =========================================================
+   CONFIG
+========================================================= */
 
-const CONFIG={
+const CONFIG = {
 
-BASE:
+  BASE:
+    location.hostname === "localhost"
+      ? "http://localhost:3000/api"
+      : location.origin + "/api",
 
-location.hostname==="localhost"
+  TIMEOUT: 12000,
 
-?
+  RETRIES: 3,
 
-"http://localhost:3000/api"
+  BACKOFF: 500,
 
-:
+  CACHE: 20000,
 
-location.origin+"/api",
-
-TIMEOUT:12000,
-
-RETRIES:3,
-
-BACKOFF:500,
-
-CACHE:20000,
-
-QUEUE:4
+  QUEUE: 4
 
 };
 
-/* =====================================================
-STATE
-===================================================== */
+/* =========================================================
+   STATE
+========================================================= */
 
-const cache=new Map();
+const cache = new Map();
 
-const pending=new Map();
+const pending = new Map();
 
-const listeners=new Map();
+const listeners = new Map();
 
-const controllers=new Set();
+const controllers = new Set();
 
-const queue=[];
+const queue = [];
 
-let active=0;
+let active = 0;
 
-const metrics={
+let loggedOut = false;
 
-success:0,
+const metrics = {
 
-failed:0,
+  success: 0,
 
-network:0,
+  failed: 0,
 
-cached:0
+  network: 0,
 
-};
+  cached: 0,
 
-/* =====================================================
-BUS
-===================================================== */
+  requests: 0,
 
-function emit(
+  retries: 0,
 
-event,
-payload
-
-){
-
-(listeners.get(event)||[])
-.forEach(fn=>{
-
-try{
-
-fn(payload);
-
-}catch(e){
-
-console.warn(e);
-
-}
-
-});
-
-}
-
-function on(
-
-event,
-fn
-
-){
-
-if(
-
-!listeners.has(event)
-
-){
-
-listeners.set(
-
-event,
-[]
-
-);
-
-}
-
-listeners
-.get(event)
-.push(fn);
-
-}
-
-/* =====================================================
-TOKEN
-===================================================== */
-
-function token(){
-
-return localStorage
-.getItem(
-
-"token"
-
-);
-
-}
-
-/* =====================================================
-HEADERS
-===================================================== */
-
-function headers(extra={}){
-
-return{
-
-"Content-Type":
-
-"application/json",
-
-...(token()
-
-?{
-
-Authorization:
-
-`Bearer ${token()}`
-
-}
-
-:{}),
-
-...extra
+  unauthorized: 0
 
 };
 
-}
+/* =========================================================
+   EVENT BUS
+========================================================= */
 
-/* =====================================================
-QUEUE
-===================================================== */
+function emit(event, payload) {
 
-function enqueue(fn){
+  (listeners.get(event) || []).forEach(fn => {
 
-return new Promise(
+    try {
 
-(resolve,reject)=>{
+      fn(payload);
 
-queue.push({
+    } catch (error) {
 
-fn,
+      console.warn("[BLOXIO API EVENT]", error);
 
-resolve,
+    }
 
-reject
-
-});
-
-pump();
+  });
 
 }
 
-);
+function on(event, fn) {
+
+  if (typeof fn !== "function") {
+    return;
+  }
+
+  if (!listeners.has(event)) {
+
+    listeners.set(event, []);
+
+  }
+
+  listeners.get(event).push(fn);
 
 }
 
-function pump(){
+/* =========================================================
+   TOKEN
+========================================================= */
 
-if(
+function token() {
 
-active>=CONFIG.QUEUE
-
-)return;
-
-const job=
-
-queue.shift();
-
-if(!job)return;
-
-active++;
-
-job.fn()
-
-.then(job.resolve)
-
-.catch(job.reject)
-
-.finally(()=>{
-
-active--;
-
-pump();
-
-});
+  return (
+    localStorage.getItem("token") ||
+    localStorage.getItem("accessToken") ||
+    null
+  );
 
 }
 
-/* =====================================================
-CACHE
-===================================================== */
+function clearToken() {
 
-function key(
+  localStorage.removeItem("token");
 
-url,
-opt
+  localStorage.removeItem("accessToken");
 
-){
-
-return JSON.stringify({
-
-url,
-
-method:
-
-opt.method||
-
-"GET",
-
-body:
-
-opt.body||
-
-null
-
-});
+  localStorage.removeItem("refreshToken");
 
 }
 
-function cached(k){
+/* =========================================================
+   AUTH ROUTES
+========================================================= */
 
-const c=
+function isPublicAuthRoute(url) {
 
-cache.get(k);
+  const path = String(url).split("?")[0];
 
-if(!c)return null;
+  return [
 
-if(
+    "/auth/login",
 
-Date.now()
+    "/auth/register",
 
->
+    "/auth/refresh"
 
-c.expire
-
-){
-
-cache.delete(k);
-
-return null;
+  ].includes(path);
 
 }
 
-metrics.cached++;
+/* =========================================================
+   HEADERS
+========================================================= */
 
-return c.value;
+function headers(extra = {}, authenticated = true) {
 
-}
+  const result = {
 
-/* =====================================================
-FETCH
-===================================================== */
+    Accept: "application/json",
 
-async function request(
+    "Content-Type": "application/json",
 
-url,
-opt={}
+    ...extra
 
-){
+  };
 
-const method=
+  const currentToken = authenticated
+    ? token()
+    : null;
 
-opt.method||
+  if (currentToken) {
 
-"GET";
+    result.Authorization =
+      `Bearer ${currentToken}`;
 
-const k=
+  }
 
-key(url,opt);
-
-if(
-
-method==="GET"
-
-){
-
-const hit=
-
-cached(k);
-
-if(hit){
-
-return hit;
+  return result;
 
 }
 
-}
+/* =========================================================
+   URL
+========================================================= */
 
-if(
+function buildURL(url) {
 
-pending.has(k)
+  const path = String(url || "");
 
-){
+  if (/^https?:\/\//i.test(path)) {
 
-return pending.get(k);
+    throw new Error(
+      "External API URLs are not allowed"
+    );
 
-}
+  }
 
-const promise=
-
-enqueue(
-
-()=>attempt(
-
-url,
-opt
-
-)
-
-);
-
-pending.set(
-
-k,
-promise
-
-);
-
-try{
-
-const res=
-
-await promise;
-
-if(
-
-method==="GET"
-
-&&
-
-!res.error
-
-){
-
-cache.set(
-
-k,
-
-{
-
-value:res,
-
-expire:
-
-Date.now()
-
-+
-
-CONFIG.CACHE
+  return (
+    CONFIG.BASE.replace(/\/+$/, "") +
+    "/" +
+    path.replace(/^\/+/, "")
+  );
 
 }
 
-);
+/* =========================================================
+   REQUEST QUEUE
+========================================================= */
+
+function enqueue(fn) {
+
+  return new Promise((resolve, reject) => {
+
+    queue.push({
+
+      fn,
+
+      resolve,
+
+      reject
+
+    });
+
+    pump();
+
+  });
 
 }
 
-return res;
+function pump() {
 
-}finally{
+  while (
+    active < CONFIG.QUEUE &&
+    queue.length > 0
+  ) {
 
-pending.delete(k);
+    const job = queue.shift();
 
-}
+    active++;
 
-}
+    Promise.resolve()
 
-/* =====================================================
-RETRY
-===================================================== */
+      .then(job.fn)
 
-async function attempt(
+      .then(job.resolve)
 
-url,
-opt
+      .catch(job.reject)
 
-){
+      .finally(() => {
 
-let tries=0;
+        active--;
 
-while(
+        pump();
 
-tries<=
+      });
 
-CONFIG.RETRIES
-
-){
-
-const res=
-
-await raw(
-
-url,
-opt
-
-);
-
-if(
-
-!res.error
-
-){
-
-metrics.success++;
-
-return res;
+  }
 
 }
 
-tries++;
+/* =========================================================
+   CACHE
+========================================================= */
 
-await wait(
+function cacheKey(url, opt, currentToken) {
 
-CONFIG.BACKOFF
-*tries
+  return JSON.stringify({
 
-);
+    url,
 
-}
+    method: opt.method || "GET",
 
-metrics.failed++;
+    body: opt.body || null,
 
-return{
+    token: currentToken || null
 
-error:
-
-"retry_failed"
-
-};
+  });
 
 }
 
-/* =====================================================
-RAW
-===================================================== */
+function cached(key) {
 
-async function raw(
+  const item = cache.get(key);
 
-url,
-opt
+  if (!item) {
 
-){
+    return null;
 
-const controller=
+  }
 
-new AbortController();
+  if (Date.now() > item.expire) {
 
-controllers.add(
+    cache.delete(key);
 
-controller
+    return null;
 
-);
+  }
 
-const timer=
+  metrics.cached++;
 
-setTimeout(
-
-()=>{
-
-controller.abort();
-
-},
-
-CONFIG.TIMEOUT
-
-);
-
-try{
-
-const res=
-
-await fetch(
-
-CONFIG.BASE
-+url,
-
-{
-
-method:
-
-opt.method||
-
-"GET",
-
-headers:
-
-headers(
-
-opt.headers
-
-),
-
-credentials:
-
-"include",
-
-signal:
-
-controller.signal,
-
-body:
-
-opt.body
+  return item.value;
 
 }
 
-);
+function clearCache() {
 
-clearTimeout(
-
-timer
-
-);
-
-controllers.delete(
-
-controller
-
-);
-
-let data=null;
-
-try{
-
-data=
-
-await res.json();
-
-}catch{}
-
-if(
-
-res.status===401
-
-){
-
-localStorage
-.removeItem(
-
-"token"
-
-);
-
-emit(
-
-"auth:logout"
-
-);
-
-return{
-
-error:
-
-"unauthorized"
-
-};
+  cache.clear();
 
 }
 
-if(
+/* =========================================================
+   CACHE POLICY
+========================================================= */
 
-!res.ok
+function canCache(method, authenticated, opt) {
 
-){
+  if (method !== "GET") {
 
-emit(
+    return false;
 
-"api:error",
+  }
 
-{
+  // Never cache authenticated responses.
+  if (authenticated) {
 
-url,
+    return false;
 
-status:
+  }
 
-res.status
-
-}
-
-);
-
-return{
-
-error:
-
-data?.error||
-
-"request_failed"
-
-};
+  return opt.cache !== false;
 
 }
 
-return data;
+/* =========================================================
+   REQUEST
+========================================================= */
 
-}catch(e){
+async function request(url, opt = {}) {
 
-clearTimeout(
+  const method = (
+    opt.method || "GET"
+  ).toUpperCase();
 
-timer
+  const publicAuth = isPublicAuthRoute(url);
 
-);
+  const authenticated =
+    opt.auth === false
+      ? false
+      : !publicAuth;
 
-controllers.delete(
+  const currentToken = authenticated
+    ? token()
+    : null;
 
-controller
+  const requestOptions = {
 
-);
+    ...opt,
 
-metrics.network++;
+    method,
 
-if(
+    authenticated
 
-e.name===
+  };
 
-"AbortError"
+  const useCache = canCache(
+    method,
+    authenticated,
+    requestOptions
+  );
 
-){
+  const key = cacheKey(
+    url,
+    requestOptions,
+    currentToken
+  );
 
-return{
+  if (useCache) {
 
-error:
+    const hit = cached(key);
 
-"timeout"
+    if (hit !== null) {
 
-};
+      return hit;
 
-}
+    }
 
-return{
+  }
 
-error:
+  // Avoid sharing requests across different tokens.
+  if (pending.has(key)) {
 
-"network"
+    return pending.get(key);
 
-};
+  }
 
-}
+  const promise = enqueue(() => {
 
-}
+    return attempt(url, requestOptions);
 
-/* =====================================================
-UTIL
-===================================================== */
+  });
 
-function wait(ms){
+  pending.set(key, promise);
 
-return new Promise(
+  try {
 
-r=>setTimeout(r,ms)
+    const response = await promise;
 
-);
+    if (
+      useCache &&
+      response &&
+      !response.error
+    ) {
 
-}
+      cache.set(key, {
 
-/* =====================================================
-SYNC
-===================================================== */
+        value: response,
 
-function syncAll(){
+        expire:
+          Date.now() + CONFIG.CACHE
 
-wallet();
+      });
 
-mining();
+    }
 
-market();
+    return response;
 
-airdrop();
+  } finally {
 
-}
+    pending.delete(key);
 
-/* =====================================================
-API
-===================================================== */
-
-function get(url){
-
-return request(url);
-
-}
-
-function post(
-
-url,
-body={}
-
-){
-
-return request(
-
-url,
-
-{
-
-method:"POST",
-
-body:
-
-JSON.stringify(
-
-body
-
-)
+  }
 
 }
 
-);
+/* =========================================================
+   RETRY POLICY
+========================================================= */
+
+function shouldRetry(result) {
+
+  if (!result || !result.error) {
+
+    return false;
+
+  }
+
+  if (
+    result.status === 401 ||
+    result.status === 403 ||
+    result.status === 404 ||
+    result.status === 400 ||
+    result.status === 422
+  ) {
+
+    return false;
+
+  }
+
+  return (
+
+    result.network === true ||
+
+    result.status === 408 ||
+
+    result.status === 429 ||
+
+    result.status >= 500
+
+  );
 
 }
 
-function put(
+/* =========================================================
+   RETRY
+========================================================= */
 
-url,
-body={}
+async function attempt(url, opt) {
 
-){
+  let tries = 0;
 
-return request(
+  while (true) {
 
-url,
+    metrics.requests++;
 
-{
+    const result = await raw(url, opt);
 
-method:"PUT",
+    if (!result.error) {
 
-body:
+      metrics.success++;
 
-JSON.stringify(body)
+      return result.data;
 
-}
+    }
 
-);
+    if (
+      !shouldRetry(result) ||
+      tries >= CONFIG.RETRIES
+    ) {
 
-}
+      metrics.failed++;
 
-function del(url){
+      return {
 
-return request(
+        error: result.error,
 
-url,
+        status: result.status || 0
 
-{
+      };
 
-method:
+    }
 
-"DELETE"
+    tries++;
 
-}
+    metrics.retries++;
 
-);
+    await wait(
+      CONFIG.BACKOFF * tries
+    );
 
-}
-
-/* =====================================================
-MODULES
-===================================================== */
-
-function wallet(){
-
-return get(
-
-"/wallet"
-
-);
+  }
 
 }
 
-function market(){
+/* =========================================================
+   RAW FETCH
+========================================================= */
 
-return get(
+async function raw(url, opt) {
 
-"/market"
+  const controller = new AbortController();
 
-);
+  controllers.add(controller);
+
+  let timer;
+
+  try {
+
+    timer = setTimeout(() => {
+
+      controller.abort();
+
+    }, CONFIG.TIMEOUT);
+
+    const response = await fetch(
+      buildURL(url),
+      {
+
+        method: opt.method,
+
+        headers: headers(
+          opt.headers,
+          opt.authenticated
+        ),
+
+        credentials: "include",
+
+        signal: controller.signal,
+
+        body:
+          opt.body === undefined
+            ? undefined
+            : opt.body
+
+      }
+    );
+
+    let data = null;
+
+    const contentType =
+      response.headers.get("content-type") || "";
+
+    if (response.status !== 204) {
+
+      if (
+        contentType.includes("application/json")
+      ) {
+
+        try {
+
+          data = await response.json();
+
+        } catch {
+
+          data = null;
+
+        }
+
+      } else {
+
+        try {
+
+          const text = await response.text();
+
+          data = text || null;
+
+        } catch {
+
+          data = null;
+
+        }
+
+      }
+
+    }
+
+    if (response.status === 401) {
+
+      metrics.unauthorized++;
+
+      clearToken();
+
+      clearCache();
+
+      loggedOut = true;
+
+      emit("auth:logout", {
+
+        status: 401,
+
+        url
+
+      });
+
+      return {
+
+        error: "unauthorized",
+
+        status: 401
+
+      };
+
+    }
+
+    if (!response.ok) {
+
+      emit("api:error", {
+
+        url,
+
+        status: response.status,
+
+        data
+
+      });
+
+      return {
+
+        error:
+          data?.error ||
+          data?.message ||
+          "request_failed",
+
+        status: response.status
+
+      };
+
+    }
+
+    if (loggedOut && token()) {
+
+      loggedOut = false;
+
+    }
+
+    return {
+
+      data,
+
+      status: response.status
+
+    };
+
+  } catch (error) {
+
+    metrics.network++;
+
+    if (error.name === "AbortError") {
+
+      return {
+
+        error: "timeout",
+
+        network: true
+
+      };
+
+    }
+
+    return {
+
+      error: "network",
+
+      network: true
+
+    };
+
+  } finally {
+
+    clearTimeout(timer);
+
+    controllers.delete(controller);
+
+  }
 
 }
 
-function mining(){
+/* =========================================================
+   UTILITIES
+========================================================= */
 
-return get(
+function wait(ms) {
 
-"/mining/status"
+  return new Promise(resolve => {
 
-);
+    setTimeout(resolve, ms);
 
-}
-
-function casino(){
-
-return get(
-
-"/casino"
-
-);
+  });
 
 }
 
-function airdrop(){
+/* =========================================================
+   HTTP METHODS
+========================================================= */
 
-return get(
+function get(url, options = {}) {
 
-"/airdrop/status"
+  return request(url, {
 
-);
+    ...options,
 
-}
+    method: "GET"
 
-/* =====================================================
-CANCEL
-===================================================== */
-
-function cancelAll(){
-
-controllers
-.forEach(c=>{
-
-c.abort();
-
-});
-
-controllers.clear();
+  });
 
 }
 
-/* =====================================================
-EXPORT
-===================================================== */
+function post(url, body = {}, options = {}) {
 
-window.API={
+  return request(url, {
 
-get,
+    ...options,
 
-post,
+    method: "POST",
 
-put,
+    body: JSON.stringify(body)
 
-delete:del,
+  });
 
-wallet,
+}
 
-market,
+function put(url, body = {}, options = {}) {
 
-mining,
+  return request(url, {
 
-casino,
+    ...options,
 
-airdrop,
+    method: "PUT",
 
-syncAll,
+    body: JSON.stringify(body)
 
-on,
+  });
 
-emit,
+}
 
-cancelAll,
+function patch(url, body = {}, options = {}) {
 
-metrics
+  return request(url, {
+
+    ...options,
+
+    method: "PATCH",
+
+    body: JSON.stringify(body)
+
+  });
+
+}
+
+function del(url, options = {}) {
+
+  return request(url, {
+
+    ...options,
+
+    method: "DELETE"
+
+  });
+
+}
+
+/* =========================================================
+   API MODULES
+========================================================= */
+
+function wallet() {
+
+  return get("/wallet");
+
+}
+
+function market() {
+
+  return get("/market", {
+
+    auth: false
+
+  });
+
+}
+
+function mining() {
+
+  return get("/mining/status");
+
+}
+
+function casino() {
+
+  return get("/casino", {
+
+    auth: false
+
+  });
+
+}
+
+function airdrop() {
+
+  return get("/airdrop/status");
+
+}
+
+/* =========================================================
+   SYNC
+========================================================= */
+
+async function syncAll() {
+
+  const results = await Promise.allSettled([
+
+    wallet(),
+
+    mining(),
+
+    market(),
+
+    airdrop()
+
+  ]);
+
+  const names = [
+
+    "wallet",
+
+    "mining",
+
+    "market",
+
+    "airdrop"
+
+  ];
+
+  const output = {};
+
+  results.forEach((result, index) => {
+
+    output[names[index]] =
+      result.status === "fulfilled"
+        ? result.value
+        : {
+
+            error: "sync_failed"
+
+          };
+
+  });
+
+  emit("api:sync", output);
+
+  return output;
+
+}
+
+/* =========================================================
+   CANCEL
+========================================================= */
+
+function cancelAll() {
+
+  controllers.forEach(controller => {
+
+    controller.abort();
+
+  });
+
+  controllers.clear();
+
+  // Reject queued jobs instead of leaving promises pending.
+  while (queue.length > 0) {
+
+    const job = queue.shift();
+
+    job.resolve({
+
+      error: "request_cancelled"
+
+    });
+
+  }
+
+  clearCache();
+
+  pending.clear();
+
+}
+
+/* =========================================================
+   AUTH STATE
+========================================================= */
+
+function setToken(value) {
+
+  if (!value) {
+
+    clearToken();
+
+    clearCache();
+
+    return;
+
+  }
+
+  localStorage.setItem("token", value);
+
+  // Keep compatibility with both frontend token names.
+  localStorage.setItem("accessToken", value);
+
+  loggedOut = false;
+
+  clearCache();
+
+}
+
+function logout() {
+
+  clearToken();
+
+  clearCache();
+
+  cancelAll();
+
+  loggedOut = true;
+
+  emit("auth:logout", {
+
+    manual: true
+
+  });
+
+}
+
+/* =========================================================
+   EXPORT
+========================================================= */
+
+window.API = {
+
+  get,
+
+  post,
+
+  put,
+
+  patch,
+
+  delete: del,
+
+  wallet,
+
+  market,
+
+  mining,
+
+  casino,
+
+  airdrop,
+
+  syncAll,
+
+  on,
+
+  emit,
+
+  cancelAll,
+
+  clearCache,
+
+  setToken,
+
+  logout,
+
+  metrics,
+
+  config: CONFIG
 
 };
 
