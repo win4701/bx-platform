@@ -1,862 +1,358 @@
+
 /* =========================================================
-BLOXIO WS ENGINE V6
-ENTERPRISE REALTIME LAYER
-BROWSER FIRST
+   BLOXIO WS ENGINE V7
+   Socket.IO Adapter
+   Preserves window.WS public API
 ========================================================= */
 
 "use strict";
 
-(function(){
+(function () {
+
+    const CONFIG = {
+        URL: location.origin,
+        OPTIONS: {
+            transports: ["websocket", "polling"],
+            reconnection: true,
+            reconnectionAttempts: Infinity,
+            reconnectionDelay: 1500,
+            reconnectionDelayMax: 30000,
+            timeout: 20000
+        },
+        MAX_EVENTS: 1000
+    };
 
-const CONFIG={
+    const listeners = new Map();
+    const channels = new Set();
 
-URL:
+    let socket = null;
+    let connected = false;
+    let destroyed = false;
 
-location.hostname==="localhost"
+    const metrics = {
+        connectedAt: 0,
+        sent: 0,
+        received: 0,
+        reconnects: 0,
+        failed: 0
+    };
 
-?
+    /* =====================================================
+       LOCAL EVENT BUS
+    ===================================================== */
 
-"ws://localhost:3000/ws"
+    function on(event, fn) {
 
-:
+        if (typeof fn !== "function") {
+            return () => {};
+        }
 
-(
+        if (!listeners.has(event)) {
+            listeners.set(event, new Set());
+        }
 
-location.protocol==="https:"
+        listeners.get(event).add(fn);
 
-?"wss://"
+        return () => {
+            listeners.get(event)?.delete(fn);
+        };
+    }
 
-:"ws://"
+    function emit(event, data) {
 
-)
+        listeners.get(event)?.forEach(fn => {
+            try {
+                fn(data);
+            } catch (error) {
+                console.error("[WS EVENT]", event, error);
+            }
+        });
+    }
 
-+
+    /* =====================================================
+       AUTH
+    ===================================================== */
 
-location.host
+    function token() {
+        try {
+            return localStorage.getItem("token") || "";
+        } catch {
+            return "";
+        }
+    }
 
-+
+    /* =====================================================
+       SOCKET EVENTS
+    ===================================================== */
 
-"/ws",
+    function bind() {
 
-HEARTBEAT:25000,
+        if (!socket) return;
 
-QUEUE_LIMIT:300,
+        socket.on("connect", () => {
 
-MAX_BACKOFF:30000,
+            connected = true;
+            metrics.connectedAt = Date.now();
+            metrics.reconnects++;
 
-BASE_BACKOFF:1500,
+            emit("connected", {
+                id: socket.id
+            });
 
-MAX_EVENTS:1000
+            resubscribe();
 
-};
+        });
 
-const listeners=new Map();
+        socket.on("disconnect", reason => {
 
-const queue=[];
+            connected = false;
 
-const recent=new Set();
+            emit("disconnected", {
+                reason
+            });
 
-let socket=null;
+        });
 
-let connected=false;
+        socket.on("connect_error", error => {
 
-let connecting=false;
+            metrics.failed++;
 
-let destroyed=false;
+            emit("connect_error", error);
 
-let heartbeat=null;
+            console.warn("[SOCKET.IO] Connection error:", error.message);
 
-let reconnectTimer=null;
+        });
 
-let reconnectDelay=
+        socket.onAny((event, ...args) => {
 
-CONFIG.BASE_BACKOFF;
+            metrics.received++;
 
-const metrics={
+            const payload = args.length > 1
+                ? args
+                : args[0];
 
-connectedAt:0,
+            emit(event, payload);
 
-sent:0,
+        });
 
-received:0,
+    }
 
-reconnects:0,
+    /* =====================================================
+       CONNECT
+    ===================================================== */
 
-failed:0
+    function connect() {
 
-};
+        if (destroyed) {
+            destroyed = false;
+        }
 
-const channels=new Set();
+        if (typeof io !== "function") {
 
-/* =====================================================
-EVENT BUS
-===================================================== */
+            metrics.failed++;
 
-function on(
+            console.error(
+                "[SOCKET.IO] Client library is not loaded."
+            );
 
-event,
-fn
+            emit("error", {
+                message: "Socket.IO client is missing"
+            });
 
-){
+            return false;
+        }
 
-if(
+        if (socket) {
 
-!listeners.has(event)
+            if (!socket.connected) {
+                socket.connect();
+            }
 
-){
+            return true;
+        }
 
-listeners.set(
+        try {
 
-event,
+            socket = io(CONFIG.URL, {
+                ...CONFIG.OPTIONS,
+                auth: {
+                    token: token()
+                }
+            });
 
-new Set()
+            bind();
 
-);
+            return true;
 
-}
+        } catch (error) {
 
-listeners
-.get(event)
-.add(fn);
+            metrics.failed++;
 
-return()=>{
+            console.error("[SOCKET.IO] Initialization failed:", error);
 
-listeners
-.get(event)
-?.delete(fn);
+            emit("error", error);
 
-};
+            return false;
+        }
+    }
 
-}
+    /* =====================================================
+       SEND
+       No automatic queue for financial operations.
+    ===================================================== */
 
-function emit(
+    function send(type, payload = {}) {
 
-event,
-data
+        if (!socket || !socket.connected) {
+            return false;
+        }
 
-){
+        if (typeof type !== "string" || !type) {
+            return false;
+        }
 
-listeners
-.get(event)
-?.forEach(fn=>{
+        try {
 
-try{
+            socket.emit(type, payload);
 
-fn(data);
+            metrics.sent++;
 
-}catch(e){
+            return true;
 
-console.warn(
+        } catch (error) {
 
-"WS EVENT",
+            metrics.failed++;
 
-e
+            console.error("[SOCKET.IO] Send failed:", error);
 
-);
+            return false;
+        }
+    }
 
-}
+    /* =====================================================
+       CHANNELS
+    ===================================================== */
 
-});
+    function subscribe(channel) {
 
-}
+        if (!channel) return false;
 
-/* =====================================================
-TOKEN
-===================================================== */
+        channels.add(channel);
 
-function token(){
+        const events = {
+            wallet: "wallet:subscribe",
+            market: "market:subscribe",
+            casino: "casino:subscribe",
+            mining: "mining:init"
+        };
 
-return localStorage
-.getItem(
+        const event = events[channel];
 
-"token"
+        if (!event) {
+            console.warn("[SOCKET.IO] Unknown channel:", channel);
+            return false;
+        }
 
-);
+        return send(event, {});
+    }
 
-}
+    function unsubscribe(channel) {
 
-/* =====================================================
-URL
-===================================================== */
+        if (!channel) return;
 
-function url(){
+        channels.delete(channel);
 
-const t=
+        const events = {
+            wallet: "wallet:unsubscribe",
+            market: "market:unsubscribe",
+            casino: "casino:unsubscribe",
+            mining: "mining:unsubscribe"
+        };
 
-token();
+        const event = events[channel];
 
-if(!t){
+        if (event) {
+            send(event, {});
+        }
+    }
 
-return CONFIG.URL;
+    function resubscribe() {
 
-}
+        channels.forEach(channel => {
+            subscribe(channel);
+        });
 
-return(
+    }
 
-CONFIG.URL+
+    /* =====================================================
+       DISCONNECT
+    ===================================================== */
 
-`?token=${t}`
+    function disconnect() {
 
-);
+        if (!socket) {
+            connected = false;
+            return;
+        }
 
-}
+        socket.disconnect();
 
-/* =====================================================
-CONNECT
-===================================================== */
+        connected = false;
+    }
 
-function connect(){
+    /* =====================================================
+       DESTROY
+    ===================================================== */
 
-if(
+    function destroy() {
 
-connecting||
+        destroyed = true;
 
-connected||
+        if (socket) {
 
-destroyed
+            socket.removeAllListeners();
+            socket.disconnect();
+            socket = null;
 
-){
+        }
 
-return;
+        connected = false;
 
-}
+        listeners.clear();
+        channels.clear();
 
-if(
+    }
 
-!navigator.onLine
+    /* =====================================================
+       EXPORT
+    ===================================================== */
 
-){
+    window.WS = {
 
-retry();
+        connect,
+        disconnect,
+        destroy,
+        send,
+        on,
+        emit,
+        subscribe,
+        unsubscribe,
+        metrics,
 
-return;
+        get connected() {
+            return Boolean(socket?.connected);
+        },
 
-}
+        get channels() {
+            return [...channels];
+        }
 
-connecting=true;
+    };
 
-try{
+    /* =====================================================
+       AUTO CONNECT
+    ===================================================== */
 
-socket=
-
-new WebSocket(
-
-url()
-
-);
-
-bind();
-
-}catch(e){
-
-connecting=false;
-
-retry();
-
-}
-
-}
-
-/* =====================================================
-SOCKET
-===================================================== */
-
-function bind(){
-
-socket.onopen=()=>{
-
-connecting=false;
-
-connected=true;
-
-metrics.connectedAt=
-
-Date.now();
-
-reconnectDelay=
-
-CONFIG.BASE_BACKOFF;
-
-metrics.reconnects++;
-
-emit(
-
-"connected"
-
-);
-
-flush();
-
-resubscribe();
-
-heartbeatStart();
-
-};
-
-socket.onclose=()=>{
-
-connected=false;
-
-connecting=false;
-
-heartbeatStop();
-
-emit(
-
-"disconnected"
-
-);
-
-retry();
-
-};
-
-socket.onerror=()=>{
-
-metrics.failed++;
-
-};
-
-socket.onmessage=e=>{
-
-metrics.received++;
-
-let data;
-
-try{
-
-data=
-
-JSON.parse(
-
-e.data
-
-);
-
-}catch{
-
-return;
-
-}
-
-if(
-
-data.type==="pong"
-
-){
-
-return;
-
-}
-
-dedupe(
-
-data
-
-);
-
-route(
-
-data
-
-);
-
-};
-
-}
-
-/* =====================================================
-RETRY
-===================================================== */
-
-function retry(){
-
-if(
-
-destroyed
-
-||
-
-reconnectTimer
-
-){
-
-return;
-
-}
-
-reconnectTimer=
-
-setTimeout(()=>{
-
-reconnectTimer=null;
-
-connect();
-
-},
-
-reconnectDelay
-
-);
-
-reconnectDelay=
-
-Math.min(
-
-reconnectDelay*1.5,
-
-CONFIG.MAX_BACKOFF
-
-);
-
-}
-
-/* =====================================================
-PING
-===================================================== */
-
-function heartbeatStart(){
-
-heartbeatStop();
-
-heartbeat=
-
-setInterval(()=>{
-
-send(
-
-"ping"
-
-);
-
-},
-
-CONFIG.HEARTBEAT
-
-);
-
-}
-
-function heartbeatStop(){
-
-clearInterval(
-
-heartbeat
-
-);
-
-heartbeat=null;
-
-}
-
-/* =====================================================
-QUEUE
-===================================================== */
-
-function send(
-
-type,
-payload={}
-
-){
-
-const msg=
-
-JSON.stringify({
-
-type,
-
-...payload
-
-});
-
-if(
-
-!connected
-
-){
-
-if(
-
-queue.length>
-
-CONFIG.QUEUE_LIMIT
-
-){
-
-queue.shift();
-
-}
-
-queue.push(
-
-msg
-
-);
-
-return;
-
-}
-
-try{
-
-socket.send(
-
-msg
-
-);
-
-metrics.sent++;
-
-}catch{}
-
-}
-
-function flush(){
-
-while(
-
-queue.length
-
-&&
-
-connected
-
-){
-
-socket.send(
-
-queue.shift()
-
-);
-
-}
-
-}
-
-/* =====================================================
-CHANNELS
-===================================================== */
-
-function subscribe(ch){
-
-if(!ch)return;
-
-channels.add(ch);
-
-send(
-
-"subscribe",
-
-{
-
-channel:ch
-
-}
-
-);
-
-}
-
-function unsubscribe(ch){
-
-channels.delete(ch);
-
-send(
-
-"unsubscribe",
-
-{
-
-channel:ch
-
-}
-
-);
-
-}
-
-function resubscribe(){
-
-channels.forEach(
-
-subscribe
-
-);
-
-}
-
-/* =====================================================
-DEDUPE
-===================================================== */
-
-function dedupe(data){
-
-const id=
-
-JSON.stringify(data);
-
-recent.add(id);
-
-if(
-
-recent.size>
-
-CONFIG.MAX_EVENTS
-
-){
-
-recent.clear();
-
-}
-
-}
-
-/* =====================================================
-ROUTER
-===================================================== */
-
-function route(data){
-
-if(
-
-!data?.type
-
-){
-
-return;
-
-}
-
-emit(
-
-data.type,
-
-data
-
-);
-
-switch(data.type){
-
-case"wallet_update":
-
-window.API
-?.syncWallet?.();
-
-window.STATE
-?.set(
-
-"wallet.live",
-
-data
-
-);
-
-break;
-
-case"market_price":
-
-window.STATE
-?.set(
-
-"market.live",
-
-data
-
-);
-
-break;
-
-case"mining_reward":
-
-window.API
-?.syncMining?.();
-
-break;
-
-case"airdrop":
-
-window.API
-?.syncAirdrop?.();
-
-break;
-
-case"notification":
-
-notify(data);
-
-break;
-
-}
-
-}
-
-/* =====================================================
-NOTIFY
-===================================================== */
-
-function notify(data){
-
-document.dispatchEvent(
-
-new CustomEvent(
-
-"bloxio:notify",
-
-{
-
-detail:data
-
-}
-
-)
-
-);
-
-}
-
-/* =====================================================
-ONLINE
-===================================================== */
-
-window.addEventListener(
-
-"online",
-
-connect
-
-);
-
-window.addEventListener(
-
-"offline",
-
-()=>{
-
-disconnect();
-
-}
-
-);
-
-/* =====================================================
-VISIBILITY
-===================================================== */
-
-document.addEventListener(
-
-"visibilitychange",
-
-()=>{
-
-if(
-
-document.hidden
-
-){
-
-heartbeatStop();
-
-}else{
-
-if(
-
-connected
-
-){
-
-heartbeatStart();
-
-}else{
-
-connect();
-
-}
-
-}
-
-}
-
-);
-
-/* =====================================================
-CLOSE
-===================================================== */
-
-function disconnect(){
-
-heartbeatStop();
-
-socket?.close();
-
-connected=false;
-
-connecting=false;
-
-}
-
-/* =====================================================
-DESTROY
-===================================================== */
-
-function destroy(){
-
-destroyed=true;
-
-disconnect();
-
-listeners.clear();
-
-queue.length=0;
-
-}
-
-/* =====================================================
-AUTO
-===================================================== */
-
-connect();
-
-/* =====================================================
-EXPORT
-===================================================== */
-
-window.WS={
-
-connect,
-
-disconnect,
-
-destroy,
-
-send,
-
-on,
-
-emit,
-
-subscribe,
-
-unsubscribe,
-
-metrics,
-
-get connected(){
-
-return connected;
-
-},
-
-get channels(){
-
-return[
-
-...channels
-
-];
-
-}
-
-};
+    connect();
 
 })();
