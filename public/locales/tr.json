@@ -1,0 +1,89 @@
+{
+  "common": {
+    "save": "Kaydet",
+    "cancel": "İptal",
+    "confirm": "Onayla",
+    "loading": "Yükleniyor...",
+    "search": "Ara",
+    "back": "Geri",
+    "next": "İleri",
+    "close": "Kapat"
+  },
+  "navigation": {
+    "wallet": "Cüzdan",
+    "market": "Piyasa",
+    "casino": "Casino",
+    "mining": "Madencilik",
+    "rewards": "Ödüller",
+    "dao": "DAO",
+    "vip": "VIP",
+    "chat": "Sohbet",
+    "settings": "Ayarlar"
+  },
+  "wallet": {
+    "title": "Cüzdan",
+    "deposit": "Yatır",
+    "withdraw": "Çek",
+    "swap": "Takas",
+    "history": "Geçmiş",
+    "balance": "Bakiye",
+    "assets": "Varlıklar"
+  },
+  "market": {
+    "title": "Piyasa",
+    "buy": "Satın Al",
+    "sell": "Sat",
+    "price": "Fiyat",
+    "volume": "Hacim",
+    "holders": "Sahipler",
+    "dao_countdown": "Piyasa Yakında Açılıyor"
+  },
+  "casino": {
+    "title": "Casino",
+    "jackpot": "Büyük İkramiye",
+    "leaderboard": "Liderlik Tablosu",
+    "tournament": "Turnuva",
+    "provably_fair": "Doğrulanabilir Adil Oyun",
+    "big_win": "Büyük Kazanç"
+  },
+  "mining": {
+    "title": "Madencilik",
+    "plans": "Madencilik Planları",
+    "active": "Aktif Madencilik",
+    "claim": "Ödülü Al",
+    "close": "Planı Kapat",
+    "hashrate": "Hash Oranı",
+    "profit": "Kâr"
+  },
+  "rewards": {
+    "title": "Ödül Merkezi",
+    "daily": "Günlük Ödüller",
+    "weekly": "Haftalık Ödüller",
+    "monthly": "Aylık Ödüller",
+    "missions": "Görevler",
+    "achievements": "Başarılar"
+  },
+  "vip": {
+    "title": "VIP Merkezi",
+    "cashback": "Nakit İade",
+    "rakeback": "Rakeback",
+    "boost": "Madencilik Hızlandırma"
+  },
+  "dao": {
+    "title": "DAO Yönetimi",
+    "vote": "Oy Ver",
+    "proposal": "Teklif",
+    "rewards": "DAO Ödülleri"
+  },
+  "chat": {
+    "title": "Genel Sohbet",
+    "send": "Gönder",
+    "online": "Çevrimiçi Kullanıcılar"
+  },
+  "notifications": {
+    "deposit_success": "Yatırma Başarılı",
+    "withdraw_success": "Çekim Başarılı",
+    "reward_claimed": "Ödül Alındı",
+    "vip_upgraded": "VIP Seviyesi Yükseltildi"
+  }
+}
