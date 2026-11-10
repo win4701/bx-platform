@@ -1,0 +1,89 @@
+{
+  "common": {
+    "save": "Сохранить",
+    "cancel": "Отмена",
+    "confirm": "Подтвердить",
+    "loading": "Загрузка...",
+    "search": "Поиск",
+    "back": "Назад",
+    "next": "Далее",
+    "close": "Закрыть"
+  },
+  "navigation": {
+    "wallet": "Кошелёк",
+    "market": "Рынок",
+    "casino": "Казино",
+    "mining": "Майнинг",
+    "rewards": "Награды",
+    "dao": "DAO",
+    "vip": "VIP",
+    "chat": "Чат",
+    "settings": "Настройки"
+  },
+  "wallet": {
+    "title": "Кошелёк",
+    "deposit": "Пополнение",
+    "withdraw": "Вывод",
+    "swap": "Обмен",
+    "history": "История",
+    "balance": "Баланс",
+    "assets": "Активы"
+  },
+  "market": {
+    "title": "Рынок",
+    "buy": "Купить",
+    "sell": "Продать",
+    "price": "Цена",
+    "volume": "Объём",
+    "holders": "Держатели",
+    "dao_countdown": "Скоро открытие рынка"
+  },
+  "casino": {
+    "title": "Казино",
+    "jackpot": "Джекпот",
+    "leaderboard": "Таблица лидеров",
+    "tournament": "Турнир",
+    "provably_fair": "Доказуемо честная игра",
+    "big_win": "Крупный выигрыш"
+  },
+  "mining": {
+    "title": "Майнинг",
+    "plans": "Планы майнинга",
+    "active": "Активный майнинг",
+    "claim": "Получить награду",
+    "close": "Закрыть план",
+    "hashrate": "Хешрейт",
+    "profit": "Прибыль"
+  },
+  "rewards": {
+    "title": "Центр наград",
+    "daily": "Ежедневные награды",
+    "weekly": "Еженедельные награды",
+    "monthly": "Ежемесячные награды",
+    "missions": "Задания",
+    "achievements": "Достижения"
+  },
+  "vip": {
+    "title": "VIP-центр",
+    "cashback": "Кэшбэк",
+    "rakeback": "Рейкбек",
+    "boost": "Ускорение майнинга"
+  },
+  "dao": {
+    "title": "Управление DAO",
+    "vote": "Голосовать",
+    "proposal": "Предложение",
+    "rewards": "Награды DAO"
+  },
+  "chat": {
+    "title": "Общий чат",
+    "send": "Отправить",
+    "online": "Пользователи онлайн"
+  },
+  "notifications": {
+    "deposit_success": "Пополнение выполнено",
+    "withdraw_success": "Вывод выполнен",
+    "reward_claimed": "Награда получена",
+    "vip_upgraded": "Уровень VIP повышен"
+  }
+}
