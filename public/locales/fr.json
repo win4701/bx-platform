@@ -1,0 +1,89 @@
+{
+  "common": {
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "confirm": "Confirmer",
+    "loading": "Chargement...",
+    "search": "Rechercher",
+    "back": "Retour",
+    "next": "Suivant",
+    "close": "Fermer"
+  },
+  "navigation": {
+    "wallet": "Portefeuille",
+    "market": "Marché",
+    "casino": "Casino",
+    "mining": "Minage",
+    "rewards": "Récompenses",
+    "dao": "DAO",
+    "vip": "VIP",
+    "chat": "Discussion",
+    "settings": "Paramètres"
+  },
+  "wallet": {
+    "title": "Portefeuille",
+    "deposit": "Dépôt",
+    "withdraw": "Retrait",
+    "swap": "Échange",
+    "history": "Historique",
+    "balance": "Solde",
+    "assets": "Actifs"
+  },
+  "market": {
+    "title": "Marché",
+    "buy": "Acheter",
+    "sell": "Vendre",
+    "price": "Prix",
+    "volume": "Volume",
+    "holders": "Détenteurs",
+    "dao_countdown": "Ouverture prochaine du marché"
+  },
+  "casino": {
+    "title": "Casino",
+    "jackpot": "Jackpot",
+    "leaderboard": "Classement",
+    "tournament": "Tournoi",
+    "provably_fair": "Équité vérifiable",
+    "big_win": "Gros gain"
+  },
+  "mining": {
+    "title": "Minage",
+    "plans": "Plans de minage",
+    "active": "Minage actif",
+    "claim": "Réclamer la récompense",
+    "close": "Fermer le plan",
+    "hashrate": "Puissance de calcul",
+    "profit": "Profit"
+  },
+  "rewards": {
+    "title": "Centre des récompenses",
+    "daily": "Récompenses quotidiennes",
+    "weekly": "Récompenses hebdomadaires",
+    "monthly": "Récompenses mensuelles",
+    "missions": "Missions",
+    "achievements": "Succès"
+  },
+  "vip": {
+    "title": "Centre VIP",
+    "cashback": "Remboursement",
+    "rakeback": "Rakeback",
+    "boost": "Boost de minage"
+  },
+  "dao": {
+    "title": "Gouvernance DAO",
+    "vote": "Voter",
+    "proposal": "Proposition",
+    "rewards": "Récompenses DAO"
+  },
+  "chat": {
+    "title": "Discussion mondiale",
+    "send": "Envoyer",
+    "online": "Utilisateurs en ligne"
+  },
+  "notifications": {
+    "deposit_success": "Dépôt effectué",
+    "withdraw_success": "Retrait effectué",
+    "reward_claimed": "Récompense réclamée",
+    "vip_upgraded": "Niveau VIP amélioré"
+  }
+}
