@@ -1,29 +1,90 @@
+
 {
-  "app_name":"بلوكسيو",
-  "wallet":"المحفظة",
-  "market":"السوق",
-  "casino":"الكازينو",
-  "mining":"التعدين",
-  "rewards":"المكافآت",
-  "dao":"الحوكمة",
-  "vip":"VIP",
-  "chat":"الدردشة",
-  "deposit":"إيداع",
-  "withdraw":"سحب",
-  "swap":"تحويل",
-  "claim":"استلام",
-  "cancel":"إلغاء",
-  "confirm":"تأكيد",
-  "save":"حفظ",
-  "settings":"الإعدادات",
-  "online":"متصل",
-  "offline":"غير متصل",
-  "coming_soon":"قريباً",
-  "loading":"جاري التحميل",
-  "search":"بحث",
-  "leaderboard":"المتصدرون",
-  "tournament":"البطولات",
-  "jackpot":"الجائزة الكبرى",
-  "balance":"الرصيد",
-  "history":"السجل"
+  "common": {
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "confirm": "تأكيد",
+    "loading": "جارٍ التحميل...",
+    "search": "بحث",
+    "back": "رجوع",
+    "next": "التالي",
+    "close": "إغلاق"
+  },
+  "navigation": {
+    "wallet": "المحفظة",
+    "market": "السوق",
+    "casino": "الكازينو",
+    "mining": "التعدين",
+    "rewards": "المكافآت",
+    "dao": "الحوكمة",
+    "vip": "VIP",
+    "chat": "الدردشة",
+    "settings": "الإعدادات"
+  },
+  "wallet": {
+    "title": "المحفظة",
+    "deposit": "إيداع",
+    "withdraw": "سحب",
+    "swap": "تحويل",
+    "history": "السجل",
+    "balance": "الرصيد",
+    "assets": "الأصول"
+  },
+  "market": {
+    "title": "السوق",
+    "buy": "شراء",
+    "sell": "بيع",
+    "price": "السعر",
+    "volume": "حجم التداول",
+    "holders": "حاملو العملة",
+    "dao_countdown": "السوق سيفتح قريباً"
+  },
+  "casino": {
+    "title": "الكازينو",
+    "jackpot": "الجائزة الكبرى",
+    "leaderboard": "قائمة المتصدرين",
+    "tournament": "البطولة",
+    "provably_fair": "لعب عادل قابل للتحقق",
+    "big_win": "فوز كبير"
+  },
+  "mining": {
+    "title": "التعدين",
+    "plans": "خطط التعدين",
+    "active": "التعدين النشط",
+    "claim": "استلام المكافأة",
+    "close": "إغلاق الخطة",
+    "hashrate": "قوة التعدين",
+    "profit": "الأرباح"
+  },
+  "rewards": {
+    "title": "مركز المكافآت",
+    "daily": "المكافآت اليومية",
+    "weekly": "المكافآت الأسبوعية",
+    "monthly": "المكافآت الشهرية",
+    "missions": "المهام",
+    "achievements": "الإنجازات"
+  },
+  "vip": {
+    "title": "مركز VIP",
+    "cashback": "استرداد نقدي",
+    "rakeback": "استرداد رسوم اللعب",
+    "boost": "تعزيز التعدين"
+  },
+  "dao": {
+    "title": "حوكمة DAO",
+    "vote": "تصويت",
+    "proposal": "اقتراح",
+    "rewards": "مكافآت DAO"
+  },
+  "chat": {
+    "title": "الدردشة العامة",
+    "send": "إرسال",
+    "online": "المستخدمون المتصلون"
+  },
+  "notifications": {
+    "deposit_success": "تم الإيداع بنجاح",
+    "withdraw_success": "تم السحب بنجاح",
+    "reward_claimed": "تم استلام المكافأة",
+    "vip_upgraded": "تمت ترقية VIP"
+  }
 }
