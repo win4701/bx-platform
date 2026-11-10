@@ -1,0 +1,89 @@
+{
+  "common": {
+    "save": "保存",
+    "cancel": "取消",
+    "confirm": "确认",
+    "loading": "加载中...",
+    "search": "搜索",
+    "back": "返回",
+    "next": "下一步",
+    "close": "关闭"
+  },
+  "navigation": {
+    "wallet": "钱包",
+    "market": "市场",
+    "casino": "赌场",
+    "mining": "挖矿",
+    "rewards": "奖励",
+    "dao": "DAO",
+    "vip": "VIP",
+    "chat": "聊天",
+    "settings": "设置"
+  },
+  "wallet": {
+    "title": "钱包",
+    "deposit": "充值",
+    "withdraw": "提现",
+    "swap": "兑换",
+    "history": "历史记录",
+    "balance": "余额",
+    "assets": "资产"
+  },
+  "market": {
+    "title": "市场",
+    "buy": "买入",
+    "sell": "卖出",
+    "price": "价格",
+    "volume": "交易量",
+    "holders": "持有者",
+    "dao_countdown": "市场即将开放"
+  },
+  "casino": {
+    "title": "赌场",
+    "jackpot": "累积大奖",
+    "leaderboard": "排行榜",
+    "tournament": "锦标赛",
+    "provably_fair": "可验证公平",
+    "big_win": "大奖"
+  },
+  "mining": {
+    "title": "挖矿",
+    "plans": "挖矿计划",
+    "active": "正在挖矿",
+    "claim": "领取奖励",
+    "close": "关闭计划",
+    "hashrate": "算力",
+    "profit": "利润"
+  },
+  "rewards": {
+    "title": "奖励中心",
+    "daily": "每日奖励",
+    "weekly": "每周奖励",
+    "monthly": "每月奖励",
+    "missions": "任务",
+    "achievements": "成就"
+  },
+  "vip": {
+    "title": "VIP中心",
+    "cashback": "现金返还",
+    "rakeback": "投注返还",
+    "boost": "挖矿加速"
+  },
+  "dao": {
+    "title": "DAO治理",
+    "vote": "投票",
+    "proposal": "提案",
+    "rewards": "DAO奖励"
+  },
+  "chat": {
+    "title": "全球聊天",
+    "send": "发送",
+    "online": "在线用户"
+  },
+  "notifications": {
+    "deposit_success": "充值成功",
+    "withdraw_success": "提现成功",
+    "reward_claimed": "奖励已领取",
+    "vip_upgraded": "VIP等级已提升"
+  }
+}
