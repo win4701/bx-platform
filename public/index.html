@@ -187,7 +187,7 @@ id="app" class="app-container">
 <section id="wallet" class="view active">
 <section class="wallet-overview">
 <div class="wallet-balance-card">
-<span class="wallet-caption">EST TOTAL VALUE</span>
+<span class="wallet-caption" data-lang-key="wallet.total_value">EST TOTAL VALUE</span>
 <h1><span id="walletTotal">$0.00</span><small>USD</small></h1>
 <div id="walletStatus" class="wallet-status hidden">Portfolio Syncing</div>
 </div>
@@ -217,9 +217,9 @@ id="app" class="app-container">
 </section>
 
 <section class="wallet-actions">
-<button id="openDepositBtn" class="btn primary" data-wallet-open="depositPanel">Deposit</button>
-<button id="openWithdrawBtn" class="btn" data-wallet-open="withdrawPanel">Withdraw</button>
-<button id="openTransferBtn" class="btn" data-wallet-open="transferPanel">Transfer</button>
+<button id="openDepositBtn" class="btn primary" data-wallet-open="depositPanel"><span data-lang-key="wallet.deposit">Deposit</span></button>
+<button id="openWithdrawBtn" class="btn" data-wallet-open="withdrawPanel"><span data-lang-key="wallet.withdraw">Withdraw</span></button>
+<button id="openTransferBtn" class="btn" data-wallet-open="transferPanel"><span data-lang-key="wallet.transfer">Transfer</span></button>
 <button id="openSwapBtn" class="btn">Swap</button>
 <button id="walletBuyBtn" class="btn">Buy</button>
 <button id="walletSellBtn" class="btn">Sell</button>
@@ -1331,7 +1331,7 @@ type="button" aria-label="Close">X</button>
 </div>
 <div class="enterprise-card">
 <div class="card-head">
-<h3>Language</h3>
+<h3 data-lang-key="settings.language">Language</h3>
 
 <span>Localization</span>
 </div>
