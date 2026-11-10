@@ -1,115 +1,86 @@
+
 "use strict";
 
 /* =========================================================
-   BXS API GATEWAY — ENTERPRISE EDGE ROUTER
+   BLOXIO API GATEWAY V7
+   CENTRAL ROUTER
+   SECURITY
+   RATE LIMITING
+   REQUEST TRACKING
+   VERSIONED ROUTES
 ========================================================= */
 
-const express =
-  require("express");
+const express = require("express");
+const crypto = require("crypto");
+const morgan = require("morgan");
+const rateLimit = require("express-rate-limit");
 
-const crypto =
-  require("crypto");
-
-const compression =
-  require("compression");
-
-const helmet =
-  require("helmet");
-
-const cors =
-  require("cors");
-
-const morgan =
-  require("morgan");
-
-const rateLimit =
-  require("express-rate-limit");
-
-const db =
-  require("./database");
+const db = require("./database");
 
 /* =========================================================
    ROUTER
 ========================================================= */
 
-const router =
-  express.Router();
+const router = express.Router();
 
 /* =========================================================
-   MODULES
+   LOAD MODULES
+   Each module must export an Express Router or middleware.
 ========================================================= */
 
-const auth =
-  require("./modules/auth");
-
-const wallet =
-  require("./modules/wallet");
-
-const casino =
-  require("./modules/casino");
-
-const market =
-  require("./modules/market");
-
-const mining =
-  require("./modules/mining");
-
-const airdrop =
-  require("./modules/airdrop");
-
-const payments =
-  require("./modules/payments");
+const auth = require("./modules/auth");
+const wallet = require("./modules/wallet");
+const casino = require("./modules/casino");
+const market = require("./modules/market");
+const mining = require("./modules/mining");
+const airdrop = require("./modules/airdrop");
+const payments = require("./modules/payments");
 
 /* =========================================================
-   TRUST PROXY (RENDER)
+   VALIDATE MODULES
 ========================================================= */
 
-router.set?.(
-  "trust proxy",
-  1
-);
+const modules = {
+  auth,
+  wallet,
+  casino,
+  market,
+  mining,
+  airdrop,
+  payments
+};
 
-/* =========================================================
-   SECURITY
-========================================================= */
+for (const [name, moduleRouter] of Object.entries(modules)) {
 
-router.use(
+  if (typeof moduleRouter !== "function") {
 
-  helmet({
+    throw new TypeError(
+      `BLOXIO ROUTER ERROR: modules/${name} must export Express middleware`
+    );
 
-    crossOriginEmbedderPolicy:false,
+  }
 
-    contentSecurityPolicy:false
-
-  })
-
-);
-
-router.use(cors({
-
-  origin:true,
-
-  credentials:true
-
-}));
-
-router.use(compression());
+}
 
 /* =========================================================
    REQUEST ID
 ========================================================= */
 
-router.use((req,res,next)=>{
+router.use((req, res, next) => {
 
-  req.requestId =
-    crypto.randomUUID();
+  const incomingId = req.get("x-request-id");
+
+  const validIncomingId =
+    typeof incomingId === "string" &&
+    /^[a-zA-Z0-9_-]{8,100}$/.test(incomingId);
+
+  req.requestId = validIncomingId
+    ? incomingId
+    : crypto.randomUUID();
 
   res.setHeader(
-
     "x-request-id",
-
     req.requestId
-
   );
 
   next();
@@ -121,160 +92,250 @@ router.use((req,res,next)=>{
 ========================================================= */
 
 morgan.token(
-
-  "id",
-
-  req=>req.requestId
-
+  "request-id",
+  req => req.requestId || "-"
 );
 
 router.use(
-
   morgan(
-
-    ':id :method :url :status :response-time ms'
-
+    ':request-id :method :url :status :response-time ms'
   )
-
 );
 
 /* =========================================================
    GLOBAL RATE LIMIT
 ========================================================= */
 
-router.use(
+const globalLimiter = rateLimit({
 
-  rateLimit({
+  windowMs: 60 * 1000,
 
-    windowMs:
-      60 * 1000,
+  max: 500,
 
-    max:500,
+  standardHeaders: true,
 
-    standardHeaders:true,
+  legacyHeaders: false,
 
-    legacyHeaders:false
+  message: {
+    success: false,
+    error: "too_many_requests"
+  },
 
-  })
+  handler(req, res) {
 
-);
+    res.status(429).json({
 
-/* =========================================================
-   ROOT
-========================================================= */
+      success: false,
 
-router.get(
+      error: "too_many_requests",
 
-  "/",
-
-  (req,res)=>{
-
-    res.json({
-
-      name:
-        "BXS API",
-
-      status:
-        "online",
-
-      version:
-        "enterprise",
-
-      requestId:
-        req.requestId,
-
-      time:
-        Date.now()
+      requestId: req.requestId
 
     });
 
   }
 
-);
+});
 
 /* =========================================================
-   HEALTH
+   AUTH RATE LIMIT
 ========================================================= */
 
-router.get(
+const authLimiter = rateLimit({
 
-  "/health",
+  windowMs: 15 * 60 * 1000,
 
-  async(req,res)=>{
+  max: 30,
 
-    try{
+  standardHeaders: true,
 
-      const dbHealth =
-        await db.health();
+  legacyHeaders: false,
 
-      return res.json({
+  skipSuccessfulRequests: true,
 
-        status:"ok",
+  message: {
+    success: false,
+    error: "auth_rate_limit"
+  },
 
-        uptime:
-          process.uptime(),
+  handler(req, res) {
 
-        memory:
-          process.memoryUsage(),
+    res.status(429).json({
 
-        db:
-          dbHealth,
+      success: false,
 
-        requestId:
-          req.requestId
+      error: "auth_rate_limit",
 
-      });
+      message: "Too many authentication attempts",
 
-    }catch(e){
+      requestId: req.requestId
 
-      return res.status(500)
-        .json({
-
-          status:"error",
-
-          error:e.message
-
-        });
-
-    }
+    });
 
   }
 
-);
+});
 
 /* =========================================================
-   ROUTES
+   APPLY GLOBAL LIMIT
+========================================================= */
+
+router.use(globalLimiter);
+
+/* =========================================================
+   ROOT
+   GET /api
+========================================================= */
+
+router.get("/", (req, res) => {
+
+  res.json({
+
+    success: true,
+
+    name: "BLOXIO API",
+
+    status: "online",
+
+    version: "7.0.0",
+
+    requestId: req.requestId,
+
+    timestamp: Date.now()
+
+  });
+
+});
+
+/* =========================================================
+   HEALTH
+   GET /api/health
+========================================================= */
+
+router.get("/health", async (req, res) => {
+
+  try {
+
+    const databaseOnline = await db.health();
+
+    const healthy = databaseOnline === true;
+
+    return res.status(
+      healthy ? 200 : 503
+    ).json({
+
+      success: healthy,
+
+      status: healthy
+        ? "ok"
+        : "degraded",
+
+      services: {
+
+        database: healthy
+          ? "online"
+          : "offline"
+
+      },
+
+      uptime: process.uptime(),
+
+      timestamp: Date.now(),
+
+      requestId: req.requestId
+
+    });
+
+  } catch (error) {
+
+    console.error(
+      "BLOXIO HEALTH ERROR:",
+      error.message,
+      req.requestId
+    );
+
+    return res.status(503).json({
+
+      success: false,
+
+      status: "unavailable",
+
+      error: "health_check_failed",
+
+      requestId: req.requestId
+
+    });
+
+  }
+
+});
+
+/* =========================================================
+   AUTH ROUTES
+   POST /api/auth/login
+   POST /api/auth/register
 ========================================================= */
 
 router.use(
   "/auth",
+  authLimiter,
   auth
 );
+
+/* =========================================================
+   WALLET / FINANCE ROUTES
+   /api/finance/*
+========================================================= */
 
 router.use(
   "/finance",
   wallet
 );
 
+/* =========================================================
+   CASINO ROUTES
+   /api/casino/*
+========================================================= */
+
 router.use(
   "/casino",
   casino
 );
+
+/* =========================================================
+   MARKET ROUTES
+   /api/market/*
+========================================================= */
 
 router.use(
   "/market",
   market
 );
 
+/* =========================================================
+   MINING ROUTES
+   /api/mining/*
+========================================================= */
+
 router.use(
   "/mining",
   mining
 );
 
+/* =========================================================
+   AIRDROP ROUTES
+   /api/airdrop/*
+========================================================= */
+
 router.use(
   "/airdrop",
   airdrop
 );
+
+/* =========================================================
+   PAYMENT ROUTES
+   /api/payments/*
+========================================================= */
 
 router.use(
   "/payments",
@@ -283,45 +344,41 @@ router.use(
 
 /* =========================================================
    VERSIONED API
+   /api/v1/*
 ========================================================= */
 
-const api =
-  express.Router();
+const v1 = express.Router();
 
-api.use("/auth",auth);
-api.use("/finance",wallet);
-api.use("/casino",casino);
-api.use("/market",market);
-api.use("/mining",mining);
-api.use("/airdrop",airdrop);
-api.use("/payments",payments);
+v1.use("/auth", authLimiter, auth);
+v1.use("/finance", wallet);
+v1.use("/casino", casino);
+v1.use("/market", market);
+v1.use("/mining", mining);
+v1.use("/airdrop", airdrop);
+v1.use("/payments", payments);
 
 router.use(
-  "/api/v1",
-  api
+  "/v1",
+  v1
 );
 
 /* =========================================================
    NOT FOUND
 ========================================================= */
 
-router.use((req,res)=>{
+router.use((req, res) => {
 
-  res.status(404)
-    .json({
+  return res.status(404).json({
 
-      success:false,
+    success: false,
 
-      error:
-        "endpoint_not_found",
+    error: "endpoint_not_found",
 
-      path:
-        req.originalUrl,
+    path: req.originalUrl,
 
-      requestId:
-        req.requestId
+    requestId: req.requestId
 
-    });
+  });
 
 });
 
@@ -329,39 +386,50 @@ router.use((req,res)=>{
    ERROR HANDLER
 ========================================================= */
 
-router.use((
+router.use((err, req, res, next) => {
 
-  err,
-  req,
-  res,
-  next
+  if (res.headersSent) {
 
-)=>{
+    return next(err);
+
+  }
+
+  const status =
+    Number.isInteger(err.status) &&
+    err.status >= 400 &&
+    err.status <= 599
+      ? err.status
+      : 500;
 
   console.error(
 
-    "❌ API:",
+    "BLOXIO API ERROR:",
 
-    err.message,
-
-    req.requestId
+    {
+      message: err.message,
+      status,
+      requestId: req.requestId
+    }
 
   );
 
-  res.status(
+  const production =
+    process.env.NODE_ENV === "production";
 
-    err.status || 500
+  return res.status(status).json({
 
-  ).json({
+    success: false,
 
-    success:false,
+    error: status === 500 && production
+      ? "internal_server_error"
+      : (err.code || err.message || "request_failed"),
 
-    error:
-      err.message ||
-      "internal_error",
+    ...(production
+      ? {}
+      : { details: err.message }
+    ),
 
-    requestId:
-      req.requestId
+    requestId: req.requestId
 
   });
 
@@ -371,5 +439,4 @@ router.use((
    EXPORT
 ========================================================= */
 
-module.exports =
-  router;
+module.exports = router;
