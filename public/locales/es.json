@@ -1,0 +1,89 @@
+{
+  "common": {
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "confirm": "Confirmar",
+    "loading": "Cargando...",
+    "search": "Buscar",
+    "back": "Volver",
+    "next": "Siguiente",
+    "close": "Cerrar"
+  },
+  "navigation": {
+    "wallet": "Billetera",
+    "market": "Mercado",
+    "casino": "Casino",
+    "mining": "Minería",
+    "rewards": "Recompensas",
+    "dao": "DAO",
+    "vip": "VIP",
+    "chat": "Chat",
+    "settings": "Configuración"
+  },
+  "wallet": {
+    "title": "Billetera",
+    "deposit": "Depositar",
+    "withdraw": "Retirar",
+    "swap": "Intercambiar",
+    "history": "Historial",
+    "balance": "Saldo",
+    "assets": "Activos"
+  },
+  "market": {
+    "title": "Mercado",
+    "buy": "Comprar",
+    "sell": "Vender",
+    "price": "Precio",
+    "volume": "Volumen",
+    "holders": "Titulares",
+    "dao_countdown": "El mercado abrirá pronto"
+  },
+  "casino": {
+    "title": "Casino",
+    "jackpot": "Premio mayor",
+    "leaderboard": "Clasificación",
+    "tournament": "Torneo",
+    "provably_fair": "Justicia verificable",
+    "big_win": "Gran victoria"
+  },
+  "mining": {
+    "title": "Minería",
+    "plans": "Planes de minería",
+    "active": "Minería activa",
+    "claim": "Reclamar recompensa",
+    "close": "Cerrar plan",
+    "hashrate": "Potencia de cálculo",
+    "profit": "Beneficio"
+  },
+  "rewards": {
+    "title": "Centro de recompensas",
+    "daily": "Recompensas diarias",
+    "weekly": "Recompensas semanales",
+    "monthly": "Recompensas mensuales",
+    "missions": "Misiones",
+    "achievements": "Logros"
+  },
+  "vip": {
+    "title": "Centro VIP",
+    "cashback": "Reembolso",
+    "rakeback": "Rakeback",
+    "boost": "Impulso de minería"
+  },
+  "dao": {
+    "title": "Gobernanza DAO",
+    "vote": "Votar",
+    "proposal": "Propuesta",
+    "rewards": "Recompensas DAO"
+  },
+  "chat": {
+    "title": "Chat global",
+    "send": "Enviar",
+    "online": "Usuarios en línea"
+  },
+  "notifications": {
+    "deposit_success": "Depósito realizado",
+    "withdraw_success": "Retiro realizado",
+    "reward_claimed": "Recompensa reclamada",
+    "vip_upgraded": "Nivel VIP mejorado"
+  }
+}
