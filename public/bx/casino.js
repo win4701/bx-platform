@@ -1,2366 +1,1946 @@
-/*=========================================================
-BLOXIO CASINO V3.1 - CORE FOUNDATION
-=========================================================*/
+
+/* =========================================================
+   BLOXIO CASINO V4.0 — ENTERPRISE REBUILD
+   Central WS • Backend-authoritative • Lifecycle-safe
+   ========================================================= */
+
 "use strict";
 
-/*=========================================================
-IMPORTS
-=========================================================*/
-import {CASINO_GAMES} from "./data/games.js";
-import {COINS} from "./data/coins.js";
+import { CASINO_GAMES } from "./data/games.js";
+import { COINS } from "./data/coins.js";
 
-/*=========================================================
-HELPERS
-=========================================================*/
-const $=(s,p=document)=>p.querySelector(s);
-const $$=(s,p=document)=>[...p.querySelectorAll(s)];
-const clamp=(n,min,max)=>Math.min(Math.max(n,min),max);
-const random=(min,max)=>Math.random()*(max-min)+min;
-const randomInt=(min,max)=>Math.floor(random(min,max+1));
-const uid=()=>crypto.randomUUID?.()||Math.random().toString(36).slice(2);
-const now=()=>Date.now();
+/* =========================================================
+   1. HELPERS
+   ========================================================= */
 
-/*=========================================================
-STORAGE
-=========================================================*/
-const STORAGE={
-APP:"bloxio_casino",
-STATE:"bloxio_casino_state",
-SETTINGS:"bloxio_casino_settings",
-WALLET:"bloxio_wallet",
-ANALYTICS:"bloxio_casino_analytics",
-HISTORY:"bloxio_casino_history"
+const $ = (selector, root = document) =>
+    root.querySelector(selector);
+
+const $$ = (selector, root = document) =>
+    [...root.querySelectorAll(selector)];
+
+const clamp = (value, min, max) =>
+    Math.min(Math.max(Number(value) || 0, min), max);
+
+const safeNumber = value => {
+    const number = Number(value);
+    return Number.isFinite(number) ? number : 0;
 };
 
-/*=========================================================
-EVENT BUS
-=========================================================*/
-class EventBus{
-constructor(){
-this.events=new Map();}
+const escapeHTML = value =>
+    String(value ?? "").replace(/[&<>"']/g, char => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+    })[char]);
 
-on(event,callback){
-if(!this.events.has(event)){
-this.events.set(event,[]);
-}
-this.events.get(event).push(callback);
-return()=>this.off(event,callback);
-}
+const STORAGE = {
+    SETTINGS: "bloxio_casino_settings",
+    STATE: "bloxio_casino_state"
+};
 
-off(event,callback){
-if(!this.events.has(event))return;
-const list=this.events.get(event);
-this.events.set(event,
-list.filter(fn=>fn!==callback));}
+const API = {
+    games: "/api/casino/games",
+    play: "/api/casino/play",
+    history: "/api/casino/history",
+    verify: "/api/casino/verify",
+    crashJoin: "/api/casino/crash/join",
+    crashCashout: "/api/casino/crash/cashout"
+};
 
-emit(event,payload){
-if(!this.events.has(event))return;
-for(const callback of this.events.get(event)){
-try{
-callback(payload);}catch(error){
-console.error(`[BUS:${event}]`,error);}}
-}
+/* =========================================================
+   2. EVENT BUS
+   ========================================================= */
 
-clear(){
-this.events.clear();}}
+class EventBus {
+    constructor() {
+        this.events = new Map();
+    }
 
-export const BUS=new EventBus();
+    on(name, callback) {
+        if (typeof callback !== "function") return () => {};
 
-/*=========================================================
-STATE
-=========================================================*/
-export const STATE={
-ready:false,
-booted:false,
-version:"3.1.0",
-currency:"BX",
-online:false,
-activeGame:null,
-activeView:"lobby",
+        if (!this.events.has(name)) {
+            this.events.set(name, new Set());
+        }
 
-wallet:{BX:0,XBC:0},
+        this.events.get(name).add(callback);
 
-user:{
-id:null,
-username:null,
-vip:0,
-level:1,
-verified:false
-},
+        return () => this.off(name, callback);
+    }
 
-casino:{
-onlinePlayers:0,
-games:[],
-featured:[],
-jackpots:{},
-leaderboard:[],
-tournaments:[],
-providers:[]
-},
+    off(name, callback) {
+        this.events.get(name)?.delete(callback);
+    }
 
-filters:{
-search:"",
-category:"all",
-provider:"all"
-},
+    emit(name, payload) {
+        this.events.get(name)?.forEach(callback => {
+            try {
+                callback(payload);
+            } catch (error) {
+                console.error(`[CASINO BUS:${name}]`, error);
+            }
+        });
+    }
 
-feeds:{
-live:[],
-winners:[],
-bigWins:[]
-},
-
-analytics:{
-wagered:0,
-won:0,
-lost:0,
-profit:0,
-bets:0,
-wins:0,
-losses:0
-},
-
-runtime:{
-socket:false,
-pixi:false,
-audio:false,
-charts:false
-}};
-
-/*=========================================================
-SETTINGS
-=========================================================*/
-export const Settings={
-sound:true,
-music:false,
-animations:true,
-currency:"BX",
-theme:"dark",
-
-save(){
-localStorage.setItem(
-STORAGE.SETTINGS,JSON.stringify({
-sound:this.sound,music:this.music,
-animations:this.animations,
-currency:this.currency,
-theme:this.theme}));
-},
-
-load(){
-try{
-const data=JSON.parse(
-localStorage.getItem(STORAGE.SETTINGS)||"{}"
-);
-Object.assign(this,data);
-}catch(error){
-console.warn("[SETTINGS]",error);}}};
-
-/*=========================================================
-PERSISTENCE
-=========================================================*/
-export const Persistence={
-
-saveState(){
-localStorage.setItem(
-STORAGE.STATE,JSON.stringify({
-currency:STATE.currency,
-analytics:STATE.analytics}));
-},
-
-loadState(){
-try{
-const data=JSON.parse(
-localStorage.getItem(STORAGE.STATE)||"{}");
-
-if(data.currency){
-STATE.currency=data.currency;}
-
-if(data.analytics){
-STATE.analytics=data.analytics;}
-
-}catch(error){
-console.warn("[STATE]",error);}},
-
-saveWallet(){
-localStorage.setItem(
-STORAGE.WALLET,
-JSON.stringify(STATE.wallet));},
-
-loadWallet(){
-try{
-const data=JSON.parse(
-localStorage.getItem(STORAGE.WALLET)||"{}");
-
-STATE.wallet.BX=Number(data.BX||0);
-STATE.wallet.XBC=Number(data.XBC||0);
-
-}catch(error){
-console.warn("[WALLET]",error);}}};
-
-/*=========================================================
-WALLET ENGINE
-=========================================================*/
-export const Wallet={
-
-get(currency=STATE.currency){
-return Number(
-STATE.wallet[currency]||0);},
-
-set(currency,value){
-STATE.wallet[currency]=Number(
-value||0);
-
-Persistence.saveWallet();
-
-BUS.emit("wallet:update",STATE.wallet);
-
-return true;},
-
-credit(currency,amount){
-amount=Number(amount||0);
-
-STATE.wallet[currency]+=amount;
-
-Persistence.saveWallet();
-
-BUS.emit("wallet:update",STATE.wallet);
-
-return true;},
-
-debit(currency,amount){
-amount=Number(amount||0);
-
-if(STATE.wallet[currency]<amount){
-return false;}
-
-STATE.wallet[currency]-=amount;
-
-Persistence.saveWallet();
-
-BUS.emit("wallet:update",STATE.wallet);
-return true;
-}};
-
-/*=========================================================
-CURRENCY ENGINE
-=========================================================*/
-export const Currency={
-
-supported:["BX","XBC"],
-
-set(currency){
-
-if(!this.supported.includes(currency)
-){
-return false;
+    clear() {
+        this.events.clear();
+    }
 }
 
-STATE.currency=currency;
-Settings.currency=currency;
-Settings.save();
+export const BUS = new EventBus();
 
-BUS.emit("currency:change",currency);
+/* =========================================================
+   3. STATE
+   ========================================================= */
 
-return true;},
+export const STATE = {
+    ready: false,
+    booted: false,
+    version: "4.0.0",
+    currency: "BX",
+    online: false,
+    activeGame: null,
+    activeView: "lobby",
 
-get(){return STATE.currency;},
+    wallet: {
+        BX: 0,
+        XBC: 0
+    },
 
-minBet(){
-return STATE.currency==="XBC"?10:0.1;}};
+    user: {
+        id: null,
+        username: null,
+        vip: 0,
+        level: 1,
+        verified: false
+    },
 
-/*=========================================================
-GAME REGISTRY
-=========================================================*/
-export const Registry={
+    casino: {
+        onlinePlayers: 0,
+        games: [],
+        featured: [],
+        jackpots: {},
+        leaderboard: [],
+        tournaments: [],
+        providers: []
+    },
 
-games:[],
+    filters: {
+        search: "",
+        category: "all",
+        provider: "all"
+    },
 
-init(){
+    feeds: {
+        live: [],
+        winners: [],
+        bigWins: []
+    },
 
-this.games=
-Array.isArray(CASINO_GAMES)?CASINO_GAMES:[];
+    analytics: {
+        wagered: 0,
+        won: 0,
+        lost: 0,
+        profit: 0,
+        bets: 0,
+        wins: 0,
+        losses: 0
+    },
 
-STATE.casino.games=this.games;
-
-STATE.casino.featured=
-this.games.filter(game=>game.featured);
-
-STATE.casino.providers=[...new Set(
-this.games.map(g=>g.provider||"BLOXIO"))];
-},
-
-all(){return this.games;},
-
-featured(){
-return STATE.casino.featured;
-},
-
-get(id){
-return this.games.find(
-game=>game.id===id);
-},
-
-search(term=""){term=term.toLowerCase();
-
-return this.games.filter(game=>
-game.name?.toLowerCase().includes(term)||
-game.category?.toLowerCase().includes(term)||
-game.provider?.toLowerCase().includes(term)
-);},
-
-category(category){
-
-if(category==="all"){
-return this.games;}
-
-return this.games.filter(
-game=>game.category===category);},
-
-provider(provider){
-
-if(provider==="all"){return this.games;}
-
-return this.games.filter(game=>game.provider===provider);}};
-
-/*=========================================================
-ANALYTICS
-=========================================================*/
-export const Analytics={
-
-bet(amount){
-STATE.analytics.bets++;
-STATE.analytics.wagered+=
-Number(amount||0);},
-
-win(amount){
-STATE.analytics.wins++;
-STATE.analytics.won+=
-Number(amount||0);
-},
-
-loss(amount){
-STATE.analytics.losses++;
-STATE.analytics.lost+=
-Number(amount||0);
-},
-
-recalculate(){
-
-STATE.analytics.profit=
-STATE.analytics.won-
-STATE.analytics.lost;
-
-Persistence.saveState();}};
-
-/*=========================================================
-CASINO CORE
-=========================================================*/
-export const CasinoCore={
-
-boot(){
-
-if(STATE.booted){return;}
-
-Settings.load();
-Persistence.loadState();
-Persistence.loadWallet();
-
-Registry.init();
-
-STATE.currency=
-Settings.currency||"BX";
-
-STATE.booted=true;
-BUS.emit("core:booted",STATE);
-console.log("[CASINO V3.1] BOOTED");},
-
-start(){
-
-if(STATE.ready){return;}
-
-this.boot();
-
-STATE.ready=true;
-BUS.emit("casino:ready",STATE);
-console.log("[CASINO V3.1] READY");},
-
-destroy(){
-
-BUS.clear();
-STATE.ready=false;
-STATE.booted=false;
-}};
-
-/*=========================================================
-GLOBALS
-=========================================================*/
-window.CasinoCore=CasinoCore;
-window.CasinoState=STATE;
-window.CasinoWallet=Wallet;
-window.CasinoRegistry=Registry;
-window.CasinoBus=BUS;
-
-/*=========================================================
-BLOXIO CASINO V3.2 - UI RENDERER
-Requires: V3.1 Core Foundation
-=========================================================*/
-
-export const DOM={
-gamesGrid:$("#casinoGamesGrid"),
-featuredTrack:$("#casinoFeaturedTrack"),
-searchInput:$("#casinoSearch"),
-gameView:$("#casinoGameView"),
-gameContainer:$("#casinoGameContainer"),
-leaderboard:$("#casinoLeaderboard"),
-leaderboardTop3:$("#casinoLeaderboardTop3"),
-liveFeed:$("#casinoTickerTrack"),
-liveWinners:$("#casinoLiveWinners"),
-winnerTrack:$("#casinoLiveWinnerTrack"),
-tournaments:$("#casinoTournamentList"),
-tournamentCountdown:$("#casinoTournamentCountdown"),
-bigWins:$("#bigWinsTrack"),
-bigWinStats:$("#casinoBigWinStats"),
-bxBalance:$("#casinoBXBalance"),
-xbcBalance:$("#casinoXBCBalance"),
-gamesCount:$("#casinoGamesCount"),
-onlinePlayers:$("#casinoOnlineText"),
-volume:$("#casinoVolumeText"),
-catOriginals:$("#catOriginals"),
-catArcade:$("#catArcade"),
-catCards:$("#catCards"),
-catSlots:$("#catSlots"),
-catRoulette:$("#catRoulette"),
-jackpotCrash:$("#jackpotCrash"),
-jackpotMines:$("#jackpotMines"),
-jackpotPlinko:$("#jackpotPlinko"),
-jackpotWheel:$("#jackpotWheel")
+    runtime: {
+        socket: false,
+        pixi: false,
+        audio: false,
+        charts: false
+    }
 };
 
-/*=========================================================
-TEMPLATES
-=========================================================*/
-export const Templates={
+/* =========================================================
+   4. SETTINGS
+   ========================================================= */
 
-game(game){
-return`
-<button class="casino-game-card"
-data-game="${game.id}"
-data-category="${game.category||"all"}">
+export const Settings = {
+    sound: true,
+    music: false,
+    animations: true,
+    currency: "BX",
+    theme: "dark",
 
-<div class="casino-game-cover">
-<img
-loading="lazy"
-src="${game.image}"
-alt="${game.name}">
-</div>
-<div class="casino-game-body">
-<h3>${game.name}</h3>
-<p>${game.provider||"BLOXIO"}</p>
-<div class="casino-game-meta">
-<span>${game.category||"casino"}</span>
-<span>RTP ${game.rtp||99}%</span>
-</div>
-</div>
+    load() {
+        try {
+            const data = JSON.parse(
+                localStorage.getItem(STORAGE.SETTINGS) || "{}"
+            );
 
-</button>`;},
+            this.sound = data.sound !== false;
+            this.music = data.music === true;
+            this.animations = data.animations !== false;
+            this.currency = ["BX", "XBC"].includes(data.currency)
+                ? data.currency
+                : "BX";
+            this.theme = data.theme || "dark";
+        } catch (error) {
+            console.warn("[CASINO SETTINGS]", error);
+        }
+    },
 
-featured(game){
-return`
-<button
-class="casino-featured-card"
-data-game="${game.id}">
-<img loading="lazy"
-src="${game.image}"
-alt="${game.name}">
-<div>
-<h4>${game.name}</h4>
-<p>${game.provider||"BLOXIO"}</p>
-</div>
-</button>`;},
-
-feed(row){
-return`
-<div class="feed-row">
-<span>${row.user}</span>
-<span>${row.game}</span>
-<strong>${row.amount}${row.currency||"BX"}</strong>
-</div>
-`;
-},
-
-winner(row){
-return`
-<div class="winner-row">
-<span>${row.user}</span>
-<span>${row.game}</span>
-<strong>${row.amount}${row.currency||"BX"}</strong>
-</div>
-`;
-},
-
-leaderboard(row){
-return`
-<div class="leaderboard-row">
-<span>#${row.rank}</span>
-<span>${row.username}</span>
-<strong>${row.profit}</strong>
-</div>
-`;
-},
-
-tournament(row){
-return`
-<div class="tournament-card">
-<h4>${row.name}</h4>
-<p>Prize: ${row.prize}</p>
-<p>Players: ${row.players||0}</p>
-</div>
-`;}
-
+    save() {
+        try {
+            localStorage.setItem(STORAGE.SETTINGS, JSON.stringify({
+                sound: this.sound,
+                music: this.music,
+                animations: this.animations,
+                currency: this.currency,
+                theme: this.theme
+            }));
+        } catch (error) {
+            console.warn("[CASINO SETTINGS]", error);
+        }
+    }
 };
 
-/*=========================================================
-VIRTUAL LIST
-=========================================================*/
-export const VirtualList={
+/* =========================================================
+   5. PERSISTENCE
+   Only preferences and display analytics are local.
+   Never use localStorage as authoritative wallet storage.
+   ========================================================= */
 
-render(root,items,renderer){
+export const Persistence = {
+    saveState() {
+        try {
+            localStorage.setItem(STORAGE.STATE, JSON.stringify({
+                currency: STATE.currency,
+                analytics: STATE.analytics
+            }));
+        } catch (error) {
+            console.warn("[CASINO STATE]", error);
+        }
+    },
 
-if(!root)return;
+    loadState() {
+        try {
+            const data = JSON.parse(
+                localStorage.getItem(STORAGE.STATE) || "{}"
+            );
 
-root.innerHTML=items
-.map(renderer)
-.join("");}};
+            if (data.currency &&
+                ["BX", "XBC"].includes(data.currency)) {
+                STATE.currency = data.currency;
+            }
 
-/*=========================================================
-WALLET UI
-=========================================================*/
-export const WalletUI={
-
-update(){
-
-if(DOM.bxBalance){
-
-DOM.bxBalance.textContent=Wallet.get("BX").toFixed(4);}
-
-if(DOM.xbcBalance){
-
-DOM.xbcBalance.textContent=Wallet.get("XBC").toFixed(2);}
-
-const walletText= $("#casinoWalletText");
-
-if(walletText){
-
-walletText.textContent=`${Wallet.get().toFixed(2)} ${STATE.currency}`;}}
-
+            if (data.analytics && typeof data.analytics === "object") {
+                Object.assign(STATE.analytics, data.analytics);
+            }
+        } catch (error) {
+            console.warn("[CASINO STATE]", error);
+        }
+    }
 };
 
-BUS.on("wallet:update",()=>WalletUI.update());
+/* =========================================================
+   6. WALLET DISPLAY ADAPTER
+   Balance must come from authenticated backend data.
+   ========================================================= */
 
-/*=========================================================
-CATEGORY UI
-=========================================================*/
-export const CategoryUI={
+export const Wallet = {
+    get(currency = STATE.currency) {
+        return safeNumber(STATE.wallet[currency]);
+    },
 
-update(){
+    set(currency, value) {
+        if (!["BX", "XBC"].includes(currency)) return false;
 
-const games=
-Registry.all();
+        STATE.wallet[currency] = safeNumber(value);
+        BUS.emit("wallet:update", STATE.wallet);
+        return true;
+    },
 
-const count=name=>
+    sync(balances = {}) {
+        for (const currency of ["BX", "XBC"]) {
+            if (balances[currency] !== undefined) {
+                STATE.wallet[currency] = safeNumber(
+                    typeof balances[currency] === "object"
+                        ? balances[currency].available
+                        : balances[currency]
+                );
+            }
+        }
 
-games.filter(g=>g.category===name).length;
+        BUS.emit("wallet:update", STATE.wallet);
+    },
 
-if(DOM.catOriginals){
-DOM.catOriginals.textContent=count("originals");}
+    credit() {
+        console.warn("[CASINO] Wallet changes must be confirmed by backend.");
+        return false;
+    },
 
-if(DOM.catArcade){
-DOM.catArcade.textContent=count("arcade");}
-
-if(DOM.catCards){
-DOM.catCards.textContent=count("cards");}
-
-if(DOM.catSlots){
-DOM.catSlots.textContent= count("slots");}
-
-if(DOM.catRoulette){
-DOM.catRoulette.textContent=count("roulette");}}};
-
-/*=========================================================
-GAMES UI
-=========================================================*/
-export const GamesUI={
-
-render(
-games=Registry.all()){
-VirtualList.render(DOM.gamesGrid,games,Templates.game);
-
-},
-
-refresh(){this.render();}};
-
-/*=========================================================
-FEATURED UI
-=========================================================*/
-export const FeaturedUI={
-
-render(){
-
-VirtualList.render(
-DOM.featuredTrack,
-Registry.featured(),
-Templates.featured
-);}
-
+    debit() {
+        console.warn("[CASINO] Wallet changes must be confirmed by backend.");
+        return false;
+    }
 };
 
-/*=========================================================
-SEARCH UI
-=========================================================*/
-export const SearchUI={
+/* =========================================================
+   7. CURRENCY
+   ========================================================= */
 
-init(){
+export const Currency = {
+    supported: ["BX", "XBC"],
 
-if(!DOM.searchInput)
-return;
+    set(currency) {
+        if (!this.supported.includes(currency)) return false;
 
-DOM.searchInput.addEventListener("input",
+        STATE.currency = currency;
+        Settings.currency = currency;
+        Settings.save();
 
-event=>{
+        BUS.emit("currency:change", currency);
+        return true;
+    },
 
-const value=
-event.target.value.trim();
-STATE.filters.search=value;
+    get() {
+        return STATE.currency;
+    },
 
-GamesUI.render(
-Registry.search(value));});}
-
+    minBet() {
+        return STATE.currency === "XBC" ? 10 : 0.1;
+    }
 };
 
-/*=========================================================
-FILTER UI
-=========================================================*/
-export const FilterUI={
+/* =========================================================
+   8. GAME REGISTRY
+   ========================================================= */
 
-init() {$$(".casino-filter-btn")
+export const Registry = {
+    games: [],
 
-.forEach(btn=>{
+    init() {
+        this.games = Array.isArray(CASINO_GAMES)
+            ? CASINO_GAMES
+            : [];
 
-btn.addEventListener("click",()=>{
-$$(".casino-filter-btn")
+        STATE.casino.games = this.games;
+        STATE.casino.featured = this.games.filter(game => game.featured);
+        STATE.casino.providers = [
+            ...new Set(this.games.map(game => game.provider || "BLOXIO"))
+        ];
 
-.forEach(b=>b.classList.remove("active"));
+        return this.games;
+    },
 
-btn.classList.add("active");
+    all() {
+        return this.games;
+    },
 
-const category=btn.dataset.tab;
+    featured() {
+        return STATE.casino.featured;
+    },
 
-STATE.filters.category=category;
-GamesUI.render(Registry.category(category));}
+    get(id) {
+        return this.games.find(game => game.id === id);
+    },
 
-);});
+    search(term = "") {
+        const value = term.toLowerCase();
 
-}};
+        return this.games.filter(game =>
+            `${game.name || ""} ${game.category || ""} ${game.provider || ""}`
+                .toLowerCase()
+                .includes(value)
+        );
+    },
 
-/*=========================================================
-GAME VIEW
-=========================================================*/
-export const GameView={
+    category(category = "all") {
+        if (category === "all") return this.games;
 
-open(id){
+        const aliases = {
+            original: "originals",
+            slot: "slots",
+            card: "cards"
+        };
 
-const game=
-Registry.get(id);
+        const target = aliases[category] || category;
 
-if(!game)
-return;
+        return this.games.filter(game => {
+            const gameCategory = aliases[game.category] || game.category;
+            return gameCategory === target;
+        });
+    },
 
-STATE.activeGame=game.id;
-
-DOM.gameView?.classList.remove("hidden");
-DOM.gameContainer.innerHTML=`
-
-<div class="casino-active-view">
-<div class="casino-active-header">
-<h2>${game.name}</h2>
-<button id="closeGame">Close</button>
-</div>
-<div id="casinoRuntime">
-</div>
-</div>
-
-`;
-
-BUS.emit("game:open",game);},
-
-close(){
-
-STATE.activeGame=
-null;
-
-DOM.gameView?.classList.add("hidden");
-
-if(DOM.gameContainer){
-
-DOM.gameContainer.innerHTML="";}}};
-
-/*=========================================================
-CLICK ROUTER
-=========================================================*/
-export const ClickRouter={
-
-init(){
-
-document.addEventListener("click",event=>{
-
-const game=
-
-event.target.closest(".casino-game-card");
-
-if(game){
-
-GameView.open(game.dataset.game);}
-
-const featured=
-
-event.target.closest(".casino-featured-card");
-
-if(featured){
-
-GameView.open(featured.dataset.game);}
-
-if(event.target.id==="closeGame"
-){GameView.close();}}
-
-);}};
-
-/*=========================================================
-LIVE FEED UI
-=========================================================*/
-export const FeedUI={
-
-render(){
-
-VirtualList.render(
-DOM.liveFeed,
-STATE.feeds.live,
-Templates.feed);}};
-
-BUS.on("feed:update",()=>FeedUI.render());
-
-/*=========================================================
-WINNERS UI
-=========================================================*/
-export const WinnersUI={
-
-render(){
-
-VirtualList.render(
-DOM.liveWinners,
-STATE.feeds.winners,
-Templates.winner);}};
-
-BUS.on("winner:update",()=>WinnersUI.render());
-
-/*=========================================================
-LEADERBOARD UI
-=========================================================*/
-export const LeaderboardUI={
-
-render(){
-
-VirtualList.render(
-DOM.leaderboard,
-STATE.casino.leaderboard,
-Templates.leaderboard);}
-
+    provider(provider = "all") {
+        return provider === "all"
+            ? this.games
+            : this.games.filter(game => game.provider === provider);
+    }
 };
 
-BUS.on(
-"leaderboard:update",
-()=>LeaderboardUI.render()
-);
+/* =========================================================
+   9. ANALYTICS
+   Display analytics only; updated from confirmed responses.
+   ========================================================= */
 
-/*=========================================================
-TOURNAMENT UI
-=========================================================*/
-export const TournamentUI={
+export const Analytics = {
+    bet(amount) {
+        STATE.analytics.bets++;
+        STATE.analytics.wagered += safeNumber(amount);
+        this.save();
+    },
 
-render(){
+    win(amount) {
+        STATE.analytics.wins++;
+        STATE.analytics.won += safeNumber(amount);
+        this.recalculate();
+    },
 
-VirtualList.render(
-DOM.tournaments,
-STATE.casino.tournaments,
-Templates.tournament);}
+    loss(amount) {
+        STATE.analytics.losses++;
+        STATE.analytics.lost += safeNumber(amount);
+        this.recalculate();
+    },
 
+    recalculate() {
+        STATE.analytics.profit =
+            STATE.analytics.won - STATE.analytics.lost;
+
+        this.save();
+    },
+
+    save() {
+        Persistence.saveState();
+    }
 };
 
-BUS.on("tournament:update",()=>TournamentUI.render());
+/* =========================================================
+   10. BACKEND API
+   ========================================================= */
 
-/*=========================================================
-JACKPOT UI
-=========================================================*/
-export const JackpotUI={
+export const CasinoAPI = {
+    async request(path, options = {}) {
+        const token = localStorage.getItem("token");
 
-update(){
+        const headers = {
+            Accept: "application/json",
+            ...(options.body ? { "Content-Type": "application/json" } : {}),
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            ...options.headers
+        };
 
-const jp=
-STATE.casino.jackpots;
+        const response = await fetch(path, {
+            ...options,
+            headers,
+            credentials: "same-origin"
+        });
 
-if(DOM.jackpotCrash){
+        const contentType = response.headers.get("content-type") || "";
 
-DOM.jackpotCrash.textContent=
-(jp.crash||0).toFixed(0);
+        const data = contentType.includes("application/json")
+            ? await response.json()
+            : await response.text();
 
-}
+        if (!response.ok) {
+            const error = new Error(
+                data?.message || data?.error || `HTTP ${response.status}`
+            );
 
-if(DOM.jackpotMines){
+            error.status = response.status;
+            error.data = data;
+            throw error;
+        }
 
-DOM.jackpotMines.textContent=
-(jp.mines||0).toFixed(0);
+        return data;
+    },
 
-}
+    get(path) {
+        return this.request(path);
+    },
 
-if(DOM.jackpotPlinko){
+    post(path, payload) {
+        return this.request(path, {
+            method: "POST",
+            body: JSON.stringify(payload)
+        });
+    },
 
-DOM.jackpotPlinko.textContent=
-(jp.plinko||0).toFixed(0);
+    async play(payload) {
+        return this.post(API.play, payload);
+    },
 
-}
+    async history() {
+        return this.get(API.history);
+    },
 
-if(DOM.jackpotWheel){
+    async games() {
+        return this.get(API.games);
+    },
 
-DOM.jackpotWheel.textContent=
-(jp.wheel||0).toFixed(0);
+    async crashJoin(payload) {
+        return this.post(API.crashJoin, payload);
+    },
 
-}}
+    async crashCashout(payload) {
+        return this.post(API.crashCashout, payload);
+    },
 
+    async verify(payload) {
+        return this.post(API.verify, payload);
+    }
 };
 
-BUS.on("jackpot:update",()=>JackpotUI.update());
+/* =========================================================
+   11. CASINO CORE
+   ========================================================= */
 
-/*=========================================================
-STATS UI
-=========================================================*/
-export const StatsUI={
+export const CasinoCore = {
+    boot() {
+        if (STATE.booted) return;
 
-update(){
+        Settings.load();
+        Persistence.loadState();
 
-if(DOM.gamesCount){
+        STATE.currency = Settings.currency || STATE.currency;
 
-DOM.gamesCount.textContent=Registry.all().length;
+        Registry.init();
 
-}
+        STATE.booted = true;
+        BUS.emit("core:booted", STATE);
+    },
 
-if(DOM.onlinePlayers){
+    start() {
+        if (STATE.ready) return;
 
-DOM.onlinePlayers.textContent=
-STATE.casino.onlinePlayers;}}
+        this.boot();
+        STATE.ready = true;
 
+        BUS.emit("casino:ready", STATE);
+    },
+
+    destroy() {
+        STATE.ready = false;
+        STATE.booted = false;
+        BUS.emit("casino:destroyed");
+    }
 };
 
-/*=========================================================
-GSAP BRIDGE
-=========================================================*/
-export const AnimationUI={
+/* =========================================================
+   12. DOM REFERENCES
+   ========================================================= */
 
-enabled(){return typeof gsap!=="undefined";},
+export const DOM = {
+    gamesGrid: $("#casinoGamesGrid"),
+    featuredTrack: $("#casinoFeaturedTrack"),
+    searchInput: $("#casinoSearch"),
+    gameView: $("#casinoGameView"),
+    gameContainer: $("#casinoGameContainer"),
+    leaderboard: $("#casinoLeaderboard"),
+    leaderboardTop3: $("#casinoLeaderboardTop3"),
+    liveFeed: $("#casinoTickerTrack"),
+    liveWinners: $("#casinoLiveWinners"),
+    winnerTrack: $("#casinoLiveWinnerTrack"),
+    tournaments: $("#casinoTournamentList"),
+    tournamentCountdown: $("#casinoTournamentCountdown"),
+    bigWins: $("#bigWinsTrack"),
+    bigWinStats: $("#casinoBigWinStats"),
+    bxBalance: $("#casinoBXBalance"),
+    xbcBalance: $("#casinoXBCBalance"),
+    gamesCount: $("#casinoGamesCount"),
+    onlinePlayers: $("#casinoOnlineText"),
+    volume: $("#casinoVolumeText"),
+    catOriginals: $("#catOriginals"),
+    catArcade: $("#catArcade"),
+    catCards: $("#catCards"),
+    catSlots: $("#catSlots"),
+    catRoulette: $("#catRoulette"),
+    jackpotCrash: $("#jackpotCrash"),
+    jackpotMines: $("#jackpotMines"),
+    jackpotPlinko: $("#jackpotPlinko"),
+    jackpotWheel: $("#jackpotWheel")
+};
 
-cards(){
+/* =========================================================
+   13. TEMPLATES
+   ========================================================= */
 
-if(!this.enabled())
-return;
+export const Templates = {
+    game(game) {
+        return `
+            <button class="casino-game-card"
+                type="button"
+                data-game="${escapeHTML(game.id)}"
+                data-category="${escapeHTML(game.category || "all")}">
+                <div class="casino-game-cover">
+                    <img loading="lazy"
+                        src="${escapeHTML(game.image || "")}"
+                        alt="${escapeHTML(game.name || "Casino game")}"
+                        onerror="this.style.visibility='hidden'">
+                </div>
+                <div class="casino-game-body">
+                    <h3>${escapeHTML(game.name)}</h3>
+                    <p>${escapeHTML(game.provider || "BLOXIO")}</p>
+                    <div class="casino-game-meta">
+                        <span>${escapeHTML(game.category || "casino")}</span>
+                        <span>RTP ${escapeHTML(game.rtp ?? "—")}${game.rtp != null ? "%" : ""}</span>
+                    </div>
+                </div>
+            </button>`;
+    },
 
-gsap.from(".casino-game-card",
-{
-opacity:0,y:30,
-duration:0.4,
-stagger:0.02});},
+    featured(game) {
+        return `
+            <button class="casino-featured-card"
+                type="button"
+                data-game="${escapeHTML(game.id)}">
+                <img loading="lazy"
+                    src="${escapeHTML(game.image || "")}"
+                    alt="${escapeHTML(game.name || "Featured game")}">
+                <div>
+                    <h4>${escapeHTML(game.name)}</h4>
+                    <p>${escapeHTML(game.provider || "BLOXIO")}</p>
+                </div>
+            </button>`;
+    },
 
-featured(){
+    feed(row) {
+        return `
+            <div class="feed-row">
+                <span>${escapeHTML(row.user)}</span>
+                <span>${escapeHTML(row.game)}</span>
+                <strong>${escapeHTML(row.amount)} ${escapeHTML(row.currency || "BX")}</strong>
+            </div>`;
+    },
 
-if(!this.enabled())
-return;
+    winner(row) {
+        return `
+            <div class="winner-row">
+                <span>${escapeHTML(row.user)}</span>
+                <span>${escapeHTML(row.game)}</span>
+                <strong>${escapeHTML(row.amount)} ${escapeHTML(row.currency || "BX")}</strong>
+            </div>`;
+    },
 
-gsap.from(".casino-featured-card",
-{
-opacity:0,
-scale:0.9,
-duration:0.5,
-stagger:0.05
-});}};
+    leaderboard(row) {
+        return `
+            <div class="leaderboard-row">
+                <span>#${escapeHTML(row.rank)}</span>
+                <span>${escapeHTML(row.username)}</span>
+                <strong>${escapeHTML(row.profit)}</strong>
+            </div>`;
+    },
 
-/*=========================================================
-PIXI BRIDGE
-=========================================================*/
-export const PixiBridge={
+    tournament(row) {
+        return `
+            <div class="tournament-card">
+                <h4>${escapeHTML(row.name)}</h4>
+                <p>Prize: ${escapeHTML(row.prize)}</p>
+                <p>Players: ${escapeHTML(row.players ?? 0)}</p>
+            </div>`;
+    }
+};
 
-create(container){
+/* =========================================================
+   14. RENDERING
+   ========================================================= */
 
-if(typeof PIXI==="undefined"){return null;}
+export const VirtualList = {
+    render(root, items, renderer) {
+        if (!root) return;
 
-const app=
-new PIXI.Application({
-resizeTo:container,antialias:true,
-backgroundAlpha:0});
+        root.innerHTML = (Array.isArray(items) ? items : [])
+            .map(renderer)
+            .join("");
+    }
+};
 
-container.appendChild(app.view);
+export const WalletUI = {
+    update() {
+        if (DOM.bxBalance) {
+            DOM.bxBalance.textContent = Wallet.get("BX").toFixed(4);
+        }
 
-return app;}};
+        if (DOM.xbcBalance) {
+            DOM.xbcBalance.textContent = Wallet.get("XBC").toFixed(2);
+        }
 
-/*=========================================================
-UI RENDERER
-=========================================================*/
-export const UIRenderer={
+        const walletText = $("#casinoWalletText");
 
-init(){
+        if (walletText) {
+            walletText.textContent =
+                `${Wallet.get()} ${STATE.currency}`;
+        }
+    }
+};
 
-WalletUI.update();
-CategoryUI.update();
-StatsUI.update();
-GamesUI.render();
-FeaturedUI.render();
-SearchUI.init();
-FilterUI.init();
-ClickRouter.init();
-AnimationUI.cards();
-AnimationUI.featured();
-console.log(
-"[CASINO V3.2] UI READY");}};
+export const CategoryUI = {
+    update() {
+        const games = Registry.all();
 
-/*=========================================================
-BLOXIO CASINO V3.3 - REALTIME + GAMES RUNTIME
-Requires:
-V3.1 Core Foundation
-V3.2 UI Renderer
-=========================================================*/
+        const count = category =>
+            games.filter(game => game.category === category).length;
 
-export const SocketEngine={
+        if (DOM.catOriginals) DOM.catOriginals.textContent = count("originals");
+        if (DOM.catArcade) DOM.catArcade.textContent = count("arcade");
+        if (DOM.catCards) DOM.catCards.textContent = count("cards");
+        if (DOM.catSlots) DOM.catSlots.textContent = count("slots");
+        if (DOM.catRoulette) DOM.catRoulette.textContent = count("roulette");
+    }
+};
 
-socket:null,
-connected:false,
+export const GamesUI = {
+    render(games = Registry.all()) {
+        VirtualList.render(DOM.gamesGrid, games, Templates.game);
+    },
 
-connect(){
+    refresh() {
+        this.render();
+    }
+};
 
-if(typeof io==="undefined"){
-console.warn("[SOCKET] Missing");
-return;
-}
+export const FeaturedUI = {
+    render() {
+        VirtualList.render(
+            DOM.featuredTrack,
+            Registry.featured(),
+            Templates.featured
+        );
+    }
+};
 
-this.socket=io({
-transports:["websocket","polling"]});
+export const FeedUI = {
+    render() {
+        VirtualList.render(DOM.liveFeed, STATE.feeds.live, Templates.feed);
+    }
+};
 
-this.bind();
+export const WinnersUI = {
+    render() {
+        VirtualList.render(
+            DOM.liveWinners,
+            STATE.feeds.winners,
+            Templates.winner
+        );
+    }
+};
 
-},
+export const LeaderboardUI = {
+    render() {
+        VirtualList.render(
+            DOM.leaderboard,
+            STATE.casino.leaderboard,
+            Templates.leaderboard
+        );
+    }
+};
 
-bind(){
+export const TournamentUI = {
+    render() {
+        VirtualList.render(
+            DOM.tournaments,
+            STATE.casino.tournaments,
+            Templates.tournament
+        );
+    }
+};
 
-if(!this.socket)return;
+export const JackpotUI = {
+    update() {
+        const values = STATE.casino.jackpots;
 
-this.socket.on(
-"connect",
-()=>{
-this.connected=true;
-STATE.runtime.socket=true;
-BUS.emit("socket:connected");});
+        const elements = {
+            crash: DOM.jackpotCrash,
+            mines: DOM.jackpotMines,
+            plinko: DOM.jackpotPlinko,
+            wheel: DOM.jackpotWheel
+        };
 
-this.socket.on("disconnect",()=>{
-this.connected=false;
-STATE.runtime.socket=false;
-BUS.emit("socket:disconnected");});
+        Object.entries(elements).forEach(([key, element]) => {
+            if (element && values[key] !== undefined) {
+                element.textContent = String(values[key]);
+            }
+        });
+    }
+};
 
-this.socket.on("casino:online",count=>{
-STATE.casino.onlinePlayers=count;
-BUS.emit("online:update",count);});
+export const StatsUI = {
+    update() {
+        if (DOM.gamesCount) {
+            DOM.gamesCount.textContent = Registry.all().length;
+        }
 
-this.socket.on("casino:feed",payload=>{
+        if (DOM.onlinePlayers) {
+            DOM.onlinePlayers.textContent =
+                String(STATE.casino.onlinePlayers);
+        }
+    }
+};
 
-STATE.feeds.live.unshift(payload);
-STATE.feeds.live=
-STATE.feeds.live.slice(0,100);
-BUS.emit("feed:update",payload);
+/* =========================================================
+   15. SEARCH AND FILTERS
+   ========================================================= */
 
+export const SearchUI = {
+    init() {
+        if (!DOM.searchInput || this.bound) return;
+
+        this.bound = true;
+
+        DOM.searchInput.addEventListener("input", event => {
+            STATE.filters.search = event.target.value.trim();
+
+            let games = Registry.search(STATE.filters.search);
+
+            if (STATE.filters.category !== "all") {
+                const category = Registry.category(
+                    STATE.filters.category
+                );
+
+                const ids = new Set(category.map(game => game.id));
+                games = games.filter(game => ids.has(game.id));
+            }
+
+            GamesUI.render(games);
+        });
+    },
+
+    bound: false
+};
+
+export const FilterUI = {
+    init() {
+        if (this.bound) return;
+
+        this.bound = true;
+
+        $$(".casino-filter-btn").forEach(button => {
+            button.addEventListener("click", () => {
+                $$(".casino-filter-btn").forEach(item =>
+                    item.classList.remove("active")
+                );
+
+                button.classList.add("active");
+
+                const category = button.dataset.tab || "all";
+                STATE.filters.category = category;
+
+                let games = Registry.category(category);
+
+                if (STATE.filters.search) {
+                    const ids = new Set(
+                        Registry.search(STATE.filters.search)
+                            .map(game => game.id)
+                    );
+
+                    games = games.filter(game => ids.has(game.id));
+                }
+
+                GamesUI.render(games);
+            });
+        });
+    },
+
+    bound: false
+};
+
+/* =========================================================
+   16. GAME VIEW
+   ========================================================= */
+
+export const GameView = {
+    open(id) {
+        const game = Registry.get(id);
+        if (!game || !DOM.gameContainer) return false;
+
+        this.close(false);
+
+        STATE.activeGame = game.id;
+
+        if (DOM.gameView) {
+            DOM.gameView.classList.remove("hidden");
+        }
+
+        DOM.gameContainer.innerHTML = `
+            <div class="casino-active-view">
+                <div class="casino-active-header">
+                    <h2>${escapeHTML(game.name)}</h2>
+                    <button type="button" id="closeGame">Close</button>
+                </div>
+                <div id="casinoRuntime"
+                    data-game="${escapeHTML(game.id)}">
+                    <div class="casino-runtime-placeholder">
+                        <p>${escapeHTML(game.name)}</p>
+                        <span>Connecting to game service...</span>
+                    </div>
+                </div>
+                <p class="casino-runtime-status"
+                    id="casinoRuntimeStatus"
+                    role="status"></p>
+            </div>`;
+
+        BUS.emit("game:open", game);
+        return true;
+    },
+
+    close(emit = true) {
+        const previous = STATE.activeGame;
+
+        PixiEngine.destroyAll();
+        CrashPixi.stop();
+
+        STATE.activeGame = null;
+
+        if (DOM.gameView) {
+            DOM.gameView.classList.add("hidden");
+        }
+
+        if (DOM.gameContainer) {
+            DOM.gameContainer.innerHTML = "";
+        }
+
+        if (emit && previous) {
+            BUS.emit("game:close", previous);
+        }
+    }
+};
+
+/* =========================================================
+   17. CLICK ROUTER
+   ========================================================= */
+
+export const ClickRouter = {
+    init() {
+        if (this.bound) return;
+
+        this.bound = true;
+
+        document.addEventListener("click", event => {
+            const gameButton = event.target.closest(
+                ".casino-game-card, .casino-featured-card"
+            );
+
+            if (gameButton) {
+                GameView.open(gameButton.dataset.game);
+                return;
+            }
+
+            if (event.target.closest("#closeGame")) {
+                GameView.close();
+            }
+        });
+    },
+
+    bound: false
+};
+
+/* =========================================================
+   18. CENTRAL REALTIME ADAPTER
+   Uses window.WS only. No independent Socket.IO connection.
+   ========================================================= */
+
+export const SocketEngine = {
+    connected: false,
+    cleanups: [],
+
+    connect() {
+        const ws = window.WS;
+
+        if (!ws) {
+            console.warn("[CASINO WS] Central WS service unavailable.");
+            return false;
+        }
+
+        if (typeof ws.on === "function") {
+            const events = {
+                "casino:online": count => {
+                    STATE.casino.onlinePlayers = safeNumber(count);
+                    StatsUI.update();
+                },
+
+                "casino:feed": payload => {
+                    if (!payload) return;
+                    STATE.feeds.live.unshift(payload);
+                    STATE.feeds.live = STATE.feeds.live.slice(0, 50);
+                    FeedUI.render();
+                },
+
+                "casino:winner": payload => {
+                    if (!payload) return;
+                    STATE.feeds.winners.unshift(payload);
+                    STATE.feeds.winners = STATE.feeds.winners.slice(0, 50);
+                    WinnersUI.render();
+                },
+
+                "casino:bigwin": payload => {
+                    if (!payload) return;
+                    STATE.feeds.bigWins.unshift(payload);
+                    STATE.feeds.bigWins = STATE.feeds.bigWins.slice(0, 30);
+                    BUS.emit("bigwin:update", payload);
+                },
+
+                "casino:leaderboard": rows => {
+                    if (!Array.isArray(rows)) return;
+                    STATE.casino.leaderboard = rows;
+                    LeaderboardUI.render();
+                },
+
+                "casino:jackpot": payload => {
+                    if (!payload || typeof payload !== "object") return;
+                    Object.assign(STATE.casino.jackpots, payload);
+                    JackpotUI.update();
+                },
+
+                "casino:tournaments": rows => {
+                    if (!Array.isArray(rows)) return;
+                    STATE.casino.tournaments = rows;
+                    TournamentUI.render();
+                },
+
+                "casino:rain": payload => BUS.emit("rain:update", payload)
+            };
+
+            Object.entries(events).forEach(([name, callback]) => {
+                const cleanup = ws.on(name, callback);
+
+                if (typeof cleanup === "function") {
+                    this.cleanups.push(cleanup);
+                }
+            });
+        }
+
+        if (typeof ws.subscribe === "function") {
+            ws.subscribe("casino");
+        }
+
+        this.connected = Boolean(
+            typeof ws.connected === "function"
+                ? ws.connected()
+                : ws.connected
+        );
+
+        STATE.runtime.socket = this.connected;
+        return true;
+    },
+
+    disconnect() {
+        this.cleanups.forEach(cleanup => cleanup());
+        this.cleanups = [];
+
+        if (window.WS?.unsubscribe) {
+            window.WS.unsubscribe("casino");
+        }
+
+        this.connected = false;
+        STATE.runtime.socket = false;
+    },
+
+    emit(event, data = {}) {
+        if (!window.WS?.send) return false;
+
+        return window.WS.send({
+            type: event,
+            ...data
+        });
+    }
+};
+
+/* =========================================================
+   19. CONFIRMED GAME OPERATIONS
+   No local outcome generation or local balance changes.
+   ========================================================= */
+
+export const BetEngine = {
+    pending: false,
+
+    async place(amount, gameId = STATE.activeGame, extra = {}) {
+        amount = safeNumber(amount);
+
+        if (this.pending) {
+            throw new Error("A bet is already being processed.");
+        }
+
+        if (!gameId || amount < Currency.minBet()) {
+            throw new Error("Invalid game or bet amount.");
+        }
+
+        this.pending = true;
+        BUS.emit("bet:pending", { amount, gameId });
+
+        try {
+            const result = await CasinoAPI.play({
+                gameId,
+                amount,
+                currency: STATE.currency,
+                ...extra
+            });
+
+            if (result?.balance) {
+                Wallet.sync(result.balance);
+            }
+
+            if (result?.wallet) {
+                Wallet.sync(result.wallet);
+            }
+
+            if (result?.analytics) {
+                Object.assign(STATE.analytics, result.analytics);
+                Persistence.saveState();
+            }
+
+            BUS.emit("bet:confirmed", result);
+            return result;
+        } catch (error) {
+            BUS.emit("bet:error", error);
+            throw error;
+        } finally {
+            this.pending = false;
+        }
+    }
+};
+
+/* =========================================================
+   20. CRASH GAME — SERVER AUTHORITATIVE
+   ========================================================= */
+
+export const CrashGame = {
+    running: false,
+    multiplier: 1,
+    roundId: null,
+
+    async start(amount) {
+        if (this.running) {
+            throw new Error("Crash round already active.");
+        }
+
+        const result = await CasinoAPI.crashJoin({
+            amount: safeNumber(amount),
+            currency: STATE.currency
+        });
+
+        this.running = true;
+        this.multiplier = safeNumber(result?.multiplier) || 1;
+        this.roundId = result?.roundId || result?.id || null;
+
+        BUS.emit("crash:joined", result);
+        return result;
+    },
+
+    async cashout() {
+        if (!this.running || !this.roundId) {
+            throw new Error("No active Crash round.");
+        }
+
+        const result = await CasinoAPI.crashCashout({
+            roundId: this.roundId
+        });
+
+        this.running = false;
+        BUS.emit("crash:cashout", result);
+        return result;
+    },
+
+    update(payload) {
+        if (!payload) return;
+
+        this.multiplier = safeNumber(payload.multiplier) || 1;
+        this.running = payload.running !== false;
+
+        BUS.emit("crash:update", this.multiplier);
+    },
+
+    stop() {
+        this.running = false;
+        this.roundId = null;
+    }
+};
+
+/* =========================================================
+   21. LEGACY GAME ADAPTERS
+   No local random financial outcomes.
+   ========================================================= */
+
+export const MinesGame = {
+    async play(payload = {}) {
+        return BetEngine.place(
+            payload.amount,
+            "mines",
+            payload
+        );
+    }
+};
+
+export const PlinkoGame = {
+    async drop(payload = {}) {
+        return BetEngine.place(
+            payload.amount,
+            "plinko",
+            payload
+        );
+    }
+};
+
+export const WheelGame = {
+    async spin(payload = {}) {
+        return BetEngine.place(
+            payload.amount,
+            "wheel",
+            payload
+        );
+    }
+};
+
+export const DiceGame = {
+    async roll(payload = {}) {
+        return BetEngine.place(
+            payload.amount,
+            "dice",
+            payload
+        );
+    }
+};
+
+export const CoinflipGame = {
+    async flip(payload = {}) {
+        return BetEngine.place(
+            payload.amount,
+            "coinflip",
+            payload
+        );
+    }
+};
+
+export const LimboGame = {
+    async roll(payload = {}) {
+        return BetEngine.place(
+            payload.amount,
+            "limbo",
+            payload
+        );
+    }
+};
+
+export const HiloGame = {
+    async draw(payload = {}) {
+        return BetEngine.place(
+            payload.amount,
+            "hilo",
+            payload
+        );
+    }
+};
+
+export const GameFactory = {
+    get(id) {
+        const games = {
+            crash: CrashGame,
+            mines: MinesGame,
+            plinko: PlinkoGame,
+            wheel: WheelGame,
+            dice: DiceGame,
+            coinflip: CoinflipGame,
+            limbo: LimboGame,
+            hilo: HiloGame
+        };
+
+        return games[id] || null;
+    }
+};
+
+/* =========================================================
+   22. RAIN AND TIPS
+   Backend requests only; no local reward simulation.
+   ========================================================= */
+
+export const RainRuntime = {
+    current: null,
+
+    update(payload) {
+        this.current = payload || null;
+        BUS.emit("rain:update", this.current);
+    },
+
+    async join() {
+        return SocketEngine.emit("casino:rain:join");
+    },
+
+    async claim() {
+        return SocketEngine.emit("casino:rain:claim");
+    }
+};
+
+export const TipsEngine = {
+    open() {
+        BUS.emit("tips:open");
+    },
+
+    send(user, amount, currency = STATE.currency) {
+        amount = safeNumber(amount);
+
+        if (!user || amount <= 0) {
+            throw new Error("Invalid tip details.");
+        }
+
+        return SocketEngine.emit("casino:tip", {
+            user,
+            amount,
+            currency
+        });
+    }
+};
+
+/* =========================================================
+   23. VISUAL ENGINES
+   ========================================================= */
+
+export const AnimationEngine = {
+    enabled: false,
+
+    init() {
+        this.enabled =
+            Settings.animations &&
+            typeof window.gsap !== "undefined";
+
+        return this.enabled;
+    },
+
+    cards() {
+        if (!this.enabled) return;
+
+        window.gsap.from(".casino-game-card", {
+            opacity: 0,
+            y: 20,
+            duration: 0.35,
+            stagger: 0.025
+        });
+    },
+
+    featured() {
+        if (!this.enabled) return;
+
+        window.gsap.from(".casino-featured-card", {
+            opacity: 0,
+            scale: 0.96,
+            duration: 0.35,
+            stagger: 0.04
+        });
+    },
+
+    kill() {
+        if (this.enabled) {
+            window.gsap.killTweensOf(
+                ".casino-game-card, .casino-featured-card"
+            );
+        }
+    }
+};
+
+export const PixiEngine = {
+    enabled: false,
+    apps: new Map(),
+
+    init() {
+        this.enabled = typeof window.PIXI !== "undefined";
+        STATE.runtime.pixi = this.enabled;
+        return this.enabled;
+    },
+
+    async create(id, container) {
+        if (!this.enabled || !container) return null;
+
+        if (this.apps.has(id)) {
+            return this.apps.get(id);
+        }
+
+        const PIXI = window.PIXI;
+        let app;
+
+        try {
+            app = new PIXI.Application();
+
+            if (typeof app.init === "function") {
+                await app.init({
+                    resizeTo: container,
+                    antialias: true,
+                    backgroundAlpha: 0
+                });
+            } else {
+                app = new PIXI.Application({
+                    resizeTo: container,
+                    antialias: true,
+                    backgroundAlpha: 0
+                });
+            }
+
+            const canvas = app.canvas || app.view;
+
+            if (canvas && !canvas.parentNode) {
+                container.appendChild(canvas);
+            }
+
+            this.apps.set(id, app);
+            return app;
+        } catch (error) {
+            console.error("[CASINO PIXI]", error);
+            return null;
+        }
+    },
+
+    get(id) {
+        return this.apps.get(id) || null;
+    },
+
+    destroy(id) {
+        const app = this.apps.get(id);
+        if (!app) return;
+
+        try {
+            app.destroy(true, {
+                children: true,
+                texture: false,
+                textureSource: false
+            });
+        } catch (error) {
+            console.warn("[PIXI DESTROY]", error);
+        }
+
+        this.apps.delete(id);
+    },
+
+    destroyAll() {
+        [...this.apps.keys()].forEach(id => this.destroy(id));
+    }
+};
+
+export const AudioEngine = {
+    enabled: false,
+    sounds: {},
+
+    init() {
+        if (typeof window.Howl === "undefined") return false;
+
+        this.enabled = Settings.sound;
+        STATE.runtime.audio = true;
+
+        const files = {
+            click: "click",
+            win: "win",
+            lose: "lose",
+            jackpot: "jackpot",
+            rain: "rain",
+            tip: "tip",
+            spin: "spin",
+            crash: "crash"
+        };
+
+        Object.entries(files).forEach(([key, file]) => {
+            this.sounds[key] = new window.Howl({
+                src: [`/assets/sounds/${file}.mp3`],
+                preload: false,
+                volume: 0.65
+            });
+        });
+
+        return true;
+    },
+
+    play(name) {
+        if (!this.enabled) return;
+
+        this.sounds[name]?.play();
+    },
+
+    stop(name) {
+        this.sounds[name]?.stop();
+    },
+
+    toggle() {
+        this.enabled = !this.enabled;
+        Settings.sound = this.enabled;
+        Settings.save();
+        return this.enabled;
+    },
+
+    destroy() {
+        Object.values(this.sounds).forEach(sound => sound.unload());
+        this.sounds = {};
+    }
+};
+
+export const ChartsEngine = {
+    chart: null,
+    series: null,
+    observer: null,
+
+    init() {
+        const library = window.LightweightCharts;
+        const root = DOM.bigWinStats;
+
+        if (!library || !root) return false;
+
+        try {
+            this.chart = library.createChart(root, {
+                width: root.clientWidth || 300,
+                height: 220,
+                layout: {
+                    background: { color: "transparent" },
+                    textColor: "#aebbd0"
+                },
+                grid: {
+                    vertLines: { color: "rgba(255,255,255,.04)" },
+                    horzLines: { color: "rgba(255,255,255,.04)" }
+                }
+            });
+
+            if (typeof this.chart.addAreaSeries === "function") {
+                this.series = this.chart.addAreaSeries();
+            } else if (typeof this.chart.addSeries === "function" &&
+                       library.AreaSeries) {
+                this.series = this.chart.addSeries(library.AreaSeries);
+            }
+
+            if (typeof ResizeObserver !== "undefined") {
+                this.observer = new ResizeObserver(entries => {
+                    const width = entries[0]?.contentRect?.width;
+                    if (width) this.chart?.applyOptions({ width });
+                });
+
+                this.observer.observe(root);
+            }
+
+            STATE.runtime.charts = Boolean(this.series);
+            return Boolean(this.series);
+        } catch (error) {
+            console.warn("[CASINO CHART]", error);
+            return false;
+        }
+    },
+
+    update(point) {
+        if (!this.series || !point) return;
+
+        if (point.time == null || point.value == null) return;
+
+        this.series.update({
+            time: point.time,
+            value: safeNumber(point.value)
+        });
+    },
+
+    destroy() {
+        this.observer?.disconnect();
+        this.observer = null;
+
+        this.chart?.remove();
+        this.chart = null;
+        this.series = null;
+        STATE.runtime.charts = false;
+    }
+};
+
+/* =========================================================
+   24. GAME RENDER BRIDGES
+   ========================================================= */
+
+export const CrashPixi = {
+    app: null,
+    line: null,
+
+    async mount(container) {
+        this.app = await PixiEngine.create("crash", container);
+        if (!this.app || !window.PIXI) return;
+
+        this.line = new window.PIXI.Graphics();
+        this.app.stage.addChild(this.line);
+    },
+
+    render(multiplier) {
+        if (!this.line) return;
+
+        this.line.clear();
+
+        if (this.line.moveTo && this.line.lineTo) {
+            this.line.moveTo(0, 200);
+            this.line.lineTo(
+                clamp(multiplier, 1, 30) * 12,
+                200 - clamp(multiplier, 1, 30) * 5
+            );
+
+            this.line.stroke?.({
+                width: 4,
+                color: 0x22d68a
+            });
+        }
+    },
+
+    stop() {
+        this.line = null;
+        this.app = null;
+    }
+};
+
+export const PlinkoPixi = {
+    app: null,
+
+    async mount(container) {
+        this.app = await PixiEngine.create("plinko", container);
+        return this.app;
+    }
+};
+
+export const RoulettePixi = {
+    app: null,
+
+    async mount(container) {
+        this.app = await PixiEngine.create("roulette", container);
+        return this.app;
+    }
+};
+
+/* =========================================================
+   25. VISUAL EVENTS
+   ========================================================= */
+
+BUS.on("wallet:update", () => WalletUI.update());
+
+BUS.on("currency:change", () => WalletUI.update());
+
+BUS.on("feed:update", () => FeedUI.render());
+
+BUS.on("winner:update", () => WinnersUI.render());
+
+BUS.on("leaderboard:update", () => LeaderboardUI.render());
+
+BUS.on("tournament:update", () => TournamentUI.render());
+
+BUS.on("jackpot:update", () => JackpotUI.update());
+
+BUS.on("crash:update", value => {
+    const element = $("#crashMultiplier");
+
+    if (element) {
+        element.textContent = `${safeNumber(value).toFixed(2)}x`;
+    }
+
+    CrashPixi.render(value);
 });
 
-this.socket.on("casino:winner",payload=>{
-
-STATE.feeds.winners.unshift(payload);
-STATE.feeds.winners=
-STATE.feeds.winners.slice(0,100);
-BUS.emit("winner:update",payload);});
-
-this.socket.on("casino:bigwin",payload=>{
-
-STATE.feeds.bigWins.unshift(payload);
-STATE.feeds.bigWins=
-STATE.feeds.bigWins.slice(0,50);
-BUS.emit("bigwin:update",payload);});
-
-this.socket.on("casino:leaderboard",rows=>{
-
-STATE.casino.leaderboard=rows;
-BUS.emit("leaderboard:update",rows);});
-
-this.socket.on("casino:jackpot",payload=>{
-
-Object.assign(STATE.casino.jackpots,payload);
-BUS.emit("jackpot:update",payload);});
-
-this.socket.on("casino:tournaments",payload=>{
-
-STATE.casino.tournaments=payload;
-BUS.emit("tournament:update",payload);});
-
-this.socket.on("casino:rain",payload=>{
-
-BUS.emit("rain:update",payload);});
-
-},
-
-emit(event,data={}){
-
-if(!this.connected)
-return;
-
-this.socket.emit(event,data);}};
-
-/*=========================================================
-LIVE FEED RUNTIME
-=========================================================*/
-export const FeedRuntime={
-
-start(){
-
-setInterval(()=>{
-
-if(
-SocketEngine.connected
-)return;
-
-const games=
-Registry.all();
-
-if(!games.length)
-return;
-
-const game=
-
-games[randomInt(0,games.length-1)];
-STATE.feeds.live.unshift({
-
-user:"Player"+randomInt(1000,9999),
-
-game:game.name,
-
-amount:randomInt(10,5000),
-
-currency:randomInt(0,1)?"BX":"XBC"});
-
-STATE.feeds.live=
-STATE.feeds.live.slice(0,50);
-BUS.emit("feed:update");},3000);}};
-
-/*=========================================================
-BIG WINS RUNTIME
-=========================================================*/
-export const BigWinsRuntime={
-
-start(){
-
-setInterval(()=>{
-
-const games=
-Registry.all();
-
-if(!games.length)
-return;
-
-const game=
-
-games[randomInt(0,games.length-1)];
-
-const payload={
-
-user:"Whale"+randomInt(100,999),
-
-game:game.name,
-
-amount:randomInt(1000,50000),
-
-multiplier:random(5,150).toFixed(2)};
-
-STATE.feeds.bigWins.unshift(payload);
-STATE.feeds.bigWins=
-STATE.feeds.bigWins.slice(0,20);
-BUS.emit("bigwin:update",payload);},12000);}};
-
-/*=========================================================
-JACKPOT RUNTIME
-=========================================================*/
-export const JackpotRuntime={
-
-start(){
-
-STATE.casino.jackpots={
-
-crash:2500,
-mines:1500,
-plinko:4000,
-wheel:1000,
-slots:6000
-
-};
-
-setInterval(()=>{
-
-for(
-const key in
-STATE.casino.jackpots
-){
-
-STATE.casino.jackpots[key]+=
-
-randomInt(1,25);}
-
-BUS.emit("jackpot:update");},5000);}};
-
-/*=========================================================
-TOURNAMENT RUNTIME
-=========================================================*/
-export const TournamentRuntime={
-
-start(){
-
-STATE.casino.tournaments=[
-
-{
-id:"daily-bx",
-name:"Daily BX Cup",
-prize:5000,
-players:0,
-endsAt:
-Date.now()+86400000
-},
-
-{
-id:"xbc-masters",
-name:"XBC Masters",
-prize:15000,
-players:0,
-endsAt:
-Date.now()+172800000
-},
-
-{
-id:"vip-championship",
-name:"VIP Championship",
-prize:50000,
-players:0,
-endsAt:
-Date.now()+259200000}];
-
-BUS.emit("tournament:update");}};
-
-/*=========================================================
-RAIN RUNTIME
-=========================================================*/
-
-export const RainRuntime={
-
-current:null,
-
-create(){
-
-this.current={
-amount:randomInt(100,10000),
-currency:randomInt(0,1)?"BX":"XBC",
-players:0,
-expires:Date.now()+300000};
-
-BUS.emit("rain:update",this.current);},
-join(){
-
-if(!this.current)
-return;
-
-this.current.players++;
-
-BUS.emit("rain:joined",this.current);},
-claim(){
-
-if(!this.current)
-return false;
-
-BUS.emit("rain:claim",this.current);
-return true;
-
-}};
-
-export const TipsEngine={
-
-open()
-{BUS.emit("tips:open");},
-send(user,amount,currency){
-BUS.emit("tips:send",{user,amount,currency});}};
-
-/*=========================================================
-LEADERBOARD RUNTIME
-=========================================================*/
-export const LeaderboardRuntime={
-
-generate(){
-
-const rows=[];
-
-for(
-let i=1; i<=100; i++){
-
-rows.push({ rank:i,
-
-username:"Player"+randomInt(1000,9999),
-profit:randomInt(1000,1000000),
-wagered:randomInt(10000,10000000)});}
-
-STATE.casino.leaderboard=rows;
-BUS.emit("leaderboard:update",rows);},
-
-start(){
-
-this.generate();
-
-setInterval(()=>this.generate(),60000);}};
-
-/*=========================================================
-CRASH GAME
-=========================================================*/
-export const CrashGame={
-
-multiplier:1,
-running:false,
-
-start(){
-
-this.running=true;
-this.multiplier=1;
-
-const tick=()=>{
-
-if(!this.running)
-return;
-
-this.multiplier+=0.01;
-
-BUS.emit("crash:update",this.multiplier);
-
-requestAnimationFrame(tick);};
-
-tick();},
-
-cashout(){
-
-this.running=false;
-
-return this.multiplier;
-
-},
-
-stop(){
-
-this.running=false;}};
-
-/*=========================================================
-MINES GAME
-=========================================================*/
-export const MinesGame={
-
-createBoard(tiles=25,mines=3){
-
-const board=Array(tiles).fill(false);
-
-let count=0;
-
-while(count<mines){
-
-const index=randomInt(0,tiles-1);
-
-if(board[index])
-continue;
-
-board[index]=true; count++;}
-
-return board;}};
-
-/*=========================================================
-PLINKO GAME
-=========================================================*/
-
-export const PlinkoGame={
-drop(){const payouts=[0.2,0.5,1,2,5,10,25];
-return payouts[randomInt(0,payouts.length-1)];}};
-
-/*=========================================================
-WHEEL GAME
-=========================================================*/
-export const WheelGame={
-spin(){const sectors=[1,2,3,5,10,25];
-return sectors[randomInt(0,sectors.length-1)];}};
-
-/*=========================================================
-DICE GAME
-=========================================================*/
-export const DiceGame={
-roll(){return randomInt(1,100);}};
-
-/*=========================================================
-COINFLIP GAME
-=========================================================*/
-export const CoinflipGame={flip(){
-return Math.random()>0.5?"heads":"tails";}};
-
-/*=========================================================
-LIMBO GAME
-=========================================================*/
-export const LimboGame={roll(){
-return Number(random(1,1000).toFixed(2));}};
-
-/*=========================================================
-HILO GAME
-=========================================================*/
-export const HiloGame={draw(){
-return randomInt(1,13);}};
-
-/*=========================================================
-GAME FACTORY
-=========================================================*/
-export const GameFactory={
-
-get(id){
-
-switch(id){
-
-case "crash":
-return CrashGame;
-
-case "mines":
-return MinesGame;
-
-case "plinko":
-return PlinkoGame;
-
-case "wheel":
-return WheelGame;
-
-case "dice":
-return DiceGame;
-
-case "coinflip":
-return CoinflipGame;
-
-case "limbo":
-return LimboGame;
-
-case "hilo":
-return HiloGame;
-
-default:
-return null;
-
-}}};
-
-/*=========================================================
-BET ENGINE
-=========================================================*/
-export const BetEngine={
-
-place(amount){
-
-amount=Number(amount);
-
-if(
-amount<Currency.minBet()){
-return false;}
-
-if(
-!Wallet.debit(STATE.currency,amount)){
-return false;}
-
-Analytics.bet(amount);
-
-BUS.emit("bet:placed",
-{amount,currency:STATE.currency});
-
-return true;},
-
-win(amount){
-
-Wallet.credit(STATE.currency,amount);
-
-Analytics.win(amount);
-
-BUS.emit("bet:won",amount);},
-
-lose(amount){
-
-Analytics.loss(amount);
-
-BUS.emit("bet:lost",amount);}};
-
-/*=========================================================
-REALTIME RUNTIME
-=========================================================*/
-export const RealtimeRuntime={
-
-start(){
-SocketEngine.connect();
-FeedRuntime.start();
-BigWinsRuntime.start();
-JackpotRuntime.start();
-TournamentRuntime.start();
-LeaderboardRuntime.start();
-console.log(
-"[CASINO V3.3] REALTIME READY");}};
-
-/*=========================================================
-BLOXIO CASINO V3.4 - PIXI + GSAP + HOWLER
-Requires:
-=========================================================*/
-
-export const PixiEngine={
-
-enabled:false,
-apps:new Map(),
-
-init(){
-
-if(typeof PIXI==="undefined"){
-console.warn("[PIXI] Missing");
-return;}
-
-this.enabled=true;
-STATE.runtime.pixi=true;
-console.log("[PIXI] Ready");},
-
-create(id,container){
-
-if(!this.enabled||!container){
-return null;}
-
-if(this.apps.has(id)){
-return this.apps.get(id);}
-
-const app=new PIXI.Application({
-resizeTo:container,
-antialias:true,
-backgroundAlpha:0,
-autoDensity:true,
-resolution:
-window.devicePixelRatio||1});
-container.appendChild(app.view);
-
-this.apps.set(id,app);
-
-return app;},
-
-get(id){
-
-return this.apps.get(id);},
-
-destroy(id){
-
-const app=
-this.apps.get(id);
-
-if(!app)return;
-
-app.destroy(true,true);
-
-this.apps.delete(id);},
-
-destroyAll(){
-
-for(const id of this.apps.keys()){
-
-this.destroy(id);}}};
-
-/*=========================================================
-PARTICLE FX
-=========================================================*/
-export const ParticlesEngine={
-
-explode(container,count=50){
-
-if(!PixiEngine.enabled||!container){return;}
-
-const app=
-
-PixiEngine.create("particles",container);
-
-for(
-let i=0;i<count;i++){
-
-const particle=
-
-new PIXI.Graphics();
-
-particle.beginFill(Math.random()*0xffffff);
-particle.drawCircle(0,0,3);
-particle.endFill();
-particle.x=container.clientWidth/2;
-particle.y=container.clientHeight/2;
-
-app.stage.addChild(particle);
-
-gsap.to(particle,{x:particle.x+
-random(-300,300),
-y:particle.y+random(-300,300),alpha:0,
-
-duration:1.2,onComplete(){
-app.stage.removeChild(particle);}});
-
-}}};
-
-/*=========================================================
-CRASH PIXI
-=========================================================*/
-export const CrashPixi={
-
-app:null,
-line:null,
-running:false,
-
-mount(container){
-
-if(!container)return;
-
-this.app=
-
-PixiEngine.create("crash",container);
-
-this.line=
-new PIXI.Graphics();
-
-this.app.stage.addChild(
-this.line);},
-
-render(multiplier){
-
-if(!this.line)return;
-
-this.line.clear();
-this.line.lineStyle(4,0x00ff99);
-this.line.moveTo(0,300);
-this.line.lineTo(multiplier*10,300-(multiplier*5));},
-
-start(){
-
-this.running=true;
-
-const tick=()=>{
-
-if(!this.running)
-return;
-
-this.render(CrashGame.multiplier);
-
-requestAnimationFrame(tick);};
-
-tick();},
-
-stop(){
-
-this.running=false;
-
-}};
-
-/*=========================================================
-PLINKO PIXI
-=========================================================*/
-export const PlinkoPixi={
-
-app:null,
-ball:null,
-
-mount(container){
-
-if(!container)return;
-
-this.app=PixiEngine.create("plinko",container);
-this.ball=new PIXI.Graphics();
-this.ball.beginFill(0xffff00);
-this.ball.drawCircle(0,0,10);
-this.ball.endFill();
-this.ball.x=250;
-this.ball.y=30;
-this.app.stage.addChild(
-this.ball);},
-
-drop(){
-
-if(!this.ball)
-return;
-
-gsap.to(this.ball,
-{
-y:500,
-x:250+
-random(-120,120),
-
-duration:2,
-ease:"bounce.out"});
-
-}};
-
-/*=========================================================
-ROULETTE PIXI
-=========================================================*/
-export const RoulettePixi={
-
-app:null,
-wheel:null,
-
-mount(container){
-
-if(!container)return;
-
-this.app=
-
-PixiEngine.create("roulette",container);
-
-this.wheel=
-new PIXI.Graphics();
-
-this.wheel.beginFill(0xff0000);
-this.wheel.drawCircle(0,0,150);
-this.wheel.endFill();
-this.wheel.x=250;
-this.wheel.y=250;
-this.app.stage.addChild(
-this.wheel
-);},
-
-spin(){
-
-if(!this.wheel)
-return;
-
-gsap.to(
-this.wheel,
-{
-rotation:
-Math.PI*10+
-random(0,10),
-
-duration:5,ease:"power4.out"});
-
-}};
-
-/*=========================================================
-GSAP ENGINE
-=========================================================*/
-export const AnimationEngine={
-
-enabled:false,
-
-init(){
-
-if(typeof gsap==="undefined"){
-console.warn("[GSAP] Missing");
-return;
-}
-
-this.enabled=true;
-
-console.log("[GSAP] Ready");},
-
-cards(){
-
-if(!this.enabled)
-return;
-
-gsap.from(".casino-game-card",
-{opacity:0,y:40,duration:0.4,stagger:0.03});
-
-},
-
-featured(){
-
-if(!this.enabled)
-return;
-
-gsap.from(".casino-featured-card",
-{opacity:0,scale:0.9,duration:0.5,stagger:0.05});
-},
-
-winner(element){
-
-if(
-!this.enabled||
-!element
-)return;
-
-gsap.fromTo(
-element,
-{scale:0.8,opacity:0},
-{scale:1,opacity:1,duration:0.4});},
-
-jackpot(element){
-
-if(
-!this.enabled||
-!element
-)return;
-
-gsap.fromTo(
-element,
-{
-scale:1
-},
-{scale:1.15,repeat:1,yoyo:true,duration:0.4});
-
-},
-
-shake(element){
-
-if(
-!this.enabled||
-!element
-)return;
-
-gsap.fromTo(element,{x:-8},
-{x:8,repeat:4,yoyo:true,duration:0.05});
-
-}};
-
-/*=========================================================
-HOWLER AUDIO
-=========================================================*/
-export const AudioEngine={
-
-enabled:true,
-sounds:{},
-
-init(){
-
-if(typeof Howl==="undefined"){
-console.warn("[HOWLER] Missing");
-return;
-}
-
-STATE.runtime.audio=true;
-
-this.sounds={
-
-click:new Howl({src:["/audio/click.mp3"]}),
-win:new Howl({src:["/audio/win.mp3"]}),
-lose:new Howl({src:["/audio/lose.mp3"]}),
-jackpot:new Howl({src:["/audio/jackpot.mp3"]}),
-rain:new Howl({src:["/audio/rain.mp3"]}),
-tip:new Howl({src:["/audio/tip.mp3"]}),
-spin:new Howl({src:["/audio/spin.mp3"]}),
-crash:new Howl({src:["/audio/crash.mp3"]})
-
-};
-
-console.log("[HOWLER] Ready");
-
-},
-
-play(name){
-
-if(!this.enabled)
-return;
-
-const sound= this.sounds[name];
-
-if(sound) {sound.play();}},
-
-stop(name){
-
-const sound=
-this.sounds[name];
-
-if(sound){
-
-sound.stop();
-
-}},
-
-toggle(){
-
-this.enabled= !this.enabled;
-
-}};
-
-/*=========================================================
-AUDIO EVENTS
-=========================================================*/
-BUS.on("bet:placed",()=>AudioEngine.play("click"));
-BUS.on("bet:won",()=>AudioEngine.play("win"));
-BUS.on("bet:lost",()=>AudioEngine.play("lose"));
-BUS.on("rain:update",()=>AudioEngine.play("rain"));
-BUS.on("jackpot:update",()=>AudioEngine.play("jackpot"));
-
-/*=========================================================
-LIGHTWEIGHT CHARTS
-=========================================================*/
-export const ChartsEngine={
-
-chart:null,
-series:null,
-
-init(){
-
-if(
-typeof LightweightCharts==="undefined"
-){
-return;
-}
-
-const root=
-document.getElementById("casinoBigWinStats");
-
-if(!root)
-return;
-
-this.chart=
-LightweightCharts.createChart(root,
-{
-width:
-root.clientWidth,height:250});
-
-this.series=
-this.chart.addAreaSeries();
-
-this.series.setData([
-{time:1,value:10},{time:2,value:15},
-{time:3,value:8},{time:4,value:25}]);
-
-STATE.runtime.charts=true;
-
-},
-
-update(value){
-
-if(!this.series)
-return;
-
-this.series.update({
-time:
-Math.floor(Date.now()/1000),
-value
-});
-}};
-
-/*=========================================================
-EFFECTS ENGINE
-=========================================================*/
-export const EffectsEngine={
-
-bigWin(){
-
-ParticlesEngine.explode(document.body,100);},
-
-jackpot(){
-
-ParticlesEngine.explode(document.body,200);
-
-AudioEngine.play("jackpot");}};
-
-BUS.on("bigwin:update",()=>EffectsEngine.bigWin());
-BUS.on("jackpot:update",()=>EffectsEngine.jackpot());
-
-/*=========================================================
-GAME OPEN EVENTS
-=========================================================*/
-BUS.on("game:open",game=>{
-
-const runtime=
-document.getElementById("casinoRuntime");
-
-if(!runtime)
-return;
-
-switch(game.id){
-
-case "crash":
-
-CrashPixi.mount(
-runtime
-);
-
-CrashPixi.start();
-
-break;
-
-case "plinko":
-
-PlinkoPixi.mount(runtime);
-
-break;
-
-case "roulette":
-case "wheel":
-
-RoulettePixi.mount(
-runtime);
-
-break;
-
-}}
-);
-
-/*=========================================================
-CRASH MULTIPLIER UI
-=========================================================*/
-BUS.on("crash:update",value=>{
-
-const el=document.getElementById("crashMultiplier");
-
-if(!el)
-return;
-
-el.textContent=value.toFixed(2)+"x";});
-
-/*=========================================================
-VISUAL ENGINE
-=========================================================*/
-export const VisualEngine={
-
-start(){
-
-PixiEngine.init();
-AnimationEngine.init();
-AudioEngine.init();
-ChartsEngine.init();
-AnimationEngine.cards();
-AnimationEngine.featured();
-console.log("[CASINO V3.4] VISUAL READY");
-
-}};
-
-/*=========================================================
-BLOXIO CASINO V3.5 - FINAL BOOTSTRAP
-Requires:
-=========================================================*/
-
-export const VERSION={
-name:"BLOXIO CASINO",
-version:"3.5.0",
-build:"ENTERPRISE",
-release:"2026"
-};
-
-/*=========================================================
-HEALTH ENGINE
-=========================================================*/
-export const HealthEngine={
-
-checks:[],
-
-add(name,callback){
-
-this.checks.push({name,callback});
-
-},
-
-run(){
-
-const report=[];
-
-for(const check of this.checks){
-
-try{
-
-report.push({
-name:check.name,
-status:check.callback()});
-
-}catch(error){
-
-report.push({name:check.name,
-status:false,error});
-
-}
-
-}
-
-return report;
-
-}};
-
-HealthEngine.add("Wallet",
-()=>typeof Wallet!=="undefined");
-
-HealthEngine.add("Registry",
-()=>typeof Registry!=="undefined");
-
-HealthEngine.add("SocketEngine",
-()=>typeof SocketEngine!=="undefined");
-
-HealthEngine.add("PixiEngine",
-()=>typeof PixiEngine!=="undefined");
-
-HealthEngine.add("AudioEngine",
-()=>typeof AudioEngine!=="undefined");
-
-HealthEngine.add("ChartsEngine",
-()=>typeof ChartsEngine!=="undefined");
-
-/*=========================================================
-PROVIDER ENGINE
-=========================================================*/
-export const ProviderEngine={
-
-providers:new Map(),
-
-register(provider){
-
-if(!provider?.id)
-return;
-
-this.providers.set(provider.id,provider);},
-
-get(id){return this.providers.get(id);},
-
-all(){
-
-return[...this.providers.values()];}
-
-};
-
-/*=========================================================
-GAME LOADER
-=========================================================*/
-export const GameLoader={
-
-load(){
-
-const games=
-Registry.all();
-
-for(const game of games){
-
-if(!game.provider){
-
-game.provider="BLOXIO";}}
-console.log(`[CASINO] ${games.length} Games Loaded`);
-
-return games.length;
-
-}
-
-};
-
-/*=========================================================
-SYNC ENGINES
-=========================================================*/
-export const WalletSync={
-
-start(){
-
-WalletUI.update();
-
-BUS.emit("wallet:sync",STATE.wallet);
-
-}};
-
-export const FeedSync={
-
-start(){
-
-BUS.emit("feed:update",STATE.feeds.live);
-
-BUS.emit("winner:update",STATE.feeds.winners);
-
-}};
-
-export const JackpotSync={
-
-start(){
-
-BUS.emit("jackpot:update",STATE.casino.jackpots);
-
-}};
-
-export const TournamentSync={
-
-start(){
-
-BUS.emit("tournament:update",STATE.casino.tournaments);
-
-}};
-
-export const LeaderboardSync={
-
-start(){
-
-BUS.emit("leaderboard:update",STATE.casino.leaderboard);
-
-}
-
-};
-
-/*=========================================================
-PERFORMANCE ENGINE
-=========================================================*/
-export const PerformanceEngine={
-
-fps:0,
-frames:0,
-last:performance.now(),
-raf:null,
-
-start(){
-
-const loop=time=>{
-
-this.frames++;
-
-if(time-this.last>=1000){
-
-this.fps=
-this.frames;
-
-this.frames=0;
-
-this.last=time;
-
-}
-
-this.raf=requestAnimationFrame(loop);};
-this.raf=requestAnimationFrame(loop);},
-
-stop(){cancelAnimationFrame(this.raf);}
-
-};
-
-/*=========================================================
-MEMORY ENGINE
-=========================================================*/
-export const MemoryEngine={
-
-usage(){
-
-if(
-!performance.memory){return null;}
-
-return{
-
-used:
-Math.round(
-performance.memory.usedJSHeapSize
-/1024/1024),
-
-limit:
-Math.round(
-performance.memory.jsHeapSizeLimit
-/1024/1024)
-
-};}
-
-};
-
-/*=========================================================
-CASINO ANALYTICS
-=========================================================*/
-export const CasinoAnalytics={
-
-sessionStart:Date.now(),
-
-sessionDuration(){
-
-return Math.floor((Date.now()-this.sessionStart)/1000);
-
-},
-
-snapshot(){
-
-return{
-
-version:VERSION.version,
-currency:STATE.currency,
-wallet:STATE.wallet,
-analytics:STATE.analytics,
-online:STATE.casino.onlinePlayers,
-games:Registry.all().length,
-fps:PerformanceEngine.fps};}
-
-};
-
-/*=========================================================
-HOTKEYS
-=========================================================*/
-export const Hotkeys={
-
-init(){
-
-document.addEventListener("keydown",event=>{
-
-if(event.key==="Escape"){
-
-GameView.close();}
-
-if(event.key==="/"){
-
-event.preventDefault();
-
-document.getElementById("casinoSearch")?.focus();}}
-
-);}
-
-};
-
-/*=========================================================
-VISIBILITY ENGINE
-=========================================================*/
-export const VisibilityEngine={ init(){
-
-document.addEventListener("visibilitychange",()=>{
-
-if(document.hidden){
-
-BUS.emit("app:hidden");
-
-}else{
-
-BUS.emit("app:visible");}}
-
-);}
-
-};
-
-/*=========================================================
-MOBILE ENGINE
-=========================================================*/
-export const MobileEngine={
-
-init(){
-
-document.getElementById("mobileCasinoSearch")
-?.addEventListener("click",()=>{
-
-document.getElementById("casinoSearch")?.focus();
-
+BUS.on("game:open", async game => {
+    const runtime = $("#casinoRuntime");
+    if (!runtime) return;
+
+    if (game.id === "crash") {
+        await CrashPixi.mount(runtime);
+    } else if (game.id === "plinko") {
+        await PlinkoPixi.mount(runtime);
+    } else if (["roulette", "wheel"].includes(game.id)) {
+        await RoulettePixi.mount(runtime);
+    }
 });
 
-document.getElementById("mobileCasinoWallet")
-?.addEventListener("click",()=>{
-
-BUS.emit("wallet:open");
-
+BUS.on("game:close", () => {
+    CrashPixi.stop();
+    PixiEngine.destroyAll();
 });
 
-document.getElementById("mobileCasinoLeaderboard")
-?.addEventListener("click",()=>{
+/* =========================================================
+   26. APP UTILITIES
+   ========================================================= */
 
-document.getElementById("casinoLeaderboard")
-?.scrollIntoView({behavior:"smooth"});
-
-});
-
-}};
-
-/*=========================================================
-DEVTOOLS
-=========================================================*/
-export const DevTools={
-
-mount(){
-
-window.BLOXIO={
-
-VERSION,STATE,BUS,Wallet,Currency,
-
-Registry,Analytics,
-
-SocketEngine,AudioEngine,CasinoAnalytics
-
-};}
-
+export const HealthEngine = {
+    run() {
+        return [
+            { name: "Wallet", status: Boolean(Wallet) },
+            { name: "Registry", status: Boolean(Registry) },
+            { name: "Central WS", status: Boolean(window.WS) },
+            { name: "PixiJS", status: typeof window.PIXI !== "undefined" },
+            { name: "Howler", status: typeof window.Howl !== "undefined" },
+            {
+                name: "Lightweight Charts",
+                status: typeof window.LightweightCharts !== "undefined"
+            }
+        ];
+    }
 };
 
-/*=========================================================
-APP ENGINE
-=========================================================*/
-export const CasinoApp={
+export const CasinoAnalytics = {
+    sessionStart: Date.now(),
 
-started:false,
-start(){
+    sessionDuration() {
+        return Math.floor((Date.now() - this.sessionStart) / 1000);
+    },
 
-if(this.started)
-return;
+    snapshot() {
+        return {
+            version: STATE.version,
+            currency: STATE.currency,
+            analytics: { ...STATE.analytics },
+            online: STATE.casino.onlinePlayers,
+            games: Registry.all().length
+        };
+    }
+};
 
-console.group(`🚀 ${VERSION.name}`);
-console.log(VERSION);
+export const Hotkeys = {
+    init() {
+        if (this.bound) return;
+        this.bound = true;
 
-CasinoCore.start();
-GameLoader.load();
-WalletSync.start();
-FeedSync.start();
-JackpotSync.start();
-TournamentSync.start();
-LeaderboardSync.start();
-RealtimeRuntime.start();
-VisualEngine.start();
-PerformanceEngine.start();
-Hotkeys.init();
-VisibilityEngine.init();
-MobileEngine.init();
+        document.addEventListener("keydown", event => {
+            if (event.key === "Escape") GameView.close();
 
-$$(".casino-currency").forEach(btn=>{
-btn.addEventListener("click",()=>{
-$$(".casino-currency").forEach(x=>
-x.classList.remove("active"));
-btn.classList.add("active");
-Currency.set(btn.dataset.currency);
-WalletUI.update();
+            if (event.key === "/" &&
+                !["INPUT", "TEXTAREA"].includes(
+                    document.activeElement?.tagName
+                )) {
+                event.preventDefault();
+                DOM.searchInput?.focus();
+            }
+        });
+    },
 
-});});
+    bound: false
+};
 
-$("#joinRainBtn")?.addEventListener(
-"click",()=>RainRuntime.join());
+export const VisibilityEngine = {
+    init() {
+        if (this.bound) return;
+        this.bound = true;
 
-$("#claimRainBtn")?.addEventListener(
-"click",()=>RainRuntime.claim?.());
+        document.addEventListener("visibilitychange", () => {
+            BUS.emit(document.hidden ? "app:hidden" : "app:visible");
+        });
+    },
 
-$("#sendTipBtn")?.addEventListener(
-"click",()=>TipsEngine.open?.());
-DevTools.mount();
+    bound: false
+};
 
-const report=
-HealthEngine.run();
+export const MobileEngine = {
+    init() {
+        if (this.bound) return;
+        this.bound = true;
 
-console.table(report);
-console.groupEnd();
+        $("#mobileCasinoSearch")?.addEventListener("click", () => {
+            DOM.searchInput?.focus();
+        });
 
-this.started=true;
+        $("#mobileCasinoWallet")?.addEventListener("click", () => {
+            BUS.emit("wallet:open");
+        });
 
-BUS.emit("casino:started");
+        $("#mobileCasinoLeaderboard")?.addEventListener("click", () => {
+            DOM.leaderboard?.scrollIntoView({ behavior: "smooth" });
+        });
+    },
 
-console.log("[CASINO V3.5] READY");
+    bound: false
+};
 
-},
+/* =========================================================
+   27. APP LIFECYCLE
+   ========================================================= */
 
-stop(){
+export const CasinoApp = {
+    started: false,
 
-PerformanceEngine.stop();
+    start() {
+        if (this.started) return true;
 
-this.started=false;
+        CasinoCore.start();
 
-BUS.emit("casino:stopped");
+        GameLoader.load();
 
-}};
+        WalletSync.start();
+        FeedSync.start();
+        JackpotSync.start();
+        TournamentSync.start();
+        LeaderboardSync.start();
 
-/*=========================================================
-GLOBAL EXPORTS
-=========================================================*/
-window.CasinoApp=CasinoApp;
-window.CasinoVersion=VERSION;
-window.CasinoAnalytics=CasinoAnalytics;
+        SearchUI.init();
+        FilterUI.init();
+        ClickRouter.init();
 
-/*=========================================================
-BOOTSTRAP
-=========================================================*/
-document.addEventListener("DOMContentLoaded",()=>{
-CasinoApp.start();});
+        AnimationEngine.init();
+        AnimationEngine.cards();
+        AnimationEngine.featured();
+
+        PixiEngine.init();
+        AudioEngine.init();
+        ChartsEngine.init();
+
+        SocketEngine.connect();
+
+        Hotkeys.init();
+        VisibilityEngine.init();
+        MobileEngine.init();
+
+        $$(".casino-currency").forEach(button => {
+            if (button.dataset.casinoBound) return;
+            button.dataset.casinoBound = "1";
+
+            button.addEventListener("click", () => {
+                $$(".casino-currency").forEach(item =>
+                    item.classList.remove("active")
+                );
+
+                button.classList.add("active");
+
+                Currency.set(button.dataset.currency);
+            });
+        });
+
+        $("#joinRainBtn")?.addEventListener("click", () => {
+            RainRuntime.join();
+        });
+
+        $("#claimRainBtn")?.addEventListener("click", () => {
+            RainRuntime.claim();
+        });
+
+        $("#sendTipBtn")?.addEventListener("click", () => {
+            TipsEngine.open();
+        });
+
+        DevTools.mount();
+
+        STATE.ready = true;
+        this.started = true;
+
+        BUS.emit("casino:started", STATE);
+
+        console.log(`[${VERSION.name} ${VERSION.version}] READY`);
+
+        return true;
+    },
+
+    stop() {
+        if (!this.started) return;
+
+        SocketEngine.disconnect();
+
+        AnimationEngine.kill();
+        ChartsEngine.destroy();
+        PixiEngine.destroyAll();
+        AudioEngine.destroy();
+
+        CrashGame.stop();
+
+        STATE.ready = false;
+        this.started = false;
+
+        BUS.emit("casino:stopped");
+    },
+
+    destroy() {
+        this.stop();
+        CasinoCore.destroy();
+    }
+};
+
+/* =========================================================
+   28. SYNC ADAPTERS
+   ========================================================= */
+
+export const GameLoader = {
+    load() {
+        const games = Registry.all();
+
+        games.forEach(game => {
+            if (!game.provider) game.provider = "BLOXIO";
+        });
+
+        return games.length;
+    }
+};
+
+export const WalletSync = {
+    start() {
+        WalletUI.update();
+        BUS.emit("wallet:sync");
+    }
+};
+
+export const FeedSync = {
+    start() {
+        FeedUI.render();
+        WinnersUI.render();
+    }
+};
+
+export const JackpotSync = {
+    start() {
+        JackpotUI.update();
+    }
+};
+
+export const TournamentSync = {
+    start() {
+        TournamentUI.render();
+    }
+};
+
+export const LeaderboardSync = {
+    start() {
+        LeaderboardUI.render();
+    }
+};
+
+export const RealtimeRuntime = {
+    start() {
+        return SocketEngine.connect();
+    },
+
+    stop() {
+        SocketEngine.disconnect();
+    }
+};
+
+/* =========================================================
+   29. COMPATIBILITY GLOBALS
+   ========================================================= */
+
+export const VERSION = {
+    name: "BLOXIO CASINO",
+    version: "4.0.0",
+    build: "ENTERPRISE",
+    release: "2026"
+};
+
+export const DevTools = {
+    mount() {
+        window.BLOXIO = {
+            VERSION,
+            STATE,
+            BUS,
+            Wallet,
+            Currency,
+            Registry,
+            Analytics,
+            CasinoAPI,
+            SocketEngine,
+            CasinoAnalytics
+        };
+
+        window.CasinoCore = CasinoCore;
+        window.CasinoState = STATE;
+        window.CasinoWallet = Wallet;
+        window.CasinoRegistry = Registry;
+        window.CasinoBus = BUS;
+    }
+};
+
+window.CasinoApp = CasinoApp;
+window.CasinoVersion = VERSION;
+window.CasinoAnalytics = CasinoAnalytics;
+
+/* Compatibility for existing code expecting window.CASINO */
+window.CASINO = CasinoApp;
+
+/* Bootstrap is safe whether module loads before or after DOM ready. */
+if (document.readyState === "loading") {
+    document.addEventListener(
+        "DOMContentLoaded",
+        () => CasinoApp.start(),
+        { once: true }
+    );
+} else {
+    CasinoApp.start();
+}
