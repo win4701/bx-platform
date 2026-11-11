@@ -1,639 +1,1268 @@
+
 // =====================================================
-// BLOXIO CORE ENGINE V3
-// ENTERPRISE BOOT SYSTEM
+// BLOXIO CORE ENGINE V4
+// CENTRAL APPLICATION BOOT & LIFECYCLE ENGINE
 // =====================================================
 
 "use strict";
 
 /* =====================================================
-CONFIG
+   CONFIG
 ===================================================== */
 
-const CONFIG={
+const CONFIG = Object.freeze({
 
-API:
-"https://api.bloxio.online",
+    API: "https://api.bloxio.online",
 
-WS:
-"wss://api.bloxio.online",
+    WS: "https://api.bloxio.online",
 
-BOOT_TIMEOUT:
-12000,
+    VERSION: "4.0.0",
 
-VERSION:
-"3.0.0"
+    BOOT_TIMEOUT: 12000,
 
-};
+    MODULE_TIMEOUT: 8000,
 
-/* =====================================================
-GLOBAL
-===================================================== */
+    TELEGRAM_TIMEOUT: 10000,
 
-window.APP=window.APP||{
+    RETRY_DELAY: 2000,
 
-version:
-CONFIG.VERSION,
+    MAX_ERRORS: 100,
 
-ready:false,
-
-booting:true,
-
-online:
-navigator.onLine,
-
-user:null,
-
-modules:{},
-
-services:{},
-
-errors:[]
-
-};
-
-/* =====================================================
-DOM
-===================================================== */
-
-const DOM={
-
-loader:
-()=>document.getElementById(
-"globalLoader"
-),
-
-loaderFill:
-()=>document.getElementById(
-"loaderProgress"
-),
-
-app:
-()=>document.getElementById(
-"app"
-)
-
-};
-
-/* =====================================================
-LOGGER
-===================================================== */
-
-function log(...args){
-
-console.log(
-"[BX]",
-...args
-);
-
-}
-
-function warn(...args){
-
-console.warn(
-"[BX]",
-...args
-);
-
-}
-
-function error(...args){
-
-console.error(
-"[BX]",
-...args
-);
-
-APP.errors.push(args);
-
-}
-
-/* =====================================================
-LOADER
-===================================================== */
-
-function setProgress(v){
-
-const el=
-DOM.loaderFill();
-
-if(!el)return;
-
-el.style.width=
-`${v}%`;
-
-}
-
-function removeLoader(){
-
-const loader=
-DOM.loader();
-
-if(!loader)return;
-
-loader.classList.add(
-"hidden"
-);
-
-setTimeout(()=>{
-
-loader.remove();
-
-},450);
-
-}
-
-/* =====================================================
-APP STATE
-===================================================== */
-
-function unlockApp(){
-
-document.body.classList.remove(
-"loading"
-);
-
-document.body.classList.remove(
-"app-preload"
-);
-
-document.body.classList.remove(
-"auth-lock"
-);
-
-document.body.classList.add(
-"app-ready"
-);
-
-DOM.app()
-?.classList.remove(
-"app-hidden"
-);
-
-}
-
-function lockApp(){
-
-document.body.classList.add(
-"loading"
-);
-
-}
-
-/* =====================================================
-NETWORK
-===================================================== */
-
-function networkWatcher(){
-
-window.addEventListener(
-"online",
-()=>{
-
-APP.online=true;
-
-log(
-"ONLINE"
-);
-
-}
-);
-
-window.addEventListener(
-"offline",
-()=>{
-
-APP.online=false;
-
-warn(
-"OFFLINE"
-);
+    DEBUG: true
 
 });
 
-}
 
 /* =====================================================
-TELEGRAM
+   GLOBAL APP STATE
 ===================================================== */
 
-async function initTelegram(){
+window.APP = window.APP || {};
 
-const tg=
-window.Telegram
-?.WebApp;
+const APP = window.APP;
 
-if(!tg){
+APP.version = CONFIG.VERSION;
 
-log(
-"No Telegram"
-);
+APP.ready = false;
 
-return;
+APP.booting = false;
 
-}
+APP.online = navigator.onLine;
 
-try{
+APP.user = APP.user || null;
 
-tg.ready();
+APP.token = APP.token || null;
 
-tg.expand();
+APP.modules = APP.modules || {};
 
-tg.setHeaderColor(
-"#05080e"
-);
+APP.services = APP.services || {};
 
-tg.setBackgroundColor(
-"#05080e"
-);
+APP.errors = Array.isArray(APP.errors)
+    ? APP.errors
+    : [];
 
-const user=
+APP.startedAt = null;
 
-tg.initDataUnsafe
-?.user;
+APP.readyAt = null;
 
-if(!user){
+APP.destroyed = false;
 
-warn(
-"No TG User"
-);
-
-return;
-
-}
-
-APP.user=user;
-
-log(
-"TG USER",
-user.id
-);
-
-try{
-
-const res=
-await fetch(
-
-CONFIG.API+
-"/auth/telegram",
-
-{
-
-method:"POST",
-
-headers:{
-
-"Content-Type":
-"application/json"
-
-},
-
-body:
-
-JSON.stringify({
-
-telegram_id:
-user.id,
-
-username:
-user.username
-
-})
-
-}
-
-);
-
-const data=
-await res.json();
-
-if(data?.token){
-
-localStorage.setItem(
-
-"token",
-data.token
-
-);
-
-}
-
-}catch(e){
-
-warn(
-"TG AUTOLOGIN FAIL"
-);
-
-}
-
-}catch(e){
-
-warn(
-"TG INIT FAIL",
-e
-);
-
-}
-
-}
 
 /* =====================================================
-WEBSOCKET
+   INTERNAL STATE
 ===================================================== */
 
-function initWS(){
+const CORE = {
 
-if(!window.WS){
+    bootPromise: null,
 
-warn(
-"WS MISSING"
-);
+    booted: false,
 
-return;
+    destroyed: false,
 
-}
+    listeners: [],
 
-try{
+    moduleStatus: new Map(),
 
-WS.connect();
+    timeoutId: null,
 
-log(
-"WS READY"
-);
+    progress: 0,
 
-}catch(e){
+    telegramReady: false,
 
-warn(
-"WS FAIL"
-);
+    wsReady: false,
 
-}
+    bootId: 0
 
-}
+};
+
 
 /* =====================================================
-SAFE MODULES
+   DOM REFERENCES
 ===================================================== */
 
-function initWallet(){
+const DOM = {
 
-try{
+    loader: () =>
+        document.getElementById("globalLoader"),
 
-window.WALLET
-?.init
-?.();
+    loaderFill: () =>
+        document.getElementById("loaderProgress"),
 
-}catch(e){
+    app: () =>
+        document.getElementById("app")
 
-error(
-"WALLET",
-e
-);
+};
 
-}
-
-}
-
-function initMarket(){
-
-try{
-
-window
-.initMarket
-?.();
-
-}catch(e){
-
-error(
-"MARKET",
-e
-);
-
-}
-
-}
-
-function initCasino(){
-
-try{
-
-window
-.CASINO
-?.init
-?.();
-
-}catch(e){
-
-error(
-"CASINO",
-e
-);
-
-}
-
-}
-
-function initMining(){
-
-try{
-
-window
-.renderMining
-?.();
-
-}catch(e){
-
-error(
-"MINING",
-e
-);
-
-}
-
-}
-
-function initAirdrop(){
-
-try{
-
-window
-.initAirdrop
-?.();
-
-}catch(e){
-
-error(
-"AIRDROP",
-e
-);
-
-}
-
-}
 
 /* =====================================================
-BOOT
+   LOGGER
 ===================================================== */
 
-async function boot(){
+function log(...args) {
 
-lockApp();
+    if (!CONFIG.DEBUG) return;
 
-log(
-"BOOT START"
-);
-
-const timeout=
-
-setTimeout(()=>{
-
-warn(
-"BOOT TIMEOUT"
-);
-
-finishBoot();
-
-},
-
-CONFIG
-.BOOT_TIMEOUT
-
-);
-
-try{
-
-setProgress(5);
-
-networkWatcher();
-
-setProgress(12);
-
-await initTelegram();
-
-setProgress(25);
-
-initWS();
-
-setProgress(40);
-
-initWallet();
-
-setProgress(55);
-
-initMarket();
-
-setProgress(68);
-
-initCasino();
-
-setProgress(78);
-
-initMining();
-
-setProgress(88);
-
-initAirdrop();
-
-setProgress(100);
-
-clearTimeout(
-timeout
-);
-
-finishBoot();
-
-}catch(e){
-
-error(
-"BOOT",
-e
-);
-
-finishBoot();
+    console.log("[BX CORE]", ...args);
 
 }
 
+function warn(...args) {
+
+    console.warn("[BX CORE]", ...args);
+
 }
+
+function error(...args) {
+
+    console.error("[BX CORE]", ...args);
+
+    if (APP.errors.length >= CONFIG.MAX_ERRORS) {
+        APP.errors.shift();
+    }
+
+    APP.errors.push({
+
+        message: args.map(value => {
+
+            if (value instanceof Error) {
+                return value.message;
+            }
+
+            return String(value);
+
+        }).join(" "),
+
+        timestamp: Date.now()
+
+    });
+
+}
+
 
 /* =====================================================
-READY
+   UTILITIES
 ===================================================== */
 
-function finishBoot(){
+function delay(ms) {
 
-if(APP.ready){
+    return new Promise(resolve => {
+        setTimeout(resolve, ms);
+    });
 
-return;
+}
+
+function withTimeout(promise, ms, label = "Operation") {
+
+    let timeoutId;
+
+    const timeout = new Promise((_, reject) => {
+
+        timeoutId = setTimeout(() => {
+
+            reject(
+                new Error(`${label} timeout after ${ms}ms`)
+            );
+
+        }, ms);
+
+    });
+
+    return Promise.race([
+        Promise.resolve(promise),
+        timeout
+    ]).finally(() => {
+
+        clearTimeout(timeoutId);
+
+    });
 
 }
 
-APP.ready=true;
+function isFunction(value) {
 
-APP.booting=false;
-
-unlockApp();
-
-removeLoader();
-
-log(
-"CORE READY"
-);
+    return typeof value === "function";
 
 }
+
+function safeCall(fn, ...args) {
+
+    if (!isFunction(fn)) return undefined;
+
+    try {
+
+        return fn(...args);
+
+    } catch (e) {
+
+        error("SAFE CALL", e);
+
+        return undefined;
+
+    }
+
+}
+
+function getToken() {
+
+    try {
+
+        return localStorage.getItem("token") || "";
+
+    } catch {
+
+        return "";
+
+    }
+
+}
+
+function saveToken(token) {
+
+    if (!token || typeof token !== "string") {
+        return false;
+    }
+
+    try {
+
+        localStorage.setItem("token", token);
+
+        APP.token = token;
+
+        return true;
+
+    } catch (e) {
+
+        error("TOKEN SAVE", e);
+
+        return false;
+
+    }
+
+}
+
 
 /* =====================================================
-RECOVERY
+   EVENT TRACKING
 ===================================================== */
 
-window.addEventListener(
+function trackListener(target, event, callback, options) {
 
-"error",
+    if (!target?.addEventListener) return;
 
-e=>{
+    target.addEventListener(
+        event,
+        callback,
+        options
+    );
 
-error(
+    CORE.listeners.push({
 
-"RUNTIME",
+        target,
 
-e.error||
+        event,
 
-e.message
+        callback,
 
-);
+        options
 
-}
-
-);
-
-window.addEventListener(
-
-"unhandledrejection",
-
-e=>{
-
-error(
-
-"PROMISE",
-
-e.reason
-
-);
+    });
 
 }
 
-);
+function removeListeners() {
+
+    CORE.listeners.forEach(item => {
+
+        item.target.removeEventListener(
+            item.event,
+            item.callback,
+            item.options
+        );
+
+    });
+
+    CORE.listeners.length = 0;
+
+}
+
 
 /* =====================================================
-INIT
+   LOADER
 ===================================================== */
 
-document.addEventListener(
+function setProgress(value) {
 
-"DOMContentLoaded",
+    const progress = Math.max(
+        0,
+        Math.min(100, Number(value) || 0)
+    );
 
-()=>{
+    CORE.progress = progress;
 
-boot();
+    const el = DOM.loaderFill();
+
+    if (el) {
+
+        el.style.width = `${progress}%`;
+
+        el.setAttribute(
+            "aria-valuenow",
+            String(progress)
+        );
+
+    }
 
 }
 
-);
+function removeLoader() {
+
+    const loader = DOM.loader();
+
+    if (!loader) return;
+
+    loader.classList.add("hidden");
+
+    setTimeout(() => {
+
+        loader.remove();
+
+    }, 450);
+
+}
+
+
+/* =====================================================
+   APP LOCK / UNLOCK
+===================================================== */
+
+function lockApp() {
+
+    document.body.classList.add("loading");
+
+    document.body.classList.remove("app-ready");
+
+}
+
+function unlockApp() {
+
+    document.body.classList.remove("loading");
+
+    document.body.classList.remove("app-preload");
+
+    document.body.classList.remove("auth-lock");
+
+    document.body.classList.add("app-ready");
+
+    DOM.app()?.classList.remove("app-hidden");
+
+}
+
+
+/* =====================================================
+   MODULE STATUS
+===================================================== */
+
+function setModuleStatus(name, status, details = null) {
+
+    const data = {
+
+        name,
+
+        status,
+
+        details,
+
+        timestamp: Date.now()
+
+    };
+
+    CORE.moduleStatus.set(name, data);
+
+    APP.modules[name] = data;
+
+    log("MODULE", name, status);
+
+}
+
+function getModuleStatus(name) {
+
+    return CORE.moduleStatus.get(name) || {
+
+        name,
+
+        status: "not_started"
+
+    };
+
+}
+
+
+/* =====================================================
+   MODULE INITIALIZER
+===================================================== */
+
+async function runModule(name, initializer, options = {}) {
+
+    const {
+
+        timeout = CONFIG.MODULE_TIMEOUT,
+
+        optional = true
+
+    } = options;
+
+    if (!isFunction(initializer)) {
+
+        setModuleStatus(
+            name,
+            "unavailable"
+        );
+
+        return false;
+
+    }
+
+    setModuleStatus(
+        name,
+        "loading"
+    );
+
+    try {
+
+        const result = await withTimeout(
+
+            Promise.resolve().then(initializer),
+
+            timeout,
+
+            name
+
+        );
+
+        setModuleStatus(
+            name,
+            "ready"
+        );
+
+        return result !== false;
+
+    } catch (e) {
+
+        setModuleStatus(
+            name,
+            "failed",
+            e.message
+        );
+
+        error(`MODULE ${name}`, e);
+
+        if (!optional) {
+            throw e;
+        }
+
+        return false;
+
+    }
+
+}
+
+
+/* =====================================================
+   NETWORK WATCHER
+===================================================== */
+
+function networkWatcher() {
+
+    if (APP.services.networkWatcher) {
+        return;
+    }
+
+    trackListener(
+        window,
+        "online",
+        () => {
+
+            APP.online = true;
+
+            log("NETWORK ONLINE");
+
+            window.dispatchEvent(
+                new CustomEvent("bloxio:online")
+            );
+
+        }
+    );
+
+    trackListener(
+        window,
+        "offline",
+        () => {
+
+            APP.online = false;
+
+            warn("NETWORK OFFLINE");
+
+            window.dispatchEvent(
+                new CustomEvent("bloxio:offline")
+            );
+
+        }
+    );
+
+    APP.services.networkWatcher = true;
+
+}
+
+
+/* =====================================================
+   TELEGRAM WEB APP
+===================================================== */
+
+async function initTelegram() {
+
+    const tg = window.Telegram?.WebApp;
+
+    if (!tg) {
+
+        log("TELEGRAM NOT AVAILABLE");
+
+        return false;
+
+    }
+
+    try {
+
+        tg.ready();
+
+        tg.expand();
+
+        safeCall(
+            tg.setHeaderColor?.bind(tg),
+            "#05080e"
+        );
+
+        safeCall(
+            tg.setBackgroundColor?.bind(tg),
+            "#05080e"
+        );
+
+        const user = tg.initDataUnsafe?.user;
+
+        if (!user) {
+
+            warn("TELEGRAM USER NOT FOUND");
+
+            return false;
+
+        }
+
+        APP.user = user;
+
+        APP.services.telegram = {
+
+            available: true,
+
+            userId: user.id
+
+        };
+
+        CORE.telegramReady = true;
+
+        log("TELEGRAM USER", user.id);
+
+        /*
+           Do not trust initDataUnsafe as server authentication.
+           The backend must validate Telegram initData.
+        */
+
+        const initData = tg.initData;
+
+        if (!initData) {
+
+            warn("TELEGRAM INIT DATA MISSING");
+
+            return true;
+
+        }
+
+        try {
+
+            const response = await withTimeout(
+
+                fetch(
+                    `${CONFIG.API}/auth/telegram`,
+                    {
+
+                        method: "POST",
+
+                        headers: {
+
+                            "Content-Type": "application/json"
+
+                        },
+
+                        body: JSON.stringify({
+
+                            initData
+
+                        })
+
+                    }
+                ),
+
+                CONFIG.TELEGRAM_TIMEOUT,
+
+                "TELEGRAM AUTH"
+
+            );
+
+            if (!response.ok) {
+
+                throw new Error(
+                    `Telegram auth HTTP ${response.status}`
+                );
+
+            }
+
+            const data = await response.json();
+
+            if (data?.token) {
+
+                saveToken(data.token);
+
+                APP.services.auth = {
+
+                    authenticated: true,
+
+                    provider: "telegram"
+
+                };
+
+                log("TELEGRAM AUTH SUCCESS");
+
+            } else {
+
+                warn("TELEGRAM TOKEN NOT RETURNED");
+
+            }
+
+        } catch (e) {
+
+            warn("TELEGRAM AUTH FAILED", e);
+
+            APP.services.auth = {
+
+                authenticated: false,
+
+                provider: "telegram"
+
+            };
+
+        }
+
+        return true;
+
+    } catch (e) {
+
+        error("TELEGRAM INIT", e);
+
+        return false;
+
+    }
+
+}
+
+
+/* =====================================================
+   WEBSOCKET
+   Compatible with window.WS from ws.js V7
+===================================================== */
+
+function initWS() {
+
+    const WS = window.WS;
+
+    if (!WS) {
+
+        warn("WS MODULE MISSING");
+
+        return false;
+
+    }
+
+    try {
+
+        const result = WS.connect?.();
+
+        if (result === false) {
+
+            warn("WS CONNECTION NOT STARTED");
+
+            return false;
+
+        }
+
+        CORE.wsReady = true;
+
+        APP.services.websocket = {
+
+            available: true,
+
+            connected: Boolean(WS.connected)
+
+        };
+
+        /*
+           The adapter uses Socket.IO.
+           Subscribe only after connection.
+        */
+
+        if (!APP.services.wsConnectionListener) {
+
+            WS.on?.("connected", () => {
+
+                APP.services.websocket.connected = true;
+
+                log("WS CONNECTED");
+
+            });
+
+            WS.on?.("disconnected", () => {
+
+                APP.services.websocket.connected = false;
+
+                warn("WS DISCONNECTED");
+
+            });
+
+            WS.on?.("connect_error", e => {
+
+                APP.services.websocket.connected = false;
+
+                warn("WS CONNECT ERROR", e?.message);
+
+            });
+
+            APP.services.wsConnectionListener = true;
+
+        }
+
+        if (WS.connected) {
+
+            WS.subscribe?.("wallet");
+
+            WS.subscribe?.("market");
+
+            WS.subscribe?.("casino");
+
+        }
+
+        return true;
+
+    } catch (e) {
+
+        error("WS INIT", e);
+
+        return false;
+
+    }
+
+}
+
+
+/* =====================================================
+   WALLET
+===================================================== */
+
+async function initWallet() {
+
+    return runModule(
+        "wallet",
+        async () => {
+
+            const wallet = window.WALLET;
+
+            if (!wallet?.init) {
+                return false;
+            }
+
+            return wallet.init();
+
+        }
+    );
+
+}
+
+
+/* =====================================================
+   MARKET
+===================================================== */
+
+async function initMarket() {
+
+    return runModule(
+        "market",
+        async () => {
+
+            if (!isFunction(window.initMarket)) {
+                return false;
+            }
+
+            return window.initMarket();
+
+        }
+    );
+
+}
+
+
+/* =====================================================
+   CASINO
+===================================================== */
+
+async function initCasino() {
+
+    return runModule(
+        "casino",
+        async () => {
+
+            const casino = window.CASINO;
+
+            if (!casino) {
+                return false;
+            }
+
+            if (isFunction(casino.init)) {
+                return casino.init();
+            }
+
+            if (isFunction(casino.start)) {
+                return casino.start();
+            }
+
+            return false;
+
+        }
+    );
+
+}
+
+
+/* =====================================================
+   MINING
+===================================================== */
+
+async function initMining() {
+
+    return runModule(
+        "mining",
+        async () => {
+
+            if (!isFunction(window.renderMining)) {
+                return false;
+            }
+
+            return window.renderMining();
+
+        }
+    );
+
+}
+
+
+/* =====================================================
+   AIRDROP
+===================================================== */
+
+async function initAirdrop() {
+
+    return runModule(
+        "airdrop",
+        async () => {
+
+            if (!isFunction(window.initAirdrop)) {
+                return false;
+            }
+
+            return window.initAirdrop();
+
+        }
+    );
+
+}
+
+
+/* =====================================================
+   OPTIONAL MODULE REGISTRY
+===================================================== */
+
+async function initOptionalModules() {
+
+    const modules = [
+
+        ["wallet", initWallet],
+
+        ["market", initMarket],
+
+        ["casino", initCasino],
+
+        ["mining", initMining],
+
+        ["airdrop", initAirdrop]
+
+    ];
+
+    for (const [name, initializer] of modules) {
+
+        await initializer();
+
+    }
+
+}
+
+
+/* =====================================================
+   APP HEALTH
+===================================================== */
+
+function getHealth() {
+
+    const modules = {};
+
+    CORE.moduleStatus.forEach((value, key) => {
+
+        modules[key] = value.status;
+
+    });
+
+    return {
+
+        version: APP.version,
+
+        ready: APP.ready,
+
+        booting: APP.booting,
+
+        online: APP.online,
+
+        websocket: Boolean(window.WS?.connected),
+
+        telegram: CORE.telegramReady,
+
+        modules,
+
+        errors: APP.errors.length,
+
+        uptime: APP.startedAt
+            ? Date.now() - APP.startedAt
+            : 0
+
+    };
+
+}
+
+
+/* =====================================================
+   BOOT COMPLETION
+===================================================== */
+
+function finishBoot(reason = "complete") {
+
+    if (APP.ready) return;
+
+    clearTimeout(CORE.timeoutId);
+
+    APP.ready = true;
+
+    APP.booting = false;
+
+    APP.readyAt = Date.now();
+
+    CORE.booted = true;
+
+    setProgress(100);
+
+    unlockApp();
+
+    removeLoader();
+
+    APP.services.boot = {
+
+        status: "ready",
+
+        reason,
+
+        completedAt: APP.readyAt
+
+    };
+
+    log("CORE READY", getHealth());
+
+    window.dispatchEvent(
+        new CustomEvent("bloxio:ready", {
+            detail: getHealth()
+        })
+    );
+
+}
+
+
+/* =====================================================
+   BOOT PROCESS
+===================================================== */
+
+async function boot() {
+
+    if (CORE.bootPromise) {
+        return CORE.bootPromise;
+    }
+
+    if (CORE.destroyed) {
+        return false;
+    }
+
+    CORE.bootPromise = (async () => {
+
+        APP.booting = true;
+
+        APP.ready = false;
+
+        APP.startedAt = Date.now();
+
+        CORE.bootId++;
+
+        const currentBoot = CORE.bootId;
+
+        lockApp();
+
+        log("BOOT START", CONFIG.VERSION);
+
+        /*
+           Failsafe:
+           The interface must not remain locked forever.
+        */
+
+        CORE.timeoutId = setTimeout(() => {
+
+            warn("BOOT TIMEOUT");
+
+            finishBoot("timeout");
+
+        }, CONFIG.BOOT_TIMEOUT);
+
+        try {
+
+            setProgress(5);
+
+            networkWatcher();
+
+            setProgress(15);
+
+            await initTelegram();
+
+            if (currentBoot !== CORE.bootId) {
+                return false;
+            }
+
+            setProgress(30);
+
+            initWS();
+
+            setProgress(40);
+
+            await initOptionalModules();
+
+            if (currentBoot !== CORE.bootId) {
+                return false;
+            }
+
+            setProgress(90);
+
+            finishBoot("complete");
+
+            return true;
+
+        } catch (e) {
+
+            error("BOOT FAILURE", e);
+
+            finishBoot("error");
+
+            return false;
+
+        }
+
+    })();
+
+    return CORE.bootPromise;
+
+}
+
+
+/* =====================================================
+   RECOVERY
+===================================================== */
+
+function setupRecovery() {
+
+    trackListener(
+        window,
+        "error",
+        e => {
+
+            error(
+                "RUNTIME",
+                e.error || e.message
+            );
+
+        }
+    );
+
+    trackListener(
+        window,
+        "unhandledrejection",
+        e => {
+
+            error(
+                "PROMISE",
+                e.reason
+            );
+
+        }
+    );
+
+}
+
+
+/* =====================================================
+   PUBLIC API
+===================================================== */
+
+const BloxioCore = {
+
+    version: CONFIG.VERSION,
+
+    boot,
+
+    init: boot,
+
+    getHealth,
+
+    getModuleStatus,
+
+    setProgress,
+
+    lock: lockApp,
+
+    unlock: unlockApp,
+
+    get ready() {
+        return APP.ready;
+    },
+
+    get online() {
+        return APP.online;
+    },
+
+    get user() {
+        return APP.user;
+    },
+
+    get errors() {
+        return APP.errors;
+    },
+
+    async restart() {
+
+        if (CORE.destroyed) {
+            return false;
+        }
+
+        APP.ready = false;
+
+        APP.booting = false;
+
+        CORE.bootPromise = null;
+
+        CORE.booted = false;
+
+        return boot();
+
+    },
+
+    destroy() {
+
+        if (CORE.destroyed) return;
+
+        CORE.destroyed = true;
+
+        clearTimeout(CORE.timeoutId);
+
+        removeListeners();
+
+        safeCall(
+            window.WS?.disconnect?.bind(window.WS)
+        );
+
+        APP.ready = false;
+
+        APP.booting = false;
+
+        log("CORE DESTROYED");
+
+    }
+
+};
+
+
+/* =====================================================
+   GLOBAL EXPORTS
+===================================================== */
+
+window.BloxioCore = BloxioCore;
+
+window.APP = APP;
+
+window.getBloxioHealth = getHealth;
+
+
+/* =====================================================
+   INITIALIZATION
+===================================================== */
+
+setupRecovery();
+
+if (document.readyState === "loading") {
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        boot,
+        { once: true }
+    );
+
+} else {
+
+    boot();
+
+}
