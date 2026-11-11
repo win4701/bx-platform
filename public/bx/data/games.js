@@ -13,7 +13,7 @@ ORIGINALS
 id:"crash",
 name:"Crash",
 provider:"Bloxio Originals",
-image:"/assets/images/casino/crash.png",
+image:"/assets/images/casino/crash.webp",
 currency:["BX","XBC"],
 status:"active",
 category:"original"
@@ -23,7 +23,7 @@ category:"original"
 id:"dice",
 name:"Dice",
 provider:"Bloxio Originals",
-image:"/assets/images/casino/dice.png",
+image:"/assets/images/casino/dice.webp",
 currency:["BX","XBC"],
 status:"active",
 category:"original"
