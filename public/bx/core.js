@@ -1,7 +1,7 @@
 
 // =====================================================
-// BLOXIO CORE ENGINE V4
-// CENTRAL APPLICATION BOOT & LIFECYCLE ENGINE
+// BLOXIO CORE ENGINE V4.1
+// NON-BLOCKING APPLICATION BOOT SYSTEM
 // =====================================================
 
 "use strict";
@@ -16,15 +16,13 @@ const CONFIG = Object.freeze({
 
     WS: "https://api.bloxio.online",
 
-    VERSION: "4.0.0",
+    VERSION: "4.1.0",
 
     BOOT_TIMEOUT: 12000,
 
-    MODULE_TIMEOUT: 8000,
+    MODULE_TIMEOUT: 10000,
 
     TELEGRAM_TIMEOUT: 10000,
-
-    RETRY_DELAY: 2000,
 
     MAX_ERRORS: 100,
 
@@ -34,7 +32,7 @@ const CONFIG = Object.freeze({
 
 
 /* =====================================================
-   GLOBAL APP STATE
+   GLOBAL APP
 ===================================================== */
 
 window.APP = window.APP || {};
@@ -42,30 +40,15 @@ window.APP = window.APP || {};
 const APP = window.APP;
 
 APP.version = CONFIG.VERSION;
-
 APP.ready = false;
-
 APP.booting = false;
-
 APP.online = navigator.onLine;
-
 APP.user = APP.user || null;
-
-APP.token = APP.token || null;
-
 APP.modules = APP.modules || {};
-
 APP.services = APP.services || {};
-
-APP.errors = Array.isArray(APP.errors)
-    ? APP.errors
-    : [];
-
+APP.errors = Array.isArray(APP.errors) ? APP.errors : [];
 APP.startedAt = null;
-
 APP.readyAt = null;
-
-APP.destroyed = false;
 
 
 /* =====================================================
@@ -86,19 +69,19 @@ const CORE = {
 
     timeoutId: null,
 
-    progress: 0,
+    bootId: 0,
 
-    telegramReady: false,
+    recoveryReady: false,
 
-    wsReady: false,
+    wsListenersReady: false,
 
-    bootId: 0
+    moduleTasks: null
 
 };
 
 
 /* =====================================================
-   DOM REFERENCES
+   DOM
 ===================================================== */
 
 const DOM = {
@@ -121,9 +104,9 @@ const DOM = {
 
 function log(...args) {
 
-    if (!CONFIG.DEBUG) return;
-
-    console.log("[BX CORE]", ...args);
+    if (CONFIG.DEBUG) {
+        console.log("[BX CORE]", ...args);
+    }
 
 }
 
@@ -164,11 +147,27 @@ function error(...args) {
    UTILITIES
 ===================================================== */
 
-function delay(ms) {
+function isFunction(value) {
 
-    return new Promise(resolve => {
-        setTimeout(resolve, ms);
-    });
+    return typeof value === "function";
+
+}
+
+function safeCall(fn, ...args) {
+
+    if (!isFunction(fn)) return undefined;
+
+    try {
+
+        return fn(...args);
+
+    } catch (e) {
+
+        error("SAFE CALL", e);
+
+        return undefined;
+
+    }
 
 }
 
@@ -196,30 +195,6 @@ function withTimeout(promise, ms, label = "Operation") {
         clearTimeout(timeoutId);
 
     });
-
-}
-
-function isFunction(value) {
-
-    return typeof value === "function";
-
-}
-
-function safeCall(fn, ...args) {
-
-    if (!isFunction(fn)) return undefined;
-
-    try {
-
-        return fn(...args);
-
-    } catch (e) {
-
-        error("SAFE CALL", e);
-
-        return undefined;
-
-    }
 
 }
 
@@ -263,7 +238,7 @@ function saveToken(token) {
 
 
 /* =====================================================
-   EVENT TRACKING
+   EVENT LISTENER MANAGEMENT
 ===================================================== */
 
 function trackListener(target, event, callback, options) {
@@ -279,11 +254,8 @@ function trackListener(target, event, callback, options) {
     CORE.listeners.push({
 
         target,
-
         event,
-
         callback,
-
         options
 
     });
@@ -318,20 +290,16 @@ function setProgress(value) {
         Math.min(100, Number(value) || 0)
     );
 
-    CORE.progress = progress;
-
     const el = DOM.loaderFill();
 
-    if (el) {
+    if (!el) return;
 
-        el.style.width = `${progress}%`;
+    el.style.width = `${progress}%`;
 
-        el.setAttribute(
-            "aria-valuenow",
-            String(progress)
-        );
-
-    }
+    el.setAttribute(
+        "aria-valuenow",
+        String(progress)
+    );
 
 }
 
@@ -380,121 +348,13 @@ function unlockApp() {
 
 
 /* =====================================================
-   MODULE STATUS
-===================================================== */
-
-function setModuleStatus(name, status, details = null) {
-
-    const data = {
-
-        name,
-
-        status,
-
-        details,
-
-        timestamp: Date.now()
-
-    };
-
-    CORE.moduleStatus.set(name, data);
-
-    APP.modules[name] = data;
-
-    log("MODULE", name, status);
-
-}
-
-function getModuleStatus(name) {
-
-    return CORE.moduleStatus.get(name) || {
-
-        name,
-
-        status: "not_started"
-
-    };
-
-}
-
-
-/* =====================================================
-   MODULE INITIALIZER
-===================================================== */
-
-async function runModule(name, initializer, options = {}) {
-
-    const {
-
-        timeout = CONFIG.MODULE_TIMEOUT,
-
-        optional = true
-
-    } = options;
-
-    if (!isFunction(initializer)) {
-
-        setModuleStatus(
-            name,
-            "unavailable"
-        );
-
-        return false;
-
-    }
-
-    setModuleStatus(
-        name,
-        "loading"
-    );
-
-    try {
-
-        const result = await withTimeout(
-
-            Promise.resolve().then(initializer),
-
-            timeout,
-
-            name
-
-        );
-
-        setModuleStatus(
-            name,
-            "ready"
-        );
-
-        return result !== false;
-
-    } catch (e) {
-
-        setModuleStatus(
-            name,
-            "failed",
-            e.message
-        );
-
-        error(`MODULE ${name}`, e);
-
-        if (!optional) {
-            throw e;
-        }
-
-        return false;
-
-    }
-
-}
-
-
-/* =====================================================
    NETWORK WATCHER
 ===================================================== */
 
 function networkWatcher() {
 
     if (APP.services.networkWatcher) {
+        APP.online = navigator.onLine;
         return;
     }
 
@@ -536,7 +396,113 @@ function networkWatcher() {
 
 
 /* =====================================================
-   TELEGRAM WEB APP
+   MODULE STATUS
+===================================================== */
+
+function setModuleStatus(name, status, details = null) {
+
+    const data = {
+
+        name,
+        status,
+        details,
+        timestamp: Date.now()
+
+    };
+
+    CORE.moduleStatus.set(name, data);
+
+    APP.modules[name] = data;
+
+    log("MODULE", name, status);
+
+}
+
+function getModuleStatus(name) {
+
+    return CORE.moduleStatus.get(name) || {
+
+        name,
+        status: "not_started"
+
+    };
+
+}
+
+
+/* =====================================================
+   SAFE MODULE RUNNER
+===================================================== */
+
+async function runModule(name, initializer, options = {}) {
+
+    const timeout = options.timeout || CONFIG.MODULE_TIMEOUT;
+
+    if (!isFunction(initializer)) {
+
+        setModuleStatus(
+            name,
+            "unavailable"
+        );
+
+        return false;
+
+    }
+
+    setModuleStatus(
+        name,
+        "loading"
+    );
+
+    try {
+
+        const result = await withTimeout(
+
+            Promise.resolve().then(initializer),
+
+            timeout,
+
+            name
+
+        );
+
+        if (result === false) {
+
+            setModuleStatus(
+                name,
+                "unavailable"
+            );
+
+            return false;
+
+        }
+
+        setModuleStatus(
+            name,
+            "ready"
+        );
+
+        return true;
+
+    } catch (e) {
+
+        setModuleStatus(
+            name,
+            "failed",
+            e.message
+        );
+
+        error(`MODULE ${name}`, e);
+
+        return false;
+
+    }
+
+}
+
+
+/* =====================================================
+   TELEGRAM
 ===================================================== */
 
 async function initTelegram() {
@@ -545,7 +511,7 @@ async function initTelegram() {
 
     if (!tg) {
 
-        log("TELEGRAM NOT AVAILABLE");
+        log("NO TELEGRAM WEBAPP");
 
         return false;
 
@@ -587,31 +553,20 @@ async function initTelegram() {
 
         };
 
-        CORE.telegramReady = true;
-
         log("TELEGRAM USER", user.id);
 
         /*
-           Do not trust initDataUnsafe as server authentication.
-           The backend must validate Telegram initData.
+           Preserve the original backend request format.
+           Do not change this contract without updating
+           the backend endpoint as well.
         */
-
-        const initData = tg.initData;
-
-        if (!initData) {
-
-            warn("TELEGRAM INIT DATA MISSING");
-
-            return true;
-
-        }
 
         try {
 
             const response = await withTimeout(
 
                 fetch(
-                    `${CONFIG.API}/auth/telegram`,
+                    CONFIG.API + "/auth/telegram",
                     {
 
                         method: "POST",
@@ -624,7 +579,9 @@ async function initTelegram() {
 
                         body: JSON.stringify({
 
-                            initData
+                            telegram_id: user.id,
+
+                            username: user.username
 
                         })
 
@@ -640,7 +597,7 @@ async function initTelegram() {
             if (!response.ok) {
 
                 throw new Error(
-                    `Telegram auth HTTP ${response.status}`
+                    `HTTP ${response.status}`
                 );
 
             }
@@ -661,6 +618,14 @@ async function initTelegram() {
 
                 log("TELEGRAM AUTH SUCCESS");
 
+                window.dispatchEvent(
+                    new CustomEvent("bloxio:authenticated", {
+                        detail: {
+                            user: APP.user
+                        }
+                    })
+                );
+
             } else {
 
                 warn("TELEGRAM TOKEN NOT RETURNED");
@@ -669,7 +634,7 @@ async function initTelegram() {
 
         } catch (e) {
 
-            warn("TELEGRAM AUTH FAILED", e);
+            warn("TELEGRAM AUTOLOGIN FAILED", e);
 
             APP.services.auth = {
 
@@ -696,7 +661,7 @@ async function initTelegram() {
 
 /* =====================================================
    WEBSOCKET
-   Compatible with window.WS from ws.js V7
+   Compatible with ws.js V7 API
 ===================================================== */
 
 function initWS() {
@@ -713,6 +678,12 @@ function initWS() {
 
     try {
 
+        /*
+           ws.js already performs automatic connection.
+           connect() is safe to call because its adapter
+           checks whether a socket already exists.
+        */
+
         const result = WS.connect?.();
 
         if (result === false) {
@@ -723,7 +694,57 @@ function initWS() {
 
         }
 
-        CORE.wsReady = true;
+        if (!CORE.wsListenersReady) {
+
+            WS.on?.("connected", () => {
+
+                APP.services.websocket = {
+
+                    available: true,
+
+                    connected: true
+
+                };
+
+                log("WS CONNECTED");
+
+                WS.subscribe?.("wallet");
+
+                WS.subscribe?.("market");
+
+                WS.subscribe?.("casino");
+
+            });
+
+            WS.on?.("disconnected", data => {
+
+                if (APP.services.websocket) {
+                    APP.services.websocket.connected = false;
+                }
+
+                warn(
+                    "WS DISCONNECTED",
+                    data?.reason || ""
+                );
+
+            });
+
+            WS.on?.("connect_error", e => {
+
+                if (APP.services.websocket) {
+                    APP.services.websocket.connected = false;
+                }
+
+                warn(
+                    "WS CONNECT ERROR",
+                    e?.message || e
+                );
+
+            });
+
+            CORE.wsListenersReady = true;
+
+        }
 
         APP.services.websocket = {
 
@@ -734,39 +755,9 @@ function initWS() {
         };
 
         /*
-           The adapter uses Socket.IO.
-           Subscribe only after connection.
+           If the socket connected before Core initialized,
+           subscribe now instead of waiting for another event.
         */
-
-        if (!APP.services.wsConnectionListener) {
-
-            WS.on?.("connected", () => {
-
-                APP.services.websocket.connected = true;
-
-                log("WS CONNECTED");
-
-            });
-
-            WS.on?.("disconnected", () => {
-
-                APP.services.websocket.connected = false;
-
-                warn("WS DISCONNECTED");
-
-            });
-
-            WS.on?.("connect_error", e => {
-
-                APP.services.websocket.connected = false;
-
-                warn("WS CONNECT ERROR", e?.message);
-
-            });
-
-            APP.services.wsConnectionListener = true;
-
-        }
 
         if (WS.connected) {
 
@@ -801,13 +792,11 @@ async function initWallet() {
         "wallet",
         async () => {
 
-            const wallet = window.WALLET;
-
-            if (!wallet?.init) {
+            if (!window.WALLET?.init) {
                 return false;
             }
 
-            return wallet.init();
+            return window.WALLET.init();
 
         }
     );
@@ -914,7 +903,7 @@ async function initAirdrop() {
 
 
 /* =====================================================
-   OPTIONAL MODULE REGISTRY
+   MODULE STARTUP
 ===================================================== */
 
 async function initOptionalModules() {
@@ -933,17 +922,50 @@ async function initOptionalModules() {
 
     ];
 
-    for (const [name, initializer] of modules) {
+    const results = await Promise.allSettled(
 
-        await initializer();
+        modules.map(([name, initializer]) => {
 
-    }
+            return Promise.resolve().then(initializer);
+
+        })
+
+    );
+
+    results.forEach((result, index) => {
+
+        const name = modules[index][0];
+
+        if (result.status === "rejected") {
+
+            setModuleStatus(
+                name,
+                "failed",
+                result.reason?.message || "Unknown error"
+            );
+
+            error(
+                `MODULE ${name}`,
+                result.reason
+            );
+
+        }
+
+    });
+
+    window.dispatchEvent(
+        new CustomEvent("bloxio:modules-ready", {
+            detail: getHealth()
+        })
+    );
+
+    return results;
 
 }
 
 
 /* =====================================================
-   APP HEALTH
+   HEALTH
 ===================================================== */
 
 function getHealth() {
@@ -968,7 +990,11 @@ function getHealth() {
 
         websocket: Boolean(window.WS?.connected),
 
-        telegram: CORE.telegramReady,
+        telegram: Boolean(APP.services.telegram?.available),
+
+        authenticated: Boolean(
+            APP.services.auth?.authenticated
+        ),
 
         modules,
 
@@ -984,7 +1010,7 @@ function getHealth() {
 
 
 /* =====================================================
-   BOOT COMPLETION
+   FINISH BOOT
 ===================================================== */
 
 function finishBoot(reason = "complete") {
@@ -1029,7 +1055,7 @@ function finishBoot(reason = "complete") {
 
 
 /* =====================================================
-   BOOT PROCESS
+   BOOT
 ===================================================== */
 
 async function boot() {
@@ -1044,62 +1070,69 @@ async function boot() {
 
     CORE.bootPromise = (async () => {
 
-        APP.booting = true;
-
         APP.ready = false;
+
+        APP.booting = true;
 
         APP.startedAt = Date.now();
 
         CORE.bootId++;
 
-        const currentBoot = CORE.bootId;
-
         lockApp();
 
         log("BOOT START", CONFIG.VERSION);
 
-        /*
-           Failsafe:
-           The interface must not remain locked forever.
-        */
-
-        CORE.timeoutId = setTimeout(() => {
-
-            warn("BOOT TIMEOUT");
-
-            finishBoot("timeout");
-
-        }, CONFIG.BOOT_TIMEOUT);
-
         try {
 
-            setProgress(5);
+            setProgress(10);
 
+            // Network listeners are installed only once.
             networkWatcher();
 
-            setProgress(15);
+            setProgress(25);
 
-            await initTelegram();
-
-            if (currentBoot !== CORE.bootId) {
-                return false;
-            }
-
-            setProgress(30);
+            /*
+               Do not wait for the network connection.
+               ws.js has its own automatic connection logic.
+            */
 
             initWS();
 
             setProgress(40);
 
-            await initOptionalModules();
+            /*
+               Open the application shell immediately.
+               Module startup must not block the interface.
+            */
 
-            if (currentBoot !== CORE.bootId) {
+            finishBoot("shell_ready");
+
+            /*
+               Telegram runs independently.
+               A slow authentication request must not
+               prevent other application modules from starting.
+            */
+
+            APP.services.telegramTask = initTelegram().catch(e => {
+
+                error("TELEGRAM BACKGROUND", e);
+
                 return false;
-            }
 
-            setProgress(90);
+            });
 
-            finishBoot("complete");
+            /*
+               Start modules in parallel.
+               Each module has its own timeout and error boundary.
+            */
+
+            CORE.moduleTasks = initOptionalModules();
+
+            CORE.moduleTasks.catch(e => {
+
+                error("MODULE STARTUP", e);
+
+            });
 
             return true;
 
@@ -1125,6 +1158,8 @@ async function boot() {
 ===================================================== */
 
 function setupRecovery() {
+
+    if (CORE.recoveryReady) return;
 
     trackListener(
         window,
@@ -1152,6 +1187,8 @@ function setupRecovery() {
         }
     );
 
+    CORE.recoveryReady = true;
+
 }
 
 
@@ -1177,6 +1214,20 @@ const BloxioCore = {
 
     unlock: unlockApp,
 
+    initWS,
+
+    initTelegram,
+
+    initWallet,
+
+    initMarket,
+
+    initCasino,
+
+    initMining,
+
+    initAirdrop,
+
     get ready() {
         return APP.ready;
     },
@@ -1191,6 +1242,10 @@ const BloxioCore = {
 
     get errors() {
         return APP.errors;
+    },
+
+    get modules() {
+        return APP.modules;
     },
 
     async restart() {
@@ -1221,13 +1276,14 @@ const BloxioCore = {
 
         removeListeners();
 
-        safeCall(
-            window.WS?.disconnect?.bind(window.WS)
-        );
-
         APP.ready = false;
 
         APP.booting = false;
+
+        /*
+           Do not disconnect window.WS here.
+           It may be shared by other application modules.
+        */
 
         log("CORE DESTROYED");
 
