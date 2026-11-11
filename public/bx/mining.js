@@ -373,7 +373,7 @@ BX:4500,ETC:750,LTC:150,TRX:50000,BNB:50,SOL:100,XRP:30000,USDC:10000,DOGE:10000
         <div class="mining-top-head">
           <div>
             <h2>Cloud Mining</h2>
-            <p>Choose your asset, subscribe to a mining node, and earn passive rewards daily.</p>
+            <p></p>
           </div>
           <button id="miningRefreshBtn" class="btn" type="button">Refresh</button>
         </div>
