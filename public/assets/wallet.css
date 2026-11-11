@@ -1,10 +1,8 @@
-wallet.
+
 /* =========================================================
-   BLOXIO WALLET — ASSET CARDS & SWAP SELECT REDESIGN
-   Scoped visual override — no JavaScript changes
+   BLOXIO WALLET — ASSET CARDS & SWAP SELECT 
    ========================================================= */
 
-/* 1. Wallet asset list */
 #wallet .wallet-assets-grid {
     display: grid;
     grid-template-columns: 1fr;
