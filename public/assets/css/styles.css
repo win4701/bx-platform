@@ -1942,130 +1942,550 @@ select:focus {
     text-align: center;
 }
 
-/* =========================================
-   MINING LAYOUT — 10 COINS + 2x3 PLANS
-   ========================================= */
+/* =========================================================
+   BLOXIO MINING — UNIFIED PREMIUM DESIGN
+   Coins: Compact Horizontal 5 x 2
+   Plans: Premium Grid 2 Columns
+   Hero / Stats / Active Mining / Responsive
+   ========================================================= */
 
-/* 10 العملات: 5 في كل صف */
+#mining {
+    --mining-gold: #e4bd4f;
+    --mining-green: #22d68a;
+    --mining-blue: #62a9ee;
+    --mining-card: #071626;
+    --mining-border: rgba(179, 197, 218, .14);
+    --mining-text: #edf3fa;
+    --mining-muted: #91a3b8;
+}
+
+/* =========================================================
+   1. MINING SHELL
+   ========================================================= */
+
+#mining .mining-shell {
+    gap: 22px;
+}
+
+/* =========================================================
+   2. COIN SELECTOR — COMPACT HORIZONTAL 5 x 2
+   ========================================================= */
+
+#mining #miningTabs,
 #miningTabs.mining-tabs {
     display: grid;
     grid-template-columns: repeat(5, minmax(0, 1fr));
-    gap: 10px;
-    width: 100%;
-    overflow: visible;
-    padding-bottom: 0;
-}
-
-#miningTabs.mining-tabs button {
-    display: flex;
-    align-items: center;
-    justify-content: center;
     gap: 8px;
     width: 100%;
+    overflow: visible;
+    padding: 3px 0 9px;
+}
+
+#mining #miningTabs > button,
+#miningTabs.mining-tabs button {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    width: 100%;
     min-width: 0;
-    min-height: 64px;
-    padding: 9px 5px;
+    min-height: 51px;
+    padding: 7px 5px;
+    border: 1px solid var(--mining-border);
+    border-radius: 11px;
+    background:
+        linear-gradient(145deg, rgba(255,255,255,.045), transparent 65%),
+        #071525;
+    color: #aab9cb;
+    font-size: .79rem;
+    font-weight: 800;
+    white-space: nowrap;
+    box-shadow: 0 5px 14px rgba(0,0,0,.16);
+    transition:
+        transform .2s ease,
+        border-color .2s ease,
+        background .2s ease,
+        box-shadow .2s ease;
 }
 
+#mining #miningTabs > button img,
 #miningTabs.mining-tabs button img {
-    width: 25px;
-    height: 25px;
-    flex: 0 0 auto;
+    display: block;
+    flex: 0 0 24px;
+    width: 24px;
+    height: 24px;
     object-fit: contain;
+    filter: drop-shadow(0 3px 5px rgba(0,0,0,.3));
 }
 
-/* خطط التعدين: عمودان */
+#mining #miningTabs > button:hover,
+#miningTabs.mining-tabs button:hover {
+    transform: translateY(-2px);
+    border-color: rgba(228,189,79,.5);
+    color: #fff;
+}
+
+#mining #miningTabs > button.active,
+#miningTabs.mining-tabs button.active {
+    border-color: var(--mining-gold);
+    background:
+        linear-gradient(155deg, rgba(228,189,79,.18), rgba(228,189,79,.035)),
+        #101c28;
+    color: var(--mining-gold);
+    box-shadow:
+        0 0 0 1px rgba(228,189,79,.08),
+        0 8px 22px rgba(228,189,79,.09);
+}
+
+/* =========================================================
+   3. MINING PLANS — TWO COLUMNS
+   ========================================================= */
+
+#mining #miningGrid,
 #miningGrid.mining-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 14px;
-    width: 100%;
     align-items: stretch;
-}
-
-#miningGrid.mining-grid > * {
+    gap: 15px;
     width: 100%;
-    min-width: 0;
-    height: 100%;
 }
 
-/* ترتيب محتوى بطاقات الخطط */
-#miningGrid .mining-plan-card {
+#mining #miningGrid > *,
+#miningGrid.mining-grid > * {
+    position: relative;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    align-items: stretch;
+    gap: 9px;
+    min-width: 0;
+    min-height: 100%;
+    overflow: hidden;
     padding: 18px;
-    border: 1px solid var(--gold-border);
-    border-radius: var(--radius-lg);
-    background: var(--bg-card);
+    border: 1px solid rgba(164,185,207,.14);
+    border-radius: 17px;
+    background:
+        radial-gradient(ellipse at 100% 0%, rgba(34,214,138,.075), transparent 48%),
+        linear-gradient(145deg, #0d1b2a, #061321 75%);
+    box-shadow: 0 9px 24px rgba(0,0,0,.22);
+    transition:
+        transform .22s ease,
+        border-color .22s ease,
+        box-shadow .22s ease;
 }
 
-#miningGrid button {
-    max-width: 100%;
+/* Card accent */
+#mining #miningGrid > *::before,
+#miningGrid.mining-grid > *::before {
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #20c981, #d8b54d);
+    content: "";
+    opacity: .85;
 }
 
-/* Tablet */
+#mining #miningGrid > *:hover,
+#miningGrid.mining-grid > *:hover {
+    transform: translateY(-4px);
+    border-color: rgba(228,189,79,.38);
+    box-shadow: 0 15px 30px rgba(0,0,0,.32);
+}
+
+/* =========================================================
+   4. PLAN TYPOGRAPHY
+   ========================================================= */
+
+#mining #miningGrid h2,
+#mining #miningGrid h3,
+#mining #miningGrid h4,
+#miningGrid.mining-grid h2,
+#miningGrid.mining-grid h3,
+#miningGrid.mining-grid h4 {
+    margin: 6px 0;
+    color: #f2f5fa;
+    font-size: 1.12rem;
+    font-weight: 850;
+    line-height: 1.4;
+}
+
+#mining #miningGrid p,
+#miningGrid.mining-grid p {
+    color: #aab8c9;
+    font-size: .86rem;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+}
+
+#mining #miningGrid strong,
+#miningGrid.mining-grid strong {
+    color: var(--mining-gold);
+}
+
+#mining #miningGrid small,
+#miningGrid.mining-grid small {
+    color: var(--mining-muted);
+}
+
+/* =========================================================
+   5. PLAN BADGES
+   ========================================================= */
+
+#mining #miningGrid .plan-badge,
+#mining #miningGrid .mining-badge,
+#miningGrid .mining-plan-card .plan-badge,
+#miningGrid .mining-plan-card .mining-badge {
+    display: inline-flex;
+    align-items: center;
+    align-self: flex-start;
+    width: fit-content;
+    padding: 6px 11px;
+    border: 1px solid rgba(228,189,79,.25);
+    border-radius: 30px;
+    background: rgba(228,189,79,.09);
+    color: #f0cf73;
+    font-size: .72rem;
+    font-weight: 850;
+    letter-spacing: .5px;
+}
+
+/* Plan number */
+#mining #miningGrid .plan-number,
+#miningGrid .mining-plan-card .plan-number {
+    color: #8798aa;
+    font-family: var(--font-mono);
+    font-size: .8rem;
+}
+
+/* Plan price */
+#mining #miningGrid .plan-price,
+#miningGrid .mining-plan-card .plan-price {
+    margin: 9px 0;
+    color: #f4d477;
+    font-family: var(--font-mono);
+    font-size: 1.2rem;
+    font-weight: 850;
+}
+
+/* =========================================================
+   6. PLAN DETAILS
+   ========================================================= */
+
+#mining #miningGrid .plan-details,
+#miningGrid .mining-plan-card .plan-details {
+    display: grid;
+    gap: 8px;
+    margin: 12px 0;
+}
+
+#mining #miningGrid .plan-details > div,
+#miningGrid .mining-plan-card .plan-details > div {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255,255,255,.055);
+}
+
+#mining #miningGrid .plan-details span,
+#miningGrid .mining-plan-card .plan-details span {
+    color: #8fa1b5;
+    font-size: .78rem;
+}
+
+#mining #miningGrid .plan-details strong,
+#miningGrid .mining-plan-card .plan-details strong {
+    color: #edf3fa;
+    font-size: .82rem;
+}
+
+/* =========================================================
+   7. PLAN LEVEL VARIANTS
+   ========================================================= */
+
+/* Popular */
+#mining #miningGrid .popular,
+#mining #miningGrid .featured,
+#miningGrid .mining-plan-card.popular,
+#miningGrid .mining-plan-card.featured {
+    border-color: rgba(228,189,79,.42);
+    background:
+        radial-gradient(ellipse at 50% 0%, rgba(228,189,79,.13), transparent 55%),
+        linear-gradient(145deg, #152235, #071321);
+}
+
+/* Blue tier */
+#mining #miningGrid .basic,
+#mining #miningGrid .pro {
+    border-color: rgba(98,169,238,.32);
+    background:
+        radial-gradient(ellipse at 100% 0%, rgba(98,169,238,.12), transparent 50%),
+        linear-gradient(145deg, #11243a, #071321);
+}
+
+/* Premium tier */
+#mining #miningGrid .premium,
+#mining #miningGrid .elite {
+    border-color: rgba(228,189,79,.4);
+    background:
+        radial-gradient(ellipse at 100% 0%, rgba(228,189,79,.12), transparent 50%),
+        linear-gradient(145deg, #1b2636, #091522);
+}
+
+/* =========================================================
+   8. PLAN BUTTONS
+   ========================================================= */
+
+#mining #miningGrid > * button,
+#miningGrid.mining-grid > * button {
+    width: 100%;
+    min-height: 43px;
+    margin-top: auto;
+    padding: 9px 12px;
+    border: 0;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #f5d978, #bd8e20);
+    color: #111722;
+    font-size: .88rem;
+    font-weight: 850;
+    box-shadow: 0 5px 15px rgba(189,142,32,.16);
+    transition: filter .2s ease, transform .2s ease;
+}
+
+#mining #miningGrid > * button:hover,
+#miningGrid.mining-grid > * button:hover {
+    filter: brightness(1.08);
+    transform: translateY(-1px);
+}
+
+/* =========================================================
+   9. MINING HERO / SUMMARY
+   ========================================================= */
+
+#mining .mining-hero {
+    padding: 22px;
+    border: 1px solid rgba(228,189,79,.18);
+    border-radius: 20px;
+    background:
+        radial-gradient(circle at 100% 0%, rgba(34,214,138,.10), transparent 42%),
+        linear-gradient(145deg, #111c2b, #071321);
+    box-shadow: 0 12px 30px rgba(0,0,0,.2);
+}
+
+#mining .mining-hero-left h2 {
+    color: #f2f5fa;
+    font-weight: 900;
+}
+
+#mining .mining-hero-left p {
+    color: #a6b5c7;
+    line-height: 1.6;
+}
+
+/* Stats */
+#mining .mining-stat {
+    padding: 15px;
+    border: 1px solid rgba(255,255,255,.075);
+    border-radius: 13px;
+    background: rgba(255,255,255,.035);
+}
+
+#mining .mining-stat span {
+    color: #91a2b6;
+    font-size: .72rem;
+    font-weight: 800;
+    letter-spacing: .5px;
+    text-transform: uppercase;
+}
+
+#mining .mining-stat strong {
+    display: block;
+    margin-top: 9px;
+    color: #f2d16f;
+    font-size: 1.2rem;
+}
+
+/* Subscribe */
+#mining .mining-hero .btn,
+#mining .mining-hero-right .btn {
+    min-height: 48px;
+    border: 0;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #f6dc83, #c39527);
+    color: #111722;
+    font-weight: 900;
+    box-shadow: 0 7px 20px rgba(195,149,39,.16);
+}
+
+/* =========================================================
+   10. ACTIVE MINING / CONTROL PANELS
+   ========================================================= */
+
+#mining .mining-active,
+#mining .mining-sub-panel,
+#mining .mining-history {
+    border: 1px solid var(--mining-border);
+    border-radius: 16px;
+    background: linear-gradient(145deg, #0c1a29, #061321);
+}
+
+#mining .mining-active-row {
+    padding: 13px 0;
+    border-bottom: 1px solid rgba(255,255,255,.065);
+}
+
+#mining .mining-active-row span {
+    color: #91a2b6;
+}
+
+#mining .mining-active-row strong {
+    color: #f0d078;
+}
+
+/* Progress */
+#mining .mining-progress-bar {
+    height: 9px;
+    border: 1px solid rgba(255,255,255,.06);
+    border-radius: 20px;
+    background: #020a13;
+    overflow: hidden;
+}
+
+#mining #miningProgressFill {
+    border-radius: inherit;
+    background: linear-gradient(90deg, #20bd7c, #e4bd4f);
+    box-shadow: 0 0 12px rgba(34,214,138,.25);
+}
+
+/* =========================================================
+   11. RESPONSIVE — TABLET
+   ========================================================= */
+
 @media (max-width: 768px) {
+    #mining #miningTabs,
     #miningTabs.mining-tabs {
         grid-template-columns: repeat(5, minmax(0, 1fr));
         gap: 7px;
     }
 
+    #mining #miningTabs > button,
     #miningTabs.mining-tabs button {
-        min-height: 58px;
-        flex-direction: column;
-        gap: 4px;
-        font-size: .78rem;
+        min-height: 48px;
+        gap: 5px;
+        font-size: .73rem;
     }
 
+    #mining #miningGrid,
     #miningGrid.mining-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 10px;
+        gap: 12px;
     }
 }
 
-/* Mobile */
+/* =========================================================
+   12. RESPONSIVE — MOBILE
+   ========================================================= */
+
 @media (max-width: 480px) {
+    #mining #miningTabs,
     #miningTabs.mining-tabs {
         grid-template-columns: repeat(5, minmax(0, 1fr));
-        gap: 6px;
+        gap: 5px;
     }
 
+    #mining #miningTabs > button,
     #miningTabs.mining-tabs button {
-        min-height: 58px;
-        padding: 6px 2px;
-        font-size: .7rem;
+        min-height: 44px;
+        gap: 4px;
+        padding: 5px 2px;
+        border-radius: 9px;
+        font-size: .65rem;
     }
 
+    #mining #miningTabs > button img,
     #miningTabs.mining-tabs button img {
-        width: 22px;
-        height: 22px;
+        flex-basis: 19px;
+        width: 19px;
+        height: 19px;
     }
 
+    #mining #miningGrid,
     #miningGrid.mining-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 9px;
     }
 
+    #mining #miningGrid > *,
     #miningGrid.mining-grid > * {
-        padding: 12px;
+        gap: 7px;
+        padding: 13px 11px;
+        border-radius: 14px;
+    }
+
+    #mining #miningGrid h2,
+    #mining #miningGrid h3,
+    #mining #miningGrid h4 {
+        font-size: 1rem;
+    }
+
+    #mining #miningGrid p {
+        font-size: .79rem;
+        overflow-wrap: anywhere;
+    }
+
+    #mining #miningGrid > * button,
+    #miningGrid.mining-grid > * button {
+        min-height: 39px;
+        padding: 8px 5px;
+        font-size: .75rem;
+    }
+
+    #mining .mining-hero {
+        padding: 16px;
+    }
+
+    #mining .mining-stat {
+        padding: 11px;
     }
 }
 
-@media (max-width: 360px) {
+/* =========================================================
+   13. RESPONSIVE — SMALL MOBILE
+   ========================================================= */
+
+@media (max-width: 350px) {
+    #mining #miningTabs,
     #miningTabs.mining-tabs {
         gap: 4px;
     }
 
+    #mining #miningTabs > button,
     #miningTabs.mining-tabs button {
-        font-size: .65rem;
+        gap: 3px;
+        min-height: 41px;
+        font-size: .61rem;
     }
 
+    #mining #miningTabs > button img,
+    #miningTabs.mining-tabs button img {
+        flex-basis: 17px;
+        width: 17px;
+        height: 17px;
+    }
+
+    #mining #miningGrid,
     #miningGrid.mining-grid {
         gap: 7px;
     }
-}
 
+    #mining #miningGrid > *,
+    #miningGrid.mining-grid > * {
+        padding: 11px 9px;
+    }
+}
 
 /*=======================================================================================
      11. AIRDROP  STYLES General 
