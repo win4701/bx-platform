@@ -1,180 +1,844 @@
+
 /* =========================================================
-   BLOXIO CHART ENGINE 2026
+   BLOXIO CHART ENGINE V8
    public/bx/chart.js
-   TradingView Lightweight Charts
-   Binance WebSocket
+
+   Features:
+   - Lightweight Charts v4 / v5 compatibility
+   - Historical Binance candles
+   - Live Binance WebSocket
+   - Hidden container detection
+   - Automatic resize
+   - Automatic reconnect
+   - Symbol normalization
+   - Timeframe switching
+   - Volume histogram
+   - Safe initialization and destruction
 ========================================================= */
 
-window.BXChart=(function(){
+"use strict";
 
-let chart=null;
-let candleSeries=null;
-let volumeSeries=null;
-let socket=null;
+window.BXChart = (function () {
 
-let currentSymbol="btcusdt";
-let currentTimeframe="1m";
+/* =========================================================
+   CONFIG
+========================================================= */
 
-const TIMEFRAME_MAP={
-"1m":"1m",
-"5m":"5m",
-"15m":"15m",
-"1h":"1h",
-"4h":"4h",
-"1d":"1d",
-"1w":"1w"
+const CONFIG = {
+  containerId: "marketChart",
+  tooltipId: "marketTooltip",
+
+  historyLimit: 300,
+
+  reconnectDelay: 2000,
+  maxReconnectDelay: 30000,
+
+  historyTimeout: 12000,
+
+  defaultSymbol: "BTCUSDT",
+  defaultTimeframe: "1m",
+
+  socketBase: "wss://stream.binance.com:9443/ws",
+
+  historyBase: "https://api.binance.com/api/v3/klines",
+
+  colors: {
+    background: "#07111F",
+    text: "#D6E0F5",
+    grid: "rgba(255,255,255,.04)",
+    border: "rgba(255,255,255,.08)",
+    up: "#00FFC2",
+    down: "#FF4D6D",
+    volumeUp: "rgba(0,255,194,.35)",
+    volumeDown: "rgba(255,77,109,.35)"
+  }
 };
 
-const CHART_CONFIG={
-layout:{background:{color:"#07111F"},textColor:"#D6E0F5",fontSize:12,fontFamily:"Inter,Arial,sans-serif"},
-grid:{vertLines:{color:"rgba(255,255,255,.04)"},horzLines:{color:"rgba(255,255,255,.04)"}},
-crosshair:{mode:1},
-rightPriceScale:{borderColor:"rgba(255,255,255,.08)"},
-timeScale:{borderColor:"rgba(255,255,255,.08)",timeVisible:true,secondsVisible:false},
-handleScroll:true,
-handleScale:true
+const TIMEFRAME_MAP = {
+  "1m": "1m",
+  "5m": "5m",
+  "15m": "15m",
+  "1h": "1h",
+  "4h": "4h",
+  "1d": "1d",
+  "1w": "1w"
+};
+
+const CHART_CONFIG = {
+  layout: {
+    background: {
+      color: CONFIG.colors.background
+    },
+    textColor: CONFIG.colors.text,
+    fontSize: 12,
+    fontFamily: "Inter, Arial, sans-serif"
+  },
+
+  grid: {
+    vertLines: {
+      color: CONFIG.colors.grid
+    },
+    horzLines: {
+      color: CONFIG.colors.grid
+    }
+  },
+
+  crosshair: {
+    mode: 1
+  },
+
+  rightPriceScale: {
+    borderColor: CONFIG.colors.border
+  },
+
+  timeScale: {
+    borderColor: CONFIG.colors.border,
+    timeVisible: true,
+    secondsVisible: false
+  },
+
+  handleScroll: true,
+  handleScale: true
 };
 
 /* =========================================================
-   CREATE
+   STATE
 ========================================================= */
 
-function createChart(){
+let chart = null;
+let candleSeries = null;
+let volumeSeries = null;
 
-const container=
-document.getElementById(
-"marketChart"
-);
+let socket = null;
 
-if(!container){
-return;
+let resizeObserver = null;
+let mutationObserver = null;
+let visibilityObserver = null;
+
+let reconnectTimer = null;
+let reconnectAttempts = 0;
+
+let historyController = null;
+
+let currentSymbol = CONFIG.defaultSymbol;
+let currentTimeframe = CONFIG.defaultTimeframe;
+
+let initialized = false;
+let destroyed = false;
+let connecting = false;
+
+let lastCandleTime = 0;
+let chartReady = false;
+
+let generation = 0;
+
+/* =========================================================
+   HELPERS
+========================================================= */
+
+function getContainer() {
+  return document.getElementById(
+    CONFIG.containerId
+  );
 }
 
-chart=
-LightweightCharts.createChart(
-container,
-{
-...CHART_CONFIG,
-width:container.clientWidth,
-height:getChartHeight()
+function getLibrary() {
+  return window.LightweightCharts || null;
 }
-);
 
-candleSeries=
-chart.addCandlestickSeries({
-upColor:"#00FFC2",
-downColor:"#FF4D6D",
-borderVisible:false,
-wickUpColor:"#00FFC2",
-wickDownColor:"#FF4D6D"
-});
+function isVisible(element) {
 
-volumeSeries=
-chart.addHistogramSeries({
-priceScaleId:"",
-priceFormat:{
-type:"volume"
+  if (!element) {
+    return false;
+  }
+
+  const rect = element.getBoundingClientRect();
+
+  const style = getComputedStyle(element);
+
+  return (
+    rect.width > 0 &&
+    rect.height > 0 &&
+    style.display !== "none" &&
+    style.visibility !== "hidden"
+  );
 }
-});
 
-window.addEventListener(
-"resize",
-resizeChart
-);
+function normalizeSymbol(symbol) {
 
+  let value = String(
+    symbol || CONFIG.defaultSymbol
+  )
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, "");
+
+  if (!value) {
+    return CONFIG.defaultSymbol;
+  }
+
+  if (
+    !/(USDT|USDC|BUSD|BTC|ETH|BNB)$/.test(value)
+  ) {
+    value += "USDT";
+  }
+
+  return value;
+}
+
+function getChartHeight() {
+
+  if (window.innerWidth < 480) {
+    return 260;
+  }
+
+  if (window.innerWidth < 768) {
+    return 320;
+  }
+
+  if (window.innerWidth < 1200) {
+    return 380;
+  }
+
+  return 460;
+}
+
+function safeNumber(value) {
+
+  const number = Number(value);
+
+  return Number.isFinite(number)
+    ? number
+    : 0;
 }
 
 /* =========================================================
-   HEIGHT
+   SERIES COMPATIBILITY
+   Lightweight Charts v4 / v5
 ========================================================= */
 
-function getChartHeight(){
+function addCandles(library) {
 
-if(window.innerWidth<480){
-return 260;
+  if (typeof chart.addCandlestickSeries === "function") {
+
+    return chart.addCandlestickSeries({
+      upColor: CONFIG.colors.up,
+      downColor: CONFIG.colors.down,
+      borderVisible: false,
+      wickUpColor: CONFIG.colors.up,
+      wickDownColor: CONFIG.colors.down
+    });
+
+  }
+
+  if (
+    typeof chart.addSeries === "function" &&
+    library.CandlestickSeries
+  ) {
+
+    return chart.addSeries(
+      library.CandlestickSeries,
+      {
+        upColor: CONFIG.colors.up,
+        downColor: CONFIG.colors.down,
+        borderVisible: false,
+        wickUpColor: CONFIG.colors.up,
+        wickDownColor: CONFIG.colors.down
+      }
+    );
+
+  }
+
+  throw new Error(
+    "Candlestick series is not supported"
+  );
 }
 
-if(window.innerWidth<768){
-return 320;
+function addVolume(library) {
+
+  const options = {
+    priceScaleId: "volume",
+    priceFormat: {
+      type: "volume"
+    },
+    lastValueVisible: false,
+    priceLineVisible: false
+  };
+
+  let series;
+
+  if (typeof chart.addHistogramSeries === "function") {
+
+    series = chart.addHistogramSeries(options);
+
+  } else if (
+    typeof chart.addSeries === "function" &&
+    library.HistogramSeries
+  ) {
+
+    series = chart.addSeries(
+      library.HistogramSeries,
+      options
+    );
+
+  }
+
+  if (series) {
+
+    series.priceScale().applyOptions({
+      scaleMargins: {
+        top: 0.82,
+        bottom: 0
+      },
+      borderVisible: false
+    });
+
+  }
+
+  return series;
 }
 
-if(window.innerWidth<1200){
-return 380;
+/* =========================================================
+   CREATE CHART
+========================================================= */
+
+function createChart() {
+
+  const container = getContainer();
+
+  const library = getLibrary();
+
+  if (!container) {
+    return false;
+  }
+
+  if (!library || typeof library.createChart !== "function") {
+
+    console.error(
+      "[BXChart] LightweightCharts library unavailable"
+    );
+
+    return false;
+  }
+
+  if (!isVisible(container)) {
+    return false;
+  }
+
+  if (chart) {
+    return true;
+  }
+
+  try {
+
+    chart = library.createChart(
+      container,
+      {
+        ...CHART_CONFIG,
+        width: Math.floor(container.clientWidth),
+        height: getChartHeight()
+      }
+    );
+
+    candleSeries = addCandles(library);
+
+    volumeSeries = addVolume(library);
+
+    if (!candleSeries) {
+      throw new Error("Candle series creation failed");
+    }
+
+    chartReady = true;
+
+    resizeChart();
+
+    console.log("[BXChart] Chart created");
+
+    return true;
+
+  } catch (error) {
+
+    console.error(
+      "[BXChart] CREATE_ERROR",
+      error
+    );
+
+    removeChart();
+
+    return false;
+  }
 }
 
-return 460;
+/* =========================================================
+   REMOVE CHART
+========================================================= */
 
+function removeChart() {
+
+  if (chart) {
+
+    try {
+      chart.remove();
+    } catch (error) {
+      console.warn(error);
+    }
+
+  }
+
+  chart = null;
+  candleSeries = null;
+  volumeSeries = null;
+
+  chartReady = false;
 }
 
 /* =========================================================
    RESIZE
 ========================================================= */
 
-function resizeChart(){
+function resizeChart() {
 
-if(!chart){
-return;
+  if (!chart) {
+    return;
+  }
+
+  const container = getContainer();
+
+  if (!container || !isVisible(container)) {
+    return;
+  }
+
+  const width = Math.floor(
+    container.clientWidth
+  );
+
+  if (width <= 0) {
+    return;
+  }
+
+  try {
+
+    chart.applyOptions({
+      width,
+      height: getChartHeight()
+    });
+
+  } catch (error) {
+
+    console.warn(
+      "[BXChart] RESIZE_ERROR",
+      error
+    );
+
+  }
 }
 
-const container=
-document.getElementById(
-"marketChart"
-);
+/* =========================================================
+   VISIBILITY
+========================================================= */
 
-if(!container){
-return;
+function onVisibilityChange() {
+
+  if (destroyed) {
+    return;
+  }
+
+  const container = getContainer();
+
+  if (!container) {
+    return;
+  }
+
+  if (!isVisible(container)) {
+    return;
+  }
+
+  if (!chart) {
+
+    if (createChart()) {
+      loadHistory();
+    }
+
+    return;
+  }
+
+  resizeChart();
 }
 
-chart.applyOptions({
-width:container.clientWidth,
-height:getChartHeight()
-});
+function setupObservers() {
+
+  const container = getContainer();
+
+  if (!container) {
+    return;
+  }
+
+  if ("ResizeObserver" in window) {
+
+    resizeObserver = new ResizeObserver(() => {
+      onVisibilityChange();
+    });
+
+    resizeObserver.observe(container);
+
+  }
+
+  if ("MutationObserver" in window) {
+
+    mutationObserver = new MutationObserver(() => {
+      requestAnimationFrame(
+        onVisibilityChange
+      );
+    });
+
+    let node = container;
+
+    while (node && node !== document.body) {
+
+      mutationObserver.observe(node, {
+        attributes: true,
+        attributeFilter: [
+          "class",
+          "style",
+          "hidden"
+        ]
+      });
+
+      node = node.parentElement;
+    }
+
+  }
+
+  if ("IntersectionObserver" in window) {
+
+    visibilityObserver = new IntersectionObserver(
+      entries => {
+
+        if (entries.some(entry => entry.isIntersecting)) {
+          onVisibilityChange();
+        }
+
+      }
+    );
+
+    visibilityObserver.observe(container);
+
+  }
+
+  window.addEventListener(
+    "resize",
+    resizeChart
+  );
 
 }
 
 /* =========================================================
-   SOCKET
+   HISTORICAL DATA
 ========================================================= */
 
-function connectKline(){
+async function loadHistory() {
 
-if(socket){
+  if (destroyed) {
+    return;
+  }
 
-socket.close();
+  if (!chart && !createChart()) {
+    return;
+  }
 
-socket=null;
+  if (historyController) {
+    historyController.abort();
+  }
 
+  const controller = new AbortController();
+
+  historyController = controller;
+
+  const requestGeneration = generation;
+
+  const url =
+    CONFIG.historyBase +
+    "?symbol=" + encodeURIComponent(currentSymbol) +
+    "&interval=" + encodeURIComponent(currentTimeframe) +
+    "&limit=" + CONFIG.historyLimit;
+
+  const timeout = setTimeout(() => {
+    controller.abort();
+  }, CONFIG.historyTimeout);
+
+  try {
+
+    const response = await fetch(
+      url,
+      {
+        method: "GET",
+        signal: controller.signal
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(
+        "History HTTP " + response.status
+      );
+    }
+
+    const data = await response.json();
+
+    if (
+      destroyed ||
+      requestGeneration !== generation ||
+      !Array.isArray(data)
+    ) {
+      return;
+    }
+
+    const candles = [];
+    const volumes = [];
+
+    data.forEach(item => {
+
+      const time = Math.floor(
+        Number(item[0]) / 1000
+      );
+
+      const open = safeNumber(item[1]);
+      const high = safeNumber(item[2]);
+      const low = safeNumber(item[3]);
+      const close = safeNumber(item[4]);
+      const volume = safeNumber(item[5]);
+
+      if (
+        !time ||
+        !open ||
+        !high ||
+        !low ||
+        !close
+      ) {
+        return;
+      }
+
+      candles.push({
+        time,
+        open,
+        high,
+        low,
+        close
+      });
+
+      volumes.push({
+        time,
+        value: volume,
+        color: close >= open
+          ? CONFIG.colors.volumeUp
+          : CONFIG.colors.volumeDown
+      });
+
+    });
+
+    if (!candleSeries) {
+      return;
+    }
+
+    candleSeries.setData(candles);
+
+    if (volumeSeries) {
+      volumeSeries.setData(volumes);
+    }
+
+    lastCandleTime = candles.length
+      ? candles[candles.length - 1].time
+      : 0;
+
+    chart.timeScale().fitContent();
+
+    if (candles.length) {
+
+      const last = candles[candles.length - 1];
+
+      updateTooltip(
+        last.close,
+        last.high,
+        last.low
+      );
+
+    }
+
+    console.log(
+      "[BXChart] Historical candles loaded:",
+      candles.length
+    );
+
+  } catch (error) {
+
+    if (error.name !== "AbortError") {
+
+      console.error(
+        "[BXChart] HISTORY_ERROR",
+        error
+      );
+
+    }
+
+  } finally {
+
+    clearTimeout(timeout);
+
+    if (historyController === controller) {
+      historyController = null;
+    }
+
+  }
 }
 
-socket=
-new WebSocket(
-`wss://stream.binance.com:9443/ws/${currentSymbol}@kline_${currentTimeframe}`
-);
+/* =========================================================
+   WEBSOCKET
+========================================================= */
 
-socket.onmessage=e=>{
+function socketURL() {
 
-const data=
-JSON.parse(
-e.data
-);
-
-if(!data.k){
-return;
+  return (
+    CONFIG.socketBase +
+    "/" +
+    currentSymbol.toLowerCase() +
+    "@kline_" +
+    currentTimeframe
+  );
 }
 
-updateCandle(
-data.k
-);
+function connectKline() {
 
-};
+  if (destroyed || connecting) {
+    return;
+  }
 
-socket.onerror=()=>{
+  disconnectSocket();
 
-console.error(
-"CHART_SOCKET_ERROR"
-);
+  if (!chart || !candleSeries) {
+    return;
+  }
 
-};
+  connecting = true;
+
+  try {
+
+    socket = new WebSocket(
+      socketURL()
+    );
+
+    socket.onopen = () => {
+
+      connecting = false;
+      reconnectAttempts = 0;
+
+      console.log(
+        "[BXChart] WebSocket connected:",
+        currentSymbol,
+        currentTimeframe
+      );
+
+    };
+
+    socket.onmessage = event => {
+
+      try {
+
+        const data = JSON.parse(event.data);
+
+        if (!data.k) {
+          return;
+        }
+
+        updateCandle(data.k);
+
+      } catch (error) {
+
+        console.warn(
+          "[BXChart] MESSAGE_ERROR",
+          error
+        );
+
+      }
+
+    };
+
+    socket.onerror = error => {
+
+      console.warn(
+        "[BXChart] SOCKET_ERROR",
+        error
+      );
+
+    };
+
+    socket.onclose = () => {
+
+      connecting = false;
+      socket = null;
+
+      scheduleReconnect();
+
+    };
+
+  } catch (error) {
+
+    connecting = false;
+
+    console.error(
+      "[BXChart] SOCKET_CONNECT_ERROR",
+      error
+    );
+
+    scheduleReconnect();
+
+  }
+}
+
+function disconnectSocket() {
+
+  if (socket) {
+
+    socket.onopen = null;
+    socket.onmessage = null;
+    socket.onerror = null;
+    socket.onclose = null;
+
+    try {
+      socket.close();
+    } catch (error) {
+      console.warn(error);
+    }
+
+    socket = null;
+  }
+
+  connecting = false;
+
+  clearTimeout(reconnectTimer);
+  reconnectTimer = null;
+}
+
+function scheduleReconnect() {
+
+  if (destroyed || !initialized) {
+    return;
+  }
+
+  clearTimeout(reconnectTimer);
+
+  const delay = Math.min(
+    CONFIG.reconnectDelay *
+      Math.pow(2, reconnectAttempts),
+    CONFIG.maxReconnectDelay
+  );
+
+  reconnectAttempts++;
+
+  reconnectTimer = setTimeout(() => {
+
+    if (!destroyed && chart) {
+      connectKline();
+    }
+
+  }, delay);
 
 }
 
@@ -182,55 +846,103 @@ console.error(
    CANDLE UPDATE
 ========================================================= */
 
-function updateCandle(kline){
+function updateCandle(kline) {
 
-const time=
-Math.floor(
-kline.t/1000
-);
+  if (!candleSeries || !chartReady) {
+    return;
+  }
 
-candleSeries.update({
-time,
-open:Number(kline.o),
-high:Number(kline.h),
-low:Number(kline.l),
-close:Number(kline.c)
-});
+  const time = Math.floor(
+    Number(kline.t) / 1000
+  );
 
-volumeSeries.update({
-time,
-value:Number(kline.v)
-});
+  if (!time) {
+    return;
+  }
 
-updateTooltip(
-Number(kline.c),
-Number(kline.h),
-Number(kline.l)
-);
+  const open = safeNumber(kline.o);
+  const high = safeNumber(kline.h);
+  const low = safeNumber(kline.l);
+  const close = safeNumber(kline.c);
+  const volume = safeNumber(kline.v);
 
+  if (
+    !open ||
+    !high ||
+    !low ||
+    !close
+  ) {
+    return;
+  }
+
+  const candle = {
+    time,
+    open,
+    high,
+    low,
+    close
+  };
+
+  try {
+
+    candleSeries.update(candle);
+
+    if (volumeSeries) {
+
+      volumeSeries.update({
+        time,
+        value: volume,
+        color: close >= open
+          ? CONFIG.colors.volumeUp
+          : CONFIG.colors.volumeDown
+      });
+
+    }
+
+    lastCandleTime = time;
+
+    updateTooltip(
+      close,
+      high,
+      low
+    );
+
+  } catch (error) {
+
+    console.warn(
+      "[BXChart] CANDLE_UPDATE_ERROR",
+      error
+    );
+
+  }
 }
 
 /* =========================================================
    TOOLTIP
 ========================================================= */
 
-function updateTooltip(
-price,
-high,
-low
-){
+function updateTooltip(price, high, low) {
 
-const tooltip=
-document.getElementById(
-"marketTooltip"
-);
+  const tooltip = document.getElementById(
+    CONFIG.tooltipId
+  );
 
-if(!tooltip){
-return;
-}
+  if (!tooltip) {
+    return;
+  }
 
-tooltip.innerHTML=
-`<div class="tooltip-price">${price.toFixed(8)}</div><div class="tooltip-high">H ${high.toFixed(8)}</div><div class="tooltip-low">L ${low.toFixed(8)}</div>`;
+  const precision = price < 1 ? 8 : 4;
+
+  tooltip.innerHTML =
+    '<div class="tooltip-price">' +
+      price.toFixed(precision) +
+    '</div>' +
+    '<div class="tooltip-high">H ' +
+      high.toFixed(precision) +
+    '</div>' +
+    '<div class="tooltip-low">L ' +
+      low.toFixed(precision) +
+    '</div>';
 
 }
 
@@ -238,36 +950,98 @@ tooltip.innerHTML=
    PAIR
 ========================================================= */
 
-function setPair(symbol){
+function setPair(symbol) {
 
-if(!symbol){
-return;
-}
+  const normalized = normalizeSymbol(symbol);
 
-currentSymbol=
-symbol.toLowerCase();
+  if (normalized === currentSymbol) {
+    return;
+  }
 
-connectKline();
+  currentSymbol = normalized;
 
+  generation++;
+
+  if (historyController) {
+    historyController.abort();
+    historyController = null;
+  }
+
+  disconnectSocket();
+
+  if (chart) {
+    loadHistory();
+    connectKline();
+  }
+
+  console.log(
+    "[BXChart] Pair changed:",
+    currentSymbol
+  );
 }
 
 /* =========================================================
    TIMEFRAME
 ========================================================= */
 
-function setTimeframe(tf){
+function setTimeframe(timeframe) {
 
-if(
-!TIMEFRAME_MAP[
-tf
-]
-){
-return;
+  if (!TIMEFRAME_MAP[timeframe]) {
+    console.warn(
+      "[BXChart] Unsupported timeframe:",
+      timeframe
+    );
+    return;
+  }
+
+  if (timeframe === currentTimeframe) {
+    return;
+  }
+
+  currentTimeframe = timeframe;
+
+  generation++;
+
+  if (historyController) {
+    historyController.abort();
+    historyController = null;
+  }
+
+  disconnectSocket();
+
+  if (chart) {
+    loadHistory();
+    connectKline();
+  }
+
+  console.log(
+    "[BXChart] Timeframe changed:",
+    currentTimeframe
+  );
 }
 
-currentTimeframe=tf;
+/* =========================================================
+   CLEAR
+========================================================= */
 
-connectKline();
+function clearChart() {
+
+  if (historyController) {
+    historyController.abort();
+    historyController = null;
+  }
+
+  generation++;
+
+  if (candleSeries) {
+    candleSeries.setData([]);
+  }
+
+  if (volumeSeries) {
+    volumeSeries.setData([]);
+  }
+
+  lastCandleTime = 0;
 
 }
 
@@ -275,76 +1049,139 @@ connectKline();
    RESET
 ========================================================= */
 
-function clearChart(){
+function reset() {
 
-if(!chart){
-return;
-}
+  clearChart();
 
-chart.remove();
+  disconnectSocket();
 
-chart=null;
+  removeChart();
 
-candleSeries=null;
+  if (!destroyed) {
 
-volumeSeries=null;
+    requestAnimationFrame(() => {
 
-createChart();
+      if (createChart()) {
+        loadHistory();
+        connectKline();
+      }
 
-connectKline();
+    });
 
-}
-
-/* =========================================================
-   DESTROY
-========================================================= */
-
-function destroy(){
-
-if(socket){
-
-socket.close();
-
-socket=null;
-
-}
-
-if(chart){
-
-chart.remove();
-
-chart=null;
-
-}
-
+  }
 }
 
 /* =========================================================
    INIT
 ========================================================= */
 
-function init(){
+function init() {
 
-createChart();
+  if (initialized && !destroyed) {
+    onVisibilityChange();
+    return true;
+  }
 
-connectKline();
+  initialized = true;
+  destroyed = false;
 
-console.log(
-"📈 BX CHART READY"
-);
+  setupObservers();
 
+  if (createChart()) {
+
+    loadHistory();
+
+    connectKline();
+
+  }
+
+  console.log(
+    "[BXChart] V8 INITIALIZED"
+  );
+
+  return true;
 }
 
 /* =========================================================
-   API
+   DESTROY
 ========================================================= */
 
-return{
-init,
-destroy,
-setPair,
-setTimeframe,
-clearChart
+function destroy() {
+
+  destroyed = true;
+  initialized = false;
+
+  generation++;
+
+  disconnectSocket();
+
+  if (historyController) {
+    historyController.abort();
+    historyController = null;
+  }
+
+  if (resizeObserver) {
+    resizeObserver.disconnect();
+    resizeObserver = null;
+  }
+
+  if (mutationObserver) {
+    mutationObserver.disconnect();
+    mutationObserver = null;
+  }
+
+  if (visibilityObserver) {
+    visibilityObserver.disconnect();
+    visibilityObserver = null;
+  }
+
+  window.removeEventListener(
+    "resize",
+    resizeChart
+  );
+
+  removeChart();
+
+  console.log(
+    "[BXChart] DESTROYED"
+  );
+}
+
+/* =========================================================
+   PUBLIC API
+========================================================= */
+
+return {
+
+  init,
+
+  destroy,
+
+  setPair,
+
+  setTimeframe,
+
+  clearChart,
+
+  reset,
+
+  resize: resizeChart,
+
+  loadHistory,
+
+  getState() {
+
+    return {
+      symbol: currentSymbol,
+      timeframe: currentTimeframe,
+      connected: !!socket &&
+        socket.readyState === WebSocket.OPEN,
+      chartReady,
+      lastCandleTime
+    };
+
+  }
+
 };
 
 })();
@@ -353,9 +1190,29 @@ clearChart
    AUTO INIT
 ========================================================= */
 
-document.readyState==="loading"
-?document.addEventListener(
-"DOMContentLoaded",
-()=>window.BXChart.init()
-)
-:window.BXChart.init();
+function initializeBXChart() {
+
+  if (
+    window.BXChart &&
+    typeof window.BXChart.init === "function"
+  ) {
+
+    window.BXChart.init();
+
+  }
+
+}
+
+if (document.readyState === "loading") {
+
+  document.addEventListener(
+    "DOMContentLoaded",
+    initializeBXChart,
+    { once: true }
+  );
+
+} else {
+
+  initializeBXChart();
+
+}
