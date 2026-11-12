@@ -1,248 +1,500 @@
 
 "use strict";
 
-/* BLOXIO LANGUAGE ENGINE */
+/* =========================================================
+   BLOXIO LANGUAGE ENGINE V2
+   Supported: EN AR FR ES DE RU TR ZH JA
+========================================================= */
+
 window.BXLanguage = (() => {
-  const STORAGE_KEY = "bx_language";
-  const DEFAULT_LANG = "EN";
-  const SUPPORTED = ["EN", "AR", "FR", "ES", "DE", "RU", "TR", "ZH", "JA"];
-  const RTL_LANGS = ["AR"];
 
-  let current = DEFAULT_LANG;
-  let dictionary = {};
-  let loaded = false;
-  let loading = null;
+    const STORAGE_KEY = "bx_language";
+    const DEFAULT_LANG = "EN";
 
-  const normalize = lang => String(lang || DEFAULT_LANG).toUpperCase();
-  const isSupported = lang => SUPPORTED.includes(normalize(lang));
-  const isRTL = lang => RTL_LANGS.includes(normalize(lang));
-
-  function emit(name, detail = {}) {
-    window.dispatchEvent(new CustomEvent(name, { detail }));
-  }
-
-  function getSaved() {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      return isSupported(saved) ? normalize(saved) : null;
-    } catch {
-      return null;
-    }
-  }
-
-  function get(path) {
-    if (!path) return "";
-    const value = String(path).split(".").reduce(
-      (obj, key) => obj == null ? undefined : obj[key],
-      dictionary
-    );
-    return value === undefined || value === null ? path : value;
-  }
-
-  function applyDirection(lang) {
-    const rtl = isRTL(lang);
-    document.documentElement.lang = lang.toLowerCase();
-    document.documentElement.dir = rtl ? "rtl" : "ltr";
-
-    if (document.body) {
-      document.body.classList.toggle("rtl", rtl);
-      document.body.classList.toggle("ltr", !rtl);
-    }
-  }
-
-  function translatePage(root = document) {
-    const selectors = [
-      "[data-lang-key]",
-      "[data-lang-html]",
-      "[data-lang-placeholder]",
-      "[data-lang-title]",
-      "[data-lang-value]",
-      "[data-lang-aria]",
-      "[data-lang-alt]"
-    ].join(",");
-
-    if (root.nodeType === 1 && root.matches?.(selectors)) {
-      translateNode(root);
-    }
-
-    root.querySelectorAll?.(selectors).forEach(translateNode);
-
-    const currentLocale = document.getElementById("currentLocale");
-    if (currentLocale) currentLocale.textContent = current;
-  }
-
-  function translateNode(node) {
-    if (!node || node.nodeType !== 1) return;
-
-    const mappings = [
-      ["langKey", value => node.textContent = value],
-      ["langHtml", value => node.textContent = value],
-      ["langPlaceholder", value => node.setAttribute("placeholder", value)],
-      ["langTitle", value => node.setAttribute("title", value)],
-      ["langValue", value => node.value = value],
-      ["langAria", value => node.setAttribute("aria-label", value)],
-      ["langAlt", value => node.setAttribute("alt", value)]
+    const SUPPORTED = [
+        "EN", "AR", "FR", "ES", "DE",
+        "RU", "TR", "ZH", "JA"
     ];
 
-    for (const [dataKey, apply] of mappings) {
-      const key = node.dataset[dataKey];
-      if (!key) continue;
-      const value = get(key);
-      if (value !== key) apply(value);
+    const RTL_LANGS = ["AR"];
+
+    let current = DEFAULT_LANG;
+    let dictionary = {};
+    let loaded = false;
+    let loading = null;
+    let requestId = 0;
+
+    const normalize = lang =>
+        String(lang || DEFAULT_LANG).trim().toUpperCase();
+
+    const isSupported = lang =>
+        SUPPORTED.includes(normalize(lang));
+
+    const isRTL = lang =>
+        RTL_LANGS.includes(normalize(lang));
+
+    /* -----------------------------------------------------
+       STORAGE
+    ----------------------------------------------------- */
+
+    function getSaved() {
+        try {
+            const saved = normalize(
+                localStorage.getItem(STORAGE_KEY)
+            );
+
+            return isSupported(saved) ? saved : null;
+
+        } catch {
+            return null;
+        }
     }
-  }
 
-  async function loadLocale(lang) {
-    lang = normalize(lang);
-    if (!isSupported(lang)) return false;
+    /* -----------------------------------------------------
+       DICTIONARY
+    ----------------------------------------------------- */
 
-    if (loading) await loading;
+    function get(path, fallback) {
+        if (!path) return "";
 
-    loading = (async () => {
-      try {
-        const response = await fetch(
-          `/locales/${lang.toLowerCase()}.json`,
-          { cache: "no-cache" }
+        const value = String(path).split(".").reduce(
+            (object, key) =>
+                object == null ? undefined : object[key],
+            dictionary
         );
 
-        if (!response.ok) {
-          throw new Error(`Cannot load ${lang}: ${response.status}`);
+        if (value === undefined || value === null) {
+            return fallback !== undefined ? fallback : path;
         }
 
-        const data = await response.json();
+        return typeof value === "object"
+            ? fallback ?? path
+            : String(value);
+    }
 
-        if (!data || typeof data !== "object" || Array.isArray(data)) {
-          throw new Error(`Invalid dictionary: ${lang}`);
+    /* -----------------------------------------------------
+       DIRECTION
+    ----------------------------------------------------- */
+
+    function applyDirection(lang) {
+        const rtl = isRTL(lang);
+
+        document.documentElement.lang =
+            lang.toLowerCase();
+
+        document.documentElement.dir =
+            rtl ? "rtl" : "ltr";
+
+        document.documentElement.classList.toggle(
+            "rtl",
+            rtl
+        );
+
+        document.documentElement.classList.toggle(
+            "ltr",
+            !rtl
+        );
+
+        document.body?.classList.toggle("rtl", rtl);
+        document.body?.classList.toggle("ltr", !rtl);
+    }
+
+    /* -----------------------------------------------------
+       TRANSLATE NODE
+    ----------------------------------------------------- */
+
+    function translateNode(node) {
+        if (!node || node.nodeType !== 1) return;
+
+        const mappings = [
+            ["langKey", "text"],
+            ["langHtml", "html"],
+            ["langPlaceholder", "placeholder"],
+            ["langTitle", "title"],
+            ["langValue", "value"],
+            ["langAria", "aria-label"],
+            ["langAlt", "alt"]
+        ];
+
+        mappings.forEach(([dataKey, type]) => {
+            const key = node.dataset[dataKey];
+
+            if (!key) return;
+
+            const value = get(key);
+
+            if (value === key) return;
+
+            switch (type) {
+                case "text":
+                    node.textContent = value;
+                    break;
+
+                case "html":
+                    node.innerHTML = value;
+                    break;
+
+                case "placeholder":
+                case "title":
+                case "aria-label":
+                case "alt":
+                    node.setAttribute(type, value);
+                    break;
+
+                case "value":
+                    node.value = value;
+                    break;
+            }
+        });
+    }
+
+    /* -----------------------------------------------------
+       TRANSLATE PAGE
+    ----------------------------------------------------- */
+
+    function translatePage(root = document) {
+
+        const selector = [
+            "[data-lang-key]",
+            "[data-lang-html]",
+            "[data-lang-placeholder]",
+            "[data-lang-title]",
+            "[data-lang-value]",
+            "[data-lang-aria]",
+            "[data-lang-alt]"
+        ].join(",");
+
+        if (
+            root.nodeType === 1 &&
+            root.matches?.(selector)
+        ) {
+            translateNode(root);
         }
 
-        dictionary = data;
-        current = lang;
-        loaded = true;
+        root.querySelectorAll?.(selector)
+            .forEach(translateNode);
+
+        const currentLocale =
+            document.getElementById("currentLocale");
+
+        if (currentLocale) {
+            currentLocale.textContent = current;
+        }
+
+        document.querySelectorAll("[data-lang]")
+            .forEach(button => {
+                const active =
+                    normalize(button.dataset.lang) === current;
+
+                button.classList.toggle("active", active);
+
+                button.setAttribute(
+                    "aria-pressed",
+                    active ? "true" : "false"
+                );
+            });
+    }
+
+    /* -----------------------------------------------------
+       LOAD LOCALE
+    ----------------------------------------------------- */
+
+    async function loadLocale(lang) {
+
+        lang = normalize(lang);
+
+        if (!isSupported(lang)) {
+            console.error("[BXLanguage] Unsupported:", lang);
+            return false;
+        }
+
+        const id = ++requestId;
+
+        if (loading) {
+            await loading;
+        }
+
+        const task = (async () => {
+
+            try {
+                const url =
+                    `/locales/${lang.toLowerCase()}.json`;
+
+                const response = await fetch(url, {
+                    method: "GET",
+                    cache: "no-cache",
+                    headers: {
+                        Accept: "application/json"
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(
+                        `Locale HTTP ${response.status}: ${url}`
+                    );
+                }
+
+                const data = await response.json();
+
+                if (
+                    !data ||
+                    typeof data !== "object" ||
+                    Array.isArray(data)
+                ) {
+                    throw new Error(
+                        `Invalid dictionary: ${lang}`
+                    );
+                }
+
+                if (id !== requestId) {
+                    return false;
+                }
+
+                dictionary = data;
+                current = lang;
+                loaded = true;
+
+                try {
+                    localStorage.setItem(
+                        STORAGE_KEY,
+                        lang
+                    );
+                } catch {}
+
+                applyDirection(lang);
+                translatePage();
+
+                window.dispatchEvent(
+                    new CustomEvent("bx:language-change", {
+                        detail: {
+                            lang,
+                            dictionary
+                        }
+                    })
+                );
+
+                console.log(
+                    `[BXLanguage] Loaded ${lang}`
+                );
+
+                return true;
+
+            } catch (error) {
+
+                console.error(
+                    `[BXLanguage] Failed ${lang}`,
+                    error
+                );
+
+                return false;
+            }
+
+        })();
+
+        loading = task;
 
         try {
-          localStorage.setItem(STORAGE_KEY, lang);
-        } catch {}
-
-        applyDirection(lang);
-        translatePage();
-
-        emit("bx:language-change", { lang, dictionary });
-        return true;
-      } catch (error) {
-        console.error("[BXLanguage]", error);
-        return false;
-      }
-    })();
-
-    const result = await loading;
-    loading = null;
-    return result;
-  }
-
-  async function set(lang) {
-    lang = normalize(lang);
-    if (!isSupported(lang)) return false;
-
-    if (lang === current && loaded) {
-      translatePage();
-      return true;
+            return await task;
+        } finally {
+            if (loading === task) {
+                loading = null;
+            }
+        }
     }
 
-    return loadLocale(lang);
-  }
+    /* -----------------------------------------------------
+       SET LANGUAGE
+    ----------------------------------------------------- */
 
-  function bindLanguageButtons() {
-    document.querySelectorAll("[data-lang]").forEach(button => {
-      if (button.dataset.languageBound === "true") return;
+    async function set(lang) {
+        lang = normalize(lang);
 
-      button.dataset.languageBound = "true";
-      button.addEventListener("click", async () => {
-        const success = await set(button.dataset.lang);
+        if (!isSupported(lang)) return false;
+
+        if (lang === current && loaded) {
+            translatePage();
+            closeMenu();
+            return true;
+        }
+
+        const success = await loadLocale(lang);
 
         if (success) {
-          document.querySelectorAll("[data-lang]").forEach(item => {
-            item.setAttribute(
-              "aria-pressed",
-              normalize(item.dataset.lang) === current ? "true" : "false"
-            );
-          });
-
-          const menu = document.getElementById("localeMenu");
-          const trigger = document.getElementById("localeTrigger");
-
-          if (menu && trigger) {
-            trigger.setAttribute("aria-expanded", "false");
-          }
+            closeMenu();
         }
-      });
-    });
-  }
 
-  function bindLocaleMenu() {
-    const trigger = document.getElementById("localeTrigger");
-    const menu = document.getElementById("localeMenu");
-
-    if (!trigger || !menu || trigger.dataset.menuBound === "true") return;
-
-    trigger.dataset.menuBound = "true";
-
-    trigger.addEventListener("click", () => {
-      const open = trigger.getAttribute("aria-expanded") !== "true";
-      trigger.setAttribute("aria-expanded", String(open));
-    });
-
-    document.addEventListener("click", event => {
-      if (!event.target.closest(".locale-box")) {
-        trigger.setAttribute("aria-expanded", "false");
-      }
-    });
-
-    document.addEventListener("keydown", event => {
-      if (event.key === "Escape") {
-        trigger.setAttribute("aria-expanded", "false");
-      }
-    });
-  }
-
-  async function init() {
-    const saved = getSaved();
-
-    let browserLang = "EN";
-    try {
-      browserLang = normalize(
-        (navigator.language || "en").slice(0, 2)
-      );
-    } catch {}
-
-    const preferred = saved ||
-      (isSupported(browserLang) ? browserLang : DEFAULT_LANG);
-
-    const success = await loadLocale(preferred);
-
-    if (!success && preferred !== DEFAULT_LANG) {
-      await loadLocale(DEFAULT_LANG);
+        return success;
     }
 
-    bindLanguageButtons();
-    bindLocaleMenu();
+    /* -----------------------------------------------------
+       LOCALE MENU
+    ----------------------------------------------------- */
 
-    console.log(`[BX] Language ready: ${current}`);
-  }
+    function openMenu() {
+        const trigger = document.getElementById(
+            "localeTrigger"
+        );
 
-  return {
-    init,
-    set,
-    loadLocale,
-    get,
-    getCurrent: () => current,
-    getDictionary: () => dictionary,
-    translatePage,
-    ready: () => loaded,
-    supported: SUPPORTED,
-    rtl: RTL_LANGS
-  };
+        const menu = document.getElementById(
+            "localeMenu"
+        );
+
+        if (!trigger || !menu) return;
+
+        trigger.setAttribute("aria-expanded", "true");
+        menu.classList.add("open");
+    }
+
+    function closeMenu() {
+        const trigger = document.getElementById(
+            "localeTrigger"
+        );
+
+        const menu = document.getElementById(
+            "localeMenu"
+        );
+
+        if (!trigger || !menu) return;
+
+        trigger.setAttribute("aria-expanded", "false");
+        menu.classList.remove("open");
+    }
+
+    function toggleMenu() {
+        const trigger = document.getElementById(
+            "localeTrigger"
+        );
+
+        if (
+            trigger?.getAttribute("aria-expanded") === "true"
+        ) {
+            closeMenu();
+        } else {
+            openMenu();
+        }
+    }
+
+    /* -----------------------------------------------------
+       EVENT DELEGATION
+    ----------------------------------------------------- */
+
+    function bindEvents() {
+
+        if (document.documentElement.dataset.languageEventsBound) {
+            return;
+        }
+
+        document.documentElement.dataset.languageEventsBound =
+            "true";
+
+        document.addEventListener("click", async event => {
+
+            const languageButton =
+                event.target.closest("[data-lang]");
+
+            if (languageButton) {
+                event.preventDefault();
+
+                const lang = languageButton.dataset.lang;
+
+                const success = await set(lang);
+
+                if (!success) {
+                    console.error(
+                        "[BXLanguage] Could not activate",
+                        lang
+                    );
+                }
+
+                return;
+            }
+
+            const trigger =
+                event.target.closest("#localeTrigger");
+
+            if (trigger) {
+                event.preventDefault();
+                toggleMenu();
+                return;
+            }
+
+            if (!event.target.closest(".locale-box")) {
+                closeMenu();
+            }
+        });
+
+        document.addEventListener("keydown", event => {
+            if (event.key === "Escape") {
+                closeMenu();
+            }
+        });
+    }
+
+    /* -----------------------------------------------------
+       INIT
+    ----------------------------------------------------- */
+
+    async function init() {
+
+        bindEvents();
+
+        const saved = getSaved();
+
+        let browserLang = DEFAULT_LANG;
+
+        try {
+            browserLang = normalize(
+                navigator.language.slice(0, 2)
+            );
+        } catch {}
+
+        const preferred =
+            saved ||
+            (
+                isSupported(browserLang)
+                    ? browserLang
+                    : DEFAULT_LANG
+            );
+
+        let success = await loadLocale(preferred);
+
+        if (!success && preferred !== DEFAULT_LANG) {
+            success = await loadLocale(DEFAULT_LANG);
+        }
+
+        if (!success) {
+            console.error(
+                "[BXLanguage] No locale dictionary could be loaded"
+            );
+
+            return false;
+        }
+
+        console.log(
+            `[BXLanguage] Ready: ${current}`
+        );
+
+        return true;
+    }
+
+    return {
+        init,
+        set,
+        loadLocale,
+        get,
+        getCurrent: () => current,
+        getDictionary: () => dictionary,
+        translatePage,
+        translateNode,
+        ready: () => loaded,
+        supported: SUPPORTED,
+        rtl: RTL_LANGS,
+        openMenu,
+        closeMenu
+    };
+
 })();
 
 document.addEventListener("DOMContentLoaded", () => {
-  BXLanguage.init();
-});
+    window.BXLanguage.init();
+}, { once: true });
