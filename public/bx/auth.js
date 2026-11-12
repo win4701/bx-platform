@@ -1,128 +1,114 @@
 
 /* =========================================================
    BLOXIO AUTH ENGINE V8
-   SECURE SESSION MANAGEMENT
-   API V7 COMPATIBLE
-   ROUTES V8 COMPATIBLE
-   UI PRESERVED
+   public/bx/auth.js
+
+   Login / Register / Logout
+   Session Restore / Verification
+   Header Controls / UI Integration
+   API Engine Integration
 ========================================================= */
 
 "use strict";
 
+(function () {
+
 const AUTH = {
 
+  /* =====================================================
+     CONFIG
+  ===================================================== */
+
+  config: {
+    loginEndpoint: "/auth/login",
+    registerEndpoint: "/auth/register",
+    meEndpoint: "/auth/me",
+    logoutEndpoint: "/auth/logout",
+
+    minPasswordLength: 6,
+    animationDuration: 220,
+
+    rememberKey: "rememberDevice"
+  },
+
+  /* =====================================================
+     STATE
+  ===================================================== */
+
   state: {
+    initialized: false,
     loading: false,
-    mode: "login",
     authenticated: false,
+    verifying: false,
+
+    mode: "login",
+
     token: null,
     refreshToken: null,
-    user: null,
-    browser: true,
-    ready: false
+    user: null
   },
+
+  /* =====================================================
+     ELEMENTS
+  ===================================================== */
 
   el: {},
 
-  /* =====================================================
-     INIT
-  ===================================================== */
-
-  init() {
-
-    if (this.state.ready) return;
-
-    this.cache();
-
-    this.bind();
-
-    this.bindGlobal();
-
-    this.injectReferral();
-
-    this.bootstrap();
-
-    this.state.ready = true;
-
-  },
-
-  /* =====================================================
-     DOM
-  ===================================================== */
-
-  getElement(...ids) {
-
-    for (const id of ids) {
-
-      const element =
-        document.getElementById(id);
-
-      if (element) return element;
-
-    }
-
-    return null;
-
-  },
-
   cache() {
 
-    this.el = {
+    const ids = {
+      overlay: "authOverlay",
 
-      app: this.getElement("app"),
+      loginTab: "loginBtn",
+      registerTab: "registerBtn",
 
-      overlay: this.getElement("authOverlay"),
+      loginBox: "loginBox",
+      registerBox: "registerBox",
 
-      loginBox: this.getElement("loginBox"),
+      loginForm: "loginForm",
+      registerForm: "registerForm",
 
-      registerBox: this.getElement("registerBox"),
+      email: "loginEmail",
+      pass: "loginPassword",
 
-      loginForm: this.getElement("loginForm"),
+      regEmail: "registerEmail",
+      regPhone: "registerPhone",
+      regPass: "registerPassword",
+      regConfirm: "registerConfirm",
 
-      registerForm: this.getElement("registerForm"),
+      regRef: "inviteCode",
+      agreeTerms: "agreeTerms",
 
-      email: this.getElement("loginEmail"),
+      guestToolbar: "guestToolbar",
+      userToolbar: "userToolbar",
 
-      pass: this.getElement(
-        "loginPassword",
-        "loginPass"
-      ),
+      headerLoginBtn: "headerLoginBtn",
+      headerRegisterBtn: "headerRegisterBtn",
 
-      regEmail: this.getElement(
-        "registerEmail",
-        "regEmail"
-      ),
+      logoutBtn: "logoutBtn",
 
-      regPass: this.getElement(
-        "registerPassword",
-        "regPass"
-      ),
+      userMenuTrigger: "userMenuTrigger",
+      userDropdown: "userDropdown",
 
-      regPhone: this.getElement(
-        "registerPhone",
-        "regPhone"
-      ),
-
-      regRef: this.getElement(
-        "inviteCode",
-        "regRef"
-      ),
-
-      loginBtn: this.getElement("loginBtn"),
-
-      registerBtn: this.getElement("registerBtn"),
-
-      toggle: this.getElement("toggleAuth"),
-
-      error: this.getElement("authError"),
-
-      title: this.getElement("authTitle"),
-
-      sub: this.getElement("authSub"),
-
-      switch: this.getElement("switchText")
-
+      app: "app",
+      error: "authError",
+      authTitle: "authTitle",
+      vipTier: "vipTier"
     };
+
+    Object.entries(ids).forEach(([key, id]) => {
+      this.el[key] = document.getElementById(id);
+    });
+
+    // Compatibility with previous AUTH integrations.
+    this.el.loginBtn = this.el.loginForm?.querySelector(
+      'button[type="submit"]'
+    );
+
+    this.el.registerBtnSubmit =
+      this.el.registerForm?.querySelector(
+        'button[type="submit"]'
+      );
 
   },
 
@@ -133,24 +119,22 @@ const AUTH = {
   readStorage(key) {
 
     try {
-
       return localStorage.getItem(key);
-
-    } catch (error) {
-
-      console.warn("[AUTH STORAGE]", error);
-
+    } catch {
       return null;
-
     }
 
   },
 
-  writeStorage(key, value) {
+  writeStorage(key, value, remember = true) {
 
     try {
 
-      localStorage.setItem(key, value);
+      if (remember) {
+        localStorage.setItem(key, value);
+      } else {
+        sessionStorage.setItem(key, value);
+      }
 
       return true;
 
@@ -167,13 +151,10 @@ const AUTH = {
   removeStorage(key) {
 
     try {
-
       localStorage.removeItem(key);
-
+      sessionStorage.removeItem(key);
     } catch (error) {
-
       console.warn("[AUTH STORAGE]", error);
-
     }
 
   },
@@ -181,364 +162,453 @@ const AUTH = {
   getToken() {
 
     return (
+      this.readStorage("token") ||
       this.readStorage("accessToken") ||
-      this.readStorage("token")
+      this.readStorage("sessionToken")
     );
 
   },
 
   /* =====================================================
-     BOOTSTRAP
+     SESSION
   ===================================================== */
 
-  async bootstrap() {
+  session(response, remember = true) {
 
-    const accessToken = this.getToken();
+    const data =
+      response?.data &&
+      typeof response.data === "object"
+        ? response.data
+        : response;
+
+    const token =
+      data?.accessToken ||
+      data?.token ||
+      response?.accessToken ||
+      response?.token;
 
     const refreshToken =
-      this.readStorage("refreshToken");
+      data?.refreshToken ||
+      response?.refreshToken ||
+      null;
 
-    const storedUser =
-      this.readStorage("user");
+    const user =
+      data?.user ||
+      response?.user ||
+      null;
 
-    if (storedUser) {
-
-      try {
-
-        this.state.user = JSON.parse(storedUser);
-
-      } catch {
-
-        this.removeStorage("user");
-
-      }
-
+    if (!token) {
+      throw new Error("Token Missing");
     }
 
-    if (
-      accessToken &&
-      !this.isTokenExpired(accessToken)
-    ) {
+    if (!this.writeStorage("token", token, remember)) {
+      throw new Error("Unable to save session");
+    }
 
-      this.setSession(
-        accessToken,
+    this.writeStorage(
+      "accessToken",
+      token,
+      remember
+    );
+
+    if (refreshToken) {
+      this.writeStorage(
+        "refreshToken",
         refreshToken,
-        this.state.user
+        remember
       );
-
-      this.enter();
-
-      // Verify session against the server.
-      this.verifySession();
-
-    } else {
-
-      this.clearSession();
-
-      this.state.authenticated = false;
-
-      this.unlockApp();
-
-      this.showAuth();
-
     }
 
-    this.telegram();
+    if (user) {
+      this.writeStorage(
+        "user",
+        JSON.stringify(user),
+        remember
+      );
+    }
+
+    if (window.API?.setToken) {
+      window.API.setToken(token);
+    }
+
+    this.state.token = token;
+    this.state.refreshToken = refreshToken;
+    this.state.user = user;
+    this.state.authenticated = true;
+
+    return user;
+
+  },
+
+  clearSession() {
+
+    [
+      "token",
+      "accessToken",
+      "refreshToken",
+      "sessionToken",
+      "user"
+    ].forEach(key => this.removeStorage(key));
+
+    if (window.API?.setToken) {
+      window.API.setToken(null);
+    }
+
+    this.state.token = null;
+    this.state.refreshToken = null;
+    this.state.user = null;
+    this.state.authenticated = false;
 
   },
 
   /* =====================================================
-     TOKEN EXPIRY
+     USER RESTORE
   ===================================================== */
 
-  isTokenExpired(token) {
+  restoreUser() {
 
     try {
 
-      const parts = token.split(".");
+      const value = this.readStorage("user");
 
-      if (parts.length !== 3) {
-
-        return true;
-
+      if (value) {
+        this.state.user = JSON.parse(value);
       }
-
-      const base64 = parts[1]
-        .replace(/-/g, "+")
-        .replace(/_/g, "/");
-
-      const payload = JSON.parse(
-        atob(base64)
-      );
-
-      if (!payload.exp) {
-
-        return false;
-
-      }
-
-      return (
-        Number(payload.exp) * 1000 <= Date.now()
-      );
 
     } catch {
-
-      return true;
-
+      this.state.user = null;
     }
 
   },
 
   /* =====================================================
-     VERIFY SESSION
+     API REQUEST
   ===================================================== */
 
-  async verifySession() {
+  async request(url, body = {}, options = {}) {
 
-    if (!this.state.token) return false;
-
-    try {
-
-      const response = await window.API.get(
-        "/auth/me"
-      );
-
-      if (
-        !response ||
-        response.error ||
-        response.success === false
-      ) {
-
-        throw new Error(
-          response?.error || "session_invalid"
-        );
-
-      }
-
-      const data = response.data || response;
-
-      if (data.user) {
-
-        this.state.user = data.user;
-
-        this.writeStorage(
-          "user",
-          JSON.stringify(data.user)
-        );
-
-      }
-
-      this.state.authenticated = true;
-
-      return true;
-
-    } catch (error) {
-
-      console.warn(
-        "[AUTH VERIFY]",
-        error.message
-      );
-
-      this.logout(false);
-
-      return false;
-
+    if (
+      !window.API ||
+      typeof window.API.post !== "function"
+    ) {
+      throw new Error("API service unavailable");
     }
 
-  },
+    const response = await window.API.post(
+      url,
+      body,
+      {
+        auth: options.auth ?? false,
+        cache: false
+      }
+    );
 
-  /* =====================================================
-     TELEGRAM
-  ===================================================== */
+    if (
+      !response ||
+      response.error ||
+      response.success === false
+    ) {
 
-  telegram() {
-
-    if (!window.Telegram?.WebApp) return;
-
-    try {
-
-      window.Telegram.WebApp.ready();
-
-      window.Telegram.WebApp.expand();
-
-    } catch (error) {
-
-      console.warn(
-        "[AUTH TELEGRAM]",
-        error
+      throw new Error(
+        response?.error ||
+        response?.message ||
+        "request_failed"
       );
 
     }
 
+    return response;
+
   },
 
-  /* =====================================================
-     GLOBAL EVENTS
-  ===================================================== */
+  async get(url) {
 
-  bindGlobal() {
+    if (!window.API?.get) {
+      throw new Error("API service unavailable");
+    }
 
-    window.addEventListener(
-      "storage",
-      event => {
-
-        if (
-          event.key === "token" ||
-          event.key === "accessToken"
-        ) {
-
-          if (!event.newValue) {
-
-            this.logout(false);
-
-          } else {
-
-            this.state.token = event.newValue;
-
-          }
-
-        }
-
+    const response = await window.API.get(
+      url,
+      {
+        cache: false
       }
     );
 
-    window.API?.on?.(
-      "auth:logout",
-      () => {
+    if (
+      !response ||
+      response.error ||
+      response.success === false
+    ) {
+      throw new Error(
+        response?.error ||
+        response?.message ||
+        "request_failed"
+      );
+    }
 
-        if (this.state.authenticated) {
-
-          this.logout(false);
-
-        }
-
-      }
-    );
-
-    window.addEventListener(
-      "pageshow",
-      () => {
-
-        this.unlockApp();
-
-      }
-    );
+    return response;
 
   },
 
   /* =====================================================
-     EVENTS
+     VALIDATION
   ===================================================== */
 
-  bind() {
+  email(value) {
 
-    this.el.toggle?.addEventListener(
-      "click",
-      event => {
-
-        event.preventDefault();
-
-        this.toggle();
-
-      }
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+      String(value || "").trim()
     );
 
-    this.el.loginBtn?.addEventListener(
-      "click",
-      event => {
+  },
 
-        if (
-          this.el.loginBtn.type !== "submit"
-        ) {
+  password(value) {
 
-          event.preventDefault();
-
-          this.login();
-
-        }
-
-      }
+    return (
+      typeof value === "string" &&
+      value.length >= this.config.minPasswordLength
     );
 
-    this.el.registerBtn?.addEventListener(
-      "click",
-      event => {
+  },
 
-        if (
-          this.el.registerBtn.type !== "submit"
-        ) {
+  /* =====================================================
+     ERROR MESSAGES
+  ===================================================== */
 
-          event.preventDefault();
+  message(error) {
 
-          this.register();
-
-        }
-
-      }
+    const message = String(
+      error?.message || error || ""
     );
 
-    this.el.loginForm?.addEventListener(
-      "submit",
-      event => {
+    const known = {
 
-        event.preventDefault();
+      unauthorized: "Session expired. Please login again",
+      invalid_token: "Session expired",
+      invalid_credentials: "Invalid email or password",
 
-        this.login();
+      email_exists: "Email already registered",
+      weak_password: "Password is too weak",
 
-      }
+      network: "Network connection failed",
+      timeout: "Request timed out",
+
+      request_failed: "Request failed. Try again",
+      auth_rate_limit: "Too many attempts. Try again later",
+
+      ACCOUNT_BLOCKED: "Your account is restricted",
+      USER_NOT_FOUND: "Account not found",
+
+      "API service unavailable":
+        "Connection service unavailable",
+
+      "Token Missing":
+        "Authentication response is incomplete",
+
+      "Unable to save session":
+        "Unable to save login session"
+
+    };
+
+    return known[message] || message || "Authentication failed";
+
+  },
+
+  /* =====================================================
+     ERROR UI
+  ===================================================== */
+
+  error(message) {
+
+    if (!this.el.error) {
+
+      console.warn("[AUTH]", message);
+
+      return;
+
+    }
+
+    this.el.error.textContent = message;
+
+    this.el.error.classList.add("active");
+
+  },
+
+  clearError() {
+
+    if (!this.el.error) return;
+
+    this.el.error.textContent = "";
+
+    this.el.error.classList.remove("active");
+
+  },
+
+  /* =====================================================
+     LOADING
+  ===================================================== */
+
+  loading(button, state) {
+
+    this.state.loading = state;
+
+    if (!button) return;
+
+    if (state) {
+
+      button.dataset.originalText =
+        button.textContent;
+
+    } else if (button.dataset.originalText) {
+
+      button.textContent =
+        button.dataset.originalText;
+
+    }
+
+    button.disabled = state;
+
+    button.classList.toggle("loading", state);
+
+    button.setAttribute(
+      "aria-busy",
+      String(state)
     );
 
-    this.el.registerForm?.addEventListener(
-      "submit",
-      event => {
+  },
 
-        event.preventDefault();
+  /* =====================================================
+     MODE
+  ===================================================== */
 
-        this.register();
+  setMode(mode) {
 
-      }
+    if (
+      mode !== "login" &&
+      mode !== "register"
+    ) {
+      return;
+    }
+
+    this.state.mode = mode;
+
+    const login = mode === "login";
+    const register = mode === "register";
+
+    this.el.loginBox?.classList.toggle(
+      "active",
+      login
     );
 
-    document.addEventListener(
-      "keydown",
-      event => {
+    this.el.registerBox?.classList.toggle(
+      "active",
+      register
+    );
 
-        if (
-          event.key !== "Enter" ||
-          this.state.loading
-        ) {
+    this.el.loginBox?.classList.toggle(
+      "hidden",
+      !login
+    );
 
-          return;
+    this.el.registerBox?.classList.toggle(
+      "hidden",
+      !register
+    );
 
-        }
+    this.el.loginTab?.classList.toggle(
+      "active",
+      login
+    );
 
-        if (
-          event.target?.tagName === "TEXTAREA"
-        ) {
+    this.el.registerTab?.classList.toggle(
+      "active",
+      register
+    );
 
-          return;
+    this.el.loginTab?.setAttribute(
+      "aria-selected",
+      String(login)
+    );
 
-        }
+    this.el.registerTab?.setAttribute(
+      "aria-selected",
+      String(register)
+    );
 
-        if (
-          event.target?.tagName === "BUTTON"
-        ) {
+    if (this.el.authTitle) {
+      this.el.authTitle.textContent = login
+        ? "Welcome To BLOXIO"
+        : "Create Your BLOXIO Account";
+    }
 
-          return;
+    this.clearError();
 
-        }
+  },
 
-        if (this.state.mode === "login") {
+  toggle() {
 
-          this.login();
+    this.setMode(
+      this.state.mode === "login"
+        ? "register"
+        : "login"
+    );
 
-        } else {
+  },
 
-          this.register();
+  /* =====================================================
+     AUTH OVERLAY
+  ===================================================== */
 
-        }
+  showAuth(mode = "login") {
 
+    const overlay = this.el.overlay;
+
+    if (!overlay) return;
+
+    this.setMode(mode);
+
+    this.lockApp();
+
+    // Remove hidden because .hidden uses !important.
+    overlay.classList.remove("hidden");
+
+    overlay.style.display = "flex";
+
+    requestAnimationFrame(() => {
+
+      overlay.classList.add("visible");
+
+    });
+
+  },
+
+  hideAuth(force = false) {
+
+    const overlay = this.el.overlay;
+
+    if (!overlay) return;
+
+    overlay.classList.remove("visible");
+
+    const hide = () => {
+
+      if (overlay.classList.contains("visible")) {
+        return;
       }
+
+      overlay.style.display = "none";
+      overlay.classList.add("hidden");
+
+    };
+
+    if (force) {
+      hide();
+      return;
+    }
+
+    setTimeout(
+      hide,
+      this.config.animationDuration
     );
 
   },
@@ -563,9 +633,7 @@ const AUTH = {
     if (this.el.app) {
 
       this.el.app.style.opacity = "1";
-
       this.el.app.style.visibility = "visible";
-
       this.el.app.style.pointerEvents = "auto";
 
     }
@@ -579,175 +647,71 @@ const AUTH = {
   },
 
   /* =====================================================
-     AUTH VIEW
+     TOOLBARS
   ===================================================== */
 
-  showAuth() {
+  updateUI() {
 
-    if (!this.el.overlay) return;
+    const authenticated =
+      this.state.authenticated;
 
-    this.lockApp();
+    this.el.guestToolbar?.classList.toggle(
+      "hidden",
+      authenticated
+    );
 
-    this.el.overlay.style.display = "flex";
+    this.el.userToolbar?.classList.toggle(
+      "hidden",
+      !authenticated
+    );
 
-    requestAnimationFrame(() => {
+    if (this.el.vipTier && this.state.user) {
 
-      this.el.overlay.classList.add("visible");
-
-    });
-
-  },
-
-  hideAuth(force = false) {
-
-    if (!this.el.overlay) return;
-
-    this.el.overlay.classList.remove("visible");
-
-    if (force) {
-
-      this.el.overlay.style.display = "none";
-
-      return;
+      this.el.vipTier.textContent =
+        this.state.user.vipTier ||
+        this.state.user.role ||
+        "VIP 1";
 
     }
 
-    setTimeout(() => {
+    this.el.userMenuTrigger?.setAttribute(
+      "aria-expanded",
+      "false"
+    );
 
-      if (
-        !this.el.overlay.classList.contains("visible")
-      ) {
-
-        this.el.overlay.style.display = "none";
-
-      }
-
-    }, 220);
+    this.el.userDropdown?.classList.remove("active");
 
   },
 
   /* =====================================================
-     TOGGLE
+     ENTER APP
   ===================================================== */
 
-  toggle() {
+  enter() {
 
-    if (this.state.loading) return;
+    this.state.authenticated = true;
 
-    this.state.mode =
-      this.state.mode === "login"
-        ? "register"
-        : "login";
+    this.unlockApp();
 
-    this.el.loginBox?.classList.toggle(
-      "active",
-      this.state.mode === "login"
-    );
+    this.hideAuth(true);
 
-    this.el.registerBox?.classList.toggle(
-      "active",
-      this.state.mode === "register"
-    );
+    this.updateUI();
 
-    this.clearError();
+    window.WS?.connect?.();
 
-  },
-
-  /* =====================================================
-     VALIDATION
-  ===================================================== */
-
-  email(value) {
-
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-      .test(String(value || "").trim());
-
-  },
-
-  password(value) {
-
-    return (
-      typeof value === "string" &&
-      value.length >= 6
-    );
-
-  },
-
-  /* =====================================================
-     API REQUEST
-  ===================================================== */
-
-  async request(url, body = {}) {
-
-    if (
-      !window.API ||
-      typeof window.API.post !== "function"
-    ) {
-
-      throw new Error(
-        "API service unavailable"
-      );
-
+    if (window.API?.syncAll) {
+      window.API.syncAll().catch(error => {
+        console.warn("[AUTH SYNC]", error);
+      });
     }
 
-    const response = await window.API.post(
-      url,
-      body,
-      {
-        auth: false
-      }
+    document.dispatchEvent(
+      new CustomEvent("bloxio:authenticated", {
+        detail: {
+          user: this.state.user
+        }
+      })
     );
-
-    if (
-      !response ||
-      response.error ||
-      response.success === false
-    ) {
-
-      throw new Error(
-        response?.error ||
-        response?.message ||
-        "Request failed"
-      );
-
-    }
-
-    return response;
-
-  },
-
-  /* =====================================================
-     RESPONSE NORMALIZATION
-  ===================================================== */
-
-  normalizeResponse(response) {
-
-    const data =
-      response?.data &&
-      typeof response.data === "object"
-        ? response.data
-        : response;
-
-    return {
-
-      token:
-        data?.accessToken ||
-        data?.token ||
-        response?.accessToken ||
-        response?.token ||
-        null,
-
-      refreshToken:
-        data?.refreshToken ||
-        response?.refreshToken ||
-        null,
-
-      user:
-        data?.user ||
-        response?.user ||
-        null
-
-    };
 
   },
 
@@ -766,36 +730,37 @@ const AUTH = {
       this.el.pass?.value || "";
 
     if (!this.email(email)) {
-
       this.error("Invalid Email");
-
+      this.el.email?.focus();
       return;
-
     }
 
     if (!this.password(password)) {
-
       this.error("Password Too Short");
-
+      this.el.pass?.focus();
       return;
-
     }
 
     this.clearError();
 
-    this.loading(this.el.loginBtn, true);
+    const button = this.el.loginBtn;
+
+    this.loading(button, true);
 
     try {
 
       const response = await this.request(
-        "/auth/login",
+        this.config.loginEndpoint,
         {
           email,
           password
         }
       );
 
-      this.session(response);
+      const remember =
+        this.el.rememberDevice?.checked !== false;
+
+      this.session(response, remember);
 
       this.enter();
 
@@ -805,7 +770,7 @@ const AUTH = {
 
     } finally {
 
-      this.loading(this.el.loginBtn, false);
+      this.loading(button, false);
 
     }
 
@@ -822,50 +787,96 @@ const AUTH = {
     const email =
       this.el.regEmail?.value?.trim() || "";
 
-    const password =
-      this.el.regPass?.value || "";
-
     const phone =
       this.el.regPhone?.value?.trim() || "";
 
-    const referral =
+    const password =
+      this.el.regPass?.value || "";
+
+    const confirm =
+      this.el.regConfirm?.value || "";
+
+    const inviteCode =
       this.el.regRef?.value?.trim() || "";
 
     if (!this.email(email)) {
-
       this.error("Invalid Email");
-
+      this.el.regEmail?.focus();
       return;
+    }
 
+    if (!phone) {
+      this.error("Phone number is required");
+      this.el.regPhone?.focus();
+      return;
     }
 
     if (!this.password(password)) {
-
-      this.error("Password Too Short");
-
+      this.error("Password must contain at least 6 characters");
+      this.el.regPass?.focus();
       return;
+    }
 
+    if (password !== confirm) {
+      this.error("Passwords do not match");
+      this.el.regConfirm?.focus();
+      return;
+    }
+
+    if (!this.el.agreeTerms?.checked) {
+      this.error("Please accept Terms & Privacy");
+      return;
     }
 
     this.clearError();
 
-    this.loading(this.el.registerBtn, true);
+    const button = this.el.registerBtnSubmit;
+
+    this.loading(button, true);
 
     try {
 
       const response = await this.request(
-        "/auth/register",
+        this.config.registerEndpoint,
         {
           email,
-          password,
           phone,
-          referral
+          password,
+          inviteCode
         }
       );
 
-      this.session(response);
+      const data =
+        response?.data &&
+        typeof response.data === "object"
+          ? response.data
+          : response;
 
-      this.enter();
+      // Some backends require login after registration.
+      if (
+        data?.accessToken ||
+        data?.token ||
+        response?.accessToken ||
+        response?.token
+      ) {
+
+        this.session(response, true);
+
+        this.enter();
+
+      } else {
+
+        this.setMode("login");
+
+        if (this.el.email) {
+          this.el.email.value = email;
+        }
+
+        this.error(
+          "Account created. Please login."
+        );
+
+      }
 
     } catch (error) {
 
@@ -873,105 +884,80 @@ const AUTH = {
 
     } finally {
 
-      this.loading(this.el.registerBtn, false);
+      this.loading(button, false);
 
     }
 
   },
 
   /* =====================================================
-     SESSION
+     VERIFY SESSION
   ===================================================== */
 
-  session(response) {
+  async verifySession() {
 
-    const data = this.normalizeResponse(response);
+    if (this.state.verifying) return false;
 
-    if (!data.token) {
+    const token = this.getToken();
 
-      throw new Error("Token Missing");
-
+    if (!token) {
+      return false;
     }
 
-    this.setSession(
-      data.token,
-      data.refreshToken,
-      data.user
-    );
+    this.state.verifying = true;
+    this.state.token = token;
 
-  },
-
-  setSession(token, refreshToken, user) {
-
-    const saved = window.API?.setToken
-      ? (window.API.setToken(token), true)
-      : this.writeStorage("token", token);
-
-    if (!saved) {
-
-      throw new Error("Unable to save session");
-
+    if (window.API?.setToken) {
+      window.API.setToken(token);
     }
 
-    this.writeStorage("accessToken", token);
+    try {
 
-    if (refreshToken) {
-
-      this.writeStorage(
-        "refreshToken",
-        refreshToken
+      const response = await this.get(
+        this.config.meEndpoint
       );
 
-    }
+      const data =
+        response?.data &&
+        typeof response.data === "object"
+          ? response.data
+          : response;
 
-    if (user) {
+      const user = data?.user || response?.user;
+
+      if (!user) {
+        throw new Error("session_invalid");
+      }
+
+      this.state.user = user;
+      this.state.authenticated = true;
 
       this.writeStorage(
         "user",
-        JSON.stringify(user)
+        JSON.stringify(user),
+        true
       );
 
-    }
+      this.enter();
 
-    this.state.token = token;
+      return true;
 
-    this.state.refreshToken = refreshToken || null;
+    } catch (error) {
 
-    this.state.user = user || null;
+      console.warn(
+        "[AUTH VERIFY]",
+        this.message(error)
+      );
 
-    this.state.authenticated = true;
+      this.clearSession();
 
-  },
+      return false;
 
-  /* =====================================================
-     CLEAR SESSION
-  ===================================================== */
+    } finally {
 
-  clearSession() {
-
-    if (window.API?.setToken) {
-
-      window.API.setToken(null);
-
-    } else {
-
-      this.removeStorage("token");
-
-      this.removeStorage("accessToken");
+      this.state.verifying = false;
 
     }
-
-    this.removeStorage("refreshToken");
-
-    this.removeStorage("user");
-
-    this.state.authenticated = false;
-
-    this.state.token = null;
-
-    this.state.refreshToken = null;
-
-    this.state.user = null;
 
   },
 
@@ -981,6 +967,8 @@ const AUTH = {
 
   async logout(notify = true) {
 
+    if (this.state.loading) return;
+
     const hadSession = Boolean(
       this.state.token || this.getToken()
     );
@@ -989,8 +977,8 @@ const AUTH = {
 
       try {
 
-        await window.API?.post?.(
-          "/auth/logout",
+        await this.request(
+          this.config.logoutEndpoint,
           {},
           { auth: true }
         );
@@ -1010,127 +998,137 @@ const AUTH = {
 
     window.WS?.disconnect?.();
 
-    this.showAuth();
+    this.updateUI();
+
+    this.lockApp();
+
+    this.showAuth("login");
 
     this.clearError();
 
-  },
-
-  /* =====================================================
-     ENTER APP
-  ===================================================== */
-
-  enter() {
-
-    this.unlockApp();
-
-    this.hideAuth(true);
-
-    if (this.state.token) {
-
-      window.WS?.connect?.();
-
-      window.API?.syncAll?.();
-
-    }
-
-  },
-
-  /* =====================================================
-     LOADING
-  ===================================================== */
-
-  loading(button, state) {
-
-    this.state.loading = state;
-
-    if (!button) return;
-
-    button.disabled = state;
-
-    button.classList.toggle(
-      "loading",
-      state
+    document.dispatchEvent(
+      new CustomEvent("bloxio:logout")
     );
 
   },
 
   /* =====================================================
-     ERROR MESSAGES
+     HEADER EVENTS
   ===================================================== */
 
-  message(error) {
+  bindHeader() {
 
-    const message = String(
-      error?.message || ""
+    this.el.headerLoginBtn?.addEventListener(
+      "click",
+      () => this.showAuth("login")
     );
 
-    const known = {
+    this.el.headerRegisterBtn?.addEventListener(
+      "click",
+      () => this.showAuth("register")
+    );
 
-      unauthorized: "Session expired",
+    this.el.logoutBtn?.addEventListener(
+      "click",
+      () => this.logout()
+    );
 
-      invalid_token: "Session expired",
+    this.el.userMenuTrigger?.addEventListener(
+      "click",
+      () => {
 
-      network: "Network connection failed",
+        const dropdown = this.el.userDropdown;
 
-      timeout: "Request timed out",
+        if (!dropdown) return;
 
-      retry_failed: "Request failed. Try again",
+        const open =
+          dropdown.classList.toggle("active");
 
-      request_failed: "Request failed",
+        this.el.userMenuTrigger.setAttribute(
+          "aria-expanded",
+          String(open)
+        );
 
-      email_exists: "Email already registered",
+      }
+    );
 
-      weak_password: "Password is too weak",
+    document.addEventListener(
+      "click",
+      event => {
 
-      invalid_credentials: "Invalid email or password",
+        if (
+          !this.el.userToolbar?.contains(event.target)
+        ) {
 
-      session_invalid: "Session expired. Please log in again",
+          this.el.userDropdown?.classList.remove(
+            "active"
+          );
 
-      "API service unavailable":
-        "Connection service unavailable",
+          this.el.userMenuTrigger?.setAttribute(
+            "aria-expanded",
+            "false"
+          );
 
-      "Token Missing":
-        "Authentication response is incomplete",
+        }
 
-      "Unable to save session":
-        "Unable to save login session"
-
-    };
-
-    return known[message] ||
-      message ||
-      "Authentication failed";
+      }
+    );
 
   },
 
   /* =====================================================
-     ERROR UI
+     FORM EVENTS
   ===================================================== */
 
-  error(message) {
+  bindForms() {
 
-    if (!this.el.error) {
+    this.el.loginTab?.addEventListener(
+      "click",
+      () => this.setMode("login")
+    );
 
-      console.warn("[AUTH]", message);
+    this.el.registerTab?.addEventListener(
+      "click",
+      () => this.setMode("register")
+    );
 
-      return;
+    this.el.loginForm?.addEventListener(
+      "submit",
+      event => {
 
-    }
+        event.preventDefault();
 
-    this.el.error.innerText = message;
+        this.login();
 
-    this.el.error.classList.add("active");
+      }
+    );
 
-  },
+    this.el.registerForm?.addEventListener(
+      "submit",
+      event => {
 
-  clearError() {
+        event.preventDefault();
 
-    if (!this.el.error) return;
+        this.register();
 
-    this.el.error.innerText = "";
+      }
+    );
 
-    this.el.error.classList.remove("active");
+    this.el.overlay?.addEventListener(
+      "click",
+      event => {
+
+        if (
+          event.target.classList.contains("auth-backdrop")
+        ) {
+
+          // Keep authentication overlay open.
+          this.clearError();
+
+        }
+
+      }
+    );
 
   },
 
@@ -1153,6 +1151,66 @@ const AUTH = {
 
     }
 
+  },
+
+  /* =====================================================
+     INITIALIZATION
+  ===================================================== */
+
+  async init() {
+
+    if (this.state.initialized) {
+      return;
+    }
+
+    this.state.initialized = true;
+
+    this.cache();
+
+    this.bindHeader();
+
+    this.bindForms();
+
+    this.injectReferral();
+
+    this.restoreUser();
+
+    this.setMode("login");
+
+    const token = this.getToken();
+
+    if (token) {
+
+      const valid = await this.verifySession();
+
+      if (!valid) {
+
+        this.unlockApp();
+
+        this.updateUI();
+
+        this.showAuth("login");
+
+      }
+
+    } else {
+
+      this.state.authenticated = false;
+
+      this.unlockApp();
+
+      this.updateUI();
+
+      this.showAuth("login");
+
+    }
+
+    console.log(
+      "[BLOXIO AUTH] V8 INITIALIZED"
+    );
+
+    return true;
+
   }
 
 };
@@ -1167,16 +1225,33 @@ window.AUTH = AUTH;
    BOOT
 ========================================================= */
 
+function boot() {
+
+  AUTH.init().catch(error => {
+
+    console.error(
+      "[BLOXIO AUTH BOOT]",
+      error
+    );
+
+    AUTH.showAuth("login");
+
+  });
+
+}
+
 if (document.readyState === "loading") {
 
   document.addEventListener(
     "DOMContentLoaded",
-    () => AUTH.init(),
+    boot,
     { once: true }
   );
 
 } else {
 
-  AUTH.init();
+  boot();
 
 }
+
+})();
