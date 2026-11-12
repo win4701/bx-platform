@@ -1,8 +1,9 @@
 
 /* =========================================================
    BLOXIO WALLET ENTERPRISE 2026
-   Unified Wallet Engine
-   Socket.IO Compatible
+   Unified Wallet Engine V2
+   Guest Browsing + Authenticated Wallet
+   API Engine Compatible
    Preserves Existing DOM IDs and CSS Classes
 ========================================================= */
 
@@ -17,10 +18,15 @@ const $ = id => document.getElementById(id);
 
 const CONFIG = {
     COINS_PATH: "./data/coins.js",
-    API_WALLET: "/api/wallet",
-    API_DEPOSIT: "/api/payments/create",
-    API_WITHDRAW: "/api/payments/withdraw",
-    API_TRANSFER: "/api/finance/transfer"
+
+    // API Engine adds /api automatically.
+    API_WALLET: "/wallet",
+    API_DEPOSIT: "/payments/create",
+    API_WITHDRAW: "/payments/withdraw",
+    API_TRANSFER: "/finance/transfer",
+
+    SYNC_INTERVAL: 30000,
+    MAX_TRANSACTIONS: 20
 };
 
 /* =========================================================
@@ -32,14 +38,22 @@ const state = {
     balances: {},
     prices: {},
     transactions: [],
+
     ws: null,
     listeners: [],
+    apiListeners: [],
+
     syncing: false,
     initialized: false,
+    authenticated: false,
+
     activeGroup: "main",
     activeAsset: null,
     search: "",
-    coinsReady: false
+
+    coinsReady: false,
+    syncTimer: null,
+    requestVersion: 0
 };
 
 /* =========================================================
@@ -53,10 +67,22 @@ function safe(value) {
 
 function token() {
     try {
-        return localStorage.getItem("token") || "";
+        if (window.API && typeof window.API.token === "function") {
+            return window.API.token() || "";
+        }
+
+        return (
+            localStorage.getItem("accessToken") ||
+            localStorage.getItem("token") ||
+            ""
+        );
     } catch {
         return "";
     }
+}
+
+function isAuthenticated() {
+    return Boolean(token());
 }
 
 function notify(message) {
@@ -95,17 +121,21 @@ function hideStatus(id) {
 }
 
 function getBalance(symbol) {
-    return safe(state.balances[symbol]);
+    return safe(state.balances[String(symbol).toUpperCase()]);
 }
 
 function getPrice(symbol) {
-    const livePrice = state.prices[symbol];
+    const key = String(symbol).toUpperCase();
+    const livePrice = state.prices[key];
 
-    if (Number.isFinite(Number(livePrice))) {
+    if (
+        livePrice !== undefined &&
+        Number.isFinite(Number(livePrice))
+    ) {
         return Number(livePrice);
     }
 
-    const coin = getCoin(symbol);
+    const coin = getCoin(key);
 
     return coin && Number.isFinite(Number(coin.price))
         ? Number(coin.price)
@@ -113,9 +143,65 @@ function getPrice(symbol) {
 }
 
 function getCoin(symbol) {
+    const key = String(symbol || "").toUpperCase();
+
     return state.COINS.find(
-        coin => coin.symbol === String(symbol).toUpperCase()
+        coin => String(coin.symbol).toUpperCase() === key
     ) || null;
+}
+
+function clearWalletData() {
+    state.balances = {};
+    state.prices = {};
+    state.transactions = [];
+
+    renderBalances();
+}
+
+function requireAuth() {
+    if (isAuthenticated()) {
+        state.authenticated = true;
+        return true;
+    }
+
+    state.authenticated = false;
+
+    notify("Please login to use your wallet");
+
+    if (window.AUTH && typeof window.AUTH.openAuth === "function") {
+        window.AUTH.openAuth("login");
+    } else {
+        $("headerLoginBtn")?.click();
+    }
+
+    return false;
+}
+
+function normalizeResponse(response) {
+    if (!response || typeof response !== "object") {
+        throw new Error("Invalid server response");
+    }
+
+    if (response.error) {
+        throw new Error(
+            response.error.message ||
+            response.error ||
+            "Request failed"
+        );
+    }
+
+    if (response.success === false) {
+        throw new Error(
+            response.message ||
+            response.error ||
+            "Request failed"
+        );
+    }
+
+    return response.data &&
+        typeof response.data === "object"
+        ? response.data
+        : response;
 }
 
 /* =========================================================
@@ -133,7 +219,10 @@ async function loadCoins() {
         }
 
         state.COINS = registry.COINS.filter(
-            coin => coin && coin.symbol && coin.wallet !== false
+            coin =>
+                coin &&
+                coin.symbol &&
+                coin.wallet !== false
         );
 
         state.coinsReady = true;
@@ -143,6 +232,7 @@ async function loadCoins() {
     } catch (error) {
         console.error("[WALLET COINS]", error);
         notify("Unable to load wallet assets");
+
         return false;
     }
 }
@@ -153,9 +243,8 @@ async function loadCoins() {
 
 function getGroupAssets() {
     const coins = state.COINS;
-    const group = state.activeGroup;
 
-    switch (group) {
+    switch (state.activeGroup) {
         case "main":
             return coins.filter(
                 coin => coin.category === "main"
@@ -172,9 +261,7 @@ function getGroupAssets() {
             );
 
         case "defi": {
-            const defiTypes = new Set([
-                "defi"
-            ]);
+            const defiTypes = new Set(["defi"]);
 
             const defiSymbols = new Set([
                 "AAVE", "UNI", "MKR", "SNX",
@@ -208,12 +295,14 @@ function getVisibleAssets() {
     if (state.search) {
         const query = state.search.toLowerCase();
 
-        assets = state.COINS.filter(coin => {
-            const matches =
-                coin.symbol.toLowerCase().includes(query) ||
-                String(coin.name || "").toLowerCase().includes(query);
+        assets = assets.filter(coin => {
+            const symbol = String(coin.symbol || "").toLowerCase();
+            const name = String(coin.name || "").toLowerCase();
 
-            return matches;
+            return (
+                symbol.includes(query) ||
+                name.includes(query)
+            );
         });
     }
 
@@ -232,6 +321,7 @@ function buildAssetCard(asset) {
     card.dataset.group = asset.category || "";
 
     const icon = document.createElement("img");
+
     icon.src = asset.icon || "";
     icon.alt = asset.symbol;
     icon.loading = "lazy";
@@ -249,7 +339,10 @@ function buildAssetCard(asset) {
 
     const balance = document.createElement("div");
     balance.className = "asset-balance";
-    balance.textContent = getBalance(asset.symbol).toFixed(4);
+
+    balance.textContent = state.authenticated
+        ? getBalance(asset.symbol).toFixed(4)
+        : "—";
 
     card.append(icon, meta, balance);
 
@@ -287,11 +380,13 @@ function updateAssetCount(assets) {
     const active = $("walletActiveAssets");
 
     if (active) {
-        active.textContent = String(
-            assets.filter(asset =>
-                getBalance(asset.symbol) > 0
-            ).length
-        );
+        active.textContent = state.authenticated
+            ? String(
+                assets.filter(asset =>
+                    getBalance(asset.symbol) > 0
+                ).length
+            )
+            : "—";
     }
 }
 
@@ -303,37 +398,47 @@ function renderWalletTotal() {
     let total = 0;
     let active = 0;
 
-    Object.entries(state.balances).forEach(
-        ([symbol, balance]) => {
-            const amount = safe(balance);
+    if (state.authenticated) {
+        Object.entries(state.balances).forEach(
+            ([symbol, balance]) => {
+                const amount = safe(balance);
 
-            if (amount > 0) active++;
+                if (amount > 0) active++;
 
-            total += amount * getPrice(symbol);
-        }
-    );
+                total += amount * getPrice(symbol);
+            }
+        );
+    }
 
     const element = $("walletTotal");
 
     if (element) {
-        element.textContent = "$" + total.toFixed(2);
+        element.textContent = state.authenticated
+            ? "$" + total.toFixed(2)
+            : "—";
     }
 
     const activeElement = $("walletActiveAssets");
 
     if (activeElement) {
-        activeElement.textContent = String(active);
+        activeElement.textContent = state.authenticated
+            ? String(active)
+            : "—";
     }
 
     const bx = $("bal-bx");
     const xbc = $("bal-xbc");
 
     if (bx) {
-        bx.textContent = getBalance("BX").toFixed(4);
+        bx.textContent = state.authenticated
+            ? getBalance("BX").toFixed(4)
+            : "—";
     }
 
     if (xbc) {
-        xbc.textContent = getBalance("XBC").toFixed(4);
+        xbc.textContent = state.authenticated
+            ? getBalance("XBC").toFixed(4)
+            : "—";
     }
 }
 
@@ -348,24 +453,30 @@ function renderTransactions() {
 
     container.replaceChildren();
 
-    state.transactions.slice(0, 20).forEach(transaction => {
-        const row = document.createElement("div");
+    if (!state.authenticated) return;
 
-        row.className = "wallet-transaction";
+    state.transactions
+        .slice(0, CONFIG.MAX_TRANSACTIONS)
+        .forEach(transaction => {
+            const row = document.createElement("div");
 
-        const title = document.createElement("strong");
-        title.textContent =
-            transaction.type || "Transaction";
+            row.className = "wallet-transaction";
 
-        const detail = document.createElement("span");
-        detail.textContent = [
-            transaction.asset || "",
-            transaction.amount ?? ""
-        ].join(" ");
+            const title = document.createElement("strong");
 
-        row.append(title, detail);
-        container.appendChild(row);
-    });
+            title.textContent =
+                transaction.type || "Transaction";
+
+            const detail = document.createElement("span");
+
+            detail.textContent = [
+                transaction.asset || "",
+                transaction.amount ?? ""
+            ].join(" ");
+
+            row.append(title, detail);
+            container.appendChild(row);
+        });
 }
 
 /* =========================================================
@@ -395,7 +506,9 @@ function bindCategories() {
     Object.entries(tabs).forEach(([id, group]) => {
         const button = $(id);
 
-        if (!button) return;
+        if (!button || button.dataset.walletBound) return;
+
+        button.dataset.walletBound = "true";
 
         button.addEventListener("click", () => {
             state.activeGroup = group;
@@ -423,7 +536,9 @@ function bindCategories() {
 function bindSearch() {
     const input = $("walletAssetSearch");
 
-    if (!input) return;
+    if (!input || input.dataset.walletBound) return;
+
+    input.dataset.walletBound = "true";
 
     input.addEventListener("input", () => {
         state.search = input.value.trim();
@@ -486,6 +601,8 @@ function renderNetworks(symbol) {
     [deposit, withdraw].forEach(select => {
         if (!select || !Array.isArray(asset.networks)) return;
 
+        const previous = select.value;
+
         select.replaceChildren();
 
         asset.networks.forEach(network => {
@@ -496,6 +613,10 @@ function renderNetworks(symbol) {
 
             select.appendChild(option);
         });
+
+        if (asset.networks.includes(previous)) {
+            select.value = previous;
+        }
     });
 }
 
@@ -520,11 +641,21 @@ function closePanel(id) {
 }
 
 function bindPanels() {
+    if (state.panelsBound) return;
+
+    state.panelsBound = true;
+
     document.addEventListener("click", event => {
-        const openButton = event.target.closest("[data-wallet-open]");
-        const closeButton = event.target.closest("[data-wallet-close]");
+        const target = event.target;
+
+        if (!(target instanceof Element)) return;
+
+        const openButton = target.closest("[data-wallet-open]");
+        const closeButton = target.closest("[data-wallet-close]");
 
         if (openButton) {
+            if (!requireAuth()) return;
+
             openPanel(openButton.dataset.walletOpen);
         }
 
@@ -538,36 +669,27 @@ function bindPanels() {
    API REQUEST
 ========================================================= */
 
-async function request(url, options = {}) {
-    const headers = {
-        "Content-Type": "application/json",
-        ...(token()
-            ? { Authorization: `Bearer ${token()}` }
-            : {}),
-        ...(options.headers || {})
+async function request(method, url, body) {
+    if (!window.API) {
+        throw new Error("API Engine is unavailable");
+    }
+
+    const apiMethod = window.API[method];
+
+    if (typeof apiMethod !== "function") {
+        throw new Error(`API method ${method} is unavailable`);
+    }
+
+    const options = {
+        auth: true,
+        cache: false
     };
 
-    const response = await fetch(url, {
-        credentials: "same-origin",
-        ...options,
-        headers
-    });
+    const response = method === "get"
+        ? await apiMethod.call(window.API, url, options)
+        : await apiMethod.call(window.API, url, body, options);
 
-    let data = {};
-
-    try {
-        data = await response.json();
-    } catch {
-        throw new Error("Invalid server response");
-    }
-
-    if (!response.ok || data.success === false) {
-        throw new Error(
-            data.error || `Request failed (${response.status})`
-        );
-    }
-
-    return data;
+    return normalizeResponse(response);
 }
 
 /* =========================================================
@@ -577,22 +699,46 @@ async function request(url, options = {}) {
 async function syncWallet() {
     if (state.syncing) return;
 
+    if (!isAuthenticated()) {
+        state.authenticated = false;
+        clearWalletData();
+        return;
+    }
+
+    state.authenticated = true;
     state.syncing = true;
+
+    const version = ++state.requestVersion;
 
     try {
         const data = await request(
-            CONFIG.API_WALLET,
-            { method: "GET" }
+            "get",
+            CONFIG.API_WALLET
         );
 
-        if (data.balances &&
-            typeof data.balances === "object") {
+        // Ignore stale responses after logout.
+        if (
+            version !== state.requestVersion ||
+            !isAuthenticated()
+        ) {
+            return;
+        }
+
+        if (
+            data.balances &&
+            typeof data.balances === "object"
+        ) {
             state.balances = data.balances;
         }
 
-        if (data.prices &&
-            typeof data.prices === "object") {
-            state.prices = data.prices;
+        if (
+            data.prices &&
+            typeof data.prices === "object"
+        ) {
+            state.prices = {
+                ...state.prices,
+                ...data.prices
+            };
         }
 
         if (Array.isArray(data.transactions)) {
@@ -612,7 +758,15 @@ async function syncWallet() {
 
     } catch (error) {
         console.error("[WALLET SYNC]", error);
-        notify(error.message || "Wallet sync unavailable");
+
+        if (
+            error.message &&
+            /401|unauthorized|session expired/i.test(error.message)
+        ) {
+            handleLogout();
+        } else {
+            notify(error.message || "Wallet sync unavailable");
+        }
 
     } finally {
         state.syncing = false;
@@ -620,14 +774,110 @@ async function syncWallet() {
 }
 
 /* =========================================================
-   SOCKET.IO ADAPTER
+   AUTH STATE
 ========================================================= */
 
+function handleLogin() {
+    if (!isAuthenticated()) return;
+
+    state.authenticated = true;
+
+    syncWallet();
+    startSyncTimer();
+}
+
+function handleLogout() {
+    state.authenticated = false;
+    state.requestVersion++;
+
+    stopSyncTimer();
+
+    state.balances = {};
+    state.prices = {};
+    state.transactions = {};
+
+    state.transactions = [];
+
+    disconnectWS();
+    renderBalances();
+
+    hideStatus("depositStatus");
+    hideStatus("withdrawStatus");
+    hideStatus("transferStatus");
+}
+
+function startSyncTimer() {
+    stopSyncTimer();
+
+    if (!state.authenticated) return;
+
+    state.syncTimer = setInterval(() => {
+        if (isAuthenticated()) {
+            syncWallet();
+        } else {
+            handleLogout();
+        }
+    }, CONFIG.SYNC_INTERVAL);
+}
+
+function stopSyncTimer() {
+    if (state.syncTimer) {
+        clearInterval(state.syncTimer);
+        state.syncTimer = null;
+    }
+}
+
+function bindAuthEvents() {
+    if (!window.API || typeof window.API.on !== "function") {
+        return;
+    }
+
+    const on = (event, callback) => {
+        const unsubscribe = window.API.on(event, callback);
+
+        if (typeof unsubscribe === "function") {
+            state.apiListeners.push(unsubscribe);
+        }
+    };
+
+    on("auth:logout", handleLogout);
+    on("auth:login", handleLogin);
+}
+
+/* =========================================================
+   SOCKET ADAPTER
+========================================================= */
+
+function disconnectWS() {
+    if (state.ws && typeof state.ws.unsubscribe === "function") {
+        try {
+            state.ws.unsubscribe("wallet");
+        } catch (error) {
+            console.warn("[WALLET WS]", error);
+        }
+    }
+
+    state.listeners.forEach(unsubscribe => {
+        try {
+            unsubscribe();
+        } catch (error) {
+            console.warn("[WALLET WS]", error);
+        }
+    });
+
+    state.listeners = [];
+    state.ws = null;
+}
+
 function connectWS() {
+    if (!state.authenticated || !isAuthenticated()) return;
+
     if (!window.WS) {
         console.warn("[WALLET] WS adapter not available");
         return;
     }
+
+    if (state.ws) return;
 
     state.ws = window.WS;
 
@@ -650,14 +900,17 @@ function connectWS() {
     };
 
     register("wallet:update", data => {
-        if (!data) return;
+        if (!data || !isAuthenticated()) return;
 
         if (data.balances) {
             state.balances = data.balances;
         }
 
         if (data.prices) {
-            state.prices = data.prices;
+            state.prices = {
+                ...state.prices,
+                ...data.prices
+            };
         }
 
         if (Array.isArray(data.transactions)) {
@@ -668,7 +921,7 @@ function connectWS() {
     });
 
     register("market:update", data => {
-        if (!data) return;
+        if (!data || !isAuthenticated()) return;
 
         if (data.prices) {
             state.prices = {
@@ -700,28 +953,32 @@ function connectWS() {
 ========================================================= */
 
 async function handleDeposit() {
+    if (!requireAuth()) return;
+
     const asset = $("depositAsset")?.value;
     const network = $("depositNetwork")?.value;
     const memo = $("depositMemo")?.value?.trim() || "";
-    const destination = $("depositDestination")?.value?.trim() || "";
+    const destination =
+        $("depositDestination")?.value?.trim() || "";
 
-    if (!asset) {
-        notify("Select an asset first");
+    if (!asset || !getCoin(asset)) {
+        notify("Select a valid asset first");
         return;
     }
 
     setStatus("depositStatus", "Generating address...");
 
     try {
-        const data = await request(CONFIG.API_DEPOSIT, {
-            method: "POST",
-            body: JSON.stringify({
+        const data = await request(
+            "post",
+            CONFIG.API_DEPOSIT,
+            {
                 asset,
                 network,
                 memo,
                 destination
-            })
-        });
+            }
+        );
 
         if (!data.address) {
             throw new Error("Deposit address unavailable");
@@ -746,32 +1003,46 @@ async function handleDeposit() {
 ========================================================= */
 
 async function handleWithdraw() {
+    if (!requireAuth()) return;
+
     const asset = $("withdrawAsset")?.value;
     const network = $("withdrawNetwork")?.value;
     const amount = safe($("withdrawAmount")?.value);
     const address = $("withdrawAddress")?.value?.trim();
     const memo = $("withdrawMemo")?.value?.trim() || "";
 
-    if (!asset || amount <= 0 || !address) {
+    if (
+        !asset ||
+        !getCoin(asset) ||
+        amount <= 0 ||
+        !address
+    ) {
         notify("Invalid withdrawal details");
+        return;
+    }
+
+    if (amount > getBalance(asset)) {
+        notify("Insufficient balance");
         return;
     }
 
     setStatus("withdrawStatus", "Processing withdrawal...");
 
     try {
-        await request(CONFIG.API_WITHDRAW, {
-            method: "POST",
-            body: JSON.stringify({
+        await request(
+            "post",
+            CONFIG.API_WITHDRAW,
+            {
                 asset,
                 network,
                 amount,
                 address,
                 memo
-            })
-        });
+            }
+        );
 
         notify("Withdrawal Request Submitted");
+
         await syncWallet();
 
     } catch (error) {
@@ -785,28 +1056,42 @@ async function handleWithdraw() {
 ========================================================= */
 
 async function handleTransfer() {
+    if (!requireAuth()) return;
+
     const asset = $("transferAsset")?.value;
     const amount = safe($("transferAmount")?.value);
     const to = $("transferUser")?.value?.trim();
 
-    if (!asset || amount <= 0 || !to) {
+    if (
+        !asset ||
+        !getCoin(asset) ||
+        amount <= 0 ||
+        !to
+    ) {
         notify("Invalid transfer details");
+        return;
+    }
+
+    if (amount > getBalance(asset)) {
+        notify("Insufficient balance");
         return;
     }
 
     setStatus("transferStatus", "Processing transfer...");
 
     try {
-        await request(CONFIG.API_TRANSFER, {
-            method: "POST",
-            body: JSON.stringify({
+        await request(
+            "post",
+            CONFIG.API_TRANSFER,
+            {
                 asset,
                 amount,
                 to
-            })
-        });
+            }
+        );
 
         notify("Transfer Submitted");
+
         await syncWallet();
 
     } catch (error) {
@@ -820,6 +1105,8 @@ async function handleTransfer() {
 ========================================================= */
 
 function launchSwap() {
+    if (!requireAuth()) return;
+
     if (!state.activeAsset) {
         notify("Select an asset first");
         return;
@@ -885,6 +1172,10 @@ function populateWalletSelects() {
 ========================================================= */
 
 function bindActions() {
+    if (state.actionsBound) return;
+
+    state.actionsBound = true;
+
     document.addEventListener("click", event => {
         const target = event.target;
 
@@ -913,21 +1204,28 @@ function bindActions() {
         }
 
         if (target.closest("#walletQuickDeposit")) {
-            openPanel("depositPanel");
+            if (requireAuth()) openPanel("depositPanel");
         }
 
         if (target.closest("#walletQuickWithdraw")) {
-            openPanel("withdrawPanel");
+            if (requireAuth()) openPanel("withdrawPanel");
         }
 
         if (target.closest("#walletQuickTransfer")) {
-            openPanel("transferPanel");
+            if (requireAuth()) openPanel("transferPanel");
         }
 
         if (target.closest("#copyDepositBtn")) {
-            const address = $("depositAddressText")?.textContent;
+            if (!requireAuth()) return;
 
-            if (address && address !== "—" && navigator.clipboard) {
+            const address =
+                $("depositAddressText")?.textContent;
+
+            if (
+                address &&
+                address !== "—" &&
+                navigator.clipboard
+            ) {
                 navigator.clipboard.writeText(address)
                     .then(() => notify("Address Copied"))
                     .catch(() => notify("Unable to copy address"));
@@ -958,11 +1256,19 @@ async function init() {
     bindSearch();
     bindPanels();
     bindActions();
+    bindAuthEvents();
+
+    state.authenticated = isAuthenticated();
 
     renderBalances();
 
-    connectWS();
-    syncWallet();
+    if (state.authenticated) {
+        connectWS();
+        syncWallet();
+        startSyncTimer();
+    } else {
+        clearWalletData();
+    }
 
     console.log("[BLOXIO] Wallet Engine Ready");
 }
@@ -972,16 +1278,24 @@ async function init() {
 ========================================================= */
 
 function destroy() {
-    state.listeners.forEach(unsubscribe => {
+    stopSyncTimer();
+
+    state.requestVersion++;
+
+    disconnectWS();
+
+    state.apiListeners.forEach(unsubscribe => {
         try {
             unsubscribe();
         } catch (error) {
-            console.warn("[WALLET] Listener cleanup failed", error);
+            console.warn("[WALLET] API listener cleanup failed", error);
         }
     });
 
-    state.listeners = [];
+    state.apiListeners = [];
+
     state.initialized = false;
+    state.syncing = false;
 }
 
 /* =========================================================
@@ -995,10 +1309,16 @@ window.WALLET = {
     render: renderBalances,
     getBalance,
     getCoin,
+
+    onLogin: handleLogin,
+    onLogout: handleLogout,
+
     getState: () => ({
         balances: { ...state.balances },
         prices: { ...state.prices },
-        activeGroup: state.activeGroup
+        activeGroup: state.activeGroup,
+        authenticated: state.authenticated,
+        coinsReady: state.coinsReady
     })
 };
 
