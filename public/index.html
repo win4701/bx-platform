@@ -1138,18 +1138,21 @@ BX Sync
 </div>
 <div class="auth-right">
 <div class="auth-card">
-<div class="auth-topbar">
-
-<button id="loginBtn" class="auth-tab active" type="button">Login</button>
-<button id="registerBtn" class="auth-tab" type="button">Register</button>
-
-</div>
-<div id="loginBox" class="auth-box">
+    <div class="auth-topbar">
+        <button id="loginBtn" class="auth-tab active" type="button">Login</button>
+        <button id="registerBtn" class="auth-tab" type="button">Register</button>
+    </div>
+    <!-- AUTH ERROR MESSAGE -->
+    <div id="authError"
+         class="auth-error"
+         role="alert"
+         aria-live="polite">
+    </div>
+    <div id="loginBox" class="auth-box">
 <form id="loginForm" novalidate>
 <div class="auth-field">
 
 <label>Email</label>
-
 <input
 id="loginEmail"
 type="email"
