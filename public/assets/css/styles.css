@@ -350,34 +350,55 @@ body:not(.loading) #globalLoader {
 .header-center { justify-content: center; }
 .header-right { justify-content: flex-end; gap: 12px; }
 
+/* --- تحديث: حاوية الشعار --- */
 .enterprise-brand {
     display: flex;
     align-items: center;
-    gap: 11px;
+    gap: 12px; /* المسافة بين الأيقونة والنص */
     flex-shrink: 0;
+    text-decoration: none;
 }
 
+/* --- تحديث: الأيقونة --- */
 .brand-logo {
-    width: 36px;
-    height: 36px;
+    width: 38px;
+    height: 38px;
     object-fit: contain;
+    /* إضافة تأثير توهج خفيف ليتناسب مع الثيم الداكن */
+    filter: drop-shadow(0 0 6px rgba(0, 201, 213, 0.3));
 }
 
-.brand-text strong,
-.brand-text small {
-    display: block;
+/* --- تحديث: النص بجانب الأيقونة --- */
+.brand-text {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
 .brand-text strong {
-    font-size: 1.15rem;
-    font-weight: 900;
+    display: block;
+    font-size: 1.35rem; /* حجم خط أكبر وأوضح */
+    font-weight: 900;   /* خط عريض جداً */
+    letter-spacing: 0.5px;
+    color: #ffffff;
+    line-height: 1.1;
+}
+
+/* تلوين حرف O بلون الثيم (اختياري حسب شعارك) */
+.brand-text strong span {
+    color: var(--gold-solid);
 }
 
 .brand-text small {
+    display: block;
     color: var(--gold-solid);
     font-size: .65rem;
+    font-weight: 600;
+    letter-spacing: 1px;
+    margin-top: 2px;
 }
 
+/* --- مؤشر حالة النظام --- */
 .system-status {
     display: flex;
     align-items: center;
@@ -411,6 +432,7 @@ body:not(.loading) #globalLoader {
     font-size: .66rem;
 }
 
+/* --- القوائم المنسدلة والأزرار --- */
 .locale-box,
 .user-toolbar {
     position: relative;
@@ -428,6 +450,7 @@ body:not(.loading) #globalLoader {
     border-radius: var(--radius-md);
     background: rgba(255, 255, 255, .025);
     color: var(--text-platinum);
+    transition: all var(--transition-fast);
 }
 
 .locale-trigger:hover,
@@ -471,6 +494,7 @@ body:not(.loading) #globalLoader {
     background: transparent;
     color: var(--text-metadata);
     text-align: center;
+    transition: all var(--transition-fast);
 }
 
 .locale-menu button:hover,
@@ -494,6 +518,7 @@ body:not(.loading) #globalLoader {
     color: var(--text-platinum);
     font-size: .83rem;
     font-weight: 800;
+    transition: all var(--transition-fast);
 }
 
 .header-btn.primary {
@@ -502,8 +527,17 @@ body:not(.loading) #globalLoader {
     color: #14231D;
 }
 
+.header-btn.primary:hover {
+    filter: brightness(1.1);
+    box-shadow: var(--shadow-gold);
+}
+
 .header-btn.secondary {
     color: var(--gold-solid);
+}
+
+.header-btn.secondary:hover {
+    background: var(--gold-glow);
 }
 
 .user-avatar {
@@ -554,6 +588,47 @@ body:not(.loading) #globalLoader {
 
 #logoutBtn {
     color: var(--signal-sell);
+}
+
+/* =========================================
+   تحديث استجابة الهيدر للموبايل (Responsive)
+   ========================================= */
+@media (max-width: 768px) {
+    .enterprise-header {
+        padding: 0 14px;
+    }
+    
+    .header-left {
+        gap: 10px;
+    }
+
+    .brand-logo {
+        width: 32px;
+        height: 32px;
+    }
+
+    .brand-text strong {
+        font-size: 1.15rem;
+    }
+
+    .system-status {
+        display: none; /* إخفاء حالة النظام في الموبايل لتوفير مساحة */
+    }
+}
+
+@media (max-width: 480px) {
+    .brand-logo {
+        width: 28px;
+        height: 28px;
+    }
+
+    .brand-text strong {
+        font-size: 1rem;
+    }
+    
+    .enterprise-brand {
+        gap: 8px; /* تقليل المسافة قليلاً في الشاشات الصغيرة */
+    }
 }
 
 /* 08. APP LAYOUT */
