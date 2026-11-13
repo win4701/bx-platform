@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Home icon</title>
+  <desc id="desc">A muted sage home symbol inside a dark green circular badge with a subtle border.</desc>
+  <circle cx="256" cy="256" r="248" fill="#0F1C1A" stroke="#2A3B38" stroke-width="2"/>
+  <g fill="none" stroke="#8A9A96" stroke-width="25" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M122 258 L256 146 L390 258"/>
+    <path d="M165 220 V177"/>
+    <path d="M165 296 V366 H347 V296"/>
+  </g>
+</svg>
