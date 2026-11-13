@@ -5,10 +5,10 @@
 
 /* 01. DESIGN TOKENS */
 :root {
-    --bg-base-deep: #07241F;
-    --bg-base-core: #0A2B25;
-    --bg-card: #0D332C;
-    --bg-panel: #102F29;
+     --bg-base-deep: #06201D; 
+    --bg-base-core: #06201D; 
+    --bg-card: #06201D;      
+    --bg-panel: #06201D;     
 
     --gold-primary: linear-gradient(135deg, #087BFF 0%, #00C9D5 52%, #00E59A 100%);
     --gold-solid: #00C9D5;
@@ -224,11 +224,8 @@ body.loading {
     inset: 0;
     z-index: -2;
     pointer-events: none;
-    background:
-        radial-gradient(ellipse at 50% 0%, rgba(39, 214, 154, .07), transparent 48%),
-        linear-gradient(180deg, rgba(6, 28, 25, .88), rgba(6, 28, 25, .98));
-}
-
+    background: var(--bg-base-deep); 
+ }
 .grid-overlay {
     position: fixed;
     inset: 0;
@@ -333,7 +330,7 @@ body:not(.loading) #globalLoader {
     height: var(--header-height);
     padding: 0 26px;
     border-bottom: 1px solid var(--gold-border);
-    background: rgba(6, 28, 25, .96);
+    background: var(--bg-base-deep); 
     backdrop-filter: blur(18px);
     -webkit-backdrop-filter: blur(18px);
 }
