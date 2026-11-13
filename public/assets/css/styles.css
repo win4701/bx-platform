@@ -5,15 +5,15 @@
 
 /* 01. DESIGN TOKENS */
 :root {
-    --bg-base-deep: #061c19;
-    --bg-base-core: #0a2a27;
-    --bg-card: #0d332f;
-    --bg-panel: #11403b;
+    --bg-base-deep: #07241F;
+    --bg-base-core: #0A2B25;
+    --bg-card: #0D332C;
+    --bg-panel: #102F29;
 
-    --gold-primary: linear-gradient(135deg, #F4E3B1 0%, #D4AF37 50%, #A67C00 100%);
-    --gold-solid: #D4AF37;
-    --gold-glow: rgba(212, 175, 55, .2);
-    --gold-border: rgba(212, 175, 55, .15);
+    --gold-primary: linear-gradient(135deg, #087BFF 0%, #00C9D5 52%, #00E59A 100%);
+    --gold-solid: #00C9D5;
+    --gold-glow: rgba(0, 201, 213, .14);
+    --gold-border: rgba(0, 201, 213, .16);
 
     --text-platinum: #FFFFFF;
     --text-metadata: #A3C1BD;
@@ -40,7 +40,7 @@
 
     --shadow-card: 0 10px 30px rgba(0, 0, 0, .2);
     --shadow-deep: 0 18px 50px rgba(0, 0, 0, .38);
-    --shadow-gold: 0 0 24px rgba(212, 175, 55, .12);
+    --shadow-gold: 0 0 24px rgba(0, 201, 213, .12);
 
     --transition-fast: .16s ease;
     --transition-smooth: .3s ease;
