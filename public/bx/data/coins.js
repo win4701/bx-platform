@@ -636,8 +636,8 @@ icon:"/assets/images/coins/ht.png"
 },
 
 {
-symbol:"GBG",
-name:"GBG",
+symbol:"BGB",
+name:"Bitget",
 category:"secondary",
 swap:true,
 wallet:true,
