@@ -3594,10 +3594,10 @@ select option {
 }
 
 /* --- FIX: PARTNERS 4 HORIZONTAL CARDS --- */
+
 .partners-grid {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    grid-template-rows: repeat(2, minmax(90px, auto));
+    grid-template-columns: repeat(4, minmax(0, 1fr)); /* 4 أعمدة متساوية */
     align-items: center;
     gap: 12px;
     width: 100%;
@@ -3606,9 +3606,9 @@ select option {
 .partners-grid img {
     display: block;
     width: 100%;
-    height: 90px;
+    height: 60px; /* تصغير الارتفاع قليلاً لتناسب العرض الأفقي */
     min-width: 0;
-    padding: 12px;
+    padding: 8px; /* تقليل الحواف الداخلية */
     border: 1px solid var(--gold-border);
     border-radius: var(--radius-md);
     background: rgba(255, 255, 255, .045);
@@ -4026,6 +4026,7 @@ select option {
 /* ==========================================================================
    18. FOOTER & MOBILE NAVIGATION
    ========================================================================== */
+
 .legal-footer {
     display: flex;
     align-items: center;
@@ -4139,6 +4140,7 @@ hr {
 /* ==========================================================================
    20. RESPONSIVE — 1200px
    ========================================================================== */
+
 @media (max-width: 1200px) {
     .app-container {
         padding-right: 20px;
@@ -4757,16 +4759,17 @@ hr {
     }
 
     /* --- FIX: PARTNERS 4 HORIZONTAL CARDS --- */
+    
     .partners-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
-        grid-template-rows: repeat(2, minmax(76px, auto));
         gap: 8px;
     }
 
     .partners-grid img {
-        height: 76px;
-        padding: 8px;
+        height: 60px;
+        padding: 6px;
     }
+   }
 
     .settings-hero {
         padding: 15px;
