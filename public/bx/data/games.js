@@ -15,7 +15,7 @@ export const CASINO_GAMES = [
     { id: "hilo", name: "HiLo", provider: "Bloxio Originals", image: "/assets/images/casino/hilo.webp", currency: ["BX", "XBC"], status: "active", category: "original" },
     { id: "coinflip", name: "Coin Flip", provider: "Bloxio Originals", image: "/assets/images/casino/coinflip.webp", currency: ["BX", "XBC"], status: "active", category: "original" },
     { id: "plinko", name: "Plinko", provider: "Bloxio Originals", image: "/assets/images/casino/plinko.webp", currency: ["BX", "XBC"], status: "active", category: "original" }, // تحتاج صورة
-    { id: "wheel", name: "Wheel", provider: "Bloxio Originals", image: "/assets/images/casino/wheel.webp", currency: ["BX", "XBC"], status: "active", category: "original" }, // تحتاج صورة
+    { id: "wheel", name: "wheel", provider: "Bloxio Originals", image: "/assets/images/casino/wheel.webp", currency: ["BX", "XBC"], status: "active", category: "original" }, // تحتاج صورة
     { id: "keno", name: "Keno", provider: "Bloxio Originals", image: "/assets/images/casino/keno.webp", currency: ["BX", "XBC"], status: "active", category: "original" }, // تحتاج صورة
 
     /* =========================================================
