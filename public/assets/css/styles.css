@@ -2269,39 +2269,134 @@ select option {
     text-align: center;
 }
 
-/* --- FIX: MINING SUBSCRIPTION PLANS — 2 COLUMNS × 2 ROWS --- */
+
+/* =========================================
+   BLOXIO - MINING PLANS MOBILE CARD FIX
+   ========================================= */
 
 #miningGrid,
 .mining-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
     grid-auto-flow: row;
+    align-items: stretch;
     gap: 12px;
     width: 100%;
     min-width: 0;
-    align-items: stretch;
 }
 
+/* Individual plan cards */
 #miningGrid > *,
-.mining-grid > * {
+.mining-grid > *,
+.mining-plan-card {
+    position: relative;
+    display: flex !important;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 9px;
     width: 100%;
     min-width: 0;
     max-width: 100%;
+    padding: 12px;
+    overflow: hidden;
+
+    border: 1px solid rgba(212, 175, 55, 0.25);
+    border-radius: 14px;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(17, 64, 59, 0.95),
+            rgba(10, 42, 39, 0.98)
+        );
+
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.18);
 }
 
-/* Mobile: preserve the 2-column plan layout */
-@media (max-width: 768px) {
+/* Gold top line */
+#miningGrid > *::before,
+.mining-grid > *::before,
+.mining-plan-card::before {
+    content: "";
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(
+        90deg,
+        #F4E3B1,
+        #D4AF37,
+        #A67C00
+    );
+}
+
+/* Plan text */
+#miningGrid h2,
+#miningGrid h3,
+#miningGrid h4,
+.mining-grid h2,
+.mining-grid h3,
+.mining-grid h4 {
+    color: #FFFFFF;
+    font-size: 1rem;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+}
+
+#miningGrid p,
+.mining-grid p {
+    color: #A3C1BD;
+    font-size: 0.82rem;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+#miningGrid strong,
+.mining-grid strong {
+    color: #D4AF37;
+}
+
+/* Plan buttons */
+#miningGrid > * button,
+.mining-grid > * button {
+    width: 100%;
+    min-height: 40px;
+    margin-top: auto;
+    padding: 8px 5px;
+    border: 0;
+    border-radius: 9px;
+    background: linear-gradient(
+        135deg,
+        #F4E3B1,
+        #D4AF37,
+        #A67C00
+    );
+    color: #17251D;
+    font-size: 0.78rem;
+    font-weight: 800;
+}
+
+/* Small mobile screens */
+@media (max-width: 380px) {
     #miningGrid,
     .mining-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 9px;
+        gap: 8px;
     }
-}
 
-@media (max-width: 360px) {
-    #miningGrid,
-    .mining-grid {
-        gap: 7px;
+    #miningGrid > *,
+    .mining-grid > * {
+        padding: 9px;
+    }
+
+    #miningGrid h2,
+    #miningGrid h3,
+    #miningGrid h4,
+    .mining-grid h2,
+    .mining-grid h3,
+    .mining-grid h4 {
+        font-size: 0.9rem;
     }
 }
 
