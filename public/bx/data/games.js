@@ -33,7 +33,7 @@ export const CASINO_GAMES = [
        ARCADE (4 ألعاب)
        ========================================================= */
     { id: "airboss", name: "Air Boss", provider: "Bloxio Arcade", image: "/assets/images/casino/airboss.webp", currency: ["BX", "XBC"], status: "active", category: "arcade" },
-    { id: "birds-party", name: "Birds Party", provider: "Bloxio Arcade", image: "/assets/images/casino/birds-party.webp", currency: ["BX", "XBC"], status: "active", category: "arcade" },
+    { id: "birds-party", name: "Birds Party", provider: "Bloxio Arcade", image: "/assets/images/casino/birdsparty.webp", currency: ["BX", "XBC"], status: "active", category: "arcade" },
     { id: "tower-rush", name: "Tower Rush", provider: "Bloxio Arcade", image: "/assets/images/casino/tower.webp", currency: ["BX", "XBC"], status: "active", category: "arcade" }, // تحتاج صورة
     { id: "chicken-road", name: "Chicken Road", provider: "Bloxio Arcade", image: "/assets/images/casino/chicken.webp", currency: ["BX", "XBC"], status: "active", category: "arcade" }, // تحتاج صورة
 
