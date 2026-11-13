@@ -1,273 +1,70 @@
 /* =========================================================
-CASINO GAMES 2026
-TOTAL = 18 GAMES
-========================================================= */
+   CASINO GAMES 2026
+   TOTAL = 18 GAMES
+   ========================================================= */
 
 export const CASINO_GAMES = [
 
-/* =========================================================
-ORIGINALS
-========================================================= */
+    /* =========================================================
+       ORIGINALS (9 ألعاب)
+       ========================================================= */
+    { id: "crash", name: "Crash", provider: "Bloxio Originals", image: "/assets/images/casino/crash.webp", currency: ["BX", "XBC"], status: "active", category: "original" },
+    { id: "dice", name: "Dice", provider: "Bloxio Originals", image: "/assets/images/casino/dice.webp", currency: ["BX", "XBC"], status: "active", category: "original" },
+    { id: "limbo", name: "Limbo", provider: "Bloxio Originals", image: "/assets/images/casino/limbo.webp", currency: ["BX", "XBC"], status: "active", category: "original" },
+    { id: "mines", name: "Mines", provider: "Bloxio Originals", image: "/assets/images/casino/mines.webp", currency: ["BX", "XBC"], status: "active", category: "original" },
+    { id: "hilo", name: "HiLo", provider: "Bloxio Originals", image: "/assets/images/casino/hilo.webp", currency: ["BX", "XBC"], status: "active", category: "original" },
+    { id: "coinflip", name: "Coin Flip", provider: "Bloxio Originals", image: "/assets/images/casino/coinflip.webp", currency: ["BX", "XBC"], status: "active", category: "original" },
+    { id: "plinko", name: "Plinko", provider: "Bloxio Originals", image: "/assets/images/casino/plinko.webp", currency: ["BX", "XBC"], status: "active", category: "original" }, // تحتاج صورة
+    { id: "wheel", name: "Wheel", provider: "Bloxio Originals", image: "/assets/images/casino/wheel.webp", currency: ["BX", "XBC"], status: "active", category: "original" }, // تحتاج صورة
+    { id: "keno", name: "Keno", provider: "Bloxio Originals", image: "/assets/images/casino/keno.webp", currency: ["BX", "XBC"], status: "active", category: "original" }, // تحتاج صورة
 
-{
-id:"crash",
-name:"Crash",
-provider:"Bloxio Originals",
-image:"/assets/images/casino/crash.webp",
-currency:["BX","XBC"],
-status:"active",
-category:"original"
-},
+    /* =========================================================
+       CARDS (2 ألعاب)
+       ========================================================= */
+    { id: "blackjack", name: "Blackjack", provider: "Bloxio Originals", image: "/assets/images/casino/blackjack.webp", currency: ["BX", "XBC"], status: "active", category: "card" },
+    { id: "baccarat", name: "Baccarat", provider: "Bloxio Originals", image: "/assets/images/casino/baccarat.webp", currency: ["BX", "XBC"], status: "active", category: "card" }, // تحتاج صورة
 
-{
-id:"dice",
-name:"Dice",
-provider:"Bloxio Originals",
-image:"/assets/images/casino/dice.webp",
-currency:["BX","XBC"],
-status:"active",
-category:"original"
-},
+    /* =========================================================
+       ROULETTE (1 لعبة)
+       ========================================================= */
+    { id: "roulette", name: "Roulette", provider: "Bloxio Originals", image: "/assets/images/casino/roulette.webp", currency: ["BX", "XBC"], status: "active", category: "roulette" }, // تحتاج صورة
 
-{
-id:"limbo",
-name:"Limbo",
-provider:"Bloxio Originals",
-image:"/assets/images/casino/limbo.webp",
-currency:["BX","XBC"],
-status:"active",
-category:"original"
-},
+    /* =========================================================
+       ARCADE (4 ألعاب)
+       ========================================================= */
+    { id: "airboss", name: "Air Boss", provider: "Bloxio Arcade", image: "/assets/images/casino/airboss.webp", currency: ["BX", "XBC"], status: "active", category: "arcade" },
+    { id: "birds-party", name: "Birds Party", provider: "Bloxio Arcade", image: "/assets/images/casino/birds-party.webp", currency: ["BX", "XBC"], status: "active", category: "arcade" },
+    { id: "tower-rush", name: "Tower Rush", provider: "Bloxio Arcade", image: "/assets/images/casino/tower.webp", currency: ["BX", "XBC"], status: "active", category: "arcade" }, // تحتاج صورة
+    { id: "chicken-road", name: "Chicken Road", provider: "Bloxio Arcade", image: "/assets/images/casino/chicken.webp", currency: ["BX", "XBC"], status: "active", category: "arcade" }, // تحتاج صورة
 
-{
-id:"mines",
-name:"Mines",
-provider:"Bloxio Originals",
-image:"/assets/images/casino/mines.webp",
-currency:["BX","XBC"],
-status:"active",
-category:"original"
-},
-
-{
-id:"plinko",
-name:"Plinko",
-provider:"Bloxio Originals",
-image:"/assets/images/casino/plinko.webp",
-currency:["BX","XBC"],
-status:"active",
-category:"original"
-},
-
-{
-id:"roulette",
-name:"Roulette",
-provider:"Bloxio Originals",
-image:"/assets/images/casino/roulette.webp",
-currency:["BX","XBC"],
-status:"active",
-category:"original"
-},
-
-{
-id:"wheel",
-name:"Wheel",
-provider:"Bloxio Originals",
-image:"/assets/images/casino/wheel.webp",
-currency:["BX","XBC"],
-status:"active",
-category:"original"
-},
-
-{
-id:"keno",
-name:"Keno",
-provider:"Bloxio Originals",
-image:"/assets/images/casino/keno.webp",
-currency:["BX","XBC"],
-status:"active",
-category:"original"
-},
-
-{
-id:"hilo",
-name:"HiLo",
-provider:"Bloxio Originals",
-image:"/assets/images/casino/hilo.webp",
-currency:["BX","XBC"],
-status:"active",
-category:"original"
-},
-
-{
-id:"blackjack",
-name:"Blackjack",
-provider:"Bloxio Originals",
-image:"/assets/images/casino/blackjack.webp",
-currency:["BX","XBC"],
-status:"active",
-category:"card"
-},
-
-{
-id:"baccarat",
-name:"Baccarat",
-provider:"Bloxio Originals",
-image:"/assets/images/casino/baccarat.webp",
-currency:["BX","XBC"],
-status:"active",
-category:"card"
-},
-
-{
-id:"tower-rush",
-name:"Tower Rush",
-provider:"GS",
-image:"/assets/images/casino/tower.webp",
-category:"arcade",
-currency:["BX","XBC"]
-},
-
-{
-id:"chilli-respin",
-name:"Chilli Respin",
-provider:"Fazi",
-image:"/assets/images/casino/chilli.webp",
-category:"slot",
-currency:["BX","XBC"]
-},
-
-{
-id:"chix",
-name:"Chix",
-provider:"Onlyplay",
-image:"/assets/images/casino/chix.webp",
-category:"arcade",
-currency:["BX","XBC"]
-},
-
-{
-id:"mighty-masks",
-name:"Mighty Masks",
-provider:"Hacksaw",
-image:"/assets/images/casino/masks.webp",
-category:"slot",
-currency:["BX","XBC"]
-},
-
-{
-id:"roue",
-name:"Roue",
-provider:"Jeux Original",
-image:"/assets/images/casino/roue.webp",
-category:"roulette",
-currency:["BX","XBC"]
-},
-
-{
-id:"chicken-road",
-name:"Chicken Road",
-provider:"InOut",
-image:"/assets/images/casino/chicken.webp",
-category:"arcade",
-currency:["BX","XBC"]
-}
-
+    /* =========================================================
+       SLOTS (2 ألعاب)
+       ========================================================= */
+    { id: "bananafarm", name: "Banana Farm", provider: "Bloxio Slots", image: "/assets/images/casino/bananafarm.webp", currency: ["BX", "XBC"], status: "active", category: "slot" },
+    { id: "fruitparty", name: "Fruit Party", provider: "Bloxio Slots", image: "/assets/images/casino/fruitparty.webp", currency: ["BX", "XBC"], status: "active", category: "slot" }
 ];
 
-
-/* =========================================================
-CASINO HOME ORDER
-========================================================= */
-
+/* ترتيب ظهور الألعاب في الصفحة الرئيسية */
 export const CASINO_HOME_ORDER = [
-
-"crash",
-"mines",
-"plinko",
-"tower",
-"chicken",
-"chilli",
-"chix",
-"masks",
-
-"dice",
-"limbo",
-"roulette",
-"roue",
-
-"wheel",
-"keno",
-"hilo",
-
-"blackjack",
-"baccarat"
-
+    "crash", "mines", "plinko", "tower-rush", "chicken-road", 
+    "dice", "limbo", "roulette", "wheel", "keno", "hilo", 
+    "blackjack", "baccarat", "coinflip", "airboss", 
+    "birds-party", "bananafarm", "fruitparty"
 ];
 
-/* =========================================================
-CATEGORIES
-========================================================= */
-
+/* التصنيفات (تستخدم صيغة المفرد لتطابق الكود) */
 export const CASINO_CATEGORIES = [
-
-{
-id:"all",
-name:"All Games"
-},
-
-{
-id:"original",
-name:"Originals"
-},
-
-{
-id:"arcade",
-name:"Arcade"
-},
-
-{
-id:"slot",
-name:"Slots"
-},
-
-{
-id:"card",
-name:"Cards"
-},
-
-{
-id:"roulette",
-name:"Roulette"
-}
-
+    { id: "all", name: "All Games" },
+    { id: "original", name: "Originals" },
+    { id: "arcade", name: "Arcade" },
+    { id: "slot", name: "Slots" },
+    { id: "card", name: "Cards" },
+    { id: "roulette", name: "Roulette" }
 ];
 
-/* =========================================================
-SUPPORTED CURRENCIES
-========================================================= */
-
-export const CASINO_CURRENCIES = [
-
-"BX",
-"XBC"
-
-];
-
-/* =========================================================
-BET LIMITS
-========================================================= */
+export const CASINO_CURRENCIES = ["BX", "XBC"];
 
 export const CASINO_LIMITS = {
-
-BX:{
-min:0.1,
-max:1000
-},
-
-XBC:{
-min:10,
-max:500000
-}
-
+    BX: { min: 0.1, max: 1000 },
+    XBC: { min: 10, max: 500000 }
 };
