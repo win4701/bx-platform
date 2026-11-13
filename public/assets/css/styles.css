@@ -10,8 +10,9 @@
     --bg-card: #06201D;      
     --bg-panel: #06201D;     
 
-    --gold-primary: linear-gradient(135deg, #087BFF 0%, #00C9D5 52%, #00E59A 100%);
-    --gold-solid: #00C9D5;
+    
+    --gold-solid: #00E5FF; 
+    --gold-primary: #00E5FF; 
     --gold-glow: rgba(0, 201, 213, .14);
     --gold-border: rgba(0, 201, 213, .16);
 
@@ -239,6 +240,7 @@ body.loading {
 
 .ambient-glow {
     position: fixed;
+    display: none; 
     top: -220px;
     left: -180px;
     z-index: -1;
