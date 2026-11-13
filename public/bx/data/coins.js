@@ -641,7 +641,7 @@ name:"GBG",
 category:"secondary",
 swap:true,
 wallet:true,
-icon:"/assets/images/coins/gbg.png"
+icon:"/assets/images/coins/bgb.png"
 }
 
 ];
