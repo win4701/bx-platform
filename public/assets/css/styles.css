@@ -4838,6 +4838,747 @@ hr {
     }
 }
 
-/* ==========================================================================
-   END — BLOXIO DESIGN SYSTEM
-   ========================================================================== */
+
+/* =========================================================
+   BLOXIO SWAP ENGINE V2
+   Component: Swap Only
+   Scope: .wallet-swap-engine.swap-v2
+========================================================= */
+
+.wallet-swap-engine.swap-v2 {
+    --swap-bg: #0F1C1A;
+    --swap-panel: #142521;
+    --swap-panel-soft: #192D28;
+    --swap-border: rgba(138, 154, 150, .16);
+    --swap-border-active: rgba(68, 210, 158, .42);
+    --swap-text: #E5EFEB;
+    --swap-muted: #8A9A96;
+    --swap-green: #38D9A0;
+    --swap-green-dark: #123F32;
+    --swap-gold: #D8B76A;
+    --swap-danger: #FF727C;
+    --swap-radius: 16px;
+
+    position: relative;
+    width: 100%;
+    min-width: 0;
+    margin-bottom: 22px;
+    padding: 22px;
+    overflow: hidden;
+    color: var(--swap-text);
+    background: var(--swap-bg);
+    border: 1px solid var(--swap-border);
+    border-radius: var(--swap-radius);
+    box-shadow: 0 14px 40px rgba(0, 0, 0, .16);
+}
+
+.wallet-swap-engine.swap-v2 *,
+.wallet-swap-engine.swap-v2 *::before,
+.wallet-swap-engine.swap-v2 *::after {
+    box-sizing: border-box;
+}
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.wallet-swap-engine.swap-v2 .swap-v2-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 22px;
+}
+
+.wallet-swap-engine.swap-v2 .swap-v2-heading {
+    min-width: 0;
+}
+
+.wallet-swap-engine.swap-v2 .swap-eyebrow {
+    display: inline-block;
+    margin-bottom: 7px;
+    color: var(--swap-green);
+    font-size: .68rem;
+    font-weight: 800;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+}
+
+.wallet-swap-engine.swap-v2 .swap-v2-heading h3 {
+    margin: 0;
+    color: var(--swap-text);
+    font-size: clamp(1.2rem, 2vw, 1.65rem);
+    font-weight: 750;
+    line-height: 1.25;
+}
+
+.wallet-swap-engine.swap-v2 .swap-v2-heading p {
+    margin: 7px 0 0;
+    color: var(--swap-muted);
+    font-size: .83rem;
+    line-height: 1.6;
+}
+
+/* =========================================================
+   QUICK ASSETS
+========================================================= */
+
+.wallet-swap-engine.swap-v2 .swap-quick-assets {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 18px;
+}
+
+.wallet-swap-engine.swap-v2
+.swap-quick-assets [data-swap-asset] {
+    min-height: 35px;
+    padding: 7px 13px;
+    color: var(--swap-muted);
+    background: var(--swap-panel);
+    border: 1px solid var(--swap-border);
+    border-radius: 9px;
+    font: inherit;
+    font-size: .75rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition:
+        color .2s ease,
+        background .2s ease,
+        border-color .2s ease,
+        transform .2s ease;
+}
+
+.wallet-swap-engine.swap-v2
+.swap-quick-assets [data-swap-asset]:hover {
+    color: var(--swap-text);
+    border-color: var(--swap-border-active);
+    transform: translateY(-1px);
+}
+
+.wallet-swap-engine.swap-v2
+.swap-quick-assets [data-swap-asset].is-active {
+    color: var(--swap-green);
+    background: rgba(56, 217, 160, .09);
+    border-color: var(--swap-border-active);
+}
+
+/* =========================================================
+   MAIN WORKSPACE
+========================================================= */
+
+.wallet-swap-engine.swap-v2 .swap-v2-workspace {
+    display: grid;
+    grid-template-columns: minmax(0, 1.65fr) minmax(250px, .85fr);
+    align-items: start;
+    gap: 18px;
+}
+
+.wallet-swap-engine.swap-v2 .swap-v2-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 0;
+}
+
+/* =========================================================
+   TOKEN CARDS
+========================================================= */
+
+.wallet-swap-engine.swap-v2 .swap-token-card {
+    position: relative;
+    min-width: 0;
+    padding: 17px;
+    background: var(--swap-panel);
+    border: 1px solid var(--swap-border);
+    border-radius: 14px;
+    transition: border-color .2s ease;
+}
+
+.wallet-swap-engine.swap-v2 .swap-token-card:focus-within {
+    border-color: var(--swap-border-active);
+}
+
+.wallet-swap-engine.swap-v2 .swap-token-pay {
+    background: linear-gradient(
+        145deg,
+        rgba(25, 45, 40, .96),
+        rgba(20, 37, 33, .96)
+    );
+}
+
+.wallet-swap-engine.swap-v2 .swap-token-receive {
+    background: linear-gradient(
+        145deg,
+        rgba(20, 48, 39, .85),
+        rgba(20, 37, 33, .96)
+    );
+}
+
+.wallet-swap-engine.swap-v2 .swap-token-entry {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-width: 0;
+    margin-top: 13px;
+}
+
+.wallet-swap-engine.swap-v2 .swap-token-entry > * {
+    min-width: 0;
+}
+
+.wallet-swap-engine.swap-v2 .swap-token-card label {
+    display: block;
+    color: var(--swap-muted);
+    font-size: .76rem;
+    font-weight: 650;
+}
+
+.wallet-swap-engine.swap-v2 .swap-amount-input {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    padding: 5px 0;
+    color: var(--swap-text);
+    background: transparent;
+    border: 0;
+    outline: none;
+    font-family: inherit;
+    font-size: clamp(1.35rem, 3vw, 1.9rem);
+    font-weight: 750;
+    font-variant-numeric: tabular-nums;
+}
+
+.wallet-swap-engine.swap-v2 .swap-amount-input::placeholder {
+    color: rgba(138, 154, 150, .45);
+}
+
+.wallet-swap-engine.swap-v2 .swap-amount-input:focus {
+    outline: none;
+}
+
+.wallet-swap-engine.swap-v2 .swap-amount-output {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    overflow-wrap: anywhere;
+    color: var(--swap-green);
+    font-size: clamp(1.35rem, 3vw, 1.9rem);
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+}
+
+.wallet-swap-engine.swap-v2 .swap-token-picker {
+    flex: 0 0 auto;
+    min-width: 110px;
+}
+
+.wallet-swap-engine.swap-v2 .swap-asset-select {
+    width: 100%;
+    min-height: 43px;
+    padding: 9px 30px 9px 11px;
+    color: var(--swap-text);
+    background-color: var(--swap-panel-soft);
+    border: 1px solid var(--swap-border);
+    border-radius: 10px;
+    outline: none;
+    font: inherit;
+    font-size: .8rem;
+    font-weight: 750;
+    cursor: pointer;
+}
+
+.wallet-swap-engine.swap-v2 .swap-asset-select:focus {
+    border-color: var(--swap-green);
+}
+
+.wallet-swap-engine.swap-v2 .swap-asset-select option {
+    color: var(--swap-text);
+    background: var(--swap-panel);
+}
+
+.wallet-swap-engine.swap-v2 .swap-token-balance,
+.wallet-swap-engine.swap-v2 .swap-token-card small {
+    display: block;
+    margin-top: 9px;
+    color: var(--swap-muted);
+    font-size: .72rem;
+    line-height: 1.5;
+}
+
+/* =========================================================
+   REVERSE BUTTON
+========================================================= */
+
+.wallet-swap-engine.swap-v2 .swap-v2-switch-row {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 12px;
+    margin: -5px 0;
+}
+
+.wallet-swap-engine.swap-v2 .swap-reverse-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 39px;
+    height: 39px;
+    padding: 0;
+    color: var(--swap-green);
+    background: var(--swap-panel-soft);
+    border: 1px solid var(--swap-border-active);
+    border-radius: 50%;
+    cursor: pointer;
+    transition:
+        transform .25s ease,
+        background .2s ease,
+        box-shadow .2s ease;
+}
+
+.wallet-swap-engine.swap-v2 .swap-reverse-btn:hover {
+    background: var(--swap-green-dark);
+    box-shadow: 0 0 18px rgba(56, 217, 160, .14);
+    transform: rotate(180deg);
+}
+
+/* =========================================================
+   MAX BUTTON
+========================================================= */
+
+.wallet-swap-engine.swap-v2 #swapMaxButton {
+    min-height: 27px;
+    padding: 4px 10px;
+    color: var(--swap-green);
+    background: rgba(56, 217, 160, .08);
+    border: 1px solid rgba(56, 217, 160, .2);
+    border-radius: 7px;
+    font: inherit;
+    font-size: .68rem;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.wallet-swap-engine.swap-v2 #swapMaxButton:hover {
+    background: rgba(56, 217, 160, .16);
+}
+
+.wallet-swap-engine.swap-v2 #swapMaxButton:disabled {
+    opacity: .4;
+    cursor: not-allowed;
+}
+
+/* =========================================================
+   MARKET TOOLS
+========================================================= */
+
+.wallet-swap-engine.swap-v2 .swap-market-tools {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 13px 15px;
+    background: rgba(255, 255, 255, .018);
+    border: 1px solid var(--swap-border);
+    border-radius: 11px;
+}
+
+.wallet-swap-engine.swap-v2 .swap-slippage-select {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    color: var(--swap-muted);
+    font-size: .75rem;
+}
+
+.wallet-swap-engine.swap-v2 .swap-slippage-select select {
+    min-height: 34px;
+    padding: 6px 27px 6px 9px;
+    color: var(--swap-text);
+    background: var(--swap-panel-soft);
+    border: 1px solid var(--swap-border);
+    border-radius: 8px;
+    outline: none;
+    font: inherit;
+}
+
+.wallet-swap-engine.swap-v2 .swap-slippage-select select:focus {
+    border-color: var(--swap-green);
+}
+
+/* =========================================================
+   QUOTE DETAILS
+========================================================= */
+
+.wallet-swap-engine.swap-v2 .swap-v2-quote {
+    display: flex;
+    flex-direction: column;
+    gap: 11px;
+    padding: 16px;
+    background: rgba(255, 255, 255, .018);
+    border: 1px solid var(--swap-border);
+    border-radius: 12px;
+}
+
+.wallet-swap-engine.swap-v2 .swap-quote-line {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+    color: var(--swap-muted);
+    font-size: .76rem;
+    line-height: 1.5;
+}
+
+.wallet-swap-engine.swap-v2 .swap-quote-line strong {
+    max-width: 65%;
+    color: var(--swap-text);
+    text-align: right;
+    overflow-wrap: anywhere;
+    font-family: var(--font-mono, monospace);
+    font-size: .76rem;
+    font-weight: 700;
+}
+
+.wallet-swap-engine.swap-v2 .swap-quote-line:last-child strong {
+    color: var(--swap-green);
+}
+
+/* =========================================================
+   STATUS
+========================================================= */
+
+.wallet-swap-engine.swap-v2 .swap-status {
+    display: block;
+    padding: 11px 13px;
+    color: var(--swap-muted);
+    background: rgba(138, 154, 150, .07);
+    border: 1px solid var(--swap-border);
+    border-radius: 9px;
+    font-size: .75rem;
+    line-height: 1.55;
+    overflow-wrap: anywhere;
+}
+
+.wallet-swap-engine.swap-v2 .swap-status[data-state="success"] {
+    color: var(--swap-green);
+    background: rgba(56, 217, 160, .07);
+    border-color: rgba(56, 217, 160, .2);
+}
+
+.wallet-swap-engine.swap-v2 .swap-status[data-state="warning"] {
+    color: var(--swap-gold);
+    background: rgba(216, 183, 106, .07);
+    border-color: rgba(216, 183, 106, .2);
+}
+
+.wallet-swap-engine.swap-v2 .swap-status[data-state="error"] {
+    color: var(--swap-danger);
+    background: rgba(255, 114, 124, .07);
+    border-color: rgba(255, 114, 124, .2);
+}
+
+/* =========================================================
+   EXECUTE BUTTON
+========================================================= */
+
+.wallet-swap-engine.swap-v2 .btn-execute-swap,
+.wallet-swap-engine.swap-v2 #swapButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 51px;
+    padding: 13px 18px;
+    color: #06251B;
+    background: linear-gradient(
+        110deg,
+        #38D9A0,
+        #65E6B6
+    );
+    border: 1px solid rgba(101, 230, 182, .6);
+    border-radius: 11px;
+    box-shadow: 0 8px 22px rgba(56, 217, 160, .12);
+    font: inherit;
+    font-size: .88rem;
+    font-weight: 850;
+    cursor: pointer;
+    transition:
+        transform .2s ease,
+        filter .2s ease,
+        box-shadow .2s ease;
+}
+
+.wallet-swap-engine.swap-v2 .btn-execute-swap:hover,
+.wallet-swap-engine.swap-v2 #swapButton:hover {
+    filter: brightness(1.07);
+    box-shadow: 0 10px 27px rgba(56, 217, 160, .2);
+    transform: translateY(-1px);
+}
+
+.wallet-swap-engine.swap-v2 .btn-execute-swap:active,
+.wallet-swap-engine.swap-v2 #swapButton:active {
+    transform: translateY(0);
+}
+
+.wallet-swap-engine.swap-v2 .btn-execute-swap:disabled,
+.wallet-swap-engine.swap-v2 #swapButton:disabled {
+    color: #82938D;
+    background: #263832;
+    border-color: var(--swap-border);
+    box-shadow: none;
+    cursor: not-allowed;
+    filter: none;
+    transform: none;
+}
+
+/* =========================================================
+   ASIDE PANEL
+========================================================= */
+
+.wallet-swap-engine.swap-v2 .swap-v2-aside {
+    display: flex;
+    flex-direction: column;
+    gap: 13px;
+    min-width: 0;
+}
+
+.wallet-swap-engine.swap-v2 .swap-aside-card {
+    min-width: 0;
+    padding: 17px;
+    background: var(--swap-panel);
+    border: 1px solid var(--swap-border);
+    border-radius: 13px;
+}
+
+.wallet-swap-engine.swap-v2 .swap-aside-card h4 {
+    margin: 0 0 15px;
+    color: var(--swap-text);
+    font-size: .9rem;
+    font-weight: 750;
+}
+
+.wallet-swap-engine.swap-v2 .swap-preview-pair {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 14px;
+    padding: 12px;
+    background: var(--swap-panel-soft);
+    border: 1px solid var(--swap-border);
+    border-radius: 10px;
+}
+
+.wallet-swap-engine.swap-v2 .swap-preview-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--swap-border);
+    color: var(--swap-muted);
+    font-size: .74rem;
+    line-height: 1.5;
+}
+
+.wallet-swap-engine.swap-v2 .swap-preview-row:last-child {
+    border-bottom: 0;
+}
+
+.wallet-swap-engine.swap-v2 .swap-preview-row strong {
+    color: var(--swap-text);
+    text-align: right;
+    overflow-wrap: anywhere;
+    font-family: var(--font-mono, monospace);
+    font-size: .73rem;
+}
+
+.wallet-swap-engine.swap-v2 .swap-aside-note {
+    padding: 13px;
+    color: var(--swap-muted);
+    background: rgba(56, 217, 160, .045);
+    border: 1px solid rgba(56, 217, 160, .12);
+    border-radius: 10px;
+    font-size: .72rem;
+    line-height: 1.65;
+}
+
+/* =========================================================
+   UPDATED PRICE LABEL
+========================================================= */
+
+.wallet-swap-engine.swap-v2 #swapPriceUpdated {
+    color: var(--swap-muted);
+    font-size: .68rem;
+    font-variant-numeric: tabular-nums;
+}
+
+/* =========================================================
+   ACCESSIBILITY
+========================================================= */
+
+.wallet-swap-engine.swap-v2 button:focus-visible,
+.wallet-swap-engine.swap-v2 select:focus-visible,
+.wallet-swap-engine.swap-v2 input:focus-visible {
+    outline: 2px solid var(--swap-green);
+    outline-offset: 3px;
+}
+
+.wallet-swap-engine.swap-v2 button:disabled {
+    cursor: not-allowed;
+}
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (max-width: 900px) {
+    .wallet-swap-engine.swap-v2 .swap-v2-workspace {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .wallet-swap-engine.swap-v2 .swap-v2-aside {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        align-items: start;
+    }
+
+    .wallet-swap-engine.swap-v2 .swap-aside-note {
+        grid-column: 1 / -1;
+    }
+}
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 600px) {
+    .wallet-swap-engine.swap-v2 {
+        padding: 14px;
+        border-radius: 13px;
+    }
+
+    .wallet-swap-engine.swap-v2 .swap-v2-header {
+        align-items: flex-start;
+        margin-bottom: 17px;
+    }
+
+    .wallet-swap-engine.swap-v2 .swap-v2-heading h3 {
+        font-size: 1.2rem;
+    }
+
+    .wallet-swap-engine.swap-v2 .swap-v2-heading p {
+        font-size: .75rem;
+    }
+
+    .wallet-swap-engine.swap-v2 .swap-quick-assets {
+        gap: 6px;
+    }
+
+    .wallet-swap-engine.swap-v2
+    .swap-quick-assets [data-swap-asset] {
+        min-height: 32px;
+        padding: 6px 10px;
+        font-size: .7rem;
+    }
+
+    .wallet-swap-engine.swap-v2 .swap-token-card {
+        padding: 13px;
+    }
+
+    .wallet-swap-engine.swap-v2 .swap-token-entry {
+        gap: 8px;
+    }
+
+    .wallet-swap-engine.swap-v2 .swap-token-picker {
+        min-width: 95px;
+        max-width: 42%;
+    }
+
+    .wallet-swap-engine.swap-v2 .swap-asset-select {
+        min-height: 40px;
+        padding: 8px 22px 8px 8px;
+        font-size: .72rem;
+    }
+
+    .wallet-swap-engine.swap-v2 .swap-amount-input,
+    .wallet-swap-engine.swap-v2 .swap-amount-output {
+        font-size: 1.35rem;
+    }
+
+    .wallet-swap-engine.swap-v2 .swap-market-tools {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .wallet-swap-engine.swap-v2 .swap-v2-aside {
+        grid-template-columns: 1fr;
+    }
+
+    .wallet-swap-engine.swap-v2 .swap-aside-note {
+        grid-column: auto;
+    }
+
+    .wallet-swap-engine.swap-v2 .swap-v2-quote {
+        padding: 13px;
+    }
+
+    .wallet-swap-engine.swap-v2 .swap-quote-line {
+        font-size: .7rem;
+    }
+
+    .wallet-swap-engine.swap-v2 .swap-quote-line strong {
+        font-size: .7rem;
+    }
+}
+
+/* =========================================================
+   SMALL MOBILE
+========================================================= */
+
+@media (max-width: 380px) {
+    .wallet-swap-engine.swap-v2 {
+        padding: 11px;
+    }
+
+    .wallet-swap-engine.swap-v2 .swap-token-entry {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .wallet-swap-engine.swap-v2 .swap-token-picker {
+        width: 100%;
+        max-width: 100%;
+    }
+
+    .wallet-swap-engine.swap-v2 .swap-asset-select {
+        width: 100%;
+    }
+
+    .wallet-swap-engine.swap-v2 .swap-amount-input,
+    .wallet-swap-engine.swap-v2 .swap-amount-output {
+        font-size: 1.2rem;
+    }
+}
+
+/* =========================================================
+   REDUCED MOTION
+========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+    .wallet-swap-engine.swap-v2 *,
+    .wallet-swap-engine.swap-v2 *::before,
+    .wallet-swap-engine.swap-v2 *::after {
+        scroll-behavior: auto !important;
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+    }
+}
