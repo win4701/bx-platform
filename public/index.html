@@ -221,175 +221,99 @@ id="app" class="app-container">
 <button id="walletSellBtn" class="btn">Sell</button>
 </section>
 
-
-<section class="wallet-swap-engine swap-v2" id="walletSwapEngine" aria-labelledby="swapEngineTitle">
-    <!-- HEADER -->
-    <header class="swap-v2-header">
-        <div class="swap-v2-heading">
-            <span class="swap-eyebrow">BLOXIO EXCHANGE</span>
-            <h3 id="swapEngineTitle">Swap &amp; Convert</h3>
-            <p>Convert digital assets instantly through the Bloxio swap engine.</p>
-        </div>
-        <div class="swap-network-status">
-            <span class="swap-status-indicator"></span>
-            <span>SWAP ENGINE</span>
-        </div>
-    </header>
-
-    <!-- POPULAR ASSETS -->
-    <nav class="swap-quick-assets" aria-label="Popular assets">
-        <span class="swap-quick-label">POPULAR</span>
-        <button type="button" class="swap-quick-asset is-active" data-swap-asset="BX">BX</button>
-        <button type="button" class="swap-quick-asset" data-swap-asset="XBC">XBC</button>
-        <button type="button" class="swap-quick-asset" data-swap-asset="BTC">BTC</button>
-        <button type="button" class="swap-quick-asset" data-swap-asset="ETH">ETH</button>
-        <button type="button" class="swap-quick-asset" data-swap-asset="BNB">BNB</button>
-        <button type="button" class="swap-quick-asset" data-swap-asset="SOL">SOL</button>
-        <button type="button" class="swap-quick-asset" data-swap-asset="USDT">USDT</button>
-        <button type="button" class="swap-quick-asset" data-swap-asset="USDC">USDC</button>
-    </nav>
-
-    <div class="swap-v2-workspace">
-        <!-- SWAP FORM -->
-        <div class="swap-v2-form">
-            <!-- FROM ASSET -->
-            <div class="swap-token-card swap-token-pay">
-                <div class="swap-token-card-top">
-                    <label for="swapFromAsset">You Pay</label>
-                    <span id="swapFromBalance" class="swap-balance-note">Balance: —</span>
-                </div>
-                <div class="swap-token-entry">
-                    <input id="swapAmount" class="swap-amount-input" type="number" min="0" step="any" inputmode="decimal" placeholder="0.00" autocomplete="off" aria-label="Amount to swap">
-                    <div class="swap-token-picker">
-                        <select id="swapFromAsset" class="swap-asset-select" aria-label="Select sending asset"></select>
-                        <span class="swap-picker-caption">PAY WITH</span>
-                    </div>
-                </div>
-                <div class="swap-token-card-foot">
-                    <span>Available source assets</span>
-                    <button type="button" id="swapMaxButton" class="swap-max-button">MAX</button>
-                </div>
-            </div>
-
-            <!-- REVERSE DIRECTION -->
-            <div class="swap-v2-switch-row">
-                <span></span>
-                <button type="button" id="swapReverseButton" class="swap-reverse-btn" aria-label="Reverse swap direction" title="Reverse swap direction">⇅</button>
-                <span></span>
-            </div>
-
-            <!-- TO ASSET -->
-            <div class="swap-token-card swap-token-receive">
-                <div class="swap-token-card-top">
-                    <label for="swapToAsset">You Receive</label>
-                    <span id="swapToBalance" class="swap-balance-note">Estimated output</span>
-                </div>
-                <div class="swap-token-entry">
-                    <output id="estimatedReceive" class="swap-amount-output" aria-live="polite" aria-atomic="true">0.00</output>
-                    <div class="swap-token-picker">
-                        <select id="swapToAsset" class="swap-asset-select" aria-label="Select receiving asset"></select>
-                        <span class="swap-picker-caption">RECEIVE AS</span>
-                    </div>
-                </div>
-                <div class="swap-token-card-foot">
-                    <span>Estimated amount after fees</span>
-                    <span id="swapOutputFiat" class="swap-output-fiat">≈ $0.00</span>
-                </div>
-            </div>
-
-            <!-- SLIPPAGE -->
-            <div class="swap-market-tools">
-                <div class="swap-tool-label">
-                    <label for="swapSlippage">Slippage Tolerance</label>
-                    <span>Maximum acceptable price movement</span>
-                </div>
-                <select id="swapSlippage" class="swap-slippage-select">
-                    <option value="0.1">0.1%</option>
-                    <option value="0.5" selected>0.5%</option>
-                    <option value="1">1.0%</option>
-                    <option value="3">3.0%</option>
-                </select>
-            </div>
-
-            <!-- QUOTE DETAILS -->
-            <div class="swap-v2-quote">
-                <div class="swap-quote-line">
-                    <span>Exchange Rate</span>
-                    <strong id="swapRate">—</strong>
-                </div>
-                <div class="swap-quote-line">
-                    <span>Swap Fee</span>
-                    <strong id="swapFee">0.30%</strong>
-                </div>
-                <div class="swap-quote-line">
-                    <span>Price Impact</span>
-                    <strong id="swapPriceImpact">—</strong>
-                </div>
-                <div class="swap-quote-line">
-                    <span>Quote Status</span>
-                    <strong id="swapQuoteStatus">Waiting</strong>
-                </div>
-            </div>
-
-            <!-- STATUS -->
-            <p id="swapStatus" class="swap-status" role="status" aria-live="polite">Select two assets and enter an amount.</p>
-
-            <!-- EXECUTION -->
-            <button type="button" id="swapButton" class="btn primary btn-execute-swap" disabled>Review Conversion</button>
-            <p class="swap-disclaimer">Final execution, balances, fees and slippage must be validated by the Bloxio backend before settlement.</p>
-        </div>
-
-        <!-- SWAP INFORMATION -->
-        <aside class="swap-v2-aside">
-            <div class="swap-aside-card swap-aside-overview">
-                <span class="swap-aside-kicker">MULTI-ASSET ROUTING</span>
-                <h4>One Engine.<br>More Markets.</h4>
-                <p>Convert between all supported assets using available market prices and liquidity routes.</p>
-                <div class="swap-route-tags">
-                    <span>BX</span>
-                    <span>XBC</span>
-                    <span>STABLE</span>
-                    <span>MAJOR</span>
-                </div>
-            </div>
-
-            <!-- CONVERSION PREVIEW -->
-            <div class="swap-aside-card">
-                <div class="swap-aside-title">
-                    <span>Conversion Preview</span>
-                    <span class="swap-aside-icon">↗</span>
-                </div>
-                <div class="swap-preview-pair">
-                    <strong id="swapPreviewPair">BX / XBC</strong>
-                    <small id="swapPreviewDirection">Select your pair</small>
-                </div>
-                <div class="swap-preview-divider"></div>
-                <div class="swap-preview-row">
-                    <span>Reference Price</span>
-                    <strong id="swapReferencePrice">—</strong>
-                </div>
-                <div class="swap-preview-row">
-                    <span>Estimated Fee</span>
-                    <strong id="swapEstimatedFee">—</strong>
-                </div>
-                <div class="swap-preview-row">
-                    <span>Minimum Received</span>
-                    <strong id="swapMinimumReceived">—</strong>
-                </div>
-            </div>
-
-            <!-- SECURITY -->
-            <div class="swap-aside-note">
-                <span class="swap-security-mark">✓</span>
-                <div>
-                    <strong>Execution Safeguards</strong>
-                    <p>Balance validation, price verification, fee calculation and slippage protection.</p>
-                </div>
-            </div>
-        </aside>
+<!-- BLOXIO WALLET: SWAP ENGINE -->
+<section class="wallet-swap-engine" id="wallet-swap-engine" aria-labelledby="walletSwapTitle">
+  <header class="swap-header">
+    <div>
+      <p class="swap-eyebrow">BLOXIO WALLET</p>
+      <h2 id="walletSwapTitle">Swap Engine</h2>
+      <p class="swap-subtitle">Exchange assets instantly across the Bloxio ecosystem.</p>
     </div>
-</section>
+    <span class="swap-live-indicator"><i aria-hidden="true"></i> Live quotes</span>
+  </header>
 
+  <div class="swap-selection-grid">
+    <fieldset class="swap-asset-group" data-swap-group="from">
+      <legend>From <span>Asset you send</span></legend>
+      <div class="swap-asset-options" id="swapFromOptions" role="radiogroup" aria-label="Select asset to send">
+      </div>
+    </fieldset>
+
+    <div class="swap-direction-control">
+      <button type="button" id="swapReverseButton" class="swap-reverse-button"
+              aria-label="Reverse swap direction" title="Reverse swap direction">
+        <span aria-hidden="true">⇅</span>
+      </button>
+    </div>
+
+    <fieldset class="swap-asset-group" data-swap-group="to">
+      <legend>To <span>Asset you receive</span></legend>
+      <div class="swap-asset-options" id="swapToOptions" role="radiogroup" aria-label="Select asset to receive">
+        <!-- Radio cards are generated from coins.js -->
+      </div>
+    </fieldset>
+  </div>
+
+  <div class="swap-form-card">
+    <div class="swap-field-heading">
+      <label for="swapAmount">Amount to send</label>
+      <span id="swapFromBalance" class="swap-balance-label">Available balance: —</span>
+    </div>
+    <div class="swap-amount-wrap">
+      <input id="swapAmount" name="swapAmount" type="number" inputmode="decimal"
+             min="0" step="any" placeholder="0.00" autocomplete="off">
+      <span id="swapAmountSymbol" class="swap-amount-symbol">BX</span>
+    </div>
+
+    <div class="swap-quick-amounts" aria-label="Quick amount">
+      <button type="button" data-swap-percent="25">25%</button>
+      <button type="button" data-swap-percent="50">50%</button>
+      <button type="button" data-swap-percent="75">75%</button>
+      <button type="button" data-swap-percent="100">MAX</button>
+    </div>
+
+    <div class="swap-details">
+      <div class="swap-detail-row">
+        <span>Exchange rate</span>
+        <strong id="swapRate">1 BX = 300 XBC</strong>
+      </div>
+      <div class="swap-detail-row">
+        <span>Market price</span>
+        <strong id="swapMarketPrice">—</strong>
+      </div>
+      <div class="swap-detail-row">
+        <label for="slippage">Slippage tolerance</label>
+        <div class="swap-slippage-control">
+          <input id="slippage" type="number" min="0" max="50" step="0.1" value="0.5">
+          <span>%</span>
+        </div>
+      </div>
+      <div class="swap-detail-row">
+        <span>Network / swap fee (0.30%)</span>
+        <strong id="swapFee">—</strong>
+      </div>
+    </div>
+
+    <div class="swap-receive-panel">
+      <div>
+        <span class="swap-receive-label">Estimated receive</span>
+        <strong id="estimatedReceiveText">0.000000</strong>
+      </div>
+      <div class="swap-receive-asset">
+        <img id="swapToIcon" src="/assets/images/coins/xbc.png" alt="" width="30" height="30">
+        <strong id="swapToSymbol">XBC</strong>
+      </div>
+    </div>
+
+    <p id="swapValidation" class="swap-validation" role="alert" aria-live="polite"></p>
+    <button type="button" id="swapButton" class="swap-execute-button" disabled>
+      <span class="swap-button-label">Review Swap</span>
+      <span aria-hidden="true">→</span>
+    </button>
+    <p class="swap-disclaimer">Displayed amounts are estimates.</p>
+    <div id="swapStatus" class="swap-status" role="status" aria-live="polite" hidden></div>
+  </div>
+</section>
    
 <div class="wallet-panels">
 <section id="depositPanel" class="wallet-panel wallet-hidden">
