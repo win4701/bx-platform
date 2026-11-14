@@ -4838,129 +4838,1100 @@ hr {
     }
 }
 
-
-/* =====================================================
-   BLOXIO SWAP - MOBILE FIXES
-   ===================================================== */
+/* ==========================================================================
+   01. SWAP DESIGN TOKENS
+   ========================================================================== */
 
 #bloxioSwap {
-    scroll-margin-top: 120px;
-    padding-bottom: 24px;
+    --swap-bg: #0A261E;
+    --swap-bg-deep: #041410;
+    --swap-bg-panel: #071C16;
+    --swap-bg-hover: #10372B;
+
+    --swap-gold: #D4AF37;
+    --swap-gold-light: #F4E3B1;
+    --swap-gold-gradient: linear-gradient(
+        135deg,
+        #F6DC83,
+        #C39527
+    );
+
+    --swap-text: #FFFFFF;
+    --swap-muted: #8A9A96;
+
+    --swap-border: rgba(212, 175, 55, .18);
+    --swap-border-strong: rgba(212, 175, 55, .42);
+
+    --swap-success: #35C98A;
+    --swap-warning: #E9B95B;
+    --swap-danger: #EF7777;
+
+    --swap-radius: 16px;
+    --swap-transition: .2s ease;
+
+    position: relative;
+    isolation: isolate;
+
+    width: 100%;
+    max-width: 100%;
+
+    margin: 18px auto;
+    padding: 0;
+
+    color: var(--swap-text);
+    font-family: inherit;
+
+    scroll-margin-top: 115px;
+}
+
+
+/* ==========================================================================
+   02. RESET
+   ========================================================================== */
+
+#bloxioSwap *,
+#bloxioSwap *::before,
+#bloxioSwap *::after {
+    box-sizing: border-box;
+}
+
+#bloxioSwap button,
+#bloxioSwap input {
+    font: inherit;
+}
+
+#bloxioSwap button {
+    -webkit-tap-highlight-color: transparent;
+}
+
+#bloxioSwap img {
+    display: block;
+    max-width: 100%;
+}
+
+#bloxioSwap [hidden] {
+    display: none !important;
+}
+
+
+/* ==========================================================================
+   03. MAIN CARD
+   ========================================================================== */
+
+#bloxioSwap .bxs-swap-card {
+    position: relative;
+
+    width: 100%;
+    min-width: 0;
+
+    padding: 22px;
+
+    border: 1px solid var(--swap-border);
+    border-radius: 20px;
+
+    background:
+        radial-gradient(
+            circle at 100% 0,
+            rgba(212, 175, 55, .07),
+            transparent 38%
+        ),
+        var(--swap-bg);
+
+    box-shadow:
+        0 15px 45px rgba(0, 0, 0, .20),
+        inset 0 1px 0 rgba(255, 255, 255, .025);
+}
+
+
+/* ==========================================================================
+   04. HEADER
+   ========================================================================== */
+
+#bloxioSwap .bxs-swap-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 15px;
+
+    margin-bottom: 20px;
+}
+
+#bloxioSwap .bxs-swap-header h2 {
+    margin: 4px 0;
+
+    color: var(--swap-text);
+
+    font-size: clamp(20px, 3vw, 27px);
+    font-weight: 850;
+    letter-spacing: -.04em;
+}
+
+#bloxioSwap .bxs-swap-eyebrow {
+    display: block;
+
+    color: var(--swap-gold);
+
+    font-size: 10px;
+    font-weight: 850;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+}
+
+#bloxioSwap .bxs-swap-subtitle {
+    margin: 5px 0 0;
+
+    color: var(--swap-muted);
+    font-size: 12px;
+}
+
+#bloxioSwap .bxs-swap-status {
+    display: inline-flex;
+    align-items: center;
+
+    gap: 7px;
+
+    padding: 8px 12px;
+
+    border: 1px solid var(--swap-border);
+    border-radius: 30px;
+
+    color: var(--swap-gold-light);
+    font-size: 11px;
+    white-space: nowrap;
+}
+
+#bloxioSwap .bxs-swap-status-dot {
+    width: 7px;
+    height: 7px;
+
+    border-radius: 50%;
+
+    background: var(--swap-success);
+    box-shadow: 0 0 10px rgba(53, 201, 138, .45);
+}
+
+
+/* ==========================================================================
+   05. HORIZONTAL SWAP GRID
+   ========================================================================== */
+
+#bloxioSwap .bxs-swap-grid {
+    display: grid;
+
+    grid-template-columns:
+        minmax(0, 1fr)
+        minmax(0, 1fr);
+
+    align-items: stretch;
+
+    gap: 14px;
+
+    width: 100%;
+    min-width: 0;
+}
+
+
+/* ==========================================================================
+   06. FROM / TO PANELS
+   ========================================================================== */
+
+#bloxioSwap .bxs-swap-panel {
+    position: relative;
+
+    display: flex;
+    flex-direction: column;
+
+    justify-content: space-between;
+
+    min-width: 0;
+    min-height: 190px;
+
+    padding: 16px;
+
+    border: 1px solid rgba(212, 175, 55, .13);
+    border-radius: var(--swap-radius);
+
+    background: var(--swap-bg-deep);
+
+    transition:
+        border-color var(--swap-transition),
+        box-shadow var(--swap-transition);
+}
+
+#bloxioSwap .bxs-swap-panel:focus-within {
+    border-color: var(--swap-border-strong);
+
+    box-shadow:
+        0 0 0 3px rgba(212, 175, 55, .045);
+}
+
+#bloxioSwap .bxs-swap-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 8px;
+
+    margin-bottom: 14px;
+}
+
+#bloxioSwap .bxs-swap-panel-header label {
+    color: var(--swap-text);
+
+    font-size: 13px;
+    font-weight: 800;
+}
+
+#bloxioSwap .bxs-swap-panel-header span {
+    color: var(--swap-muted);
+    font-size: 10px;
+}
+
+
+/* ==========================================================================
+   07. AMOUNT ENTRY
+   ========================================================================== */
+
+#bloxioSwap .bxs-swap-entry {
+    display: flex;
+    flex-direction: column;
+
+    justify-content: center;
+    align-items: stretch;
+
+    gap: 12px;
+
+    width: 100%;
+    min-width: 0;
+    min-height: 112px;
+
+    padding: 12px;
+
+    border: 1px solid var(--swap-border);
+    border-radius: 13px;
+
+    background: #061B15;
+
+    transition:
+        border-color var(--swap-transition),
+        box-shadow var(--swap-transition);
+}
+
+#bloxioSwap .bxs-swap-entry:focus-within {
+    border-color: var(--swap-gold);
+
+    box-shadow:
+        0 0 0 3px rgba(212, 175, 55, .08);
+}
+
+#bloxioSwap .bxs-swap-entry input {
+    display: block;
+
+    width: 100%;
+    min-width: 0;
+
+    padding: 4px 0;
+
+    border: 0;
+    outline: 0;
+
+    background: transparent;
+
+    color: var(--swap-text);
+
+    font-size: clamp(19px, 3vw, 27px);
+    font-weight: 800;
+
+    text-align: left;
+}
+
+#bloxioSwap .bxs-swap-entry input::placeholder {
+    color: rgba(138, 154, 150, .55);
 }
 
 #bloxioSwap .bxs-swap-entry input[readonly] {
     cursor: default;
     caret-color: transparent;
-    user-select: none;
 }
 
-#bloxioSwap .bxs-swap-entry input:disabled {
-    opacity: .8;
-}
 
-#bloxioSwap .bxs-swap-message[hidden] {
-    display: none !important;
-}
+/* ==========================================================================
+   08. TOKEN PICKER
+   ========================================================================== */
 
-#bloxioSwap .bxs-swap-message {
-    display: block;
-    margin-top: 14px;
-    padding: 12px 15px;
-    border-radius: 11px;
-    line-height: 1.5;
-}
+#bloxioSwap .bxs-swap-picker {
+    position: relative;
 
-#bloxioSwap .bxs-swap-execute:disabled {
-    opacity: .38;
-    filter: grayscale(.65);
-    cursor: not-allowed;
-    box-shadow: none;
-    transform: none;
-}
-
-#bloxioSwap .bxs-swap-execute:disabled:hover {
-    filter: grayscale(.65);
-    transform: none;
-}
-
-#bloxioSwap .bxs-swap-entry,
-#bloxioSwap .bxs-swap-panel {
+    width: 100%;
     min-width: 0;
 }
 
 #bloxioSwap .bxs-swap-token {
-    max-width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 8px;
+
+    width: 100%;
+    min-width: 0;
+    min-height: 44px;
+
+    padding: 8px 10px;
+
+    border: 1px solid var(--swap-border);
+    border-radius: 11px;
+
+    background: var(--swap-bg);
+
+    color: var(--swap-text);
+
+    cursor: pointer;
+
+    transition:
+        background var(--swap-transition),
+        border-color var(--swap-transition);
+}
+
+#bloxioSwap .bxs-swap-token:hover {
+    border-color: var(--swap-gold);
+    background: var(--swap-bg-hover);
+}
+
+#bloxioSwap .bxs-swap-token img {
+    width: 27px;
+    height: 27px;
+
+    flex: 0 0 27px;
+
+    border-radius: 50%;
+    object-fit: contain;
 }
 
 #bloxioSwap .bxs-swap-token-info {
+    display: flex;
+    flex-direction: column;
+
+    flex: 1;
+    min-width: 0;
+
+    text-align: left;
+}
+
+#bloxioSwap .bxs-swap-token-info strong {
+    overflow: hidden;
+
+    color: var(--swap-text);
+
+    font-size: 12px;
+    font-weight: 850;
+
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#bloxioSwap .bxs-swap-token-info small {
+    overflow: hidden;
+
+    color: var(--swap-muted);
+
+    font-size: 10px;
+
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#bloxioSwap .bxs-swap-token > span:last-child {
+    flex: 0 0 auto;
+
+    color: var(--swap-gold);
+    font-size: 13px;
+}
+
+
+/* ==========================================================================
+   09. TOKEN DROPDOWN
+   ========================================================================== */
+
+#bloxioSwap .bxs-swap-menu {
+    position: absolute;
+
+    top: calc(100% + 9px);
+    right: 0;
+
+    z-index: 1000;
+
+    width: min(310px, 85vw);
+    max-height: 360px;
+
+    padding: 10px;
+
+    overflow: hidden;
+
+    border: 1px solid var(--swap-border);
+    border-radius: 14px;
+
+    background: #071C16;
+
+    color: var(--swap-text);
+
+    box-shadow:
+        0 18px 45px rgba(0, 0, 0, .45);
+}
+
+#bloxioSwap .bxs-swap-menu[hidden] {
+    display: none !important;
+}
+
+#bloxioSwap .bxs-swap-menu.is-open {
+    display: block;
+}
+
+#bloxioSwap .bxs-swap-search {
+    display: block;
+
+    width: 100%;
+    height: 41px;
+
+    margin-bottom: 9px;
+    padding: 0 12px;
+
+    border: 1px solid var(--swap-border);
+    border-radius: 9px;
+
+    outline: 0;
+
+    background: var(--swap-bg-deep);
+    color: var(--swap-text);
+
+    font-size: 12px;
+}
+
+#bloxioSwap .bxs-swap-search:focus {
+    border-color: var(--swap-gold);
+}
+
+#bloxioSwap .bxs-swap-search::placeholder {
+    color: var(--swap-muted);
+}
+
+
+/* ==========================================================================
+   10. TOKEN OPTIONS
+   ========================================================================== */
+
+#bloxioSwap .bxs-swap-options {
+    display: flex;
+    flex-direction: column;
+
+    gap: 3px;
+
+    max-height: 260px;
+
+    overflow-x: hidden;
+    overflow-y: auto;
+
+    overscroll-behavior: contain;
+
+    scrollbar-width: thin;
+    scrollbar-color: var(--swap-gold) var(--swap-bg-panel);
+}
+
+#bloxioSwap .bxs-swap-options button,
+#bloxioSwap .bxs-swap-option {
+    display: flex;
+    align-items: center;
+
+    gap: 10px;
+
+    width: 100%;
+    min-height: 48px;
+
+    padding: 8px 10px;
+
+    border: 0;
+    border-radius: 9px;
+
+    background: transparent;
+
+    color: var(--swap-text);
+
+    text-align: left;
+
+    cursor: pointer;
+
+    transition: background var(--swap-transition);
+}
+
+#bloxioSwap .bxs-swap-options button:hover,
+#bloxioSwap .bxs-swap-option:hover {
+    background: rgba(212, 175, 55, .09);
+}
+
+#bloxioSwap .bxs-swap-options button[aria-selected="true"],
+#bloxioSwap .bxs-swap-option[aria-selected="true"] {
+    background: rgba(212, 175, 55, .12);
+}
+
+#bloxioSwap .bxs-swap-options img,
+#bloxioSwap .bxs-swap-option img {
+    width: 29px;
+    height: 29px;
+
+    flex: 0 0 29px;
+
+    border-radius: 50%;
+    object-fit: contain;
+}
+
+#bloxioSwap .bxs-swap-options button span,
+#bloxioSwap .bxs-swap-option span {
+    display: flex;
+    flex-direction: column;
+
     min-width: 0;
 }
 
+#bloxioSwap .bxs-swap-options button strong,
+#bloxioSwap .bxs-swap-option strong {
+    color: var(--swap-text);
+    font-size: 12px;
+    font-weight: 800;
+}
+
+#bloxioSwap .bxs-swap-options button small,
+#bloxioSwap .bxs-swap-option small {
+    color: var(--swap-muted);
+    font-size: 10px;
+}
+
+#bloxioSwap .bxs-swap-empty {
+    padding: 18px 10px;
+
+    color: var(--swap-muted);
+
+    font-size: 12px;
+    text-align: center;
+}
+
+#bloxioSwap .bxs-swap-no-price {
+    margin-left: auto;
+
+    color: var(--swap-warning);
+
+    font-size: 9px;
+}
+
+
+/* ==========================================================================
+   11. REFERENCE VALUES
+   ========================================================================== */
+
+#bloxioSwap .bxs-swap-usd {
+    display: block;
+
+    margin-top: 11px;
+
+    color: var(--swap-muted);
+
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+
+/* ==========================================================================
+   12. REVERSE BUTTON
+   ========================================================================== */
+
+#bloxioSwap .bxs-swap-reverse-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 100%;
+
+    margin: 15px 0;
+}
+
+#bloxioSwap .bxs-swap-reverse {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 46px;
+    height: 46px;
+
+    padding: 0;
+
+    border: 1px solid var(--swap-border);
+    border-radius: 50%;
+
+    background: var(--swap-bg-hover);
+
+    color: var(--swap-gold);
+
+    font-size: 21px;
+
+    cursor: pointer;
+
+    transition:
+        transform .25s ease,
+        background var(--swap-transition),
+        border-color var(--swap-transition);
+}
+
+#bloxioSwap .bxs-swap-reverse:hover {
+    transform: rotate(180deg);
+
+    border-color: var(--swap-gold);
+
+    background: #174737;
+}
+
+
+/* ==========================================================================
+   13. QUOTE INFORMATION
+   ========================================================================== */
+
 #bloxioSwap .bxs-swap-quote {
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+
+    gap: 14px;
+
+    width: 100%;
+
+    margin-top: 16px;
+    padding: 16px;
+
+    border: 1px solid rgba(212, 175, 55, .13);
+    border-radius: 14px;
+
+    background: var(--swap-bg-deep);
+}
+
+#bloxioSwap .bxs-swap-quote-row {
+    display: flex;
+    flex-direction: column;
+
+    align-items: flex-start;
+
+    gap: 5px;
+
+    min-width: 0;
+}
+
+#bloxioSwap .bxs-swap-quote-row span {
+    color: var(--swap-muted);
+
+    font-size: 11px;
+}
+
+#bloxioSwap .bxs-swap-quote-row strong {
+    color: var(--swap-text);
+
+    font-size: 13px;
+    font-weight: 800;
+
     overflow-wrap: anywhere;
 }
 
-@media (max-width: 768px) {
-    #bloxioSwap {
-        width: 100%;
-        max-width: 100%;
-        overflow: visible;
-    }
+#bloxioSwap #bxsSwapRate {
+    color: var(--swap-gold-light);
+}
 
+
+/* ==========================================================================
+   14. MESSAGE STATES
+   ========================================================================== */
+
+#bloxioSwap .bxs-swap-message {
+    display: block;
+
+    width: 100%;
+
+    margin-top: 13px;
+    padding: 12px 14px;
+
+    border: 1px solid rgba(233, 185, 91, .22);
+    border-radius: 11px;
+
+    background: rgba(233, 185, 91, .07);
+
+    color: var(--swap-warning);
+
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+#bloxioSwap .bxs-swap-message:empty,
+#bloxioSwap .bxs-swap-message[hidden] {
+    display: none !important;
+}
+
+#bloxioSwap .bxs-swap-message.success {
+    border-color: rgba(53, 201, 138, .25);
+
+    background: rgba(53, 201, 138, .07);
+
+    color: var(--swap-success);
+}
+
+#bloxioSwap .bxs-swap-message.error {
+    border-color: rgba(239, 119, 119, .28);
+
+    background: rgba(239, 119, 119, .07);
+
+    color: var(--swap-danger);
+}
+
+
+/* ==========================================================================
+   15. EXECUTE BUTTON
+   ========================================================================== */
+
+#bloxioSwap .bxs-swap-execute {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 9px;
+
+    width: 100%;
+    min-height: 55px;
+
+    margin-top: 16px;
+    padding: 13px 20px;
+
+    border: 0;
+    border-radius: 12px;
+
+    background: var(--swap-gold-gradient);
+
+    color: #041410;
+
+    font-size: 15px;
+    font-weight: 900;
+
+    cursor: pointer;
+
+    box-shadow:
+        0 7px 20px rgba(195, 149, 39, .15);
+
+    transition:
+        transform var(--swap-transition),
+        filter var(--swap-transition),
+        box-shadow var(--swap-transition);
+}
+
+#bloxioSwap .bxs-swap-execute:hover:not(:disabled) {
+    transform: translateY(-2px);
+
+    filter: brightness(1.07);
+
+    box-shadow:
+        0 10px 26px rgba(195, 149, 39, .25);
+}
+
+#bloxioSwap .bxs-swap-execute:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+#bloxioSwap .bxs-swap-execute:disabled {
+    opacity: .42;
+
+    filter: grayscale(.65);
+
+    cursor: not-allowed;
+
+    box-shadow: none;
+    transform: none;
+}
+
+
+/* ==========================================================================
+   16. DISCLAIMER
+   ========================================================================== */
+
+#bloxioSwap .bxs-swap-disclaimer {
+    margin: 14px 0 0;
+
+    color: var(--swap-muted);
+
+    font-size: 11px;
+    line-height: 1.7;
+
+    text-align: center;
+}
+
+
+/* ==========================================================================
+   17. ACCESSIBILITY
+   ========================================================================== */
+
+#bloxioSwap button:focus-visible,
+#bloxioSwap input:focus-visible {
+    outline: 2px solid var(--swap-gold);
+    outline-offset: 3px;
+}
+
+#bloxioSwap button:disabled {
+    cursor: not-allowed;
+}
+
+
+/* ==========================================================================
+   18. TABLET
+   ========================================================================== */
+
+@media (min-width: 601px) and (max-width: 900px) {
     #bloxioSwap .bxs-swap-card {
-        width: 100%;
-        max-width: 100%;
+        padding: 17px;
     }
 
     #bloxioSwap .bxs-swap-grid {
-        grid-template-columns: minmax(0, 1fr);
-    }
-}
-
-@media (max-width: 480px) {
-    #bloxioSwap {
-        margin-top: 12px;
-        margin-bottom: 20px;
-        scroll-margin-top: 110px;
+        gap: 10px;
     }
 
-    #bloxioSwap .bxs-swap-card {
+    #bloxioSwap .bxs-swap-panel {
         padding: 12px;
     }
 
     #bloxioSwap .bxs-swap-entry {
-        display: flex;
-        flex-wrap: nowrap;
-        gap: 7px;
-        padding: 9px;
-    }
-
-    #bloxioSwap .bxs-swap-entry input {
-        min-width: 0;
-        width: 100%;
-        font-size: 20px;
-    }
-
-    #bloxioSwap .bxs-swap-picker {
-        flex: 0 1 48%;
-        min-width: 0;
+        padding: 10px;
     }
 
     #bloxioSwap .bxs-swap-token {
-        min-width: 0;
-        padding: 6px;
+        padding: 7px;
+    }
+}
+
+
+/* ==========================================================================
+   19. MOBILE — KEEP HORIZONTAL PANELS
+   ========================================================================== */
+
+@media (max-width: 600px) {
+    #bloxioSwap {
+        margin: 12px auto;
+        padding: 0 2px;
     }
 
-    #bloxioSwap .bxs-swap-token-info strong {
-        font-size: 12px;
+    #bloxioSwap .bxs-swap-card {
+        padding: 12px;
+
+        border-radius: 16px;
     }
 
-    #bloxioSwap .bxs-swap-token-info small {
+    #bloxioSwap .bxs-swap-header {
+        gap: 8px;
+        margin-bottom: 14px;
+    }
+
+    #bloxioSwap .bxs-swap-header h2 {
+        font-size: 20px;
+    }
+
+    #bloxioSwap .bxs-swap-status {
+        padding: 6px 8px;
+        font-size: 9px;
+    }
+
+    #bloxioSwap .bxs-swap-grid {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+
+        gap: 8px;
+    }
+
+    #bloxioSwap .bxs-swap-panel {
+        min-height: 165px;
+        padding: 9px;
+
+        border-radius: 12px;
+    }
+
+    #bloxioSwap .bxs-swap-panel-header {
+        margin-bottom: 9px;
+    }
+
+    #bloxioSwap .bxs-swap-panel-header label {
         font-size: 10px;
     }
 
+    #bloxioSwap .bxs-swap-entry {
+        min-height: 102px;
+
+        gap: 9px;
+        padding: 8px;
+
+        border-radius: 10px;
+    }
+
+    #bloxioSwap .bxs-swap-entry input {
+        font-size: 19px;
+    }
+
+    #bloxioSwap .bxs-swap-picker {
+        width: 100%;
+    }
+
+    #bloxioSwap .bxs-swap-token {
+        min-height: 38px;
+        padding: 5px;
+        gap: 5px;
+    }
+
+    #bloxioSwap .bxs-swap-token img {
+        width: 21px;
+        height: 21px;
+
+        flex-basis: 21px;
+    }
+
+    #bloxioSwap .bxs-swap-token-info strong {
+        font-size: 10px;
+    }
+
+    #bloxioSwap .bxs-swap-token-info small {
+        font-size: 9px;
+    }
+
+    #bloxioSwap .bxs-swap-token > span:last-child {
+        font-size: 10px;
+    }
+
+    #bloxioSwap .bxs-swap-usd {
+        font-size: 10px;
+    }
+
+    #bloxioSwap .bxs-swap-reverse-row {
+        margin: 11px 0;
+    }
+
+    #bloxioSwap .bxs-swap-reverse {
+        width: 40px;
+        height: 40px;
+        font-size: 18px;
+    }
+
+    #bloxioSwap .bxs-swap-quote {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+
+        gap: 11px;
+        padding: 12px;
+    }
+
+    #bloxioSwap .bxs-swap-quote-row span {
+        font-size: 10px;
+    }
+
+    #bloxioSwap .bxs-swap-quote-row strong {
+        font-size: 11px;
+    }
+
     #bloxioSwap .bxs-swap-execute {
-        min-height: 54px;
-        font-size: 15px;
+        min-height: 51px;
+        font-size: 13px;
+    }
+
+    #bloxioSwap .bxs-swap-menu {
+        position: fixed;
+
+        top: 50%;
+        left: 50%;
+        right: auto;
+
+        transform: translate(-50%, -50%);
+
+        width: calc(100vw - 30px);
+        max-width: 360px;
+
+        max-height: 75vh;
+    }
+
+    #bloxioSwap .bxs-swap-options {
+        max-height: 52vh;
     }
 }
+
+
+/* ==========================================================================
+   20. SMALL MOBILE
+   ========================================================================== */
+
+@media (max-width: 360px) {
+    #bloxioSwap .bxs-swap-card {
+        padding: 8px;
+    }
+
+    #bloxioSwap .bxs-swap-grid {
+        gap: 6px;
+    }
+
+    #bloxioSwap .bxs-swap-panel {
+        min-height: 155px;
+        padding: 7px;
+    }
+
+    #bloxioSwap .bxs-swap-panel-header label {
+        font-size: 9px;
+    }
+
+    #bloxioSwap .bxs-swap-entry {
+        padding: 6px;
+        gap: 7px;
+    }
+
+    #bloxioSwap .bxs-swap-entry input {
+        font-size: 16px;
+    }
+
+    #bloxioSwap .bxs-swap-token {
+        gap: 4px;
+        padding: 4px;
+    }
+
+    #bloxioSwap .bxs-swap-token img {
+        width: 18px;
+        height: 18px;
+        flex-basis: 18px;
+    }
+
+    #bloxioSwap .bxs-swap-token-info strong {
+        font-size: 9px;
+    }
+
+    #bloxioSwap .bxs-swap-token-info small {
+        display: none;
+    }
+
+    #bloxioSwap .bxs-swap-quote {
+        gap: 8px;
+        padding: 9px;
+    }
+}
+
+
+/* ==========================================================================
+   21. REDUCED MOTION
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+    #bloxioSwap *,
+    #bloxioSwap *::before,
+    #bloxioSwap *::after {
+        scroll-behavior: auto !important;
+        animation-duration: .01ms !important;
+        transition-duration: .01ms !important;
+    }
+}
+
+
+/* ==========================================================================
+   END BLOXIO SWAP ENGINE
+   ========================================================================== */
