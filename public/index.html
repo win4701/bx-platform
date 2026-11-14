@@ -197,158 +197,272 @@ id="app" class="app-container">
 </div>
 </section>
 
-<section class="wallet-intelligence" id="walletIntelligence">
-<div class="wallet-intel-head">
-<div>
-<span class="wallet-kicker">SMART WALLET</span>
-<h3 id="walletIntelTitle">Ready To Fund Wallet</h3>
-</div>
-<span id="walletIntelBadge" class="wallet-intel-badge">START</span>
-</div>
-<p id="walletIntelText">Deposit assets to unlock Market • Mining • Casino</p>
-<div class="wallet-intel-actions">
-<button id="walletIntelPrimary" class="wallet-intel-btn primary">Deposit Now</button>
-<button id="walletIntelSecondary" class="wallet-intel-btn">Explore Market</button>
-</div>
+   
+ 
+<!-- =====================================================
+     BLOXIO SWAP ENGINE
+     Location: public/index.html
+===================================================== -->
+
+<section
+  id="bloxioSwap"
+  class="bloxio-swap"
+  aria-labelledby="bloxioSwapTitle"
+>
+  <div class="bxs-swap-card">
+
+    <!-- HEADER -->
+    <header class="bxs-swap-header">
+      <div>
+        <span class="bxs-swap-eyebrow">
+          BLOXIO EXCHANGE
+        </span>
+
+        <h3 id="bloxioSwapTitle">
+          Swap Assets
+        </h3>
+
+        <p>
+          Convert supported assets using a USDT reference quote.
+        </p>
+      </div>
+
+      <span class="bxs-swap-live">
+        <i></i>
+        QUOTE ENGINE
+      </span>
+    </header>
+
+    <!-- FROM / TO GRID -->
+    <div class="bxs-swap-grid">
+
+      <!-- FROM PANEL -->
+      <section
+        class="bxs-swap-panel"
+        aria-label="Asset to send"
+      >
+        <div class="bxs-swap-panel-head">
+          <label for="bxsSwapAmount">From</label>
+          <span>YOU PAY</span>
+        </div>
+
+        <div class="bxs-swap-entry">
+
+          <input
+            id="bxsSwapAmount"
+            type="number"
+            inputmode="decimal"
+            min="0"
+            step="any"
+            placeholder="0.00"
+            autocomplete="off"
+            aria-label="Amount to swap"
+          >
+
+          <div class="bxs-swap-picker">
+
+            <button
+              id="bxsFromTrigger"
+              class="bxs-swap-token"
+              type="button"
+              aria-expanded="false"
+              aria-controls="bxsFromMenu"
+            >
+              <img
+                id="bxsFromIcon"
+                src="/assets/images/coins/bx.png"
+                alt=""
+              >
+
+              <span>
+                <strong id="bxsFromSymbol">BX</strong>
+                <small id="bxsFromName">Bloxio</small>
+              </span>
+
+              <b aria-hidden="true">⌄</b>
+            </button>
+
+            <!-- FROM DROPDOWN -->
+            <div
+              id="bxsFromMenu"
+              class="bxs-swap-menu"
+              hidden
+            >
+              <input
+                id="bxsFromSearch"
+                class="bxs-swap-search"
+                type="search"
+                placeholder="Search name or symbol..."
+                autocomplete="off"
+                aria-label="Search source assets"
+              >
+
+              <div
+                id="bxsFromOptions"
+                class="bxs-swap-options"
+                role="listbox"
+                aria-label="Source assets"
+              ></div>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="bxs-swap-panel-foot">
+          <span>Reference value</span>
+          <strong id="bxsFromUsd">—</strong>
+        </div>
+      </section>
+
+      <!-- TO PANEL -->
+      <section
+        class="bxs-swap-panel"
+        aria-label="Asset to receive"
+      >
+        <div class="bxs-swap-panel-head">
+          <label for="bxsSwapReceive">To</label>
+          <span>YOU RECEIVE</span>
+        </div>
+
+        <div class="bxs-swap-entry">
+
+          <input
+            id="bxsSwapReceive"
+            type="text"
+            value="0.00"
+            readonly
+            aria-label="Estimated amount to receive"
+          >
+
+          <div class="bxs-swap-picker">
+
+            <button
+              id="bxsToTrigger"
+              class="bxs-swap-token"
+              type="button"
+              aria-expanded="false"
+              aria-controls="bxsToMenu"
+            >
+              <img
+                id="bxsToIcon"
+                src="/assets/images/coins/xbc.png"
+                alt=""
+              >
+
+              <span>
+                <strong id="bxsToSymbol">XBC</strong>
+                <small id="bxsToName">Bloxio Casino</small>
+              </span>
+
+              <b aria-hidden="true">⌄</b>
+            </button>
+
+            <!-- TO DROPDOWN -->
+            <div
+              id="bxsToMenu"
+              class="bxs-swap-menu"
+              hidden
+            >
+              <input
+                id="bxsToSearch"
+                class="bxs-swap-search"
+                type="search"
+                placeholder="Search name or symbol..."
+                autocomplete="off"
+                aria-label="Search destination assets"
+              >
+
+              <div
+                id="bxsToOptions"
+                class="bxs-swap-options"
+                role="listbox"
+                aria-label="Destination assets"
+              ></div>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="bxs-swap-panel-foot">
+          <span>Estimated value</span>
+          <strong id="bxsToUsd">—</strong>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- REVERSE BUTTON -->
+    <div class="bxs-swap-reverse-row">
+      <button
+        id="bxsSwapReverse"
+        class="bxs-swap-reverse"
+        type="button"
+        aria-label="Reverse swap direction"
+        title="Reverse pair"
+      >
+        ⇅
+      </button>
+    </div>
+
+    <!-- QUOTE DETAILS -->
+    <div class="bxs-swap-quote">
+
+      <div>
+        <span>Exchange rate</span>
+        <strong id="bxsSwapRate">—</strong>
+      </div>
+
+      <div>
+        <span>Trading fee</span>
+        <strong>0.30%</strong>
+      </div>
+
+      <div>
+        <span>Slippage allowance</span>
+        <strong>0.50%</strong>
+      </div>
+
+      <div>
+        <span>Total quote adjustment</span>
+        <strong id="bxsSwapDeduction">
+          0.7985%
+        </strong>
+      </div>
+
+    </div>
+
+    <!-- STATUS -->
+    <p
+      id="bxsSwapMessage"
+      class="bxs-swap-message"
+      data-state="info"
+      role="status"
+      aria-live="polite"
+    >
+      Choose assets and enter an amount to calculate a quote.
+    </p>
+
+    <!-- EXECUTE -->
+    <button
+      id="bxsSwapExecute"
+      class="bxs-swap-execute"
+      type="button"
+      disabled
+    >
+      EXECUTE SWAP
+    </button>
+
+    <!-- DISCLAIMER -->
+    <p class="bxs-swap-disclaimer">
+      Indicative quote only. On-chain execution requires
+      a connected wallet, liquidity route and transaction service.
+    </p>
+
+  </div>
 </section>
 
-<section class="wallet-actions">
-<button id="openDepositBtn" class="btn primary" data-wallet-open="depositPanel"><span data-lang-key="wallet.deposit">Deposit</span></button>
-<button id="openWithdrawBtn" class="btn" data-wallet-open="withdrawPanel"><span data-lang-key="wallet.withdraw">Withdraw</span></button>
-<button id="openTransferBtn" class="btn" data-wallet-open="transferPanel"><span data-lang-key="wallet.transfer">Transfer</span></button>
-<button id="openSwapBtn" class="btn">Swap</button>
-<button id="walletBuyBtn" class="btn">Buy</button>
-<button id="walletSellBtn" class="btn">Sell</button>
-</section>
-<section class="swap-container" id="bloxioSwap">
-<header class="swap-header">
-<div>
-<span class="swap-eyebrow">BLOXIO EXCHANGE</span>
-<h2>Swap Engine</h2>
-<p class="swap-subtitle">BX <span>•</span> XBC</p>
-</div>
-<div class="swap-live-status">
-<span class="status-dot"></span>
-Swap Ready
-</div>
-</header>
-<div class="swap-content">
-<!-- FROM PANEL -->
-<div class="swap-panel">
-<div class="swap-panel-heading">
-<label>From</label>
-<span class="panel-description">You pay</span>
-</div>
-<div class="token-selector" role="radiogroup" aria-label="Select sending token">
-<label class="token-card">
-<input type="radio" name="swapFrom" value="BX" checked>
-<span class="token-card-content">
-<img class="token-icon" src="/assets/images/coins/bx.png" alt="BX">
-<span class="token-info">
-<strong>BX</strong>
-<small>Bloxio Token</small>
-</span>
-<span class="token-check"></span>
-</span>
-</label>
-<label class="token-card">
-<input type="radio" name="swapFrom" value="XBC">
-<span class="token-card-content">
-<img class="token-icon" src="/assets/images/coins/xbc.png" alt="XBC">
-<span class="token-info">
-<strong>XBC</strong>
-<small>Bloxio Casino Token</small>
-</span>
-<span class="token-check"></span>
-</span>
-</label>
-</div>
-<div class="swap-amount-box">
-<label for="swapAmount">Amount</label>
-<input type="number" id="swapAmount" min="0" step="any" placeholder="0.00" inputmode="decimal" autocomplete="off">
-<span class="amount-currency" id="fromCurrency">BX</span>
-</div>
-<div class="swap-panel-footer">
-<span>Market value</span>
-<strong id="fromUsdValue">$0.00</strong>
-</div>
-</div>
-<div class="swap-direction" aria-hidden="true">
-<span>↓</span>
-</div>
-<!-- TO PANEL -->
-<div class="swap-panel">
-<div class="swap-panel-heading">
-<label>To</label>
-<span class="panel-description">You receive</span>
-</div>
-<div class="token-selector" role="radiogroup" aria-label="Select receiving token">
-<label class="token-card">
-<input type="radio" name="swapTo" value="BX">
-<span class="token-card-content">
-<img class="token-icon" src="/assets/images/coins/bx.png" alt="BX">
-<span class="token-info">
-<strong>BX</strong>
-<small>Bloxio Token</small>
-</span>
-<span class="token-check"></span>
-</span>
-</label>
-<label class="token-card">
-<input type="radio" name="swapTo" value="XBC" checked>
-<span class="token-card-content">
-<img class="token-icon" src="/assets/images/coins/xbc.png" alt="XBC">
-<span class="token-info">
-<strong>XBC</strong>
-<small>Bloxio Casino Token</small>
-</span>
-<span class="token-check"></span>
-</span>
-</label>
-</div>
-<div class="swap-amount-box receive-box">
-<label for="swapReceive">Estimated receive</label>
-<input type="text" id="swapReceive" placeholder="0.00" readonly aria-live="polite">
-<span class="amount-currency" id="toCurrency">XBC</span>
-</div>
-<div class="swap-panel-footer">
-<span>Estimated value</span>
-<strong id="toUsdValue">$0.00</strong>
-</div>
-</div>
-<div class="swap-details">
-<div class="swap-detail-row">
-<span>Exchange Rate</span>
-<strong id="swapRate">1 BX = 300 XBC</strong>
-</div>
-<div class="swap-detail-row">
-<span>Swap Fee</span>
-<strong>0.30%</strong>
-</div>
-<div class="swap-detail-row">
-<span>Slippage</span>
-<strong>0.50%</strong>
-</div>
-<div class="swap-detail-row">
-<span>Total Deduction</span>
-<strong id="swapDeduction">0.80%</strong>
-</div>
-<div class="swap-detail-row swap-detail-total">
-<span>Minimum Received</span>
-<strong id="swapMinimum">0.00</strong>
-</div>
-</div>
-<div class="swap-message" id="swapMessage" role="status" aria-live="polite" hidden></div>
-<!-- Execute -->
-<button type="button" class="swap-btn" id="executeSwap">
-<span>Execute Swap</span>
-<span class="swap-btn-arrow">→</span>
-</button>
-<p class="swap-disclaimer">Estimated conversion only.</p>
-</div>
-<div class="swap-toast" id="swapToast" role="status" aria-live="polite"></div>
-</section>
-   
+<!-- END BLOXIO SWAP ENGINE -->
+  
 <div class="wallet-panels">
 <section id="depositPanel" class="wallet-panel wallet-hidden">
    
