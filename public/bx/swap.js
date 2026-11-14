@@ -9,18 +9,6 @@
 
    HTML:
    #bloxioSwap
-
-   Features:
-   - Dynamic token selection
-   - Token search
-   - Token images and names
-   - Swap pair reversal
-   - USDT reference calculation
-   - Fee and slippage calculation
-   - Responsive dropdown interaction
-   - Wallet integration events
-   - Public JavaScript API
-
    Security:
    - No fabricated token prices
    - No simulated blockchain transactions
