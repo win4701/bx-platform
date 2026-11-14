@@ -1,1165 +1,1145 @@
 
 /* ==========================================================================
-   BLOXIO SWAP ENGINE
-   Version: 5.0
-   File: public/assets/js/swap.js
+   BLOXIO SWAP ENGINE — FULL UPDATE V6
+   File: public/bx/swap.js
+   Registry: public/bx/data/coins.js
 
-   Registry:
-   /bx/data/coins.js
+   IMPORTANT:
+   This version calculates indicative quotes.
+   It does not execute blockchain transactions.
+========================================================================== */
 
-   HTML:
-   #bloxioSwap
-   Security:
-   - No fabricated token prices
-   - No simulated blockchain transactions
-   ========================================================================== */
-
-import { SWAP_COINS } from "/bx/data/coins.js";
+import { SWAP_COINS } from "./data/coins.js";
 
 (() => {
-    "use strict";
+  "use strict";
 
-    /* ==============================================================
-       01. CONFIGURATION
-    ============================================================== */
+  /* ========================================================================
+     01. INITIALIZATION
+  ======================================================================== */
 
-    const CONFIG = Object.freeze({
-        feeRate: 0.003,
-        slippage: 0.005,
+  const root = document.getElementById("bloxioSwap");
 
-        defaultFrom: "BX",
-        defaultTo: "XBC",
+  if (!root || root.dataset.initialized === "true") {
+    return;
+  }
 
-        currency: "USD",
+  root.dataset.initialized = "true";
 
-        selectors: {
-            root: "bloxioSwap",
-            amount: "bxsSwapAmount",
-            receive: "bxsSwapReceive",
-            execute: "bxsSwapExecute",
-            reverse: "bxsSwapReverse"
-        }
-    });
+  const $ = (id) => document.getElementById(id);
 
-    const TOTAL_ADJUSTMENT =
-        1 - (1 - CONFIG.feeRate) * (1 - CONFIG.slippage);
+  const CONFIG = Object.freeze({
+    pricesUrl: "/api/market/prices",
 
-    /* ==============================================================
-       02. HELPERS
-    ============================================================== */
+    refreshInterval: 15000,
 
-    const $ = id => document.getElementById(id);
+    requestTimeout: 10000,
 
-    const symbol = value =>
-        String(value ?? "").trim().toUpperCase();
+    feeRate: 0.003,
 
-    const toNumber = value => {
-        if (typeof value === "number") {
-            return Number.isFinite(value) ? value : NaN;
-        }
+    slippageRate: 0.005,
 
-        if (
-            typeof value !== "string" ||
-            value.trim() === ""
-        ) {
-            return NaN;
-        }
+    maxAmount: Number.MAX_SAFE_INTEGER,
 
-        const number = Number(value);
+    defaultFrom: "BX",
 
-        return Number.isFinite(number)
-            ? number
-            : NaN;
-    };
+    defaultTo: "XBC"
+  });
 
-    const formatNumber = (value, digits = 8) => {
-        if (!Number.isFinite(value)) return "—";
+  const TOTAL_ADJUSTMENT =
+    1 - (1 - CONFIG.feeRate) * (1 - CONFIG.slippageRate);
 
-        return new Intl.NumberFormat("en-US", {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: digits
-        }).format(value);
-    };
 
-    const formatUSD = value => {
-        if (!Number.isFinite(value)) return "—";
+  /* ========================================================================
+     02. USER INTERFACE ELEMENTS
+  ======================================================================== */
 
-        return new Intl.NumberFormat("en-US", {
-            style: "currency",
-            currency: CONFIG.currency,
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-        }).format(value);
-    };
+  const ui = {
+    amount: $("bxsSwapAmount"),
+    receive: $("bxsSwapReceive"),
 
-    /* ==============================================================
-       03. ROOT AND ELEMENTS
-    ============================================================== */
+    fromUsd: $("bxsFromUsd"),
+    toUsd: $("bxsToUsd"),
 
-    const root = $(CONFIG.selectors.root);
+    rate: $("bxsSwapRate"),
+    deduction: $("bxsSwapDeduction"),
 
-    if (!root) {
-        console.warn("[BLOXIO SWAP] Swap section not found.");
-        return;
+    message: $("bxsSwapMessage"),
+
+    execute: $("bxsSwapExecute"),
+    reverse: $("bxsSwapReverse")
+  };
+
+  const sides = {
+    from: {
+      trigger: $("bxsFromTrigger"),
+      menu: $("bxsFromMenu"),
+      search: $("bxsFromSearch"),
+      options: $("bxsFromOptions"),
+
+      icon: $("bxsFromIcon"),
+      symbol: $("bxsFromSymbol"),
+      name: $("bxsFromName")
+    },
+
+    to: {
+      trigger: $("bxsToTrigger"),
+      menu: $("bxsToMenu"),
+      search: $("bxsToSearch"),
+      options: $("bxsToOptions"),
+
+      icon: $("bxsToIcon"),
+      symbol: $("bxsToSymbol"),
+      name: $("bxsToName")
     }
+  };
 
-    if (root.dataset.swapInitialized === "true") {
-        return;
-    }
 
-    const ui = {
-        amount: $("bxsSwapAmount"),
-        receive: $("bxsSwapReceive"),
+  /* ========================================================================
+     03. REQUIRED ELEMENT VALIDATION
+  ======================================================================== */
 
-        fromUsd: $("bxsFromUsd"),
-        toUsd: $("bxsToUsd"),
+  const requiredElements = [
+    ui.amount,
+    ui.receive,
+    ui.message,
+    ui.execute,
+    ui.reverse,
 
-        rate: $("bxsSwapRate"),
-        deduction: $("bxsSwapDeduction"),
+    ...Object.values(sides).flatMap(side => [
+      side.trigger,
+      side.menu,
+      side.search,
+      side.options,
+      side.icon,
+      side.symbol,
+      side.name
+    ])
+  ];
 
-        message: $("bxsSwapMessage"),
+  const missingElements = requiredElements.filter(
+    element => !element
+  );
 
-        execute: $("bxsSwapExecute"),
-        reverse: $("bxsSwapReverse")
-    };
-
-    const sides = {
-        from: {
-            trigger: $("bxsFromTrigger"),
-            menu: $("bxsFromMenu"),
-            search: $("bxsFromSearch"),
-            options: $("bxsFromOptions"),
-
-            icon: $("bxsFromIcon"),
-            symbol: $("bxsFromSymbol"),
-            name: $("bxsFromName")
-        },
-
-        to: {
-            trigger: $("bxsToTrigger"),
-            menu: $("bxsToMenu"),
-            search: $("bxsToSearch"),
-            options: $("bxsToOptions"),
-
-            icon: $("bxsToIcon"),
-            symbol: $("bxsToSymbol"),
-            name: $("bxsToName")
-        }
-    };
-
-    const requiredElements = [
-        ...Object.values(ui),
-        ...Object.values(sides).flatMap(side =>
-            Object.values(side)
-        )
-    ];
-
-    if (requiredElements.some(element => !element)) {
-        console.error(
-            "[BLOXIO SWAP] Required HTML elements are missing."
-        );
-
-        return;
-    }
-
-    /* ==============================================================
-       04. COIN REGISTRY
-    ============================================================== */
-
-    const coins = (
-        Array.isArray(SWAP_COINS)
-            ? SWAP_COINS
-            : []
-    )
-        .filter(coin =>
-            coin &&
-            coin.swap === true &&
-            coin.symbol &&
-            coin.name
-        )
-        .map(coin => {
-            const price = toNumber(
-                coin.priceInUSDT ?? coin.price
-            );
-
-            return {
-                ...coin,
-
-                symbol: symbol(coin.symbol),
-
-                name: String(coin.name),
-
-                icon: typeof coin.icon === "string"
-                    ? coin.icon.trim()
-                    : "",
-
-                price: Number.isFinite(price) && price > 0
-                    ? price
-                    : null
-            };
-        });
-
-    const coinMap = new Map(
-        coins.map(coin => [
-            coin.symbol,
-            coin
-        ])
+  if (missingElements.length) {
+    console.error(
+      "[Bloxio Swap] Missing required HTML elements.",
+      missingElements
     );
 
-    if (coins.length < 2) {
-        console.error(
-            "[BLOXIO SWAP] SWAP_COINS must contain at least two assets."
-        );
+    root.dataset.initialized = "false";
+    return;
+  }
 
-        return;
+
+  /* ========================================================================
+     04. COIN REGISTRY
+  ======================================================================== */
+
+  const coins = (
+    Array.isArray(SWAP_COINS) ? SWAP_COINS : []
+  )
+    .filter(asset =>
+      asset &&
+      asset.swap !== false &&
+      typeof asset.symbol === "string" &&
+      typeof asset.name === "string" &&
+      typeof asset.icon === "string"
+    )
+    .map(asset => {
+      const rawPrice =
+        asset.priceInUSDT ?? asset.price;
+
+      const price = Number(rawPrice);
+
+      return {
+        symbol: asset.symbol.trim().toUpperCase(),
+
+        name: asset.name.trim(),
+
+        icon: asset.icon,
+
+        category: asset.category || "other",
+
+        priceInUSDT:
+          Number.isFinite(price) && price > 0
+            ? price
+            : null
+      };
+    })
+    .filter(asset =>
+      asset.symbol &&
+      asset.name &&
+      asset.icon
+    );
+
+  const coinMap = new Map(
+    coins.map(asset => [
+      asset.symbol,
+      asset
+    ])
+  );
+
+
+  /* ========================================================================
+     05. APPLICATION STATE
+  ======================================================================== */
+
+  const state = {
+    from: coinMap.has(CONFIG.defaultFrom)
+      ? CONFIG.defaultFrom
+      : coins[0]?.symbol || "",
+
+    to: coinMap.has(CONFIG.defaultTo)
+      ? CONFIG.defaultTo
+      : coins[1]?.symbol || "",
+
+    prices: {},
+
+    quote: null,
+
+    loadingPrices: false,
+
+    executing: false,
+
+    priceError: false,
+
+    lastPriceUpdate: 0,
+
+    refreshTimer: null,
+
+    requestController: null,
+
+    openPicker: null
+  };
+
+
+  /* ========================================================================
+     06. UTILITIES
+  ======================================================================== */
+
+  const toNumber = value => {
+    if (
+      typeof value === "number" &&
+      Number.isFinite(value)
+    ) {
+      return value;
     }
 
-    const getCoin = key =>
-        coinMap.get(symbol(key)) || null;
+    if (
+      typeof value === "string" &&
+      value.trim() !== ""
+    ) {
+      const parsed = Number(value);
 
-    const getPrice = key =>
-        getCoin(key)?.price ?? null;
+      return Number.isFinite(parsed)
+        ? parsed
+        : NaN;
+    }
 
-    /* ==============================================================
-       05. STATE
-    ============================================================== */
+    return NaN;
+  };
 
-    const state = {
-        from: getCoin(CONFIG.defaultFrom)
-            ? CONFIG.defaultFrom
-            : coins[0].symbol,
 
-        to: getCoin(CONFIG.defaultTo)
-            ? CONFIG.defaultTo
-            : coins[1].symbol,
+  const formatNumber = (value, digits = 8) => {
+    const number = toNumber(value);
 
-        openMenu: null,
+    if (!Number.isFinite(number)) {
+      return "—";
+    }
 
-        quote: null,
+    return new Intl.NumberFormat("en-US", {
+      maximumFractionDigits: digits,
+      minimumFractionDigits: 2
+    }).format(number);
+  };
 
-        initialized: false
+
+  const formatUSD = value => {
+    const number = toNumber(value);
+
+    if (!Number.isFinite(number)) {
+      return "—";
+    }
+
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      maximumFractionDigits: 2
+    }).format(number);
+  };
+
+
+  const getCoin = symbol => {
+    return coinMap.get(
+      String(symbol || "").trim().toUpperCase()
+    ) || null;
+  };
+
+
+  const setMessage = (message, type = "info") => {
+    if (!ui.message) return;
+
+    ui.message.textContent = message;
+    ui.message.dataset.state = type;
+  };
+
+
+  const setText = (element, value) => {
+    if (element) {
+      element.textContent = String(value);
+    }
+  };
+
+
+  const getPrice = symbol => {
+    const key = String(symbol || "").toUpperCase();
+
+    const marketPrice = toNumber(state.prices[key]);
+
+    if (
+      Number.isFinite(marketPrice) &&
+      marketPrice > 0
+    ) {
+      return marketPrice;
+    }
+
+    const asset = getCoin(key);
+
+    if (
+      asset &&
+      Number.isFinite(asset.priceInUSDT) &&
+      asset.priceInUSDT > 0
+    ) {
+      return asset.priceInUSDT;
+    }
+
+    return 0;
+  };
+
+
+  /* ========================================================================
+     07. BUTTON STATE
+  ======================================================================== */
+
+  function updateExecuteButton(valid = false) {
+    const enabled =
+      valid === true &&
+      !state.executing;
+
+    ui.execute.disabled = !enabled;
+
+    ui.execute.classList.toggle(
+      "is-ready",
+      enabled
+    );
+
+    ui.execute.setAttribute(
+      "aria-disabled",
+      String(!enabled)
+    );
+
+    ui.execute.setAttribute(
+      "aria-busy",
+      String(state.executing)
+    );
+
+    if (state.executing) {
+      ui.execute.textContent = "PROCESSING...";
+    } else {
+      ui.execute.textContent = "EXECUTE SWAP";
+    }
+  }
+
+
+  /* ========================================================================
+     08. SELECTED ASSET RENDERING
+  ======================================================================== */
+
+  function renderSelected(which) {
+    const asset = getCoin(state[which]);
+
+    if (!asset) return;
+
+    const side = sides[which];
+
+    side.icon.src = asset.icon;
+
+    side.icon.alt = asset.symbol;
+
+    side.icon.style.visibility = "visible";
+
+    side.icon.onerror = () => {
+      side.icon.style.visibility = "hidden";
     };
 
-    if (state.from === state.to) {
-        state.to = coins.find(
-            coin => coin.symbol !== state.from
-        ).symbol;
-    }
+    side.icon.onload = () => {
+      side.icon.style.visibility = "visible";
+    };
 
-    /* ==============================================================
-       06. MESSAGE SYSTEM
-    ============================================================== */
+    side.symbol.textContent = asset.symbol;
 
-    function setMessage(text = "", type = "info") {
-        ui.message.textContent = text;
+    side.name.textContent = asset.name;
 
-        ui.message.dataset.state = type;
+    side.trigger.setAttribute(
+      "aria-label",
+      `Select ${which} asset. Current asset: ${asset.symbol}`
+    );
+  }
 
-        ui.message.hidden = !text;
 
-        ui.message.classList.toggle(
-            "success",
-            type === "success"
-        );
+  /* ========================================================================
+     09. ASSET PICKER
+  ======================================================================== */
 
-        ui.message.classList.toggle(
-            "warning",
-            type === "warning"
-        );
+  function closeMenus() {
+    Object.entries(sides).forEach(([which, side]) => {
+      side.menu.hidden = true;
 
-        ui.message.classList.toggle(
-            "error",
-            type === "error"
-        );
-    }
-
-    /* ==============================================================
-       07. TOKEN ICON
-    ============================================================== */
-
-    function updateIcon(image, coin) {
-        image.onerror = null;
-
-        image.alt = coin.symbol;
-
-        if (!coin.icon) {
-            image.style.visibility = "hidden";
-            return;
-        }
-
-        image.style.visibility = "visible";
-
-        image.onerror = () => {
-            image.onerror = null;
-            image.style.visibility = "hidden";
-        };
-
-        image.src = coin.icon;
-    }
-
-    /* ==============================================================
-       08. RENDER SELECTED TOKEN
-    ============================================================== */
-
-    function renderSelected(sideName) {
-        const side = sides[sideName];
-
-        const coin = getCoin(state[sideName]);
-
-        if (!coin) return;
-
-        updateIcon(side.icon, coin);
-
-        side.symbol.textContent = coin.symbol;
-
-        side.name.textContent = coin.name;
-
-        side.trigger.setAttribute(
-            "aria-expanded",
-            String(state.openMenu === sideName)
-        );
-
-        side.trigger.setAttribute(
-            "aria-label",
-            `Selected ${coin.symbol}. Choose another asset.`
-        );
-    }
-
-    function renderAllSelected() {
-        renderSelected("from");
-        renderSelected("to");
-    }
-
-    /* ==============================================================
-       09. TOKEN OPTION CREATION
-    ============================================================== */
-
-    function createTokenOption(coin, sideName) {
-        const button = document.createElement("button");
-
-        button.type = "button";
-
-        button.className = "bxs-swap-option";
-
-        button.dataset.symbol = coin.symbol;
-
-        button.setAttribute("role", "option");
-
-        const selected =
-            state[sideName] === coin.symbol;
-
-        const otherSide =
-            sideName === "from" ? "to" : "from";
-
-        const conflict =
-            state[otherSide] === coin.symbol;
-
-        button.setAttribute(
-            "aria-selected",
-            String(selected)
-        );
-
-        button.disabled = conflict;
-
-        /* ICON */
-
-        if (coin.icon) {
-            const image = document.createElement("img");
-
-            image.src = coin.icon;
-
-            image.alt = "";
-
-            image.loading = "lazy";
-
-            image.onerror = () => {
-                image.style.visibility = "hidden";
-            };
-
-            button.appendChild(image);
-        }
-
-        /* NAME AND SYMBOL */
-
-        const copy = document.createElement("span");
-
-        copy.className = "bxs-swap-option-copy";
-
-        const ticker = document.createElement("strong");
-
-        ticker.textContent = coin.symbol;
-
-        const name = document.createElement("small");
-
-        name.textContent = coin.name;
-
-        copy.append(ticker, name);
-
-        button.appendChild(copy);
-
-        /* PRICE STATUS */
-
-        if (coin.price === null) {
-            const priceStatus = document.createElement("small");
-
-            priceStatus.className = "bxs-swap-no-price";
-
-            priceStatus.textContent = "No price";
-
-            button.appendChild(priceStatus);
-        }
-
-        return button;
-    }
-
-    /* ==============================================================
-       10. RENDER TOKEN LIST
-    ============================================================== */
-
-    function renderOptions(sideName) {
-        const side = sides[sideName];
-
-        const query = side.search.value
-            .trim()
-            .toLowerCase();
-
-        const filtered = coins.filter(coin => {
-            const searchable =
-                `${coin.symbol} ${coin.name}`.toLowerCase();
-
-            return searchable.includes(query);
-        });
-
-        side.options.replaceChildren();
-
-        if (!filtered.length) {
-            const empty = document.createElement("div");
-
-            empty.className = "bxs-swap-empty";
-
-            empty.textContent = "No matching assets found.";
-
-            side.options.appendChild(empty);
-
-            return;
-        }
-
-        const fragment = document.createDocumentFragment();
-
-        filtered.forEach(coin => {
-            fragment.appendChild(
-                createTokenOption(coin, sideName)
-            );
-        });
-
-        side.options.appendChild(fragment);
-    }
-
-    function renderAllOptions() {
-        renderOptions("from");
-        renderOptions("to");
-    }
-
-    /* ==============================================================
-       11. MENU OPEN / CLOSE
-    ============================================================== */
-
-    function closeMenus() {
-        Object.entries(sides).forEach(([name, side]) => {
-            side.menu.hidden = true;
-
-            side.menu.classList.remove("is-open");
-
-            side.trigger.setAttribute(
-                "aria-expanded",
-                "false"
-            );
-        });
-
-        state.openMenu = null;
-    }
-
-    function openMenu(sideName) {
-        const side = sides[sideName];
-
-        if (!side) return;
-
-        closeMenus();
-
-        side.menu.hidden = false;
-
-        side.menu.classList.add("is-open");
-
-        side.trigger.setAttribute(
-            "aria-expanded",
-            "true"
-        );
-
-        state.openMenu = sideName;
-
-        side.search.value = "";
-
-        renderOptions(sideName);
-
-        requestAnimationFrame(() => {
-            side.search.focus();
-        });
-    }
-
-    function toggleMenu(sideName) {
-        if (state.openMenu === sideName) {
-            closeMenus();
-        } else {
-            openMenu(sideName);
-        }
-    }
-
-    /* ==============================================================
-       12. SELECT TOKEN
-    ============================================================== */
-
-    function selectToken(sideName, key) {
-        const selected = symbol(key);
-
-        const coin = getCoin(selected);
-
-        if (!coin) return false;
-
-        const otherSide =
-            sideName === "from" ? "to" : "from";
-
-        if (selected === state[otherSide]) {
-            setMessage(
-                "The same asset cannot be selected on both sides.",
-                "warning"
-            );
-
-            return false;
-        }
-
-        state[sideName] = selected;
-
-        closeMenus();
-
-        renderAllSelected();
-
-        renderAllOptions();
-
-        updateQuote();
-
-        return true;
-    }
-
-    /* ==============================================================
-       13. REVERSE PAIR
-    ============================================================== */
-
-    function reversePair() {
-        const previousFrom = state.from;
-
-        state.from = state.to;
-
-        state.to = previousFrom;
-
-        closeMenus();
-
-        renderAllSelected();
-
-        renderAllOptions();
-
-        updateQuote();
-    }
-
-    /* ==============================================================
-       14. EXCHANGE RATE
-    ============================================================== */
-
-    function calculateRate() {
-        const fromPrice = getPrice(state.from);
-
-        const toPrice = getPrice(state.to);
-
-        if (
-            fromPrice === null ||
-            toPrice === null ||
-            toPrice <= 0
-        ) {
-            return null;
-        }
-
-        return fromPrice / toPrice;
-    }
-
-    /* ==============================================================
-       15. QUOTE CALCULATION
-    ============================================================== */
-
-    function calculateQuote() {
-        const from = getCoin(state.from);
-
-        const to = getCoin(state.to);
-
-        const amountText = ui.amount.value.trim();
-
-        const amount = toNumber(amountText);
-
-        if (!from || !to) {
-            return {
-                error: "Choose both assets."
-            };
-        }
-
-        if (from.symbol === to.symbol) {
-            return {
-                error: "Choose two different assets."
-            };
-        }
-
-        if (!amountText) {
-            return {
-                empty: true
-            };
-        }
-
-        if (!Number.isFinite(amount) || amount <= 0) {
-            return {
-                error: "Enter an amount greater than zero."
-            };
-        }
-
-        if (
-            from.price === null ||
-            to.price === null
-        ) {
-            return {
-                error:
-                    `A reliable price is unavailable for ${
-                        from.price === null
-                            ? from.symbol
-                            : to.symbol
-                    }.`
-            };
-        }
-
-        const fromValue = amount * from.price;
-
-        const rate = from.price / to.price;
-
-        const grossReceive = fromValue / to.price;
-
-        const fee = grossReceive * CONFIG.feeRate;
-
-        const afterFee = grossReceive - fee;
-
-        const slippage = afterFee * CONFIG.slippage;
-
-        const receive = afterFee - slippage;
-
-        if (
-            !Number.isFinite(receive) ||
-            receive <= 0
-        ) {
-            return {
-                error: "Unable to calculate a valid quote."
-            };
-        }
-
-        return {
-            from,
-            to,
-
-            amount,
-
-            fromValue,
-
-            rate,
-
-            grossReceive,
-
-            fee,
-
-            slippage,
-
-            receive,
-
-            receiveValue: receive * to.price
-        };
-    }
-
-    /* ==============================================================
-       16. UPDATE QUOTE UI
-    ============================================================== */
-
-    function updateQuote() {
-        ui.receive.readOnly = true;
-
-        ui.receive.setAttribute(
-            "aria-readonly",
-            "true"
-        );
-
-        ui.deduction.textContent =
-            `${(TOTAL_ADJUSTMENT * 100).toFixed(4)}%`;
-
-        const fromPrice = getPrice(state.from);
-
-        const toPrice = getPrice(state.to);
-
-        const amount = toNumber(ui.amount.value);
-
-        /* Reference values */
-
-        ui.fromUsd.textContent =
-            Number.isFinite(amount) &&
-            amount > 0 &&
-            fromPrice !== null
-                ? formatUSD(amount * fromPrice)
-                : "—";
-
-        /* Exchange rate */
-
-        const rate = calculateRate();
-
-        ui.rate.textContent =
-            rate !== null
-                ? `1 ${state.from} = ${formatNumber(rate)} ${state.to}`
-                : "—";
-
-        /* Reset state */
-
-        ui.execute.disabled = true;
-
-        state.quote = null;
-
-        const quote = calculateQuote();
-
-        if (quote.empty) {
-            ui.receive.value = "0.00";
-
-            ui.toUsd.textContent = "—";
-
-            setMessage(
-                "Choose assets and enter an amount to calculate a quote.",
-                "info"
-            );
-
-            return null;
-        }
-
-        if (quote.error) {
-            ui.receive.value = "—";
-
-            ui.toUsd.textContent = "—";
-
-            setMessage(
-                quote.error,
-                quote.error.includes("price")
-                    ? "warning"
-                    : "error"
-            );
-
-            return null;
-        }
-
-        /* Valid quote */
-
-        ui.receive.value = formatNumber(quote.receive);
-
-        ui.toUsd.textContent = formatUSD(quote.receiveValue);
-
-        state.quote = {
-            from: quote.from.symbol,
-            to: quote.to.symbol,
-
-            amount: quote.amount,
-
-            receive: quote.receive,
-
-            rate: quote.rate,
-
-            fromValue: quote.fromValue,
-
-            receiveValue: quote.receiveValue,
-
-            fee: quote.fee,
-
-            slippage: quote.slippage,
-
-            createdAt: Date.now()
-        };
-
-        ui.execute.disabled = false;
-
-        setMessage(
-            `Estimated receive: ${formatNumber(quote.receive)} ${quote.to.symbol}.`,
-            "success"
-        );
-
-        return state.quote;
-    }
-
-    /* ==============================================================
-       17. EXECUTE BUTTON
-    ============================================================== */
-
-    function executeSwap() {
-        const quote = updateQuote();
-
-        if (!quote) return;
-
-        /*
-         * This frontend currently provides an indicative quote.
-         *
-         * Real execution requires:
-         * 1. Connected wallet.
-         * 2. Verified liquidity route.
-         * 3. Backend quote validation.
-         * 4. Transaction signing.
-         * 5. On-chain confirmation.
-         */
-
-        setMessage(
-            "Quote ready. Connect a wallet and configure a verified liquidity route and transaction service before execution.",
-            "warning"
-        );
-
-        window.dispatchEvent(
-            new CustomEvent("bloxio-swap-preview", {
-                detail: {
-                    ...quote
-                }
-            })
-        );
-    }
-
-    /* ==============================================================
-       18. EVENT HANDLERS
-    ============================================================== */
-
-    function bindEvents() {
-
-        /*
-         * Delegated click handling:
-         * One handler manages both token buttons,
-         * all dynamically created options and reverse.
-         */
-
-        root.addEventListener("click", event => {
-
-            /* FROM / TO BUTTONS */
-
-            const trigger = event.target.closest(
-                "#bxsFromTrigger, #bxsToTrigger"
-            );
-
-            if (trigger) {
-                event.preventDefault();
-
-                const sideName =
-                    trigger.id === "bxsFromTrigger"
-                        ? "from"
-                        : "to";
-
-                toggleMenu(sideName);
-
-                return;
-            }
-
-            /* TOKEN OPTION */
-
-            const option = event.target.closest(
-                ".bxs-swap-option"
-            );
-
-            if (option && root.contains(option)) {
-                event.preventDefault();
-
-                if (option.disabled) return;
-
-                const menu = option.closest(
-                    "#bxsFromMenu, #bxsToMenu"
-                );
-
-                if (!menu) return;
-
-                const sideName =
-                    menu.id === "bxsFromMenu"
-                        ? "from"
-                        : "to";
-
-                selectToken(
-                    sideName,
-                    option.dataset.symbol
-                );
-
-                return;
-            }
-
-            /* REVERSE */
-
-            const reverse = event.target.closest(
-                "#bxsSwapReverse"
-            );
-
-            if (reverse) {
-                event.preventDefault();
-
-                reversePair();
-
-                return;
-            }
-
-            /* EXECUTE */
-
-            const execute = event.target.closest(
-                "#bxsSwapExecute"
-            );
-
-            if (execute) {
-                event.preventDefault();
-
-                if (!execute.disabled) {
-                    executeSwap();
-                }
-            }
-        });
-
-        /* SEARCH INPUTS */
-
-        sides.from.search.addEventListener(
-            "input",
-            () => renderOptions("from")
-        );
-
-        sides.to.search.addEventListener(
-            "input",
-            () => renderOptions("to")
-        );
-
-        /* AMOUNT INPUT */
-
-        ui.amount.addEventListener(
-            "input",
-            updateQuote
-        );
-
-        ui.amount.addEventListener(
-            "change",
-            updateQuote
-        );
-
-        /* OUTSIDE CLICK */
-
-        document.addEventListener("click", event => {
-            if (!root.contains(event.target)) {
-                closeMenus();
-            }
-        });
-
-        /* ESCAPE */
-
-        document.addEventListener("keydown", event => {
-            if (event.key !== "Escape") return;
-
-            const openSide = state.openMenu;
-
-            closeMenus();
-
-            if (openSide) {
-                sides[openSide].trigger.focus();
-            }
-        });
-
-        /* WALLET OPEN SWAP BUTTON */
-
-        $("openSwapBtn")?.addEventListener(
-            "click",
-            () => {
-                root.scrollIntoView({
-                    behavior: "smooth",
-                    block: "center"
-                });
-            }
-        );
-
-        /* WALLET ASSET EVENT */
-
-        window.addEventListener(
-            "wallet-swap-open",
-            event => {
-                const key = symbol(
-                    event.detail?.symbol
-                );
-
-                if (!getCoin(key)) return;
-
-                selectToken("from", key);
-
-                root.scrollIntoView({
-                    behavior: "smooth",
-                    block: "center"
-                });
-            }
-        );
-    }
-
-    /* ==============================================================
-       19. PUBLIC API
-    ============================================================== */
-
-    window.BloxioSwap = Object.freeze({
-
-        getAssets() {
-            return coins.map(coin => ({
-                symbol: coin.symbol,
-                name: coin.name,
-                icon: coin.icon,
-                price: coin.price
-            }));
-        },
-
-        getState() {
-            return {
-                from: state.from,
-                to: state.to,
-
-                openMenu: state.openMenu,
-
-                quote: state.quote
-                    ? { ...state.quote }
-                    : null,
-
-                assets: coins.length
-            };
-        },
-
-        setPair(from, to) {
-            from = symbol(from);
-            to = symbol(to);
-
-            if (
-                !getCoin(from) ||
-                !getCoin(to) ||
-                from === to
-            ) {
-                return false;
-            }
-
-            state.from = from;
-            state.to = to;
-
-            closeMenus();
-
-            renderAllSelected();
-
-            renderAllOptions();
-
-            updateQuote();
-
-            return true;
-        },
-
-        select(side, key) {
-            if (
-                side !== "from" &&
-                side !== "to"
-            ) {
-                return false;
-            }
-
-            return selectToken(side, key);
-        },
-
-        reverse() {
-            reversePair();
-        },
-
-        refresh() {
-            return updateQuote();
-        },
-
-        open(side) {
-            if (
-                side !== "from" &&
-                side !== "to"
-            ) {
-                return false;
-            }
-
-            openMenu(side);
-
-            return true;
-        },
-
-        close() {
-            closeMenus();
-        }
+      side.trigger.setAttribute(
+        "aria-expanded",
+        "false"
+      );
     });
 
-    /* ==============================================================
-       20. INITIALIZATION
-    ============================================================== */
+    state.openPicker = null;
+  }
 
-    function init() {
-        if (state.initialized) return;
 
-        /* Initial token display */
+  function renderOptions(which, query = "") {
+    const side = sides[which];
 
-        renderAllSelected();
+    if (!side) return;
 
-        /* Initial option lists */
+    const search = query.trim().toLowerCase();
 
-        renderAllOptions();
+    const found = coins.filter(asset => {
+      return (
+        asset.symbol.toLowerCase().includes(search) ||
+        asset.name.toLowerCase().includes(search)
+      );
+    });
 
-        /* Initial menu state */
+    side.options.replaceChildren();
+
+    if (!found.length) {
+      const empty = document.createElement("div");
+
+      empty.className = "bxs-swap-empty";
+
+      empty.textContent = "No matching assets.";
+
+      side.options.append(empty);
+
+      return;
+    }
+
+    const fragment = document.createDocumentFragment();
+
+    found.forEach(asset => {
+      const selected =
+        state[which] === asset.symbol;
+
+      const opposite =
+        which === "from" ? "to" : "from";
+
+      const conflict =
+        state[opposite] === asset.symbol;
+
+      const button = document.createElement("button");
+
+      button.type = "button";
+
+      button.className = "bxs-swap-option";
+
+      button.setAttribute("role", "option");
+
+      button.setAttribute(
+        "aria-selected",
+        String(selected)
+      );
+
+      button.disabled = conflict && !selected;
+
+      const image = document.createElement("img");
+
+      image.src = asset.icon;
+
+      image.alt = "";
+
+      image.loading = "lazy";
+
+      image.onerror = () => {
+        image.style.visibility = "hidden";
+      };
+
+      const copy = document.createElement("span");
+
+      const symbol = document.createElement("strong");
+
+      symbol.textContent = asset.symbol;
+
+      const name = document.createElement("small");
+
+      name.textContent = asset.name;
+
+      copy.append(symbol, name);
+
+      button.append(image, copy);
+
+      if (getPrice(asset.symbol) <= 0) {
+        const unavailable = document.createElement("small");
+
+        unavailable.className = "bxs-swap-no-price";
+
+        unavailable.textContent = "Price unavailable";
+
+        button.append(unavailable);
+      }
+
+      button.addEventListener("click", () => {
+        if (button.disabled) return;
+
+        state[which] = asset.symbol;
 
         closeMenus();
 
-        /* Receive field is read-only */
-
-        ui.receive.readOnly = true;
-
-        ui.receive.setAttribute(
-            "aria-readonly",
-            "true"
-        );
-
-        /* Execute starts disabled */
-
-        ui.execute.disabled = true;
-
-        /* Activate events */
-
-        bindEvents();
-
-        /* Initial quote */
+        renderAll();
 
         updateQuote();
+      });
 
-        state.initialized = true;
+      fragment.append(button);
+    });
 
-        root.dataset.swapInitialized = "true";
+    side.options.append(fragment);
+  }
 
-        root.dataset.assetCount = String(coins.length);
 
-        console.info(
-            `[BLOXIO SWAP] Initialized successfully: ${coins.length} assets.`,
-            window.BloxioSwap.getState()
+  function openMenu(which) {
+    closeMenus();
+
+    const side = sides[which];
+
+    if (!side) return;
+
+    side.menu.hidden = false;
+
+    side.trigger.setAttribute(
+      "aria-expanded",
+      "true"
+    );
+
+    state.openPicker = which;
+
+    side.search.value = "";
+
+    renderOptions(which);
+
+    side.search.focus();
+  }
+
+
+  /* ========================================================================
+     10. MARKET PRICE API
+  ======================================================================== */
+
+  function normalizePriceData(data) {
+    const source =
+      data?.prices ??
+      data?.data?.prices ??
+      data?.data ??
+      data;
+
+    const result = {};
+
+    if (Array.isArray(source)) {
+      source.forEach(item => {
+        if (!item || !item.symbol) return;
+
+        const price = toNumber(
+          item.usd ??
+          item.price ??
+          item.last ??
+          item.close
         );
+
+        if (price > 0) {
+          result[
+            String(item.symbol).toUpperCase()
+          ] = price;
+        }
+      });
+
+      return result;
     }
 
-    /* ==============================================================
-       21. START
-    ============================================================== */
-
-    if (document.readyState === "loading") {
-        document.addEventListener(
-            "DOMContentLoaded",
-            init,
-            { once: true }
+    if (
+      source &&
+      typeof source === "object"
+    ) {
+      Object.entries(source).forEach(([key, value]) => {
+        const price = toNumber(
+          typeof value === "object" && value !== null
+            ? value.usd ??
+              value.price ??
+              value.last ??
+              value.close
+            : value
         );
-    } else {
-        init();
+
+        if (price > 0) {
+          result[key.toUpperCase()] = price;
+        }
+      });
     }
+
+    return result;
+  }
+
+
+  async function refreshPrices() {
+    if (state.loadingPrices) return;
+
+    state.loadingPrices = true;
+
+    if (state.requestController) {
+      state.requestController.abort();
+    }
+
+    const controller = new AbortController();
+
+    state.requestController = controller;
+
+    const timeout = setTimeout(() => {
+      controller.abort();
+    }, CONFIG.requestTimeout);
+
+    try {
+      const response = await fetch(
+        CONFIG.pricesUrl,
+        {
+          method: "GET",
+
+          headers: {
+            Accept: "application/json"
+          },
+
+          cache: "no-store",
+
+          signal: controller.signal
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          `Market API error: ${response.status}`
+        );
+      }
+
+      const data = await response.json();
+
+      const prices = normalizePriceData(data);
+
+      if (!Object.keys(prices).length) {
+        throw new Error("No valid market prices returned.");
+      }
+
+      state.prices = {
+        ...state.prices,
+        ...prices
+      };
+
+      state.lastPriceUpdate = Date.now();
+
+      state.priceError = false;
+
+      if (state.openPicker) {
+        renderOptions(state.openPicker);
+      }
+
+      updateQuote();
+
+      return true;
+
+    } catch (error) {
+      state.priceError = true;
+
+      console.warn(
+        "[Bloxio Swap] Market price feed unavailable:",
+        error.message
+      );
+
+      return false;
+
+    } finally {
+      clearTimeout(timeout);
+
+      state.loadingPrices = false;
+
+      state.requestController = null;
+    }
+  }
+
+
+  /* ========================================================================
+     11. QUOTE CALCULATION
+  ======================================================================== */
+
+  function calculateQuote() {
+    const from = getCoin(state.from);
+
+    const to = getCoin(state.to);
+
+    const rawAmount = ui.amount.value.trim();
+
+    const amount = toNumber(rawAmount);
+
+    if (!from || !to) {
+      return {
+        error: "Choose both assets."
+      };
+    }
+
+    if (from.symbol === to.symbol) {
+      return {
+        error: "Choose two different assets."
+      };
+    }
+
+    if (
+      rawAmount === "" ||
+      !Number.isFinite(amount) ||
+      amount <= 0 ||
+      amount > CONFIG.maxAmount
+    ) {
+      return {
+        error: "Enter a valid amount greater than zero."
+      };
+    }
+
+    const fromPrice = getPrice(from.symbol);
+
+    const toPrice = getPrice(to.symbol);
+
+    if (fromPrice <= 0 || toPrice <= 0) {
+      const missing = [];
+
+      if (fromPrice <= 0) {
+        missing.push(from.symbol);
+      }
+
+      if (toPrice <= 0) {
+        missing.push(to.symbol);
+      }
+
+      return {
+        error:
+          `Price unavailable for ${missing.join(" and ")}. ` +
+          "Waiting for a valid market price."
+      };
+    }
+
+    const fromValue =
+      amount * fromPrice;
+
+    const grossReceive =
+      fromValue / toPrice;
+
+    const feeAmount =
+      grossReceive * CONFIG.feeRate;
+
+    const afterFee =
+      grossReceive - feeAmount;
+
+    const slippageAmount =
+      afterFee * CONFIG.slippageRate;
+
+    const netReceive =
+      afterFee - slippageAmount;
+
+    const exchangeRate =
+      fromPrice / toPrice;
+
+    if (
+      !Number.isFinite(netReceive) ||
+      netReceive <= 0
+    ) {
+      return {
+        error: "Unable to calculate a valid quote."
+      };
+    }
+
+    return {
+      valid: true,
+
+      from,
+      to,
+
+      amount,
+
+      fromPrice,
+      toPrice,
+
+      fromValue,
+
+      grossReceive,
+
+      feeAmount,
+
+      slippageAmount,
+
+      netReceive,
+
+      exchangeRate,
+
+      feeRate: CONFIG.feeRate,
+
+      slippageRate: CONFIG.slippageRate,
+
+      totalAdjustment: TOTAL_ADJUSTMENT,
+
+      timestamp: Date.now()
+    };
+  }
+
+
+  /* ========================================================================
+     12. UPDATE QUOTE DISPLAY
+  ======================================================================== */
+
+  function updateQuote() {
+    const quote = calculateQuote();
+
+    state.quote = null;
+
+    setText(
+      ui.deduction,
+      `${(TOTAL_ADJUSTMENT * 100).toFixed(4)}%`
+    );
+
+    if (!quote.valid) {
+      ui.receive.value = "—";
+
+      setText(ui.fromUsd, "—");
+
+      setText(ui.toUsd, "—");
+
+      setText(ui.rate, "—");
+
+      updateExecuteButton(false);
+
+      setMessage(
+        quote.error,
+        "warning"
+      );
+
+      return null;
+    }
+
+    state.quote = quote;
+
+    ui.receive.value = formatNumber(
+      quote.netReceive,
+      8
+    );
+
+    setText(
+      ui.fromUsd,
+      formatUSD(quote.fromValue)
+    );
+
+    setText(
+      ui.toUsd,
+      formatUSD(
+        quote.netReceive * quote.toPrice
+      )
+    );
+
+    setText(
+      ui.rate,
+      `1 ${quote.from.symbol} = ${formatNumber(
+        quote.exchangeRate,
+        8
+      )} ${quote.to.symbol}`
+    );
+
+    updateExecuteButton(true);
+
+    setMessage(
+      `Estimated receive: ${formatNumber(
+        quote.netReceive,
+        8
+      )} ${quote.to.symbol}. Trading fee and slippage included.`,
+      "success"
+    );
+
+    return quote;
+  }
+
+
+  /* ========================================================================
+     13. REVERSE SWAP
+  ======================================================================== */
+
+  function reversePair() {
+    const previousFrom = state.from;
+
+    state.from = state.to;
+
+    state.to = previousFrom;
+
+    renderAll();
+
+    updateQuote();
+  }
+
+
+  /* ========================================================================
+     14. RENDER ALL
+  ======================================================================== */
+
+  function renderAll() {
+    renderSelected("from");
+
+    renderSelected("to");
+
+    renderOptions("from");
+
+    renderOptions("to");
+  }
+
+
+  /* ========================================================================
+     15. EXECUTE BUTTON HANDLER
+  ======================================================================== */
+
+  function handleExecute() {
+    const quote = state.quote;
+
+    if (
+      !quote ||
+      !calculateQuote().valid ||
+      state.executing
+    ) {
+      updateQuote();
+      return;
+    }
+
+    /*
+      SECURITY:
+      No blockchain transaction is submitted here.
+
+      A real swap requires:
+      1. Connected wallet.
+      2. Verified liquidity route.
+      3. Backend quote validation.
+      4. Transaction signing.
+      5. On-chain confirmation.
+
+      Never report a simulated swap as completed.
+    */
+
+    setMessage(
+      "Your quote is ready. On-chain execution is not connected yet. A wallet, verified liquidity route and transaction service are required.",
+      "warning"
+    );
+
+    console.info(
+      "[Bloxio Swap] Indicative quote:",
+      quote
+    );
+  }
+
+
+  /* ========================================================================
+     16. EVENT LISTENERS
+  ======================================================================== */
+
+  Object.entries(sides).forEach(([which, side]) => {
+    side.trigger.addEventListener("click", event => {
+      event.stopPropagation();
+
+      if (side.menu.hidden) {
+        openMenu(which);
+      } else {
+        closeMenus();
+      }
+    });
+
+    side.search.addEventListener("input", () => {
+      renderOptions(
+        which,
+        side.search.value
+      );
+    });
+  });
+
+
+  ui.amount.addEventListener("input", () => {
+    updateQuote();
+  });
+
+
+  ui.amount.addEventListener("change", () => {
+    updateQuote();
+  });
+
+
+  ui.reverse.addEventListener("click", () => {
+    reversePair();
+  });
+
+
+  ui.execute.addEventListener("click", () => {
+    handleExecute();
+  });
+
+
+  document.addEventListener("click", event => {
+    if (!root.contains(event.target)) {
+      closeMenus();
+    }
+  });
+
+
+  document.addEventListener("keydown", event => {
+    if (event.key === "Escape") {
+      closeMenus();
+    }
+  });
+
+
+  /* ========================================================================
+     17. PRICE REFRESH TIMER
+  ======================================================================== */
+
+  function startPriceRefresh() {
+    if (state.refreshTimer) {
+      clearInterval(state.refreshTimer);
+    }
+
+    state.refreshTimer = setInterval(() => {
+      if (document.visibilityState === "visible") {
+        refreshPrices();
+      }
+    }, CONFIG.refreshInterval);
+  }
+
+
+  document.addEventListener(
+    "visibilitychange",
+    () => {
+      if (document.visibilityState === "visible") {
+        refreshPrices();
+      }
+    }
+  );
+
+
+  /* ========================================================================
+     18. PUBLIC API
+  ======================================================================== */
+
+  window.BloxioSwap = Object.freeze({
+
+    getState() {
+      return {
+        from: state.from,
+
+        to: state.to,
+
+        quote: state.quote
+          ? { ...state.quote }
+          : null,
+
+        prices: { ...state.prices },
+
+        loadingPrices: state.loadingPrices,
+
+        priceError: state.priceError,
+
+        lastPriceUpdate: state.lastPriceUpdate
+      };
+    },
+
+
+    setPair(from, to) {
+      const source = String(from).toUpperCase();
+
+      const destination = String(to).toUpperCase();
+
+      if (
+        !coinMap.has(source) ||
+        !coinMap.has(destination) ||
+        source === destination
+      ) {
+        return false;
+      }
+
+      state.from = source;
+
+      state.to = destination;
+
+      renderAll();
+
+      updateQuote();
+
+      return true;
+    },
+
+
+    reverse() {
+      reversePair();
+
+      return this.getState();
+    },
+
+
+    refreshPrices() {
+      return refreshPrices();
+    },
+
+
+    updateQuote() {
+      return updateQuote();
+    },
+
+
+    getAssets() {
+      return coins.map(asset => ({
+        ...asset
+      }));
+    }
+
+  });
+
+
+  /* ========================================================================
+     19. INITIALIZATION
+  ======================================================================== */
+
+  renderAll();
+
+  setText(
+    ui.deduction,
+    `${(TOTAL_ADJUSTMENT * 100).toFixed(4)}%`
+  );
+
+  updateExecuteButton(false);
+
+  updateQuote();
+
+  startPriceRefresh();
+
+  refreshPrices();
+
+  root.dataset.assetCount = String(coins.length);
+
+  root.dataset.swapVersion = "6.0";
+
+  console.info(
+    `[Bloxio Swap V6] Initialized successfully. ${coins.length} assets loaded.`
+  );
 
 })();
