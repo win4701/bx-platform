@@ -196,12 +196,8 @@ id="app" class="app-container">
 <div class="wallet-stat-card"><span>Last Sync</span><strong id="walletLastSync">--</strong></div>
 </div>
 </section>
-
-   
- 
 <!-- =====================================================
-     BLOXIO SWAP ENGINE
-     Location: public/index.html
+     BLOXIO SWAP 
 ===================================================== -->
 
 <section
@@ -215,21 +211,14 @@ id="app" class="app-container">
     <header class="bxs-swap-header">
       <div>
         <span class="bxs-swap-eyebrow">
-          BLOXIO EXCHANGE
+          BLOXIO SWAP
         </span>
 
-        <h3 id="bloxioSwapTitle">
-          Swap Assets
-        </h3>
-
-        <p>
-          Convert supported assets using a USDT reference quote.
-        </p>
+        <h3 id="bloxioSwapTitle"></h3> </p> </p>
       </div>
 
       <span class="bxs-swap-live">
         <i></i>
-        QUOTE ENGINE
       </span>
     </header>
 
@@ -356,8 +345,6 @@ id="app" class="app-container">
 
               <b aria-hidden="true">⌄</b>
             </button>
-
-            <!-- TO DROPDOWN -->
             <div
               id="bxsToMenu"
               class="bxs-swap-menu"
@@ -379,10 +366,8 @@ id="app" class="app-container">
                 aria-label="Destination assets"
               ></div>
             </div>
-
           </div>
         </div>
-
         <div class="bxs-swap-panel-foot">
           <span>Estimated value</span>
           <strong id="bxsToUsd">—</strong>
@@ -390,17 +375,13 @@ id="app" class="app-container">
       </section>
 
     </div>
-
-    <!-- REVERSE BUTTON -->
     <div class="bxs-swap-reverse-row">
       <button
         id="bxsSwapReverse"
         class="bxs-swap-reverse"
         type="button"
         aria-label="Reverse swap direction"
-        title="Reverse pair"
-      >
-        ⇅
+        title="Reverse pair">⇅
       </button>
     </div>
 
@@ -430,19 +411,15 @@ id="app" class="app-container">
       </div>
 
     </div>
-
-    <!-- STATUS -->
     <p
       id="bxsSwapMessage"
       class="bxs-swap-message"
       data-state="info"
       role="status"
       aria-live="polite"
-    >
-      Choose assets and enter an amount to calculate a quote.
+      Choose assets calculate a quote.
+       >
     </p>
-
-    <!-- EXECUTE -->
     <button
       id="bxsSwapExecute"
       class="bxs-swap-execute"
@@ -1777,7 +1754,7 @@ Casino
 <script src="/bx/services/api.js"></script>
 <script src="/bx/services/ws.js"></script>
 <script src="/bx/wallet.js"></script>
-<script src="/bx/swap.js"></script>
+<script type="module" src="/bx/swap.js"></script>
 <script src="/bx/chart.js"></script>
 <script src="/bx/market.js"></script>
 <script type="module" src="bx/casino.js"></script>
