@@ -1239,16 +1239,19 @@ select option {
     margin-top: 20px;
 }
 
+
 .wallet-analytics-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 12px;
+    gap: 10px;
 }
 
 .wallet-analytics-card {
+    display: flex;
+    flex-direction: column;
     min-width: 0;
-    min-height: 165px;
-    padding: 16px;
+    min-height: 125px;
+    padding: 12px;
     border: 1px solid var(--gold-border);
     border-radius: var(--radius-md);
     background: rgba(255, 255, 255, .02);
@@ -1256,7 +1259,7 @@ select option {
 
 .wallet-analytics-card > span {
     display: block;
-    margin-bottom: 12px;
+    margin-bottom: 7px;
     color: var(--text-metadata);
     font-size: .78rem;
 }
@@ -1264,13 +1267,14 @@ select option {
 .wallet-analytics-card canvas {
     display: block;
     width: 100% !important;
-    max-height: 180px;
+    height: 95px !important;
+    max-height: 95px !important;
 }
 
 .wallet-analytics-card strong {
     color: var(--gold-solid);
     font-family: var(--font-mono);
-    font-size: 2rem;
+    font-size: 1.8rem;
 }
 
 .wallet-quick-sheet {
@@ -2995,39 +2999,60 @@ select option {
     font-size: 1.45rem;
 }
 
+
 .mining-hero-right {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 9px;
+    gap: 10px;
+    align-content: start;
+    min-width: 0;
 }
 
 .mining-stat {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
     min-width: 0;
-    padding: 11px;
+    min-height: 92px;
+    padding: 14px;
     border: 1px solid var(--gold-border);
-    border-radius: var(--radius-md);
-    background: rgba(255, 255, 255, .02);
+    border-radius: 14px;
+    background: linear-gradient(
+        145deg,
+        rgba(15, 48, 43, .72),
+        rgba(6, 32, 29, .96)
+    );
+    transition: border-color .2s ease,
+                background .2s ease,
+                transform .2s ease;
 }
 
-.mining-stat span,
-.mining-stat strong {
-    display: block;
+.mining-stat:hover {
+    border-color: rgba(0, 229, 255, .35);
+    background: rgba(0, 229, 255, .035);
+    transform: translateY(-2px);
 }
 
 .mining-stat span {
     color: var(--text-metadata);
-    font-size: .72rem;
+    font-size: .78rem;
+    font-weight: 600;
 }
 
 .mining-stat strong {
-    margin-top: 5px;
+    display: block;
+    margin-top: 10px;
     color: var(--gold-solid);
     font-family: var(--font-mono);
+    font-size: clamp(.95rem, 2vw, 1.15rem);
+    font-weight: 850;
+    line-height: 1.3;
     overflow-wrap: anywhere;
 }
 
-.mining-hero-right > button {
-    grid-column: 1 / -1;
+/* Remove Refresh from the Mining interface */
+#miningRefreshBtn {
+    display: none !important;
 }
 
 /* 10 currency buttons: five columns × two rows. */
@@ -4288,9 +4313,18 @@ hr {
         gap: 8px;
     }
 
-    .mining-hero {
-        grid-template-columns: 1fr;
+    
+     .mining-hero {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 14px;
+        padding: 16px;
     }
+
+     .mining-hero-right {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 9px;
+    }
+
 
     .mining-layout {
         grid-template-columns: 1fr;
@@ -4555,9 +4589,30 @@ hr {
         font-size: .7rem;
     }
 
-    .wallet-analytics-grid {
-        grid-template-columns: 1fr;
-    }
+    
+ .wallet-analytics-grid {
+    grid-template-columns: 1fr;
+    gap: 9px;
+ }
+
+ .wallet-analytics-card {
+    min-height: 112px;
+    padding: 10px 12px;
+ }
+
+ .wallet-analytics-card > span {
+    margin-bottom: 5px;
+    font-size: .76rem;
+}
+
+ .wallet-analytics-card canvas {
+    height: 76px !important;
+    max-height: 76px !important;
+ }
+
+ .wallet-analytics-card strong {
+    font-size: 1.65rem;
+ }
 
     .wallet-quick-actions {
         grid-template-columns: repeat(2, minmax(0, 1fr));
