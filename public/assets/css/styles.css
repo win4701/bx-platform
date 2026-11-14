@@ -4843,609 +4843,648 @@ hr {
    Dark Enterprise UI
    ========================================================== */
 
-.swap-container {
-    --swap-bg: #021222;
-    --swap-panel: #03172C;
-    --swap-card: #071D32;
-    --swap-border: rgba(138, 153, 173, .20);
-    --swap-cyan: #00C9D5;
+
+/* =========================================================
+   BLOXIO SWAP ENGINE
+   Version: 2.0
+   File: public/assets/css/styles.css
+   Scope: #bloxioSwap
+   ========================================================= */
+
+/* ROOT */
+
+#bloxioSwap {
+    --swap-bg: #0A261E;
+    --swap-field: #041410;
+    --swap-border: rgba(212, 175, 55, .20);
     --swap-gold: #D4AF37;
-    --swap-text: #EAEAEA;
-    --swap-muted: #8A99AD;
+    --swap-gold-light: #F4E3B1;
+    --swap-text: #FFFFFF;
+    --swap-muted: #8A9A96;
+    --swap-danger: #EF6464;
+    --swap-success: #35C98A;
 
     position: relative;
+    isolation: isolate;
     width: 100%;
-    max-width: 680px;
-    margin: 20px auto;
+    min-width: 0;
+    margin: 24px 0;
+    color: var(--swap-text);
+    font-family: inherit;
+}
+
+#bloxioSwap *,
+#bloxioSwap *::before,
+#bloxioSwap *::after {
+    box-sizing: border-box;
+}
+
+/* MAIN CARD */
+
+#bloxioSwap .bxs-swap-card {
+    position: relative;
+    width: 100%;
     padding: 24px;
-    overflow: hidden;
+    overflow: visible;
     border: 1px solid var(--swap-border);
     border-radius: 20px;
     background:
         radial-gradient(
             circle at 100% 0,
-            rgba(0, 201, 213, .09),
-            transparent 36%
+            rgba(212, 175, 55, .07),
+            transparent 38%
         ),
         var(--swap-bg);
-    color: var(--swap-text);
-    font-family: inherit;
-    box-shadow: 0 16px 45px rgba(0, 0, 0, .24);
+    box-shadow: 0 15px 45px rgba(0, 0, 0, .22);
 }
 
-.swap-container *,
-.swap-container *::before,
-.swap-container *::after {
-    box-sizing: border-box;
-}
+/* HEADER */
 
-/* Header */
-.swap-header {
+#bloxioSwap .bxs-swap-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 15px;
-    margin-bottom: 24px;
+    gap: 16px;
+    margin-bottom: 25px;
 }
 
-.swap-eyebrow {
-    display: block;
-    margin-bottom: 6px;
-    color: var(--swap-cyan);
+#bloxioSwap .bxs-swap-header h2 {
+    margin: 5px 0;
+    color: var(--swap-text);
+    font-size: clamp(1.35rem, 3vw, 1.8rem);
+    font-weight: 850;
+    letter-spacing: -.04em;
+}
+
+#bloxioSwap .bxs-swap-eyebrow {
+    display: inline-block;
+    color: var(--swap-gold);
     font-size: .68rem;
     font-weight: 800;
-    letter-spacing: 2px;
+    letter-spacing: .15em;
+    text-transform: uppercase;
 }
 
-.swap-header h2 {
-    margin: 0;
-    color: var(--swap-text);
-    font-size: 1.5rem;
-    font-weight: 850;
-    letter-spacing: -.5px;
-}
-
-.swap-subtitle {
+#bloxioSwap .bxs-swap-subtitle {
     margin: 5px 0 0;
     color: var(--swap-muted);
     font-size: .8rem;
-    font-weight: 700;
 }
 
-.swap-subtitle span {
-    padding: 0 4px;
-    color: var(--swap-gold);
-}
-
-.swap-live-status {
+#bloxioSwap .bxs-swap-status {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    padding: 8px 11px;
-    border: 1px solid rgba(0, 229, 154, .22);
+    padding: 8px 12px;
+    border: 1px solid var(--swap-border);
     border-radius: 30px;
-    background: rgba(0, 229, 154, .06);
-    color: #00E59A;
-    font-size: .68rem;
-    font-weight: 750;
+    color: var(--swap-gold-light);
+    font-size: .72rem;
     white-space: nowrap;
 }
 
-.status-dot {
+#bloxioSwap .bxs-swap-status-dot {
     width: 7px;
     height: 7px;
     border-radius: 50%;
-    background: #00E59A;
-    box-shadow: 0 0 9px rgba(0, 229, 154, .65);
+    background: var(--swap-success);
+    box-shadow: 0 0 10px rgba(53, 201, 138, .5);
 }
 
-/* Main content */
-.swap-content {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
+/* TWO COLUMN LAYOUT */
+
+#bloxioSwap .bxs-swap-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    align-items: start;
 }
 
-/* From and To panels */
-.swap-panel {
+/* PANELS */
+
+#bloxioSwap .bxs-swap-panel {
     min-width: 0;
-    padding: 17px;
-    border: 1px solid var(--swap-border);
-    border-radius: 15px;
-    background: var(--swap-panel);
-    transition: border-color .2s ease, box-shadow .2s ease;
+    padding: 18px;
+    border: 1px solid rgba(212, 175, 55, .13);
+    border-radius: 16px;
+    background: rgba(4, 20, 16, .65);
 }
 
-.swap-panel:focus-within {
-    border-color: rgba(0, 201, 213, .45);
-    box-shadow: 0 0 0 3px rgba(0, 201, 213, .045);
-}
-
-.swap-panel-heading {
+#bloxioSwap .bxs-swap-panel-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 10px;
-    margin-bottom: 13px;
-}
-
-.swap-panel-heading label {
-    color: var(--swap-text);
-    font-size: .85rem;
-    font-weight: 800;
-}
-
-.panel-description {
-    color: var(--swap-muted);
-    font-size: .7rem;
-}
-
-/* Token radio card grid */
-.token-selector {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 9px;
     margin-bottom: 15px;
 }
 
-.token-card {
-    position: relative;
-    display: block;
-    min-width: 0;
-    cursor: pointer;
+#bloxioSwap .bxs-swap-panel-header label {
+    color: var(--swap-text);
+    font-size: .9rem;
+    font-weight: 800;
 }
 
-.token-card input {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    opacity: 0;
-    pointer-events: none;
+#bloxioSwap .bxs-swap-panel-header span {
+    color: var(--swap-muted);
+    font-size: .72rem;
 }
 
-.token-card-content {
+/* INPUT AREA */
+
+#bloxioSwap .bxs-swap-entry {
     display: flex;
     align-items: center;
-    gap: 9px;
-    min-height: 65px;
-    padding: 10px;
-    border: 1px solid var(--swap-border);
-    border-radius: 12px;
-    background: var(--swap-card);
-    transition:
-        border-color .2s ease,
-        background .2s ease,
-        box-shadow .2s ease,
-        transform .2s ease;
+    gap: 12px;
+    min-height: 75px;
+    padding: 12px 14px;
+    border: 1px solid rgba(212, 175, 55, .15);
+    border-radius: 13px;
+    background: var(--swap-field);
+    transition: border-color .2s ease, box-shadow .2s ease;
 }
 
-.token-card:hover .token-card-content {
-    border-color: rgba(0, 201, 213, .45);
-    transform: translateY(-1px);
+#bloxioSwap .bxs-swap-entry:focus-within {
+    border-color: var(--swap-gold);
+    box-shadow: 0 0 0 3px rgba(212, 175, 55, .08);
 }
 
-/* Selected radio card */
-.token-card input:checked + .token-card-content {
-    border-color: var(--swap-cyan);
-    background: rgba(0, 201, 213, .075);
-    box-shadow:
-        0 0 0 1px rgba(0, 201, 213, .12),
-        0 0 16px rgba(0, 201, 213, .09);
-}
-
-/* Keyboard accessibility */
-.token-card input:focus-visible + .token-card-content {
-    outline: 2px solid var(--swap-cyan);
-    outline-offset: 3px;
-}
-
-/* Coin images */
-.token-icon {
-    display: block;
-    width: 32px;
-    height: 32px;
-    min-width: 32px;
-    border: 1px solid rgba(255, 255, 255, .08);
-    border-radius: 50%;
-    background: rgba(255, 255, 255, .04);
-    object-fit: cover;
-}
-
-.token-info {
-    display: flex;
+#bloxioSwap .bxs-swap-entry input {
     flex: 1;
-    flex-direction: column;
-    gap: 3px;
-    min-width: 0;
-}
-
-.token-info strong {
-    color: var(--swap-text);
-    font-family: var(--font-mono, monospace);
-    font-size: .82rem;
-    font-weight: 850;
-}
-
-.token-info small {
-    overflow: hidden;
-    color: var(--swap-muted);
-    font-size: .61rem;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-/* Selection indicator */
-.token-check {
-    position: relative;
-    width: 15px;
-    height: 15px;
-    min-width: 15px;
-    border: 1px solid rgba(138, 153, 173, .5);
-    border-radius: 50%;
-}
-
-.token-card input:checked + .token-card-content .token-check {
-    border-color: var(--swap-cyan);
-    background: var(--swap-cyan);
-    box-shadow: 0 0 8px rgba(0, 201, 213, .35);
-}
-
-.token-card input:checked + .token-card-content .token-check::after {
-    position: absolute;
-    top: 3px;
-    left: 5px;
-    width: 4px;
-    height: 7px;
-    border: solid #021222;
-    border-width: 0 2px 2px 0;
-    content: "";
-    transform: rotate(45deg);
-}
-
-/* Amount input */
-.swap-amount-box {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    gap: 7px;
-    min-width: 0;
-    padding: 12px 13px;
-    border: 1px solid rgba(138, 153, 173, .16);
-    border-radius: 11px;
-    background: rgba(2, 18, 34, .75);
-}
-
-.swap-amount-box label {
-    color: var(--swap-muted);
-    font-size: .69rem;
-    font-weight: 700;
-}
-
-.swap-amount-box input {
     width: 100%;
     min-width: 0;
-    min-height: 35px;
-    padding: 0 52px 0 0;
+    padding: 8px 0;
     border: 0;
     outline: 0;
     background: transparent;
     color: var(--swap-text);
-    font-family: var(--font-mono, monospace);
-    font-size: 1.35rem;
-    font-weight: 800;
-    box-shadow: none;
+    font-family: inherit;
+    font-size: clamp(1.2rem, 3vw, 1.65rem);
+    font-weight: 750;
 }
 
-.swap-amount-box input:focus {
-    border: 0;
-    outline: 0;
-    box-shadow: none;
+#bloxioSwap .bxs-swap-entry input::placeholder {
+    color: rgba(138, 154, 150, .55);
 }
 
-.swap-amount-box input::placeholder {
-    color: rgba(138, 153, 173, .45);
-}
-
-.swap-amount-box input:read-only {
-    color: #00E59A;
+#bloxioSwap .bxs-swap-entry input[readonly] {
     cursor: default;
 }
 
-.swap-amount-box input::-webkit-inner-spin-button,
-.swap-amount-box input::-webkit-outer-spin-button {
-    margin: 0;
-    appearance: none;
+/* TOKEN PICKER */
+
+#bloxioSwap .bxs-swap-picker {
+    position: relative;
+    flex: 0 0 auto;
+    min-width: 125px;
 }
 
-.swap-amount-box input[type="number"] {
-    appearance: textfield;
-    -moz-appearance: textfield;
+#bloxioSwap .bxs-swap-token {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    width: 100%;
+    min-height: 45px;
+    padding: 7px 10px;
+    border: 1px solid var(--swap-border);
+    border-radius: 10px;
+    background: #0A261E;
+    color: var(--swap-text);
+    cursor: pointer;
+    transition: background .2s ease, border-color .2s ease;
 }
 
-.amount-currency {
-    position: absolute;
-    right: 13px;
-    bottom: 20px;
-    color: var(--swap-cyan);
-    font-family: var(--font-mono, monospace);
-    font-size: .75rem;
+#bloxioSwap .bxs-swap-token:hover {
+    border-color: var(--swap-gold);
+    background: #10372B;
+}
+
+#bloxioSwap .bxs-swap-token img {
+    width: 27px;
+    height: 27px;
+    flex: 0 0 27px;
+    border-radius: 50%;
+    object-fit: contain;
+}
+
+#bloxioSwap .bxs-swap-token-info {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-width: 0;
+    text-align: left;
+}
+
+#bloxioSwap .bxs-swap-token-info strong {
+    color: var(--swap-text);
+    font-size: .78rem;
     font-weight: 850;
 }
 
-/* USD value */
-.swap-panel-footer {
-    display: flex;
-    justify-content: space-between;
-    gap: 10px;
-    margin-top: 11px;
+#bloxioSwap .bxs-swap-token-info small {
+    overflow: hidden;
     color: var(--swap-muted);
+    font-size: .62rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#bloxioSwap .bxs-swap-token > span:last-child {
+    color: var(--swap-gold);
     font-size: .7rem;
 }
 
-.swap-panel-footer strong {
-    color: var(--swap-gold);
-    font-family: var(--font-mono, monospace);
-    font-size: .72rem;
-}
+/* DROPDOWN MENU */
 
-/* Direction icon */
-.swap-direction {
-    position: relative;
-    z-index: 2;
-    display: grid;
-    height: 0;
-    place-items: center;
-}
-
-.swap-direction span {
-    display: grid;
-    width: 34px;
-    height: 34px;
-    place-items: center;
-    margin-top: -17px;
-    border: 3px solid var(--swap-bg);
-    border-radius: 50%;
-    background: #0B2941;
-    color: var(--swap-cyan);
-    font-size: 1.1rem;
-    font-weight: 900;
-}
-
-/* Swap details */
-.swap-details {
-    margin-top: 5px;
-    padding: 5px 13px;
+#bloxioSwap .bxs-swap-menu {
+    position: absolute;
+    top: calc(100% + 9px);
+    right: 0;
+    z-index: 100;
+    display: none;
+    width: min(300px, 85vw);
+    max-height: 340px;
+    padding: 10px;
+    overflow: hidden;
     border: 1px solid var(--swap-border);
     border-radius: 13px;
-    background: rgba(3, 23, 44, .75);
+    background: #071C16;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, .45);
 }
 
-.swap-detail-row {
+#bloxioSwap .bxs-swap-menu.is-open {
+    display: block;
+    animation: bxsSwapMenuIn .16s ease-out;
+}
+
+@keyframes bxsSwapMenuIn {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* SEARCH */
+
+#bloxioSwap .bxs-swap-search {
+    width: 100%;
+    height: 40px;
+    margin-bottom: 9px;
+    padding: 0 12px;
+    border: 1px solid rgba(212, 175, 55, .18);
+    border-radius: 8px;
+    outline: 0;
+    background: var(--swap-field);
+    color: var(--swap-text);
+    font-family: inherit;
+    font-size: .8rem;
+}
+
+#bloxioSwap .bxs-swap-search:focus {
+    border-color: var(--swap-gold);
+}
+
+#bloxioSwap .bxs-swap-search::placeholder {
+    color: var(--swap-muted);
+}
+
+/* TOKEN OPTIONS */
+
+#bloxioSwap .bxs-swap-options {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    max-height: 245px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: var(--swap-gold) #071C16;
+}
+
+#bloxioSwap .bxs-swap-options button {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    min-height: 48px;
+    padding: 7px 9px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--swap-text);
+    text-align: left;
+    cursor: pointer;
+    transition: background .15s ease;
+}
+
+#bloxioSwap .bxs-swap-options button:hover,
+#bloxioSwap .bxs-swap-options button[aria-selected="true"] {
+    background: rgba(212, 175, 55, .10);
+}
+
+#bloxioSwap .bxs-swap-options img {
+    width: 29px;
+    height: 29px;
+    flex: 0 0 29px;
+    border-radius: 50%;
+    object-fit: contain;
+}
+
+#bloxioSwap .bxs-swap-options button span {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+#bloxioSwap .bxs-swap-options button strong {
+    font-size: .78rem;
+}
+
+#bloxioSwap .bxs-swap-options button small {
+    color: var(--swap-muted);
+    font-size: .65rem;
+}
+
+/* USD VALUE */
+
+#bloxioSwap .bxs-swap-usd {
+    display: block;
+    margin-top: 9px;
+    color: var(--swap-muted);
+    font-size: .73rem;
+}
+
+/* REVERSE BUTTON */
+
+#bloxioSwap .bxs-swap-reverse-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 13px 0;
+}
+
+#bloxioSwap .bxs-swap-reverse {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 43px;
+    height: 43px;
+    border: 1px solid var(--swap-border);
+    border-radius: 50%;
+    background: #10372B;
+    color: var(--swap-gold);
+    font-size: 1.25rem;
+    cursor: pointer;
+    transition: transform .25s ease, background .2s ease;
+}
+
+#bloxioSwap .bxs-swap-reverse:hover {
+    transform: rotate(180deg);
+    background: #174737;
+}
+
+/* QUOTE DETAILS */
+
+#bloxioSwap .bxs-swap-quote {
+    display: flex;
+    flex-direction: column;
+    gap: 11px;
+    margin-top: 19px;
+    padding: 15px;
+    border: 1px solid rgba(212, 175, 55, .13);
+    border-radius: 12px;
+    background: rgba(4, 20, 16, .55);
+}
+
+#bloxioSwap .bxs-swap-quote-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    min-height: 39px;
-    border-bottom: 1px solid rgba(138, 153, 173, .10);
+    font-size: .76rem;
 }
 
-.swap-detail-row:last-child {
-    border-bottom: 0;
-}
-
-.swap-detail-row span {
+#bloxioSwap .bxs-swap-quote-row span {
     color: var(--swap-muted);
-    font-size: .72rem;
 }
 
-.swap-detail-row strong {
+#bloxioSwap .bxs-swap-quote-row strong {
     color: var(--swap-text);
-    font-family: var(--font-mono, monospace);
-    font-size: .72rem;
+    font-family: inherit;
+    font-size: .78rem;
     font-weight: 750;
     text-align: right;
     overflow-wrap: anywhere;
 }
 
-.swap-detail-total strong {
-    color: var(--swap-cyan);
+#bloxioSwap #bxsSwapRate {
+    color: var(--swap-gold-light);
 }
 
-/* Validation message */
-.swap-message {
+/* STATUS MESSAGE */
+
+#bloxioSwap .bxs-swap-message {
+    display: none;
+    margin-top: 13px;
     padding: 11px 13px;
-    border: 1px solid rgba(255, 100, 114, .25);
-    border-radius: 10px;
-    background: rgba(255, 100, 114, .07);
-    color: #FF7A86;
-    font-size: .75rem;
+    border: 1px solid rgba(239, 100, 100, .3);
+    border-radius: 9px;
+    background: rgba(239, 100, 100, .08);
+    color: #FF9B9B;
+    font-size: .76rem;
     line-height: 1.5;
 }
 
-.swap-message[hidden] {
-    display: none;
+#bloxioSwap .bxs-swap-message:not(:empty) {
+    display: block;
 }
 
-.swap-message.success {
-    border-color: rgba(0, 229, 154, .25);
-    background: rgba(0, 229, 154, .07);
-    color: #00E59A;
+#bloxioSwap .bxs-swap-message.success {
+    border-color: rgba(53, 201, 138, .3);
+    background: rgba(53, 201, 138, .08);
+    color: var(--swap-success);
 }
 
-/* Execute button */
-.swap-btn {
+/* EXECUTE BUTTON */
+
+#bloxioSwap .bxs-swap-execute {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 12px;
+    gap: 9px;
     width: 100%;
-    min-height: 51px;
-    margin-top: 3px;
-    padding: 12px 18px;
+    min-height: 54px;
+    margin-top: 17px;
+    padding: 13px 20px;
     border: 0;
-    border-radius: 12px;
-    background: linear-gradient(105deg, #087BFF 0%, #00C9D5 52%, #00E59A 100%);
-    color: #021222;
-    font-size: .88rem;
+    border-radius: 11px;
+    background: linear-gradient(
+        135deg,
+        #F6DC83,
+        #C39527
+    );
+    color: #041410;
+    font-family: inherit;
+    font-size: .9rem;
     font-weight: 900;
-    letter-spacing: .02em;
     cursor: pointer;
-    box-shadow: 0 8px 24px rgba(0, 201, 213, .13);
-    transition:
-        transform .2s ease,
-        filter .2s ease,
-        box-shadow .2s ease;
+    box-shadow: 0 7px 20px rgba(195, 149, 39, .15);
+    transition: transform .2s ease, filter .2s ease, box-shadow .2s ease;
 }
 
-.swap-btn:hover {
+#bloxioSwap .bxs-swap-execute:hover:not(:disabled) {
     transform: translateY(-2px);
-    filter: brightness(1.08);
-    box-shadow: 0 12px 28px rgba(0, 201, 213, .22);
+    filter: brightness(1.06);
+    box-shadow: 0 10px 25px rgba(195, 149, 39, .23);
 }
 
-.swap-btn:active {
+#bloxioSwap .bxs-swap-execute:active:not(:disabled) {
     transform: translateY(0);
 }
 
-.swap-btn:focus-visible {
-    outline: 2px solid var(--swap-cyan);
-    outline-offset: 4px;
-}
-
-.swap-btn:disabled {
-    opacity: .55;
+#bloxioSwap .bxs-swap-execute:disabled {
+    opacity: .5;
     cursor: not-allowed;
-    transform: none;
+    filter: grayscale(.35);
 }
 
-.swap-btn-arrow {
-    font-size: 1.1rem;
-}
+/* DISCLAIMER */
 
-/* Disclaimer */
-.swap-disclaimer {
-    margin: 0;
+#bloxioSwap .bxs-swap-disclaimer {
+    margin: 14px 0 0;
     color: var(--swap-muted);
-    font-size: .64rem;
-    line-height: 1.6;
+    font-size: .68rem;
+    line-height: 1.7;
     text-align: center;
 }
 
-/* Toast */
-.swap-toast {
-    position: fixed;
-    right: 20px;
-    bottom: 20px;
-    z-index: 9999;
-    max-width: min(360px, calc(100vw - 40px));
-    padding: 13px 17px;
-    border: 1px solid rgba(0, 229, 154, .3);
-    border-radius: 11px;
-    background: #03172C;
-    color: #00E59A;
-    font-size: .78rem;
-    font-weight: 750;
-    line-height: 1.5;
-    opacity: 0;
-    pointer-events: none;
-    transform: translateY(10px);
-    transition: opacity .22s ease, transform .22s ease;
-    box-shadow: 0 12px 35px rgba(0, 0, 0, .35);
+/* FOCUS ACCESSIBILITY */
+
+#bloxioSwap button:focus-visible,
+#bloxioSwap input:focus-visible {
+    outline: 2px solid var(--swap-gold);
+    outline-offset: 3px;
 }
 
-.swap-toast.show {
-    opacity: 1;
-    transform: translateY(0);
-}
+/* TABLET */
 
-/* Responsive: tablets and phones */
-@media (max-width: 600px) {
-    .swap-container {
-        margin: 12px auto;
-        padding: 15px;
-        border-radius: 16px;
+@media (max-width: 768px) {
+    #bloxioSwap .bxs-swap-card {
+        padding: 18px;
     }
 
-    .swap-header {
+    #bloxioSwap .bxs-swap-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    #bloxioSwap .bxs-swap-panel {
+        padding: 15px;
+    }
+
+    #bloxioSwap .bxs-swap-header {
         margin-bottom: 18px;
     }
+}
 
-    .swap-header h2 {
+/* MOBILE */
+
+@media (max-width: 480px) {
+    #bloxioSwap {
+        margin: 16px 0;
+    }
+
+    #bloxioSwap .bxs-swap-card {
+        padding: 13px;
+        border-radius: 15px;
+    }
+
+    #bloxioSwap .bxs-swap-header {
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    #bloxioSwap .bxs-swap-header h2 {
         font-size: 1.3rem;
     }
 
-    .swap-panel {
-        padding: 13px;
-    }
-
-    .token-card-content {
-        gap: 7px;
-        min-height: 59px;
-        padding: 8px;
-    }
-
-    .token-icon {
-        width: 29px;
-        height: 29px;
-        min-width: 29px;
-    }
-
-    .token-info small {
-        font-size: .57rem;
-    }
-
-    .swap-amount-box input {
-        font-size: 1.2rem;
-    }
-}
-
-@media (max-width: 380px) {
-    .swap-container {
-        padding: 11px;
-    }
-
-    .token-selector {
-        gap: 6px;
-    }
-
-    .token-card-content {
-        gap: 5px;
-        padding: 7px 6px;
-    }
-
-    .token-icon {
-        width: 25px;
-        height: 25px;
-        min-width: 25px;
-    }
-
-    .token-info strong {
-        font-size: .75rem;
-    }
-
-    .token-info small {
-        font-size: .53rem;
-    }
-
-    .token-check {
-        width: 13px;
-        height: 13px;
-        min-width: 13px;
-    }
-
-    .swap-live-status {
+    #bloxioSwap .bxs-swap-status {
         padding: 6px 8px;
-        font-size: .59rem;
+        font-size: .62rem;
+    }
+
+    #bloxioSwap .bxs-swap-panel {
+        padding: 12px;
+    }
+
+    #bloxioSwap .bxs-swap-entry {
+        gap: 7px;
+        padding: 9px;
+    }
+
+    #bloxioSwap .bxs-swap-picker {
+        min-width: 112px;
+    }
+
+    #bloxioSwap .bxs-swap-token {
+        gap: 5px;
+        padding: 6px;
+    }
+
+    #bloxioSwap .bxs-swap-token img {
+        width: 23px;
+        height: 23px;
+    }
+
+    #bloxioSwap .bxs-swap-token-info strong {
+        font-size: .72rem;
+    }
+
+    #bloxioSwap .bxs-swap-token-info small {
+        font-size: .58rem;
+    }
+
+    #bloxioSwap .bxs-swap-entry input {
+        font-size: 1.15rem;
+    }
+
+    #bloxioSwap .bxs-swap-menu {
+        width: min(280px, 88vw);
+    }
+
+    #bloxioSwap .bxs-swap-quote {
+        padding: 12px;
+    }
+
+    #bloxioSwap .bxs-swap-quote-row {
+        font-size: .7rem;
     }
 }
 
-/* Respect reduced-motion preferences */
-@media (prefers-reduced-motion: reduce) {
-    .swap-container *,
-    .swap-container *::before,
-    .swap-container *::after {
-        animation-duration: .01ms !important;
-        transition-duration: .01ms !important;
-        scroll-behavior: auto !important;
+/* EXTRA SMALL MOBILE */
+
+@media (max-width: 360px) {
+    #bloxioSwap .bxs-swap-header {
+        flex-direction: column;
+    }
+
+    #bloxioSwap .bxs-swap-entry {
+        flex-wrap: wrap;
+    }
+
+    #bloxioSwap .bxs-swap-picker {
+        width: 100%;
+    }
+
+    #bloxioSwap .bxs-swap-token {
+        justify-content: flex-start;
+    }
+
+    #bloxioSwap .bxs-swap-token-info {
+        flex: 1;
     }
 }
