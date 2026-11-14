@@ -5929,9 +5929,25 @@ hr {
         animation-duration: .01ms !important;
         transition-duration: .01ms !important;
     }
+}/* =================================
+   BLOXIO SWAP - EXECUTE BUTTON
+================================= */
+
+#bloxioSwap #bxsSwapExecute {
+    opacity: 0.45;
+    cursor: not-allowed;
+    transition: all 0.25s ease;
 }
 
-
-/* ==========================================================================
-   END BLOXIO SWAP ENGINE
-   ========================================================================== */
+/* Active button */
+#bloxioSwap #bxsSwapExecute.is-ready {
+    opacity: 1;
+    cursor: pointer;
+    background: linear-gradient(
+        135deg,
+        #F6DC83,
+        #C39527
+    );
+    color: #041410;
+    box-shadow: 0 4px 18px rgba(212, 175, 55, 0.2);
+   }
