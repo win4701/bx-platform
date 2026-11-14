@@ -222,32 +222,43 @@ id="app" class="app-container">
 </section>
 
 <section class="wallet-swap-engine">
-<div class="wallet-section-head">
-<h3>Swap Engine</h3>
-<span>BX • XBC</span>
-</div>
-<div class="wallet-swap-grid">
-<select id="swapFromAsset"></select>
-<select id="swapToAsset">
-<option>BX</option>
-<option>XBC</option>
-</select>
-</div>
-
-<input id="swapAmount" class="wallet-input" placeholder="Amount">
-
-<div class="wallet-swap-meta">
-<div>Receive <strong id="estimatedReceive">0</strong></div>
-<div>Rate <strong id="swapRate">--</strong></div>
-<div>Slippage <strong id="slippage">0.5%</strong></div>
-</div>
-
-<button id="swapButton" class="btn primary">Execute Swap</button>
+    <div class="wallet-section-head">
+        <h3>Swap Engine</h3>
+        <span>BX • XBC</span>
+    </div>
+    <!-- قائمة اختيار العملة (تطابق الصورة) -->
+    <div class="currency-select-list">
+        <label class="currency-item">
+            <div class="currency-info">
+                <strong>BX</strong>
+                <span>Bloxio</span>
+            </div>
+            <input type="radio" name="swapCurrency" value="BX" checked>
+            <div class="currency-radio-custom"></div>
+        </label>
+        <label class="currency-item">
+            <div class="currency-info">
+                <strong>XBC</strong>
+                <span>Bloxio Casino</span>
+            </div>
+            <input type="radio" name="swapCurrency" value="XBC">
+            <div class="currency-radio-custom"></div>
+        </label>
+    </div>
+    <!-- حقول المبادلة -->
+    <div class="swap-input-group">
+        <input id="swapAmount" class="wallet-input" placeholder="Amount" type="number">
+    </div>
+    <div class="wallet-swap-meta">
+        <div>Receive <strong id="estimatedReceive">0</strong></div>
+        <div>Rate <strong id="swapRate">--</strong></div>
+        <div>Slippage <strong id="slippage">0.5%</strong></div>
+    </div>
+    <button id="swapButton" class="btn primary btn-execute-swap">Execute Swap</button>
 </section>
-
 <div class="wallet-panels">
-
 <section id="depositPanel" class="wallet-panel wallet-hidden">
+   
 <div class="wallet-panel-head">
 <h4>Deposit</h4>
 <button class="wallet-panel-close" data-wallet-close="depositPanel">✕</button>
