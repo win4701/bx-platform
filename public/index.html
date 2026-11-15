@@ -209,21 +209,17 @@ id="app" class="app-container">
     <!-- HEADER -->
     <header class="bxs-swap-header">
       <div>
-        <span class="bxs-swap-eyebrow">
-          BLOXIO SWAP
+        <span class="bxs-swap-eyebrow">BLOXIO SWAP
         </span>
 
         <h3 id="bxsSwapTitle">Swap</h3>
-      </div>
-
-      <span class="bxs-swap-live">
+      </div><span class="bxs-swap-live">
         <i></i>
       </span>
     </header>
 
     <!-- FROM / TO GRID -->
     <div class="bxs-swap-grid">
-
       <!-- FROM PANEL -->
       <section
         class="bxs-swap-panel"
@@ -233,9 +229,7 @@ id="app" class="app-container">
           <label for="bxsSwapAmount">From</label>
           <span>YOU PAY</span>
         </div>
-
         <div class="bxs-swap-entry">
-
           <input
             id="bxsSwapAmount"
             type="number"
@@ -246,22 +240,18 @@ id="app" class="app-container">
             autocomplete="off"
             aria-label="Amount to swap"
           >
-
           <div class="bxs-swap-picker">
-
             <button
               id="bxsFromTrigger"
               class="bxs-swap-token"
               type="button"
               aria-expanded="false"
               aria-controls="bxsFromMenu"
-            >
-              <img
+            > <img
                 id="bxsFromIcon"
                 src="/assets/images/coins/bx.png"
                 alt=""
               >
-
               <span>
                 <strong id="bxsFromSymbol">BX</strong>
                 <small id="bxsFromName">Bloxio</small>
@@ -275,8 +265,7 @@ id="app" class="app-container">
               id="bxsFromMenu"
               class="bxs-swap-menu"
               hidden
-            >
-              <input
+            > <input
                 id="bxsFromSearch"
                 class="bxs-swap-search"
                 type="search"
@@ -284,7 +273,6 @@ id="app" class="app-container">
                 autocomplete="off"
                 aria-label="Search source assets"
               >
-
               <div
                 id="bxsFromOptions"
                 class="bxs-swap-options"
@@ -292,10 +280,8 @@ id="app" class="app-container">
                 aria-label="Source assets"
               ></div>
             </div>
-
           </div>
         </div>
-
         <div class="bxs-swap-panel-foot">
           <span>Reference value</span>
           <strong id="bxsFromUsd">—</strong>
@@ -311,9 +297,7 @@ id="app" class="app-container">
           <label for="bxsSwapReceive">To</label>
           <span>YOU RECEIVE</span>
         </div>
-
         <div class="bxs-swap-entry">
-
           <input
             id="bxsSwapReceive"
             type="text"
@@ -321,7 +305,6 @@ id="app" class="app-container">
             readonly
             aria-label="Estimated amount to receive"
           >
-
           <div class="bxs-swap-picker">
 
             <button
@@ -336,12 +319,10 @@ id="app" class="app-container">
                 src="/assets/images/coins/xbc.png"
                 alt=""
               >
-
               <span>
                 <strong id="bxsToSymbol">XBC</strong>
                 <small id="bxsToName">Bloxio Casino</small>
               </span>
-
               <b aria-hidden="true">⌄</b>
             </button>
             <div
@@ -357,7 +338,6 @@ id="app" class="app-container">
                 autocomplete="off"
                 aria-label="Search destination assets"
               >
-
               <div
                 id="bxsToOptions"
                 class="bxs-swap-options"
@@ -372,10 +352,8 @@ id="app" class="app-container">
           <strong id="bxsToUsd">—</strong>
         </div>
       </section>
-
     </div>
-    <div class="bxs-swap-reverse-row">
-      <button
+    <div class="bxs-swap-reverse-row"><button
         id="bxsSwapReverse"
         class="bxs-swap-reverse"
         type="button"
@@ -386,29 +364,23 @@ id="app" class="app-container">
 
     <!-- QUOTE DETAILS -->
     <div class="bxs-swap-quote">
-
       <div>
         <span>Exchange rate</span>
         <strong id="bxsSwapRate">—</strong>
       </div>
-
       <div>
         <span>Trading fee</span>
         <strong>0.30%</strong>
       </div>
-
       <div>
         <span>Slippage allowance</span>
         <strong>0.50%</strong>
       </div>
-
       <div>
         <span>Total quote adjustment</span>
-        <strong id="bxsSwapDeduction">
-          0.7985%
+        <strong id="bxsSwapDeduction">0.7985%
         </strong>
       </div>
-
     </div>
     <p
       id="bxsSwapMessage"
@@ -425,9 +397,7 @@ id="app" class="app-container">
       disabled
     >
       EXECUTE SWAP
-    </button>
-
-    <p class="bxs-swap-disclaimer"></p>
+    </button><p class="bxs-swap-disclaimer"></p>
   </div>
 </section>
 
@@ -563,7 +533,7 @@ id="app" class="app-container">
 </div>
 </section>
 
-<div id="walletQuickSheet" class="wallet-quick-sheet wallet-view">
+<div id="walletQuickSheet" class="wallet-quick-sheet" aria-hidden="true" hidden>
 <div class="wallet-quick-card">
 <h4 id="walletQuickAssetName">Asset</h4>
 
