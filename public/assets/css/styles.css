@@ -3106,12 +3106,16 @@ select option {
 }
 
 /* 10 currency buttons: five columns × two rows. */
+/* =========================================
+   MINING CURRENCY TABS — HORIZONTAL RECTANGULAR
+   ========================================= */
+
 .mining-tabs,
 #miningTabs {
     display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-    grid-template-rows: repeat(2, minmax(58px, auto));
-    gap: 9px;
+    grid-template-columns: repeat(5, minmax(0, 1fr)); /* 5 أعمدة */
+    grid-template-rows: repeat(2, auto); /* صفين */
+    gap: 8px; /* مسافة أقل قليلاً لزيادة العرض */
     width: 100%;
     min-width: 0;
 }
@@ -3119,28 +3123,32 @@ select option {
 .mining-tabs button,
 #miningTabs button {
     display: flex;
-    flex-direction: column;
+    flex-direction: row; /* <--- هذا هو السر: يجعل الأيقونة والنص بجانب بعضهما */
     align-items: center;
-    justify-content: center;
-    gap: 5px;
+    justify-content: center; /* توسيط المحتوى */
+    gap: 6px; /* مسافة صغيرة بين الأيقونة والنص */
     min-width: 0;
-    min-height: 58px;
-    padding: 7px 4px;
+    min-height: 40px; /* <--- تقليل الارتفاع لجعله مستطيلاً */
+    padding: 6px 4px; /* تقليل الحواف الداخلية */
     border: 1px solid var(--gold-border);
     border-radius: var(--radius-md);
     background: var(--bg-card);
     color: var(--text-metadata);
-    font-size: .76rem;
+    font-size: .75rem;
     font-weight: 800;
+    transition: all 0.2s ease;
+    white-space: nowrap; /* منع النص من النزول لسطر جديد */
 }
 
 .mining-tabs button img,
 #miningTabs button img {
-    width: 25px;
-    height: 25px;
+    width: 20px; /* تصغير الأيقونة قليلاً */
+    height: 20px;
+    flex-shrink: 0; /* منع الأيقونة من الانكماش */
     object-fit: contain;
 }
 
+/* تأثيرات التحديد والتمرير */
 .mining-tabs button.active,
 #miningTabs button.active,
 .mining-tabs button:hover,
@@ -3148,6 +3156,31 @@ select option {
     border-color: var(--gold-solid);
     background: var(--gold-glow);
     color: var(--gold-solid);
+}
+
+/* =========================================
+   استجابة الموبايل (شاشات صغيرة)
+   ========================================= */
+@media (max-width: 768px) {
+    .mining-tabs,
+    #miningTabs {
+        gap: 6px; /* تقليل المسافة أكثر */
+    }
+
+    .mining-tabs button,
+    #miningTabs button {
+        flex-direction: row; /* يبقى أفقياً */
+        padding: 5px 2px;
+        gap: 4px;
+        min-height: 36px; /* ارتفاع أقل للموبايل */
+        font-size: 0.65rem; /* خط أصغر قليلاً */
+    }
+
+    .mining-tabs button img,
+    #miningTabs button img {
+        width: 18px; /* أيقونة أصغر */
+        height: 18px;
+    }
 }
 
 .mining-layout {
