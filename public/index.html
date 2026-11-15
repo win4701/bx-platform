@@ -203,44 +203,31 @@ id="app" class="app-container">
     <h3>Wallet Operations</h3>
     <span>Manage your funds</span>
   </div>
-
-  <div class="wallet-action-grid">
-    <!-- Transfer -->
-    <button class="wallet-action-card wallet-action-transfer"
-            type="button"
-            data-wallet-open="transferPanel"
-            aria-controls="transferPanel">
+ <div class="wallet-action-grid">
+    <!-- 1. Transfer -->
+    <button class="wallet-action-card wallet-action-transfer" type="button" data-wallet-open="transferPanel">
       <span class="wallet-action-icon" aria-hidden="true">⇄</span>
       <span class="wallet-action-copy">
-        <strong>Transfer</strong>
-        <small>Move funds</small>
+        <strong>Transfer</strong><small>Move funds</small>
       </span>
     </button>
 
-    <!-- Withdraw -->
-    <button class="wallet-action-card wallet-action-withdraw"
-            type="button"
-            data-wallet-open="withdrawPanel"
-            aria-controls="withdrawPanel">
+    <!-- 2. Withdraw -->
+    <button class="wallet-action-card wallet-action-withdraw" type="button" data-wallet-open="withdrawPanel">
       <span class="wallet-action-icon" aria-hidden="true">↑</span>
       <span class="wallet-action-copy">
-        <strong>Withdraw</strong>
-        <small>Send funds</small>
+        <strong>Withdraw</strong><small>Send funds</small>
       </span>
     </button>
 
-    <!-- Deposit -->
-    <button class="wallet-action-card wallet-action-deposit"
-            type="button"
-            data-wallet-open="depositPanel"
-            aria-controls="depositPanel">
+    <!-- 3. Deposit -->
+    <button class="wallet-action-card wallet-action-deposit" type="button" data-wallet-open="depositPanel">
       <span class="wallet-action-icon" aria-hidden="true">↓</span>
       <span class="wallet-action-copy">
-        <strong>Deposit</strong>
-        <small>Add funds</small>
+        <strong>Deposit</strong><small>Add funds</small>
       </span>
     </button>
-  </div>
+ </div>
 </section>
 <!-- =====================================================
      BLOXIO SWAP 
