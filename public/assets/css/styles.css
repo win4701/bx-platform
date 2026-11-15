@@ -908,7 +908,7 @@ select option {
 }
 
 /* ==========================================================================
-   WALLET OPERATIONS — FINAL FIX (Matching the Image 100%)
+   WALLET OPERATIONS — FINAL FIX (Horizontal Rectangular Buttons)
    ========================================================================== */
 
 /* الحاوية الرئيسية */
@@ -939,23 +939,28 @@ select option {
 /* الشبكة التي تجعل الأزرار الثلاثة أفقية */
 .wallet-action-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    /* 3 أعمدة متساوية */
+    grid-template-columns: repeat(3, 1fr); 
     gap: 15px;
     width: 100%;
 }
 
-/* التصميم الأساسي للزر (الزر هو الحاوية) */
+/* التصميم الأساسي للزر (هنا سر الشكل الأفقي) */
 .wallet-action-card {
     display: flex;
-    align-items: center;
+    flex-direction: row; /* <--- هذا هو السر: يجعل الأيقونة والنص بجانب بعضهما */
+    align-items: center; /* يوسّط المحتوى عمودياً */
+    justify-content: center; /* يوسّط المحتوى أفقياً */
     gap: 12px;
     padding: 16px 20px;
     border-radius: 12px;
-    background: transparent; /* سيتم تلوينه لاحقاً */
+    background: transparent;
     cursor: pointer;
     transition: all 0.2s ease;
     text-align: left;
-    border: 1px solid transparent; /* سيتم تلوينه لاحقاً */
+    border: 1px solid transparent;
+    /* يمكنك إزالة min-height إذا كنت تريد الزر أن يكون نحيفاً جداً */
+    min-height: 70px; 
 }
 
 /* الأيقونة الدائرية */
@@ -968,12 +973,13 @@ select option {
     border-radius: 50%;
     font-size: 1.2rem;
     font-weight: bold;
+    flex-shrink: 0; /* يمنع الأيقونة من الانكماش */
 }
 
 /* النصوص */
 .wallet-action-copy {
     display: flex;
-    flex-direction: column;
+    flex-direction: column; /* النص والوصف فوق بعضهما */
     gap: 2px;
 }
 
@@ -981,11 +987,13 @@ select option {
     font-size: 1rem;
     font-weight: 800;
     color: #ffffff;
+    white-space: nowrap; /* يمنع النص من النزول لسطر جديد */
 }
 
 .wallet-action-copy small {
     font-size: 0.75rem;
     color: rgba(255, 255, 255, 0.7);
+    white-space: nowrap;
 }
 
 /* =========================================
@@ -994,7 +1002,7 @@ select option {
 
 /* 1. الإيداع (Deposit - أخضر) */
 .wallet-action-deposit {
-    border: 1px solid #2E7D5E; /* حدود خضراء */
+    border: 1px solid #2E7D5E;
     background: linear-gradient(135deg, rgba(46, 125, 94, 0.2), rgba(46, 125, 94, 0.05));
 }
 .wallet-action-deposit:hover {
@@ -1008,7 +1016,7 @@ select option {
 
 /* 2. السحب (Withdraw - ذهبي/برتقالي) */
 .wallet-action-withdraw {
-    border: 1px solid #B8862A; /* حدود ذهبية */
+    border: 1px solid #B8862A;
     background: linear-gradient(135deg, rgba(184, 134, 42, 0.2), rgba(184, 134, 42, 0.05));
 }
 .wallet-action-withdraw:hover {
@@ -1022,7 +1030,7 @@ select option {
 
 /* 3. التحويل (Transfer - أزرق سماوي) */
 .wallet-action-transfer {
-    border: 1px solid #2C7A9E; /* حدود زرقاء */
+    border: 1px solid #2C7A9E;
     background: linear-gradient(135deg, rgba(44, 122, 158, 0.2), rgba(44, 122, 158, 0.05));
 }
 .wallet-action-transfer:hover {
@@ -1035,37 +1043,39 @@ select option {
 }
 
 /* =========================================
-   استجابة الموبايل (شاشات صغيرة)
+   استجابة الموبايل (تعديل مهم جداً)
    ========================================= */
 @media (max-width: 768px) {
     .wallet-action-grid {
         gap: 8px;
     }
     
+    /* هنا التغيير الأهم: لا نغير اتجاه flex إلى column، بل نبقيه row */
     .wallet-action-card {
-        flex-direction: column;
+        flex-direction: row; /* يبقى أفقياً */
         align-items: center;
         justify-content: center;
-        padding: 12px 5px;
-        gap: 8px;
+        padding: 10px 8px; /* تقليل الحواف */
+        gap: 6px; /* تقليل المسافة بين الأيقونة والنص */
+        min-height: 60px; /* جعله أقصر قليلاً */
     }
     
     .wallet-action-icon {
-        width: 32px;
-        height: 32px;
-        font-size: 1rem;
+        width: 28px;
+        height: 28px;
+        font-size: 0.9rem;
     }
     
     .wallet-action-copy {
-        align-items: center;
+        align-items: flex-start; /* محاذاة النص لليسار */
     }
     
     .wallet-action-copy strong {
-        font-size: 0.8rem;
+        font-size: 0.75rem; /* تصغير الخط قليلاً ليناسب العرض */
     }
     
     .wallet-action-copy small {
-        display: none; /* إخفاء الوصف في الموبايل */
+        display: none; /* إخفاء الوصف في الموبايل لتوفير مساحة */
     }
 }
 
