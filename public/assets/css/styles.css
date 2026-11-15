@@ -2944,9 +2944,6 @@ select option {
 }
 
 /* 17. MOBILE ACTIONS — FIXED ABOVE BOTTOM NAV */
-#casino .casino-mobile-actions {
-    display: none;
-}
 
 @media (max-width: 768px) {
     #casino .casino-top-stats {
@@ -2975,61 +2972,6 @@ select option {
     #casino .ledger-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
-
-    #casino .casino-mobile-actions {
-        position: fixed;
-        left: 10px;
-        right: 10px;
-        bottom: calc(
-            var(--mobile-nav-height, 66px) +
-            env(safe-area-inset-bottom, 0px) +
-            9px
-        );
-        z-index: 1150;
-
-        display: grid !important;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 8px;
-
-        width: auto;
-        margin: 0;
-        padding: 9px;
-
-        border: 1px solid rgba(212, 175, 55, .25);
-        border-radius: 14px;
-        background: rgba(6, 28, 25, .97);
-
-        box-shadow: 0 8px 24px rgba(0, 0, 0, .4);
-        backdrop-filter: blur(14px);
-        -webkit-backdrop-filter: blur(14px);
-    }
-
-    #casino .casino-mobile-actions button {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        min-width: 0;
-        min-height: 43px;
-        padding: 7px 3px;
-
-        border: 1px solid var(--casino-border);
-        border-radius: 9px;
-        background: var(--casino-panel-bg);
-        color: var(--casino-gold);
-
-        font-size: .72rem;
-        font-weight: 850;
-        white-space: nowrap;
-    }
-
-    #casino .casino-mobile-actions button:active {
-        background: rgba(212, 175, 55, .2);
-    }
-
-    #casino {
-        padding-bottom: 145px;
-    }
-}
 
 /* 18. SMALL MOBILE */
 @media (max-width: 380px) {
