@@ -2,109 +2,367 @@
 "use strict";
 
 /* =========================================================
-   BLOXIO LANGUAGE ENGINE V2
-   Supported: EN AR FR ES DE RU TR ZH JA
+   BLOXIO LANGUAGE ENGINE V3
+   ---------------------------------------------------------
+   Supported:
+   EN AR FR ES DE RU TR ZH JA
+
+   Features:
+   - Dynamic locale loading
+   - Latest-request-wins language switching
+   - Successful dictionary caching
+   - Nested dictionary lookup
+   - Safe dictionary path access
+   - RTL / LTR management
+   - Dynamic DOM translation
+   - Language menu management
+   - BXTranslator V3.1 compatibility
 ========================================================= */
 
 window.BXLanguage = (() => {
 
+    /* =====================================================
+       CONFIGURATION
+    ===================================================== */
+
+    const VERSION = "3.0.0";
+
     const STORAGE_KEY = "bx_language";
+
     const DEFAULT_LANG = "EN";
 
-    const SUPPORTED = [
-        "EN", "AR", "FR", "ES", "DE",
-        "RU", "TR", "ZH", "JA"
+    const SUPPORTED = Object.freeze([
+        "EN",
+        "AR",
+        "FR",
+        "ES",
+        "DE",
+        "RU",
+        "TR",
+        "ZH",
+        "JA"
+    ]);
+
+    const RTL_LANGS = Object.freeze([
+        "AR"
+    ]);
+
+    const LOCALE_PATH = "/locales/";
+
+    const TRANSLATION_ATTRIBUTES = [
+        "data-lang-key",
+        "data-lang-html",
+        "data-lang-placeholder",
+        "data-lang-title",
+        "data-lang-value",
+        "data-lang-aria",
+        "data-lang-alt"
     ];
 
-    const RTL_LANGS = ["AR"];
+    const TRANSLATION_SELECTOR =
+        TRANSLATION_ATTRIBUTES
+            .map(attribute => `[${attribute}]`)
+            .join(",");
+
+    const BLOCKED_PATH_KEYS = new Set([
+        "__proto__",
+        "prototype",
+        "constructor"
+    ]);
+
+    /* =====================================================
+       STATE
+    ===================================================== */
 
     let current = DEFAULT_LANG;
+
     let dictionary = {};
+
     let loaded = false;
-    let loading = null;
+
     let requestId = 0;
 
-    const normalize = lang =>
-        String(lang || DEFAULT_LANG).trim().toUpperCase();
+    let initPromise = null;
 
-    const isSupported = lang =>
-        SUPPORTED.includes(normalize(lang));
+    const dictionaryCache = new Map();
 
-    const isRTL = lang =>
-        RTL_LANGS.includes(normalize(lang));
+    /* =====================================================
+       LANGUAGE HELPERS
+    ===================================================== */
 
-    /* -----------------------------------------------------
+    function normalize(lang) {
+
+        const value = String(
+            lang || DEFAULT_LANG
+        ).trim().toUpperCase();
+
+        return value.replace(/[^A-Z]/g, "");
+    }
+
+    function isSupported(lang) {
+
+        return SUPPORTED.includes(
+            normalize(lang)
+        );
+    }
+
+    function isRTL(lang) {
+
+        return RTL_LANGS.includes(
+            normalize(lang)
+        );
+    }
+
+    function getCurrent() {
+        return current;
+    }
+
+    function getSupported() {
+        return [...SUPPORTED];
+    }
+
+    function getDictionary() {
+        return dictionary;
+    }
+
+    function ready() {
+        return loaded;
+    }
+
+    /* =====================================================
        STORAGE
-    ----------------------------------------------------- */
+    ===================================================== */
 
     function getSaved() {
+
         try {
+
             const saved = normalize(
                 localStorage.getItem(STORAGE_KEY)
             );
 
-            return isSupported(saved) ? saved : null;
+            return isSupported(saved)
+                ? saved
+                : null;
 
-        } catch {
+        } catch (error) {
+
+            console.warn(
+                "[BXLanguage] Storage unavailable:",
+                error
+            );
+
             return null;
         }
     }
 
-    /* -----------------------------------------------------
-       DICTIONARY
-    ----------------------------------------------------- */
+    function saveLanguage(lang) {
+
+        try {
+
+            localStorage.setItem(
+                STORAGE_KEY,
+                lang
+            );
+
+            return true;
+
+        } catch (error) {
+
+            console.warn(
+                "[BXLanguage] Could not save language:",
+                error
+            );
+
+            return false;
+        }
+    }
+
+    /* =====================================================
+       DICTIONARY VALIDATION
+    ===================================================== */
+
+    function isValidDictionary(data) {
+
+        return (
+            data !== null &&
+            typeof data === "object" &&
+            !Array.isArray(data)
+        );
+    }
+
+    /* =====================================================
+       NESTED DICTIONARY LOOKUP
+       Example:
+       get("wallet.deposit.success")
+    ===================================================== */
 
     function get(path, fallback) {
-        if (!path) return "";
 
-        const value = String(path).split(".").reduce(
-            (object, key) =>
-                object == null ? undefined : object[key],
-            dictionary
-        );
-
-        if (value === undefined || value === null) {
-            return fallback !== undefined ? fallback : path;
+        if (
+            path === undefined ||
+            path === null ||
+            path === ""
+        ) {
+            return fallback ?? "";
         }
 
-        return typeof value === "object"
-            ? fallback ?? path
-            : String(value);
+        const keys = String(path).split(".");
+
+        // Prevent prototype-related property access.
+        if (
+            keys.some(key =>
+                BLOCKED_PATH_KEYS.has(key)
+            )
+        ) {
+            return fallback ?? path;
+        }
+
+        let value = dictionary;
+
+        for (const key of keys) {
+
+            if (
+                value === null ||
+                typeof value !== "object" ||
+                !Object.prototype.hasOwnProperty.call(
+                    value,
+                    key
+                )
+            ) {
+
+                return fallback !== undefined
+                    ? fallback
+                    : path;
+            }
+
+            value = value[key];
+        }
+
+        if (
+            value === undefined ||
+            value === null ||
+            typeof value === "object"
+        ) {
+
+            return fallback !== undefined
+                ? fallback
+                : path;
+        }
+
+        return String(value);
     }
 
-    /* -----------------------------------------------------
-       DIRECTION
-    ----------------------------------------------------- */
+    /* =====================================================
+       TRANSLATION INTERPOLATION
+       Example:
+       format("Hello {name}", { name: "Bloxio" })
+    ===================================================== */
+
+    function format(template, values = {}) {
+
+        if (
+            template === undefined ||
+            template === null
+        ) {
+            return "";
+        }
+
+        return String(template).replace(
+            /\{([a-zA-Z0-9_.-]+)\}/g,
+            (match, key) => {
+
+                if (
+                    !Object.prototype.hasOwnProperty.call(
+                        values,
+                        key
+                    )
+                ) {
+                    return match;
+                }
+
+                const value = values[key];
+
+                return value === null ||
+                    value === undefined
+                    ? ""
+                    : String(value);
+            }
+        );
+    }
+
+    function translate(key, fallback, values) {
+
+        const result = get(key, fallback);
+
+        return values
+            ? format(result, values)
+            : result;
+    }
+
+    /* =====================================================
+       DOCUMENT DIRECTION
+    ===================================================== */
 
     function applyDirection(lang) {
-        const rtl = isRTL(lang);
 
-        document.documentElement.lang =
-            lang.toLowerCase();
+        const normalized = normalize(lang);
 
-        document.documentElement.dir =
-            rtl ? "rtl" : "ltr";
+        const rtl = isRTL(normalized);
 
-        document.documentElement.classList.toggle(
-            "rtl",
-            rtl
+        const root = document.documentElement;
+
+        if (!root) {
+            return;
+        }
+
+        root.lang = normalized.toLowerCase();
+
+        root.dir = rtl ? "rtl" : "ltr";
+
+        root.classList.toggle("rtl", rtl);
+
+        root.classList.toggle("ltr", !rtl);
+
+        if (document.body) {
+
+            document.body.dir = rtl
+                ? "rtl"
+                : "ltr";
+
+            document.body.classList.toggle(
+                "rtl",
+                rtl
+            );
+
+            document.body.classList.toggle(
+                "ltr",
+                !rtl
+            );
+        }
+
+        window.dispatchEvent(
+            new CustomEvent("bx:direction-change", {
+                detail: {
+                    lang: normalized,
+                    direction: rtl ? "rtl" : "ltr"
+                }
+            })
         );
-
-        document.documentElement.classList.toggle(
-            "ltr",
-            !rtl
-        );
-
-        document.body?.classList.toggle("rtl", rtl);
-        document.body?.classList.toggle("ltr", !rtl);
     }
 
-    /* -----------------------------------------------------
+    /* =====================================================
        TRANSLATE NODE
-    ----------------------------------------------------- */
+    ===================================================== */
 
     function translateNode(node) {
-        if (!node || node.nodeType !== 1) return;
+
+        if (
+            !node ||
+            node.nodeType !== 1
+        ) {
+            return false;
+        }
 
         const mappings = [
             ["langKey", "text"],
@@ -116,77 +374,171 @@ window.BXLanguage = (() => {
             ["langAlt", "alt"]
         ];
 
-        mappings.forEach(([dataKey, type]) => {
+        let translated = false;
+
+        for (const [dataKey, type] of mappings) {
+
             const key = node.dataset[dataKey];
 
-            if (!key) return;
+            if (!key) {
+                continue;
+            }
 
             const value = get(key);
 
-            if (value === key) return;
+            // Preserve fallback content when key is missing.
+            if (value === key) {
+                continue;
+            }
 
             switch (type) {
+
                 case "text":
+
                     node.textContent = value;
+
+                    translated = true;
+
                     break;
 
                 case "html":
+
                     node.innerHTML = value;
+
+                    translated = true;
+
                     break;
 
                 case "placeholder":
+
                 case "title":
+
                 case "aria-label":
+
                 case "alt":
-                    node.setAttribute(type, value);
+
+                    node.setAttribute(
+                        type,
+                        value
+                    );
+
+                    translated = true;
+
                     break;
 
                 case "value":
-                    node.value = value;
+
+                    if ("value" in node) {
+
+                        node.value = value;
+
+                        translated = true;
+                    }
+
                     break;
             }
-        });
+        }
+
+        return translated;
     }
 
-    /* -----------------------------------------------------
+    /* =====================================================
        TRANSLATE PAGE
-    ----------------------------------------------------- */
+    ===================================================== */
 
     function translatePage(root = document) {
 
-        const selector = [
-            "[data-lang-key]",
-            "[data-lang-html]",
-            "[data-lang-placeholder]",
-            "[data-lang-title]",
-            "[data-lang-value]",
-            "[data-lang-aria]",
-            "[data-lang-alt]"
-        ].join(",");
-
-        if (
-            root.nodeType === 1 &&
-            root.matches?.(selector)
-        ) {
-            translateNode(root);
+        if (!root) {
+            return false;
         }
 
-        root.querySelectorAll?.(selector)
-            .forEach(translateNode);
+        let elements = [];
+
+        try {
+
+            if (
+                root.nodeType === 1 &&
+                root.matches?.(TRANSLATION_SELECTOR)
+            ) {
+                elements.push(root);
+            }
+
+            if (typeof root.querySelectorAll === "function") {
+
+                elements = elements.concat(
+                    Array.from(
+                        root.querySelectorAll(
+                            TRANSLATION_SELECTOR
+                        )
+                    )
+                );
+            }
+
+        } catch (error) {
+
+            console.error(
+                "[BXLanguage] Invalid translation root:",
+                error
+            );
+
+            return false;
+        }
+
+        elements.forEach(translateNode);
+
+        updateLocaleDisplay();
+
+        updateLanguageButtons();
+
+        return true;
+    }
+
+    /* =====================================================
+       LOCALE DISPLAY
+    ===================================================== */
+
+    function updateLocaleDisplay() {
 
         const currentLocale =
             document.getElementById("currentLocale");
 
         if (currentLocale) {
+
             currentLocale.textContent = current;
         }
 
+        const trigger =
+            document.getElementById("localeTrigger");
+
+        if (trigger) {
+
+            trigger.setAttribute(
+                "aria-label",
+                `Language: ${current}`
+            );
+        }
+    }
+
+    /* =====================================================
+       LANGUAGE BUTTON STATES
+    ===================================================== */
+
+    function updateLanguageButtons() {
+
         document.querySelectorAll("[data-lang]")
             .forEach(button => {
-                const active =
-                    normalize(button.dataset.lang) === current;
 
-                button.classList.toggle("active", active);
+                const buttonLang = normalize(
+                    button.dataset.lang
+                );
+
+                const active =
+                    buttonLang === current;
+
+                button.classList.toggle(
+                    "active",
+                    active
+                );
 
                 button.setAttribute(
                     "aria-pressed",
@@ -195,125 +547,147 @@ window.BXLanguage = (() => {
             });
     }
 
-    /* -----------------------------------------------------
+    /* =====================================================
        LOAD LOCALE
-    ----------------------------------------------------- */
+       Latest request wins.
+       A stale response cannot overwrite a newer choice.
+    ===================================================== */
 
     async function loadLocale(lang) {
 
         lang = normalize(lang);
 
         if (!isSupported(lang)) {
-            console.error("[BXLanguage] Unsupported:", lang);
+
+            console.error(
+                "[BXLanguage] Unsupported language:",
+                lang
+            );
+
             return false;
         }
 
         const id = ++requestId;
 
-        if (loading) {
-            await loading;
-        }
+        try {
 
-        const task = (async () => {
+            let data = dictionaryCache.get(lang);
 
-            try {
+            // Load only if not cached.
+            if (!data) {
+
                 const url =
-                    `/locales/${lang.toLowerCase()}.json`;
+                    `${LOCALE_PATH}${lang.toLowerCase()}.json`;
 
                 const response = await fetch(url, {
+
                     method: "GET",
+
                     cache: "no-cache",
+
                     headers: {
                         Accept: "application/json"
                     }
                 });
 
                 if (!response.ok) {
+
                     throw new Error(
                         `Locale HTTP ${response.status}: ${url}`
                     );
                 }
 
-                const data = await response.json();
+                data = await response.json();
 
-                if (
-                    !data ||
-                    typeof data !== "object" ||
-                    Array.isArray(data)
-                ) {
+                if (!isValidDictionary(data)) {
+
                     throw new Error(
-                        `Invalid dictionary: ${lang}`
+                        `Invalid locale dictionary: ${lang}`
                     );
                 }
 
-                if (id !== requestId) {
-                    return false;
-                }
+                // Cache only valid dictionaries.
+                dictionaryCache.set(lang, data);
+            }
 
-                dictionary = data;
-                current = lang;
-                loaded = true;
-
-                try {
-                    localStorage.setItem(
-                        STORAGE_KEY,
-                        lang
-                    );
-                } catch {}
-
-                applyDirection(lang);
-                translatePage();
-
-                window.dispatchEvent(
-                    new CustomEvent("bx:language-change", {
-                        detail: {
-                            lang,
-                            dictionary
-                        }
-                    })
-                );
-
-                console.log(
-                    `[BXLanguage] Loaded ${lang}`
-                );
-
-                return true;
-
-            } catch (error) {
-
-                console.error(
-                    `[BXLanguage] Failed ${lang}`,
-                    error
-                );
-
+            // Ignore outdated requests.
+            if (id !== requestId) {
                 return false;
             }
 
-        })();
+            // Commit language only after successful loading.
+            dictionary = data;
 
-        loading = task;
+            current = lang;
 
-        try {
-            return await task;
-        } finally {
-            if (loading === task) {
-                loading = null;
+            loaded = true;
+
+            saveLanguage(lang);
+
+            applyDirection(lang);
+
+            translatePage(document);
+
+            window.dispatchEvent(
+                new CustomEvent("bx:language-change", {
+
+                    detail: {
+                        lang: current,
+                        dictionary,
+                        version: VERSION
+                    }
+                })
+            );
+
+            console.log(
+                `[BXLanguage] Loaded ${lang}`
+            );
+
+            return true;
+
+        } catch (error) {
+
+            // Do not report stale requests as active failures.
+            if (id !== requestId) {
+                return false;
             }
+
+            console.error(
+                `[BXLanguage] Failed to load ${lang}:`,
+                error
+            );
+
+            return false;
         }
     }
 
-    /* -----------------------------------------------------
+    /* =====================================================
        SET LANGUAGE
-    ----------------------------------------------------- */
+    ===================================================== */
 
     async function set(lang) {
+
         lang = normalize(lang);
 
-        if (!isSupported(lang)) return false;
+        if (!isSupported(lang)) {
 
-        if (lang === current && loaded) {
-            translatePage();
+            console.error(
+                "[BXLanguage] Unsupported language:",
+                lang
+            );
+
+            return false;
+        }
+
+        if (
+            lang === current &&
+            loaded
+        ) {
+
+            translatePage(document);
+
             closeMenu();
+
             return true;
         }
 
@@ -326,175 +700,356 @@ window.BXLanguage = (() => {
         return success;
     }
 
-    /* -----------------------------------------------------
+    /* =====================================================
        LOCALE MENU
-    ----------------------------------------------------- */
+    ===================================================== */
 
     function openMenu() {
-        const trigger = document.getElementById(
-            "localeTrigger"
-        );
 
-        const menu = document.getElementById(
-            "localeMenu"
-        );
+        const trigger =
+            document.getElementById("localeTrigger");
 
-        if (!trigger || !menu) return;
+        const menu =
+            document.getElementById("localeMenu");
 
-        trigger.setAttribute("aria-expanded", "true");
-        menu.classList.add("open");
+        if (trigger) {
+
+            trigger.setAttribute(
+                "aria-expanded",
+                "true"
+            );
+        }
+
+        if (menu) {
+
+            menu.classList.add("open");
+
+            menu.setAttribute(
+                "aria-hidden",
+                "false"
+            );
+        }
     }
 
     function closeMenu() {
-        const trigger = document.getElementById(
-            "localeTrigger"
-        );
 
-        const menu = document.getElementById(
-            "localeMenu"
-        );
+        const trigger =
+            document.getElementById("localeTrigger");
 
-        if (!trigger || !menu) return;
+        const menu =
+            document.getElementById("localeMenu");
 
-        trigger.setAttribute("aria-expanded", "false");
-        menu.classList.remove("open");
+        if (trigger) {
+
+            trigger.setAttribute(
+                "aria-expanded",
+                "false"
+            );
+        }
+
+        if (menu) {
+
+            menu.classList.remove("open");
+
+            menu.setAttribute(
+                "aria-hidden",
+                "true"
+            );
+        }
     }
 
     function toggleMenu() {
-        const trigger = document.getElementById(
-            "localeTrigger"
-        );
+
+        const trigger =
+            document.getElementById("localeTrigger");
 
         if (
             trigger?.getAttribute("aria-expanded") === "true"
         ) {
+
             closeMenu();
+
         } else {
+
             openMenu();
         }
     }
 
-    /* -----------------------------------------------------
+    /* =====================================================
        EVENT DELEGATION
-    ----------------------------------------------------- */
+    ===================================================== */
 
     function bindEvents() {
 
-        if (document.documentElement.dataset.languageEventsBound) {
+        const root = document.documentElement;
+
+        if (
+            root.dataset.languageEventsBound === "true"
+        ) {
             return;
         }
 
-        document.documentElement.dataset.languageEventsBound =
-            "true";
+        root.dataset.languageEventsBound = "true";
 
-        document.addEventListener("click", async event => {
+        /* ---------------------------------------------
+           CLICK EVENTS
+        --------------------------------------------- */
 
-            const languageButton =
-                event.target.closest("[data-lang]");
+        document.addEventListener(
+            "click",
+            async event => {
 
-            if (languageButton) {
-                event.preventDefault();
+                const target = event.target;
 
-                const lang = languageButton.dataset.lang;
-
-                const success = await set(lang);
-
-                if (!success) {
-                    console.error(
-                        "[BXLanguage] Could not activate",
-                        lang
-                    );
+                if (!target || !target.closest) {
+                    return;
                 }
 
-                return;
-            }
+                const languageButton =
+                    target.closest("[data-lang]");
 
-            const trigger =
-                event.target.closest("#localeTrigger");
+                if (languageButton) {
 
-            if (trigger) {
-                event.preventDefault();
-                toggleMenu();
-                return;
-            }
+                    event.preventDefault();
 
-            if (!event.target.closest(".locale-box")) {
-                closeMenu();
-            }
-        });
+                    const lang =
+                        languageButton.dataset.lang;
 
-        document.addEventListener("keydown", event => {
-            if (event.key === "Escape") {
-                closeMenu();
+                    const success = await set(lang);
+
+                    if (!success) {
+
+                        console.error(
+                            "[BXLanguage] Activation failed:",
+                            lang
+                        );
+                    }
+
+                    return;
+                }
+
+                const trigger =
+                    target.closest("#localeTrigger");
+
+                if (trigger) {
+
+                    event.preventDefault();
+
+                    toggleMenu();
+
+                    return;
+                }
+
+                if (!target.closest(".locale-box")) {
+
+                    closeMenu();
+                }
             }
-        });
+        );
+
+        /* ---------------------------------------------
+           KEYBOARD EVENTS
+        --------------------------------------------- */
+
+        document.addEventListener(
+            "keydown",
+            event => {
+
+                if (event.key === "Escape") {
+
+                    closeMenu();
+                }
+            }
+        );
     }
 
-    /* -----------------------------------------------------
-       INIT
-    ----------------------------------------------------- */
+    /* =====================================================
+       INITIALIZATION
+    ===================================================== */
 
     async function init() {
 
-        bindEvents();
+        // Prevent duplicate initialization.
+        if (initPromise) {
+            return initPromise;
+        }
 
-        const saved = getSaved();
+        initPromise = (async () => {
 
-        let browserLang = DEFAULT_LANG;
+            bindEvents();
+
+            const saved = getSaved();
+
+            let browserLang = DEFAULT_LANG;
+
+            try {
+
+                browserLang = normalize(
+                    navigator.language.slice(0, 2)
+                );
+
+            } catch {
+                browserLang = DEFAULT_LANG;
+            }
+
+            const preferred =
+                saved ||
+                (
+                    isSupported(browserLang)
+                        ? browserLang
+                        : DEFAULT_LANG
+                );
+
+            let success = await loadLocale(preferred);
+
+            // Fallback to English if preferred language fails.
+            if (
+                !success &&
+                preferred !== DEFAULT_LANG
+            ) {
+
+                success = await loadLocale(
+                    DEFAULT_LANG
+                );
+            }
+
+            if (!success) {
+
+                console.error(
+                    "[BXLanguage] No locale dictionary available."
+                );
+
+                return false;
+            }
+
+            console.log(
+                `[BXLanguage] V${VERSION} ready: ${current}`
+            );
+
+            return true;
+
+        })();
 
         try {
-            browserLang = normalize(
-                navigator.language.slice(0, 2)
-            );
-        } catch {}
 
-        const preferred =
-            saved ||
-            (
-                isSupported(browserLang)
-                    ? browserLang
-                    : DEFAULT_LANG
-            );
+            return await initPromise;
 
-        let success = await loadLocale(preferred);
+        } finally {
 
-        if (!success && preferred !== DEFAULT_LANG) {
-            success = await loadLocale(DEFAULT_LANG);
+            // Allow explicit retry after a failed initialization.
+            if (!loaded) {
+                initPromise = null;
+            }
+        }
+    }
+
+    /* =====================================================
+       CACHE MANAGEMENT
+    ===================================================== */
+
+    function clearCache(lang) {
+
+        if (lang) {
+
+            const normalized = normalize(lang);
+
+            if (!isSupported(normalized)) {
+                return false;
+            }
+
+            dictionaryCache.delete(normalized);
+
+            return true;
         }
 
-        if (!success) {
-            console.error(
-                "[BXLanguage] No locale dictionary could be loaded"
-            );
-
-            return false;
-        }
-
-        console.log(
-            `[BXLanguage] Ready: ${current}`
-        );
+        dictionaryCache.clear();
 
         return true;
     }
 
+    function getCacheStatus() {
+
+        return {
+            current,
+            loaded,
+            cached: Array.from(
+                dictionaryCache.keys()
+            ),
+            supported: [...SUPPORTED]
+        };
+    }
+
+    /* =====================================================
+       PUBLIC API
+       Existing API preserved.
+    ===================================================== */
+
     return {
+
+        version: VERSION,
+
         init,
+
         set,
+
         loadLocale,
+
         get,
-        getCurrent: () => current,
-        getDictionary: () => dictionary,
+
+        translate,
+
+        format,
+
+        getCurrent,
+
+        getDictionary,
+
         translatePage,
+
         translateNode,
-        ready: () => loaded,
+
+        ready,
+
         supported: SUPPORTED,
+
         rtl: RTL_LANGS,
+
+        isSupported,
+
+        isRTL,
+
+        normalize,
+
+        applyDirection,
+
         openMenu,
-        closeMenu
+
+        closeMenu,
+
+        toggleMenu,
+
+        clearCache,
+
+        getCacheStatus
+
     };
 
 })();
 
-document.addEventListener("DOMContentLoaded", () => {
+/* =========================================================
+   AUTO INITIALIZATION
+========================================================= */
+
+if (document.readyState === "loading") {
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        () => window.BXLanguage.init(),
+        { once: true }
+    );
+
+} else {
+
     window.BXLanguage.init();
-}, { once: true });
+
+}
