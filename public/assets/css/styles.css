@@ -907,46 +907,178 @@ select option {
     color: #17251D;
 }
 
-/* --- FIX: WALLET ACTION BUTTONS 2/3 + BUY/SELL COLORS --- */
-.wallet-actions {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
-    margin-bottom: 21px;
-}
+/* ==========================================================================
+   WALLET OPERATIONS — Persistent Deposit / Withdraw / Transfer Cards
+   ========================================================================== */
 
-.wallet-actions .btn {
+.wallet-action-launcher {
     width: 100%;
     min-width: 0;
-    min-height: 46px;
-    font-weight: 800;
+    margin: 18px 0 16px;
 }
 
-/* Buy / Sell buttons are identified by their existing IDs in index.html. */
-#walletBuyBtn {
-    border-color: rgba(39, 214, 154, .35);
-    background: var(--signal-buy);
-    color: #06251B;
-    box-shadow: 0 5px 16px var(--signal-buy-glow);
+.wallet-action-launcher .wallet-section-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 11px;
 }
 
-#walletBuyBtn:hover {
+.wallet-action-launcher .wallet-section-head h3 {
+    color: var(--text-platinum);
+    font-size: 1rem;
+    font-weight: 850;
+}
+
+.wallet-action-launcher .wallet-section-head > span {
+    color: var(--text-muted);
+    font-size: .74rem;
+}
+
+/* الحاوية التي تجعل البطاقات أفقية (3 أعمدة) */
+.wallet-action-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    width: 100%;
+}
+
+/* التصميم الأساسي للبطاقة */
+.wallet-action-card {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    width: 100%;
+    min-width: 0;
+    min-height: 82px;
+    padding: 14px;
+    border: 1px solid var(--gold-border);
+    border-radius: var(--radius-lg);
+    background: var(--bg-card);
+    color: var(--text-platinum);
+    text-align: left;
+    box-shadow: var(--shadow-card);
+    transition: transform var(--transition-fast), border-color var(--transition-fast),
+                background var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.wallet-action-card:hover {
+    transform: translateY(-2px);
+    background-color: var(--bg-panel);
+    box-shadow: var(--shadow-gold);
+}
+
+/* تصميم الأيقونة داخل البطاقة */
+.wallet-action-icon {
+    display: grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    flex: 0 0 42px;
+    border-radius: 13px;
+    font-size: 1.5rem;
+    font-weight: 900;
+    line-height: 1;
+}
+
+/* النصوص داخل البطاقة */
+.wallet-action-copy {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
+.wallet-action-copy strong {
+    color: var(--text-platinum);
+    font-size: .9rem;
+    font-weight: 850;
+}
+
+.wallet-action-copy small {
+    color: var(--text-metadata);
+    font-size: .7rem;
+    line-height: 1.35;
+}
+
+/* =========================================
+   ألوان البطاقات المخصصة (مطابقة للصورة)
+   ========================================= */
+
+/* 1. بطاقة الإيداع (أخضر) */
+.wallet-action-deposit {
+    border-color: rgba(39, 214, 154, 0.4);
+    background: linear-gradient(145deg, rgba(39, 214, 154, 0.1), transparent 70%), var(--bg-card);
+}
+.wallet-action-deposit:hover {
     border-color: var(--signal-buy);
-    background: #38E4A8;
-    color: #06251B;
+    box-shadow: 0 0 15px var(--signal-buy-glow);
+}
+.wallet-action-deposit .wallet-action-icon {
+    color: var(--signal-buy);
+    background: var(--signal-buy-glow);
+    border: 1px solid rgba(39, 214, 154, 0.2);
 }
 
-#walletSellBtn {
-    border-color: rgba(255, 100, 114, .35);
-    background: var(--signal-sell);
-    color: #2B080D;
-    box-shadow: 0 5px 16px var(--signal-sell-glow);
+/* 2. بطاقة السحب (برتقالي / ذهبي) */
+.wallet-action-withdraw {
+    border-color: rgba(242, 184, 75, 0.4);
+    background: linear-gradient(145deg, rgba(242, 184, 75, 0.1), transparent 70%), var(--bg-card);
+}
+.wallet-action-withdraw:hover {
+    border-color: var(--signal-warning);
+    box-shadow: 0 0 15px rgba(242, 184, 75, 0.15);
+}
+.wallet-action-withdraw .wallet-action-icon {
+    color: var(--signal-warning);
+    background: rgba(242, 184, 75, 0.1);
+    border: 1px solid rgba(242, 184, 75, 0.2);
 }
 
-#walletSellBtn:hover {
-    border-color: var(--signal-sell);
-    background: #FF7A86;
-    color: #2B080D;
+/* 3. بطاقة التحويل (أزرق) */
+.wallet-action-transfer {
+    border-color: rgba(85, 199, 217, 0.4);
+    background: linear-gradient(145deg, rgba(85, 199, 217, 0.1), transparent 70%), var(--bg-card);
+}
+.wallet-action-transfer:hover {
+    border-color: var(--signal-info);
+    box-shadow: 0 0 15px rgba(85, 199, 217, 0.15);
+}
+.wallet-action-transfer .wallet-action-icon {
+    color: var(--signal-info);
+    background: rgba(85, 199, 217, 0.1);
+    border: 1px solid rgba(85, 199, 217, 0.2);
+}
+
+/* =========================================
+   استجابة الموبايل (Responsive)
+   ========================================= */
+@media (max-width: 768px) {
+    .wallet-action-grid {
+        gap: 8px;
+    }
+    .wallet-action-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+        min-height: 98px;
+        padding: 10px;
+    }
+    .wallet-action-icon {
+        width: 35px;
+        height: 35px;
+        flex-basis: 35px;
+        border-radius: 10px;
+        font-size: 1.25rem;
+    }
+    .wallet-action-copy strong {
+        font-size: .78rem;
+    }
+    .wallet-action-copy small {
+        display: none; /* إخفاء الوصف في الموبايل */
+    }
 }
 
 .wallet-swap-engine,
