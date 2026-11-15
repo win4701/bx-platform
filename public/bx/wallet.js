@@ -1182,10 +1182,12 @@ function bindActions() {
         if (!(target instanceof Element)) return;
 
         const card = target.closest(".wallet-asset-card");
+        const mainAsset = target.closest(".wallet-row[data-asset]");
 
         if (card) {
-            openAssetSheet(card.dataset.symbol);
-        }
+         openAssetSheet(card.dataset.symbol);} 
+        else if (mainAsset) {
+         openAssetSheet(mainAsset.dataset.asset);}
 
         if (target.closest("#generateDepositBtn")) {
             handleDeposit();
