@@ -908,166 +908,160 @@ select option {
 }
 
 /* ==========================================================================
-   WALLET OPERATIONS — Persistent Deposit / Withdraw / Transfer Cards
+   WALLET OPERATIONS — FINAL FIX (Matching the Image 100%)
    ========================================================================== */
 
+/* الحاوية الرئيسية */
 .wallet-action-launcher {
     width: 100%;
-    min-width: 0;
-    margin: 18px 0 20px;
+    margin: 20px 0;
 }
 
 .wallet-action-launcher .wallet-section-head {
     display: flex;
-    align-items: center;
     justify-content: space-between;
-    gap: 12px;
-    margin-bottom: 12px;
+    align-items: center;
+    margin-bottom: 15px;
 }
 
 .wallet-action-launcher .wallet-section-head h3 {
-    color: var(--text-platinum);
-    font-size: 1.05rem;
-    font-weight: 900;
+    color: #ffffff;
+    font-size: 1.1rem;
+    font-weight: 800;
+    margin: 0;
 }
 
 .wallet-action-launcher .wallet-section-head > span {
-    color: var(--text-muted);
-    font-size: .74rem;
+    color: #a3b8b0;
+    font-size: 0.75rem;
 }
 
-/* الحاوية التي تجعل البطاقات أفقية (3 أعمدة) */
+/* الشبكة التي تجعل الأزرار الثلاثة أفقية */
 .wallet-action-grid {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 10px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
     width: 100%;
 }
 
-/* التصميم الأساسي للبطاقة */
+/* التصميم الأساسي للزر (الزر هو الحاوية) */
 .wallet-action-card {
     display: flex;
     align-items: center;
-    gap: 10px;
-    width: 100%;
-    min-width: 0;
-    min-height: 72px;
-    padding: 14px 16px;
-    border: 1px solid var(--gold-border);
-    border-radius: var(--radius-lg);
-    background: var(--bg-card);
-    color: var(--text-platinum);
-    text-align: left;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    transition: all var(--transition-fast);
+    gap: 12px;
+    padding: 16px 20px;
+    border-radius: 12px;
+    background: transparent; /* سيتم تلوينه لاحقاً */
     cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: left;
+    border: 1px solid transparent; /* سيتم تلوينه لاحقاً */
 }
 
-.wallet-action-card:hover {
-    transform: translateY(-2px);
-}
-
-/* تصميم الأيقونة داخل البطاقة */
+/* الأيقونة الدائرية */
 .wallet-action-icon {
-    display: grid;
-    place-items: center;
-    width: 40px;
-    height: 40px;
-    flex: 0 0 40px;
-    border-radius: 50%; /* أيقونة دائرية كما في الصورة */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
     font-size: 1.2rem;
     font-weight: bold;
 }
 
-/* النصوص داخل البطاقة */
+/* النصوص */
 .wallet-action-copy {
     display: flex;
-    flex: 1 1 auto;
     flex-direction: column;
     gap: 2px;
-    min-width: 0;
 }
 
 .wallet-action-copy strong {
-    color: var(--text-platinum);
-    font-size: .95rem;
-    font-weight: 900;
+    font-size: 1rem;
+    font-weight: 800;
+    color: #ffffff;
 }
 
 .wallet-action-copy small {
-    color: var(--text-metadata);
-    font-size: .75rem;
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.7);
 }
 
 /* =========================================
-   ألوان البطاقات المخصصة (مطابقة للصورة 100%)
+   الألوان الثلاثة (المطابقة للصورة)
    ========================================= */
 
-/* 1. بطاقة الإيداع (Deposit - أخضر) */
+/* 1. الإيداع (Deposit - أخضر) */
 .wallet-action-deposit {
-    border-color: rgba(39, 214, 154, 0.3);
-    background: linear-gradient(145deg, rgba(39, 214, 154, 0.15), transparent 80%), var(--bg-card);
+    border: 1px solid #2E7D5E; /* حدود خضراء */
+    background: linear-gradient(135deg, rgba(46, 125, 94, 0.2), rgba(46, 125, 94, 0.05));
 }
 .wallet-action-deposit:hover {
-    border-color: var(--signal-buy);
-    box-shadow: 0 0 15px rgba(39, 214, 154, 0.15);
+    border-color: #27D69A;
+    box-shadow: 0 0 15px rgba(39, 214, 154, 0.2);
 }
 .wallet-action-deposit .wallet-action-icon {
-    color: var(--signal-buy);
+    color: #27D69A;
+    background: rgba(39, 214, 154, 0.15);
 }
 
-/* 2. بطاقة السحب (Withdraw - ذهبي/برتقالي) */
+/* 2. السحب (Withdraw - ذهبي/برتقالي) */
 .wallet-action-withdraw {
-    border-color: rgba(242, 184, 75, 0.3);
-    background: linear-gradient(145deg, rgba(242, 184, 75, 0.15), transparent 80%), var(--bg-card);
+    border: 1px solid #B8862A; /* حدود ذهبية */
+    background: linear-gradient(135deg, rgba(184, 134, 42, 0.2), rgba(184, 134, 42, 0.05));
 }
 .wallet-action-withdraw:hover {
-    border-color: var(--signal-warning);
+    border-color: #F2B84B;
+    box-shadow: 0 0 15px rgba(242, 184, 75, 0.2);
 }
 .wallet-action-withdraw .wallet-action-icon {
-    color: var(--signal-warning);
+    color: #F2B84B;
+    background: rgba(242, 184, 75, 0.15);
 }
 
-/* 3. بطاقة التحويل (Transfer - أزرق سماوي) */
+/* 3. التحويل (Transfer - أزرق سماوي) */
 .wallet-action-transfer {
-    border-color: rgba(85, 199, 217, 0.3);
-    background: linear-gradient(145deg, rgba(85, 199, 217, 0.15), transparent 80%), var(--bg-card);
+    border: 1px solid #2C7A9E; /* حدود زرقاء */
+    background: linear-gradient(135deg, rgba(44, 122, 158, 0.2), rgba(44, 122, 158, 0.05));
 }
 .wallet-action-transfer:hover {
-    border-color: var(--signal-info);
+    border-color: #55C7D9;
+    box-shadow: 0 0 15px rgba(85, 199, 217, 0.2);
 }
 .wallet-action-transfer .wallet-action-icon {
-    color: var(--signal-info);
+    color: #55C7D9;
+    background: rgba(85, 199, 217, 0.15);
 }
 
 /* =========================================
-   استجابة الموبايل (Responsive)
+   استجابة الموبايل (شاشات صغيرة)
    ========================================= */
 @media (max-width: 768px) {
     .wallet-action-grid {
-        grid-template-columns: repeat(3, minmax(0, 1fr)); /* تظل 3 أعمدة */
         gap: 8px;
     }
     
     .wallet-action-card {
-        flex-direction: column; /* تحويل المحتوى لعمودي في الموبايل */
+        flex-direction: column;
         align-items: center;
         justify-content: center;
-        text-align: center;
-        gap: 8px;
-        min-height: 105px;
         padding: 12px 5px;
+        gap: 8px;
     }
     
     .wallet-action-icon {
-        width: 36px;
-        height: 36px;
-        flex-basis: 36px;
-        font-size: 1.1rem;
+        width: 32px;
+        height: 32px;
+        font-size: 1rem;
+    }
+    
+    .wallet-action-copy {
+        align-items: center;
     }
     
     .wallet-action-copy strong {
-        font-size: .8rem;
+        font-size: 0.8rem;
     }
     
     .wallet-action-copy small {
