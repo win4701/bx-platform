@@ -550,17 +550,46 @@ function bindSearch() {
    ASSET SELECTION
 ========================================================= */
 
-function openAssetSheet(symbol) {
-    const asset = getCoin(symbol);
+function openAssetSheet(symbol, sourceElement = null) {
+    const key = String(symbol || "").trim().toUpperCase();
 
-    if (!asset) return;
+    if (!key) return;
+
+    // First: retrieve asset from coin registry
+    let asset = getCoin(key);
+
+    // Fallback: build asset data from the clicked HTML row
+    if (!asset && sourceElement) {
+        const image = sourceElement.querySelector("img");
+        const symbolText = sourceElement.querySelector("strong");
+        const nameText = sourceElement.querySelector("span");
+
+        asset = {
+            symbol: key,
+            name: nameText?.textContent?.trim() || key,
+            icon: image?.getAttribute("src") || "",
+            networks: []
+        };
+    }
+
+    if (!asset) {
+        console.error("[WALLET] Asset not found:", key);
+        notify(`Asset ${key} is not available`);
+        return;
+    }
 
     state.activeAsset = asset;
+
+    const quickName = $("walletQuickAssetName");
+
+    if (quickName) {
+        quickName.textContent =
+            `${asset.name || asset.symbol} (${asset.symbol})`;
+    }
 
     const icon = $("assetSheetIcon");
     const symbolElement = $("assetSheetSymbol");
     const nameElement = $("assetSheetName");
-    const quickName = $("walletQuickAssetName");
 
     if (icon) icon.src = asset.icon || "";
 
@@ -572,19 +601,17 @@ function openAssetSheet(symbol) {
         nameElement.textContent = asset.name || asset.symbol;
     }
 
-    if (quickName) {
-        quickName.textContent =
-            `${asset.name || asset.symbol} (${asset.symbol})`;
-    }
-
     renderNetworks(asset.symbol);
 
     const quickSheet = $("walletQuickSheet");
 
     if (quickSheet) {
         quickSheet.classList.remove("wallet-hidden");
+        quickSheet.setAttribute("aria-hidden", "false");
     }
-}
+
+    console.log("[WALLET] Quick sheet opened:", asset.symbol);
+   }
 
 /* =========================================================
    NETWORKS
