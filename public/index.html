@@ -197,40 +197,39 @@ id="app" class="app-container">
 </div>
 </section>
 
-<!-- WALLET OPERATIONS: persistent Deposit / Withdraw / Transfer cards -->
+<!-- ================= NEW WALLET OPERATIONS CARDS ================= -->
 <section class="wallet-action-launcher" aria-label="Wallet operations">
   <div class="wallet-section-head">
     <h3>Wallet Operations</h3>
     <span>Manage your funds</span>
   </div>
-  <div class="wallet-action-grid">
+  <div class="wallet-action-grid">    
+    <!-- بطاقة الإيداع (Deposit) -->
     <button class="wallet-action-card wallet-action-deposit" type="button"
       data-wallet-open="depositPanel" aria-controls="depositPanel">
       <span class="wallet-action-icon" aria-hidden="true">↓</span>
       <span class="wallet-action-copy">
-        <strong>Deposit</strong><small>Add funds to your wallet</small>
+        <strong>Deposit</strong><small>Add funds</small>
       </span>
-      <span class="wallet-action-arrow" aria-hidden="true">›</span>
     </button>
+    <!-- بطاقة السحب (Withdraw) -->
     <button class="wallet-action-card wallet-action-withdraw" type="button"
       data-wallet-open="withdrawPanel" aria-controls="withdrawPanel">
       <span class="wallet-action-icon" aria-hidden="true">↑</span>
       <span class="wallet-action-copy">
-        <strong>Withdraw</strong><small>Send funds to an external wallet</small>
+        <strong>Withdraw</strong><small>Send funds</small>
       </span>
-      <span class="wallet-action-arrow" aria-hidden="true">›</span>
     </button>
+    <!-- بطاقة التحويل (Transfer) -->
     <button class="wallet-action-card wallet-action-transfer" type="button"
       data-wallet-open="transferPanel" aria-controls="transferPanel">
       <span class="wallet-action-icon" aria-hidden="true">⇄</span>
       <span class="wallet-action-copy">
-        <strong>Transfer</strong><small>Move funds to another Bloxio user</small>
+        <strong>Transfer</strong><small>Move funds</small>
       </span>
-      <span class="wallet-action-arrow" aria-hidden="true">›</span>
     </button>
   </div>
 </section>
-
 <!-- =====================================================
      BLOXIO SWAP 
 ===================================================== -->
