@@ -908,7 +908,7 @@ select option {
 }
 
 /* ==========================================================================
-   WALLET OPERATIONS — FINAL FIX (Horizontal Rectangular Buttons)
+   WALLET OPERATIONS — SOLID COLORS (Matching Header Buttons)
    ========================================================================== */
 
 /* الحاوية الرئيسية */
@@ -921,7 +921,7 @@ select option {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 15px;
+    margin-bottom: 12px;
 }
 
 .wallet-action-launcher .wallet-section-head h3 {
@@ -939,28 +939,26 @@ select option {
 /* الشبكة التي تجعل الأزرار الثلاثة أفقية */
 .wallet-action-grid {
     display: grid;
-    /* 3 أعمدة متساوية */
     grid-template-columns: repeat(3, 1fr); 
-    gap: 15px;
+    gap: 12px;
     width: 100%;
 }
 
-/* التصميم الأساسي للزر (هنا سر الشكل الأفقي) */
+/* التصميم الأساسي للزر (أفقي ومستطيل) */
 .wallet-action-card {
     display: flex;
-    flex-direction: row; /* <--- هذا هو السر: يجعل الأيقونة والنص بجانب بعضهما */
-    align-items: center; /* يوسّط المحتوى عمودياً */
-    justify-content: center; /* يوسّط المحتوى أفقياً */
-    gap: 12px;
-    padding: 16px 20px;
+    flex-direction: row;
+    align-items: center; 
+    justify-content: center; 
+    gap: 10px;
+    padding: 16px 10px;
     border-radius: 12px;
-    background: transparent;
     cursor: pointer;
     transition: all 0.2s ease;
-    text-align: left;
-    border: 1px solid transparent;
-    /* يمكنك إزالة min-height إذا كنت تريد الزر أن يكون نحيفاً جداً */
+    text-align: center;
+    border: none; /* إزالة الحدود للحصول على لون صريح */
     min-height: 70px; 
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
 /* الأيقونة الدائرية */
@@ -968,96 +966,81 @@ select option {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 36px;
-    height: 36px;
+    width: 30px;
+    height: 30px;
     border-radius: 50%;
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     font-weight: bold;
-    flex-shrink: 0; /* يمنع الأيقونة من الانكماش */
+    flex-shrink: 0;
+    /* لون خلفية الأيقونة داكن قليلاً ليتناسب مع الأزرار الملونة */
+    background: rgba(0, 0, 0, 0.15); 
+    color: inherit; /* يأخذ لون الزر */
 }
 
 /* النصوص */
 .wallet-action-copy {
     display: flex;
-    flex-direction: column; /* النص والوصف فوق بعضهما */
+    flex-direction: column; 
     gap: 2px;
 }
 
 .wallet-action-copy strong {
-    font-size: 1rem;
+    font-size: 0.95rem;
     font-weight: 800;
-    color: #ffffff;
-    white-space: nowrap; /* يمنع النص من النزول لسطر جديد */
+    color: #061A17; /* لون داكن جداً للنص ليتناسب مع الخلفيات الفاتحة */
+    white-space: nowrap; 
 }
 
+/* إخفاء الوصف الصغير لأن الأزرار الملونة عادة لا تحتوي على وصف */
 .wallet-action-copy small {
-    font-size: 0.75rem;
-    color: rgba(255, 255, 255, 0.7);
-    white-space: nowrap;
+    display: none; 
 }
 
 /* =========================================
-   الألوان الثلاثة (المطابقة للصورة)
+   الألوان الثابتة (المطابقة لزر Register)
    ========================================= */
 
-/* 1. الإيداع (Deposit - أخضر) */
-.wallet-action-deposit {
-    border: 1px solid #2E7D5E;
-    background: linear-gradient(135deg, rgba(46, 125, 94, 0.2), rgba(46, 125, 94, 0.05));
-}
-.wallet-action-deposit:hover {
-    border-color: #27D69A;
-    box-shadow: 0 0 15px rgba(39, 214, 154, 0.2);
-}
-.wallet-action-deposit .wallet-action-icon {
-    color: #27D69A;
-    background: rgba(39, 214, 154, 0.15);
-}
-
-/* 2. السحب (Withdraw - ذهبي/برتقالي) */
-.wallet-action-withdraw {
-    border: 1px solid #B8862A;
-    background: linear-gradient(135deg, rgba(184, 134, 42, 0.2), rgba(184, 134, 42, 0.05));
-}
-.wallet-action-withdraw:hover {
-    border-color: #F2B84B;
-    box-shadow: 0 0 15px rgba(242, 184, 75, 0.2);
-}
-.wallet-action-withdraw .wallet-action-icon {
-    color: #F2B84B;
-    background: rgba(242, 184, 75, 0.15);
-}
-
-/* 3. التحويل (Transfer - أزرق سماوي) */
+/* 1. التحويل (Transfer - أزرق داكن) */
 .wallet-action-transfer {
-    border: 1px solid #2C7A9E;
-    background: linear-gradient(135deg, rgba(44, 122, 158, 0.2), rgba(44, 122, 158, 0.05));
+    background-color: #0A2B25; /* لون داكن مطابق للثيم */
+    color: #55C7D9; /* لون النص والأيقونة */
+    border: 1px solid #55C7D9;
 }
 .wallet-action-transfer:hover {
-    border-color: #55C7D9;
-    box-shadow: 0 0 15px rgba(85, 199, 217, 0.2);
+    background-color: #0E332B;
 }
-.wallet-action-transfer .wallet-action-icon {
-    color: #55C7D9;
-    background: rgba(85, 199, 217, 0.15);
+
+/* 2. السحب (Withdraw - ذهبي صريح - مطابق لزر Register) */
+.wallet-action-withdraw {
+    background-color: #D4AF37; /* لون الذهبي الصريح */
+    color: #14231D; /* نص داكن */
+}
+.wallet-action-withdraw:hover {
+    background-color: #E5C158; /* لون أفتح قليلاً عند التمرير */
+}
+
+/* 3. الإيداع (Deposit - أخضر فاتح صريح) */
+.wallet-action-deposit {
+    background-color: #27D69A; /* لون الأخضر الفاتح */
+    color: #061A17; /* نص داكن */
+}
+.wallet-action-deposit:hover {
+    background-color: #3DE8B0; /* لون أفتح قليلاً عند التمرير */
 }
 
 /* =========================================
-   استجابة الموبايل (تعديل مهم جداً)
+   استجابة الموبايل 
    ========================================= */
 @media (max-width: 768px) {
     .wallet-action-grid {
         gap: 8px;
     }
     
-    /* هنا التغيير الأهم: لا نغير اتجاه flex إلى column، بل نبقيه row */
     .wallet-action-card {
-        flex-direction: row; /* يبقى أفقياً */
-        align-items: center;
-        justify-content: center;
-        padding: 10px 8px; /* تقليل الحواف */
-        gap: 6px; /* تقليل المسافة بين الأيقونة والنص */
-        min-height: 60px; /* جعله أقصر قليلاً */
+        flex-direction: column; /* في الموبايل نضع الأيقونة فوق النص لتوفير المساحة */
+        padding: 10px 5px;
+        gap: 5px;
+        min-height: 70px;
     }
     
     .wallet-action-icon {
@@ -1066,16 +1049,8 @@ select option {
         font-size: 0.9rem;
     }
     
-    .wallet-action-copy {
-        align-items: flex-start; /* محاذاة النص لليسار */
-    }
-    
     .wallet-action-copy strong {
-        font-size: 0.75rem; /* تصغير الخط قليلاً ليناسب العرض */
-    }
-    
-    .wallet-action-copy small {
-        display: none; /* إخفاء الوصف في الموبايل لتوفير مساحة */
+        font-size: 0.70rem; 
     }
 }
 
