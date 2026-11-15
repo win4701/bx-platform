@@ -202,8 +202,7 @@ id="app" class="app-container">
 <section
   id="bloxioSwap"
   class="bloxio-swap"
-  aria-labelledby="bloxioSwapTitle"
->
+  aria-labelledby="bloxioSwapTitle">
   <div class="bxs-swap-card">
 
     <!-- HEADER -->
@@ -223,14 +222,12 @@ id="app" class="app-container">
       <!-- FROM PANEL -->
       <section
         class="bxs-swap-panel"
-        aria-label="Asset to send"
-      >
+        aria-label="Asset to send">
         <div class="bxs-swap-panel-head">
           <label for="bxsSwapAmount">From</label>
           <span>YOU PAY</span>
         </div>
-        <div class="bxs-swap-entry">
-          <input
+        <div class="bxs-swap-entry"><input
             id="bxsSwapAmount"
             type="number"
             inputmode="decimal"
@@ -238,47 +235,39 @@ id="app" class="app-container">
             step="any"
             placeholder="0.00"
             autocomplete="off"
-            aria-label="Amount to swap"
-          >
+            aria-label="Amount to swap">
           <div class="bxs-swap-picker">
             <button
               id="bxsFromTrigger"
               class="bxs-swap-token"
               type="button"
               aria-expanded="false"
-              aria-controls="bxsFromMenu"
-            > <img
+              aria-controls="bxsFromMenu"> <img
                 id="bxsFromIcon"
                 src="/assets/images/coins/bx.png"
-                alt=""
-              >
-              <span>
+                alt="">
+                <span>
                 <strong id="bxsFromSymbol">BX</strong>
                 <small id="bxsFromName">Bloxio</small>
-              </span>
-
-              <b aria-hidden="true">⌄</b>
-            </button>
+              </span><b aria-hidden="true">⌄</b> </button>
 
             <!-- FROM DROPDOWN -->
             <div
               id="bxsFromMenu"
               class="bxs-swap-menu"
-              hidden
-            > <input
+              hidden> <input
                 id="bxsFromSearch"
                 class="bxs-swap-search"
                 type="search"
                 placeholder="Search name or symbol..."
                 autocomplete="off"
-                aria-label="Search source assets"
-              >
+                aria-label="Search source assets">
               <div
                 id="bxsFromOptions"
                 class="bxs-swap-options"
                 role="listbox"
-                aria-label="Source assets"
-              ></div>
+                aria-label="Source assets">
+                </div>
             </div>
           </div>
         </div>
@@ -291,8 +280,7 @@ id="app" class="app-container">
       <!-- TO PANEL -->
       <section
         class="bxs-swap-panel"
-        aria-label="Asset to receive"
-      >
+        aria-label="Asset to receive">
         <div class="bxs-swap-panel-head">
           <label for="bxsSwapReceive">To</label>
           <span>YOU RECEIVE</span>
@@ -303,8 +291,7 @@ id="app" class="app-container">
             type="text"
             value="0.00"
             readonly
-            aria-label="Estimated amount to receive"
-          >
+            aria-label="Estimated amount to receive">
           <div class="bxs-swap-picker">
 
             <button
@@ -312,13 +299,11 @@ id="app" class="app-container">
               class="bxs-swap-token"
               type="button"
               aria-expanded="false"
-              aria-controls="bxsToMenu"
-            >
+              aria-controls="bxsToMenu">
               <img
                 id="bxsToIcon"
                 src="/assets/images/coins/xbc.png"
-                alt=""
-              >
+                alt="" >
               <span>
                 <strong id="bxsToSymbol">XBC</strong>
                 <small id="bxsToName">Bloxio Casino</small>
@@ -328,16 +313,14 @@ id="app" class="app-container">
             <div
               id="bxsToMenu"
               class="bxs-swap-menu"
-              hidden
-            >
+              hidden >
               <input
                 id="bxsToSearch"
                 class="bxs-swap-search"
                 type="search"
                 placeholder="Search name or symbol..."
                 autocomplete="off"
-                aria-label="Search destination assets"
-              >
+                aria-label="Search destination assets" >
               <div
                 id="bxsToOptions"
                 class="bxs-swap-options"
@@ -358,8 +341,7 @@ id="app" class="app-container">
         class="bxs-swap-reverse"
         type="button"
         aria-label="Reverse swap direction"
-        title="Reverse pair">⇅
-      </button>
+        title="Reverse pair">⇅</button>
     </div>
 
     <!-- QUOTE DETAILS -->
@@ -387,16 +369,12 @@ id="app" class="app-container">
       class="bxs-swap-message"
       data-state="info"
       role="status"
-      aria-live="polite"
-       >
-    </p>
+      aria-live="polite"></p>
     <button
       id="bxsSwapExecute"
       class="bxs-swap-execute"
       type="button"
-      disabled
-    >
-      EXECUTE SWAP
+      disabled ></button> EXECUTE SWAP
     </button><p class="bxs-swap-disclaimer"></p>
   </div>
 </section>
@@ -533,10 +511,9 @@ id="app" class="app-container">
 </div>
 </section>
 
-<div id="walletQuickSheet" class="wallet-quick-sheet" aria-hidden="true" hidden>
+<div id="walletQuickSheet" class="wallet-quick-sheet wallet-hidden">
 <div class="wallet-quick-card">
 <h4 id="walletQuickAssetName">Asset</h4>
-
 <div class="wallet-quick-actions">
 <button id="walletQuickDeposit" class="btn primary">Deposit</button>
 <button id="walletQuickWithdraw" class="btn">Withdraw</button>
