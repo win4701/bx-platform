@@ -46,20 +46,21 @@ icon:"/assets/images/coins/xbc.png"
 ========================================================= */
 
 {
-symbol:"EBX",
-name:"BLOXIO Hybrid Token",
+symbol:"EUBX",
+name:"Bloxio euro Hybrid ",
 category:"main",
 type:"hybrid",
+price:1.08,
 fixedPrice:true,
 pegCurrency:"EUR",
 pegValue:1,
 supply:50000000000,
-decimals:18,
+decimals:12,
 swap:true,
-casino:false,
+casino:true,
 wallet:true,
 market:true,
-icon:"/assets/images/coins/ebx.png"
+icon:"/assets/images/coins/eubx.png"
 },
 
 {
@@ -72,7 +73,7 @@ priceCurrency:"USDT",
 supply:10000000000,
 decimals:18,
 swap:true,
-casino:false,
+casino:true,
 wallet:true,
 market:true,
 icon:"/assets/images/coins/str.png"
