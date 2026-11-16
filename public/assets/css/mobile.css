@@ -1,0 +1,701 @@
+
+/* ==========================================================================
+   BLOXIO — MOBILE.CSS
+   Mobile layout: phones and small screens
+   Original breakpoints preserved:
+   768px / 600px / 480px / 420px / 380px / 360px / 340px
+   ========================================================================== */
+
+
+/* ==========================================================================
+   01. TABLET & MOBILE — 768px
+   ========================================================================== */
+
+@media (max-width: 768px) {
+
+    :root {
+        --header-height: 62px;
+        --mobile-nav-height: 66px;
+    }
+
+    /* HEADER */
+    .app-header,
+    .enterprise-header {
+        padding: 0 14px;
+        gap: 8px;
+    }
+
+    .header-left {
+        gap: 12px;
+    }
+
+    .system-status {
+        display: none;
+    }
+
+    /* Keep the actual HTML logo selectors working */
+    .brand-icon {
+        width: 32px;
+        height: 32px;
+        flex-basis: 32px;
+    }
+
+    .brand-text-img {
+        height: 20px;
+        max-width: 120px;
+    }
+
+    /* Legacy selectors retained for compatibility */
+    .brand-logo {
+        width: 32px;
+        height: 32px;
+    }
+
+    .brand-text strong {
+        font-size: 1rem;
+    }
+
+    .header-center {
+        margin-left: auto;
+    }
+
+    .header-right {
+        gap: 6px;
+    }
+
+    .header-btn {
+        min-height: 35px;
+        padding: 7px 10px;
+        font-size: .74rem;
+    }
+
+    .user-trigger {
+        padding: 5px;
+    }
+
+    .user-meta,
+    .session-pill {
+        display: none;
+    }
+
+    /* MAIN CONTAINER */
+    .app-container {
+        padding:
+            calc(var(--header-height) + 16px)
+            14px
+            calc(var(--mobile-nav-height) + 25px);
+    }
+
+    /* WALLET */
+    .wallet-overview {
+        grid-template-columns: 1fr;
+    }
+
+    .wallet-overview-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .wallet-actions {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .wallet-panels {
+        grid-template-columns: 1fr;
+    }
+
+    .wallet-analytics-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    /* Wallet operation buttons */
+    .wallet-action-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+    }
+
+    .wallet-action-card {
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        min-height: 78px;
+        padding: 8px 4px;
+        text-align: center;
+    }
+
+    .wallet-action-icon {
+        width: 30px;
+        height: 30px;
+        flex-basis: 30px;
+        font-size: 1rem;
+    }
+
+    .wallet-action-copy {
+        align-items: center;
+        flex: 0 1 auto;
+    }
+
+    .wallet-action-copy strong {
+        font-size: .72rem;
+        line-height: 1.2;
+    }
+
+    .wallet-action-copy small {
+        display: none;
+    }
+
+    .wallet-action-launcher .wallet-section-head > span {
+        font-size: .66rem;
+    }
+
+    /* MARKET */
+    .market-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .market-stats-bar {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .market-mobile-tabs {
+        display: grid;
+    }
+
+    .market-chart-shell {
+        min-height: 280px;
+    }
+
+    #marketChart {
+        height: 320px;
+    }
+
+    #marketChart.bx-chart > .bx-stage {
+        height: 340px !important;
+        min-height: 280px !important;
+    }
+
+    /* CASINO — general layout only */
+    .casino-economy {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .casino-games-grid,
+    .casino-featured-track {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .casino-jackpot-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .casino-category-stats {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .casino-mobile-actions {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+    }
+
+    /* MINING */
+    .mining-hero {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 14px;
+        padding: 16px;
+    }
+
+    .mining-hero-right {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 9px;
+    }
+
+    .mining-layout {
+        grid-template-columns: 1fr;
+    }
+
+    /* Keep the original 5 × 2 mining currency layout */
+    #miningTabs,
+    .mining-tabs {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        grid-template-rows: repeat(2, minmax(54px, auto));
+        gap: 7px;
+    }
+
+    /* AIRDROP */
+    .airdrop-top {
+        flex-direction: column;
+    }
+
+    .airdrop-layout {
+        grid-template-columns: 1fr;
+    }
+
+    /* SETTINGS */
+    .settings-hero {
+        grid-template-columns: 1fr;
+    }
+
+    .settings-layout {
+        grid-template-columns: 1fr;
+    }
+
+    /* AUTH */
+    .auth-shell {
+        grid-template-columns: 1fr;
+        max-width: 490px;
+    }
+
+    .auth-left {
+        display: none;
+    }
+
+    .auth-right {
+        padding: 30px 22px;
+    }
+
+    /* FOOTER */
+    .legal-footer {
+        padding: 16px 14px 22px;
+    }
+
+    /* BOTTOM MOBILE NAVIGATION */
+    .mobile-nav {
+        position: fixed;
+        inset: auto 0 0;
+        z-index: 1200;
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        min-height: var(--mobile-nav-height);
+        padding: 6px 5px calc(6px + env(safe-area-inset-bottom));
+        border-top: 1px solid var(--gold-border);
+        background: rgba(6, 28, 25, .97);
+        backdrop-filter: blur(18px);
+        -webkit-backdrop-filter: blur(18px);
+    }
+
+    .nav-btn {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        min-width: 0;
+        border: 0;
+        border-radius: var(--radius-md);
+        background: transparent;
+        color: var(--text-muted);
+        font-size: .65rem;
+        font-weight: 750;
+    }
+
+    .nav-btn img {
+        width: 22px;
+        height: 22px;
+        object-fit: contain;
+        opacity: .65;
+        filter: grayscale(1);
+    }
+
+    .nav-btn.active {
+        background: var(--gold-glow);
+        color: var(--gold-solid);
+    }
+
+    .nav-btn.active img {
+        opacity: 1;
+        filter: none;
+    }
+}
+
+
+/* ==========================================================================
+   02. SMALL MOBILE — 600px
+   ========================================================================== */
+
+@media (max-width: 600px) {
+
+    /* Swap layout */
+    #bloxioSwap .bxs-swap-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    #bloxioSwap .bxs-swap-panel {
+        min-width: 0;
+    }
+
+    #bloxioSwap .bxs-swap-quote {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    #bloxioSwap .bxs-swap-menu {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        right: auto;
+        transform: translate(-50%, -50%);
+        width: calc(100vw - 30px);
+        max-width: 360px;
+        max-height: 75vh;
+    }
+
+    #bloxioSwap .bxs-swap-options {
+        max-height: 52vh;
+    }
+}
+
+
+/* ==========================================================================
+   03. PHONE — 480px
+   ========================================================================== */
+
+@media (max-width: 480px) {
+
+    :root {
+        --header-height: 58px;
+        --mobile-nav-height: 64px;
+        --radius-lg: 13px;
+    }
+
+    body {
+        font-size: 13px;
+    }
+
+    /* HEADER */
+    .app-header,
+    .enterprise-header {
+        padding: 0 10px;
+    }
+
+    .brand-icon {
+        width: 28px;
+        height: 28px;
+        flex-basis: 28px;
+    }
+
+    .brand-text-img {
+        height: 18px;
+        max-width: 105px;
+    }
+
+    .brand-logo {
+        width: 29px;
+        height: 29px;
+    }
+
+    .brand-text strong {
+        font-size: .9rem;
+    }
+
+    .enterprise-brand {
+        gap: 8px;
+    }
+
+    .locale-trigger {
+        min-height: 33px;
+        padding: 5px 8px;
+        font-size: .72rem;
+    }
+
+    .header-btn {
+        min-height: 33px;
+        padding: 6px 8px;
+        font-size: .68rem;
+    }
+
+    /* MAIN */
+    .app-container {
+        padding-right: 10px;
+        padding-left: 10px;
+    }
+
+    /* MARKET CHART */
+    #marketChart {
+        height: 300px !important;
+        min-height: 280px !important;
+    }
+
+    #marketChart.bx-chart > .bx-stage {
+        height: 300px !important;
+        min-height: 260px !important;
+    }
+
+    /* Keep chart controls usable on narrow screens */
+    .market-chart-toolbar {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        overflow-y: hidden;
+        scrollbar-width: thin;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .chart-time {
+        flex: 0 0 auto;
+    }
+
+    /* WALLET */
+    .wallet-overview-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .wallet-analytics-grid {
+        grid-template-columns: 1fr;
+    }
+
+    /* MARKET */
+    .market-grid {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 12px;
+    }
+
+    .market-trade-column,
+    .market-book-column {
+        width: 100%;
+    }
+
+    .market-card {
+        padding: 15px;
+    }
+
+    .market-intel-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    /* Swap compact spacing */
+    #bloxioSwap .bxs-swap-card {
+        padding: 12px;
+    }
+
+    #bloxioSwap .bxs-swap-quote {
+        gap: 11px;
+        padding: 12px;
+    }
+
+    #bloxioSwap .bxs-swap-quote-row span {
+        font-size: 10px;
+    }
+
+    #bloxioSwap .bxs-swap-quote-row strong {
+        font-size: 11px;
+    }
+
+    #bloxioSwap .bxs-swap-execute {
+        min-height: 51px;
+        font-size: 13px;
+    }
+}
+
+
+/* ==========================================================================
+   04. VERY SMALL PHONES — 420px
+   ========================================================================== */
+
+@media (max-width: 420px) {
+
+    .market-header {
+        padding: 12px;
+    }
+
+    .market-stats-bar {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .market-stat {
+        min-height: 60px;
+    }
+
+    #marketChart {
+        height: 300px !important;
+        min-height: 280px !important;
+    }
+
+    .market-chart-toolbar {
+        gap: 3px;
+        padding: 7px;
+    }
+
+    .chart-time {
+        min-width: 38px;
+        padding: 6px 8px;
+        font-size: .67rem;
+    }
+
+    .market-card,
+    .market-history-section,
+    .market-intel-section {
+        padding: 12px;
+    }
+
+    .orderbook-heading,
+    .orderbook-row {
+        grid-template-columns:
+            minmax(0, 1fr)
+            minmax(0, .85fr)
+            minmax(0, 1fr);
+        gap: 3px;
+        padding-right: 5px;
+        padding-left: 5px;
+    }
+
+    .orderbook-heading {
+        font-size: .59rem;
+    }
+
+    .orderbook-row {
+        font-size: .65rem;
+    }
+
+    .trade-row {
+        grid-template-columns:
+            minmax(0, .9fr)
+            minmax(48px, .65fr)
+            minmax(0, 1fr)
+            minmax(0, 1fr);
+        gap: 4px;
+        padding: 7px 5px;
+        font-size: .62rem;
+    }
+}
+
+
+/* ==========================================================================
+   05. EXTRA SMALL — 380px
+   ========================================================================== */
+
+@media (max-width: 380px) {
+
+    #miningGrid,
+    .mining-grid {
+        gap: 8px;
+    }
+
+    #miningGrid > *,
+    .mining-grid > * {
+        padding: 9px;
+    }
+
+    #miningGrid h2,
+    #miningGrid h3,
+    #miningGrid h4,
+    .mining-grid h2,
+    .mining-grid h3,
+    .mining-grid h4 {
+        font-size: .9rem;
+    }
+}
+
+
+/* ==========================================================================
+   06. COMPACT SWAP & WALLET — 360px
+   ========================================================================== */
+
+@media (max-width: 360px) {
+
+    .wallet-action-grid {
+        gap: 6px;
+    }
+
+    .wallet-action-card {
+        min-height: 70px;
+        padding: 6px 2px;
+    }
+
+    .wallet-action-icon {
+        width: 27px;
+        height: 27px;
+        flex-basis: 27px;
+    }
+
+    .wallet-action-copy strong {
+        font-size: .66rem;
+    }
+
+    #bloxioSwap .bxs-swap-card {
+        padding: 8px;
+    }
+
+    #bloxioSwap .bxs-swap-grid {
+        gap: 6px;
+    }
+
+    #bloxioSwap .bxs-swap-panel {
+        min-height: 155px;
+        padding: 7px;
+    }
+
+    #bloxioSwap .bxs-swap-panel-header label {
+        font-size: 9px;
+    }
+
+    #bloxioSwap .bxs-swap-entry {
+        padding: 6px;
+        gap: 7px;
+    }
+
+    #bloxioSwap .bxs-swap-entry input {
+        font-size: 16px;
+    }
+
+    #bloxioSwap .bxs-swap-token {
+        gap: 4px;
+        padding: 4px;
+    }
+
+    #bloxioSwap .bxs-swap-token img {
+        width: 18px;
+        height: 18px;
+        flex-basis: 18px;
+    }
+
+    #bloxioSwap .bxs-swap-token-info strong {
+        font-size: 9px;
+    }
+
+    #bloxioSwap .bxs-swap-token-info small {
+        display: none;
+    }
+
+    #bloxioSwap .bxs-swap-quote {
+        gap: 8px;
+        padding: 9px;
+    }
+}
+
+
+/* ==========================================================================
+   07. MARKET — 340px
+   ========================================================================== */
+
+@media (max-width: 340px) {
+
+    .market-intel-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .market-mobile-tab {
+        font-size: .61rem;
+    }
+
+    #marketChart {
+        height: 270px !important;
+        min-height: 250px !important;
+    }
+}
+
+
+/* ==========================================================================
+   08. ACCESSIBILITY — REDUCED MOTION
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+
+    #bloxioSwap *,
+    #bloxioSwap *::before,
+    #bloxioSwap *::after {
+        scroll-behavior: auto !important;
+        animation-duration: .01ms !important;
+        transition-duration: .01ms !important;
+    }
+}
+
+/* End of mobile.css */
