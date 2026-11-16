@@ -1,0 +1,1041 @@
+
+/* ==========================================================================
+   BLOXIO — RESPONSIVE.CSS
+   Original responsive breakpoints preserved
+   Desktop / Laptop / Tablet / Mobile
+   ========================================================================== */
+
+
+/* ==========================================================================
+   01. LAPTOP & SMALL DESKTOP — 1200px
+   ========================================================================== */
+
+@media (max-width: 1200px) {
+    .app-container {
+        padding-right: 20px;
+        padding-left: 20px;
+    }
+
+    .casino-games-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .casino-top {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .casino-top-stats {
+        width: 100%;
+        max-width: 100%;
+    }
+
+    .market-intel-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+
+/* ==========================================================================
+   02. TABLET MARKET — 1024px
+   ========================================================================== */
+
+@media (max-width: 1024px) {
+    .market-grid {
+        grid-template-columns:
+            minmax(0, 1fr)
+            minmax(0, 1fr);
+        gap: 10px;
+    }
+
+    .market-card {
+        padding: 14px;
+    }
+
+    .market-intel-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    #marketChart {
+        height: 380px !important;
+        min-height: 300px !important;
+    }
+}
+
+
+/* ==========================================================================
+   03. SWAP — TABLET LANDSCAPE
+   Original range: 601px to 900px
+   ========================================================================== */
+
+@media (min-width: 601px) and (max-width: 900px) {
+    #bloxioSwap .bxs-swap-card {
+        padding: 17px;
+    }
+
+    #bloxioSwap .bxs-swap-grid {
+        gap: 10px;
+    }
+
+    #bloxioSwap .bxs-swap-panel {
+        padding: 12px;
+    }
+
+    #bloxioSwap .bxs-swap-entry {
+        padding: 10px;
+    }
+
+    #bloxioSwap .bxs-swap-token {
+        padding: 7px;
+    }
+}
+
+
+/* ==========================================================================
+   04. TABLET & MOBILE — 768px
+   ========================================================================== */
+
+@media (max-width: 768px) {
+    :root {
+        --header-height: 62px;
+        --mobile-nav-height: 66px;
+    }
+
+    /* Header */
+    .app-header,
+    .enterprise-header {
+        padding: 0 14px;
+        gap: 8px;
+    }
+
+    .header-left {
+        gap: 12px;
+    }
+
+    .system-status {
+        display: none;
+    }
+
+    .brand-logo,
+    .brand-icon {
+        width: 32px;
+        height: 32px;
+    }
+
+    .brand-icon {
+        flex-basis: 32px;
+    }
+
+    .brand-text strong {
+        font-size: 1rem;
+    }
+
+    .header-center {
+        margin-left: auto;
+    }
+
+    .header-right {
+        gap: 6px;
+    }
+
+    .header-btn {
+        min-height: 35px;
+        padding: 7px 10px;
+        font-size: .74rem;
+    }
+
+    .user-trigger {
+        padding: 5px;
+    }
+
+    .user-meta,
+    .session-pill {
+        display: none;
+    }
+
+    /* Main container */
+    .app-container {
+        padding:
+            calc(var(--header-height) + 16px)
+            14px
+            calc(var(--mobile-nav-height) + 25px);
+    }
+
+    /* Wallet */
+    .wallet-overview {
+        grid-template-columns: 1fr;
+    }
+
+    .wallet-overview-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .wallet-actions {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .wallet-panels {
+        grid-template-columns: 1fr;
+    }
+
+    .wallet-analytics-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    /* Market */
+    .market-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .market-stats-bar {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .market-mobile-tabs {
+        display: grid;
+    }
+
+    .market-chart-shell {
+        min-height: 280px;
+    }
+
+    #marketChart {
+        height: 320px;
+    }
+
+    /* Casino */
+    .casino-economy {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .casino-games-grid,
+    .casino-featured-track {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .casino-jackpot-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .casino-category-stats {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .casino-mobile-actions {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+    }
+
+    /* Mining */
+    .mining-hero {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 14px;
+        padding: 16px;
+    }
+
+    .mining-hero-right {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 9px;
+    }
+
+    .mining-layout {
+        grid-template-columns: 1fr;
+    }
+
+    /* Preserve original 5 × 2 mining currency layout */
+    #miningTabs,
+    .mining-tabs {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        grid-template-rows: repeat(2, minmax(54px, auto));
+        gap: 7px;
+    }
+
+    /* Airdrop */
+    .airdrop-top {
+        flex-direction: column;
+    }
+
+    .airdrop-layout {
+        grid-template-columns: 1fr;
+    }
+
+    /* Settings */
+    .settings-hero {
+        grid-template-columns: 1fr;
+    }
+
+    .settings-layout {
+        grid-template-columns: 1fr;
+    }
+
+    /* Authentication */
+    .auth-shell {
+        grid-template-columns: 1fr;
+        max-width: 490px;
+    }
+
+    .auth-left {
+        display: none;
+    }
+
+    .auth-right {
+        padding: 30px 22px;
+    }
+
+    /* Footer */
+    .legal-footer {
+        padding: 16px 14px 22px;
+    }
+
+    /* Mobile navigation */
+    .mobile-nav {
+        position: fixed;
+        inset: auto 0 0;
+        z-index: 1200;
+
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+
+        min-height: var(--mobile-nav-height);
+        padding: 6px 5px calc(6px + env(safe-area-inset-bottom));
+
+        border-top: 1px solid var(--gold-border);
+        background: rgba(6, 28, 25, .97);
+
+        backdrop-filter: blur(18px);
+        -webkit-backdrop-filter: blur(18px);
+    }
+
+    .nav-btn {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+
+        min-width: 0;
+
+        border: 0;
+        border-radius: var(--radius-md);
+
+        background: transparent;
+        color: var(--text-muted);
+
+        font-size: .65rem;
+        font-weight: 750;
+    }
+
+    .nav-btn img {
+        width: 22px;
+        height: 22px;
+
+        object-fit: contain;
+        opacity: .65;
+        filter: grayscale(1);
+    }
+
+    .nav-btn.active {
+        background: var(--gold-glow);
+        color: var(--gold-solid);
+    }
+
+    .nav-btn.active img {
+        opacity: 1;
+        filter: none;
+    }
+
+    /* Market chart renderer */
+    #marketChart.bx-chart > .bx-stage {
+        height: 340px !important;
+        min-height: 280px !important;
+    }
+}
+
+
+/* ==========================================================================
+   05. CASINO PREMIUM — 760px
+   Kept separate from the original 768px breakpoint
+   ========================================================================== */
+
+@media (max-width: 760px) {
+    #casinoGamesGrid.casino-games-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+    .casino-game-card {
+        border-radius: 14px;
+    }
+
+    .casino-game-body {
+        padding: 10px;
+    }
+
+    .casino-game-body h3 {
+        font-size: 13px;
+    }
+
+    .casino-category-stats {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .bxp-game-shell {
+        border-radius: 16px;
+    }
+
+    .bxp-game-top {
+        padding: 14px;
+        align-items: flex-start;
+    }
+
+    .bxp-game-identity h2 {
+        font-size: 19px;
+    }
+
+    .bxp-status {
+        max-width: 125px;
+        text-align: center;
+        line-height: 1.25;
+    }
+
+    .bxp-game-layout {
+        grid-template-columns: 1fr;
+        padding: 9px;
+        gap: 10px;
+    }
+
+    .bxp-visual-stage {
+        min-height: 225px;
+        margin: 0 8px;
+    }
+
+    .bxp-chart-wrap {
+        margin: 9px 8px 8px;
+    }
+
+    .bxp-control-card {
+        padding: 14px;
+    }
+
+    .bxp-control-title {
+        margin-bottom: 12px;
+    }
+
+    .bxp-play {
+        position: sticky;
+        bottom: 10px;
+        z-index: 3;
+    }
+
+    .casino-mobile-actions {
+        display: flex;
+        gap: 8px;
+        justify-content: center;
+
+        padding: 8px;
+
+        border: 1px solid rgba(135, 157, 190, .18);
+        border-radius: 15px;
+
+        background: rgba(7, 13, 23, .92);
+        backdrop-filter: blur(14px);
+    }
+
+    .casino-mobile-actions button {
+        flex: 1;
+        min-height: 42px;
+
+        border: 1px solid rgba(135, 157, 190, .16);
+        border-radius: 10px;
+
+        background: #101c2e;
+        color: #d9e6f8;
+        font-weight: 700;
+    }
+}
+
+
+/* ==========================================================================
+   06. MOBILE — 600px
+   ========================================================================== */
+
+@media (max-width: 600px) {
+    /* Swap */
+    #bloxioSwap {
+        margin: 12px auto;
+        padding: 0 2px;
+    }
+
+    #bloxioSwap .bxs-swap-card {
+        padding: 12px;
+        border-radius: 16px;
+    }
+
+    #bloxioSwap .bxs-swap-header {
+        gap: 8px;
+        margin-bottom: 14px;
+    }
+
+    #bloxioSwap .bxs-swap-header h2 {
+        font-size: 20px;
+    }
+
+    #bloxioSwap .bxs-swap-status {
+        padding: 6px 8px;
+        font-size: 9px;
+    }
+
+    #bloxioSwap .bxs-swap-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+    }
+
+    #bloxioSwap .bxs-swap-panel {
+        min-height: 165px;
+        padding: 9px;
+        border-radius: 12px;
+    }
+
+    #bloxioSwap .bxs-swap-panel-header {
+        margin-bottom: 9px;
+    }
+
+    #bloxioSwap .bxs-swap-panel-header label {
+        font-size: 10px;
+    }
+
+    #bloxioSwap .bxs-swap-entry {
+        min-height: 102px;
+        gap: 9px;
+        padding: 8px;
+        border-radius: 10px;
+    }
+
+    #bloxioSwap .bxs-swap-entry input {
+        font-size: 19px;
+    }
+
+    #bloxioSwap .bxs-swap-picker {
+        width: 100%;
+    }
+
+    #bloxioSwap .bxs-swap-token {
+        min-height: 38px;
+        padding: 5px;
+        gap: 5px;
+    }
+
+    #bloxioSwap .bxs-swap-token img {
+        width: 21px;
+        height: 21px;
+        flex-basis: 21px;
+    }
+
+    #bloxioSwap .bxs-swap-token-info strong {
+        font-size: 10px;
+    }
+
+    #bloxioSwap .bxs-swap-token-info small {
+        font-size: 9px;
+    }
+
+    #bloxioSwap .bxs-swap-token > span:last-child {
+        font-size: 10px;
+    }
+
+    #bloxioSwap .bxs-swap-usd {
+        font-size: 10px;
+    }
+
+    #bloxioSwap .bxs-swap-reverse-row {
+        margin: 11px 0;
+    }
+
+    #bloxioSwap .bxs-swap-reverse {
+        width: 40px;
+        height: 40px;
+        font-size: 18px;
+    }
+
+    /* Market */
+    .market-shell {
+        gap: 12px;
+    }
+
+    .market-header {
+        padding: 14px;
+    }
+
+    .market-header-left,
+    .market-header-right {
+        width: 100%;
+    }
+
+    .market-stats-bar {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .market-stat {
+        min-height: 65px;
+        padding: 9px;
+    }
+
+    .market-pair-engine {
+        justify-content: stretch;
+    }
+
+    .market-search {
+        width: 100%;
+        max-width: none;
+    }
+
+    .market-chart-toolbar {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        overflow-y: hidden;
+        scrollbar-width: thin;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .chart-time {
+        flex: 0 0 auto;
+    }
+
+    #marketChart {
+        height: 340px !important;
+        min-height: 300px !important;
+    }
+
+    .market-mobile-tabs {
+        display: grid;
+    }
+
+    .market-grid {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 12px;
+    }
+
+    .market-trade-column,
+    .market-book-column {
+        width: 100%;
+    }
+
+    .market-card {
+        padding: 15px;
+    }
+
+    .market-intel-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+
+/* ==========================================================================
+   07. SMALL PHONES — 480px
+   ========================================================================== */
+
+@media (max-width: 480px) {
+    :root {
+        --header-height: 58px;
+        --mobile-nav-height: 64px;
+        --radius-lg: 13px;
+    }
+
+    body {
+        font-size: 13px;
+    }
+
+    /* Header */
+    .app-header,
+    .enterprise-header {
+        padding: 0 10px;
+    }
+
+    .brand-logo,
+    .brand-icon {
+        width: 29px;
+        height: 29px;
+    }
+
+    .brand-icon {
+        flex-basis: 29px;
+    }
+
+    .brand-text strong {
+        font-size: .9rem;
+    }
+
+    .enterprise-brand {
+        gap: 8px;
+    }
+
+    .locale-trigger {
+        min-height: 33px;
+        padding: 5px 8px;
+        font-size: .72rem;
+    }
+
+    .header-btn {
+        min-height: 33px;
+        padding: 6px 8px;
+        font-size: .68rem;
+    }
+
+    /* Main container */
+    .app-container {
+        padding-right: 10px;
+        padding-left: 10px;
+    }
+
+    /* Shared panels */
+    .enterprise-card,
+    .wallet-swap-engine,
+    .wallet-main-assets,
+    .wallet-assets,
+    .wallet-activity,
+    .wallet-analytics,
+    .wallet-intelligence {
+        padding: 14px;
+    }
+
+    /* Wallet */
+    .wallet-balance-card {
+        min-height: 155px;
+        padding: 18px;
+    }
+
+    .wallet-balance-card h1 {
+        font-size: 1.8rem;
+    }
+
+    .wallet-overview-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 7px;
+    }
+
+    .wallet-stat-card {
+        padding: 11px;
+    }
+
+    .wallet-stat-card strong {
+        font-size: .83rem;
+    }
+
+    .wallet-actions {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 7px;
+    }
+
+    .wallet-actions .btn {
+        min-height: 43px;
+        padding: 8px;
+        font-size: .78rem;
+    }
+
+    .wallet-intel-head {
+        align-items: flex-start;
+    }
+
+    .wallet-intel-actions {
+        flex-direction: column;
+    }
+
+    .wallet-intel-btn {
+        width: 100%;
+    }
+
+    .wallet-swap-grid {
+        gap: 8px;
+    }
+
+    .wallet-swap-grid select {
+        min-height: 44px;
+        padding: 8px;
+        font-size: .76rem;
+    }
+
+    .wallet-swap-meta {
+        gap: 6px;
+        font-size: .66rem;
+    }
+
+    .wallet-swap-meta > div {
+        padding: 8px 5px;
+    }
+
+    .wallet-swap-meta strong {
+        font-size: .72rem;
+    }
+
+    .wallet-panel-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .wallet-panel-grid .btn {
+        grid-column: auto;
+    }
+
+    .wallet-main-grid {
+        grid-template-columns: 1fr;
+    }
+
+    /* Market */
+    .market-header {
+        padding: 12px;
+    }
+
+    .market-stats-bar {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .market-stat {
+        min-height: 60px;
+    }
+
+    #marketChart {
+        height: 300px !important;
+        min-height: 280px !important;
+    }
+
+    .market-chart-toolbar {
+        gap: 3px;
+        padding: 7px;
+    }
+
+    .chart-time {
+        min-width: 38px;
+        padding: 6px 8px;
+        font-size: .67rem;
+    }
+
+    .market-card,
+    .market-history-section,
+    .market-intel-section {
+        padding: 12px;
+    }
+
+    .orderbook-heading,
+    .orderbook-row {
+        grid-template-columns:
+            minmax(0, 1fr)
+            minmax(0, .85fr)
+            minmax(0, 1fr);
+
+        gap: 3px;
+        padding-right: 5px;
+        padding-left: 5px;
+    }
+
+    .orderbook-heading {
+        font-size: .59rem;
+    }
+
+    .orderbook-row {
+        font-size: .65rem;
+    }
+
+    .trade-row {
+        grid-template-columns:
+            minmax(0, .9fr)
+            minmax(48px, .65fr)
+            minmax(0, 1fr)
+            minmax(0, 1fr);
+
+        gap: 4px;
+        padding: 7px 5px;
+        font-size: .62rem;
+    }
+
+    /* Market chart renderer */
+    #marketChart.bx-chart > .bx-stage {
+        height: 300px !important;
+        min-height: 260px !important;
+    }
+}
+
+
+/* ==========================================================================
+   08. VERY SMALL PHONES — 420px
+   ========================================================================== */
+
+@media (max-width: 420px) {
+    .market-header {
+        padding: 12px;
+    }
+
+    .market-stats-bar {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .market-stat {
+        min-height: 60px;
+    }
+
+    #marketChart {
+        height: 300px !important;
+        min-height: 280px !important;
+    }
+
+    .market-chart-toolbar {
+        gap: 3px;
+        padding: 7px;
+    }
+
+    .chart-time {
+        min-width: 38px;
+        padding: 6px 8px;
+        font-size: .67rem;
+    }
+
+    .market-card,
+    .market-history-section,
+    .market-intel-section {
+        padding: 12px;
+    }
+
+    .orderbook-heading,
+    .orderbook-row {
+        grid-template-columns:
+            minmax(0, 1fr)
+            minmax(0, .85fr)
+            minmax(0, 1fr);
+
+        gap: 3px;
+        padding-right: 5px;
+        padding-left: 5px;
+    }
+
+    .orderbook-heading {
+        font-size: .59rem;
+    }
+
+    .orderbook-row {
+        font-size: .65rem;
+    }
+
+    .trade-row {
+        grid-template-columns:
+            minmax(0, .9fr)
+            minmax(48px, .65fr)
+            minmax(0, 1fr)
+            minmax(0, 1fr);
+
+        gap: 4px;
+        padding: 7px 5px;
+        font-size: .62rem;
+    }
+}
+
+
+/* ==========================================================================
+   09. CASINO PREMIUM — 390px
+   ========================================================================== */
+
+@media (max-width: 390px) {
+    #casinoGamesGrid.casino-games-grid {
+        gap: 8px;
+    }
+
+    .casino-game-body h3 {
+        font-size: 12px;
+    }
+
+    .bxp-game-top-actions {
+        gap: 6px;
+        flex-direction: column-reverse;
+        align-items: flex-end;
+    }
+
+    .bxp-stage-center strong {
+        font-size: 26px;
+    }
+
+    .bxp-chart-head {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .bxp-chart-head > span {
+        text-align: left;
+    }
+}
+
+
+/* ==========================================================================
+   10. SMALL MINING SCREENS — 380px
+   ========================================================================== */
+
+@media (max-width: 380px) {
+    #miningGrid,
+    .mining-grid {
+        gap: 8px;
+    }
+
+    #miningGrid > *,
+    .mining-grid > * {
+        padding: 9px;
+    }
+
+    #miningGrid h2,
+    #miningGrid h3,
+    #miningGrid h4,
+    .mining-grid h2,
+    .mining-grid h3,
+    .mining-grid h4 {
+        font-size: .9rem;
+    }
+}
+
+
+/* ==========================================================================
+   11. MARKET EXTRA SMALL — 340px
+   ========================================================================== */
+
+@media (max-width: 340px) {
+    .market-intel-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .market-mobile-tab {
+        font-size: .61rem;
+    }
+
+    #marketChart {
+        height: 270px !important;
+        min-height: 250px !important;
+    }
+}
+
+
+/* ==========================================================================
+   12. REDUCED MOTION — GLOBAL SWAP
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+    #bloxioSwap *,
+    #bloxioSwap *::before,
+    #bloxioSwap *::after {
+        scroll-behavior: auto !important;
+        animation-duration: .01ms !important;
+        transition-duration: .01ms !important;
+    }
+}
+
+
+/* ==========================================================================
+   13. REDUCED MOTION — CASINO PREMIUM
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+    .casino-game-card,
+    .casino-featured-card,
+    .casino-game-cover img {
+        transition: none !important;
+    }
+}
+
+
+/* ==========================================================================
+   END OF RESPONSIVE.CSS
+   ========================================================================== */
