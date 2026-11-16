@@ -41,7 +41,7 @@ const ASSET_META={
 BX:{decimals:2,usd:45,name:'Bloxio',tier:1},
 ETC:{decimals:4,usd:35,name:'Ethereum Classic',tier:3},
 LTC:{decimals:4,usd:85,name:'Litecoin',tier:2},
-EUBX:{decimals:2,usd:0.15,name:'Bloxio euro,tier:2},
+EUBX:{decimals:2,usd:0.15,name:'Bloxio euro',tier:2},
 BNB:{decimals:6,usd:620,name:'BNB',tier:1},
 SOL:{decimals:6,usd:180,name:'Solana',tier:1},
 XRP:{decimals:2,usd:0.65,name:'XRP',tier:2},
