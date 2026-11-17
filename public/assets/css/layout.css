@@ -1,0 +1,412 @@
+/* BLOXIO CSS — 02 LAYOUT
+   Header, footer, navigation, app shell and shared containers.
+*/
+
+
+.view {
+    display: none;
+    width: 100%;
+    min-width: 0;
+    animation: viewFadeIn var(--transition-smooth);
+}
+
+
+
+.view.active {
+    display: block;
+}
+
+
+
+#wallet,
+#market,
+#casino,
+#mining,
+#airdrop,
+#settings {
+    display: none;
+}
+
+
+
+#wallet.active,
+#market.active,
+#casino.active,
+#mining.active,
+#airdrop.active,
+#settings.active {
+    display: block;
+}
+
+
+
+body.loading {
+    overflow: hidden;
+}
+
+
+
+body:not(.loading) #globalLoader {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+
+
+/* 07. HEADER */
+.app-header,
+.enterprise-header {
+    position: fixed;
+    inset: 0 0 auto;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    width: 100%;
+    height: var(--header-height);
+    padding: 0 26px;
+    border-bottom: 1px solid var(--gold-border);
+    background: rgba(6, 26, 23, .94);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+}
+
+
+
+.header-left,
+.header-center,
+.header-right {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+}
+
+
+
+.header-left { gap: 25px; }
+
+
+.header-center { justify-content: center; }
+
+
+.header-right { justify-content: flex-end; gap: 12px; }
+
+
+
+/* --- حاوية الشعار --- */
+.enterprise-brand {
+    display: flex;
+    align-items: center; /* يضع الأيقونة والنص على خط أفقي واحد */
+    gap: 10px;           /* مسافة صغيرة بين الأيقونة والنص */
+    flex-shrink: 0;      /* يمنع الشعار من الانضغاط */
+    text-decoration: none;
+}
+
+
+
+
+.brand-icon {
+    display: block;
+    width: 32px;
+    height: 32px;
+    flex: 0 0 32px;
+    object-fit: contain;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    filter: drop-shadow(0 0 7px rgba(212, 175, 55, .20));
+}
+
+
+
+.brand-text-img {
+    display: block;
+    height: 22px;
+    width: auto;
+    max-width: 140px;
+    object-fit: contain;
+    background: transparent;
+    border: 0;
+    filter: drop-shadow(0 0 5px rgba(212, 175, 55, .12));
+}
+
+ 
+
+.system-status {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding-left: 20px;
+    border-left: 1px solid rgba(255, 255, 255, .09);
+}
+
+
+
+/* 08. APP LAYOUT */
+#app-shell {
+    width: 100%;
+    min-height: 100vh;
+}
+
+
+
+.app-container {
+    width: 100%;
+    max-width: 1480px;
+    min-height: 100vh;
+    margin: 0 auto;
+    padding: calc(var(--header-height) + 25px) 26px 42px;
+}
+
+
+
+
+
+/* ==========================================================================
+   12. BLOXIO MARKET — COMPLETE RESPONSIVE CSS
+   Chart / Order Book / Trading / History / Market Intel
+   ========================================================================== */
+
+/* 12.1 MARKET ROOT */
+#market,
+#market.active {
+    width: 100%;
+    min-width: 0;
+    overflow: visible;
+}
+
+
+
+.view {
+    display: none;
+    width: 100%;
+    min-width: 0;
+    animation: viewFadeIn var(--transition-smooth);
+}
+
+
+
+.view.active {
+    display: block;
+}
+
+
+
+#wallet,
+#market,
+#casino,
+#mining,
+#airdrop,
+#settings {
+    display: none;
+}
+
+
+
+#wallet.active,
+#market.active,
+#casino.active,
+#mining.active,
+#airdrop.active,
+#settings.active {
+    display: block;
+}
+
+
+
+body.loading {
+    overflow: hidden;
+}
+
+
+
+body:not(.loading) #globalLoader {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+
+
+/* 07. HEADER */
+.app-header,
+.enterprise-header {
+    position: fixed;
+    inset: 0 0 auto;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    width: 100%;
+    height: var(--header-height);
+    padding: 0 26px;
+    border-bottom: 1px solid var(--gold-border);
+    background: rgba(6, 26, 23, .94);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+}
+
+
+
+.header-left,
+.header-center,
+.header-right {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+}
+
+
+
+.header-left { gap: 25px; }
+
+
+.header-center { justify-content: center; }
+
+
+.header-right { justify-content: flex-end; gap: 12px; }
+
+
+
+/* --- حاوية الشعار --- */
+.enterprise-brand {
+    display: flex;
+    align-items: center; /* يضع الأيقونة والنص على خط أفقي واحد */
+    gap: 10px;           /* مسافة صغيرة بين الأيقونة والنص */
+    flex-shrink: 0;      /* يمنع الشعار من الانضغاط */
+    text-decoration: none;
+}
+
+
+
+
+.brand-icon {
+    display: block;
+    width: 32px;
+    height: 32px;
+    flex: 0 0 32px;
+    object-fit: contain;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    filter: drop-shadow(0 0 7px rgba(212, 175, 55, .20));
+}
+
+
+
+.brand-text-img {
+    display: block;
+    height: 22px;
+    width: auto;
+    max-width: 140px;
+    object-fit: contain;
+    background: transparent;
+    border: 0;
+    filter: drop-shadow(0 0 5px rgba(212, 175, 55, .12));
+}
+
+ 
+
+.system-status {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding-left: 20px;
+    border-left: 1px solid rgba(255, 255, 255, .09);
+}
+
+
+
+/* =========================================
+   تحديث استجابة الهيدر للموبايل (Responsive)
+   ========================================= */
+
+
+
+
+/* 08. APP LAYOUT */
+#app-shell {
+    width: 100%;
+    min-height: 100vh;
+}
+
+
+
+.app-container {
+    width: 100%;
+    max-width: 1480px;
+    min-height: 100vh;
+    margin: 0 auto;
+    padding: calc(var(--header-height) + 25px) 26px 42px;
+}
+
+
+
+
+
+/* ==========================================================================
+   12. BLOXIO MARKET — COMPLETE RESPONSIVE CSS
+   Chart / Order Book / Trading / History / Market Intel
+   ========================================================================== */
+
+/* 12.1 MARKET ROOT */
+#market,
+#market.active {
+    width: 100%;
+    min-width: 0;
+    overflow: visible;
+}
+
+
+
+/* ==========================================================================
+   18. FOOTER & MOBILE NAVIGATION
+   ========================================================================== */
+
+.legal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    width: 100%;
+    max-width: 1480px;
+    margin: 0 auto;
+    padding: 18px 26px 25px;
+    border-top: 1px solid var(--gold-border);
+    color: var(--text-muted);
+    font-size: .75rem;
+}
+
+
+
+.mobile-nav {
+    display: none;
+}
+
+
+
+    .legal-footer {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 15px 10px 22px;
+    }
+
+/* BLOXIO MULTI-PAGE SHELL */
+.desktop-sidebar {
+    position: fixed; inset: var(--header-height,70px) auto 0 0; z-index: 80;
+    display: flex; flex-direction: column; gap: 8px; width: 228px;
+    padding: 22px 14px 24px; overflow-y: auto;
+    background: rgba(6,26,23,.96); border-right: 1px solid var(--gold-border,rgba(212,175,55,.17));
+    backdrop-filter: blur(18px);
+}
+.desktop-sidebar .sidebar-label { padding: 8px 12px; color: var(--text-muted,#718A80); font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+.desktop-sidebar a { display:flex; align-items:center; gap:12px; min-height:44px; padding:10px 12px; color:var(--text-metadata,#A3B8B0); text-decoration:none; border:1px solid transparent; border-radius:12px; transition:background .2s ease,color .2s ease,border-color .2s ease; }
+.desktop-sidebar a:hover,.desktop-sidebar a.active { color:var(--text-platinum,#F4F7F5); background:rgba(212,175,55,.09); border-color:var(--gold-border,rgba(212,175,55,.17)); }
+.desktop-sidebar a.active { box-shadow:inset 2px 0 0 var(--gold-primary,#D4AF37); }
+.desktop-sidebar img { width:19px; height:19px; object-fit:contain; }
+#app { margin-left:228px; }
+.brand-icon,.brand-text-img { filter:brightness(0) invert(1); }
