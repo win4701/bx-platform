@@ -1,0 +1,80 @@
+/* BLOXIO — TABLET / MEDIUM SCREENS */
+
+@media (max-width: 1024px) {
+    .market-grid {
+        grid-template-columns:
+            minmax(0, 1fr)
+            minmax(0, 1fr);
+        gap: 10px;
+    }
+
+    .market-card {
+        padding: 14px;
+    }
+
+    .market-intel-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    #marketChart {
+        height: 380px !important;
+        min-height: 300px !important;
+    }
+}
+
+@media (max-width: 1200px) {
+    .app-container {
+        padding-right: 20px;
+        padding-left: 20px;
+    }
+
+    .casino-games-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .casino-top {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .casino-top-stats {
+        width: 100%;
+        max-width: 100%;
+    }
+
+    .market-intel-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (min-width: 601px) and (max-width: 900px) {
+    #bloxioSwap .bxs-swap-card {
+        padding: 17px;
+    }
+
+    #bloxioSwap .bxs-swap-grid {
+        gap: 10px;
+    }
+
+    #bloxioSwap .bxs-swap-panel {
+        padding: 12px;
+    }
+
+    #bloxioSwap .bxs-swap-entry {
+        padding: 10px;
+    }
+
+    #bloxioSwap .bxs-swap-token {
+        padding: 7px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #bloxioSwap *,
+    #bloxioSwap *::before,
+    #bloxioSwap *::after {
+        scroll-behavior: auto !important;
+        animation-duration: .01ms !important;
+        transition-duration: .01ms !important;
+    }
+}
