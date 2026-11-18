@@ -23,15 +23,30 @@ wallet:true,
 market:true,
 icon:"/assets/images/coins/bx.png"
 },
+   
+{
+symbol:"EUBX",
+name:"Bloxio euro",
+category:"main",
+type:"platform",
+price:1.08,
+decimals:18,
+minBet:0.2,
+swap:true,
+casino:true,
+wallet:true,
+market:true,
+icon:"/assets/images/coins/bx.png"
+},
 
 {
 symbol:"XBC",
 name:"Bloxio Casino",
 category:"main",
 type:"casino",
-price:0.15,
+price:0.08,
 fixedPrice:true,
-supply:10000000000,
+supply:20000000000,
 decimals:18,
 minBet:10,
 swap:true,
@@ -169,7 +184,7 @@ symbol:"PI",
 name:"Pi Network",
 category:"main",
 swap:true,
-wallet:false,
+wallet:true,
 market:false,
 icon:"/assets/images/coins/pi.png"
 },
@@ -804,10 +819,7 @@ icon:"/assets/images/coins/bgb.png"
    CASINO CURRENCIES
 ========================================================= */
 
-export const CASINO_COINS=[
-"BX",
-"XBC"
-];
+export const CASINO_COINS=["BX","XBC","BONK","STR","SHIB","EUBX","PEPE"];
 
 /* =========================================================
    MARKET COINS
@@ -849,25 +861,20 @@ export const MARKET_COINS=[
    XBC FIXED PRICE
 ========================================================= */
 
-export const XBC_PRICE = 0.15;
+export const XBC_PRICE = 0.08;
 
 /* =========================================================
    BX REFERENCE PRICE
 ========================================================= */
 
 export const BX_PRICE = 45;
+export const EUBX_PRICE = 1.08;
 
 /* =========================================================
    CASINO MINIMUM BETS
 ========================================================= */
 
-export const MIN_BETS={
-
-BX:0.1,
-
-XBC:10
-
-};
+export const MIN_BETS={ BX:0.1,EUBX:0.2,XBC:10 };
 
 /* =========================================================
    BLOXIO COINS REGISTRY — EXTENDED API
