@@ -1,0 +1,797 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+  <title>BLOXIO | Rewards</title>
+  <meta name="theme-color" content="#00e0ff">
+  <meta name="description" content="Manage your BLOXIO rewards and reward history.">
+
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" href="/assets/images/branding/logo.png">
+
+  <!-- BLOXIO DESIGN SYSTEM -->
+  <link rel="stylesheet" href="/assets/css/base.css">
+  <link rel="stylesheet" href="/assets/css/layout.css">
+  <link rel="stylesheet" href="/assets/css/components.css">
+  <link rel="stylesheet" href="/assets/css/pages.css">
+  <link rel="stylesheet" href="/assets/css/responsive.css">
+
+  <style>
+    /* =====================================
+       BLOXIO REWARDS - PAGE STYLES
+    ===================================== */
+
+    .reward-page {
+      width: 100%;
+      max-width: 1250px;
+      margin: auto;
+      padding: 20px;
+    }
+
+    .reward-heading {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 24px;
+    }
+
+    .reward-heading h1 {
+      margin: 0;
+      font-size: clamp(1.4rem, 3vw, 2rem);
+    }
+
+    .reward-heading p {
+      margin: 7px 0 0;
+      color: var(--text-metadata);
+      font-size: .85rem;
+    }
+
+    .reward-hero {
+      position: relative;
+      overflow: hidden;
+      padding: 28px;
+      margin-bottom: 20px;
+      border: 1px solid rgba(0,224,255,.25);
+      border-radius: var(--radius-xl);
+      background:
+        radial-gradient(circle at 85% 15%, rgba(0,224,255,.16), transparent 35%),
+        var(--bg-card);
+      box-shadow: var(--shadow-deep);
+    }
+
+    .reward-hero::after {
+      content: "✧";
+      position: absolute;
+      right: 35px;
+      top: 5px;
+      color: rgba(0,224,255,.12);
+      font-size: 130px;
+      pointer-events: none;
+    }
+
+    .reward-kicker {
+      color: #00e0ff;
+      font-size: .72rem;
+      font-weight: 800;
+      letter-spacing: 2px;
+    }
+
+    .reward-hero h2 {
+      margin: 12px 0 7px;
+      font-size: clamp(1.5rem, 4vw, 2.2rem);
+    }
+
+    .reward-hero p {
+      max-width: 550px;
+      margin: 0;
+      color: var(--text-metadata);
+      font-size: .85rem;
+      line-height: 1.7;
+    }
+
+    .reward-total {
+      display: flex;
+      align-items: baseline;
+      flex-wrap: wrap;
+      gap: 9px;
+      margin-top: 22px;
+    }
+
+    .reward-total strong {
+      color: #00e0ff;
+      font-size: clamp(2rem, 5vw, 3rem);
+    }
+
+    .reward-total span {
+      color: var(--text-metadata);
+      font-size: .85rem;
+    }
+
+    .reward-stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin-bottom: 22px;
+    }
+
+    .reward-stat {
+      min-width: 0;
+      padding: 18px;
+      border: 1px solid var(--gold-border);
+      border-radius: var(--radius-lg);
+      background: var(--bg-card);
+    }
+
+    .reward-stat span {
+      display: block;
+      color: var(--text-metadata);
+      font-size: .75rem;
+    }
+
+    .reward-stat strong {
+      display: block;
+      margin-top: 10px;
+      font-size: 1.25rem;
+      overflow-wrap: anywhere;
+    }
+
+    .reward-section {
+      padding: 21px;
+      margin-bottom: 20px;
+      border: 1px solid var(--gold-border);
+      border-radius: var(--radius-lg);
+      background: var(--bg-card);
+    }
+
+    .reward-section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .reward-section-head h3 {
+      margin: 0;
+      font-size: 1rem;
+    }
+
+    .reward-section-head span {
+      color: var(--text-metadata);
+      font-size: .72rem;
+    }
+
+    .reward-cards {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .reward-card {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      padding: 18px;
+      border: 1px solid rgba(0,224,255,.14);
+      border-radius: var(--radius-md);
+      background: rgba(255,255,255,.025);
+    }
+
+    .reward-card-icon {
+      width: 43px;
+      height: 43px;
+      display: grid;
+      place-items: center;
+      margin-bottom: 14px;
+      border-radius: 12px;
+      background: rgba(0,224,255,.1);
+      color: #00e0ff;
+      font-size: 1.35rem;
+    }
+
+    .reward-card h4 {
+      margin: 0 0 7px;
+      font-size: .9rem;
+    }
+
+    .reward-card p {
+      flex: 1;
+      margin: 0 0 15px;
+      color: var(--text-metadata);
+      font-size: .76rem;
+      line-height: 1.6;
+    }
+
+    .reward-card .reward-card-status {
+      display: inline-flex;
+      align-self: flex-start;
+      padding: 5px 9px;
+      border: 1px solid rgba(0,224,255,.2);
+      border-radius: 20px;
+      color: #00e0ff;
+      font-size: .68rem;
+    }
+
+    .reward-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 15px;
+    }
+
+    .reward-filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .reward-filter {
+      padding: 8px 13px;
+      border: 1px solid var(--gold-border);
+      border-radius: 25px;
+      background: transparent;
+      color: inherit;
+      cursor: pointer;
+      font-size: .75rem;
+    }
+
+    .reward-filter.active {
+      border-color: #00e0ff;
+      background: rgba(0,224,255,.1);
+      color: #00e0ff;
+    }
+
+    .reward-table-wrap {
+      width: 100%;
+      overflow-x: auto;
+    }
+
+    .reward-table {
+      width: 100%;
+      min-width: 570px;
+      border-collapse: collapse;
+      text-align: left;
+    }
+
+    .reward-table th,
+    .reward-table td {
+      padding: 14px 12px;
+      border-bottom: 1px solid rgba(255,255,255,.06);
+      font-size: .78rem;
+    }
+
+    .reward-table th {
+      color: var(--text-metadata);
+      font-weight: 600;
+    }
+
+    .reward-empty {
+      padding: 35px 15px;
+      text-align: center;
+      color: var(--text-metadata);
+      font-size: .82rem;
+    }
+
+    .reward-empty-icon {
+      display: block;
+      margin-bottom: 10px;
+      color: #00e0ff;
+      font-size: 2rem;
+    }
+
+    .reward-note {
+      padding: 14px 16px;
+      border: 1px solid rgba(0,224,255,.15);
+      border-radius: var(--radius-md);
+      background: rgba(0,224,255,.035);
+      color: var(--text-metadata);
+      font-size: .76rem;
+      line-height: 1.7;
+    }
+
+    @media (max-width: 900px) {
+      .reward-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .reward-cards {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 560px) {
+      .reward-page {
+        padding: 14px;
+      }
+
+      .reward-hero {
+        padding: 21px;
+      }
+
+      .reward-cards {
+        grid-template-columns: 1fr;
+      }
+
+      .reward-stat {
+        padding: 14px;
+      }
+
+      .reward-section {
+        padding: 15px;
+      }
+    }
+  </style>
+</head>
+
+<body
+  class="app-ready"
+  data-motion="on"
+  data-page="reward"
+  data-sound="on"
+  data-theme="dark"
+  data-ui="enterprise"
+>
+
+  <!-- GLOBAL LOADER -->
+  <div id="globalLoader" class="hidden" aria-hidden="true">
+    <div class="loader-logo">
+      <img src="/assets/images/branding/logo.png" alt="BLOXIO">
+    </div>
+    <div class="loader-ring"></div>
+    <h1 class="loader-title">BLOXIO</h1>
+    <div class="loader-progress">
+      <div class="loader-progress-fill" id="loaderProgress"></div>
+    </div>
+  </div>
+
+  <!-- BACKGROUND -->
+  <video autoplay class="bg-video bg-ambient" loop muted playsinline>
+    <source src="/assets/video/ambient.mp4" type="video/mp4">
+  </video>
+
+  <video autoplay class="bg-video bg-particles" loop muted playsinline>
+    <source src="/assets/video/particles.mp4" type="video/mp4">
+  </video>
+
+  <video autoplay class="bg-video bg-grid" loop muted playsinline>
+    <source src="/assets/video/grid-loop.mp4" type="video/mp4">
+  </video>
+
+  <div class="bg-layer"></div>
+  <div class="grid-overlay"></div>
+  <div class="ambient-glow"></div>
+
+  <div id="app-shell">
+
+    <!-- HEADER -->
+    <header class="app-header enterprise-header">
+
+      <div class="header-left">
+        <a class="enterprise-brand" href="/" aria-label="BLOXIO Home">
+          <img
+            class="brand-icon"
+            src="/assets/images/branding/logo.png"
+            alt="BLOXIO Icon"
+          >
+          <img
+            class="brand-text-img"
+            src="/assets/images/branding/bloxio.png"
+            alt="BLOXIO"
+          >
+        </a>
+
+        <div class="system-status" id="systemStatus">
+          <span class="status-dot"></span>
+          <div class="status-meta">
+            <strong>SYSTEM ONLINE</strong>
+            <small id="networkLatency">Connecting...</small>
+          </div>
+        </div>
+      </div>
+
+      <nav class="header-center" aria-label="Language">
+        <div class="locale-box">
+          <button
+            class="locale-trigger"
+            id="localeTrigger"
+            type="button"
+            aria-controls="localeMenu"
+            aria-expanded="false"
+          >
+            <span id="currentLocale">EN</span>
+            <span aria-hidden="true">⌄</span>
+          </button>
+
+          <ul class="locale-menu" id="localeMenu">
+            <li><button data-lang="EN" type="button">EN</button></li>
+            <li><button data-lang="AR" type="button">AR</button></li>
+            <li><button data-lang="FR" type="button">FR</button></li>
+            <li><button data-lang="ES" type="button">ES</button></li>
+            <li><button data-lang="DE" type="button">DE</button></li>
+            <li><button data-lang="ZH" type="button">ZH</button></li>
+            <li><button data-lang="RU" type="button">RU</button></li>
+            <li><button data-lang="JA" type="button">JA</button></li>
+            <li><button data-lang="TR" type="button">TR</button></li>
+          </ul>
+        </div>
+      </nav>
+
+      <div class="header-right">
+
+        <div class="auth-toolbar" id="guestToolbar">
+          <button class="header-btn secondary" id="headerLoginBtn" type="button">
+            Login
+          </button>
+          <button class="header-btn primary" id="headerRegisterBtn" type="button">
+            Register
+          </button>
+        </div>
+
+        <div class="user-toolbar hidden" id="userToolbar">
+          <button
+            class="user-trigger"
+            id="userMenuTrigger"
+            type="button"
+            aria-controls="userDropdown"
+            aria-expanded="false"
+          >
+            <div class="user-avatar">BX</div>
+            <div class="user-meta">
+              <strong id="vipTier">VIP 1</strong>
+              <small>✔ VERIFIED</small>
+            </div>
+            <div class="session-pill">1 ACTIVE</div>
+          </button>
+
+          <ul class="user-dropdown" id="userDropdown">
+            <li><a href="/pages/profile">Profile</a></li>
+            <li><a href="/pages/settings">Security & Settings</a></li>
+            <li><button id="logoutBtn" type="button">Logout</button></li>
+          </ul>
+        </div>
+
+      </div>
+    </header>
+
+    <!-- DESKTOP SIDEBAR -->
+    <aside class="desktop-sidebar" aria-label="BLOXIO sections">
+
+      <div class="sidebar-label">Workspace</div>
+
+      <a data-view="wallet" href="/">
+        <img src="/assets/images/navigation/home.svg" alt="">
+        Wallet
+      </a>
+
+      <a data-view="market" href="/pages/market">
+        <img src="/assets/images/navigation/market.svg" alt="">
+        Market
+      </a>
+
+      <a data-view="casino" href="/pages/casino">
+        <img src="/assets/images/navigation/casino.svg" alt="">
+        Casino
+      </a>
+
+      <a data-view="mining" href="/pages/mining">
+        <img src="/assets/images/navigation/mining.svg" alt="">
+        Mining
+      </a>
+
+      <a data-view="airdrop" href="/pages/airdrop">
+        <img src="/assets/images/navigation/airdrop.svg" alt="">
+        Airdrop
+      </a>
+
+      <a data-view="p2p" href="/pages/p2p">
+        <span class="sidebar-glyph">⇄</span>
+        P2P
+      </a>
+
+      <a data-view="news" href="/pages/news">
+        <span class="sidebar-glyph">▤</span>
+        News
+      </a>
+
+      <a data-view="profile" href="/pages/profile">
+        <span class="sidebar-glyph">◉</span>
+        Profile
+      </a>
+
+      <a data-view="reward" class="active" aria-current="page" href="/pages/reward">
+        <span class="sidebar-glyph">✧</span>
+        Rewards
+      </a>
+
+      <a data-view="settings" href="/pages/settings">
+        <span class="sidebar-glyph">⚙</span>
+        Settings
+      </a>
+
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="app-container" id="app">
+
+      <section class="reward-page">
+
+        <!-- PAGE TITLE -->
+        <div class="reward-heading">
+          <div>
+            <h1>Rewards Center</h1>
+            <p>Explore and manage your BLOXIO rewards.</p>
+          </div>
+        </div>
+
+        <!-- REWARD HERO -->
+        <section class="reward-hero">
+
+          <div class="reward-kicker">BLOXIO REWARD PROGRAM</div>
+
+          <h2>Your Rewards</h2>
+
+          <p>
+            Keep track of your available rewards, claimed benefits
+            and reward activity in one place.
+          </p>
+
+          <div class="reward-total">
+            <strong id="rewardAvailableTotal">—</strong>
+            <span>Available Rewards</span>
+          </div>
+
+        </section>
+
+        <!-- REWARD STATISTICS -->
+        <section class="reward-stats">
+
+          <div class="reward-stat">
+            <span>Available Rewards</span>
+            <strong id="rewardAvailableCount">—</strong>
+          </div>
+
+          <div class="reward-stat">
+            <span>Claimed Rewards</span>
+            <strong id="rewardClaimedCount">—</strong>
+          </div>
+
+          <div class="reward-stat">
+            <span>Pending Rewards</span>
+            <strong id="rewardPendingCount">—</strong>
+          </div>
+
+          <div class="reward-stat">
+            <span>Total Reward Value</span>
+            <strong id="rewardTotalValue">—</strong>
+          </div>
+
+        </section>
+
+        <!-- REWARD CATEGORIES -->
+        <section class="reward-section">
+
+          <div class="reward-section-head">
+            <h3>Reward Categories</h3>
+            <span>BLOXIO Ecosystem</span>
+          </div>
+
+          <div class="reward-cards">
+
+            <article class="reward-card">
+              <div class="reward-card-icon">✧</div>
+              <h4>Membership Rewards</h4>
+              <p>
+                View benefits and rewards associated with your
+                BLOXIO membership level.
+              </p>
+              <span class="reward-card-status">Account Benefits</span>
+            </article>
+
+            <article class="reward-card">
+              <div class="reward-card-icon">◇</div>
+              <h4>Activity Rewards</h4>
+              <p>
+                Review rewards associated with eligible activity
+                across the BLOXIO platform.
+              </p>
+              <span class="reward-card-status">Activity</span>
+            </article>
+
+            <article class="reward-card">
+              <div class="reward-card-icon">⇄</div>
+              <h4>Referral Rewards</h4>
+              <p>
+                Review referral-related rewards and their
+                current status.
+              </p>
+              <span class="reward-card-status">Referrals</span>
+            </article>
+
+          </div>
+        </section>
+
+        <!-- REWARD HISTORY -->
+        <section class="reward-section">
+
+          <div class="reward-section-head">
+            <h3>Reward History</h3>
+            <span id="rewardHistoryCount">0 Records</span>
+          </div>
+
+          <div class="reward-toolbar">
+
+            <div class="reward-filters" id="rewardFilters">
+              <button
+                class="reward-filter active"
+                type="button"
+                data-filter="all"
+                aria-pressed="true"
+              >
+                All
+              </button>
+
+              <button
+                class="reward-filter"
+                type="button"
+                data-filter="claimed"
+                aria-pressed="false"
+              >
+                Claimed
+              </button>
+
+              <button
+                class="reward-filter"
+                type="button"
+                data-filter="pending"
+                aria-pressed="false"
+              >
+                Pending
+              </button>
+            </div>
+
+          </div>
+
+          <div class="reward-table-wrap">
+
+            <table class="reward-table">
+              <thead>
+                <tr>
+                  <th>Reward</th>
+                  <th>Type</th>
+                  <th>Date</th>
+                  <th>Amount</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+
+              <tbody id="rewardHistoryBody">
+                <tr>
+                  <td colspan="5">
+                    <div class="reward-empty">
+                      <span class="reward-empty-icon">✧</span>
+                      No reward records available.
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+
+          </div>
+
+        </section>
+
+        <!-- INFORMATION -->
+        <div class="reward-note">
+          Reward balances, eligibility, and claim status must be
+          supplied by the authenticated BLOXIO reward system.
+          This page does not create, credit, or claim rewards locally.
+        </div>
+
+      </section>
+
+    </main>
+
+    <!-- MOBILE NAVIGATION -->
+    <nav class="mobile-nav" aria-label="Primary navigation">
+
+      <a class="nav-btn" data-view="wallet" href="/">
+        <img src="/assets/images/navigation/home.svg" alt="">
+        <span>Wallet</span>
+      </a>
+
+      <a class="nav-btn" data-view="market" href="/pages/market">
+        <img src="/assets/images/navigation/market.svg" alt="">
+        <span>Market</span>
+      </a>
+
+      <a class="nav-btn" data-view="casino" href="/pages/casino">
+        <img src="/assets/images/navigation/casino.svg" alt="">
+        <span>Casino</span>
+      </a>
+
+      <a class="nav-btn" data-view="mining" href="/pages/mining">
+        <img src="/assets/images/navigation/mining.svg" alt="">
+        <span>Mining</span>
+      </a>
+
+      <a class="nav-btn" data-view="more" href="/pages/more">
+        <span class="nav-more-icon">•••</span>
+        <span>More</span>
+      </a>
+
+    </nav>
+
+    <!-- FOOTER -->
+    <footer class="legal-footer">
+      <div class="footer-socials">
+        <a href="/terms.html">Terms</a>
+        <a href="/privacy.html">Privacy</a>
+        <a href="/risk.html">Risk</a>
+      </div>
+      <p>© 2026 BLOXIO</p>
+    </footer>
+
+  </div>
+
+  <!-- SOUND -->
+  <audio id="snd-click" src="/assets/sounds/click.mp3" preload="auto"></audio>
+  <audio id="snd-success" src="/assets/sounds/success.mp3" preload="auto"></audio>
+  <audio id="snd-notification" src="/assets/sounds/notification.mp3" preload="auto"></audio>
+
+  <!-- BLOXIO CORE -->
+  <script src="/vendor/socket.io.min.js"></script>
+
+  <script src="/core/language.js"></script>
+  <script src="/core/translator.js"></script>
+  <script src="/core/rtl.js"></script>
+
+  <script src="/bx/auth.js"></script>
+  <script src="/bx/core.js"></script>
+  <script src="/bx/state.js"></script>
+
+  <script src="/bx/services/api.js"></script>
+  <script src="/bx/services/ws.js"></script>
+
+  <script src="/bx/main.js"></script>
+  <script src="/core/auto-i18n.js"></script>
+
+  <!-- REWARD PAGE -->
+  <script>
+    (() => {
+      "use strict";
+
+      const filters = document.getElementById("rewardFilters");
+
+      if (!filters || filters.dataset.initialized === "true") return;
+
+      filters.dataset.initialized = "true";
+
+      filters.addEventListener("click", (event) => {
+        const button = event.target.closest("[data-filter]");
+
+        if (!button) return;
+
+        filters.querySelectorAll("[data-filter]").forEach((item) => {
+          const active = item === button;
+
+          item.classList.toggle("active", active);
+          item.setAttribute("aria-pressed", String(active));
+        });
+
+        /*
+          The filter UI is prepared here.
+          Actual history filtering will be connected
+          when the real reward-history data source is integrated.
+        */
+      });
+    })();
+  </script>
+
+</body>
+</html>
