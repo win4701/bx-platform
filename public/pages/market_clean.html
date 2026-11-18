@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="
+width=device-width,
+initial-scale=1,viewport-fit=cover" name="viewport"/>
+<title>Bloxio | Market</title>
+<meta content="#00e0ff" name="theme-color"/>
+<meta content="Wallet • Market • Mining • Casino • Airdrop" name="description"/>
+<meta content="yes" name="mobile-web-app-capable"/><meta content="yes" name="apple-mobile-web-app-capable"/>
+<meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"/>
+<meta content="Bloxio" name="apple-mobile-web-app-title"/>
+<link href="/manifest.json" rel="manifest"/>
+<link href="/assets/images/branding/logo.png" rel="icon"/>
+
+<link href="/assets/css/base.css" rel="stylesheet"/><link href="/assets/css/layout.css" rel="stylesheet"/><link href="/assets/css/components.css" rel="stylesheet"/><link href="/assets/css/pages.css" rel="stylesheet"/><link href="/assets/css/responsive.css" rel="stylesheet"/></head>
+<body class="loading auth-loading" data-motion="on" data-page="market" data-sound="on" data-theme="dark" data-ui="enterprise">
+<!-- GLOBAL LOADER -->
+<div id="globalLoader">
+<div class="loader-logo">
+<img alt="Bloxio" src="/assets/images/branding/logo.png"/>
+</div>
+<div class="loader-ring"></div>
+<h1 class="loader-title">Bloxio</h1>
+<div class="loader-progress">
+<div class="loader-progress-fill" id="loaderProgress">
+</div>
+</div>
+</div>
+<!-- VIDEO -->
+<video autoplay="" class="bg-video bg-ambient" loop="" muted="" playsinline="">
+<source src="/assets/video/ambient.mp4" type="video/mp4"/>
+</video>
+<video autoplay="" class="bg-video bg-particles" loop="" muted="" playsinline="">
+<source src="/assets/video/particles.mp4" type="video/mp4"/>
+</video>
+<video autoplay="" class="bg-video bg-grid" loop="" muted="" playsinline="">
+<source src="/assets/video/grid-loop.mp4" type="video/mp4"/>
+</video>
+<div class="bg-layer"></div>
+<div class="grid-overlay"></div>
+<div class="ambient-glow"></div>
+<div id="app-shell">
+<header class="app-header enterprise-header">
+<div class="header-left">
+<a aria-label="Bloxio Home" class="enterprise-brand" href="/">
+<!-- الأيقونة (الحرف/الرمز) -->
+<img alt="Bloxio Icon" class="brand-icon" src="/assets/images/branding/logo.png"/>
+<!-- الشعار النصي (BLOXIO) -->
+<img alt="BLOXIO" class="brand-text-img" src="/assets/images/branding/bloxio.png"/>
+</a>
+<div class="system-status" id="systemStatus">
+<span class="status-dot"></span>
+<div class="status-meta">
+<strong>SYSTEM ONLINE</strong>
+<small id="networkLatency">Latency 42ms</small>
+</div>
+</div>
+</div>
+<nav aria-label="Global Navigation" class="header-center">
+<div class="locale-box">
+<button aria-controls="localeMenu" aria-expanded="false" class="locale-trigger" id="localeTrigger" type="button">
+<span id="currentLocale">EN</span>
+<svg height="14" viewbox="0 0 24 24" width="14">
+<path d="M7 10l5 5l5-5z" fill="currentColor"></path>
+</svg>
+</button>
+<ul class="locale-menu" id="localeMenu">
+<li><button data-lang="EN"> EN</button></li>
+<li><button data-lang="AR"> AR</button></li>
+<li><button data-lang="FR"> FR</button></li>
+<li><button data-lang="ES"> ES</button></li>
+<li><button data-lang="DE"> DE</button></li>
+<li><button data-lang="ZH"> ZH</button></li>
+<li><button data-lang="RU"> RU</button></li>
+<li><button data-lang="JA"> JA</button></li>
+<li><button data-lang="TR"> TR</button></li>
+</ul>
+</div>
+</nav>
+<div class="header-right">
+<div class="auth-toolbar" id="guestToolbar">
+<button class="header-btn secondary" id="headerLoginBtn" type="button">Login</button>
+<button class="header-btn primary" id="headerRegisterBtn" type="button">Register</button>
+</div>
+<div class="user-toolbar hidden" id="userToolbar">
+<button aria-controls="userDropdown" aria-expanded="false" class="user-trigger" id="userMenuTrigger" type="button">
+<div class="user-avatar">BX</div>
+<div class="user-meta">
+<strong id="vipTier">VIP 1</strong>
+<small>✔ VERIFIED</small>
+</div>
+<div class="session-pill"> 1 ACTIVE
+</div>
+</button>
+<ul class="user-dropdown" id="userDropdown">
+<li><button type="button">Profile</button></li>
+<li><button type="button">Security</button></li>
+<li><button type="button">Sessions</button></li>
+<li><button id="logoutBtn" type="button">Logout</button></li>
+</ul>
+</div>
+</div>
+</header><aside aria-label="Bloxio sections" class="desktop-sidebar"><div class="sidebar-label">Workspace</div><a aria-current="false" data-view="wallet" href="/"><img alt="" src="/assets/images/navigation/home.svg"/>Wallet</a><a aria-current="page" class="active" data-view="market" href="/pages/market"><img alt="" src="/assets/images/navigation/market.svg"/>Market</a><a aria-current="false" data-view="casino" href="/pages/casino"><img alt="" src="/assets/images/navigation/casino.svg"/>Casino</a><a aria-current="false" data-view="mining" href="/pages/mining"><img alt="" src="/assets/images/navigation/mining.svg"/>Mining</a><a aria-current="false" data-view="airdrop" href="/pages/airdrop"><img alt="" src="/assets/images/navigation/airdrop.svg"/>Airdrop</a><a aria-current="false" data-view="p2p" href="/pages/p2p"><span aria-hidden="true" class="sidebar-glyph">⇄</span>P2P</a><a aria-current="false" data-view="news" href="/pages/news"><span aria-hidden="true" class="sidebar-glyph">▤</span>News</a><a aria-current="false" data-view="settings" href="/pages/settings"><span aria-hidden="true" class="sidebar-glyph">⚙</span>Settings</a></aside>
+<main class="app-container" id="app">
+<!-- ================= WALLET ================= -->
+
+<!-- ================= MARKET ================= -->
+
+<!-- ================= CASINO ================= -->
+
+<!-- ================= MINING ================= -->
+
+<!-- ================= AIRDROP ================= -->
+
+<!-- ================= MAIN ================= -->
+<section class="view active" id="market">
+<div class="market-shell">
+<div class="market-header">
+<div class="market-header-left">
+<span class="market-kicker">BX EXCHANGE</span>
+<h2>Institutional Market</h2>
+</div>
+<div class="market-header-right">
+<div class="market-live-indicator">
+<span class="market-live-dot"></span>
+<span>LIVE</span>
+</div>
+</div>
+</div>
+<section class="market-assets-selector" aria-label="Market pair selector">
+<div class="market-base-assets" id="marketBaseAssets" role="group" aria-label="Main market assets"></div>
+<div class="market-pairs-panel">
+<div class="market-pairs-heading">
+<strong id="marketPairsTitle">BX markets</strong>
+<span id="marketPairsCount">16 pairs</span>
+</div>
+<div class="market-assets-scroll" id="marketPairAssets" role="group" aria-label="Available trading pairs"></div>
+</div>
+</section>
+<div class="market-stats-bar">
+<div class="market-stat">
+<span>PAIR</span>
+<strong id="marketPair">BX/BTC</strong>
+</div>
+<div class="market-stat">
+<span>PRICE</span>
+<strong id="marketPrice">0.00000000</strong>
+</div>
+<div class="market-stat">
+<span>CHANGE</span>
+<strong id="marketChange">0.00%</strong>
+</div>
+<div class="market-stat">
+<span>VOLUME</span>
+<strong id="marketVolume">$0</strong>
+</div>
+<div class="market-stat">
+<span>SPREAD</span>
+<strong id="spread">0.00%</strong>
+</div>
+</div>
+<div class="market-pair-engine">
+<input class="market-search" id="marketSearch" placeholder="Search Pair" type="search"/>
+</div>
+<div class="market-chart-shell">
+<div class="market-chart-toolbar">
+<button class="chart-time active">1M</button>
+<button class="chart-time">5M</button>
+<button class="chart-time">15M</button>
+<button class="chart-time">1H</button>
+<button class="chart-time">4H</button>
+<button class="chart-time">1D</button>
+<button class="chart-time">1W</button>
+<button class="chart-time">1MA</button>
+</div>
+<div id="marketChart"></div>
+<div class="hidden" id="marketTooltip"></div>
+</div>
+<div class="market-mobile-tabs">
+<button class="market-mobile-tab active" data-tab="trade">TRADE</button>
+<button class="market-mobile-tab" data-tab="book">BOOK</button>
+<button class="market-mobile-tab" data-tab="history">HISTORY</button>
+<button class="market-mobile-tab" data-tab="intel">INTEL</button>
+</div>
+<div class="market-grid">
+<div class="market-trade-column">
+<section class="market-card" id="tradeBox">
+<div class="trade-head">
+<h3 id="tradeTitle">BX Trading</h3>
+</div>
+<div class="trade-tabs">
+<button class="trade-tab active" id="buyTab">BUY</button>
+<button class="trade-tab" id="sellTab">SELL</button>
+</div>
+<div class="trade-form">
+<input class="market-input" id="orderAmount" placeholder="Amount" type="number"/>
+<input class="market-input" id="orderPrice" placeholder="Limit Price" type="number"/>
+<input class="market-input" id="orderTotal" placeholder="Total" readonly="" type="number"/>
+<button class="btn primary" id="actionBtn">PLACE ORDER</button>
+</div>
+</section>
+</div>
+<div class="market-book-column">
+<section class="market-card">
+<div class="trade-head">
+<h3>Order Book</h3>
+</div>
+<div id="orderBookGrid"></div>
+</section>
+</div>
+</div>
+<section class="market-history-section market-card">
+<div class="trade-head">
+<h3>Trade History</h3>
+</div>
+<div id="tradeHistoryGrid"></div>
+</section>
+<section class="market-intel-section market-card">
+<div class="trade-head">
+<h3>Market Intel</h3>
+</div>
+<div class="market-intel-grid">
+<div class="market-intel-item">
+<span>Trend</span>
+<strong id="marketTrend">Bullish</strong>
+</div>
+<div class="market-intel-item">
+<span>Sentiment</span>
+<strong id="marketSentiment">Positive</strong>
+</div>
+<div class="market-intel-item">
+<span>Volatility</span>
+<strong id="marketVolatility">Medium</strong>
+</div>
+<div class="market-intel-item">
+<span>Liquidity</span>
+<strong id="marketLiquidity">Strong</strong>
+</div>
+</div>
+</section>
+</div>
+</section></main>
+<nav aria-label="Primary navigation" class="mobile-nav"><a aria-current="false" class="nav-btn" data-view="wallet" href="/"><img alt="" src="/assets/images/navigation/home.svg"/><span>Wallet</span></a><a aria-current="page" class="nav-btn active" data-view="market" href="/pages/market"><img alt="" src="/assets/images/navigation/market.svg"/><span>Market</span></a><a aria-current="false" class="nav-btn" data-view="casino" href="/pages/casino"><img alt="" src="/assets/images/navigation/casino.svg"/><span>Casino</span></a><a aria-current="false" class="nav-btn" data-view="mining" href="/pages/mining"><img alt="" src="/assets/images/navigation/mining.svg"/><span>Mining</span></a><a aria-current="false" class="nav-btn" data-view="more" href="/pages/more"><span class="nav-more-icon">•••</span><span>More</span></a></nav>
+<div class="auth auth-overlay hidden" id="authOverlay">
+<div class="auth-backdrop"></div>
+<section class="auth-shell">
+<div class="auth-left">
+<div class="auth-brand">
+<img alt="Bloxio" src="/assets/images/branding/logo.svg"/>
+<h1 id="authTitle"> Welcome To BLOXIO</h1>
+<p>Enterprise Web3 Exchange • Casino • Mining • Wallet</p>
+</div>
+<div class="auth-metrics">
+<div class="auth-metric">
+<strong>100K+</strong>
+<span>Users</span>
+</div>
+<div class="auth-metric">
+<strong>24/7</strong>
+<span>Markets</span>
+</div>
+<div class="auth-metric">
+<strong>BX</strong>
+<span>Ecosystem</span>
+</div>
+</div>
+</div>
+<div class="auth-right">
+<div class="auth-card">
+<div class="auth-topbar">
+<button class="auth-tab active" id="loginBtn" type="button">Login</button>
+<button class="auth-tab" id="registerBtn" type="button">Register</button>
+</div>
+<!-- AUTH ERROR MESSAGE -->
+<div aria-live="polite" class="auth-error" id="authError" role="alert">
+</div>
+<div class="auth-box" id="loginBox">
+<form id="loginForm" novalidate="">
+<div class="auth-field">
+<label>Email</label>
+<input autocomplete="email" id="loginEmail" placeholder="name@example.com" required="" type="email"/>
+</div>
+<div class="auth-field">
+<label>Password</label>
+<input autocomplete="current-password" id="loginPassword" placeholder="••••••••" required="" type="password"/>
+</div>
+<div class="auth-row">
+<label class="remember-box">
+<input id="rememberDevice" type="checkbox"/>
+<span>Remember Device</span>
+</label>
+<button class="auth-link" type="button">Forgot Password</button>
+</div>
+<button class="auth-submit" type="submit">Login Securely</button>
+</form>
+</div>
+<div class="auth-box hidden" id="registerBox">
+<form id="registerForm" novalidate="">
+<div class="auth-grid">
+<div class="auth-field">
+<label>Email</label>
+<input id="registerEmail" placeholder="Email" required="" type="email"/>
+</div>
+<div class="auth-field">
+<label>Phone</label>
+<input id="registerPhone" placeholder="+1" required="" type="tel"/>
+</div>
+</div>
+<div class="auth-field">
+<label>Password</label>
+<input id="registerPassword" placeholder="Password" required="" type="password"/>
+</div>
+<div class="auth-field">
+<label>Confirm Password</label>
+<input id="registerConfirm" placeholder="Confirm Password" required="" type="password"/>
+</div>
+<div class="auth-field">
+<label>Invite Code</label>
+<input id="inviteCode" placeholder="Optional" type="text"/>
+</div>
+<label class="terms-box">
+<input id="agreeTerms" required="" type="checkbox"/>
+<span>Accept Terms &amp; Privacy</span>
+</label>
+<button class="auth-submit" type="submit">Create Account</button>
+</form>
+</div>
+<div class="auth-footer">
+<p id="switchText">Need account?</p>
+<button class="auth-switch" id="toggleAuth" type="button">Register</button>
+</div>
+<div class="auth-security">
+<div>🔒 Encrypted
+</div>
+<div>🛡 2FA Ready
+</div>
+<div>⚡ PWA Secure
+</div>
+</div>
+</div>
+</div>
+<button aria-label="Close" class="auth-close" id="authClose" type="button">X</button>
+</section>
+</div>
+
+<footer class="legal-footer">
+<div class="footer-socials">
+<a href="/terms.html">Terms</a>
+<a href="/privacy.html">Privacy</a>
+<a href="/risk.html">Risk</a>
+</div>
+<p>© 2026 BLOXIO</p>
+</footer>
+</div>
+<audio id="snd-click" preload="auto" src="/assets/sounds/click.mp3"></audio>
+<audio id="snd-success" preload="auto" src="/assets/sounds/success.mp3"></audio>
+<audio id="snd-notification" preload="auto" src="/assets/sounds/notification.mp3"></audio>
+<script src="/vendor/socket.io.min.js"></script>
+<script src="/vendor/chart.bloxio.js"></script>
+<script src="/core/language.js"></script>
+<script src="/core/translator.js"></script>
+<script src="/core/rtl.js"></script>
+<script src="/bx/auth.js"></script>
+<script src="/bx/core.js"></script>
+<script src="/bx/state.js"></script>
+<script src="/bx/services/api.js"></script>
+<script src="/bx/services/ws.js"></script>
+<script src="/bx/market.js"></script>
+<script type="module" src="/bx/market-page.js"></script>
+</body>
+</html>
