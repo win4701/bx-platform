@@ -59,6 +59,19 @@ icon:"/assets/images/coins/usdt.png"
 },
 
 {
+symbo:"EUBX",
+name:"Bloxio euro",
+category:"secondary",
+type:"stable",
+price:1,
+decimals:18,
+swap:true,
+wallet:true,
+marke:true,
+icon:"/assets/images/coins/dai.png"
+},
+   
+{
 symbol:"USDC",
 name:"USD Coin",
 category:"main",
@@ -145,8 +158,8 @@ icon:"/assets/images/coins/sol.png"
 symbol:"EUBX",
 name:"Euro Bloxio",
 category:"main",
-swap:false,
-wallet:false,
+swap:true,
+wallet:true,
 market:true,
 icon:"/assets/images/coins/eubx.png"
 },
@@ -155,9 +168,9 @@ icon:"/assets/images/coins/eubx.png"
 symbol:"PI",
 name:"Pi Network",
 category:"main",
-swap:false,
+swap:true,
 wallet:false,
-market:true,
+market:false,
 icon:"/assets/images/coins/pi.png"
 },
 
@@ -165,8 +178,8 @@ icon:"/assets/images/coins/pi.png"
 symbol:"STR",
 name:"STR Meme Coin",
 category:"main",
-swap:false,
-wallet:false,
+swap:true,
+wallet:true,
 market:true,
 icon:"/assets/images/coins/str.png"
 },
