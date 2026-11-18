@@ -1,0 +1,767 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+  <title>BLOXIO | My Profile</title>
+  <meta name="theme-color" content="#00e0ff">
+  <meta name="description" content="Manage your BLOXIO account profile and membership.">
+
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" href="/assets/images/branding/logo.png">
+
+  <!-- BLOXIO DESIGN SYSTEM -->
+  <link rel="stylesheet" href="/assets/css/base.css">
+  <link rel="stylesheet" href="/assets/css/layout.css">
+  <link rel="stylesheet" href="/assets/css/components.css">
+  <link rel="stylesheet" href="/assets/css/pages.css">
+  <link rel="stylesheet" href="/assets/css/responsive.css">
+
+  <style>
+    /* PROFILE PAGE - Scoped styles */
+    .profile-page {
+      width: 100%;
+      max-width: 1250px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .profile-heading {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 24px;
+    }
+
+    .profile-heading h1 {
+      margin: 0;
+      font-size: clamp(1.4rem, 3vw, 2rem);
+    }
+
+    .profile-heading p {
+      margin: 7px 0 0;
+      color: var(--text-metadata);
+      font-size: .85rem;
+    }
+
+    .profile-hero {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 22px;
+      padding: 26px;
+      margin-bottom: 22px;
+      border: 1px solid rgba(0, 224, 255, .2);
+      border-radius: var(--radius-xl);
+      background:
+        radial-gradient(circle at 10% 10%, rgba(0,224,255,.12), transparent 42%),
+        var(--bg-card);
+      box-shadow: var(--shadow-deep);
+    }
+
+    .profile-avatar {
+      width: 88px;
+      height: 88px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      border: 2px solid #00e0ff;
+      background: rgba(0,224,255,.1);
+      color: #00e0ff;
+      font-size: 1.8rem;
+      font-weight: 900;
+      box-shadow: 0 0 24px rgba(0,224,255,.15);
+    }
+
+    .profile-identity {
+      min-width: 0;
+    }
+
+    .profile-identity h2 {
+      margin: 0 0 7px;
+      font-size: 1.35rem;
+      overflow-wrap: anywhere;
+    }
+
+    .profile-identity p {
+      margin: 0 0 10px;
+      color: var(--text-metadata);
+      font-size: .85rem;
+      overflow-wrap: anywhere;
+    }
+
+    .profile-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .profile-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 5px 10px;
+      border: 1px solid rgba(0,224,255,.25);
+      border-radius: 30px;
+      background: rgba(0,224,255,.07);
+      color: #00e0ff;
+      font-size: .72rem;
+      font-weight: 700;
+    }
+
+    .profile-hero-action {
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+    }
+
+    .profile-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .profile-card {
+      min-width: 0;
+      padding: 21px;
+      border: 1px solid var(--gold-border);
+      border-radius: var(--radius-lg);
+      background: var(--bg-card);
+    }
+
+    .profile-card-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .profile-card-head h3 {
+      margin: 0;
+      font-size: 1rem;
+    }
+
+    .profile-card-head span {
+      color: var(--text-metadata);
+      font-size: .72rem;
+    }
+
+    .profile-data-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .profile-data-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 13px 0;
+      border-bottom: 1px solid rgba(255,255,255,.06);
+    }
+
+    .profile-data-row:last-child {
+      border-bottom: 0;
+    }
+
+    .profile-data-row span {
+      color: var(--text-metadata);
+      font-size: .82rem;
+    }
+
+    .profile-data-row strong {
+      text-align: right;
+      font-size: .84rem;
+      overflow-wrap: anywhere;
+    }
+
+    .profile-status {
+      color: var(--signal-buy);
+    }
+
+    .profile-actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    .profile-action-link {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+      padding: 15px;
+      border: 1px solid var(--gold-border);
+      border-radius: var(--radius-md);
+      background: rgba(255,255,255,.025);
+      color: inherit;
+      text-decoration: none;
+      transition: border-color .2s, background .2s;
+    }
+
+    .profile-action-link:hover {
+      border-color: #00e0ff;
+      background: rgba(0,224,255,.06);
+    }
+
+    .profile-action-icon {
+      width: 38px;
+      height: 38px;
+      display: grid;
+      flex-shrink: 0;
+      place-items: center;
+      border-radius: 10px;
+      background: rgba(0,224,255,.1);
+      color: #00e0ff;
+      font-size: 1.1rem;
+    }
+
+    .profile-action-copy {
+      min-width: 0;
+    }
+
+    .profile-action-copy strong,
+    .profile-action-copy small {
+      display: block;
+    }
+
+    .profile-action-copy strong {
+      font-size: .84rem;
+    }
+
+    .profile-action-copy small {
+      margin-top: 4px;
+      color: var(--text-metadata);
+      font-size: .7rem;
+    }
+
+    .profile-note {
+      margin-top: 18px;
+      padding: 13px 15px;
+      border: 1px solid rgba(0,224,255,.15);
+      border-radius: var(--radius-md);
+      background: rgba(0,224,255,.035);
+      color: var(--text-metadata);
+      font-size: .78rem;
+      line-height: 1.6;
+    }
+
+    @media (max-width: 760px) {
+      .profile-page {
+        padding: 14px;
+      }
+
+      .profile-hero {
+        grid-template-columns: auto 1fr;
+        padding: 18px;
+        gap: 15px;
+      }
+
+      .profile-avatar {
+        width: 66px;
+        height: 66px;
+        font-size: 1.35rem;
+      }
+
+      .profile-hero-action {
+        grid-column: 1 / -1;
+        flex-direction: row;
+      }
+
+      .profile-hero-action > * {
+        flex: 1;
+      }
+
+      .profile-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .profile-actions {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 380px) {
+      .profile-heading {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .profile-data-row {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 5px;
+      }
+
+      .profile-data-row strong {
+        text-align: left;
+      }
+    }
+  </style>
+</head>
+
+<body
+  class="app-ready"
+  data-motion="on"
+  data-page="profile"
+  data-sound="on"
+  data-theme="dark"
+  data-ui="enterprise"
+>
+
+  <!-- GLOBAL LOADER -->
+  <div id="globalLoader" class="hidden" aria-hidden="true">
+    <div class="loader-logo">
+      <img src="/assets/images/branding/logo.png" alt="BLOXIO">
+    </div>
+    <div class="loader-ring"></div>
+    <h1 class="loader-title">BLOXIO</h1>
+    <div class="loader-progress">
+      <div class="loader-progress-fill" id="loaderProgress"></div>
+    </div>
+  </div>
+
+  <!-- BACKGROUND -->
+  <video autoplay class="bg-video bg-ambient" loop muted playsinline>
+    <source src="/assets/video/ambient.mp4" type="video/mp4">
+  </video>
+
+  <video autoplay class="bg-video bg-particles" loop muted playsinline>
+    <source src="/assets/video/particles.mp4" type="video/mp4">
+  </video>
+
+  <video autoplay class="bg-video bg-grid" loop muted playsinline>
+    <source src="/assets/video/grid-loop.mp4" type="video/mp4">
+  </video>
+
+  <div class="bg-layer"></div>
+  <div class="grid-overlay"></div>
+  <div class="ambient-glow"></div>
+
+  <div id="app-shell">
+
+    <!-- HEADER -->
+    <header class="app-header enterprise-header">
+
+      <div class="header-left">
+        <a class="enterprise-brand" href="/" aria-label="BLOXIO Home">
+          <img
+            class="brand-icon"
+            src="/assets/images/branding/logo.png"
+            alt="BLOXIO Icon"
+          >
+          <img
+            class="brand-text-img"
+            src="/assets/images/branding/bloxio.png"
+            alt="BLOXIO"
+          >
+        </a>
+
+        <div class="system-status" id="systemStatus">
+          <span class="status-dot"></span>
+          <div class="status-meta">
+            <strong>SYSTEM ONLINE</strong>
+            <small id="networkLatency">Connecting...</small>
+          </div>
+        </div>
+      </div>
+
+      <nav class="header-center" aria-label="Language">
+        <div class="locale-box">
+          <button
+            class="locale-trigger"
+            id="localeTrigger"
+            type="button"
+            aria-controls="localeMenu"
+            aria-expanded="false"
+          >
+            <span id="currentLocale">EN</span>
+            <span aria-hidden="true">⌄</span>
+          </button>
+
+          <ul class="locale-menu" id="localeMenu">
+            <li><button data-lang="EN" type="button">EN</button></li>
+            <li><button data-lang="AR" type="button">AR</button></li>
+            <li><button data-lang="FR" type="button">FR</button></li>
+            <li><button data-lang="ES" type="button">ES</button></li>
+            <li><button data-lang="DE" type="button">DE</button></li>
+            <li><button data-lang="ZH" type="button">ZH</button></li>
+            <li><button data-lang="RU" type="button">RU</button></li>
+            <li><button data-lang="JA" type="button">JA</button></li>
+            <li><button data-lang="TR" type="button">TR</button></li>
+          </ul>
+        </div>
+      </nav>
+
+      <div class="header-right">
+        <div class="auth-toolbar" id="guestToolbar">
+          <button class="header-btn secondary" id="headerLoginBtn" type="button">
+            Login
+          </button>
+          <button class="header-btn primary" id="headerRegisterBtn" type="button">
+            Register
+          </button>
+        </div>
+
+        <div class="user-toolbar hidden" id="userToolbar">
+          <button
+            class="user-trigger"
+            id="userMenuTrigger"
+            type="button"
+            aria-controls="userDropdown"
+            aria-expanded="false"
+          >
+            <div class="user-avatar">BX</div>
+            <div class="user-meta">
+              <strong id="vipTier">VIP 1</strong>
+              <small>✔ VERIFIED</small>
+            </div>
+            <div class="session-pill">1 ACTIVE</div>
+          </button>
+
+          <ul class="user-dropdown" id="userDropdown">
+            <li><a href="/pages/profile">Profile</a></li>
+            <li><a href="/pages/settings">Security & Settings</a></li>
+            <li><button id="logoutBtn" type="button">Logout</button></li>
+          </ul>
+        </div>
+      </div>
+
+    </header>
+
+    <!-- DESKTOP SIDEBAR -->
+    <aside class="desktop-sidebar" aria-label="BLOXIO sections">
+
+      <div class="sidebar-label">Workspace</div>
+
+      <a data-view="wallet" href="/">
+        <img src="/assets/images/navigation/home.svg" alt="">
+        Wallet
+      </a>
+
+      <a data-view="market" href="/pages/market">
+        <img src="/assets/images/navigation/market.svg" alt="">
+        Market
+      </a>
+
+      <a data-view="casino" href="/pages/casino">
+        <img src="/assets/images/navigation/casino.svg" alt="">
+        Casino
+      </a>
+
+      <a data-view="mining" href="/pages/mining">
+        <img src="/assets/images/navigation/mining.svg" alt="">
+        Mining
+      </a>
+
+      <a data-view="airdrop" href="/pages/airdrop">
+        <img src="/assets/images/navigation/airdrop.svg" alt="">
+        Airdrop
+      </a>
+
+      <a data-view="p2p" href="/pages/p2p">
+        <span class="sidebar-glyph">⇄</span>
+        P2P
+      </a>
+
+      <a data-view="news" href="/pages/news">
+        <span class="sidebar-glyph">▤</span>
+        News
+      </a>
+
+      <a data-view="profile" class="active" aria-current="page" href="/pages/profile">
+        <span class="sidebar-glyph">◉</span>
+        Profile
+      </a>
+
+      <a data-view="reward" href="/pages/reward">
+        <span class="sidebar-glyph">✧</span>
+        Rewards
+      </a>
+
+      <a data-view="settings" href="/pages/settings">
+        <span class="sidebar-glyph">⚙</span>
+        Settings
+      </a>
+
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="app-container" id="app">
+
+      <section class="profile-page">
+
+        <div class="profile-heading">
+          <div>
+            <h1>My Profile</h1>
+            <p>Manage your BLOXIO account and membership.</p>
+          </div>
+        </div>
+
+        <!-- PROFILE HERO -->
+        <section class="profile-hero">
+
+          <div class="profile-avatar" id="profileAvatar">
+            BX
+          </div>
+
+          <div class="profile-identity">
+            <h2 id="profileDisplayName">BLOXIO Member</h2>
+            <p id="profileEmail">Account information unavailable</p>
+
+            <div class="profile-badges">
+              <span class="profile-badge" id="profileVipBadge">VIP —</span>
+              <span class="profile-badge" id="profileStatusBadge">
+                Account status: —
+              </span>
+            </div>
+          </div>
+
+          <div class="profile-hero-action">
+            <a href="/pages/settings" class="btn primary">
+              Account Settings
+            </a>
+          </div>
+
+        </section>
+
+        <div class="profile-grid">
+
+          <!-- ACCOUNT INFORMATION -->
+          <section class="profile-card">
+
+            <div class="profile-card-head">
+              <h3>Account Information</h3>
+              <span>Personal details</span>
+            </div>
+
+            <div class="profile-data-list">
+
+              <div class="profile-data-row">
+                <span>Display Name</span>
+                <strong id="profileNameValue">—</strong>
+              </div>
+
+              <div class="profile-data-row">
+                <span>Email Address</span>
+                <strong id="profileEmailValue">—</strong>
+              </div>
+
+              <div class="profile-data-row">
+                <span>Phone Number</span>
+                <strong id="profilePhoneValue">—</strong>
+              </div>
+
+              <div class="profile-data-row">
+                <span>Account ID</span>
+                <strong id="profileAccountId">—</strong>
+              </div>
+
+              <div class="profile-data-row">
+                <span>Registration Date</span>
+                <strong id="profileCreatedAt">—</strong>
+              </div>
+
+            </div>
+          </section>
+
+          <!-- MEMBERSHIP -->
+          <section class="profile-card">
+
+            <div class="profile-card-head">
+              <h3>Membership</h3>
+              <span>BLOXIO VIP</span>
+            </div>
+
+            <div class="profile-data-list">
+
+              <div class="profile-data-row">
+                <span>VIP Level</span>
+                <strong id="profileVipLevel">—</strong>
+              </div>
+
+              <div class="profile-data-row">
+                <span>Verification</span>
+                <strong id="profileVerification">—</strong>
+              </div>
+
+              <div class="profile-data-row">
+                <span>Membership Status</span>
+                <strong id="profileMembershipStatus">—</strong>
+              </div>
+
+              <div class="profile-data-row">
+                <span>Referral Code</span>
+                <strong id="profileReferralCode">—</strong>
+              </div>
+
+            </div>
+          </section>
+
+          <!-- SECURITY -->
+          <section class="profile-card">
+
+            <div class="profile-card-head">
+              <h3>Security Overview</h3>
+              <span>Account protection</span>
+            </div>
+
+            <div class="profile-data-list">
+
+              <div class="profile-data-row">
+                <span>Password</span>
+                <strong>••••••••</strong>
+              </div>
+
+              <div class="profile-data-row">
+                <span>Two-Factor Authentication</span>
+                <strong id="profileTwoFactor">—</strong>
+              </div>
+
+              <div class="profile-data-row">
+                <span>Email Verification</span>
+                <strong id="profileEmailVerification">—</strong>
+              </div>
+
+              <div class="profile-data-row">
+                <span>Account Security</span>
+                <strong id="profileSecurityStatus">—</strong>
+              </div>
+
+            </div>
+
+            <div class="profile-note">
+              Protect your account. Never share your password or verification
+              codes with anyone.
+            </div>
+
+          </section>
+
+          <!-- QUICK ACCESS -->
+          <section class="profile-card">
+
+            <div class="profile-card-head">
+              <h3>Account Center</h3>
+              <span>Quick access</span>
+            </div>
+
+            <div class="profile-actions">
+
+              <a class="profile-action-link" href="/pages/settings">
+                <span class="profile-action-icon">⚙</span>
+                <span class="profile-action-copy">
+                  <strong>Settings</strong>
+                  <small>Preferences and account options</small>
+                </span>
+              </a>
+
+              <a class="profile-action-link" href="/pages/reward">
+                <span class="profile-action-icon">✧</span>
+                <span class="profile-action-copy">
+                  <strong>Rewards</strong>
+                  <small>Your rewards and benefits</small>
+                </span>
+              </a>
+
+              <a class="profile-action-link" href="/pages/airdrop">
+                <span class="profile-action-icon">◇</span>
+                <span class="profile-action-copy">
+                  <strong>Airdrop</strong>
+                  <small>Explore available airdrops</small>
+                </span>
+              </a>
+
+              <a class="profile-action-link" href="/">
+                <span class="profile-action-icon">▣</span>
+                <span class="profile-action-copy">
+                  <strong>Wallet</strong>
+                  <small>View your wallet</small>
+                </span>
+              </a>
+
+            </div>
+          </section>
+
+        </div>
+
+        <div class="profile-note">
+          Profile information is displayed only when supplied by the
+          authenticated account system. Unavailable values are intentionally
+          shown as — rather than using invented account data.
+        </div>
+
+      </section>
+
+    </main>
+
+    <!-- MOBILE NAVIGATION -->
+    <nav class="mobile-nav" aria-label="Primary navigation">
+
+      <a class="nav-btn" data-view="wallet" href="/">
+        <img src="/assets/images/navigation/home.svg" alt="">
+        <span>Wallet</span>
+      </a>
+
+      <a class="nav-btn" data-view="market" href="/pages/market">
+        <img src="/assets/images/navigation/market.svg" alt="">
+        <span>Market</span>
+      </a>
+
+      <a class="nav-btn" data-view="casino" href="/pages/casino">
+        <img src="/assets/images/navigation/casino.svg" alt="">
+        <span>Casino</span>
+      </a>
+
+      <a class="nav-btn" data-view="mining" href="/pages/mining">
+        <img src="/assets/images/navigation/mining.svg" alt="">
+        <span>Mining</span>
+      </a>
+
+      <a class="nav-btn" data-view="more" href="/pages/more">
+        <span class="nav-more-icon">•••</span>
+        <span>More</span>
+      </a>
+
+    </nav>
+
+    <!-- FOOTER -->
+    <footer class="legal-footer">
+      <div class="footer-socials">
+        <a href="/terms.html">Terms</a>
+        <a href="/privacy.html">Privacy</a>
+        <a href="/risk.html">Risk</a>
+      </div>
+      <p>© 2026 BLOXIO</p>
+    </footer>
+
+  </div>
+
+  <!-- SOUND -->
+  <audio id="snd-click" src="/assets/sounds/click.mp3" preload="auto"></audio>
+  <audio id="snd-success" src="/assets/sounds/success.mp3" preload="auto"></audio>
+  <audio id="snd-notification" src="/assets/sounds/notification.mp3" preload="auto"></audio>
+
+  <!-- BLOXIO SYSTEM -->
+  <script src="/vendor/socket.io.min.js"></script>
+
+  <script src="/core/language.js"></script>
+  <script src="/core/translator.js"></script>
+  <script src="/core/rtl.js"></script>
+
+  <script src="/bx/auth.js"></script>
+  <script src="/bx/core.js"></script>
+  <script src="/bx/state.js"></script>
+
+  <script src="/bx/services/api.js"></script>
+  <script src="/bx/services/ws.js"></script>
+
+  <script src="/bx/main.js"></script>
+  <script src="/core/auto-i18n.js"></script>
+
+</body>
+</html>
