@@ -1,0 +1,513 @@
+
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+  <title>BLOXIO | Cloud Mining</title>
+
+  <meta name="theme-color" content="#00e0ff">
+  <meta name="description" content="Manage your BLOXIO cloud mining plans and rewards.">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="BLOXIO">
+
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" href="/assets/images/branding/logo.png">
+
+  <!-- Shared application styles -->
+  <link rel="stylesheet" href="/assets/css/base.css">
+  <link rel="stylesheet" href="/assets/css/layout.css">
+  <link rel="stylesheet" href="/assets/css/components.css">
+  <link rel="stylesheet" href="/assets/css/pages.css">
+  <link rel="stylesheet" href="/assets/css/responsive.css">
+</head>
+
+<body
+  class="app-ready"
+  data-page="mining"
+  data-theme="dark"
+  data-ui="enterprise"
+  data-motion="on"
+  data-sound="on"
+>
+
+  <!-- GLOBAL LOADER -->
+  <div id="globalLoader" class="hidden" aria-hidden="true">
+    <div class="loader-logo">
+      <img src="/assets/images/branding/logo.png" alt="BLOXIO">
+    </div>
+    <div class="loader-ring"></div>
+    <h1 class="loader-title">BLOXIO</h1>
+    <div class="loader-progress">
+      <div class="loader-progress-fill" id="loaderProgress"></div>
+    </div>
+  </div>
+
+  <!-- STATIC BACKGROUND -->
+  <div class="bg-layer" aria-hidden="true"></div>
+  <div class="grid-overlay" aria-hidden="true"></div>
+  <div class="ambient-glow" aria-hidden="true"></div>
+
+  <div id="app-shell">
+<header class="app-header enterprise-header">
+
+      <div class="header-left">
+        <a
+          class="enterprise-brand"
+          href="/index.html"
+          aria-label="BLOXIO Home"
+        >
+          <img
+            class="brand-icon"
+            src="/assets/images/branding/logo.png"
+            alt="BLOXIO"
+          >
+
+          <img
+            class="brand-text-img"
+            src="/assets/images/branding/bloxio.png"
+            alt="BLOXIO"
+          >
+        </a>
+
+        <div class="system-status" id="systemStatus">
+          <span class="status-dot"></span>
+
+          <div class="status-meta">
+            <strong>SYSTEM ONLINE</strong>
+            <small id="networkLatency">Latency --</small>
+          </div>
+        </div>
+      </div>
+
+      <nav class="header-center" aria-label="Language">
+        <div class="locale-box">
+
+          <button
+            type="button"
+            class="locale-trigger"
+            id="localeTrigger"
+            aria-controls="localeMenu"
+            aria-expanded="false"
+          >
+            <span id="currentLocale">EN</span>
+            <span aria-hidden="true">⌄</span>
+          </button>
+
+          <ul class="locale-menu" id="localeMenu">
+            <li><button type="button" data-lang="EN">EN</button></li>
+            <li><button type="button" data-lang="AR">AR</button></li>
+            <li><button type="button" data-lang="FR">FR</button></li>
+            <li><button type="button" data-lang="ES">ES</button></li>
+            <li><button type="button" data-lang="DE">DE</button></li>
+            <li><button type="button" data-lang="ZH">ZH</button></li>
+            <li><button type="button" data-lang="RU">RU</button></li>
+            <li><button type="button" data-lang="JA">JA</button></li>
+            <li><button type="button" data-lang="TR">TR</button></li>
+          </ul>
+
+        </div>
+      </nav>
+
+      <div class="header-right">
+
+        <div class="auth-toolbar" id="guestToolbar">
+          <button
+            class="header-btn secondary"
+            id="headerLoginBtn"
+            type="button"
+          >
+            Login
+          </button>
+
+          <button
+            class="header-btn primary"
+            id="headerRegisterBtn"
+            type="button"
+          >
+            Register
+          </button>
+        </div>
+
+        <div class="user-toolbar hidden" id="userToolbar">
+
+          <button
+            class="user-trigger"
+            id="userMenuTrigger"
+            type="button"
+            aria-controls="userDropdown"
+            aria-expanded="false"
+          >
+            <span class="user-avatar">BX</span>
+
+            <span class="user-meta">
+              <strong id="vipTier">VIP 1</strong>
+              <small>✔ VERIFIED</small>
+            </span>
+
+            <span class="session-pill">1 ACTIVE</span>
+          </button>
+
+          <ul class="user-dropdown" id="userDropdown">
+            <li><button type="button">Profile</button></li>
+            <li><button type="button">Security</button></li>
+            <li><button type="button">Sessions</button></li>
+            <li>
+              <button type="button" id="logoutBtn">Logout</button>
+            </li>
+          </ul>
+
+        </div>
+      </div>
+    </header>
+<aside class="desktop-sidebar" aria-label="BLOXIO sections">
+
+      <div class="sidebar-label">Workspace</div>
+
+      <a data-view="wallet" href="/index.html">
+        <img src="/assets/images/navigation/home.svg" alt="">
+        Wallet
+      </a>
+
+      <a data-view="market" href="/pages/market">
+        <img src="/assets/images/navigation/market.svg" alt="">
+        Market
+      </a>
+
+      <a data-view="casino" href="/pages/casino">
+        <img src="/assets/images/navigation/casino.svg" alt="">
+        Casino
+      </a>
+
+      <a
+        class="active"
+        aria-current="page"
+        data-view="mining"
+        href="/pages/mining"
+      >
+        <img src="/assets/images/navigation/mining.svg" alt="">
+        Mining
+      </a>
+
+      <a data-view="airdrop" href="/pages/airdrop">
+        <img src="/assets/images/navigation/airdrop.svg" alt="">
+        Airdrop
+      </a>
+
+      <a data-view="p2p" href="/pages/p2p">
+        <span class="sidebar-glyph" aria-hidden="true">⇄</span>
+        P2P
+      </a>
+
+      <a data-view="news" href="/pages/news">
+        <span class="sidebar-glyph" aria-hidden="true">▤</span>
+        News
+      </a>
+
+      <a data-view="settings" href="/pages/settings">
+        <span class="sidebar-glyph" aria-hidden="true">⚙</span>
+        Settings
+      </a>
+
+    </aside>
+<main class="app-container" id="app">
+
+      <section class="view active" id="mining" aria-label="Cloud Mining" data-mining-assets="10" data-mining-plans="6">
+<noscript>
+          <p>
+            JavaScript is required to use BLOXIO Mining.
+          </p>
+        </noscript>
+
+        <div class="mining-loading-placeholder" aria-live="polite">Loading Mining Dashboard...</div>
+
+      </section>
+
+    </main>
+<nav class="mobile-nav" aria-label="Primary navigation">
+
+      <a class="nav-btn" data-view="wallet" href="/index.html">
+        <img src="/assets/images/navigation/home.svg" alt="">
+        <span>Wallet</span>
+      </a>
+
+      <a class="nav-btn" data-view="market" href="/pages/market">
+        <img src="/assets/images/navigation/market.svg" alt="">
+        <span>Market</span>
+      </a>
+
+      <a class="nav-btn" data-view="casino" href="/pages/casino">
+        <img src="/assets/images/navigation/casino.svg" alt="">
+        <span>Casino</span>
+      </a>
+
+      <a
+        class="nav-btn active"
+        aria-current="page"
+        data-view="mining"
+        href="/pages/mining"
+      >
+        <img src="/assets/images/navigation/mining.svg" alt="">
+        <span>Mining</span>
+      </a>
+
+      <a class="nav-btn" data-view="more" href="/pages/more">
+        <span class="nav-more-icon" aria-hidden="true">•••</span>
+        <span>More</span>
+      </a>
+
+    </nav>
+<div
+      class="auth auth-overlay hidden"
+      id="authOverlay"
+      aria-hidden="true"
+    >
+
+      <div class="auth-backdrop"></div>
+
+      <section class="auth-shell">
+
+        <div class="auth-left">
+          <div class="auth-brand">
+
+            <img
+              src="/assets/images/branding/logo.svg"
+              alt="BLOXIO"
+            >
+
+            <h1 id="authTitle">Welcome To BLOXIO</h1>
+
+            <p>
+              Enterprise Web3 Exchange • Wallet • Mining
+            </p>
+
+          </div>
+
+          <div class="auth-metrics">
+            <div class="auth-metric">
+              <strong>100K+</strong>
+              <span>Users</span>
+            </div>
+
+            <div class="auth-metric">
+              <strong>24/7</strong>
+              <span>Markets</span>
+            </div>
+
+            <div class="auth-metric">
+              <strong>BX</strong>
+              <span>Ecosystem</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="auth-right">
+          <div class="auth-card">
+
+            <div class="auth-topbar">
+              <button
+                class="auth-tab active"
+                id="loginBtn"
+                type="button"
+              >
+                Login
+              </button>
+
+              <button
+                class="auth-tab"
+                id="registerBtn"
+                type="button"
+              >
+                Register
+              </button>
+            </div>
+
+            <div
+              class="auth-error"
+              id="authError"
+              role="alert"
+              aria-live="polite"
+            ></div>
+
+            <!-- LOGIN -->
+            <div class="auth-box" id="loginBox">
+
+              <form id="loginForm" novalidate>
+
+                <div class="auth-field">
+                  <label for="loginEmail">Email</label>
+                  <input
+                    id="loginEmail"
+                    type="email"
+                    autocomplete="email"
+                    placeholder="name@example.com"
+                    required
+                  >
+                </div>
+
+                <div class="auth-field">
+                  <label for="loginPassword">Password</label>
+                  <input
+                    id="loginPassword"
+                    type="password"
+                    autocomplete="current-password"
+                    placeholder="Password"
+                    required
+                  >
+                </div>
+
+                <div class="auth-row">
+                  <label class="remember-box">
+                    <input id="rememberDevice" type="checkbox">
+                    <span>Remember Device</span>
+                  </label>
+
+                  <button class="auth-link" type="button">
+                    Forgot Password
+                  </button>
+                </div>
+
+                <button class="auth-submit" type="submit">
+                  Login Securely
+                </button>
+
+              </form>
+            </div>
+
+            <!-- REGISTER -->
+            <div class="auth-box hidden" id="registerBox">
+
+              <form id="registerForm" novalidate>
+
+                <div class="auth-grid">
+
+                  <div class="auth-field">
+                    <label for="registerEmail">Email</label>
+                    <input
+                      id="registerEmail"
+                      type="email"
+                      placeholder="Email"
+                      required
+                    >
+                  </div>
+
+                  <div class="auth-field">
+                    <label for="registerPhone">Phone</label>
+                    <input
+                      id="registerPhone"
+                      type="tel"
+                      placeholder="+1"
+                      required
+                    >
+                  </div>
+
+                </div>
+
+                <div class="auth-field">
+                  <label for="registerPassword">Password</label>
+                  <input
+                    id="registerPassword"
+                    type="password"
+                    placeholder="Password"
+                    required
+                  >
+                </div>
+
+                <div class="auth-field">
+                  <label for="registerConfirm">Confirm Password</label>
+                  <input
+                    id="registerConfirm"
+                    type="password"
+                    placeholder="Confirm Password"
+                    required
+                  >
+                </div>
+
+                <div class="auth-field">
+                  <label for="inviteCode">Invite Code</label>
+                  <input
+                    id="inviteCode"
+                    type="text"
+                    placeholder="Optional"
+                  >
+                </div>
+
+                <label class="terms-box">
+                  <input id="agreeTerms" type="checkbox" required>
+                  <span>Accept Terms &amp; Privacy</span>
+                </label>
+
+                <button class="auth-submit" type="submit">
+                  Create Account
+                </button>
+
+              </form>
+            </div>
+
+            <div class="auth-footer">
+              <p id="switchText">Need account?</p>
+
+              <button
+                class="auth-switch"
+                id="toggleAuth"
+                type="button"
+              >
+                Register
+              </button>
+            </div>
+
+            <div class="auth-security">
+              <div> Encrypted</div>
+              <div> 2FA Ready</div>
+              <div> PWA Secure</div>
+            </div>
+
+          </div>
+        </div>
+
+        <button
+          class="auth-close"
+          id="authClose"
+          type="button"
+          aria-label="Close authentication"
+        >
+          ×
+        </button>
+
+      </section>
+    </div>
+<footer class="legal-footer">
+      <div class="footer-socials">
+        <a href="/terms.html">Terms</a>
+        <a href="/privacy.html">Privacy</a>
+        <a href="/risk.html">Risk</a>
+      </div>
+
+      <p>© 2026 BLOXIO</p>
+    </footer>
+
+  </div>
+<audio
+    id="snd-click"
+    preload="none"
+    src="/assets/sounds/click.mp3"
+  ></audio>
+<script src="/vendor/socket.io.min.js"></script>
+<script src="/core/language.js"></script>
+  <script src="/core/translator.js"></script>
+  <script src="/core/rtl.js"></script>
+<script src="/bx/auth.js"></script>
+  <script src="/bx/state.js"></script>
+  <script src="/bx/services/api.js"></script>
+  <script src="/bx/services/ws.js"></script>
+  <script src="/bx/core.js"></script>
+<script src="/bx/wallet.js"></script>
+<script src="/bx/mining.js"></script>
+<script src="/bx/main.js"></script>
+<script src="/core/auto-i18n.js"></script>
+
+</body>
+</html>
