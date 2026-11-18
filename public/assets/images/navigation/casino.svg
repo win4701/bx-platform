@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 150" role="img" aria-label="Casino">
+  <rect x="1" y="1" width="178" height="148" rx="23" fill="#0B2B24" stroke="#24443B" stroke-width="1.5"/>
+  <g fill="none" stroke="#00E5FF" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round">
+    
+      <path d="M49 70 Q49 57 62 57 H118 Q131 57 131 70 V91 Q131 103 119 103 H111 L97 92 H83 L69 103 H61 Q49 103 49 91 Z"/>
+      <path d="M69 69 V83 M62 76 H76"/>
+      <circle cx="103" cy="70" r="3" fill="{common["cyan"]}" stroke="none"/>
+      <circle cx="116" cy="84" r="3" fill="{common["cyan"]}" stroke="none"/>
+    
+  </g>
+  <text x="90" y="126" fill="#F4F8F6" font-family="Inter, Arial, Helvetica, sans-serif" font-size="18" font-weight="650" text-anchor="middle">Casino</text>
+</svg>
