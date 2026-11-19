@@ -2745,3 +2745,65 @@ hr {
         transition-duration: .01ms !important;
     }
 }
+/* =========================================
+   MORE PAGE — RESPONSIVE GRID
+   ========================================= */
+
+/* Tablet */
+
+@media (max-width: 1024px) {
+    #moreServicesGrid.bx-more-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+    }
+}
+
+/* Mobile — Binance-style vertical list */
+
+@media (max-width: 600px) {
+    #moreServicesGrid.bx-more-grid {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 10px;
+        margin-top: 16px;
+    }
+
+    #moreServicesGrid .bx-more-link {
+        min-height: 82px;
+        padding: 13px;
+        gap: 12px;
+        border-radius: var(--radius-md);
+    }
+
+    #moreServicesGrid .bx-more-icon {
+        flex-basis: 42px;
+        width: 42px;
+        height: 42px;
+        font-size: 1.25rem;
+    }
+
+    #moreServicesGrid .bx-more-content strong {
+        font-size: .88rem;
+    }
+
+    #moreServicesGrid .bx-more-content small {
+        font-size: .7rem;
+    }
+
+    #moreServicesGrid .bx-more-action {
+        padding: 6px 8px;
+        font-size: .65rem;
+    }
+}
+
+/* Very small screens */
+
+@media (max-width: 360px) {
+    #moreServicesGrid .bx-more-link {
+        gap: 9px;
+        padding: 11px;
+    }
+
+    #moreServicesGrid .bx-more-action {
+        display: none;
+    }
+}
