@@ -2219,138 +2219,115 @@ video {
 }
 
 /* =========================================
-   BLOXIO MORE SERVICES — STYLE
+   MORE PAGE — SERVICE CARDS
    ========================================= */
+
+#more {
+    width: 100%;
+    min-width: 0;
+}
 
 #moreServicesGrid.bx-more-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 14px;
+    gap: 16px;
     width: 100%;
     margin-top: 22px;
+    min-width: 0;
 }
+
+/* Service card */
 
 #moreServicesGrid .bx-more-link {
     display: flex;
     align-items: center;
     gap: 14px;
+
     min-width: 0;
-    min-height: 82px;
-    padding: 16px;
-    text-decoration: none;
+    min-height: 104px;
+    padding: 18px;
+
+    background: var(--bg-card);
+    border: 1px solid var(--gold-border);
+    border-radius: var(--radius-lg);
+
     color: var(--text-platinum);
+    text-decoration: none;
+
     transition:
-        transform .2s ease,
-        border-color .2s ease,
-        box-shadow .2s ease;
+        border-color .22s ease,
+        background .22s ease,
+        box-shadow .22s ease,
+        transform .22s ease;
 }
+
+/* Icon */
 
 #moreServicesGrid .bx-more-icon {
-    width: 44px;
-    height: 44px;
-    flex: 0 0 44px;
     display: grid;
     place-items: center;
-    border-radius: 12px;
-    background: var(--bg-card);
+
+    flex: 0 0 48px;
+    width: 48px;
+    height: 48px;
+
+    border: 1px solid var(--gold-border);
+    border-radius: var(--radius-md);
+
+    background: var(--gold-glow);
+    color: var(--gold-solid);
+
+    font-size: 1.45rem;
+    font-weight: 800;
 }
 
-#moreServicesGrid .bx-more-icon img {
-    width: 23px;
-    height: 23px;
-    object-fit: contain;
-    filter: brightness(0) invert(1);
+/* Text */
+
+#moreServicesGrid .bx-more-content {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 6px;
+
+    min-width: 0;
 }
 
-#moreServicesGrid .bx-more-glyph {
-    font-size: 23px;
+#moreServicesGrid .bx-more-content strong {
+    color: var(--text-platinum);
+    font-size: .96rem;
+    font-weight: 800;
+}
+
+#moreServicesGrid .bx-more-content small {
+    color: var(--text-metadata);
+    font-size: .76rem;
+    line-height: 1.5;
+}
+
+/* Open label — reuses existing .btn */
+
+#moreServicesGrid .bx-more-action {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    font-size: .7rem;
+    padding: 7px 10px;
+}
+
+/* Gold hover glow */
+
+#moreServicesGrid .bx-more-link:hover {
+    border-color: var(--gold-solid);
+    background: var(--bg-panel);
+    box-shadow: 0 0 18px var(--gold-glow);
+    transform: translateY(-3px);
+}
+
+#moreServicesGrid .bx-more-link:hover .bx-more-icon {
+    border-color: var(--gold-solid);
     color: var(--gold-solid);
 }
 
-#moreServicesGrid .bx-more-copy {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    min-width: 0;
-    gap: 5px;
-}
-
-#moreServicesGrid .bx-more-copy strong {
-    font-size: .94rem;
-    font-weight: 700;
-}
-
-#moreServicesGrid .bx-more-copy small {
-    font-size: .76rem;
-    color: var(--text-platinum);
-    opacity: .7;
-    line-height: 1.45;
-}
-
-#moreServicesGrid .bx-more-arrow {
-    flex-shrink: 0;
-    font-size: 18px;
-    opacity: .6;
-    transition: transform .2s ease;
-}
-
-/* Hover glow */
-#moreServicesGrid .bx-more-link:hover {
-    transform: translateY(-3px);
-    border-color: var(--gold-solid);
-    box-shadow:
-        0 0 0 1px var(--gold-solid),
-        0 8px 24px color-mix(
-            in srgb,
-            var(--gold-solid) 18%,
-            transparent
-        );
-}
-
-#moreServicesGrid .bx-more-link:hover .bx-more-arrow {
-    transform: translate(3px, -3px);
-    opacity: 1;
-}
-
-/* Tablet */
-@media (max-width: 900px) {
-    #moreServicesGrid.bx-more-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-}
-
-/* Mobile — vertical single column */
-@media (max-width: 600px) {
-    #moreServicesGrid.bx-more-grid {
-        grid-template-columns: minmax(0, 1fr);
-        gap: 10px;
-        margin-top: 16px;
-    }
-
-    #moreServicesGrid .bx-more-link {
-        min-height: 72px;
-        padding: 13px;
-        gap: 12px;
-    }
-
-    #moreServicesGrid .bx-more-icon {
-        width: 42px;
-        height: 42px;
-        flex-basis: 42px;
-    }
-
-    #moreServicesGrid .bx-more-copy strong {
-        font-size: .88rem;
-    }
-
-    #moreServicesGrid .bx-more-copy small {
-        font-size: .72rem;
-    }
-}
-
-@media (prefers-reduced-motion: reduce) {
-    #moreServicesGrid .bx-more-link,
-    #moreServicesGrid .bx-more-arrow {
-        transition: none;
-    }
+#moreServicesGrid .bx-more-link:focus-visible {
+    outline: 2px solid var(--gold-solid);
+    outline-offset: 3px;
 }
