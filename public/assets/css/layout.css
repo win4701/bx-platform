@@ -1,0 +1,91 @@
+.app-header,
+.enterprise-header {
+    position: fixed;
+    inset: 0 0 auto;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    width: 100%;
+    height: var(--header-height);
+    padding: 0 26px;
+    border-bottom: 1px solid var(--gold-border);
+    background: color-mix(in srgb, var(--bg-base-deep) 94.0%, transparent);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+}.header-left,
+.header-center,
+.header-right {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+}.header-left { gap: 25px; }.header-center { justify-content: center; }.header-right { justify-content: flex-end; gap: 12px; }.enterprise-brand {
+    display: flex;
+    align-items: center; /* يضع الأيقونة والنص على خط أفقي واحد */
+    gap: 10px;           /* مسافة صغيرة بين الأيقونة والنص */
+    flex-shrink: 0;      /* يمنع الشعار من الانضغاط */
+    text-decoration: none;
+}.brand-icon {
+    display: block;
+    width: 32px;
+    height: 32px;
+    flex: 0 0 32px;
+    object-fit: contain;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    filter: drop-shadow(0 0 7px color-mix(in srgb, var(--gold-solid) 20.0%, transparent));
+}.brand-text-img {
+    display: block;
+    height: 22px;
+    width: auto;
+    max-width: 140px;
+    object-fit: contain;
+    background: transparent;
+    border: 0;
+    filter: drop-shadow(0 0 5px color-mix(in srgb, var(--gold-solid) 12.0%, transparent));
+}.header-btn {
+    min-height: 38px;
+    padding: 8px 17px;
+    border: 1px solid var(--gold-border);
+    border-radius: var(--radius-md);
+    background: transparent;
+    color: var(--text-platinum);
+    font-size: .83rem;
+    font-weight: 800;
+    transition: transform var(--transition-fast), opacity var(--transition-fast);
+}.header-btn.primary {
+    border-color: transparent;
+    background: var(--gold-primary);
+    color: var(--bg-base-core);
+}.header-btn.primary:hover {
+    filter: brightness(1.1);
+    box-shadow: var(--shadow-gold);
+}.header-btn.secondary {
+    color: var(--gold-solid);
+}.header-btn.secondary:hover {
+    background: var(--gold-glow);
+}#app-shell {
+    width: 100%;
+    min-height: 100vh;
+}.app-container {
+    width: 100%;
+    max-width: 1480px;
+    min-height: 100vh;
+    margin: 0 auto;
+    padding: calc(var(--header-height) + 25px) 26px 42px;
+}
+
+/* ==========================================================================
+   BLOXIO APP LAYOUT — WIDTH & SAFE AREA
+   ========================================================================== */
+.app-container { min-width: 0; }
+#app-shell, .app-container, .view { box-sizing: border-box; }
+@supports (padding: max(0px)) {
+    .app-container {
+        padding-left: max(26px, env(safe-area-inset-left));
+        padding-right: max(26px, env(safe-area-inset-right));
+        padding-bottom: max(42px, env(safe-area-inset-bottom));
+    }
+}
