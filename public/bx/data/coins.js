@@ -36,7 +36,7 @@ swap:true,
 casino:true,
 wallet:true,
 market:true,
-icon:"/assets/images/coins/bx.png"
+icon:"/assets/images/coins/eubx.png"
 },
 
 {
@@ -83,7 +83,7 @@ decimals:18,
 swap:true,
 wallet:true,
 marke:true,
-icon:"/assets/images/coins/dai.png"
+icon:"/assets/images/coins/eubx.png"
 },
    
 {
@@ -167,16 +167,6 @@ swap:true,
 wallet:true,
 market:true,
 icon:"/assets/images/coins/sol.png"
-},
-
-{
-symbol:"EUBX",
-name:"Euro Bloxio",
-category:"main",
-swap:true,
-wallet:true,
-market:true,
-icon:"/assets/images/coins/eubx.png"
 },
 
 {
