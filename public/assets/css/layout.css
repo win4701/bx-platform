@@ -1,0 +1,339 @@
+/* ==========================================================================
+   BLOXIO — LAYOUT FOUNDATION
+   Header, branding, application shell and header-level navigation.
+   Keep page-specific components in pages.css and breakpoints in responsive.css.
+   ========================================================================== */
+
+.app-header,
+.enterprise-header {
+    position: fixed;
+    inset: 0 0 auto;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    height: var(--header-height);
+    padding-inline: 26px;
+    border-bottom: 1px solid var(--gold-border);
+    background: var(--bg-base-deep);
+}
+
+.header-left,
+.header-center,
+.header-right {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+}
+
+.header-left {
+    flex: 1 1 0;
+    justify-content: flex-start;
+    gap: 25px;
+}
+
+.header-center {
+    flex: 0 1 auto;
+    justify-content: center;
+    gap: 12px;
+}
+
+.header-right {
+    flex: 1 1 0;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+.enterprise-brand {
+    display: inline-flex;
+    align-items: center;
+    flex: 0 0 auto;
+    gap: 10px;
+    min-width: 0;
+    text-decoration: none;
+}
+
+.brand-icon {
+    display: block;
+    flex: 0 0 32px;
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+}
+
+.brand-text-img {
+    display: block;
+    width: auto;
+    max-width: 140px;
+    height: 22px;
+    object-fit: contain;
+    background: transparent;
+    border: 0;
+    filter: brightness(0) invert(1);
+}
+
+.header-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 38px;
+    padding: 8px 17px;
+    border: 1px solid var(--gold-border);
+    border-radius: var(--radius-md);
+    background: transparent;
+    color: var(--text-platinum);
+    font-size: .83rem;
+    font-weight: 800;
+    text-decoration: none;
+    cursor: pointer;
+    transition: transform var(--transition-fast), opacity var(--transition-fast);
+}
+
+.header-btn:hover {
+    transform: translateY(-1px);
+}
+
+.header-btn:active {
+    transform: translateY(0);
+    opacity: .85;
+}
+
+.header-btn.primary {
+    border-color: var(--gold-primary);
+    background: var(--gold-primary);
+    color: var(--bg-base-deep);
+}
+
+.header-btn.secondary {
+    color: var(--gold-solid);
+}
+
+#app-shell {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    min-height: 100vh;
+}
+
+.app-container {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 1480px;
+    min-width: 0;
+    min-height: 100vh;
+    margin-inline: auto;
+    padding: calc(var(--header-height) + 25px) 26px 42px;
+}
+
+.view {
+    box-sizing: border-box;
+    min-width: 0;
+}
+
+/* ==========================================================================
+   HEADER MORE MENU
+   The menu is positioned in the header beside the brand and locale control.
+   ========================================================================== */
+
+.header-more-menu-wrap {
+    display: flex;
+    align-items: center;
+    flex: 0 0 auto;
+    min-width: 0;
+}
+
+.header-more-menu {
+    position: relative;
+    flex: 0 0 auto;
+}
+
+.header-more-menu > summary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 40px;
+    padding: 0 13px;
+    border: 1px solid var(--gold-border);
+    border-radius: var(--radius-md);
+    background: var(--bg-card);
+    color: var(--text-platinum);
+    cursor: pointer;
+    list-style: none;
+    user-select: none;
+}
+
+.header-more-menu > summary::-webkit-details-marker {
+    display: none;
+}
+
+.header-more-menu > summary::marker {
+    content: "";
+}
+
+.header-more-menu > summary svg {
+    display: block;
+    width: 15px;
+    height: 15px;
+    flex: 0 0 15px;
+    transition: transform var(--transition-fast);
+}
+
+.header-more-menu[open] > summary svg {
+    transform: rotate(180deg);
+}
+
+.header-more-dropdown {
+    position: absolute;
+    inset-block-start: calc(100% + 10px);
+    inset-inline-start: 0;
+    z-index: 1200;
+    display: grid;
+    gap: 4px;
+    min-width: 205px;
+    max-width: min(280px, calc(100vw - 24px));
+    padding: 8px;
+    border: 1px solid var(--gold-border);
+    border-radius: var(--radius-md);
+    background: var(--bg-card);
+    box-shadow: var(--shadow-card);
+}
+
+.header-more-dropdown a {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    min-width: 0;
+    min-height: 42px;
+    padding: 9px 11px;
+    border-radius: var(--radius-sm);
+    color: var(--text-platinum);
+    text-decoration: none;
+}
+
+.header-more-dropdown a:hover,
+.header-more-dropdown a:focus-visible,
+.header-more-dropdown a.active {
+    background: var(--bg-panel);
+    color: var(--gold-solid);
+}
+
+.header-more-dropdown a:focus-visible,
+.header-more-menu > summary:focus-visible {
+    outline: 2px solid var(--gold-solid);
+    outline-offset: 2px;
+}
+
+.header-more-dropdown img,
+.header-more-dropdown .sidebar-glyph {
+    display: grid;
+    place-items: center;
+    flex: 0 0 22px;
+    width: 22px;
+    height: 22px;
+    object-fit: contain;
+    color: var(--gold-solid);
+}
+
+/* ==========================================================================
+   SAFE AREA AND OVERFLOW PROTECTION
+   ========================================================================== */
+
+@supports (padding: max(0px)) {
+    .app-container {
+        padding-inline-start: max(26px, env(safe-area-inset-left));
+        padding-inline-end: max(26px, env(safe-area-inset-right));
+        padding-bottom: max(42px, env(safe-area-inset-bottom));
+    }
+}
+
+#app-shell,
+.app-container,
+.view,
+.header-left,
+.header-center,
+.header-right {
+    min-width: 0;
+}
+
+@media (max-width: 760px) {
+    .app-header,
+    .enterprise-header {
+        gap: 10px;
+        padding-inline: 14px;
+    }
+
+    .header-left {
+        flex: 0 1 auto;
+        gap: 10px;
+    }
+
+    .header-center {
+        flex: 0 1 auto;
+        gap: 8px;
+    }
+
+    .header-right {
+        flex: 0 1 auto;
+        gap: 8px;
+    }
+
+    .brand-text-img {
+        max-width: 112px;
+        height: 19px;
+    }
+
+    .header-more-menu > summary {
+        min-height: 38px;
+        padding-inline: 10px;
+    }
+
+    .app-container {
+        padding-inline: 16px;
+        padding-bottom: calc(var(--mobile-nav-height) + 28px);
+    }
+}
+
+@media (max-width: 420px) {
+    .app-header,
+    .enterprise-header {
+        gap: 7px;
+        padding-inline: 10px;
+    }
+
+    .header-left {
+        gap: 7px;
+    }
+
+    .enterprise-brand {
+        gap: 7px;
+    }
+
+    .brand-icon {
+        flex-basis: 28px;
+        width: 28px;
+        height: 28px;
+    }
+
+    .brand-text-img {
+        max-width: 88px;
+        height: 17px;
+    }
+
+    .header-more-menu > summary {
+        gap: 5px;
+        padding-inline: 8px;
+        font-size: .78rem;
+    }
+
+    .app-container {
+        padding-inline: 12px;
+    }
+}
