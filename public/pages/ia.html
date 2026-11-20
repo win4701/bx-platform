@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BLOXIO | IA</title>
+<link rel="stylesheet" href="/assets/css/base.css">
+<link rel="stylesheet" href="/assets/css/layout.css">
+<link rel="stylesheet" href="/assets/css/components.css">
+<link rel="stylesheet" href="/assets/css/pages.css">
+<link rel="stylesheet" href="/assets/css/responsive.css">
+</head>
+<body data-page="ia">
+<div class="app-shell">
+<header class="enterprise-header">
+<a class="enterprise-brand" href="/index.html" data-view="wallet"><img class="brand-icon" src="/assets/images/branding/logo.png" alt="BLOXIO"><img class="brand-text-img" src="/assets/images/branding/bloxio.png" alt="BLOXIO"></a>
+<details class="header-more-menu"><summary class="locale-trigger">More⌄</summary><nav class="header-more-dropdown" aria-label="More services">
+<a href="/pages/market.html" data-view="market">Market</a><a href="/pages/casino.html" data-view="casino">Casino</a><a href="/pages/trade.html" data-view="trade">Trade</a><a href="/pages/ia.html" data-view="ia">IA</a><a href="/pages/more.html" data-view="more">All services</a>
+</nav></details>
+</header>
+<main class="page-content" id="ia">
+<section class="enterprise-card ia-hero">
+<span class="wallet-kicker">BLOXIO INTELLIGENCE</span><h1>IA Assistant</h1>
+<p class="text-metadata">Your intelligent workspace for market insights, portfolio context and platform guidance.</p>
+</section>
+<section class="enterprise-card ia-chat" aria-label="IA assistant">
+<div class="card-head"><h2>Conversation</h2><span>Assistant workspace</span></div>
+<div id="iaConversation" class="ia-conversation" aria-live="polite"><div class="ia-empty-state"><strong>Welcome to BLOXIO IA</strong><p>Connect an approved AI service to enable live responses. No simulated answers are shown.</p></div></div>
+<form id="iaPromptForm" class="ia-prompt-form">
+<label for="iaPrompt">Your message</label><textarea id="iaPrompt" name="prompt" rows="3" placeholder="Ask about your wallet, markets or BLOXIO features..." required></textarea>
+<button class="btn primary" type="submit" disabled aria-disabled="true">AI service not connected</button>
+</form>
+<p class="text-metadata">AI responses are unavailable until an authorized backend endpoint is configured.</p>
+</section>
+</main>
+<nav class="mobile-nav" aria-label="Primary navigation">
+<a class="nav-btn" data-view="wallet" href="/index.html"><img src="/assets/images/navigation/home.svg" alt=""><span>Wallet</span></a>
+<a class="nav-btn" data-view="market" href="/pages/market.html"><img src="/assets/images/navigation/market.svg" alt=""><span>Market</span></a>
+<a class="nav-btn" data-view="casino" href="/pages/casino.html"><img src="/assets/images/navigation/casino.svg" alt=""><span>Casino</span></a>
+<a class="nav-btn" data-view="trade" href="/pages/trade.html"><span class="sidebar-glyph">⇄</span><span>Trade</span></a>
+<a class="nav-btn active" data-view="ia" href="/pages/ia.html"><span class="sidebar-glyph">✦</span><span>IA</span></a>
+</nav>
+</div>
+<script src="/bx/core.js"></script><script src="/bx/main.js"></script>
+</body></html>
