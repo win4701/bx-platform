@@ -9,7 +9,7 @@ import { createBloxioChartEngine } from "./chart.games.js";
   const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({
     "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"
   }[c]));
-  const MIN_BETS = { BX: 0.1, STR: 0.1, EUBX: 0.1, XBC: 10 };
+  const MIN_BETS = { BX: 0.1, STR: 3, EUBX: 0.2, XBC: 10 };
   const ACTIVE_HANDLERS = new Set(["dice", "coinflip"]);
   const CHART_ENGINE = createBloxioChartEngine();
 
