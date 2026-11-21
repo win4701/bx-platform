@@ -6,6 +6,7 @@
 "use strict";
 
 // تأكد من مسار ملف games.js (إذا كان في نفس المجلد استخدم "./games.js")
+import { CASINO_COINS } from "./data/coins.js";
 import { CASINO_GAMES } from "./data/games.js";
 import { createBloxioChartEngine, createBloxioFullscreenController } from "./chart.games.js";
  
@@ -91,7 +92,7 @@ export const Currency = {
     supported: ["BX", "STR", "EUBX", "XBC"],
     set(currency) { if (!this.supported.includes(currency)) return false; STATE.currency = currency; Settings.currency = currency; Settings.save(); BUS.emit("currency:change", currency); return true; },
     get() { return STATE.currency; },
-    minBet() { return ({ BX: 0.1, STR: 0.1, EUBX: 0.1, XBC: 10 })[STATE.currency] ?? 0.1; }
+    minBet() { return ({ BX: 0.1, STR: 3, EUBX: 0.2, XBC: 10 })[STATE.currency] ?? 0.1; }
 };
 
 /* =========================================================
