@@ -4,7 +4,6 @@
    Fully aligned with Mining CSS MASTER
 ========================================================= */
 
-import { MINING_COINS } from "./data/coins.js";
 (() => {
   
    'use strict';
