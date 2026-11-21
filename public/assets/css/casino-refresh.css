@@ -1,0 +1,58 @@
+/* BLOXIO CSS / CASINO — page-specific presentation layer */
+
+/* BLOXIO CASINO REFRESH — scoped overrides; does not alter :root or brand tokens */
+.casino-shell .casino-asset-strip{
+  display:grid!important;grid-template-columns:repeat(7,minmax(0,1fr));gap:10px;
+  width:100%;overflow:visible;padding:0;margin:18px 0 22px;
+}
+.casino-shell .casino-asset-strip .casino-currency{
+  min-width:0;width:100%;min-height:112px;padding:12px 6px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;
+  border-radius:18px;overflow:hidden;
+}
+.casino-shell .casino-asset-strip .casino-currency img{
+  display:block;width:34px;height:34px;max-width:34px;max-height:34px;object-fit:contain;
+}
+.casino-shell .casino-asset-strip .casino-asset-fallback{
+  display:none;width:34px;height:34px;align-items:center;justify-content:center;
+  border-radius:50%;font-size:11px;font-weight:800;
+}
+.casino-shell .casino-asset-strip .casino-currency strong{font-size:clamp(10px,1.3vw,13px);line-height:1.2;white-space:nowrap}
+.casino-shell .casino-economy{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.casino-shell .casino-economy-card{min-width:0}
+.bxg-layout{width:100%;max-width:1240px;margin-inline:auto}
+.bxg-game-head,.bxg-stage-card,.bxg-history-card,.bxg-play-card,.bxg-competition-card{
+  border-radius:22px;min-width:0
+}
+.bxg-game-identity{display:flex;align-items:center;gap:18px;min-width:0}
+.bxg-game-art{width:76px;height:76px;object-fit:cover;border-radius:16px;flex:0 0 auto}
+.bxg-asset-strip{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:10px}
+.bxg-asset{min-width:0;min-height:92px;padding:10px 5px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}
+.bxg-asset-icon,.bxg-asset-icon img{width:34px;height:34px;max-width:34px;max-height:34px;object-fit:contain}
+.bxg-asset strong{font-size:13px;white-space:nowrap}
+.bxg-main-grid{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(280px,.85fr);gap:18px;align-items:start}
+.bxg-stage-column,.bxg-control-column{display:grid;gap:18px;min-width:0}
+.bxg-chart{min-height:270px;position:relative;overflow:hidden}
+.bxg-chart canvas{display:block;width:100%;max-width:100%}
+.bxg-form{display:grid;gap:10px}
+.bxg-form input,.bxg-form select{width:100%;min-width:0}
+.bxg-submit{width:100%;min-height:48px}
+.bxg-result-message{overflow-wrap:anywhere}
+@media(max-width:900px){
+ .casino-shell .casino-economy{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .casino-shell .casino-asset-strip{grid-template-columns:repeat(4,minmax(0,1fr))}
+ .bxg-main-grid{grid-template-columns:minmax(0,1fr)}
+ .bxg-asset-strip{grid-template-columns:repeat(4,minmax(0,1fr))}
+}
+@media(max-width:480px){
+ .casino-shell .casino-asset-strip{grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+ .casino-shell .casino-asset-strip .casino-currency{min-height:92px;padding:9px 4px;border-radius:14px}
+ .casino-shell .casino-asset-strip .casino-currency img{width:30px;height:30px}
+ .casino-shell .casino-economy{gap:9px}
+ .casino-shell .casino-economy-card{padding:14px}
+ .bxg-game-art{width:58px;height:58px}
+ .bxg-game-head,.bxg-stage-card,.bxg-history-card,.bxg-play-card,.bxg-competition-card{border-radius:17px}
+ .bxg-asset-strip{grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
+ .bxg-asset{min-height:82px}
+ .bxg-chart{min-height:230px}
+}
