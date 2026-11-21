@@ -4,8 +4,10 @@
    Fully aligned with Mining CSS MASTER
 ========================================================= */
 
+import { MINING_COINS } from "./data/coins.js";
 (() => {
-  'use strict';
+  
+   'use strict';
 
   if (window.BX_MINING_BOOTED) {
     console.warn('[Mining] Already initialized');
