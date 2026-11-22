@@ -13,30 +13,102 @@
     const state = { side: 'buy', expressSide: 'buy', section: 'market', asset: 'BX', fiat: 'DZD', currencyTarget: 'fiat', payment: 'all' };
 
     // مصفوفة العملات: الورقية مع الأعلام والمناطق، والرقمية (5 فقط)
-    const currencies = [
-      // --- العملات الورقية (Fiat) ---
-      { code: 'DZD', mark: '🇩🇿', type: 'fiat', region: 'North Africa' },
-      { code: 'MAD', mark: '🇲🇦', type: 'fiat', region: 'North Africa' },
-      { code: 'EGP', mark: '🇪🇬', type: 'fiat', region: 'North Africa' },
-      { code: 'EUR', mark: '🇪🇺', type: 'fiat', region: 'Europe' },
-      { code: 'GBP', mark: '🇬🇧', type: 'fiat', region: 'Europe' },
-      { code: 'CAD', mark: '🇨🇦', type: 'fiat', region: 'North America' },
-      { code: 'AED', mark: '🇦🇪', type: 'fiat', region: 'Middle East' },
-      { code: 'SAR', mark: '🇸🇦', type: 'fiat', region: 'Middle East' },
-      { code: 'CNY', mark: '🇨🇳', type: 'fiat', region: 'Asia' },
-      { code: 'JPY', mark: '🇯🇵', type: 'fiat', region: 'Asia' },
-      { code: 'INR', mark: '🇮🇳', type: 'fiat', region: 'Asia' },
-      { code: 'BRL', mark: '🇧🇷', type: 'fiat', region: 'Latin America' },
-      { code: 'MXN', mark: '🇲🇽', type: 'fiat', region: 'Latin America' },
-      
-      // --- العملات الرقمية (5 فقط) ---
-      { code: 'BX', mark: 'B', type: 'asset' },
-      { code: 'BTC', mark: '₿', type: 'asset' },
-      { code: 'EUBX', mark: '€', type: 'asset' },
-      { code: 'ETH', mark: '◆', type: 'asset' },
-      { code: 'SOL', mark: 'S', type: 'asset' }
-    ];
+    const renderCurrencies = (query = '') => {
+  const list = currencies.filter(c => 
+    c.type === state.currencyTarget && 
+    (c.code + (c.mark || '') + (c.countryCode || '')).toLowerCase().includes(query.toLowerCase())
+  );
+  
+  currencyList.replaceChildren();
 
+  if (state.currencyTarget === 'fiat') {
+    // تجميع حسب المنطقة
+    const regions = {};
+    list.forEach(c => {
+      if (!regions[c.region]) regions[c.region] = [];
+      regions[c.region].push(c);
+    });
+
+    Object.keys(regions).forEach(region => {
+      const regionHeader = document.createElement('div');
+      regionHeader.className = 'p2p-currency-region-label';
+      regionHeader.textContent = region;
+      regionHeader.style.cssText = 'padding:10px 16px 4px; font-size:10px; font-weight:700; color:#889e95; text-transform:uppercase; letter-spacing:0.08em;';
+      currencyList.append(regionHeader);
+
+      regions[region].forEach(c => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'p2p-currency-option';
+        button.setAttribute('aria-selected', String(state.fiat === c.code));
+        
+        // استخدام مكتبة Flag-Icons (span مع كلاسات fi fi-xx)
+        const flag = document.createElement('span');
+        flag.className = `fi fi-${c.countryCode} p2p-flag-icon`; 
+        flag.style.cssText = 'margin-right:12px; border-radius:2px; font-size: 1.2rem;';
+        
+        const code = document.createElement('strong');
+        code.textContent = c.code;
+        
+        const check = document.createElement('span');
+        check.className = 'p2p-currency-check';
+        check.textContent = state.fiat === c.code ? '✓' : '';
+        
+        button.append(flag, code, check);
+        button.addEventListener('click', () => {
+          state.fiat = c.code;
+          $('#p2pFiatLabel').textContent = c.code;
+          
+          // تحديث صورة العلم في الزر الرئيسي (باستخدام flagcdn كصورة)
+          $('#p2pFiatFlag').src = `https://flagcdn.com/${c.countryCode}.svg`;
+          
+          $('#p2pExpressFiat').textContent = c.code;
+          updateOffersTitle();
+          currencySearch.value = '';
+          setSheet(currencySheet, currencyBackdrop, false);
+        });
+        currencyList.append(button);
+      });
+    });
+  } else {
+    // العملات الرقمية
+    list.forEach(c => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'p2p-currency-option';
+      button.setAttribute('aria-selected', String(state.asset === c.code));
+      
+      const mark = document.createElement('span');
+      mark.className = 'p2p-coin-mark p2p-coin-usdt';
+      mark.textContent = c.mark;
+      
+      const code = document.createElement('strong');
+      code.textContent = c.code;
+      
+      const check = document.createElement('span');
+      check.className = 'p2p-currency-check';
+      check.textContent = state.asset === c.code ? '✓' : '';
+      
+      button.append(mark, code, check);
+      button.addEventListener('click', () => {
+        state.asset = c.code;
+        $('#p2pAssetLabel').textContent = c.code;
+        $('#p2pExpressAsset').textContent = c.code;
+        updateOffersTitle();
+        currencySearch.value = '';
+        setSheet(currencySheet, currencyBackdrop, false);
+      });
+      currencyList.append(button);
+    });
+  }
+
+  if (!list.length) {
+    const empty = document.createElement('p');
+    empty.className = 'p2p-disclaimer';
+    empty.textContent = 'No matching currency';
+    currencyList.append(empty);
+  }
+};
     // دالة مساعدة لتحديث عنوان العروض
     const updateOffersTitle = () => {
       $('#p2pOffersTitle').textContent = `${state.side === 'buy' ? 'Buy' : 'Sell'} ${state.asset} with ${state.fiat}`;
