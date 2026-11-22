@@ -3,9 +3,7 @@
 <html dir="ltr" lang="en">
 <head>
 <meta charset="utf-8"/>
-<meta content="
-width=device-width,
-initial-scale=1,viewport-fit=cover" name="viewport"/>
+<meta content="width=device-width, initial-scale=1, viewport-fit=cover" name="viewport"/>
 <title>Bloxio | P2P</title>
 <meta content="#00e0ff" name="theme-color"/>
 <meta content="Wallet • Market • Mining • Casino • Airdrop" name="description"/>
@@ -124,7 +122,7 @@ initial-scale=1,viewport-fit=cover" name="viewport"/>
 <a data-view="mint" href="/pages/mint.html"><span aria-hidden="true" class="sidebar-glyph">✦</span>Mint</a>
 </aside>
 <main class="app-container" id="app">
-<!-- ================= WALLET ================= -->
+<!-- ================= P2P ================= -->
 <section aria-label="BLOXIO P2P marketplace" class="view active p2p-page" id="p2p">
 <header class="p2p-topbar">
 <div class="p2p-brandline">
@@ -149,18 +147,44 @@ initial-scale=1,viewport-fit=cover" name="viewport"/>
 <span aria-hidden="true" class="p2p-filter-icon">☷</span><span>Filters</span><i aria-hidden="true"></i>
 </button>
 </div>
-<div class="p2p-query-bar">
-<button aria-label="Choose crypto asset" class="p2p-select-control" data-p2p-open-currency="asset" type="button">
-<span class="p2p-coin-mark p2p-coin-usdt">₮</span><strong id="p2pAssetLabel">USDT</strong><span class="p2p-chevron"></span>
-</button>
-<label class="p2p-amount-field">
-<span class="p2p-sr-only">Amount in fiat currency</span>
-<input id="p2pAmount" inputmode="decimal" min="0" placeholder="Amount" step="any" type="number"/>
-</label>
-<button aria-label="Choose fiat currency" class="p2p-select-control p2p-fiat-select" data-p2p-open-currency="fiat" type="button">
-<span class="p2p-coin-mark p2p-coin-fiat">دج</span><strong id="p2pFiatLabel">DZD</strong><span class="p2p-chevron"></span>
-</button>
+
+<!-- ===== شريط العملات المعدل (5 عملات + المبلغ + العلم) ===== -->
+<div class="p2p-query-bar" style="flex-wrap: wrap; gap: 12px; padding: 10px 0;">
+  
+  <!-- قائمة العملات الرقمية الأساسية (5 فقط) -->
+  <div class="p2p-crypto-selector" style="display:flex; gap:6px; width:100%; overflow-x:auto; padding-bottom:4px; scrollbar-width:none;">
+    <button class="p2p-crypto-btn active" data-p2p-currency-code="BX" type="button">
+      <span class="p2p-coin-mark" style="background:#00e0ff; color:#000;">B</span><strong>BX</strong>
+    </button>
+    <button class="p2p-crypto-btn" data-p2p-currency-code="BTC" type="button">
+      <span class="p2p-coin-mark" style="background:#f7931a;">₿</span><strong>BTC</strong>
+    </button>
+    <button class="p2p-crypto-btn" data-p2p-currency-code="EUBX" type="button">
+      <span class="p2p-coin-mark" style="background:#003399;">€</span><strong>EUBX</strong>
+    </button>
+    <button class="p2p-crypto-btn" data-p2p-currency-code="ETH" type="button">
+      <span class="p2p-coin-mark" style="background:#627eea;">◆</span><strong>ETH</strong>
+    </button>
+    <button class="p2p-crypto-btn" data-p2p-currency-code="SOL" type="button">
+      <span class="p2p-coin-mark" style="background:#14f195; color:#000;">S</span><strong>SOL</strong>
+    </button>
+  </div>
+
+  <!-- حقل المبلغ -->
+  <label class="p2p-amount-field" style="flex:1; min-width:120px;">
+    <span class="p2p-sr-only">Amount in fiat currency</span>
+    <input id="p2pAmount" inputmode="decimal" min="0" placeholder="Amount" step="any" type="number" style="width:100%; padding:12px; border-radius:10px; background:#0d261d; border:1px solid #1a3c2f; color:#fff;"/>
+  </label>
+
+  <!-- زر اختيار العملة الورقية (يفتح النافذة السفلية) -->
+  <button class="p2p-select-control p2p-fiat-select" data-p2p-open-currency="fiat" type="button" style="flex:0 0 auto; padding: 10px 14px;">
+    <img id="p2pFiatFlag" src="https://flagcdn.com/dz.svg" alt="DZD" style="width:20px; height:15px; border-radius:2px; margin-right:6px; object-fit:cover;"/>
+    <strong id="p2pFiatLabel">DZD</strong>
+    <span class="p2p-chevron"></span>
+  </button>
 </div>
+<!-- ======================================================== -->
+
 <div class="p2p-method-strip">
 <span>Payment</span>
 <button class="p2p-method-chip active" data-p2p-payment="all" type="button">All methods</button>
@@ -169,7 +193,7 @@ initial-scale=1,viewport-fit=cover" name="viewport"/>
 <button class="p2p-method-chip" data-p2p-payment="wallet" type="button">E-wallet</button>
 </div>
 <div class="p2p-list-heading">
-<div><h2 id="p2pOffersTitle">Buy USDT with DZD</h2><p>Compare merchant terms before starting a trade.</p></div>
+<div><h2 id="p2pOffersTitle">Buy BX with DZD</h2><p>Compare merchant terms before starting a trade.</p></div>
 <span class="p2p-sort-label">Sort: <strong>Best match</strong></span>
 </div>
 <div aria-live="polite" class="p2p-offer-list" id="p2pOfferList">
@@ -188,7 +212,7 @@ initial-scale=1,viewport-fit=cover" name="viewport"/>
 <div class="p2p-express-heading">
 <span class="p2p-kicker">QUICK CONVERSION</span>
 <h2>P2P Express</h2>
-<p>Buy or sell USDT using your preferred payment currency.</p>
+<p>Buy or sell crypto using your preferred payment currency.</p>
 </div>
 <div class="p2p-express-card">
 <div aria-label="Express transaction type" class="p2p-express-switch" role="group">
@@ -395,6 +419,7 @@ initial-scale=1,viewport-fit=cover" name="viewport"/>
 <!-- Shared navigation and translation bootstrap -->
 <script src="/bx/pages.js"></script>
 <script src="/bx/main.js"></script>
-
-<script src="/core/auto-i18n.js"></script><script defer="True" src="/bx/p2p.js"></script></body>
+<script src="/core/auto-i18n.js"></script>
+<script defer="True" src="/bx/p2p.js"></script>
+</body>
 </html>
