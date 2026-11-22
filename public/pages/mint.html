@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="
+width=device-width,
+initial-scale=1,viewport-fit=cover" name="viewport"/>
+<title>BLOXIO Moments | Social Experience</title>
+<meta content="#00e0ff" name="theme-color"/>
+<meta content="Wallet • Market • Mining • Casino • Airdrop" name="description"/>
+<meta content="yes" name="mobile-web-app-capable"/><meta content="yes" name="apple-mobile-web-app-capable"/>
+<meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"/>
+<meta content="Bloxio" name="apple-mobile-web-app-title"/>
+<link href="/manifest.json" rel="manifest"/>
+<link href="/assets/images/branding/logo.png" rel="icon"/>
+<link href="/assets/css/base.css" rel="stylesheet"/><link href="/assets/css/layout.css" rel="stylesheet"/><link href="/assets/css/components.css" rel="stylesheet"/><link href="/assets/css/pages.css" rel="stylesheet"/>
+<link href="/assets/css/responsive.css" rel="stylesheet"/>
+</head>
+<body class="loading auth-loading" data-motion="on" data-page="mint" data-sound="on" data-theme="dark" data-ui="enterprise">
+<!-- GLOBAL LOADER -->
+<div id="globalLoader">
+<div class="loader-ring"></div>
+<h1 class="loader-title">Bloxio</h1>
+<div class="loader-progress">
+<div class="loader-progress-fill" id="loaderProgress">
+</div>
+</div>
+</div>
+<!-- VIDEO -->
+<video autoplay="" class="bg-video bg-ambient" loop="" muted="" playsinline="">
+<source src="/assets/v%C3%ADdeo/ambient.mp4" type="video/mp4"/>
+</video>
+<video autoplay="" class="bg-video bg-particles" loop="" muted="" playsinline="">
+<source src="/assets/v%C3%ADdeo/particles.mp4" type="video/mp4"/>
+</video>
+<video autoplay="" class="bg-video bg-grid" loop="" muted="" playsinline="">
+<source src="/assets/v%C3%ADdeo/grid-loop.mp4" type="video/mp4"/>
+</video>
+<div class="bg-layer"></div>
+<div class="grid-overlay"></div>
+<div class="ambient-glow"></div>
+<div id="app-shell">
+<header class="app-header enterprise-header">
+<div class="header-left">
+<a aria-label="Bloxio Home" class="enterprise-brand" href="/index.html">
+<!-- الأيقونة (الحرف/الرمز) -->
+<img alt="Bloxio Icon" class="brand-icon" src="/assets/images/branding/logo.png"/>
+<!-- الشعار النصي (BLOXIO) -->
+<img alt="BLOXIO" class="brand-text-img" src="/assets/images/branding/bloxio.png"/>
+</a>
+<div class="system-status" id="systemStatus">
+<span class="status-dot"></span>
+<div class="status-meta">
+<strong>SYSTEM ONLINE</strong>
+<small id="networkLatency">Latency 42ms</small>
+</div>
+</div>
+</div>
+<nav aria-label="Global Navigation" class="header-center">
+<div class="header-more-menu-wrap">
+<details class="header-more-menu" id="headerMoreMenu">
+<summary aria-controls="headerMoreDropdown" aria-label="Open More menu">
+<span>More</span>
+<svg aria-hidden="true" viewbox="0 0 24 24"><path d="m7 10 5 5 5-5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</summary>
+<nav aria-label="More services" class="header-more-dropdown" id="headerMoreDropdown">
+<a href="/pages/trade.html" data-view="trade"><span class="sidebar-glyph" aria-hidden="true">⇄</span><span>Trade</span></a>
+<a data-view="airdrop" href="/pages/airdrop.html"><img alt="" src="/assets/images/navigation/airdrop.svg"/><span>Airdrop</span></a>
+<a data-view="mint" href="/pages/mint.html"><span aria-hidden="true" class="sidebar-glyph">✦</span><span>Mint</span></a>
+<a data-view="p2p" href="/pages/p2p.html"><span aria-hidden="true" class="sidebar-glyph">⇄</span><span>P2P</span></a>
+<a data-view="settings" href="/pages/settings.html"><span aria-hidden="true" class="sidebar-glyph">⚙</span><span>Settings</span></a>
+<a data-view="profile" href="/pages/profile.html"><span aria-hidden="true" class="sidebar-glyph">◎</span><span>Profile</span></a>
+<a data-view="reward" href="/pages/reward.html"><span aria-hidden="true" class="sidebar-glyph">◇</span><span>Rewards</span></a>
+</nav>
+</details>
+</div><div class="locale-box">
+<button aria-controls="localeMenu" aria-expanded="false" class="locale-trigger" id="localeTrigger" type="button">
+<span id="currentLocale">EN</span>
+<svg height="14" viewbox="0 0 24 24" width="14">
+<path d="M7 10l5 5l5-5z" fill="currentColor"></path>
+</svg>
+</button>
+<ul class="locale-menu" id="localeMenu">
+<li><button data-lang="EN"> EN</button></li>
+<li><button data-lang="AR"> AR</button></li>
+<li><button data-lang="FR"> FR</button></li>
+<li><button data-lang="ES"> ES</button></li>
+<li><button data-lang="DE"> DE</button></li>
+<li><button data-lang="ZH"> ZH</button></li>
+<li><button data-lang="RU"> RU</button></li>
+<li><button data-lang="JA"> JA</button></li>
+<li><button data-lang="TR"> TR</button></li>
+</ul>
+</div>
+</nav>
+<div class="header-right">
+<div class="auth-toolbar" id="guestToolbar">
+<button class="header-btn secondary" id="headerLoginBtn" type="button">Login</button>
+<button class="header-btn primary" id="headerRegisterBtn" type="button">Register</button>
+</div>
+<div class="user-toolbar hidden" id="userToolbar">
+<button aria-controls="userDropdown" aria-expanded="false" class="user-trigger" id="userMenuTrigger" type="button">
+<div class="user-avatar">BX</div>
+<div class="user-meta">
+<strong id="vipTier">VIP 1</strong>
+<small>✔ VERIFIED</small>
+</div>
+<div class="session-pill"> 1 ACTIVE
+</div>
+</button>
+<ul class="user-dropdown" id="userDropdown">
+<li><button type="button">Profile</button></li>
+<li><button type="button">Security</button></li>
+<li><button type="button">Sessions</button></li>
+<li><button id="logoutBtn" type="button">Logout</button></li>
+</ul>
+</div>
+</div>
+</header><aside aria-label="Bloxio sections" class="desktop-sidebar">
+<div class="sidebar-label">Workspace</div>
+<a data-view="wallet" href="/index.html"><img alt="" src="/assets/images/navigation/home.svg">Wallet</img></a>
+<a data-view="market" href="/pages/market.html"><img alt="" src="/assets/images/navigation/market.svg"/>Market</a>
+<a data-view="casino" href="/pages/casino.html"><img alt="" src="/assets/images/navigation/casino.svg"/>Casino</a>
+<a data-view="mining" href="/pages/mining.html"><img alt="" src="/assets/images/navigation/mining.svg"/>Mining</a>
+<a data-view="mint" href="/pages/mint.html"><span aria-hidden="true" class="sidebar-glyph">✦</span>Mint</a>
+</aside>
+<main class="app-container" id="app">
+<!-- ================= MAIN ================= -->
+<section aria-labelledby="mintTitle" class="view active mint-page" id="mint">
+<header class="mint-square-header">
+<div class="mint-square-brand">
+<div aria-hidden="true" class="mint-brand-symbol">✦</div>
+<div class="mint-brand-copy"><strong>BLOXIO</strong><span>MINT</span></div>
+</div>
+<div class="mint-header-actions">
+<a aria-label="Rewards dashboard" class="mint-rewards-link" href="/pages/reward">✦ <span>Rewards</span></a>
+<button aria-label="Refresh feed" class="mint-header-icon" id="mintRefreshButton" type="button">↻</button>
+<button aria-label="Notifications" class="mint-header-icon" id="mintNotificationButton" type="button">♧</button>
+</div>
+</header>
+<div class="mint-feed-shell">
+<main class="mint-feed-column">
+<section aria-labelledby="mintFeedTitle" class="mint-feed-panel">
+<div class="mint-feed-heading">
+<div><span class="mint-eyebrow">BLOXIO COMMUNITY</span><h1 id="mintTitle">Moments</h1></div>
+<button aria-expanded="false" aria-label="Feed options" class="mint-filter-button" id="mintFeedFilter" type="button">•••</button>
+</div>
+<div aria-label="Choose feed" class="mint-feed-tabs" role="tablist">
+<button aria-selected="true" class="mint-feed-tab active" data-feed="for-you" role="tab" type="button">Recommended</button>
+<button aria-selected="false" class="mint-feed-tab" data-feed="latest" role="tab" type="button">News</button>
+<div class="mint-feed-more-wrap">
+<button aria-expanded="false" class="mint-feed-more" id="mintMoreFeeds" type="button">More⌄</button>
+<div class="mint-feed-more-menu" hidden="" id="mintMoreFeedsMenu">
+<button aria-selected="false" class="mint-feed-tab" data-feed="following" role="tab" type="button">Following</button>
+<button aria-selected="false" class="mint-feed-tab" data-feed="creators" role="tab" type="button">Creators</button>
+<button aria-selected="false" class="mint-feed-tab" data-feed="trending" role="tab" type="button">Trending</button>
+</div>
+</div>
+</div>
+<div aria-live="polite" class="mint-show-posts-row" id="mintFeedStatus">Latest community moments</div>
+<section aria-labelledby="mintComposerTitle" class="mint-composer">
+<div aria-hidden="true" class="mint-composer-avatar" id="mintComposerAvatar">BX</div>
+<form class="mint-composer-form" id="mintPostForm">
+<label class="mint-sr-only" for="mintPostText">Write a post</label>
+<textarea id="mintPostText" maxlength="2500" name="text" placeholder="Share your thoughts with the community…" rows="2"></textarea>
+<div class="mint-composer-tools">
+<div class="mint-composer-attachments">
+<label class="mint-attach-button" for="mintPhotoInput"><span aria-hidden="true">▧</span> Photo</label>
+<span class="mint-photo-only">Photos only</span>
+<input accept="image/*" hidden="" id="mintPhotoInput" multiple="" type="file"/>
+</div>
+<div class="mint-composer-publish">
+<span id="mintTextCount">0 / 2500</span>
+<button class="btn primary" id="mintPublishButton" type="submit">Publish moment</button>
+</div>
+</div>
+<div class="mint-upload-zone" hidden="" id="mintUploadZone"></div>
+<div aria-live="polite" class="mint-preview-grid" id="mintImagePreview"></div>
+<div class="mint-composer-bottomline">
+<span id="mintUploadCount">0 / 4 photos</span>
+<span>Use #hashtags and @mentions</span>
+</div>
+<p aria-live="polite" class="mint-inline-status" id="mintComposerStatus" role="status">Share a thought, image, or market perspective.</p>
+</form>
+</section>
+<div aria-live="polite" class="mint-feed-state" id="mintFeedState" role="status">
+<span aria-hidden="true" class="mint-feed-state-icon">✧</span>
+<h3>Your community feed is getting ready</h3>
+<p>Verified community posts will appear here when the Moments feed service is connected. No sample or fabricated posts are displayed.</p>
+</div>
+<div class="mint-post-list" id="mintPostList"></div>
+</section>
+</main>
+<aside aria-label="Community discovery and rewards" class="mint-side-column">
+<section class="mint-panel mint-discovery-panel">
+<div class="mint-panel-heading"><div><span class="mint-eyebrow">DISCOVER</span><h2>Find your community</h2></div></div>
+<label class="mint-sr-only" for="mintSearch">Search creators and hashtags</label>
+<input id="mintSearch" placeholder="Search creators or #hashtags" type="search"/>
+<div class="mint-discovery-links">
+<a data-mint-discovery="trending" href="#mintTrending">↗ Trending moments</a>
+<a data-mint-discovery="creators" href="#mintCreators">✦ Discover creators</a>
+<a data-mint-discovery="challenges" href="#mintChallenges">◎ Weekly challenges</a>
+</div>
+</section>
+<section class="mint-panel" id="mintPioneer">
+<div class="mint-panel-heading"><div><span class="mint-eyebrow">EARLY COMMUNITY</span><h2>Pioneer rewards</h2></div><span class="mint-reward-mark">✦</span></div>
+<div class="mint-badge-placeholder"><span aria-hidden="true">◇</span><div><strong>Pioneer badge</strong><small>Early community member recognition</small></div></div>
+<div class="mint-reward-row"><span>Pioneer ranking</span><strong id="mintPioneerPosition">Not available</strong></div>
+<div class="mint-reward-row"><span>Activity points</span><strong id="mintActivityPoints">—</strong></div>
+<div class="mint-reward-row"><span>Contribution rewards</span><strong>Pending connection</strong></div>
+<a class="mint-text-link" href="/pages/reward">View reward details →</a>
+</section>
+<section class="mint-panel" id="mintCreators">
+<div class="mint-panel-heading"><div><span class="mint-eyebrow">CREATOR PROGRAM</span><h2>Creator rewards</h2></div></div>
+<div class="mint-creator-level"><span>LEVEL</span><strong id="mintCreatorLevelSide">—</strong><small>Quality-based progression</small></div>
+<ul class="mint-feature-list"><li>Influencer profiles</li><li>Genuine engagement scoring</li><li>Monthly creator rankings</li><li>Featured creator recognition</li></ul>
+<p class="mint-muted-note">Creator scoring and rewards require verified activity data.</p>
+<section class="mint-compact-module mint-challenge-module" id="mintChallenges">
+<div class="mint-panel-heading"><div><span class="mint-eyebrow">TAKE PART</span><h2>Weekly challenges</h2></div></div>
+<div class="mint-challenge-empty"><span aria-hidden="true">◎</span><strong>Next challenge loading</strong><small>Challenge rules and rewards will be shown after connection.</small></div>
+</section><section class="mint-integrity-panel mint-compact-module mint-integrity-module">
+<div class="mint-panel-heading"><div><span class="mint-eyebrow">COMMUNITY FIRST</span><h2>Reward integrity</h2></div><span aria-hidden="true">⌁</span></div>
+<p>Rewards are intended for authentic participation, not manufactured engagement.</p>
+<ul class="mint-feature-list"><li>Fake-account detection</li><li>Automated-like detection</li><li>Manipulation prevention</li><li>Daily and monthly reward limits</li><li>Suspicious-activity review</li></ul>
+<span class="mint-security-status">Integrity controls: awaiting service connection</span>
+</section></section>
+
+
+</aside>
+</div>
+</section></main>
+<nav aria-label="Primary navigation" class="mobile-nav">
+<a class="nav-btn" data-view="wallet" href="/index.html"><img alt="" src="/assets/images/navigation/home.svg"/><span>Wallet</span></a>
+<a class="nav-btn" data-view="market" href="/pages/market.html"><img alt="" src="/assets/images/navigation/market.svg"/><span>Market</span></a>
+<a class="nav-btn" data-view="casino" href="/pages/casino.html"><img alt="" src="/assets/images/navigation/casino.svg"/><span>Casino</span></a>
+<a class="nav-btn" data-view="mining" href="/pages/mining.html"><img alt="" src="/assets/images/navigation/mining.svg"/><span>Mining</span></a>
+<a class="nav-btn" data-view="mint" href="/pages/mint.html"><span aria-hidden="true" class="sidebar-glyph">✦</span><span>Mint</span></a>
+</nav>
+<div class="auth auth-overlay hidden" id="authOverlay">
+<div class="auth-backdrop"></div>
+<section class="auth-shell">
+<div class="auth-left">
+<div class="auth-brand">
+<img alt="Bloxio" src="/assets/images/branding/logo.svg"/>
+<h1 id="authTitle"> Welcome To BLOXIO</h1>
+<p>Enterprise Web3 Exchange • Casino • Mining • Wallet</p>
+</div>
+<div class="auth-metrics">
+<div class="auth-metric">
+<strong>100K+</strong>
+<span>Users</span>
+</div>
+<div class="auth-metric">
+<strong>24/7</strong>
+<span>Markets</span>
+</div>
+<div class="auth-metric">
+<strong>BX</strong>
+<span>Ecosystem</span>
+</div>
+</div>
+</div>
+<div class="auth-right">
+<div class="auth-card">
+<div class="auth-topbar">
+<button class="auth-tab active" id="loginBtn" type="button">Login</button>
+<button class="auth-tab" id="registerBtn" type="button">Register</button>
+</div>
+<!-- AUTH ERROR MESSAGE -->
+<div aria-live="polite" class="auth-error" id="authError" role="alert">
+</div>
+<div class="auth-box" id="loginBox">
+<form id="loginForm" novalidate="">
+<div class="auth-field">
+<label>Email</label>
+<input autocomplete="email" id="loginEmail" placeholder="name@example.com" required="" type="email">
+</input></div>
+<div class="auth-field">
+<label>Password</label>
+<input autocomplete="current-password" id="loginPassword" placeholder="••••••••" required="" type="password">
+</input></div>
+<div class="auth-row">
+<label class="remember-box">
+<input id="rememberDevice" type="checkbox"/>
+<span>Remember Device</span>
+</label>
+<button class="auth-link" type="button">Forgot Password</button>
+</div>
+<button class="auth-submit" type="submit">Login Securely</button>
+</form>
+</div>
+<div class="auth-box hidden" id="registerBox">
+<form id="registerForm" novalidate="">
+<div class="auth-grid">
+<div class="auth-field">
+<label>Email</label>
+<input id="registerEmail" placeholder="Email" required="" type="email"/>
+</div>
+<div class="auth-field">
+<label>Phone</label>
+<input id="registerPhone" placeholder="+1" required="" type="tel"/>
+</div>
+</div>
+<div class="auth-field">
+<label>Password</label>
+<input id="registerPassword" placeholder="Password" required="" type="password"/>
+</div>
+<div class="auth-field">
+<label>Confirm Password</label>
+<input id="registerConfirm" placeholder="Confirm Password" required="" type="password"/>
+</div>
+<div class="auth-field">
+<label>Invite Code</label>
+<input id="inviteCode" placeholder="Optional" type="text"/>
+</div>
+<label class="terms-box">
+<input id="agreeTerms" required="" type="checkbox"/>
+<span>Accept Terms &amp; Privacy</span>
+</label>
+<button class="auth-submit" type="submit">Create Account</button>
+</form>
+</div>
+<div class="auth-footer">
+<p id="switchText">Need account?</p>
+<button class="auth-switch" id="toggleAuth" type="button">Register</button>
+</div>
+<div class="auth-security">
+<div>🔒 Encrypted
+</div>
+<div>🛡 2FA Ready
+</div>
+<div>⚡ PWA Secure
+</div>
+</div>
+</div>
+</div>
+<button aria-label="Close" class="auth-close" id="authClose" type="button">X</button>
+</section>
+</div>
+<footer class="legal-footer">
+<div class="footer-socials">
+<a href="/terms.html">Terms</a>
+<a href="/privacy.html">Privacy</a>
+<a href="/risk.html">Risk</a>
+</div>
+<p>© 2026 BLOXIO</p>
+</footer>
+</div>
+<audio id="snd-click" preload="auto" src="/assets/sounds/click.mp3"></audio>
+<audio id="snd-success" preload="auto" src="/assets/sounds/success.mp3"></audio>
+<audio id="snd-notification" preload="auto" src="/assets/sounds/notification.mp3"></audio>
+<!-- ================= BX exporter ================= -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- BLOXIO SCRIPT BOOTSTRAP: ordered shared dependencies -->
+<script src="/vendor/socket.io.min.js"></script>
+<script src="/core/language.js"></script>
+<script src="/core/translator.js"></script>
+<script src="/core/rtl.js"></script>
+<script src="/bx/auth.js"></script>
+<script src="/bx/core.js"></script>
+<script src="/bx/state.js"></script>
+<script src="/bx/services/api.js"></script>
+<script src="/bx/services/ws.js"></script>
+<script src="/bx/icon-manager.js"></script>
+<script src="/bx/pages.js"></script>
+<script src="/bx/main.js"></script>
+<script src="/core/auto-i18n.js"></script>
+<script defer src="/bx/mint.js"></script>
+</body>
+</html>
