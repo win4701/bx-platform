@@ -4,23 +4,6 @@
  * Unified Casino Game Universe & Chart Registry
  * Version: 2.1.0
  * ============================================================================
- *
- * PURPOSE
- * - One source of truth for the BLOXIO casino game catalog.
- * - Keeps game identity, provider, category, image, currencies and limits.
- * - Defines a dedicated chart profile for each game.
- * - Exposes helpers to query, order, filter and feed game chart data.
- *
- * This file is the game-world module only.
- * It does not contain UI pages, HTML, CSS, dashboard, wallet, betting engine,
- * game outcome generator, RTP/payout math, or theme engine.
- *
- * IMPORTANT
- * The supplied games.js describes catalog metadata only. For Arcade and Slots,
- * actual result fields and chart semantics must be mapped to the relevant
- * provider's documented API. This registry does not invent rules, RTP or payouts.
- * Chart data must come from authoritative, server-verified round records.
- * ============================================================================
  */
 
 const BLOXIO_GAME_CATALOG = [
@@ -34,7 +17,7 @@ const BLOXIO_GAME_CATALOG = [
             "XBC",
             "STR",
             "MEME",
-            "USDC",
+            "EUBX",
             "XUSD"
         ],
         "status": "active",
@@ -58,7 +41,7 @@ const BLOXIO_GAME_CATALOG = [
             "XBC",
             "STR",
             "MEME",
-            "USDC",
+            "EUBX",
             "XUSD"
         ],
         "status": "active",
@@ -82,7 +65,7 @@ const BLOXIO_GAME_CATALOG = [
             "XBC",
             "STR",
             "MEME",
-            "USDC",
+            "EUBX",
             "XUSD"
         ],
         "status": "active",
@@ -106,7 +89,7 @@ const BLOXIO_GAME_CATALOG = [
             "XBC",
             "STR",
             "MEME",
-            "USDC",
+            "EUBX",
             "XUSD"
         ],
         "status": "active",
@@ -130,7 +113,7 @@ const BLOXIO_GAME_CATALOG = [
             "XBC",
             "STR",
             "MEME",
-            "USDC",
+            "EUBX",
             "XUSD"
         ],
         "status": "active",
@@ -154,7 +137,7 @@ const BLOXIO_GAME_CATALOG = [
             "XBC",
             "STR",
             "MEME",
-            "USDC",
+            "EUBX",
             "XUSD"
         ],
         "status": "active",
@@ -178,7 +161,7 @@ const BLOXIO_GAME_CATALOG = [
             "XBC",
             "STR",
             "MEME",
-            "USDC",
+            "EUBX",
             "XUSD"
         ],
         "status": "active",
@@ -202,7 +185,7 @@ const BLOXIO_GAME_CATALOG = [
             "XBC",
             "STR",
             "MEME",
-            "USDC",
+            "EUBX",
             "XUSD"
         ],
         "status": "active",
@@ -226,7 +209,7 @@ const BLOXIO_GAME_CATALOG = [
             "XBC",
             "STR",
             "MEME",
-            "USDC",
+            "EUBX",
             "XUSD"
         ],
         "status": "active",
@@ -250,7 +233,7 @@ const BLOXIO_GAME_CATALOG = [
             "XBC",
             "STR",
             "MEME",
-            "USDC",
+            "EUBX",
             "XUSD"
         ],
         "status": "active",
@@ -274,7 +257,7 @@ const BLOXIO_GAME_CATALOG = [
             "XBC",
             "STR",
             "MEME",
-            "USDC",
+            "EUBX",
             "XUSD"
         ],
         "status": "active",
@@ -298,7 +281,7 @@ const BLOXIO_GAME_CATALOG = [
             "XBC",
             "STR",
             "MEME",
-            "USDC",
+            "EUBX",
             "XUSD"
         ],
         "status": "active",
@@ -322,7 +305,7 @@ const BLOXIO_GAME_CATALOG = [
             "XBC",
             "STR",
             "MEME",
-            "USDC",
+            "EUBX",
             "XUSD"
         ],
         "status": "active",
@@ -346,7 +329,7 @@ const BLOXIO_GAME_CATALOG = [
             "XBC",
             "STR",
             "MEME",
-            "USDC",
+            "EUBX",
             "XUSD"
         ],
         "status": "active",
@@ -370,7 +353,7 @@ const BLOXIO_GAME_CATALOG = [
             "XBC",
             "STR",
             "MEME",
-            "USDC",
+            "EUBX",
             "XUSD"
         ],
         "status": "active",
@@ -394,7 +377,7 @@ const BLOXIO_GAME_CATALOG = [
             "XBC",
             "STR",
             "MEME",
-            "USDC",
+            "EUBX",
             "XUSD"
         ],
         "status": "active",
@@ -418,7 +401,7 @@ const BLOXIO_GAME_CATALOG = [
             "XBC",
             "STR",
             "MEME",
-            "USDC",
+            "EUBX",
             "XUSD"
         ],
         "status": "active",
@@ -442,7 +425,7 @@ const BLOXIO_GAME_CATALOG = [
             "XBC",
             "STR",
             "MEME",
-            "USDC",
+            "EUBX",
             "XUSD"
         ],
         "status": "active",
@@ -508,19 +491,20 @@ const BLOXIO_GAME_CATEGORIES = [
 
 // Platform currency registry. STR and MEME are enabled as selectable currency
 // codes; their stake limits must be configured before wager validation succeeds.
-const BLOXIO_GAME_CURRENCIES = ["BX", "XBC", "STR", "MEME", "USDC", "XUSD"];
+const BLOXIO_GAME_CURRENCIES = ["BX", "XBC", "STR", "MEME", "EUBX", "XUSD"];
 
 const BLOXIO_CURRENCY_CONFIG = {
     BX:   { code: "BX",   enabled: true, min: 0.1,  max: 1000 },
     XBC:  { code: "XBC",  enabled: true, min: 10,   max: 500000 },
     STR:  { code: "STR",  enabled: true, min: null, max: null },
     MEME: { code: "MEME", enabled: true, min: null, max: null },
-    USDC: { code: "USDC", enabled: true, min: null, max: null },
+    EUBX: { code: "EUBX", enabled: true, min: null, max: null },
     XUSD: { code: "XUSD", enabled: true, min: null, max: null }
 };
 
 const BLOXIO_GAME_LIMITS = {
     BX: { min: 0.1, max: 1000 },
+    EUBX: { min: 0.2, max: 5000 },
     XBC: { min: 10, max: 500000 }
 };
 
