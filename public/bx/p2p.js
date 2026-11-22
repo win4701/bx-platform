@@ -8,19 +8,39 @@
 
     const $ = (selector) => root.querySelector(selector);
     const $$ = (selector) => [...root.querySelectorAll(selector)];
-    const state = { side: 'buy', expressSide: 'buy', section: 'market', asset: 'USDT', fiat: 'DZD', currencyTarget: 'fiat', payment: 'all' };
+    
+    // الحالة الافتراضية: BX (أول عملة) و DZD
+    const state = { side: 'buy', expressSide: 'buy', section: 'market', asset: 'BX', fiat: 'DZD', currencyTarget: 'fiat', payment: 'all' };
 
+    // مصفوفة العملات: الورقية مع الأعلام والمناطق، والرقمية (5 فقط)
     const currencies = [
-      { code: 'DZD', mark: 'دج', type: 'fiat' }, { code: 'AED', mark: 'د', type: 'fiat' },
-      { code: 'AFN', mark: '؋', type: 'fiat' }, { code: 'ALL', mark: 'L', type: 'fiat' },
-      { code: 'AMD', mark: '֏', type: 'fiat' }, { code: 'AOA', mark: 'Kz', type: 'fiat' },
-      { code: 'ARS', mark: '$', type: 'fiat' }, { code: 'AUD', mark: '$', type: 'fiat' },
-      { code: 'AZN', mark: '₼', type: 'fiat' }, { code: 'EUR', mark: '€', type: 'fiat' },
-      { code: 'GBP', mark: '£', type: 'fiat' }, { code: 'MAD', mark: 'د.م', type: 'fiat' },
-      { code: 'USD', mark: '$', type: 'fiat' }, { code: 'USDT', mark: '₮', type: 'asset' },
-      { code: 'BTC', mark: '₿', type: 'asset' }, { code: 'ETH', mark: '◆', type: 'asset' },
-      { code: 'BNB', mark: '◆', type: 'asset' }, { code: 'USDC', mark: '$', type: 'asset' }
+      // --- العملات الورقية (Fiat) ---
+      { code: 'DZD', mark: '🇩🇿', type: 'fiat', region: 'North Africa' },
+      { code: 'MAD', mark: '🇲🇦', type: 'fiat', region: 'North Africa' },
+      { code: 'EGP', mark: '🇪🇬', type: 'fiat', region: 'North Africa' },
+      { code: 'EUR', mark: '🇪🇺', type: 'fiat', region: 'Europe' },
+      { code: 'GBP', mark: '🇬🇧', type: 'fiat', region: 'Europe' },
+      { code: 'CAD', mark: '🇨🇦', type: 'fiat', region: 'North America' },
+      { code: 'AED', mark: '🇦🇪', type: 'fiat', region: 'Middle East' },
+      { code: 'SAR', mark: '🇸🇦', type: 'fiat', region: 'Middle East' },
+      { code: 'CNY', mark: '🇨🇳', type: 'fiat', region: 'Asia' },
+      { code: 'JPY', mark: '🇯🇵', type: 'fiat', region: 'Asia' },
+      { code: 'INR', mark: '🇮🇳', type: 'fiat', region: 'Asia' },
+      { code: 'BRL', mark: '🇧🇷', type: 'fiat', region: 'Latin America' },
+      { code: 'MXN', mark: '🇲🇽', type: 'fiat', region: 'Latin America' },
+      
+      // --- العملات الرقمية (5 فقط) ---
+      { code: 'BX', mark: 'B', type: 'asset' },
+      { code: 'BTC', mark: '₿', type: 'asset' },
+      { code: 'EUBX', mark: '€', type: 'asset' },
+      { code: 'ETH', mark: '◆', type: 'asset' },
+      { code: 'SOL', mark: 'S', type: 'asset' }
     ];
+
+    // دالة مساعدة لتحديث عنوان العروض
+    const updateOffersTitle = () => {
+      $('#p2pOffersTitle').textContent = `${state.side === 'buy' ? 'Buy' : 'Sell'} ${state.asset} with ${state.fiat}`;
+    };
 
     const currencySheet = $('#p2pCurrencySheet');
     const currencyBackdrop = $('#p2pCurrencyBackdrop');
@@ -35,39 +55,94 @@
       document.body.classList.toggle('p2p-sheet-open', open);
     };
 
+    // دالة عرض العملات (معدلة لدعم الأعلام والتقسيم الجغرافي)
     const renderCurrencies = (query = '') => {
-      const list = currencies.filter(c => c.type === state.currencyTarget && (c.code + c.mark).toLowerCase().includes(query.toLowerCase()));
+      const list = currencies.filter(c => 
+        c.type === state.currencyTarget && 
+        (c.code + c.mark).toLowerCase().includes(query.toLowerCase())
+      );
+      
       currencyList.replaceChildren();
-      list.forEach(c => {
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.className = 'p2p-currency-option';
-        button.setAttribute('aria-selected', String((c.type === 'fiat' ? state.fiat : state.asset) === c.code));
-        const mark = document.createElement('span');
-        mark.className = 'p2p-coin-mark ' + (c.type === 'asset' ? 'p2p-coin-usdt' : 'p2p-coin-fiat');
-        mark.textContent = c.mark;
-        const code = document.createElement('strong');
-        code.textContent = c.code;
-        const check = document.createElement('span');
-        check.className = 'p2p-currency-check';
-        check.textContent = (c.type === 'fiat' ? state.fiat : state.asset) === c.code ? '✓' : '';
-        button.append(mark, code, check);
-        button.addEventListener('click', () => {
-          if (c.type === 'fiat') {
-            state.fiat = c.code;
-            $('#p2pFiatLabel').textContent = c.code;
-            $('#p2pExpressFiat').textContent = c.code;
-          } else {
+
+      if (state.currencyTarget === 'fiat') {
+        // تجميع حسب المنطقة
+        const regions = {};
+        list.forEach(c => {
+          if (!regions[c.region]) regions[c.region] = [];
+          regions[c.region].push(c);
+        });
+
+        Object.keys(regions).forEach(region => {
+          const regionHeader = document.createElement('div');
+          regionHeader.className = 'p2p-currency-region-label';
+          regionHeader.textContent = region;
+          regionHeader.style.cssText = 'padding:10px 16px 4px; font-size:10px; font-weight:700; color:#889e95; text-transform:uppercase; letter-spacing:0.08em;';
+          currencyList.append(regionHeader);
+
+          regions[region].forEach(c => {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'p2p-currency-option';
+            button.setAttribute('aria-selected', String(state.fiat === c.code));
+            
+            const flag = document.createElement('span');
+            flag.style.cssText = 'font-size:20px; margin-right:10px;';
+            flag.textContent = c.mark;
+            
+            const code = document.createElement('strong');
+            code.textContent = c.code;
+            
+            const check = document.createElement('span');
+            check.className = 'p2p-currency-check';
+            check.textContent = state.fiat === c.code ? '✓' : '';
+            
+            button.append(flag, code, check);
+            button.addEventListener('click', () => {
+              state.fiat = c.code;
+              $('#p2pFiatLabel').textContent = c.code;
+              // تحديث صورة العلم في الزر الرئيسي
+              const flagMap = { 'DZD':'dz','MAD':'ma','EGP':'eg','EUR':'eu','GBP':'gb','CAD':'ca','AED':'ae','SAR':'sa','CNY':'cn','JPY':'jp','INR':'in','BRL':'br','MXN':'mx' };
+              $('#p2pFiatFlag').src = `https://flagcdn.com/${flagMap[c.code]}.svg`;
+              $('#p2pExpressFiat').textContent = c.code;
+              updateOffersTitle();
+              currencySearch.value = '';
+              setSheet(currencySheet, currencyBackdrop, false);
+            });
+            currencyList.append(button);
+          });
+        });
+      } else {
+        // العملات الرقمية (بدون تقسيم)
+        list.forEach(c => {
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'p2p-currency-option';
+          button.setAttribute('aria-selected', String(state.asset === c.code));
+          
+          const mark = document.createElement('span');
+          mark.className = 'p2p-coin-mark p2p-coin-usdt';
+          mark.textContent = c.mark;
+          
+          const code = document.createElement('strong');
+          code.textContent = c.code;
+          
+          const check = document.createElement('span');
+          check.className = 'p2p-currency-check';
+          check.textContent = state.asset === c.code ? '✓' : '';
+          
+          button.append(mark, code, check);
+          button.addEventListener('click', () => {
             state.asset = c.code;
             $('#p2pAssetLabel').textContent = c.code;
             $('#p2pExpressAsset').textContent = c.code;
-          }
-          $('#p2pOffersTitle').textContent = `${state.side === 'buy' ? 'Buy' : 'Sell'} ${state.asset} with ${state.fiat}`;
-          currencySearch.value = '';
-          setSheet(currencySheet, currencyBackdrop, false);
+            updateOffersTitle();
+            currencySearch.value = '';
+            setSheet(currencySheet, currencyBackdrop, false);
+          });
+          currencyList.append(button);
         });
-        currencyList.append(button);
-      });
+      }
+
       if (!list.length) {
         const empty = document.createElement('p');
         empty.className = 'p2p-disclaimer';
@@ -76,6 +151,18 @@
       }
     };
 
+    // مستمعات الأزرار الخمسة السريعة
+    $$('.p2p-crypto-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const code = btn.dataset.p2pCurrencyCode;
+        state.asset = code;
+        $('#p2pAssetLabel').textContent = code;
+        $$('.p2p-crypto-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        updateOffersTitle();
+      });
+    });
+
     $$('[data-p2p-side]').forEach(button => button.addEventListener('click', () => {
       state.side = button.dataset.p2pSide;
       $$('[data-p2p-side]').forEach(b => {
@@ -83,77 +170,9 @@
         b.classList.toggle('active', active);
         b.setAttribute('aria-pressed', String(active));
       });
-      $('#p2pOffersTitle').textContent = `${state.side === 'buy' ? 'Buy' : 'Sell'} ${state.asset} with ${state.fiat}`;
+      updateOffersTitle();
     }));
 
     $$('[data-p2p-section]').forEach(button => button.addEventListener('click', () => {
       state.section = button.dataset.p2pSection;
-      $$('[data-p2p-section]').forEach(b => {
-        const active = b === button;
-        b.classList.toggle('active', active);
-        b.setAttribute('aria-pressed', String(active));
-      });
-      $$('[data-p2p-view]').forEach(view => { view.hidden = view.dataset.p2pView !== state.section; });
-    }));
-
-    $$('[data-p2p-open-currency]').forEach(button => button.addEventListener('click', () => {
-      state.currencyTarget = button.dataset.p2pOpenCurrency;
-      $('#p2pCurrencyTitle').textContent = state.currencyTarget === 'fiat' ? 'Select fiat currency' : 'Select crypto asset';
-      renderCurrencies();
-      setSheet(currencySheet, currencyBackdrop, true);
-      currencySearch.focus();
-    }));
-    currencySearch.addEventListener('input', () => renderCurrencies(currencySearch.value));
-    $$('[data-p2p-close-sheet]').forEach(b => b.addEventListener('click', () => setSheet(currencySheet, currencyBackdrop, false)));
-    currencyBackdrop.addEventListener('click', () => setSheet(currencySheet, currencyBackdrop, false));
-
-    $('#p2pFilterOpen').addEventListener('click', () => setSheet(filterSheet, filterBackdrop, true));
-    $$('[data-p2p-close-filter]').forEach(b => b.addEventListener('click', () => setSheet(filterSheet, filterBackdrop, false)));
-    filterBackdrop.addEventListener('click', () => setSheet(filterSheet, filterBackdrop, false));
-    $('#p2pFilterReset').addEventListener('click', () => {
-      $('#p2pFilterPayment').value = 'all';
-      $('#p2pMinAmount').value = '';
-      $('#p2pMaxAmount').value = '';
-      $('#p2pMerchantSearch').value = '';
-      state.payment = 'all';
-      $$('[data-p2p-payment]').forEach(b => b.classList.toggle('active', b.dataset.p2pPayment === 'all'));
-    });
-    $('#p2pFilterApply').addEventListener('click', () => {
-      state.payment = $('#p2pFilterPayment').value;
-      $$('[data-p2p-payment]').forEach(b => b.classList.toggle('active', b.dataset.p2pPayment === state.payment));
-      setSheet(filterSheet, filterBackdrop, false);
-      // No offer dataset exists yet; the filter state is retained for the API integration.
-      $('#p2pConnectionNote').textContent = 'Filters saved · Connect the P2P service to search live offers';
-    });
-    $$('[data-p2p-payment]').forEach(button => button.addEventListener('click', () => {
-      state.payment = button.dataset.p2pPayment;
-      $('#p2pFilterPayment').value = state.payment;
-      $$('[data-p2p-payment]').forEach(b => b.classList.toggle('active', b === button));
-    }));
-
-    $$('[data-p2p-express-side]').forEach(button => button.addEventListener('click', () => {
-      state.expressSide = button.dataset.p2pExpressSide;
-      $$('[data-p2p-express-side]').forEach(b => {
-        const active = b === button;
-        b.classList.toggle('active', active);
-        b.setAttribute('aria-pressed', String(active));
-      });
-      $('#p2pPayLabel').textContent = state.expressSide === 'buy' ? 'You pay' : 'You receive';
-      $('#p2pReceiveLabel').textContent = state.expressSide === 'buy' ? 'You receive' : 'You pay';
-      $('#p2pReceiveAmount').value = '';
-      $('#p2pReceiveAmount').placeholder = 'Rate unavailable';
-    }));
-
-    document.addEventListener('keydown', event => {
-      if (event.key === 'Escape') {
-        setSheet(currencySheet, currencyBackdrop, false);
-        setSheet(filterSheet, filterBackdrop, false);
-      }
-    });
-  };
-
-  window.BLOXIO_P2P = window.BLOXIO_P2P || {};
-  window.BLOXIO_P2P.init = init;
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init, { once: true });
-  else init();
-})();
+      $$
