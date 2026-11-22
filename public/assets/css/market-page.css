@@ -326,11 +326,11 @@
   flex-direction:column;
   align-items:stretch;
   justify-content:flex-start;
-  gap:13px;
+  gap:12px;
   width:100%;
   min-width:0;
-  min-height:150px;
-  padding:13px;
+  min-height:120px;
+  padding:12px;
   border:1px solid rgba(142,169,155,.17);
   border-radius:14px;
   background:linear-gradient(145deg,#0d2b21,#092018);
@@ -351,15 +351,15 @@
 #market .bx-market-card-identity {
   display:flex;
   align-items:center;
-  gap:9px;
+  gap:8px;
   min-width:0;
 }
 #market .bx-market-card-identity .bx-token-icon,
 #market .bx-market-card-identity .bx-token-icon img {
   display:block;
-  flex:0 0 32px;
-  width:32px;
-  height:32px;
+  flex:0 0 30px;
+  width:30px;
+  height:28px;
   border-radius:50%;
   object-fit:contain;
 }
@@ -422,14 +422,14 @@
 @media(max-width:520px) {
   #market .bx-market-pair-list {
     grid-template-columns:repeat(2,minmax(0,1fr));
-    gap:9px;
+    gap:8px;
     padding:10px;
   }
   #market .bx-market-asset {
-    min-height:145px;
-    gap:11px;
-    padding:10px;
-    border-radius:12px;
+    min-height:120px;
+    gap:10px;
+    padding:8px;
+    border-radius:11px;
   }
   #market .bx-market-card-identity { gap:7px; }
   #market .bx-market-card-identity .bx-token-icon,
