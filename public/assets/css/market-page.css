@@ -1,0 +1,168 @@
+/* BLOXIO TOKEN GRID — scoped override for #market only */
+
+/* Filter Tabs: .bx-market-product-tabs */
+#market .bx-market-product-tabs {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 10px;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 10px 12px;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+#market .bx-market-product-tabs::-webkit-scrollbar { display: none; }
+#market .bx-market-product-tabs button {
+  flex: 0 0 auto;
+  min-height: 42px;
+  padding: 9px 18px;
+  border: 1px solid #1a3c2f;
+  border-radius: 20px;
+  background: transparent;
+  color: #889e95;
+  font: 700 14px var(--font-primary);
+  white-space: nowrap;
+}
+#market .bx-market-product-tabs button.active {
+  border: 1px solid #e6b93c;
+  background: #0d261d;
+  color: #e6b93c;
+}
+
+/* Token Grid Container: .bx-market-pair-list */
+#market .bx-market-pair-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  padding: 12px;
+  overflow: visible;
+}
+
+/* Token Card: .bx-market-row */
+#market .bx-market-row {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  grid-template-areas:
+    "icon meta"
+    "price price";
+  align-content: start;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  min-width: 0;
+  min-height: 116px;
+  padding: 12px;
+  border: 1px solid #1a3c2f;
+  border-radius: 12px;
+  background: #0d261d;
+  color: #ffffff;
+  text-align: left;
+}
+#market .bx-market-row:hover,
+#market .bx-market-row.active {
+  border-color: #e6b93c;
+  background: #0d261d;
+}
+#market .bx-market-row[hidden] { display: none !important; }
+#market .bx-market-favorite { display: none !important; }
+#market .bx-market-row > img {
+  grid-area: icon;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: contain;
+}
+#market .bx-market-pair-meta {
+  grid-area: meta;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  min-width: 0;
+}
+#market .bx-market-pair-meta strong {
+  color: #e6b93c;
+  font-size: 15px;
+  font-weight: 800;
+}
+#market .bx-market-pair-meta small {
+  flex-basis: auto;
+  max-width: 100%;
+  color: #889e95;
+  font-size: 12px;
+  line-height: 1.35;
+  white-space: normal;
+}
+#market .bx-market-pair-meta .bx-contract-tag { display: none; }
+#market .bx-market-last {
+  grid-area: price;
+  display: block;
+  margin-top: 9px;
+  color: #ffffff;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 700;
+  text-align: left;
+}
+#market .bx-market-change { display: none !important; }
+
+/* Preserve the two-column card layout on mobile */
+@media (max-width: 768px) {
+  #market .bx-market-pair-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    padding: 12px;
+  }
+  #market .bx-market-row {
+    grid-template-columns: 28px minmax(0, 1fr);
+    min-height: 116px;
+    gap: 9px;
+    padding: 12px;
+  }
+  #market .bx-market-row > img {
+    width: 28px;
+    height: 28px;
+  }
+  #market .bx-market-pair-meta strong { font-size: 14px; }
+  #market .bx-market-pair-meta small { font-size: 12px; }
+}
+
+@media (max-width: 360px) {
+  #market .bx-market-pair-list { gap: 8px; padding: 8px; }
+  #market .bx-market-row { padding: 10px; }
+}
+
+
+/* BLOXIO MARKET — card consistency, custom dropdowns and trade fields */
+#market .bx-market-pair-list { align-items:stretch; }
+#market .bx-market-asset { display:flex; align-items:center; justify-content:space-between; gap:12px; width:100%; min-width:0; min-height:76px; padding:12px 14px; border:1px solid #1a3c2f; border-radius:13px; background:#0b211a; color:#f4f7f5; text-align:left; transition:border-color .18s,background .18s,transform .18s; }
+#market .bx-market-asset:hover, #market .bx-market-asset.active { border-color:#d4af37; background:#102b22; }
+#market .bx-market-asset-main { display:flex; align-items:center; gap:10px; min-width:0; }
+#market .bx-market-asset-price { display:flex; flex-direction:column; align-items:flex-end; gap:4px; min-width:0; }
+#market .bx-market-asset-price strong { color:#f4f7f5; font:700 13px var(--font-mono); overflow-wrap:anywhere; }
+#market .bx-market-asset-price small { color:#91a99e; font:600 11px var(--font-mono); }
+#market .bx-market-asset .bx-token-icon img { width:30px; height:30px; object-fit:contain; border-radius:50%; }
+#market .bx-market-asset .bx-token-copy { display:flex; flex-direction:column; gap:3px; min-width:0; }
+#market .bx-market-asset .bx-token-copy strong { color:#e6b93c; font-size:13px; }
+#market .bx-market-asset .bx-token-copy small { color:#8fa69b; font-size:11px; overflow-wrap:anywhere; }
+#market .bx-market-asset .bx-market-contract { color:#d4af37; font-size:9px; }
+#market .bx-market-asset[hidden] { display:none !important; }
+#market .bx-custom-select { position:relative; display:inline-block; width:100%; min-width:0; }
+#market .bx-native-select { position:absolute !important; width:1px !important; height:1px !important; padding:0 !important; margin:-1px !important; overflow:hidden !important; clip:rect(0,0,0,0) !important; white-space:nowrap !important; border:0 !important; }
+#market .bx-custom-select-trigger { display:flex; align-items:center; justify-content:space-between; gap:10px; width:100%; min-height:42px; padding:8px 11px; border:1px solid #28483c; border-radius:10px; background:#071b16; color:#f4f7f5; font-weight:700; text-align:left; cursor:pointer; }
+#market .bx-custom-select-trigger:hover, #market .bx-custom-select.is-open .bx-custom-select-trigger, #market .bx-custom-select-trigger:focus-visible { outline:0; border-color:#d4af37; box-shadow:0 0 0 3px rgba(212,175,55,.12); }
+#market .bx-custom-select-value { display:flex; align-items:center; gap:8px; min-width:0; }
+#market .bx-custom-select-chevron { color:#d4af37; font-size:18px; }
+#market .bx-custom-select-menu { position:absolute; z-index:100; top:calc(100% + 6px); left:0; right:0; max-height:240px; overflow:auto; padding:5px; border:1px solid rgba(212,175,55,.3); border-radius:11px; background:#071b16; box-shadow:0 16px 38px rgba(0,0,0,.42); }
+#market .bx-custom-select-menu[hidden] { display:none !important; }
+#market .bx-custom-select-option { display:flex; align-items:center; gap:9px; width:100%; min-height:38px; padding:8px 10px; border:0; border-radius:8px; background:transparent; color:#dce8e2; text-align:left; cursor:pointer; }
+#market .bx-custom-select-option:hover, #market .bx-custom-select-option:focus-visible, #market .bx-custom-select-option.selected { outline:0; background:#123329; color:#e6b93c; }
+#market .bx-select-token-icon { width:22px; height:22px; flex:0 0 22px; object-fit:contain; border-radius:50%; }
+#market .market-card .bx-trade-field { display:flex; flex-direction:column; gap:7px; min-width:0; }
+#market .bx-input-frame { position:relative; display:flex; align-items:center; width:100%; }
+#market .bx-input-frame .market-input { width:100%; min-height:47px; padding:0 70px 0 13px; border:1px solid rgba(140,163,157,.2); border-radius:11px; background:#061711; color:#f4f7f5; outline:0; font:600 14px var(--font-mono); transition:border-color .18s,box-shadow .18s; }
+#market .bx-input-frame .market-input:focus { border-color:#d4af37; box-shadow:0 0 0 3px rgba(212,175,55,.12); }
+#market .bx-input-unit { position:absolute; right:13px; color:#d4af37; font:700 10px var(--font-mono); pointer-events:none; }
+@media(max-width:560px) { #market .bx-market-asset { min-height:70px; padding:10px; gap:8px; } #market .bx-market-asset .bx-token-icon img { width:25px; height:25px; } }
