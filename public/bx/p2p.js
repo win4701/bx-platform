@@ -26,7 +26,6 @@
       { type: 'crypto', code: 'EUBX', mark: '€', name: 'Euro Bloxio' },
       { type: 'crypto', code: 'ETH', mark: '◆', name: 'Ethereum' },
       { type: 'crypto', code: 'SOL', mark: 'S', name: 'Solana' },
-      { type: 'crypto', code: 'USDT', mark: '₮', name: 'Tether' },
       { type: 'fiat', code: 'EUR', mark: '€', countryCode: 'eu', region: '00 · Primary currency', name: 'Euro' },
       { type: 'fiat', code: 'DZD', mark: 'دج', countryCode: 'dz', region: 'Africa · North', name: 'Algerian Dinar' },
       { type: 'fiat', code: 'MAD', mark: 'د.م.', countryCode: 'ma', region: 'Africa · North', name: 'Moroccan Dirham' },
