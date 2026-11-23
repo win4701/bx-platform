@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+<g fill="none" stroke="#0071C5" stroke-width="2.8" stroke-linecap="round">
+<path d="M9 27c1-12 10-19 23-19 12 0 22 7 23 19"/>
+<path d="M55 37c-2 12-11 19-23 19-13 0-22-7-23-19"/>
+</g>
+<text x="32" y="39" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="17" font-weight="700" letter-spacing="-1.1" fill="#0071C5">intel</text>
+</svg>
