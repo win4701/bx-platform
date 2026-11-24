@@ -2563,30 +2563,6 @@ hr {
     height: 22px;
     object-fit: contain;
 }
-
-/* Five wallet token cards: wide, horizontal cards */
-.wallet-assets-grid {
-    display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-    gap: 10px;
-    min-width: 0;
-}
-.wallet-asset-card {
-    display: grid;
-    grid-template-columns: 30px minmax(0, 1fr);
-    grid-template-areas: "icon meta" "balance balance";
-    align-content: center;
-    min-width: 0;
-    min-height: 84px;
-    padding: 10px;
-}
-.wallet-asset-card > img { grid-area: icon; }
-.wallet-asset-card .asset-meta { grid-area: meta; }
-.wallet-asset-card .asset-balance {
-    grid-area: balance;
-    text-align: left;
-}
-
 /* Wallet transfer / withdraw / deposit styling is deliberately untouched. */
 @media (max-width: 768px) {
     .app-container { padding-left: 12px; padding-right: 12px; }
@@ -3165,3 +3141,26 @@ body[data-page="trade"] * {
     min-width: 0;
 }
 
+
+
+/* ==========================================================================
+   BLOXIO WALLET — RESPONSIVE CANONICAL LAYOUT
+   Scoped to Wallet so shared breakpoints cannot reshape other pages.
+   ========================================================================== */
+@media (max-width: 1024px) {
+    #wallet .wallet-assets-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 768px) {
+    #wallet .wallet-action-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
+    #wallet .wallet-action-card { min-height: 52px; padding: 9px 8px; }
+    #wallet .wallet-assets-grid { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+    #wallet .wallet-asset-card { min-height: 68px; padding: 10px 12px; }
+    #wallet .wallet-analytics-grid { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 380px) {
+    #wallet .wallet-action-grid { gap: 7px; }
+    #wallet .wallet-action-card { min-height: 48px; gap: 6px; padding: 8px 6px; }
+    #wallet .wallet-action-copy strong { font-size: .74rem; }
+    #wallet .wallet-asset-card { grid-template-columns: 32px minmax(0, 1fr) auto; gap: 8px; }
+    #wallet .wallet-asset-card > img { width: 29px; height: 29px; }
+}
