@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html dir="ltr" lang="en">
+ <head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1, viewport-fit=cover" name="viewport"/>
+  <title>
+   BLOXIO | Cloud Mining
+  </title>
+  <meta content="#00e0ff" name="theme-color"/>
+  <meta content="Manage your BLOXIO cloud mining plans and rewards." name="description"/>
+  <meta content="yes" name="mobile-web-app-capable"/>
+  <meta content="yes" name="apple-mobile-web-app-capable"/>
+  <meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"/>
+  <meta content="BLOXIO" name="apple-mobile-web-app-title"/>
+  <link href="/manifest.json" rel="manifest"/>
+  <link href="/assets/images/branding/logo.png" rel="icon"/>
+  <!-- Shared application styles -->
+  <link href="/assets/css/base.css" rel="stylesheet"/>
+  <link href="/assets/css/layout.css" rel="stylesheet"/>
+  <link href="/assets/css/components.css" rel="stylesheet"/>
+  <link href="/assets/css/pages.css" rel="stylesheet"/>
+  <link href="/assets/css/responsive.css" rel="stylesheet"/>
+  <link href="/assets/css/mining-page.css" rel="stylesheet"/>
+ <link rel="stylesheet" href="/assets/css/bloxio-icons.css"/>
+</head>
+ <body class="app-ready" data-motion="on" data-page="mining" data-sound="on" data-theme="dark" data-ui="enterprise">
+  <!-- GLOBAL LOADER -->
+  
+  <!-- STATIC BACKGROUND -->
+  <div aria-hidden="true" class="bg-layer">
+  </div>
+  <div aria-hidden="true" class="grid-overlay">
+  </div>
+  <div aria-hidden="true" class="ambient-glow">
+  </div>
+  <div id="app-shell">
+   <header class="app-header enterprise-header">
+    <div class="header-left">
+     <a aria-label="BLOXIO Home" class="enterprise-brand" href="/index.html">
+      <img alt="BLOXIO" class="brand-icon" src="/assets/images/branding/logo.png"/>
+      <img alt="BLOXIO" class="brand-text-img" src="/assets/images/branding/bloxio.png"/>
+     </a>
+     <div class="system-status" id="systemStatus">
+      <span class="status-dot">
+      </span>
+      <div class="status-meta">
+       <strong>
+        SYSTEM ONLINE
+       </strong>
+       <small id="networkLatency">
+        Latency --
+       </small>
+      </div>
+     </div>
+    </div>
+    <nav aria-label="Language" class="header-center">
+     <div class="header-more-menu-wrap">
+      <details class="header-more-menu" id="headerMoreMenu">
+       <summary aria-controls="headerMoreDropdown" aria-label="Open More menu">
+        <span>
+         More
+        </span>
+        <svg aria-hidden="true" viewbox="0 0 24 24">
+         <path d="m7 10 5 5 5-5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+         </path>
+        </svg>
+       </summary>
+       <nav aria-label="More services" class="header-more-dropdown" id="headerMoreDropdown">
+        <a data-view="trade" href="/pages/trade.html">
+         <span aria-hidden="true" class="sidebar-glyph" data-bx-icon="trade"></span>
+         <span>
+          Trade
+         </span>
+        </a>
+        <a data-view="ia" href="/pages/ia.html">
+         <span aria-hidden="true" class="sidebar-glyph" data-bx-icon="mint"></span>
+         <span>
+          IA
+         </span>
+        </a>
+        <a data-view="airdrop" href="/pages/airdrop.html">
+         <img alt="" src="/assets/images/navigation/airdrop.svg"/>
+         <span>
+          Airdrop
+         </span>
+        </a>
+        <a data-view="mint" href="/pages/mint.html">
+         <span aria-hidden="true" class="sidebar-glyph" data-bx-icon="mint"></span>
+         <span>
+          Mint
+         </span>
+        </a>
+        <a data-view="p2p" href="/pages/p2p.html">
+         <span aria-hidden="true" class="sidebar-glyph" data-bx-icon="trade"></span>
+         <span>
+          P2P
+         </span>
+        </a>
+        <a data-view="settings" href="/pages/settings.html">
+         <span aria-hidden="true" class="sidebar-glyph" data-bx-icon="settings"></span>
+         <span>
+          Settings
+         </span>
+        </a>
+        <a data-view="profile" href="/pages/profile.html">
+         <span aria-hidden="true" class="sidebar-glyph" data-bx-icon="user"></span>
+         <span>
+          Profile
+         </span>
+        </a>
+        <a data-view="reward" href="/pages/reward.html">
+         <span aria-hidden="true" class="sidebar-glyph" data-bx-icon="star"></span>
+         <span>
+          Rewards
+         </span>
+        </a>
+       </nav>
+      </details>
+     </div>
+     <div class="locale-box">
+      <button aria-controls="localeMenu" aria-expanded="false" class="locale-trigger" id="localeTrigger" type="button">
+       <span id="currentLocale">
+        EN
+       </span>
+       <span  data-bx-icon="chevron-down"></span>
+      </button>
+      <ul class="locale-menu" id="localeMenu">
+       <li>
+        <button data-lang="EN" type="button">
+         EN
+        </button>
+       </li>
+       <li>
+        <button data-lang="AR" type="button">
+         AR
+        </button>
+       </li>
+       <li>
+        <button data-lang="FR" type="button">
+         FR
+        </button>
+       </li>
+       <li>
+        <button data-lang="ES" type="button">
+         ES
+        </button>
+       </li>
+       <li>
+        <button data-lang="DE" type="button">
+         DE
+        </button>
+       </li>
+       <li>
+        <button data-lang="ZH" type="button">
+         ZH
+        </button>
+       </li>
+       <li>
+        <button data-lang="RU" type="button">
+         RU
+        </button>
+       </li>
+       <li>
+        <button data-lang="JA" type="button">
+         JA
+        </button>
+       </li>
+       <li>
+        <button data-lang="TR" type="button">
+         TR
+        </button>
+       </li>
+      </ul>
+     </div>
+    </nav>
+    <div class="header-right">
+     <div class="auth-toolbar" id="guestToolbar">
+      <button class="header-btn secondary" id="headerLoginBtn" type="button">
+       Login
+      </button>
+      <button class="header-btn primary" id="headerRegisterBtn" type="button">
+       Register
+      </button>
+     </div>
+     <div class="user-toolbar hidden" id="userToolbar">
+      <button aria-controls="userDropdown" aria-expanded="false" class="user-trigger" id="userMenuTrigger" type="button">
+       <span class="user-avatar">
+        BX
+       </span>
+       <span class="user-meta">
+        <strong id="vipTier">
+         VIP 1
+        </strong>
+        <small>
+         ✔ VERIFIED
+        </small>
+       </span>
+       <span class="session-pill">
+        1 ACTIVE
+       </span>
+      </button>
+      <ul class="user-dropdown" id="userDropdown">
+       <li>
+        <button type="button">
+         Profile
+        </button>
+       </li>
+       <li>
+        <button type="button">
+         Security
+        </button>
+       </li>
+       <li>
+        <button type="button">
+         Sessions
+        </button>
+       </li>
+       <li>
+        <button id="logoutBtn" type="button">
+         Logout
+        </button>
+       </li>
+      </ul>
+     </div>
+    </div>
+   </header>
+   <aside aria-label="BLOXIO sections" class="desktop-sidebar">
+    <div class="sidebar-label">
+     Workspace
+    </div>
+    <a data-view="wallet" href="/index.html">
+     <span class="sidebar-icon" data-bx-icon="home" aria-hidden="true"></span>
+     Wallet
+    </a>
+    <a data-view="market" href="/pages/market.html">
+     <span class="sidebar-icon" data-bx-icon="market" aria-hidden="true"></span>
+     Market
+    </a>
+    <a data-view="casino" href="/pages/casino.html">
+     <span class="sidebar-icon" data-bx-icon="casino" aria-hidden="true"></span>
+     Casino
+    </a>
+    <a aria-current="page" class="active" data-view="mining" href="/pages/mining.html">
+     <span class="sidebar-icon" data-bx-icon="mining" aria-hidden="true"></span>
+     Mining
+    </a>
+    <a data-view="airdrop" href="/pages/airdrop.html">
+     <img alt="" src="/assets/images/navigation/airdrop.svg"/>
+     Airdrop
+    </a>
+    <a data-view="p2p" href="/pages/p2p.html">
+     <span aria-hidden="true" class="sidebar-glyph" data-bx-icon="trade"></span>
+     P2P
+    </a>
+    <a data-view="news" href="/pages/news.html">
+     <span aria-hidden="true" class="sidebar-glyph">
+      ▤
+     </span>
+     News
+    </a>
+    <a data-view="settings" href="/pages/settings.html">
+     <span aria-hidden="true" class="sidebar-glyph" data-bx-icon="settings"></span>
+     Settings
+    </a>
+   </aside>
+   <main class="app-container" id="app">
+    <section aria-label="Cloud Mining" class="view active" data-mining-assets="10" data-mining-plans="6" id="mining">
+     <noscript>
+      <p>
+       JavaScript is required to use BLOXIO Mining.
+      </p>
+     </noscript>
+     <div class="mining-shell">
+      <!-- MINING OVERVIEW -->
+      <section aria-labelledby="miningTitle" class="mining-hero mining-top">
+       <div class="mining-hero-left">
+        <div class="mining-kicker">
+         BLOXIO MINING NETWORK
+        </div>
+        <h2 id="miningTitle">
+         Mining Matrix
+        </h2>
+        <p>
+         Manage your cloud mining assets, subscriptions and rewards.
+        </p>
+       </div>
+       <div class="mining-hero-right">
+        <div class="mining-stat">
+         <span>
+          Coin
+         </span>
+         <strong id="miningActiveCoin">
+          BX
+         </strong>
+        </div>
+        <div class="mining-stat">
+         <span>
+          Available
+         </span>
+         <strong id="miningAvailableBalanceTop">
+          0.00 BX
+         </strong>
+        </div>
+        <div class="mining-stat">
+         <span>
+          Yield
+         </span>
+         <strong id="miningDailyYieldTop">
+          0%
+         </strong>
+        </div>
+        <div class="mining-stat">
+         <span>
+          Cycle
+         </span>
+         <strong id="miningCycleTop">
+          &mdash;
+         </strong>
+        </div>
+        <button class="btn" id="miningRefreshBtn" type="button">
+         Refresh
+        </button>
+       </div>
+      </section>
+      <!-- SUPPORTED MINING ASSETS -->
+      <div aria-label="Mining assets" class="mining-tabs" id="miningTabs" role="group">
+       <button aria-pressed="true" class="active" data-coin="BX" type="button">
+        <img alt="BX" loading="lazy" src="/assets/images/coins/bx.png"/>
+        <span>
+         BX
+        </span>
+       </button>
+       <button aria-pressed="false" data-coin="ETC" type="button">
+        <img alt="ETC" loading="lazy" src="/assets/images/coins/etc.png"/>
+        <span>
+         ETC
+        </span>
+       </button>
+       <button aria-pressed="false" data-coin="LTC" type="button">
+        <img alt="LTC" loading="lazy" src="/assets/images/coins/ltc.png"/>
+        <span>
+         LTC
+        </span>
+       </button>
+       <button aria-pressed="false" data-coin="EUBX" type="button">
+        <img alt="EUBX" loading="lazy" src="/assets/images/coins/eubx.png"/>
+        <span>
+         EUBX
+        </span>
+       </button>
+       <button aria-pressed="false" data-coin="BNB" type="button">
+        <img alt="BNB" loading="lazy" src="/assets/images/coins/bnb.png"/>
+        <span>
+         BNB
+        </span>
+       </button>
+       <button aria-pressed="false" data-coin="SOL" type="button">
+        <img alt="SOL" loading="lazy" src="/assets/images/coins/sol.png"/>
+        <span>
+         SOL
+        </span>
+       </button>
+       <button aria-pressed="false" data-coin="XRP" type="button">
+        <img alt="XRP" loading="lazy" src="/assets/images/coins/xrp.png"/>
+        <span>
+         XRP
+        </span>
+       </button>
+       <button aria-pressed="false" data-coin="USDC" type="button">
+        <img alt="USDC" loading="lazy" src="/assets/images/coins/usdc.png"/>
+        <span>
+         USDC
+        </span>
+       </button>
+       <button aria-pressed="false" data-coin="DOGE" type="button">
+        <img alt="DOGE" loading="lazy" src="/assets/images/coins/doge.png"/>
+        <span>
+         DOGE
+        </span>
+       </button>
+       <button aria-pressed="false" data-coin="TON" type="button">
+        <img alt="TON" loading="lazy" src="/assets/images/coins/ton.png"/>
+        <span>
+         TON
+        </span>
+       </button>
+      </div>
+      <!-- MINING CONTENT -->
+      <div class="mining-layout">
+       <div class="mining-main mining-main-col">
+        <div class="mining-head">
+         <div>
+          <span>
+           Enterprise Plans
+          </span>
+          <h3>
+           Mining Portfolio
+          </h3>
+         </div>
+         <button class="btn primary" data-mining-open="miningSubscribePanel" type="button">
+          Subscribe
+         </button>
+        </div>
+        <div aria-live="polite" class="mining-grid" id="miningGrid">
+        </div>
+       </div>
+       <aside aria-label="Mining account details" class="mining-side mining-side-col">
+        <!-- ACTIVE MINING POSITION -->
+        <section class="mining-active card mining-hidden" id="miningActivePanel">
+         <div class="mining-active-top">
+          <div>
+           <span>
+            Active Position
+           </span>
+           <h3>
+            Current Mining
+           </h3>
+          </div>
+          <span class="mining-badge idle" id="miningActiveBadge">
+           Idle
+          </span>
+         </div>
+         <div class="mining-active-main">
+          <div class="mining-active-row">
+           <span>
+            Plan
+           </span>
+           <strong id="miningActiveName">
+            &mdash;
+           </strong>
+          </div>
+          <div class="mining-active-row">
+           <span>
+            Hash / Amount
+           </span>
+           <strong id="miningActiveHash">
+            &mdash;
+           </strong>
+          </div>
+          <div class="mining-active-row">
+           <span>
+            Daily Yield
+           </span>
+           <strong id="miningActiveDaily">
+            &mdash;
+           </strong>
+          </div>
+          <div class="mining-active-row">
+           <span>
+            Pending Reward
+           </span>
+           <strong id="miningPendingReward">
+            0 BX
+           </strong>
+          </div>
+          <div class="mining-active-row">
+           <span>
+            Total Claimed
+           </span>
+           <strong id="miningTotalClaimed">
+            0 BX
+           </strong>
+          </div>
+         </div>
+         <div class="mining-progress-wrap">
+          <div class="mining-progress-row">
+           <span>
+            Progress
+           </span>
+           <strong id="miningProgressText">
+            0%
+           </strong>
+          </div>
+          <div aria-label="Mining cycle progress" aria-valuemax="100" aria-valuemin="0" aria-valuenow="0" class="mining-progress-bar" role="progressbar">
+           <div id="miningProgressFill">
+           </div>
+          </div>
+          <div class="mining-progress-hint" id="miningProgressHint">
+           Mining not started
+          </div>
+         </div>
+         <div class="mining-actions">
+          <button class="btn primary" id="claimMiningRewardBtn" type="button">
+           Claim Reward
+          </button>
+          <button class="btn" id="cancelMiningPlanBtn" type="button">
+           Close Plan
+          </button>
+         </div>
+        </section>
+        <!-- SUBSCRIPTION PANEL -->
+        <section class="mining-sub-panel mining-hidden" id="miningSubscribePanel">
+         <div class="mining-sub-head">
+          <div>
+           <h3 id="miningSelectedPlanTitle">
+            Subscription
+           </h3>
+           <p id="miningSelectedPlanMeta">
+            Choose a mining plan
+           </p>
+          </div>
+          <button aria-label="Close subscription panel" class="mining-close" id="closeMiningSubscribePanel" type="button">
+           &times;
+          </button>
+         </div>
+         <div class="mining-sub-body">
+          <div class="mining-balance-box">
+           <span>
+            Available Balance
+           </span>
+           <strong id="miningAvailableBalance">
+            0 BX
+           </strong>
+          </div>
+          <label for="miningAmountInput">
+           Mining Amount
+          </label>
+          <input id="miningAmountInput" inputmode="decimal" min="0" placeholder="Mining Amount" step="0.0001" type="number"/>
+          <div class="mining-quick">
+           <button data-mining-quick="25" type="button">
+            25%
+           </button>
+           <button data-mining-quick="50" type="button">
+            50%
+           </button>
+           <button data-mining-quick="75" type="button">
+            75%
+           </button>
+           <button data-mining-quick="100" type="button">
+            MAX
+           </button>
+          </div>
+          <div aria-live="polite" id="miningSubSummary">
+           Choose Plan
+          </div>
+          <button class="btn primary" id="confirmMiningSubscribeBtn" type="button">
+           Confirm Mining
+          </button>
+         </div>
+        </section>
+        <!-- MINING HISTORY -->
+        <section class="mining-history card">
+         <div class="mining-history-top">
+          <div>
+           <span>
+            Activity
+           </span>
+           <h3>
+            Mining History
+           </h3>
+          </div>
+          <strong id="miningHistoryCount">
+           0 Records
+          </strong>
+         </div>
+         <div aria-live="polite" id="miningHistoryList">
+          <div class="mining-history-empty">
+           No Mining Activity
+          </div>
+         </div>
+        </section>
+       </aside>
+      </div>
+     </div>
+     <div aria-live="polite" class="wallet-status hidden" id="miningStatus" role="status">
+     </div>
+     <div aria-live="polite" class="wallet-toast hidden" id="miningToast" role="status">
+     </div>
+    </section>
+   </main>
+   <nav aria-label="Primary navigation" class="mobile-nav">
+    <a class="nav-btn" data-view="wallet" href="/index.html">
+     <span class="sidebar-icon" data-bx-icon="home" aria-hidden="true"></span>
+      <span>
+       Wallet
+      </span>
+     </img>
+    </a>
+    <a class="nav-btn" data-view="market" href="/pages/market.html">
+     <span class="sidebar-icon" data-bx-icon="market" aria-hidden="true"></span>
+      <span>
+       Market
+      </span>
+     </img>
+    </a>
+    <a class="nav-btn" data-view="casino" href="/pages/casino.html">
+     <span class="sidebar-icon" data-bx-icon="casino" aria-hidden="true"></span>
+      <span>
+       Casino
+      </span>
+     </img>
+    </a>
+    <a class="nav-btn" data-view="mining" href="/pages/mining.html">
+     <span class="sidebar-icon" data-bx-icon="mining" aria-hidden="true"></span>
+      <span>
+       Mining
+      </span>
+     </img>
+    </a>
+    <a class="nav-btn" data-view="mint" href="/pages/mint.html">
+     <span aria-hidden="true" class="sidebar-glyph" data-bx-icon="mint"></span>
+     <span>
+      Mint
+     </span>
+    </a>
+   </nav>
+   <div aria-hidden="true" class="auth auth-overlay hidden" id="authOverlay">
+    <div class="auth-backdrop">
+    </div>
+    <section class="auth-shell">
+     <div class="auth-left">
+      <div class="auth-brand">
+       <img alt="BLOXIO" src="/assets/images/branding/logo.svg"/>
+       <h1 id="authTitle">
+        Welcome To BLOXIO
+       </h1>
+       <p>
+        Enterprise Web3 Exchange &bull; Wallet &bull; Mining
+       </p>
+      </div>
+      <div class="auth-metrics">
+       <div class="auth-metric">
+        <strong>
+         100K+
+        </strong>
+        <span>
+         Users
+        </span>
+       </div>
+       <div class="auth-metric">
+        <strong>
+         24/7
+        </strong>
+        <span>
+         Markets
+        </span>
+       </div>
+       <div class="auth-metric">
+        <strong>
+         BX
+        </strong>
+        <span>
+         Ecosystem
+        </span>
+       </div>
+      </div>
+     </div>
+     <div class="auth-right">
+      <div class="auth-card">
+       <div class="auth-topbar">
+        <button class="auth-tab active" id="loginBtn" type="button">
+         Login
+        </button>
+        <button class="auth-tab" id="registerBtn" type="button">
+         Register
+        </button>
+       </div>
+       <div aria-live="polite" class="auth-error" id="authError" role="alert">
+       </div>
+       <!-- LOGIN -->
+       <div class="auth-box" id="loginBox">
+        <form id="loginForm" novalidate="">
+         <div class="auth-field">
+          <label for="loginEmail">
+           Email
+          </label>
+          <input autocomplete="email" id="loginEmail" placeholder="name@example.com" required="" type="email"/>
+         </div>
+         <div class="auth-field">
+          <label for="loginPassword">
+           Password
+          </label>
+          <input autocomplete="current-password" id="loginPassword" placeholder="Password" required="" type="password"/>
+         </div>
+         <div class="auth-row">
+          <label class="remember-box">
+           <input id="rememberDevice" type="checkbox"/>
+           <span>
+            Remember Device
+           </span>
+          </label>
+          <button class="auth-link" type="button">
+           Forgot Password
+          </button>
+         </div>
+         <button class="auth-submit" type="submit">
+          Login Securely
+         </button>
+        </form>
+       </div>
+       <!-- REGISTER -->
+       <div class="auth-box hidden" id="registerBox">
+        <form id="registerForm" novalidate="">
+         <div class="auth-grid">
+          <div class="auth-field">
+           <label for="registerEmail">
+            Email
+           </label>
+           <input id="registerEmail" placeholder="Email" required="" type="email"/>
+          </div>
+          <div class="auth-field">
+           <label for="registerPhone">
+            Phone
+           </label>
+           <input id="registerPhone" placeholder="+1" required="" type="tel"/>
+          </div>
+         </div>
+         <div class="auth-field">
+          <label for="registerPassword">
+           Password
+          </label>
+          <input id="registerPassword" placeholder="Password" required="" type="password"/>
+         </div>
+         <div class="auth-field">
+          <label for="registerConfirm">
+           Confirm Password
+          </label>
+          <input id="registerConfirm" placeholder="Confirm Password" required="" type="password"/>
+         </div>
+         <div class="auth-field">
+          <label for="inviteCode">
+           Invite Code
+          </label>
+          <input id="inviteCode" placeholder="Optional" type="text"/>
+         </div>
+         <label class="terms-box">
+          <input id="agreeTerms" required="" type="checkbox"/>
+          <span>
+           Accept Terms &amp; Privacy
+          </span>
+         </label>
+         <button class="auth-submit" type="submit">
+          Create Account
+         </button>
+        </form>
+       </div>
+       <div class="auth-footer">
+        <p id="switchText">
+         Need account?
+        </p>
+        <button class="auth-switch" id="toggleAuth" type="button">
+         Register
+        </button>
+       </div>
+       <div class="auth-security">
+        <div>
+         Encrypted
+        </div>
+        <div>
+         2FA Ready
+        </div>
+        <div>
+         PWA Secure
+        </div>
+       </div>
+      </div>
+     </div>
+     <button aria-label="Close authentication" class="auth-close" id="authClose" type="button">
+      &times;
+     </button>
+    </section>
+   </div>
+   <footer class="legal-footer">
+    <div class="footer-socials">
+     <a href="/terms.html">
+      Terms
+     </a>
+     <a href="/privacy.html">
+      Privacy
+     </a>
+     <a href="/risk.html">
+      Risk
+     </a>
+    </div>
+    <p>
+     &copy; 2026 BLOXIO
+    </p>
+   </footer>
+  </div>
+  <audio id="snd-click" preload="none" src="/assets/sounds/click.mp3">
+  </audio>
+  <script src="/vendor/socket.io.min.js">
+  </script>
+  <script src="/core/language.js">
+  </script>
+  <script src="/core/translator.js">
+  </script>
+  <script src="/core/rtl.js">
+  </script>
+  <script defer src="/assets/bx/bloxio-icons.js"></script>
+  <script src="/bx/auth.js">
+  </script>
+  <script src="/bx/state.js">
+  </script>
+  <script src="/bx/services/api.js">
+  </script>
+  <script src="/bx/services/ws.js">
+  </script>
+  <script src="/bx/core.js">
+  </script>
+  <script src="/bx/wallet.js">
+  </script>
+  <script src="/bx/mining.js">
+  </script>
+  <script src="/bx/pages.js">
+  </script>
+  <script src="/bx/main.js">
+  </script>
+  <script src="/core/auto-i18n.js">
+  </script>
+ </body>
+</html>
+
