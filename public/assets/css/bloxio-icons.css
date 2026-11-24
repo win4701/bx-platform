@@ -1,9 +1,0 @@
-/* BLOXIO Internal SVG Icon Library — no external runtime dependency */
-.bx-icon{display:inline-block;width:1.2em;height:1.2em;flex:0 0 auto;vertical-align:-.2em;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-.bx-icon-sm{width:16px;height:16px}.bx-icon-md{width:20px;height:20px}.bx-icon-lg{width:24px;height:24px}.bx-icon-xl{width:32px;height:32px}
-.bx-icon-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-width:36px;min-height:36px;padding:8px 10px;border:1px solid var(--gold-border,rgba(212,175,55,.24));border-radius:10px;background:var(--bg-card,#0d261d);color:var(--text-platinum,#edf4ef);cursor:pointer}
-.bx-icon-btn:hover{border-color:var(--gold-solid,#d4af37);color:var(--gold-solid,#d4af37)}
-.bx-icon-btn:focus-visible{outline:2px solid var(--gold-solid,#d4af37);outline-offset:2px}
-.bx-icon-status{display:inline-flex;align-items:center;gap:6px;font-size:.78rem;font-weight:700}
-.bx-icon-status.is-on{color:#0ecb81}.bx-icon-status.is-off{color:#91a79b}
-.bx-icon-status.is-pending{color:var(--gold-solid,#d4af37)}
