@@ -1,3 +1,23 @@
+
+/* BLOXIO unified SVG icon adapter — safe when the icon library is not loaded. */
+const BLOXIO_ICON = (() => {
+  const get = (kind, code, options) => {
+    const api = window.BLOXIO_ICONS;
+    if (!api) return "";
+    const fn = api[kind];
+    if (typeof fn !== "function") return "";
+    try { return fn.call(api, code, options); } catch (_) { return ""; }
+  };
+  return Object.freeze({
+    token: (code, fallback = "", options = { extension: "png" }) => get("token", code, options) || fallback,
+    game: (code, fallback = "") => get("game", code) || fallback,
+    casino: (code, fallback = "") => get("casino", code) || fallback,
+    commodity: (code, fallback = "") => get("commodity", code) || fallback,
+    flag: (code, fallback = "", options = { width: 40 }) => get("flag", code, options) || fallback,
+    action: (code, fallback = "") => get("action", code) || fallback
+  });
+})();
+
 /* ==========================================================================
    BLOXIO WALLET ENGINE — V3
    Unified Wallet • Assets • Portfolio • Transactions • API • WebSocket
@@ -652,7 +672,7 @@
         const icon = document.createElement("img");
 
         icon.src = (window.BLOXIO_ICONS && asset.symbol)
-            ? window.BLOXIO_ICONS.token(asset.symbol, { extension: "png" })
+            ? BLOXIO_ICON.token(asset.symbol, asset.icon || "")
             : (asset.icon || "");
         icon.alt = asset.symbol;
         icon.loading = "lazy";
@@ -1260,7 +1280,7 @@
 
         if (icon) {
             icon.src = (window.BLOXIO_ICONS && key)
-                ? window.BLOXIO_ICONS.token(key, { extension: "png" })
+                ? BLOXIO_ICON.token(key, asset.icon || "")
                 : (asset.icon || "");
             icon.alt = key;
         }
