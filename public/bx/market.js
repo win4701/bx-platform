@@ -1,4 +1,3 @@
-
 /* BLOXIO unified SVG icon adapter — safe when the icon library is not loaded. */
 const BLOXIO_ICON = (() => {
   const get = (kind, code, options) => {
@@ -20,7 +19,7 @@ const BLOXIO_ICON = (() => {
 
 
 /* =========================================================
-   BLOXIO MARKET ENGINE V9
+   BLOXIO MARKET ENGINE V10
    public/bx/market.js
 
    Default Market: BX/USDT
@@ -150,10 +149,10 @@ const escapeHTML = value =>
     })[char]);
 
 const CONFIG = {
-    pair: "BTC_USDT",
-    displayPair: "BTC/USDT",
-
-    referencePrice: 1,
+    // Unified default: BX/USDT with 45 USDT reference (matches engine header).
+    pair: "BX_USDT",
+    displayPair: "BX/USDT",
+    referencePrice: 45,
 
     endpoints: {
         price: "/market/price",
@@ -172,7 +171,7 @@ const CONFIG = {
 
     timeframes: [
         "1m", "5m", "15m",
-        "1h", "4h", "1d", "1w" , "1M"
+        "1h", "4h", "1d", "1w", "1M"
     ]
 };
 
@@ -203,11 +202,7 @@ const MARKET = {
     orderType: "limit",
     timeframe: "1m",
 
-    orderBook: {
-        asks: [],
-        bids: []
-    },
-
+    orderBook: { asks: [], bids: [] },
     trades: [],
     candles: [],
 
@@ -218,6 +213,9 @@ const MARKET = {
     lastUpdate: null,
     lastError: null,
     pairTickerCache: Object.create(null),
+
+    marketMode: "spot",
+    marketCategory: "crypto",
 
     /* =====================================================
        INIT
@@ -233,17 +231,25 @@ const MARKET = {
         this.initialized = true;
         this.destroyed = false;
 
+        // Pair selection before rendering everything else.
+        this.restoreSavedPair();
+
         this.renderBloxioPairs();
+        this.renderQuickPairs();
         this.bindBloxioMarketFilters();
+        this.bindQuoteDropdown();
         this.bindAssets();
         this.bindSearch();
+        this.bindPairSelect();
         this.bindTradeTabs();
         this.bindTradeForm();
         this.bindBloxioTradeInputs();
         this.bindChartToolbar();
         this.bindMobileTabs();
-        this.bindOrderType();
+        this.bindOrderTypeSelect();
         this.bindVisibility();
+        this.bindTradeModeTabs();
+        this.bindTradeViewTabs();
 
         this.updatePairUI();
 
@@ -259,18 +265,26 @@ const MARKET = {
         this.subscribeWS();
         this.startHeartbeat();
 
-        console.log("[BLOXIO MARKET] V9 READY");
-
+        console.log("[BLOXIO MARKET] V10 READY");
         return true;
+    },
+
+    restoreSavedPair() {
+        let stored = null;
+        try { stored = localStorage.getItem("bloxio:selectedMarketPair"); } catch (_) {}
+        if (!stored) return;
+        const normalized = this.normalizePair(stored);
+        const exists = BLOXIO_MARKET_PAIRS.some(p => `${p.base}_${p.quote}` === normalized);
+        if (exists) {
+            this.pair = normalized;
+            this.displayPair = normalized.replace("_", "/");
+        }
     },
 
 
     /* =====================================================
-       BLOXIO MARKET SELECTOR (SPOT / FUTURES)
+       ASSET ICONS
     ===================================================== */
-
-    marketMode: "spot",
-    marketCategory: "crypto",
 
     assetIconPath(symbol, group = "") {
         const code = String(symbol || "").toUpperCase();
@@ -281,7 +295,6 @@ const MARKET = {
         const key = aliases[code] || code.toLowerCase();
         const folder = group === "commodities" ? "commodities" : "coins";
 
-        // Keep compatibility with the central icon manager for other assets.
         const icons = window.BLOXIO_ICONS;
         if (icons) {
             return folder === "commodities"
@@ -296,6 +309,10 @@ const MARKET = {
         const safeSymbol = escapeHTML(symbol);
         return `<span class="bx-token-icon"><img src="${src}" alt="${safeSymbol}" loading="lazy" onerror="this.hidden=true;this.nextElementSibling.hidden=false"><span hidden>${safeSymbol.slice(0,3)}</span></span>`;
     },
+
+    /* =====================================================
+       PAIR LIST RENDERING
+    ===================================================== */
 
     renderBloxioPairs() {
         const base = $("marketBaseAssets");
@@ -325,8 +342,8 @@ const MARKET = {
         ).join("");
 
         pairs.innerHTML = filtered.map(pair => {
-            const selected = this.normalizePair(`${pair.base}/${pair.quote}`) === this.pair;
             const pairKey = `${pair.base}_${pair.quote}`;
+            const selected = this.pair === pairKey;
             const cached = this.pairTickerCache[pairKey] || {};
             const shownPrice = cached.price > 0 ? format(cached.price, 8) : "—";
             const changeValue = Number.isFinite(cached.change) ? cached.change : null;
@@ -367,6 +384,9 @@ const MARKET = {
             </button>`;
         }).join("") || `<p class="market-empty">No markets match your filters.</p>`;
 
+        const empty = $("bxMarketEmpty");
+        if (empty) empty.hidden = filtered.length > 0;
+
         this.loadPairTickers(filtered);
 
         const title = $("marketPairsTitle");
@@ -382,6 +402,30 @@ const MARKET = {
                 companies: "Company markets quoted only in BX and EUBX",
                 commodities: "Precious metals and energy markets, including Rhodium and Iridium"
             })[this.marketCategory] || "Market listings";
+    },
+
+    renderQuickPairs() {
+        const container = $("tradePairQuickList");
+        if (!container) return;
+        const quick = ["BX_USDT", "BTC_USDT", "ETH_USDT", "SOL_USDT", "BNB_BX"]
+            .map(key => BLOXIO_MARKET_PAIRS.find(p => `${p.base}_${p.quote}` === key))
+            .filter(Boolean);
+        container.innerHTML = quick.map(pair => {
+            const key = `${pair.base}_${pair.quote}`;
+            const selected = this.pair === key;
+            const icon = pair.icon || this.assetIconPath(pair.base, pair.group);
+            return `<button type="button" class="bx-quick-pair ${selected ? "active" : ""}" data-pair="${key}" aria-pressed="${selected}">
+                <img src="${icon}" alt="${escapeHTML(pair.base)}" onerror="this.hidden=true"/>
+                <span>${escapeHTML(pair.base)}/${escapeHTML(pair.quote)}</span>
+            </button>`;
+        }).join("");
+        if (container.dataset.bound === "1") return;
+        container.dataset.bound = "1";
+        container.addEventListener("click", event => {
+            const btn = event.target.closest("[data-pair]");
+            if (!btn) return;
+            this.connectPair(btn.dataset.pair);
+        });
     },
 
     formatMarketVolume(value) {
@@ -438,8 +482,14 @@ const MARKET = {
         }));
     },
 
+    /* =====================================================
+       FILTERS / BINDINGS
+    ===================================================== */
+
     bindBloxioMarketFilters() {
         document.querySelectorAll("[data-bx-market-mode]").forEach(button => {
+            if (button.dataset.bound === "1") return;
+            button.dataset.bound = "1";
             button.addEventListener("click", () => {
                 const mode = button.dataset.bxMarketMode;
                 if (!["spot", "futures"].includes(mode)) return;
@@ -455,6 +505,8 @@ const MARKET = {
         });
 
         document.querySelectorAll("[data-market-category]").forEach(button => {
+            if (button.dataset.bound === "1") return;
+            button.dataset.bound = "1";
             button.addEventListener("click", () => {
                 this.marketCategory = button.dataset.marketCategory || "crypto";
                 document.querySelectorAll("[data-market-category]").forEach(tab => {
@@ -466,7 +518,10 @@ const MARKET = {
             });
         });
 
-        $("bxMarketQuote")?.addEventListener("change", () => this.renderBloxioPairs());
+        $("bxMarketQuote")?.addEventListener("change", () => {
+            this.syncQuoteTriggerLabel();
+            this.renderBloxioPairs();
+        });
 
         $("marketBaseAssets")?.addEventListener("click", event => {
             const button = event.target.closest("[data-bx-category]");
@@ -482,15 +537,78 @@ const MARKET = {
     },
 
     /* =====================================================
+       CUSTOM QUOTE DROPDOWN
+    ===================================================== */
+
+    syncQuoteTriggerLabel() {
+        const select = $("bxMarketQuote");
+        const label = $("bxQuoteValue");
+        if (select && label) label.textContent = select.value || "ALL";
+    },
+
+    bindQuoteDropdown() {
+        const trigger = $("bxQuoteTrigger");
+        const menu = $("bxQuoteMenu");
+        const select = $("bxMarketQuote");
+        if (!trigger || !menu || !select) return;
+
+        // Build menu from native select options.
+        const buildMenu = () => {
+            menu.innerHTML = Array.from(select.options).map(opt =>
+                `<button type="button" role="option" data-value="${escapeHTML(opt.value)}" class="${opt.value === select.value ? "selected" : ""}" aria-selected="${opt.value === select.value}">${escapeHTML(opt.textContent)}</button>`
+            ).join("");
+        };
+        buildMenu();
+
+        trigger.addEventListener("click", () => {
+            const open = !menu.hidden;
+            menu.hidden = open;
+            trigger.setAttribute("aria-expanded", String(!open));
+        });
+
+        menu.addEventListener("click", event => {
+            const opt = event.target.closest("[data-value]");
+            if (!opt) return;
+            select.value = opt.dataset.value;
+            select.dispatchEvent(new Event("change", { bubbles: true }));
+            buildMenu();
+            menu.hidden = true;
+            trigger.setAttribute("aria-expanded", "false");
+        });
+
+        document.addEventListener("click", event => {
+            if (menu.hidden) return;
+            if (!event.target.closest("#bxQuotePicker")) {
+                menu.hidden = true;
+                trigger.setAttribute("aria-expanded", "false");
+            }
+        });
+    },
+
+    /* =====================================================
+       PAIR SELECT (HEADER DROPDOWN)
+    ===================================================== */
+
+    bindPairSelect() {
+        const select = $("tradePairSelect");
+        if (!select || select.dataset.bound === "1") return;
+        select.dataset.bound = "1";
+
+        // Sync select to current pair.
+        const key = this.pair;
+        if (Array.from(select.options).some(o => o.value === key)) select.value = key;
+
+        select.addEventListener("change", () => {
+            this.connectPair(select.value);
+        });
+    },
+
+    /* =====================================================
        AUTH
     ===================================================== */
 
     isAuthenticated() {
-
-        if (window.AUTH?.state?.authenticated === true) {
-            return true;
-        }
-
+        if (window.AUTH?.state?.authenticated === true) return true;
         try {
             return Boolean(
                 window.API?.token?.() ||
@@ -500,20 +618,11 @@ const MARKET = {
         } catch {
             return false;
         }
-
     },
 
     requireAuth() {
-
-        if (this.isAuthenticated()) {
-            return true;
-        }
-
-        this.notify(
-            "Login required to place an order",
-            "warning"
-        );
-
+        if (this.isAuthenticated()) return true;
+        this.notify("Login required to place an order", "warning");
         if (window.AUTH?.openAuth) {
             window.AUTH.openAuth("login");
         } else if (window.AUTH?.showAuth) {
@@ -521,7 +630,6 @@ const MARKET = {
         } else {
             $("headerLoginBtn")?.click();
         }
-
         return false;
     },
 
@@ -530,116 +638,59 @@ const MARKET = {
     ===================================================== */
 
     async apiGet(endpoint, params = {}) {
-
-        if (!window.API?.get) {
-            throw new Error("API_UNAVAILABLE");
-        }
-
+        if (!window.API?.get) throw new Error("API_UNAVAILABLE");
         const query = new URLSearchParams();
-
         Object.entries(params).forEach(([key, value]) => {
             if (value !== undefined && value !== null) {
                 query.set(key, String(value));
             }
         });
-
-        const url = endpoint +
-            (query.toString() ? "?" + query.toString() : "");
-
-        const response = await window.API.get(url, {
-            auth: false,
-            cache: false
-        });
-
+        const url = endpoint + (query.toString() ? "?" + query.toString() : "");
+        const response = await window.API.get(url, { auth: false, cache: false });
         return this.unwrapResponse(response);
     },
 
     async apiPost(endpoint, body) {
-
-        if (!window.API?.post) {
-            throw new Error("API_UNAVAILABLE");
-        }
-
-        const response = await window.API.post(
-            endpoint,
-            body,
-            {
-                auth: true,
-                cache: false
-            }
-        );
-
+        if (!window.API?.post) throw new Error("API_UNAVAILABLE");
+        const response = await window.API.post(endpoint, body, { auth: true, cache: false });
         return this.unwrapResponse(response);
     },
 
     unwrapResponse(response) {
-
-        if (!response || typeof response !== "object") {
-            throw new Error("INVALID_SERVER_RESPONSE");
-        }
-
+        if (!response || typeof response !== "object") throw new Error("INVALID_SERVER_RESPONSE");
         if (response.error) {
-            const message =
-                typeof response.error === "string"
-                    ? response.error
-                    : response.error.message;
-
+            const message = typeof response.error === "string" ? response.error : response.error.message;
             throw new Error(message || "REQUEST_FAILED");
         }
-
-        if (response.success === false) {
-            throw new Error(
-                response.message ||
-                "REQUEST_FAILED"
-            );
-        }
-
+        if (response.success === false) throw new Error(response.message || "REQUEST_FAILED");
         return response;
     },
 
     unwrap(response, key) {
-
         let data = response;
-
-        if (data?.data !== undefined) {
-            data = data.data;
-        }
-
-        if (
-            key &&
-            data &&
-            data[key] !== undefined
-        ) {
-            return data[key];
-        }
-
+        if (data?.data !== undefined) data = data.data;
+        if (key && data && data[key] !== undefined) return data[key];
         return data;
     },
 
     /* =====================================================
-       PAIR
+       PAIR NORMALIZATION
     ===================================================== */
 
     normalizePair(pair) {
-
-        const value = String(
-            pair || CONFIG.displayPair
-        ).toUpperCase().trim();
-
-        if (
-            value === "BX_USDT" ||
-            value === "BX/USDT" ||
-            value === "BXUSDT"
-        ) {
-            return CONFIG.pair;
-        }
-
-        return value.replace("/", "_");
+        const value = String(pair || CONFIG.displayPair).toUpperCase().trim().replace("/", "_");
+        if (value === "BXUSDT" || value === "BX_USDT") return "BX_USDT";
+        if (value === "EUBXUSDT" || value === "EUBX_USDT") return "EUBX_USDT";
+        return value;
     },
 
     connectPair(pair) {
-
         const normalized = this.normalizePair(pair);
+        const exists = BLOXIO_MARKET_PAIRS.some(p => `${p.base}_${p.quote}` === normalized);
+        if (!exists) {
+            this.notify(`Unknown market pair: ${pair}`, "error");
+            return;
+        }
 
         if (normalized === this.pair) {
             this.refresh();
@@ -649,8 +700,13 @@ const MARKET = {
         this.pair = normalized;
         this.displayPair = normalized.replace("_", "/");
         this.fixedReference = false;
-        this.referencePrice = 0;
         try { localStorage.setItem("bloxio:selectedMarketPair", this.displayPair); } catch {}
+
+        // Sync header select.
+        const select = $("tradePairSelect");
+        if (select && Array.from(select.options).some(o => o.value === normalized)) {
+            select.value = normalized;
+        }
 
         window.BXChart?.setPair?.(this.pair);
 
@@ -660,54 +716,55 @@ const MARKET = {
         this.prevPrice = 0;
         this.volume = 0;
         this.change = 0;
-
-        this.orderBook = {
-            asks: [],
-            bids: []
-        };
-
+        this.orderBook = { asks: [], bids: [] };
         this.trades = [];
         this.candles = [];
 
         this.updatePairUI();
-
         this.renderOrderBook();
         this.renderHistory();
+        this.renderQuickPairs();
+
+        // Highlight in list.
+        document.querySelectorAll("#marketPairAssets .market-asset").forEach(btn => {
+            const active = btn.dataset.pair === normalized;
+            btn.classList.toggle("active", active);
+            btn.setAttribute("aria-pressed", String(active));
+        });
 
         this.refresh();
         this.refreshTrades();
         this.loadCandles();
-
     },
 
     updatePairUI() {
+        if ($("marketPair")) $("marketPair").textContent = this.displayPair;
 
-        if ($("marketPair")) {
-            $("marketPair").textContent = this.displayPair;
-        }
-
-        document.querySelectorAll(".market-asset")
-            .forEach(button => {
-                button.classList.toggle(
-                    "active",
-                    this.normalizePair(button.dataset.pair) === this.pair
-                );
-            });
+        document.querySelectorAll(".market-asset").forEach(button => {
+            button.classList.toggle("active", this.normalizePair(button.dataset.pair) === this.pair);
+        });
 
         const [base, quote] = this.displayPair.split("/");
-        if ($("marketBaseAsset")) $("marketBaseAsset").textContent = base || "BX";
-        if ($("marketQuoteAsset")) $("marketQuoteAsset").textContent = quote || "USDT";
         if ($("bxBaseSymbol")) $("bxBaseSymbol").textContent = base || "BX";
         if ($("bxQuoteSymbol")) $("bxQuoteSymbol").textContent = quote || "USDT";
         if ($("bxTotalSymbol")) $("bxTotalSymbol").textContent = quote || "USDT";
         if ($("tradeTitle")) $("tradeTitle").textContent = `${base || "BX"} Trading`;
-        document.querySelectorAll("[data-selected-token-icon]").forEach(node => {
-            const symbol = base || "BX";
-            const image = this.assetIconPath(symbol);
-            node.innerHTML = `<img src="${image}" alt="${escapeHTML(symbol)}" onerror="this.hidden=true;this.nextElementSibling.hidden=false"><span hidden>${escapeHTML(symbol.slice(0,3))}</span>`;
-        });
-        if ($("actionBtn")) $("actionBtn").textContent = `PLACE ${this.tradeSide.toUpperCase()} ORDER`;
 
+        // Update header base icon.
+        const baseIcon = $("tradeBaseIcon");
+        if (baseIcon) {
+            const icon = this.assetIconPath(base || "BX");
+            baseIcon.src = icon;
+            baseIcon.alt = base || "BX";
+        }
+
+        // Update contract label.
+        if ($("tradeContractLabel")) {
+            $("tradeContractLabel").textContent = this.marketMode === "futures" ? "Perpetual" : "Spot";
+        }
+
+        // Update action button label.
+        this.refreshActionButton();
     },
 
     /* =====================================================
@@ -715,13 +772,8 @@ const MARKET = {
     ===================================================== */
 
     async refresh() {
-
-        if (this.destroyed || this.loading) {
-            return;
-        }
-
+        if (this.destroyed || this.loading) return;
         this.loading = true;
-
         const generation = this.generation;
 
         const tasks = this.fixedReference
@@ -742,26 +794,14 @@ const MARKET = {
         }
 
         const results = await Promise.allSettled(tasks);
-
         if (generation !== this.generation) {
             this.loading = false;
             return;
         }
 
-        const failed = results.some(
-            result => result.status === "rejected"
-        );
-
-        if (failed) {
-            this.updateConnectionStatus(
-                this.price > 0 ? "partial" : "offline"
-            );
-        } else {
-            this.updateConnectionStatus("online");
-        }
-
+        const failed = results.some(result => result.status === "rejected");
+        this.updateConnectionStatus(failed ? (this.price > 0 ? "partial" : "offline") : "online");
         this.loading = false;
-
     },
 
     /* =====================================================
@@ -769,39 +809,16 @@ const MARKET = {
     ===================================================== */
 
     async loadPrice(generation = this.generation) {
-
-        const response = await this.apiGet(
-            CONFIG.endpoints.price,
-            {
-                pair: this.pair
-            }
-        );
-
-        if (
-            generation !== this.generation ||
-            this.destroyed
-        ) return;
-
+        const response = await this.apiGet(CONFIG.endpoints.price, { pair: this.pair });
+        if (generation !== this.generation || this.destroyed) return;
         const data = this.unwrap(response, "price");
-
-        const price = number(
-            typeof data === "object"
-                ? data.price
-                : data
-        );
-
-        if (price <= 0) {
-            throw new Error("INVALID_MARKET_PRICE");
-        }
-
+        const price = number(typeof data === "object" ? data.price : data);
+        if (price <= 0) throw new Error("INVALID_MARKET_PRICE");
         this.prevPrice = this.price || price;
         this.price = price;
-
         this.lastUpdate = Date.now();
         this.lastError = null;
-
         this.updateStats();
-
     },
 
     /* =====================================================
@@ -809,77 +826,34 @@ const MARKET = {
     ===================================================== */
 
     async loadOrderBook(generation = this.generation) {
-
-        const response = await this.apiGet(
-            CONFIG.endpoints.orderbook,
-            {
-                pair: this.pair
-            }
-        );
-
-        if (
-            generation !== this.generation ||
-            this.destroyed
-        ) return;
-
+        const response = await this.apiGet(CONFIG.endpoints.orderbook, { pair: this.pair });
+        if (generation !== this.generation || this.destroyed) return;
         const data = this.unwrap(response, "depth");
-
         const book = data?.depth || data;
-
-        this.orderBook.asks =
-            Array.isArray(book?.asks)
-                ? book.asks
-                : [];
-
-        this.orderBook.bids =
-            Array.isArray(book?.bids)
-                ? book.bids
-                : [];
-
+        this.orderBook.asks = Array.isArray(book?.asks) ? book.asks : [];
+        this.orderBook.bids = Array.isArray(book?.bids) ? book.bids : [];
         this.orderBookDemo = false;
         this.renderOrderBook();
         this.updateIntel();
-
     },
 
     normalizeBookRows(rows) {
-
         if (!Array.isArray(rows)) return [];
-
         return rows.map(row => ({
-            price: number(
-                Array.isArray(row)
-                    ? row[0]
-                    : row.price
-            ),
-
-            amount: number(
-                Array.isArray(row)
-                    ? row[1]
-                    : row.amount ?? row.quantity
-            )
-        })).filter(row =>
-            row.price > 0 &&
-            row.amount > 0
-        );
-
+            price: number(Array.isArray(row) ? row[0] : row.price),
+            amount: number(Array.isArray(row) ? row[1] : (row.amount ?? row.quantity))
+        })).filter(row => row.price > 0 && row.amount > 0);
     },
 
     renderOrderBook() {
-
         const grid = $("orderBookGrid");
-
         if (!grid) return;
 
-        const asks = this.normalizeBookRows(
-            this.orderBook.asks
-        )
+        const asks = this.normalizeBookRows(this.orderBook.asks)
             .sort((a, b) => b.price - a.price)
             .slice(0, CONFIG.depthLimit);
 
-        const bids = this.normalizeBookRows(
-            this.orderBook.bids
-        )
+        const bids = this.normalizeBookRows(this.orderBook.bids)
             .sort((a, b) => b.price - a.price)
             .slice(0, CONFIG.depthLimit);
 
@@ -901,107 +875,55 @@ const MARKET = {
         }
 
         if (!asks.length && !bids.length) {
-
             grid.innerHTML = `
                 <div class="orderbook-heading">
-                    <span>Price (USDT)</span>
-                    <span>Amount (BX)</span>
-                    <span>Total (USDT)</span>
+                    <span>Price</span><span>Amount</span><span>Total</span>
                 </div>
-
-                <div class="market-empty">
-                    Order book data unavailable
-                </div>
+                <div class="market-empty">Order book data unavailable</div>
             `;
-
             return;
         }
 
-        const maxAmount = Math.max(
-            ...asks.map(row => row.amount),
-            ...bids.map(row => row.amount),
-            1
-        );
+        const [base, quote] = this.displayPair.split("/");
+        const maxAmount = Math.max(...asks.map(r => r.amount), ...bids.map(r => r.amount), 1);
 
         const renderRows = (rows, side) => {
-
             let total = 0;
-
             return rows.map(row => {
-
                 total += row.amount;
-
-                const width = Math.min(
-                    100,
-                    row.amount / maxAmount * 100
-                );
-
+                const width = Math.min(100, row.amount / maxAmount * 100);
                 return `
                     <div class="orderbook-row ${side}">
-                        <span class="orderbook-price">
-                            ${format(row.price, 8)}
-                        </span>
-
-                        <span class="orderbook-amount">
-                            ${format(row.amount, 6)}
-                        </span>
-
-                        <span class="orderbook-total">
-                            ${format(total * row.price, 4)}
-                        </span>
-
-                        <span class="orderbook-depth"
-                              style="width:${width}%">
-                        </span>
+                        <span class="orderbook-price">${format(row.price, 8)}</span>
+                        <span class="orderbook-amount">${format(row.amount, 6)}</span>
+                        <span class="orderbook-total">${format(total * row.price, 4)}</span>
+                        <span class="orderbook-depth" style="width:${width}%"></span>
                     </div>
                 `;
-
             }).join("");
-
         };
 
-        const bestAsk = asks.length
-            ? Math.min(...asks.map(row => row.price))
-            : 0;
-
-        const bestBid = bids.length
-            ? Math.max(...bids.map(row => row.price))
-            : 0;
-
-        this.spread = bestAsk > 0 && bestBid > 0
-            ? ((bestAsk - bestBid) / bestAsk) * 100
-            : 0;
+        const bestAsk = asks.length ? Math.min(...asks.map(r => r.price)) : 0;
+        const bestBid = bids.length ? Math.max(...bids.map(r => r.price)) : 0;
+        this.spread = bestAsk > 0 && bestBid > 0 ? ((bestAsk - bestBid) / bestAsk) * 100 : 0;
 
         grid.innerHTML = `
             <div class="orderbook-heading">
-                <span>Price (USDT)</span>
-                <span>Amount (BX)</span>
-                <span>Total (USDT)</span>
+                <span>Price (${escapeHTML(quote)})</span>
+                <span>Amount (${escapeHTML(base)})</span>
+                <span>Total (${escapeHTML(quote)})</span>
             </div>
-
-            <div class="orderbook-asks">
-                ${renderRows(asks, "ask")}
-            </div>
-
+            <div class="orderbook-asks">${renderRows(asks, "ask")}</div>
             <div class="orderbook-spread">
-                <span>${this.displayPair}${this.orderBookDemo ? " · DEMO" : ""}</span>
+                <span>${escapeHTML(this.displayPair)}${this.orderBookDemo ? " · DEMO" : ""}</span>
                 <strong>${format(this.price || this.referencePrice, 4)}</strong>
             </div>
-
-            <div class="orderbook-bids">
-                ${renderRows(bids, "bid")}
-            </div>
+            <div class="orderbook-bids">${renderRows(bids, "bid")}</div>
         `;
-
         grid.classList.add("orderbook-enhanced");
 
-        if ($("spread")) {
-            $("spread").textContent =
-                this.spread.toFixed(4) + "%";
-        }
-
+        if ($("spread")) $("spread").textContent = this.spread.toFixed(4) + "%";
         this.updateIntel();
-
     },
 
     /* =====================================================
@@ -1009,95 +931,45 @@ const MARKET = {
     ===================================================== */
 
     async loadStats(generation = this.generation) {
-
-        const response = await this.apiGet(
-            CONFIG.endpoints.stats,
-            {
-                pair: this.pair
-            }
-        );
-
-        if (
-            generation !== this.generation ||
-            this.destroyed
-        ) return;
-
+        const response = await this.apiGet(CONFIG.endpoints.stats, { pair: this.pair });
+        if (generation !== this.generation || this.destroyed) return;
         const data = this.unwrap(response, "stats");
-
-        if (!data || typeof data !== "object") {
-            return;
-        }
-
-        this.volume = number(
-            data.volume ??
-            data.quoteVolume ??
-            data.totalVolume
-        );
-
-        if (data.change !== undefined) {
-            this.change = number(data.change);
-        }
-
+        if (!data || typeof data !== "object") return;
+        this.volume = number(data.volume ?? data.quoteVolume ?? data.totalVolume);
+        if (data.change !== undefined) this.change = number(data.change);
         this.updateStats();
-
     },
 
     updateStats() {
-
-        const displayPrice =
-            this.price > 0
-                ? this.price
-                : this.referencePrice;
-
-        if ($("marketPrice")) {
-            $("marketPrice").textContent =
-                format(displayPrice, 8);
-        }
+        const displayPrice = this.price > 0 ? this.price : this.referencePrice;
+        if ($("marketPrice")) $("marketPrice").textContent = format(displayPrice, 8);
 
         if ($("marketVolume")) {
-            $("marketVolume").textContent =
-                "$" + Math.round(this.volume).toLocaleString();
+            $("marketVolume").textContent = "$" + Math.round(this.volume).toLocaleString();
         }
 
         if ($("marketChange")) {
-
             const change = this.change !== 0
                 ? this.change
                 : this.prevPrice > 0
-                    ? (
-                        (this.price - this.prevPrice) /
-                        this.prevPrice
-                    ) * 100
+                    ? ((this.price - this.prevPrice) / this.prevPrice) * 100
                     : 0;
-
-            $("marketChange").textContent =
-                change.toFixed(2) + "%";
-
-            $("marketChange").classList.toggle(
-                "positive",
-                change >= 0
-            );
-
-            $("marketChange").classList.toggle(
-                "negative",
-                change < 0
-            );
-
+            $("marketChange").textContent = change.toFixed(2) + "%";
+            $("marketChange").classList.toggle("positive", change >= 0);
+            $("marketChange").classList.toggle("negative", change < 0);
         }
 
-        if ($("execPrice")) {
-            $("execPrice").value =
-                format(displayPrice, 8);
+        // Keep the trade price input synced in market mode.
+        if (this.orderType === "market" && $("orderPrice")) {
+            $("orderPrice").value = format(displayPrice, 8);
         }
 
         if ($("marketTooltip")) {
-            $("marketTooltip").textContent =
-                `${this.displayPair} ${this.displayPair.split("/")[1] || "USDT"} ${format(displayPrice, 8)}`;
+            $("marketTooltip").textContent = `${this.displayPair} ${format(displayPrice, 8)}`;
         }
 
         this.updateOrderTotal();
         this.updateIntel();
-
     },
 
     /* =====================================================
@@ -1105,105 +977,48 @@ const MARKET = {
     ===================================================== */
 
     async refreshTrades() {
-
         const generation = this.generation;
-
         try {
-
-            const response = await this.apiGet(
-                CONFIG.endpoints.trades,
-                {
-                    pair: this.pair,
-                    limit: CONFIG.historyLimit
-                }
-            );
-
-            if (
-                generation !== this.generation ||
-                this.destroyed
-            ) return;
-
+            const response = await this.apiGet(CONFIG.endpoints.trades, { pair: this.pair, limit: CONFIG.historyLimit });
+            if (generation !== this.generation || this.destroyed) return;
             const data = this.unwrap(response, "trades");
-
-            if (!Array.isArray(data)) {
-                throw new Error("INVALID_TRADES_RESPONSE");
-            }
-
+            if (!Array.isArray(data)) throw new Error("INVALID_TRADES_RESPONSE");
             this.trades = data;
-
             this.renderHistory();
-
         } catch (error) {
-
             console.warn("[MARKET TRADES]", error);
-
-            this.showEmptyHistory(
-                "Trade history unavailable"
-            );
-
+            this.showEmptyHistory("Trade history unavailable");
         }
-
     },
 
     renderHistory() {
-
         const grid = $("tradeHistoryGrid");
-
         if (!grid) return;
-
         if (!this.trades.length) {
             this.showEmptyHistory("No completed trades");
             return;
         }
-
-        grid.innerHTML = this.trades
-            .slice(0, CONFIG.historyLimit)
-            .map(trade => {
-
-                const side = String(
-                    trade.side || trade.type || "buy"
-                ).toLowerCase();
-
-                const price = number(trade.price);
-
-                const amount = number(
-                    trade.amount ?? trade.quantity
-                );
-
-                const timestamp =
-                    trade.time ||
-                    trade.timestamp ||
-                    trade.createdAt;
-
-                const time = timestamp
-                    ? new Date(timestamp).toLocaleTimeString()
-                    : "--";
-
-                return `
-                    <div class="trade-row ${side}">
-                        <span>${escapeHTML(time)}</span>
-                        <span>${escapeHTML(side.toUpperCase())}</span>
-                        <span>${format(price, 8)}</span>
-                        <span>${format(amount, 6)}</span>
-                    </div>
-                `;
-
-            }).join("");
-
+        grid.innerHTML = this.trades.slice(0, CONFIG.historyLimit).map(trade => {
+            const side = String(trade.side || trade.type || "buy").toLowerCase();
+            const price = number(trade.price);
+            const amount = number(trade.amount ?? trade.quantity);
+            const timestamp = trade.time || trade.timestamp || trade.createdAt;
+            const time = timestamp ? new Date(timestamp).toLocaleTimeString() : "--";
+            return `
+                <div class="trade-row ${side}">
+                    <span>${escapeHTML(time)}</span>
+                    <span>${escapeHTML(side.toUpperCase())}</span>
+                    <span>${format(price, 8)}</span>
+                    <span>${format(amount, 6)}</span>
+                </div>
+            `;
+        }).join("");
     },
 
     showEmptyHistory(message) {
-
         const grid = $("tradeHistoryGrid");
-
         if (!grid) return;
-
-        grid.innerHTML = `
-            <div class="trade-empty">
-                ${escapeHTML(message)}
-            </div>
-        `;
-
+        grid.innerHTML = `<div class="trade-empty">${escapeHTML(message)}</div>`;
     },
 
     /* =====================================================
@@ -1211,43 +1026,17 @@ const MARKET = {
     ===================================================== */
 
     async loadCandles() {
-
         const generation = this.generation;
-
         try {
-
-            const response = await this.apiGet(
-                CONFIG.endpoints.candles,
-                {
-                    pair: this.pair,
-                    timeframe: this.timeframe,
-                    limit: 300
-                }
-            );
-
-            if (
-                generation !== this.generation ||
-                this.destroyed
-            ) return;
-
+            const response = await this.apiGet(CONFIG.endpoints.candles, {
+                pair: this.pair,
+                timeframe: this.timeframe,
+                limit: 300
+            });
+            if (generation !== this.generation || this.destroyed) return;
             const data = this.unwrap(response, "candles");
-
-            if (!Array.isArray(data)) {
-                throw new Error("INVALID_CANDLES_RESPONSE");
-            }
-
+            if (!Array.isArray(data)) throw new Error("INVALID_CANDLES_RESPONSE");
             this.candles = data;
-
-            /*
-              BXChart V8 currently fetches Binance candles
-              internally. It does not expose a method to
-              inject Bloxio candles.
-
-              Do not send BX/USDT to Binance as a substitute.
-              The chart adapter must be updated separately
-              to render these server candles.
-            */
-
             this.dispatch("bloxio:market-candles", {
                 pair: this.pair,
                 timeframe: this.timeframe,
@@ -1255,31 +1044,17 @@ const MARKET = {
                 fixedReference: false,
                 candles: this.candles
             });
-
         } catch (error) {
-
             console.warn("[MARKET CANDLES]", error);
-
-            this.notify(
-                "Market chart data unavailable",
-                "warning"
-            );
-
+            this.notify("Market chart data unavailable", "warning");
         }
-
     },
 
     setTimeframe(timeframe) {
-
-        if (!CONFIG.timeframes.includes(timeframe)) {
-            return;
-        }
-
+        if (!CONFIG.timeframes.includes(timeframe)) return;
         this.timeframe = timeframe;
         window.BXChart?.setTimeframe?.(timeframe);
-
         this.loadCandles();
-
     },
 
     /* =====================================================
@@ -1287,51 +1062,19 @@ const MARKET = {
     ===================================================== */
 
     updateIntel() {
+        const diff = Math.abs(this.price - this.prevPrice);
+        const trend = this.price >= this.prevPrice ? "Bullish" : "Bearish";
+        const volatility = diff < 0.001 ? "Low" : diff < 0.01 ? "Medium" : "High";
+        const sentiment = diff < 0.001 ? "Stable" : trend;
 
-        const diff = Math.abs(
-            this.price - this.prevPrice
-        );
-
-        const trend =
-            this.price >= this.prevPrice
-                ? "Bullish"
-                : "Bearish";
-
-        const volatility =
-            diff < 0.001
-                ? "Low"
-                : diff < 0.01
-                    ? "Medium"
-                    : "High";
-
-        const sentiment =
-            diff < 0.001
-                ? "Stable"
-                : trend;
-
-        if ($("marketTrend")) {
-            $("marketTrend").textContent = trend;
-        }
-
-        if ($("marketSentiment")) {
-            $("marketSentiment").textContent = sentiment;
-        }
-
-        if ($("marketVolatility")) {
-            $("marketVolatility").textContent = volatility;
-        }
+        if ($("marketTrend")) $("marketTrend").textContent = trend;
+        if ($("marketSentiment")) $("marketSentiment").textContent = sentiment;
+        if ($("marketVolatility")) $("marketVolatility").textContent = volatility;
 
         if ($("marketLiquidity")) {
-
-            const depth =
-                this.orderBook.asks.length +
-                this.orderBook.bids.length;
-
-            $("marketLiquidity").textContent =
-                depth > 10 ? "Available" : "Limited";
-
+            const depth = this.orderBook.asks.length + this.orderBook.bids.length;
+            $("marketLiquidity").textContent = depth > 10 ? "Available" : "Limited";
         }
-
     },
 
     /* =====================================================
@@ -1339,102 +1082,52 @@ const MARKET = {
     ===================================================== */
 
     bindTradeTabs() {
-
-        $("buyTab")?.addEventListener(
-            "click",
-            () => this.setTradeSide("buy")
-        );
-
-        $("sellTab")?.addEventListener(
-            "click",
-            () => this.setTradeSide("sell")
-        );
-
+        $("buyTab")?.addEventListener("click", () => this.setTradeSide("buy"));
+        $("sellTab")?.addEventListener("click", () => this.setTradeSide("sell"));
         this.setTradeSide("buy");
-
     },
 
     setTradeSide(side) {
-
-        if (!["buy", "sell"].includes(side)) {
-            return;
-        }
-
+        if (!["buy", "sell"].includes(side)) return;
         this.tradeSide = side;
-
-        $("buyTab")?.classList.toggle(
-            "active",
-            side === "buy"
-        );
-
-        $("sellTab")?.classList.toggle(
-            "active",
-            side === "sell"
-        );
-
-        const button = $("actionBtn");
-
-        if (button) {
-
-            button.textContent =
-                side === "buy" ? "BUY BX" : "SELL BX";
-
-            button.classList.toggle(
-                "buy",
-                side === "buy"
-            );
-
-            button.classList.toggle(
-                "sell",
-                side === "sell"
-            );
-
-        }
-
+        $("buyTab")?.classList.toggle("active", side === "buy");
+        $("sellTab")?.classList.toggle("active", side === "sell");
+        this.refreshActionButton();
         this.updateOrderTotal();
+    },
 
+    refreshActionButton() {
+        const button = $("actionBtn");
+        if (!button) return;
+        const [base] = this.displayPair.split("/");
+        const side = this.tradeSide.toUpperCase();
+        button.textContent = `PLACE ${side} ORDER`;
+        button.classList.toggle("is-buy", this.tradeSide === "buy");
+        button.classList.toggle("is-sell", this.tradeSide === "sell");
     },
 
     /* =====================================================
-       ORDER TYPE
+       ORDER TYPE SELECT
     ===================================================== */
 
-    bindOrderType() {
-
-        document.querySelectorAll("[data-order-type]")
-            .forEach(button => {
-
-                button.addEventListener("click", () => {
-
-                    const type = button.dataset.orderType;
-
-                    if (!["limit", "market"].includes(type)) {
-                        return;
+    bindOrderTypeSelect() {
+        const select = $("bxOrderType");
+        if (select && select.dataset.bound !== "1") {
+            select.dataset.bound = "1";
+            select.addEventListener("change", () => {
+                const type = select.value;
+                if (!["limit", "market"].includes(type)) return;
+                this.orderType = type;
+                const priceInput = $("orderPrice");
+                if (priceInput) {
+                    priceInput.disabled = type === "market";
+                    if (type === "market") {
+                        priceInput.value = format(this.price || this.referencePrice, 8);
                     }
-
-                    this.orderType = type;
-
-                    document.querySelectorAll("[data-order-type]")
-                        .forEach(item => {
-                            item.classList.toggle(
-                                "active",
-                                item === button
-                            );
-                        });
-
-                    const priceInput = $("orderPrice");
-
-                    if (priceInput) {
-                        priceInput.disabled = type === "market";
-                        priceInput.value = type === "market"
-                            ? format(this.price || this.referencePrice, 8)
-                            : priceInput.value;
-                    }
-
-                });
-
+                }
+                this.updateOrderTotal();
             });
-
+        }
     },
 
     /* =====================================================
@@ -1442,50 +1135,35 @@ const MARKET = {
     ===================================================== */
 
     bindTradeForm() {
+        $("orderAmount")?.addEventListener("input", () => this.updateOrderTotal());
+        $("orderPrice")?.addEventListener("input", () => this.updateOrderTotal());
+        $("actionBtn")?.addEventListener("click", () => this.executeTrade());
+    },
 
-        $("orderAmount")?.addEventListener(
-            "input",
-            () => this.updateOrderTotal()
-        );
-
-        $("orderPrice")?.addEventListener(
-            "input",
-            () => this.updateOrderTotal()
-        );
-
-        $("actionBtn")?.addEventListener(
-            "click",
-            () => this.executeTrade()
-        );
-
+    bindBloxioTradeInputs() {
+        const slider = $("bxTradePercent");
+        if (slider && slider.dataset.bound !== "1") {
+            slider.dataset.bound = "1";
+            slider.addEventListener("input", () => {
+                // Percentage of available balance → amount. Without balance API,
+                // keep the % value as a visual hint only and let user enter amount.
+                const pct = Number(slider.value) || 0;
+                if ($("bxTradeAvailable")) {
+                    $("bxTradeAvailable").dataset.percent = String(pct);
+                }
+            });
+        }
     },
 
     updateOrderTotal() {
-
-        const amount = number(
-            $("orderAmount")?.value
-        );
-
+        const amount = number($("orderAmount")?.value);
         const price = this.orderType === "market"
             ? this.price
-            : number($("orderPrice")?.value) ||
-                this.price ||
-                this.referencePrice;
-
+            : number($("orderPrice")?.value) || this.price || this.referencePrice;
         const total = amount * price;
 
-        if ($("orderTotal")) {
-            $("orderTotal").value =
-                format(total, 8);
-        }
-
-        if ($("execPrice")) {
-            $("execPrice").value =
-                format(price, 8);
-        }
-
+        if ($("orderTotal")) $("orderTotal").value = format(total, 8);
         return total;
-
     },
 
     /* =====================================================
@@ -1493,11 +1171,8 @@ const MARKET = {
     ===================================================== */
 
     async executeTrade() {
-
         if (this.submitting) return;
 
-        // The supplied backend exposes spot order endpoints only. Never route a
-        // Futures selection into the spot order API.
         if (this.marketMode === "futures") {
             this.notify("Futures browsing is enabled, but Futures order execution is not connected to a backend yet.", "warning");
             return;
@@ -1505,39 +1180,15 @@ const MARKET = {
 
         if (!this.requireAuth()) return;
 
-        const amount = number(
-            $("orderAmount")?.value
-        );
+        const amount = number($("orderAmount")?.value);
+        const price = this.orderType === "limit" ? number($("orderPrice")?.value) : 0;
 
-        const price = this.orderType === "limit"
-            ? number($("orderPrice")?.value)
-            : 0;
-
-        if (amount <= 0) {
-            this.notify("Enter a valid BX amount", "error");
-            return;
-        }
-
-        if (
-            this.orderType === "limit" &&
-            price <= 0
-        ) {
-            this.notify("Enter a valid limit price", "error");
-            return;
-        }
-
-        if (
-            this.orderType === "market" &&
-            this.price <= 0
-        ) {
-            this.notify("Live market price unavailable", "error");
-            return;
-        }
+        if (amount <= 0) { this.notify("Enter a valid amount", "error"); return; }
+        if (this.orderType === "limit" && price <= 0) { this.notify("Enter a valid limit price", "error"); return; }
+        if (this.orderType === "market" && this.price <= 0) { this.notify("Live market price unavailable", "error"); return; }
 
         const button = $("actionBtn");
-
         this.submitting = true;
-
         if (button) {
             button.disabled = true;
             button.dataset.previousText = button.textContent;
@@ -1545,77 +1196,36 @@ const MARKET = {
         }
 
         try {
-
-            const payload = {
-                pair: this.pair,
-                side: this.tradeSide,
-                amount
-            };
-
+            const payload = { pair: this.pair, side: this.tradeSide, amount };
             let response;
-
             if (this.orderType === "limit") {
-
                 payload.price = price;
-
-                response = await this.apiPost(
-                    CONFIG.endpoints.limitOrder,
-                    payload
-                );
-
+                response = await this.apiPost(CONFIG.endpoints.limitOrder, payload);
             } else {
-
-                response = await this.apiPost(
-                    CONFIG.endpoints.marketOrder,
-                    payload
-                );
-
+                response = await this.apiPost(CONFIG.endpoints.marketOrder, payload);
             }
 
-            this.notify(
-                "Order submitted successfully",
-                "success"
-            );
-
+            this.notify("Order submitted successfully", "success");
             this.dispatch("bloxio:order-submitted", {
                 pair: this.pair,
                 side: this.tradeSide,
                 order: response.order || response
             });
 
-            await Promise.allSettled([
-                this.refresh(),
-                this.refreshTrades()
-            ]);
+            await Promise.allSettled([this.refresh(), this.refreshTrades()]);
 
-            if ($("orderAmount")) {
-                $("orderAmount").value = "";
-            }
-
+            if ($("orderAmount")) $("orderAmount").value = "";
             this.updateOrderTotal();
-
         } catch (error) {
-
             console.error("[MARKET ORDER]", error);
-
-            this.notify(
-                error.message || "Order submission failed",
-                "error"
-            );
-
+            this.notify(error.message || "Order submission failed", "error");
         } finally {
-
             this.submitting = false;
-
             if (button) {
                 button.disabled = false;
-                button.textContent =
-                    button.dataset.previousText ||
-                    (this.tradeSide === "buy" ? "BUY BX" : "SELL BX");
+                button.textContent = button.dataset.previousText || "PLACE ORDER";
             }
-
         }
-
     },
 
     /* =====================================================
@@ -1623,42 +1233,21 @@ const MARKET = {
     ===================================================== */
 
     async cancelOrder(orderId) {
-
         if (!this.requireAuth()) return false;
-
         const id = Number(orderId);
-
         if (!Number.isInteger(id) || id <= 0) {
             this.notify("Invalid order ID", "error");
             return false;
         }
-
         try {
-
-            await this.apiPost(
-                CONFIG.endpoints.cancel,
-                {
-                    orderId: id
-                }
-            );
-
+            await this.apiPost(CONFIG.endpoints.cancel, { orderId: id });
             this.notify("Order cancelled", "success");
-
             await this.refresh();
-
             return true;
-
         } catch (error) {
-
-            this.notify(
-                error.message || "Cancel failed",
-                "error"
-            );
-
+            this.notify(error.message || "Cancel failed", "error");
             return false;
-
         }
-
     },
 
     /* =====================================================
@@ -1670,7 +1259,7 @@ const MARKET = {
     },
 
     /* =====================================================
-       ASSETS
+       ASSETS (PAIR LIST)
     ===================================================== */
 
     bindAssets() {
@@ -1681,7 +1270,6 @@ const MARKET = {
             const asset = event.target.closest(".market-asset[data-pair]");
             if (!asset) return;
             this.connectPair(asset.dataset.pair);
-            this.renderBloxioPairs();
         });
     },
 
@@ -1690,41 +1278,19 @@ const MARKET = {
     ===================================================== */
 
     bindChartToolbar() {
-
-        const map = {
-            "1M": "1m",
-            "5M": "5m",
-            "15M": "15m",
-            "1H": "1h",
-            "4H": "4h",
-            "1D": "1d",
-            "1W": "1w"
-        };
-
-        document.querySelectorAll(".chart-time")
-            .forEach(button => {
-
-                button.addEventListener("click", () => {
-
-                    document.querySelectorAll(".chart-time")
-                        .forEach(item => {
-                            item.classList.remove("active");
-                        });
-
-                    button.classList.add("active");
-
-                    const timeframe = map[
-                        button.textContent.trim().toUpperCase()
-                    ];
-
-                    if (timeframe) {
-                        this.setTimeframe(timeframe);
-                    }
-
-                });
-
+        const buttons = document.querySelectorAll(".chart-time");
+        buttons.forEach(button => {
+            if (button.dataset.bound === "1") return;
+            button.dataset.bound = "1";
+            button.addEventListener("click", () => {
+                buttons.forEach(item => item.classList.remove("active"));
+                button.classList.add("active");
+                const tf = button.dataset.tf
+                    || button.textContent.trim().toLowerCase();
+                const normalized = { "1m": "1m", "5m": "5m", "15m": "15m", "1h": "1h", "4h": "4h", "1d": "1d", "1w": "1w", "1ma": "1M", "1M": "1M" }[tf];
+                if (normalized) this.setTimeframe(normalized);
             });
-
+        });
     },
 
     /* =====================================================
@@ -1732,25 +1298,76 @@ const MARKET = {
     ===================================================== */
 
     bindMobileTabs() {
-
-        document.querySelectorAll(".market-mobile-tab")
-            .forEach(tab => {
-
-                tab.addEventListener("click", () => {
-
-                    document.querySelectorAll(".market-mobile-tab")
-                        .forEach(button => {
-                            button.classList.remove("active");
-                        });
-
-                    tab.classList.add("active");
-
-                    window.BXChart?.resize?.();
-
+        document.querySelectorAll("[data-trade-mobile-panel], .market-mobile-tab").forEach(tab => {
+            if (tab.dataset.bound === "1") return;
+            tab.dataset.bound = "1";
+            tab.addEventListener("click", () => {
+                document.querySelectorAll("[data-trade-mobile-panel], .market-mobile-tab").forEach(btn => {
+                    btn.classList.remove("active");
+                    btn.setAttribute("aria-selected", "false");
                 });
+                tab.classList.add("active");
+                tab.setAttribute("aria-selected", "true");
 
+                const panel = tab.dataset.tradeMobilePanel;
+                if (panel) {
+                    const orderbook = document.querySelector(".bx-trade-orderbook");
+                    const recent = document.querySelector(".bx-trade-recent");
+                    if (orderbook) orderbook.classList.toggle("mobile-active", panel === "orderbook");
+                    if (recent) recent.classList.toggle("mobile-active", panel === "recent");
+                }
+
+                window.BXChart?.resize?.();
             });
+        });
+    },
 
+    /* =====================================================
+       TRADE MODE / VIEW TABS (SPOT / FUTURES, TRADE / CHART)
+    ===================================================== */
+
+    bindTradeModeTabs() {
+        document.querySelectorAll("[data-bx-trade-mode]").forEach(btn => {
+            if (btn.dataset.bound === "1") return;
+            btn.dataset.bound = "1";
+            btn.addEventListener("click", () => {
+                const mode = btn.dataset.bxTradeMode;
+                if (!["spot", "futures"].includes(mode)) return;
+                this.marketMode = mode;
+                document.querySelectorAll("[data-bx-trade-mode]").forEach(t => {
+                    const active = t === btn;
+                    t.classList.toggle("active", active);
+                    t.setAttribute("aria-pressed", String(active));
+                });
+                // Also reflect on market-mode buttons in the watchlist.
+                document.querySelectorAll("[data-bx-market-mode]").forEach(t => {
+                    const active = t.dataset.bxMarketMode === mode;
+                    t.classList.toggle("active", active);
+                    t.setAttribute("aria-pressed", String(active));
+                });
+                if ($("tradeModeNotice")) $("tradeModeNotice").hidden = mode !== "futures";
+                this.updatePairUI();
+                this.renderBloxioPairs();
+            });
+        });
+    },
+
+    bindTradeViewTabs() {
+        document.querySelectorAll("[data-trade-view]").forEach(btn => {
+            if (btn.dataset.bound === "1") return;
+            btn.dataset.bound = "1";
+            btn.addEventListener("click", () => {
+                const view = btn.dataset.tradeView;
+                document.querySelectorAll("[data-trade-view]").forEach(t => {
+                    const active = t === btn;
+                    t.classList.toggle("active", active);
+                    t.setAttribute("aria-selected", String(active));
+                });
+                const workspace = document.querySelector(".bx-trade-workspace");
+                if (workspace) workspace.classList.toggle("trade-chart-mode", view === "chart");
+                window.BXChart?.resize?.();
+            });
+        });
     },
 
     /* =====================================================
@@ -1758,97 +1375,47 @@ const MARKET = {
     ===================================================== */
 
     subscribeWS() {
-
         if (!window.WS?.on) return;
-
         const events = [
-            "market:price",
-            "market:depth",
-            "market:trade",
-            "market:candle",
-            "market:kline",
-            "market:update"
+            "market:price", "market:depth", "market:trade",
+            "market:candle", "market:kline", "market:update"
         ];
-
         events.forEach(event => {
-
             const handler = payload => {
-
                 if (!payload || this.destroyed) return;
-
                 const incomingPair = payload.pair;
-
-                if (
-                    incomingPair &&
-                    this.normalizePair(incomingPair) !== this.pair
-                ) {
-                    return;
-                }
+                if (incomingPair && this.normalizePair(incomingPair) !== this.pair) return;
 
                 if (event === "market:price") {
-
                     const price = number(payload.price);
-
                     if (price > 0) {
-
                         this.prevPrice = this.price || price;
                         this.price = price;
-
                         this.updateStats();
-
                     }
-
                 } else if (event === "market:depth") {
-
-                    const depth =
-                        payload.depth || payload;
-
-                    this.orderBook.asks =
-                        depth.asks || [];
-
-                    this.orderBook.bids =
-                        depth.bids || [];
-
+                    const depth = payload.depth || payload;
+                    this.orderBook.asks = depth.asks || [];
+                    this.orderBook.bids = depth.bids || [];
                     this.renderOrderBook();
-
                 } else if (event === "market:trade") {
-
                     this.trades.unshift(payload);
-
-                    this.trades = this.trades.slice(
-                        0,
-                        CONFIG.historyLimit
-                    );
-
+                    this.trades = this.trades.slice(0, CONFIG.historyLimit);
                     this.renderHistory();
-
                 } else if (event === "market:candle" || event === "market:kline") {
-
                     this.dispatch("bloxio:market-candle", {
                         pair: this.pair,
                         timeframe: payload.timeframe || this.timeframe,
                         candle: payload.candle || payload.kline || payload
                     });
-
                 } else {
-
                     this.refresh();
-
                 }
-
             };
-
             window.WS.on(event, handler);
-
-            this.listeners.push({
-                event,
-                handler
-            });
-
+            this.listeners.push({ event, handler });
         });
-
         window.WS.subscribe?.("market");
-
     },
 
     /* =====================================================
@@ -1856,41 +1423,35 @@ const MARKET = {
     ===================================================== */
 
     updateConnectionStatus(status) {
-
         const element = $("systemStatus");
-
         if (element) {
-
             element.dataset.marketStatus = status;
-
-            element.classList.toggle(
-                "market-online",
-                status === "online"
-            );
-
-            element.classList.toggle(
-                "market-offline",
-                status === "offline"
-            );
-
+            element.classList.toggle("market-online", status === "online");
+            element.classList.toggle("market-offline", status === "offline");
         }
 
         const label = $("marketConnectionStatus");
-
         if (label) {
-
             const messages = {
                 loading: "Connecting...",
                 online: "Market Live",
                 partial: "Partial Data",
                 offline: "Market Offline"
             };
-
-            label.textContent =
-                messages[status] || status;
-
+            label.textContent = messages[status] || status;
         }
 
+        const feed = $("bxMarketFeedLabel");
+        if (feed) {
+            const messages = {
+                loading: "Waiting for market feed...",
+                online: "Live market feed",
+                partial: "Partial market feed",
+                offline: "Market feed offline"
+            };
+            feed.textContent = messages[status] || status;
+            feed.dataset.state = status;
+        }
     },
 
     /* =====================================================
@@ -1898,21 +1459,12 @@ const MARKET = {
     ===================================================== */
 
     startHeartbeat() {
-
         clearInterval(this.heartbeat);
-
         this.heartbeat = setInterval(() => {
-
-            if (
-                this.destroyed ||
-                document.hidden
-            ) return;
-
+            if (this.destroyed || document.hidden) return;
             this.refresh();
             this.refreshTrades();
-
         }, CONFIG.refreshInterval);
-
     },
 
     /* =====================================================
@@ -1920,30 +1472,15 @@ const MARKET = {
     ===================================================== */
 
     bindVisibility() {
-
         this.visibilityHandler = () => {
-
-            if (
-                !document.hidden &&
-                this.initialized &&
-                !this.destroyed
-            ) {
-
+            if (!document.hidden && this.initialized && !this.destroyed) {
                 window.BXChart?.resize?.();
-
                 this.refresh();
                 this.refreshTrades();
                 this.loadCandles();
-
             }
-
         };
-
-        document.addEventListener(
-            "visibilitychange",
-            this.visibilityHandler
-        );
-
+        document.addEventListener("visibilitychange", this.visibilityHandler);
     },
 
     /* =====================================================
@@ -1951,37 +1488,18 @@ const MARKET = {
     ===================================================== */
 
     notify(message, type = "info") {
-
-        console[type === "error" ? "error" : "log"](
-            "[MARKET]",
-            message
-        );
-
+        console[type === "error" ? "error" : "log"]("[MARKET]", message);
         const status = $("marketStatus");
-
         if (status) {
-
             status.textContent = message;
             status.dataset.type = type;
             status.classList.remove("hidden");
-
         }
-
-        this.dispatch("bloxio:market-message", {
-            message,
-            type
-        });
-
+        this.dispatch("bloxio:market-message", { message, type });
     },
 
     dispatch(name, detail = {}) {
-
-        document.dispatchEvent(
-            new CustomEvent(name, {
-                detail
-            })
-        );
-
+        document.dispatchEvent(new CustomEvent(name, { detail }));
     },
 
     /* =====================================================
@@ -1989,31 +1507,19 @@ const MARKET = {
     ===================================================== */
 
     destroy() {
-
         this.destroyed = true;
         this.initialized = false;
-
         this.generation++;
-
         clearInterval(this.heartbeat);
-
         if (this.visibilityHandler) {
-            document.removeEventListener(
-                "visibilitychange",
-                this.visibilityHandler
-            );
+            document.removeEventListener("visibilitychange", this.visibilityHandler);
         }
-
         this.listeners.forEach(({ event, handler }) => {
             window.WS?.off?.(event, handler);
         });
-
         this.listeners = [];
-
         window.WS?.unsubscribe?.("market");
-
         console.log("[BLOXIO MARKET] DESTROYED");
-
     },
 
     /* =====================================================
@@ -2021,38 +1527,28 @@ const MARKET = {
     ===================================================== */
 
     getState() {
-
         return {
             pair: this.pair,
             displayPair: this.displayPair,
-
             price: this.price,
             referencePrice: this.referencePrice,
             fixedReference: this.fixedReference,
-
             volume: this.volume,
             change: this.change,
             spread: this.spread,
-
             orderBook: {
                 asks: [...this.orderBook.asks],
                 bids: [...this.orderBook.bids]
             },
-
             trades: [...this.trades],
             candles: [...this.candles],
-
             timeframe: this.timeframe,
             tradeSide: this.tradeSide,
-
             initialized: this.initialized,
             authenticated: this.isAuthenticated(),
-
             lastUpdate: this.lastUpdate
         };
-
     }
-
 };
 
 /* =========================================================
@@ -2060,31 +1556,20 @@ const MARKET = {
 ========================================================= */
 
 window.MARKET = MARKET;
+window.BLOXIO_MARKET_PAIRS = BLOXIO_MARKET_PAIRS;
 
 /* =========================================================
    AUTO INIT
 ========================================================= */
 
 function bootMarket() {
-
-    if (window.MARKET) {
-        window.MARKET.init();
-    }
-
+    if (window.MARKET) window.MARKET.init();
 }
 
 if (document.readyState === "loading") {
-
-    document.addEventListener(
-        "DOMContentLoaded",
-        bootMarket,
-        { once: true }
-    );
-
+    document.addEventListener("DOMContentLoaded", bootMarket, { once: true });
 } else {
-
     bootMarket();
-
 }
 
 })();
