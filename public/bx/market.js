@@ -19,13 +19,8 @@ const BLOXIO_ICON = (() => {
 
 
 /* =========================================================
-   BLOXIO MARKET ENGINE V10
+   BLOXIO MARKET ENGINE V10.1
    public/bx/market.js
-
-   Default Market: BX/USDT
-   Reference Opening Price: 45 USDT
-   Backend-driven market data
-   Guest browsing + authenticated trading
 ========================================================= */
 
 "use strict";
@@ -43,12 +38,10 @@ const BLOXIO_MARKET_PAIRS = Object.freeze((() => {
     XAU:"gold",XAG:"silver",XPT:"platinum",XPD:"palladium"
   })[symbol] || symbol.toLowerCase()}.png`;
 
-  // Core platform markets; EUR removed.
   add("BX","USDT","core","Bloxio",coinIcon("BX"));
   add("EUBX","USDT","core","Bloxio Euro",coinIcon("EUBX"));
   add("USDC","EUBX","core","USD Coin",coinIcon("USDC"));
 
-  // Sixteen selected crypto assets: majors, market assets and DeFi protocols.
   const crypto = [
     ["BTC","Bitcoin"],["ETH","Ethereum"],["BNB","BNB"],["XRP","XRP"],
     ["ADA","Cardano"],["AVAX","Avalanche"],["DOT","Polkadot"],["LINK","Chainlink"],
@@ -63,7 +56,6 @@ const BLOXIO_MARKET_PAIRS = Object.freeze((() => {
     for (const quote of quotes) add(symbol,quote,"crypto",name,icon);
   }
 
-  // Additional registered assets are also priced against BX and EUBX.
   const platformAssets = [
     ...crypto.map(([symbol]) => symbol),
     "STR","USDT","USDC","TUSD","DAI","SOL","PI","ZEC","DASH","XMR",
@@ -78,7 +70,6 @@ const BLOXIO_MARKET_PAIRS = Object.freeze((() => {
     add(symbol,"EUBX","crypto",symbol,icon);
   }
 
-  // Companies: BX and EUBX only.
   const companies = [
     ["AMZN","Amazon"],["AAPL","Apple"],["BABA","Alibaba"],["COIN","Coinbase"],
     ["GOOGL","Google"],["INTC","Intel"],["META","Meta"],["MSFT","Microsoft"],
@@ -90,7 +81,6 @@ const BLOXIO_MARKET_PAIRS = Object.freeze((() => {
     add(symbol,"EUBX","companies",name,icon);
   }
 
-  // Metals and energy products: BX and EUBX only.
   const commodities = [
     ["XAU","Gold"],["XAG","Silver"],["XPT","Platinum"],["XPD","Palladium"],
     ["COPPER","Copper"],["OIL","Crude Oil"],["BRENT","Brent Oil"],["NG","Natural Gas"],
@@ -102,7 +92,6 @@ const BLOXIO_MARKET_PAIRS = Object.freeze((() => {
     add(symbol,"EUBX","commodities",name,icon);
   }
 
-  // Fan Tokens: BX/EUBX, plus USDT and USDC.
   const fanTokens = [
     ["PSG","Paris Saint-Germain","psg.png"],["BAR","Barcelona","bar.png"],
     ["JUV","Juventus","juv.png"],["CITY","Manchester City","city.png"],
@@ -121,10 +110,6 @@ const BLOXIO_MARKET_PAIRS = Object.freeze((() => {
 
 
 (function () {
-
-/* =========================================================
-   HELPERS
-========================================================= */
 
 const $ = id => document.getElementById(id);
 
@@ -149,11 +134,9 @@ const escapeHTML = value =>
     })[char]);
 
 const CONFIG = {
-    // Unified default: BX/USDT with 45 USDT reference (matches engine header).
     pair: "BX_USDT",
     displayPair: "BX/USDT",
     referencePrice: 45,
-
     endpoints: {
         price: "/market/price",
         orderbook: "/market/orderbook",
@@ -164,20 +147,14 @@ const CONFIG = {
         marketOrder: "/market/market",
         cancel: "/market/cancel"
     },
-
     refreshInterval: 5000,
     historyLimit: 50,
     depthLimit: 10,
-
     timeframes: [
         "1m", "5m", "15m",
         "1h", "4h", "1d", "1w", "1M"
     ]
 };
-
-/* =========================================================
-   MARKET ENGINE
-========================================================= */
 
 const MARKET = {
 
@@ -217,10 +194,6 @@ const MARKET = {
     marketMode: "spot",
     marketCategory: "crypto",
 
-    /* =====================================================
-       INIT
-    ===================================================== */
-
     init() {
 
         if (this.initialized) {
@@ -231,7 +204,6 @@ const MARKET = {
         this.initialized = true;
         this.destroyed = false;
 
-        // Pair selection before rendering everything else.
         this.restoreSavedPair();
 
         this.renderBloxioPairs();
@@ -265,7 +237,7 @@ const MARKET = {
         this.subscribeWS();
         this.startHeartbeat();
 
-        console.log("[BLOXIO MARKET] V10 READY");
+        console.log("[BLOXIO MARKET] V10.1 READY");
         return true;
     },
 
@@ -280,11 +252,6 @@ const MARKET = {
             this.displayPair = normalized.replace("_", "/");
         }
     },
-
-
-    /* =====================================================
-       ASSET ICONS
-    ===================================================== */
 
     assetIconPath(symbol, group = "") {
         const code = String(symbol || "").toUpperCase();
@@ -309,10 +276,6 @@ const MARKET = {
         const safeSymbol = escapeHTML(symbol);
         return `<span class="bx-token-icon"><img src="${src}" alt="${safeSymbol}" loading="lazy" onerror="this.hidden=true;this.nextElementSibling.hidden=false"><span hidden>${safeSymbol.slice(0,3)}</span></span>`;
     },
-
-    /* =====================================================
-       PAIR LIST RENDERING
-    ===================================================== */
 
     renderBloxioPairs() {
         const base = $("marketBaseAssets");
@@ -482,10 +445,6 @@ const MARKET = {
         }));
     },
 
-    /* =====================================================
-       FILTERS / BINDINGS
-    ===================================================== */
-
     bindBloxioMarketFilters() {
         document.querySelectorAll("[data-bx-market-mode]").forEach(button => {
             if (button.dataset.bound === "1") return;
@@ -536,10 +495,6 @@ const MARKET = {
         });
     },
 
-    /* =====================================================
-       CUSTOM QUOTE DROPDOWN
-    ===================================================== */
-
     syncQuoteTriggerLabel() {
         const select = $("bxMarketQuote");
         const label = $("bxQuoteValue");
@@ -552,7 +507,6 @@ const MARKET = {
         const select = $("bxMarketQuote");
         if (!trigger || !menu || !select) return;
 
-        // Build menu from native select options.
         const buildMenu = () => {
             menu.innerHTML = Array.from(select.options).map(opt =>
                 `<button type="button" role="option" data-value="${escapeHTML(opt.value)}" class="${opt.value === select.value ? "selected" : ""}" aria-selected="${opt.value === select.value}">${escapeHTML(opt.textContent)}</button>`
@@ -585,16 +539,11 @@ const MARKET = {
         });
     },
 
-    /* =====================================================
-       PAIR SELECT (HEADER DROPDOWN)
-    ===================================================== */
-
     bindPairSelect() {
         const select = $("tradePairSelect");
         if (!select || select.dataset.bound === "1") return;
         select.dataset.bound = "1";
 
-        // Sync select to current pair.
         const key = this.pair;
         if (Array.from(select.options).some(o => o.value === key)) select.value = key;
 
@@ -602,10 +551,6 @@ const MARKET = {
             this.connectPair(select.value);
         });
     },
-
-    /* =====================================================
-       AUTH
-    ===================================================== */
 
     isAuthenticated() {
         if (window.AUTH?.state?.authenticated === true) return true;
@@ -632,10 +577,6 @@ const MARKET = {
         }
         return false;
     },
-
-    /* =====================================================
-       API
-    ===================================================== */
 
     async apiGet(endpoint, params = {}) {
         if (!window.API?.get) throw new Error("API_UNAVAILABLE");
@@ -673,10 +614,6 @@ const MARKET = {
         return data;
     },
 
-    /* =====================================================
-       PAIR NORMALIZATION
-    ===================================================== */
-
     normalizePair(pair) {
         const value = String(pair || CONFIG.displayPair).toUpperCase().trim().replace("/", "_");
         if (value === "BXUSDT" || value === "BX_USDT") return "BX_USDT";
@@ -702,7 +639,6 @@ const MARKET = {
         this.fixedReference = false;
         try { localStorage.setItem("bloxio:selectedMarketPair", this.displayPair); } catch {}
 
-        // Sync header select.
         const select = $("tradePairSelect");
         if (select && Array.from(select.options).some(o => o.value === normalized)) {
             select.value = normalized;
@@ -725,11 +661,16 @@ const MARKET = {
         this.renderHistory();
         this.renderQuickPairs();
 
-        // Highlight in list.
         document.querySelectorAll("#marketPairAssets .market-asset").forEach(btn => {
             const active = btn.dataset.pair === normalized;
             btn.classList.toggle("active", active);
             btn.setAttribute("aria-pressed", String(active));
+        });
+
+        // ✅ V10.1 — notify listeners (trade.js) that the active pair changed.
+        this.dispatch("bloxio:market-pair-changed", {
+            pair: this.pair,
+            displayPair: this.displayPair
         });
 
         this.refresh();
@@ -750,7 +691,6 @@ const MARKET = {
         if ($("bxTotalSymbol")) $("bxTotalSymbol").textContent = quote || "USDT";
         if ($("tradeTitle")) $("tradeTitle").textContent = `${base || "BX"} Trading`;
 
-        // Update header base icon.
         const baseIcon = $("tradeBaseIcon");
         if (baseIcon) {
             const icon = this.assetIconPath(base || "BX");
@@ -758,18 +698,12 @@ const MARKET = {
             baseIcon.alt = base || "BX";
         }
 
-        // Update contract label.
         if ($("tradeContractLabel")) {
             $("tradeContractLabel").textContent = this.marketMode === "futures" ? "Perpetual" : "Spot";
         }
 
-        // Update action button label.
         this.refreshActionButton();
     },
-
-    /* =====================================================
-       REFRESH ALL
-    ===================================================== */
 
     async refresh() {
         if (this.destroyed || this.loading) return;
@@ -804,10 +738,6 @@ const MARKET = {
         this.loading = false;
     },
 
-    /* =====================================================
-       PRICE
-    ===================================================== */
-
     async loadPrice(generation = this.generation) {
         const response = await this.apiGet(CONFIG.endpoints.price, { pair: this.pair });
         if (generation !== this.generation || this.destroyed) return;
@@ -820,10 +750,6 @@ const MARKET = {
         this.lastError = null;
         this.updateStats();
     },
-
-    /* =====================================================
-       ORDER BOOK
-    ===================================================== */
 
     async loadOrderBook(generation = this.generation) {
         const response = await this.apiGet(CONFIG.endpoints.orderbook, { pair: this.pair });
@@ -924,11 +850,17 @@ const MARKET = {
 
         if ($("spread")) $("spread").textContent = this.spread.toFixed(4) + "%";
         this.updateIntel();
-    },
 
-    /* =====================================================
-       MARKET STATS
-    ===================================================== */
+        // ✅ V10.1 — notify listeners of the current depth snapshot.
+        this.dispatch("bloxio:market-depth", {
+            pair: this.pair,
+            displayPair: this.displayPair,
+            asks: asks.map(r => [r.price, r.amount]),
+            bids: bids.map(r => [r.price, r.amount]),
+            spread: this.spread,
+            demo: Boolean(this.orderBookDemo)
+        });
+    },
 
     async loadStats(generation = this.generation) {
         const response = await this.apiGet(CONFIG.endpoints.stats, { pair: this.pair });
@@ -959,7 +891,6 @@ const MARKET = {
             $("marketChange").classList.toggle("negative", change < 0);
         }
 
-        // Keep the trade price input synced in market mode.
         if (this.orderType === "market" && $("orderPrice")) {
             $("orderPrice").value = format(displayPrice, 8);
         }
@@ -970,11 +901,14 @@ const MARKET = {
 
         this.updateOrderTotal();
         this.updateIntel();
-    },
 
-    /* =====================================================
-       TRADES
-    ===================================================== */
+        // ✅ V10.1 — notify listeners (trade.js) of the latest display price.
+        this.dispatch("bloxio:market-price", {
+            pair: this.pair,
+            displayPair: this.displayPair,
+            price: displayPrice
+        });
+    },
 
     async refreshTrades() {
         const generation = this.generation;
@@ -1013,6 +947,13 @@ const MARKET = {
                 </div>
             `;
         }).join("");
+
+        // ✅ V10.1 — notify listeners of the latest trades snapshot.
+        this.dispatch("bloxio:market-trades", {
+            pair: this.pair,
+            displayPair: this.displayPair,
+            trades: this.trades.slice(0, CONFIG.historyLimit)
+        });
     },
 
     showEmptyHistory(message) {
@@ -1020,10 +961,6 @@ const MARKET = {
         if (!grid) return;
         grid.innerHTML = `<div class="trade-empty">${escapeHTML(message)}</div>`;
     },
-
-    /* =====================================================
-       CANDLES
-    ===================================================== */
 
     async loadCandles() {
         const generation = this.generation;
@@ -1057,10 +994,6 @@ const MARKET = {
         this.loadCandles();
     },
 
-    /* =====================================================
-       INTELLIGENCE
-    ===================================================== */
-
     updateIntel() {
         const diff = Math.abs(this.price - this.prevPrice);
         const trend = this.price >= this.prevPrice ? "Bullish" : "Bearish";
@@ -1076,10 +1009,6 @@ const MARKET = {
             $("marketLiquidity").textContent = depth > 10 ? "Available" : "Limited";
         }
     },
-
-    /* =====================================================
-       TRADE SIDE
-    ===================================================== */
 
     bindTradeTabs() {
         $("buyTab")?.addEventListener("click", () => this.setTradeSide("buy"));
@@ -1106,10 +1035,6 @@ const MARKET = {
         button.classList.toggle("is-sell", this.tradeSide === "sell");
     },
 
-    /* =====================================================
-       ORDER TYPE SELECT
-    ===================================================== */
-
     bindOrderTypeSelect() {
         const select = $("bxOrderType");
         if (select && select.dataset.bound !== "1") {
@@ -1130,10 +1055,6 @@ const MARKET = {
         }
     },
 
-    /* =====================================================
-       ORDER FORM
-    ===================================================== */
-
     bindTradeForm() {
         $("orderAmount")?.addEventListener("input", () => this.updateOrderTotal());
         $("orderPrice")?.addEventListener("input", () => this.updateOrderTotal());
@@ -1145,8 +1066,6 @@ const MARKET = {
         if (slider && slider.dataset.bound !== "1") {
             slider.dataset.bound = "1";
             slider.addEventListener("input", () => {
-                // Percentage of available balance → amount. Without balance API,
-                // keep the % value as a visual hint only and let user enter amount.
                 const pct = Number(slider.value) || 0;
                 if ($("bxTradeAvailable")) {
                     $("bxTradeAvailable").dataset.percent = String(pct);
@@ -1165,10 +1084,6 @@ const MARKET = {
         if ($("orderTotal")) $("orderTotal").value = format(total, 8);
         return total;
     },
-
-    /* =====================================================
-       EXECUTE ORDER
-    ===================================================== */
 
     async executeTrade() {
         if (this.submitting) return;
@@ -1228,10 +1143,6 @@ const MARKET = {
         }
     },
 
-    /* =====================================================
-       CANCEL ORDER
-    ===================================================== */
-
     async cancelOrder(orderId) {
         if (!this.requireAuth()) return false;
         const id = Number(orderId);
@@ -1250,17 +1161,9 @@ const MARKET = {
         }
     },
 
-    /* =====================================================
-       SEARCH
-    ===================================================== */
-
     bindSearch() {
         $("marketSearch")?.addEventListener("input", () => this.renderBloxioPairs());
     },
-
-    /* =====================================================
-       ASSETS (PAIR LIST)
-    ===================================================== */
 
     bindAssets() {
         const container = $("marketPairAssets");
@@ -1272,10 +1175,6 @@ const MARKET = {
             this.connectPair(asset.dataset.pair);
         });
     },
-
-    /* =====================================================
-       CHART TOOLBAR
-    ===================================================== */
 
     bindChartToolbar() {
         const buttons = document.querySelectorAll(".chart-time");
@@ -1292,10 +1191,6 @@ const MARKET = {
             });
         });
     },
-
-    /* =====================================================
-       MOBILE TABS
-    ===================================================== */
 
     bindMobileTabs() {
         document.querySelectorAll("[data-trade-mobile-panel], .market-mobile-tab").forEach(tab => {
@@ -1322,10 +1217,6 @@ const MARKET = {
         });
     },
 
-    /* =====================================================
-       TRADE MODE / VIEW TABS (SPOT / FUTURES, TRADE / CHART)
-    ===================================================== */
-
     bindTradeModeTabs() {
         document.querySelectorAll("[data-bx-trade-mode]").forEach(btn => {
             if (btn.dataset.bound === "1") return;
@@ -1339,7 +1230,6 @@ const MARKET = {
                     t.classList.toggle("active", active);
                     t.setAttribute("aria-pressed", String(active));
                 });
-                // Also reflect on market-mode buttons in the watchlist.
                 document.querySelectorAll("[data-bx-market-mode]").forEach(t => {
                     const active = t.dataset.bxMarketMode === mode;
                     t.classList.toggle("active", active);
@@ -1369,10 +1259,6 @@ const MARKET = {
             });
         });
     },
-
-    /* =====================================================
-       WEBSOCKET
-    ===================================================== */
 
     subscribeWS() {
         if (!window.WS?.on) return;
@@ -1418,10 +1304,6 @@ const MARKET = {
         window.WS.subscribe?.("market");
     },
 
-    /* =====================================================
-       CONNECTION STATUS
-    ===================================================== */
-
     updateConnectionStatus(status) {
         const element = $("systemStatus");
         if (element) {
@@ -1452,11 +1334,26 @@ const MARKET = {
             feed.textContent = messages[status] || status;
             feed.dataset.state = status;
         }
-    },
 
-    /* =====================================================
-       HEARTBEAT
-    ===================================================== */
+        // ✅ V10.1 — Overview feed label (top of the market overview card).
+        const overviewFeed = $("bxMarketOverviewFeedLabel");
+        if (overviewFeed) {
+            const messages = {
+                loading: "Waiting for market feed",
+                online: "Live market feed",
+                partial: "Partial market feed",
+                offline: "Market feed offline"
+            };
+            const textNode = Array.from(overviewFeed.childNodes)
+                .find(node => node.nodeType === Node.TEXT_NODE);
+            if (textNode) {
+                textNode.textContent = " " + (messages[status] || status);
+            } else {
+                overviewFeed.append(" " + (messages[status] || status));
+            }
+            overviewFeed.dataset.state = status;
+        }
+    },
 
     startHeartbeat() {
         clearInterval(this.heartbeat);
@@ -1466,10 +1363,6 @@ const MARKET = {
             this.refreshTrades();
         }, CONFIG.refreshInterval);
     },
-
-    /* =====================================================
-       VISIBILITY
-    ===================================================== */
 
     bindVisibility() {
         this.visibilityHandler = () => {
@@ -1482,10 +1375,6 @@ const MARKET = {
         };
         document.addEventListener("visibilitychange", this.visibilityHandler);
     },
-
-    /* =====================================================
-       NOTIFICATIONS
-    ===================================================== */
 
     notify(message, type = "info") {
         console[type === "error" ? "error" : "log"]("[MARKET]", message);
@@ -1502,10 +1391,6 @@ const MARKET = {
         document.dispatchEvent(new CustomEvent(name, { detail }));
     },
 
-    /* =====================================================
-       DESTROY
-    ===================================================== */
-
     destroy() {
         this.destroyed = true;
         this.initialized = false;
@@ -1521,10 +1406,6 @@ const MARKET = {
         window.WS?.unsubscribe?.("market");
         console.log("[BLOXIO MARKET] DESTROYED");
     },
-
-    /* =====================================================
-       PUBLIC STATE
-    ===================================================== */
 
     getState() {
         return {
@@ -1551,16 +1432,8 @@ const MARKET = {
     }
 };
 
-/* =========================================================
-   GLOBAL EXPORT
-========================================================= */
-
 window.MARKET = MARKET;
 window.BLOXIO_MARKET_PAIRS = BLOXIO_MARKET_PAIRS;
-
-/* =========================================================
-   AUTO INIT
-========================================================= */
 
 function bootMarket() {
     if (window.MARKET) window.MARKET.init();
