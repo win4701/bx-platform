@@ -1208,8 +1208,658 @@ video {
     color: var(--gold-solid);
     font-family: var(--font-mono);
     font-size: .83rem;
+    overflow-wrap: anywhere;}
+/* ==========================================================================
+   BLOXIO — MARKET PAGE HOTFIX (V10.1)
+   يستهدف الأخطاء في الصفحات فقط، لا يمس Trade أو Wallet.
+   ========================================================================== */
+
+/* 1) إخفاء حاوية التوافق التي كانت تتسبب في تكرار التصنيفات */
+#market #marketBaseAssets {
+    display: none !important;
+    visibility: hidden !important;
+    position: absolute !important;
+    width: 0 !important;
+    height: 0 !important;
+    overflow: hidden !important;
+    pointer-events: none !important;
+}
+
+/* 2) ضمان ظهور تصنيفات السوق مرة واحدة فقط عبر .bx-market-product-tabs */
+#market .bx-market-product-tabs {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 4px;
+    padding: 4px;
+    background: #0B0E11;
+    border-radius: 10px;
+    overflow-x: auto;
+    scrollbar-width: thin;
+    min-width: 0;
+    max-width: 100%;
+}
+
+#market .bx-market-product-tabs button {
+    flex: 0 0 auto;
+    min-width: 0;
+    padding: 7px 12px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-metadata, #848E9C);
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background .15s, color .15s;
+    white-space: nowrap;
+}
+
+#market .bx-market-product-tabs button:hover {
+    color: var(--text-platinum, #EAECEF);
+}
+
+#market .bx-market-product-tabs button.active,
+#market .bx-market-product-tabs button[aria-selected="true"] {
+    background: #252A33;
+    color: var(--text-platinum, #EAECEF);
+}
+
+/* 3) تصحيح .bx-market-modes (فقط داخل #market) لتفادي تعارض pages.css */
+#market .bx-market-modebar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin: 12px 0;
+}
+
+#market .bx-market-modes {
+    display: flex;
+    gap: 4px;
+    padding: 4px;
+    background: #0B0E11;
+    border: 1px solid var(--gold-border, rgba(212,175,55,.2));
+    border-radius: 8px;
+}
+
+#market .bx-market-modes button {
+    padding: 6px 12px;
+    min-height: 32px;
+    min-width: 64px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-metadata, #848E9C);
+    font: 600 11px/1 var(--font-primary, system-ui, sans-serif);
+    cursor: pointer;
+    transition: background .15s, color .15s;
+}
+
+#market .bx-market-modes button.active,
+#market .bx-market-modes button[aria-pressed="true"] {
+    background: #252A33;
+    color: var(--text-platinum, #EAECEF);
+}
+
+/* 4) قائمة العملة المنسدلة — تنسيق كامل لـ market.html */
+#market .bx-market-quote {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-metadata, #848E9C);
+    font-size: 11px;
+    white-space: nowrap;
+}
+
+#market .bx-market-quote select#bxMarketQuote {
+    min-height: 34px;
+    padding: 4px 28px 4px 10px;
+    border: 1px solid #303640;
+    border-radius: 6px;
+    background-color: #0B0E11;
+    background-image:
+        linear-gradient(45deg, transparent 50%, #D4AF37 50%),
+        linear-gradient(135deg, #D4AF37 50%, transparent 50%);
+    background-position: calc(100% - 14px) 50%, calc(100% - 9px) 50%;
+    background-size: 5px 5px, 5px 5px;
+    background-repeat: no-repeat;
+    color: var(--text-platinum, #EAECEF);
+    font: 600 11px/1.2 var(--font-primary, system-ui, sans-serif);
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+}
+
+#market .bx-market-quote select#bxMarketQuote:focus {
+    outline: 0;
+    border-color: var(--gold-solid, #D4AF37);
+    box-shadow: 0 0 0 3px rgba(212,175,55,.12);
+}
+
+/* 5) تفعيل .bx-custom-select-* إذا تم استخدامها من trade.js داخل Market */
+#market .bx-custom-select {
+    position: relative;
+    display: inline-block;
+    min-width: 0;
+    max-width: 220px;
+}
+
+#market .bx-custom-select-menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    z-index: 500;
+    min-width: 140px;
+    max-height: 280px;
+    padding: 6px;
+    overflow-y: auto;
+    border: 1px solid var(--gold-border, rgba(212,175,55,.2));
+    border-radius: 10px;
+    background: #0b211a;
+    box-shadow: 0 16px 38px rgba(0,0,0,.42);
+}
+
+#market .bx-custom-select-menu[hidden] {
+    display: none !important;
+}
+
+#market .bx-custom-select-menu button {
+    display: block;
+    width: 100%;
+    padding: 8px 10px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: #dce8e2;
+    font-size: 12px;
+    font-weight: 600;
+    text-align: left;
+    cursor: pointer;
+}
+
+#market .bx-custom-select-menu button:hover,
+#market .bx-custom-select-menu button.selected {
+    background: #123329;
+    color: var(--gold-solid, #D4AF37);
+}
+
+/* 6) تصحيح رأس قائمة الأزواج (.bx-market-list-head) — يحاذي 4 أعمدة */
+#market .bx-market-list-head {
+    display: grid;
+    grid-template-columns: minmax(0, 1.6fr) 1fr 1fr 1fr;
+    gap: 10px;
+    padding: 8px 6px;
+    color: var(--text-metadata, #848E9C);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    border-bottom: 1px solid rgba(255,255,255,.06);
+}
+
+/* 7) توحيد شبكة صفوف الأزواج لتحاذي الرأس */
+#market #marketPairAssets .market-asset,
+#market #marketPairAssets .bx-market-asset {
+    display: grid;
+    grid-template-columns: minmax(0, 1.6fr) 1fr 1fr 1fr;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    min-height: 56px;
+    padding: 8px 6px;
+    border: 0;
+    border-bottom: 1px solid rgba(255,255,255,.04);
+    background: transparent;
+    color: var(--text-platinum, #EAECEF);
+    text-align: left;
+    cursor: pointer;
+    transition: background .15s;
+}
+
+#market #marketPairAssets .market-asset:hover {
+    background: rgba(255,255,255,.03);
+}
+
+#market #marketPairAssets .market-asset.active {
+    background: rgba(212,175,55,.08);
+}
+
+#market #marketPairAssets .bx-market-card-identity {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+
+#market #marketPairAssets .bx-token-icon img {
+    width: 26px;
+    height: 26px;
+    object-fit: contain;
+    border-radius: 50%;
+}
+
+#market #marketPairAssets .bx-token-copy {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    gap: 2px;
+}
+
+#market #marketPairAssets .bx-token-copy strong {
+    font-size: 13px;
+    font-weight: 700;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#market #marketPairAssets .bx-token-copy small {
+    color: var(--text-metadata, #848E9C);
+    font-size: 10px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#market #marketPairAssets .bx-market-card-metrics {
+    display: contents;
+}
+
+#market #marketPairAssets .bx-market-metric {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+    text-align: right;
+    min-width: 0;
+}
+
+#market #marketPairAssets .bx-market-metric small {
+    display: none;
+}
+
+#market #marketPairAssets .bx-market-metric strong {
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
+}
+
+#market #marketPairAssets .is-positive strong,
+#market #marketPairAssets .positive {
+    color: var(--signal-buy, #0ECB81);
+}
+
+#market #marketPairAssets .is-negative strong,
+#market #marketPairAssets .negative {
+    color: var(--signal-sell, #F6465D);
+}
+
+#market #marketPairAssets .is-neutral strong {
+    color: var(--text-metadata, #848E9C);
+}
+
+/* 8) تحسين بطاقات المؤشرات (bx-index-card) */
+#market .bx-market-index-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 10px;
+}
+
+#market .bx-index-card {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+    padding: 12px 14px;
+    border: 1px solid var(--gold-border, rgba(212,175,55,.2));
+    border-radius: 10px;
+    background: rgba(0,0,0,.2);
+    overflow: hidden;
+}
+
+#market .bx-index-card span {
+    color: var(--text-metadata, #848E9C);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+
+#market .bx-index-card strong {
+    color: var(--text-platinum, #EAECEF);
+    font: 800 15px var(--font-mono, ui-monospace, monospace);
+    font-variant-numeric: tabular-nums;
     overflow-wrap: anywhere;
-}#casino {
+}
+
+#market .bx-index-card small {
+    color: var(--text-metadata, #848E9C);
+    font-size: 10px;
+}
+
+/* 9) ضبط .market-header (تجاوز الذهبي الافتراضي من pages.css) */
+#market .market-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    padding: 4px 2px;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+#market .market-header h2 {
+    margin: 4px 0 0;
+    color: var(--text-platinum, #EAECEF);
+    font-size: clamp(22px, 2.4vw, 30px);
+    font-weight: 800;
+    letter-spacing: -.02em;
+}
+
+#market .market-kicker {
+    color: var(--gold-solid, #D4AF37);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+}
+
+/* 10) استجابة الموبايل — منع فيض التصنيفات والجدول */
+@media (max-width: 900px) {
+    #market .bx-market-index-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    #market .bx-market-index-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    #market .bx-market-list-head {
+        grid-template-columns: minmax(0, 1.4fr) 1fr 1fr;
+    }
+
+    #market .bx-market-list-head span:nth-child(4) {
+        display: none;
+    }
+
+    #market #marketPairAssets .market-asset,
+    #market #marketPairAssets .bx-market-asset {
+        grid-template-columns: minmax(0, 1.4fr) 1fr 1fr;
+    }
+
+    #market #marketPairAssets .bx-market-volume-cell {
+        display: none;
+    }
+}
+
+@media (max-width: 480px) {
+    #market .bx-market-index-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    #market .bx-market-list-head {
+        grid-template-columns: minmax(0, 1fr) auto;
+    }
+
+    #market .bx-market-list-head span:nth-child(n+3) {
+        display: none;
+    }
+
+    #market #marketPairAssets .market-asset,
+    #market #marketPairAssets .bx-market-asset {
+        grid-template-columns: minmax(0, 1fr) auto;
+        min-height: 52px;
+    }
+
+    #market #marketPairAssets .bx-market-change-cell {
+        display: none;
+    }
+
+    #market .bx-market-topline {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+
+    #market .bx-market-search-wrap {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+}
+
+/* 11) منع تكرار قواعد .bx-trade-options / .bx-trade-form من التعارض */
+#market .bx-trade-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 9px;
+    margin-bottom: 10px;
+}
+
+#market .bx-trade-options label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+    color: var(--text-metadata, #848E9C);
+    font-size: 11px;
+}
+
+#market .bx-trade-options select {
+    width: 100%;
+    min-height: 38px;
+    padding: 0 10px;
+    border: 1px solid #303640;
+    border-radius: 8px;
+    background: #0B0E11;
+    color: var(--text-platinum, #EAECEF);
+    font-size: 12px;
+    cursor: pointer;
+}
+
+#market .bx-trade-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: end;
+    gap: 10px;
+}
+
+#market .bx-trade-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+    color: var(--text-metadata, #848E9C);
+    font-size: 11px;
+}
+
+#market .bx-trade-field > span {
+    display: flex;
+    justify-content: space-between;
+    gap: 5px;
+}
+
+#market .bx-trade-field small {
+    color: var(--gold-solid, #D4AF37);
+    font: 600 10px var(--font-mono, ui-monospace, monospace);
+    text-transform: uppercase;
+}
+
+#market .bx-trade-field .market-input {
+    width: 100%;
+    min-height: 44px;
+    padding: 0 12px;
+    border: 1px solid #303640;
+    border-radius: 8px;
+    background: #061711;
+    color: var(--text-platinum, #EAECEF);
+    font: 600 13px var(--font-mono, ui-monospace, monospace);
+    font-variant-numeric: tabular-nums;
+    outline: 0;
+}
+
+#market .bx-trade-field .market-input:focus {
+    border-color: var(--gold-solid, #D4AF37);
+    box-shadow: 0 0 0 3px rgba(212,175,55,.12);
+}
+
+#market .bx-trade-field .market-input:disabled,
+#market .bx-trade-field .market-input[readonly] {
+    opacity: .75;
+    cursor: not-allowed;
+}
+
+#market .bx-trade-percent {
+    grid-column: 1 / -1;
+    display: grid;
+    gap: 4px;
+}
+
+#market .bx-trade-percent input[type="range"] {
+    width: 100%;
+    min-height: 26px;
+    accent-color: var(--gold-solid, #D4AF37);
+    cursor: pointer;
+}
+
+#market .bx-trade-percent div {
+    display: flex;
+    justify-content: space-between;
+    color: var(--text-metadata, #848E9C);
+    font: 10px var(--font-mono, ui-monospace, monospace);
+}
+
+#market .bx-trade-meta {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--gold-border, rgba(212,175,55,.2));
+    color: var(--text-metadata, #848E9C);
+    font-size: 11px;
+}
+
+#market .bx-trade-meta strong {
+    color: var(--text-platinum, #EAECEF);
+    font-variant-numeric: tabular-nums;
+}
+
+#market #actionBtn {
+    grid-column: 1 / -1;
+    min-height: 46px;
+    width: 100%;
+    border: 0;
+    border-radius: 8px;
+    background: var(--signal-buy, #0ECB81);
+    color: #071B13;
+    font-size: 13px;
+    font-weight: 900;
+    cursor: pointer;
+    transition: background .15s, opacity .15s;
+}
+
+#market #actionBtn:hover:not(:disabled) {
+    background: #10B879;
+}
+
+#market #actionBtn:disabled {
+    opacity: .55;
+    cursor: not-allowed;
+}
+
+#market #tradeBox:has(#sellTab.active) #actionBtn {
+    background: var(--signal-sell, #F6465D);
+    color: #fff;
+}
+
+#market #tradeBox:has(#sellTab.active) #actionBtn:hover:not(:disabled) {
+    background: #E83D55;
+}
+
+#market .bx-trade-note {
+    grid-column: 1 / -1;
+    margin: 0;
+    color: var(--text-metadata, #848E9C);
+    font-size: 10px;
+    line-height: 1.5;
+}
+
+#market #marketStatus {
+    grid-column: 1 / -1;
+    margin: 0;
+    font-size: 11px;
+    min-height: 0;
+}
+
+#market #marketStatus:empty {
+    display: none;
+}
+
+#market #marketStatus[data-type="error"] {
+    color: var(--signal-sell, #F6465D);
+}
+
+#market #marketStatus[data-type="success"] {
+    color: var(--signal-buy, #0ECB81);
+}
+
+#market #marketStatus[data-type="warning"] {
+    color: var(--signal-warning, #f0b90b);
+}
+
+/* 12) تفعيل .bx-quick-pair (من renderQuickPairs) */
+#market .bx-trade-quick-pairs,
+#trade .bx-trade-quick-pairs {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 4px 2px 8px;
+    scrollbar-width: thin;
+}
+
+#market .bx-quick-pair,
+#trade .bx-quick-pair {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    flex: 0 0 auto;
+    min-height: 40px;
+    padding: 6px 10px;
+    border: 1px solid var(--gold-border, rgba(212,175,55,.2));
+    border-radius: 11px;
+    background: #0b211a;
+    color: var(--text-metadata, #848E9C);
+    font-size: 11px;
+    font-weight: 750;
+    cursor: pointer;
+    transition: border-color .15s, color .15s;
+}
+
+#market .bx-quick-pair:hover,
+#market .bx-quick-pair.active,
+#trade .bx-quick-pair:hover,
+#trade .bx-quick-pair.active {
+    border-color: var(--gold-solid, #D4AF37);
+    color: var(--gold-solid, #D4AF37);
+}
+
+#market .bx-quick-pair img,
+#trade .bx-quick-pair img {
+    display: block;
+    width: 22px;
+    height: 22px;
+    flex: 0 0 22px;
+    object-fit: contain;
+    border-radius: 50%;}
+
+#casino {
     --casino-gap: 14px;
     --casino-card-bg: var(--bg-card);
     --casino-panel-bg: var(--bg-panel);
