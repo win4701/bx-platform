@@ -1,0 +1,354 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1, viewport-fit=cover" name="viewport"/>
+<title>BLOXIO | Rewards</title>
+<meta content="var(--gold-solid)" name="theme-color"/>
+<meta content="Manage your BLOXIO rewards and reward history." name="description"/>
+<link href="/manifest.json" rel="manifest"/>
+<link href="/assets/images/branding/logo.png" rel="icon"/>
+<!-- BLOXIO DESIGN SYSTEM -->
+<link href="/assets/css/base.css" rel="stylesheet"/>
+<link href="/assets/css/layout.css" rel="stylesheet"/>
+<link href="/assets/css/components.css" rel="stylesheet"/>
+<link href="/assets/css/pages.css" rel="stylesheet"/>
+<link href="/assets/css/responsive.css" rel="stylesheet"/>
+
+</head>
+<body class="app-ready" data-motion="on" data-page="reward" data-sound="on" data-theme="dark" data-ui="enterprise">
+<!-- GLOBAL LOADER -->
+<div aria-hidden="true" class="hidden" id="globalLoader">
+<div class="loader-ring"></div>
+<h1 class="loader-title">BLOXIO</h1>
+<div class="loader-progress">
+<div class="loader-progress-fill" id="loaderProgress"></div>
+</div>
+</div>
+<!-- BACKGROUND -->
+<video autoplay="" class="bg-video bg-ambient" loop="" muted="" playsinline="">
+<source src="/assets/v%C3%ADdeo/ambient.mp4" type="video/mp4"/>
+</video>
+<video autoplay="" class="bg-video bg-particles" loop="" muted="" playsinline="">
+<source src="/assets/v%C3%ADdeo/particles.mp4" type="video/mp4"/>
+</video>
+<video autoplay="" class="bg-video bg-grid" loop="" muted="" playsinline="">
+<source src="/assets/v%C3%ADdeo/grid-loop.mp4" type="video/mp4"/>
+</video>
+<div class="bg-layer"></div>
+<div class="grid-overlay"></div>
+<div class="ambient-glow"></div>
+<div id="app-shell">
+<!-- HEADER -->
+<header class="app-header enterprise-header">
+<div class="header-left">
+<a aria-label="BLOXIO Home" class="enterprise-brand" href="/">
+<img alt="BLOXIO Icon" class="brand-icon" src="/assets/images/branding/logo.png"/>
+<img alt="BLOXIO" class="brand-text-img" src="/assets/images/branding/bloxio.png"/>
+</a>
+<div class="system-status" id="systemStatus">
+<span class="status-dot"></span>
+<div class="status-meta">
+<strong>SYSTEM ONLINE</strong>
+<small id="networkLatency">Connecting...</small>
+</div>
+</div>
+</div>
+<nav aria-label="Language" class="header-center">
+<div class="header-more-menu-wrap">
+<details class="header-more-menu" id="headerMoreMenu">
+<summary aria-controls="headerMoreDropdown" aria-label="Open More menu">
+<span>More</span>
+<svg aria-hidden="true" viewbox="0 0 24 24">
+<path d="m7 10 5 5 5-5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</summary>
+<nav aria-label="More services" class="header-more-dropdown" id="headerMoreDropdown">
+<a data-view="trade" href="/pages/trade.html"><span aria-hidden="true" class="sidebar-glyph">⇄</span><span>Trade</span></a>
+<a data-view="airdrop" href="airdrop.html">
+<img alt="" src="../assets/images/navigation/airdrop.svg"/>
+<span>Airdrop</span>
+</a>
+<a data-view="mint" href="mint.html">
+<span aria-hidden="true" class="sidebar-glyph">✦</span>
+<span>Mint</span>
+</a>
+<a data-view="p2p" href="p2p.html">
+<span aria-hidden="true" class="sidebar-glyph">⇄</span>
+<span>P2P</span>
+</a>
+<a data-view="settings" href="settings.html">
+<span aria-hidden="true" class="sidebar-glyph">⚙</span>
+<span>Settings</span>
+</a>
+<a data-view="profile" href="profile.html">
+<span aria-hidden="true" class="sidebar-glyph">◎</span>
+<span>Profile</span>
+</a>
+<a data-view="reward" href="reward.html">
+<span aria-hidden="true" class="sidebar-glyph">◇</span>
+<span>Rewards</span>
+</a>
+</nav>
+</details>
+</div>
+<div class="locale-box">
+<button aria-controls="localeMenu" aria-expanded="false" class="locale-trigger" id="localeTrigger" type="button">
+<span id="currentLocale">EN</span>
+<span aria-hidden="true">⌄</span>
+</button>
+<ul class="locale-menu" id="localeMenu">
+<li><button data-lang="EN" type="button">EN</button></li>
+<li><button data-lang="AR" type="button">AR</button></li>
+<li><button data-lang="FR" type="button">FR</button></li>
+<li><button data-lang="ES" type="button">ES</button></li>
+<li><button data-lang="DE" type="button">DE</button></li>
+<li><button data-lang="ZH" type="button">ZH</button></li>
+<li><button data-lang="RU" type="button">RU</button></li>
+<li><button data-lang="JA" type="button">JA</button></li>
+<li><button data-lang="TR" type="button">TR</button></li>
+</ul>
+</div>
+</nav>
+<div class="header-right">
+<div class="auth-toolbar" id="guestToolbar">
+<button class="header-btn secondary" id="headerLoginBtn" type="button">
+            Login
+          </button>
+<button class="header-btn primary" id="headerRegisterBtn" type="button">
+            Register
+          </button>
+</div>
+<div class="user-toolbar hidden" id="userToolbar">
+<button aria-controls="userDropdown" aria-expanded="false" class="user-trigger" id="userMenuTrigger" type="button">
+<div class="user-avatar">BX</div>
+<div class="user-meta">
+<strong id="vipTier">VIP 1</strong>
+<small>✔ VERIFIED</small>
+</div>
+<div class="session-pill">1 ACTIVE</div>
+</button>
+<ul class="user-dropdown" id="userDropdown">
+<li><a href="/pages/profile.html">Profile</a></li>
+<li><a href="/pages/settings.html">Security &amp; Settings</a></li>
+<li><button id="logoutBtn" type="button">Logout</button></li>
+</ul>
+</div>
+</div>
+</header>
+<!-- DESKTOP SIDEBAR -->
+<aside aria-label="BLOXIO sections" class="desktop-sidebar">
+<div class="sidebar-label">Workspace</div>
+<a data-view="wallet" href="/index.html">
+<img alt="" src="/assets/images/navigation/home.svg"/>Wallet
+      </a>
+<a data-view="market" href="/pages/market.html">
+<img alt="" src="/assets/images/navigation/market.svg"/>Market
+      </a>
+<a data-view="casino" href="/pages/casino.html">
+<img alt="" src="/assets/images/navigation/casino.svg"/>Casino
+      </a>
+<a data-view="mining" href="/pages/mining.html">
+<img alt="" src="/assets/images/navigation/mining.svg"/>Mining
+      </a>
+<a data-view="mint" href="/pages/mint.html">
+<span aria-hidden="true" class="sidebar-glyph">✦</span>Mint
+      </a>
+</aside>
+<!-- MAIN CONTENT -->
+<main class="app-container" id="app">
+<section class="reward-page">
+<!-- PAGE TITLE -->
+<div class="reward-heading">
+<div>
+<h1>Rewards Center</h1>
+<p>Explore and manage your BLOXIO rewards.</p>
+</div>
+</div>
+<!-- REWARD HERO -->
+<section class="reward-hero">
+<div class="reward-hero-copy">
+<div class="reward-kicker">BLOXIO REWARD PROGRAM</div>
+<h2>Make every move count.</h2>
+<p>Explore weekly rewards, follow your progress and take part in BLOXIO campaigns built around eligible platform activity.</p>
+<div class="reward-total">
+<strong id="rewardAvailableTotal">—</strong>
+<span>Available rewards</span>
+</div>
+</div>
+<div aria-hidden="true" class="reward-hero-art">
+<img alt="" loading="eager" src="/assets/images/commodities/gold.png"/>
+</div>
+</section>
+<!-- REWARD STATISTICS -->
+<section class="reward-stats">
+<div class="reward-stat">
+<span>Available Rewards</span>
+<strong id="rewardAvailableCount">—</strong>
+</div>
+<div class="reward-stat">
+<span>Claimed Rewards</span>
+<strong id="rewardClaimedCount">—</strong>
+</div>
+<div class="reward-stat">
+<span>Pending Rewards</span>
+<strong id="rewardPendingCount">—</strong>
+</div>
+<div class="reward-stat">
+<span>Total Reward Value</span>
+<strong id="rewardTotalValue">—</strong>
+</div>
+</section>
+<!-- REWARD CATEGORIES -->
+
+<!-- REWARD HISTORY -->
+
+<details class="reward-eligibility">
+<summary>Eligibility &amp; reward rules</summary>
+<ul>
+<li>Account must pass BLOXIO identity and security checks.</li>
+<li>Only eligible completed activities count.</li>
+<li>Weekly participation must span at least four different days.</li>
+<li>One eligible account may claim once per reward cycle.</li>
+<li>Automated, duplicate or abusive activity may be disqualified.</li>
+<li>Unusual activity may place a reward on hold for review.</li>
+</ul>
+</details>
+<section aria-labelledby="campaignTitle" class="reward-section">
+<div class="reward-section-head">
+<h3 id="campaignTitle">Weekly competition</h3>
+<span>Recurring campaign</span>
+</div>
+<div class="reward-feature">
+<div>
+<h4>Compete. Climb. Earn.</h4>
+<p>Join eligible platform activities, build your score and follow your position when the competition service is connected.</p>
+</div>
+<div aria-hidden="true" class="reward-feature-art">
+<img alt="" loading="lazy" src="/assets/images/casino/wheel.webp"/>
+</div>
+</div>
+</section>
+<section aria-labelledby="weeklyRewardTitle" class="reward-section">
+<div class="reward-section-head">
+<h3 id="weeklyRewardTitle">Weekly reward pool</h3>
+<span>Planned weekly allocation · 30,000 units</span>
+</div>
+<div class="reward-allocation">
+<article class="reward-asset">
+<div class="reward-asset-label"><i>S</i> STR</div>
+<strong>10,000</strong>
+<small>Weekly allocation</small>
+</article>
+<article class="reward-asset">
+<div class="reward-asset-label"><i>X</i> XBC</div>
+<strong>10,000</strong>
+<small>Weekly allocation</small>
+</article>
+<article class="reward-asset">
+<div class="reward-asset-label"><i>E</i> EUBX</div>
+<strong>10,000</strong>
+<small>Weekly allocation</small>
+</article>
+</div>
+</section>
+<section class="reward-section">
+<div class="reward-section-head">
+<h3>Reward History</h3>
+<span id="rewardHistoryCount">0 Records</span>
+</div>
+<div class="reward-toolbar">
+<div class="reward-filters" id="rewardFilters">
+<button aria-pressed="true" class="reward-filter active" data-filter="all" type="button">
+                All
+              </button>
+<button aria-pressed="false" class="reward-filter" data-filter="claimed" type="button">
+                Claimed
+              </button>
+<button aria-pressed="false" class="reward-filter" data-filter="pending" type="button">
+                Pending
+              </button>
+</div>
+</div>
+<div class="reward-table-wrap">
+<table class="reward-table">
+<thead>
+<tr>
+<th>Reward</th>
+<th>Type</th>
+<th>Date</th>
+<th>Amount</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody id="rewardHistoryBody">
+<tr>
+<td colspan="5">
+<div class="reward-empty">
+<span class="reward-empty-icon">✧</span>
+                      No reward records available.
+                    </div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<!-- INFORMATION -->
+<div class="reward-note">Weekly figures represent the planned campaign allocation, not a personal balance or guaranteed payout. Eligibility, final results and token credits must be confirmed by authenticated BLOXIO services.</div>
+</section>
+</main>
+<!-- MOBILE NAVIGATION -->
+<nav aria-label="Primary navigation" class="mobile-nav">
+<a class="nav-btn" data-view="wallet" href="/index.html">
+<img alt="" src="/assets/images/navigation/home.svg"/><span>Wallet</span>
+</a>
+<a class="nav-btn" data-view="market" href="/pages/market.html">
+<img alt="" src="/assets/images/navigation/market.svg"/><span>Market</span>
+</a>
+<a class="nav-btn" data-view="casino" href="/pages/casino.html">
+<img alt="" src="/assets/images/navigation/casino.svg"/><span>Casino</span>
+</a>
+<a class="nav-btn" data-view="mining" href="/pages/mining.html">
+<img alt="" src="/assets/images/navigation/mining.svg"/><span>Mining</span>
+</a>
+<a aria-current="page" class="nav-btn active" data-view="mint" href="/pages/mint.html">
+<span aria-hidden="true" class="sidebar-glyph">✦</span><span>Mint</span>
+</a>
+</nav>
+<!-- FOOTER -->
+<footer class="legal-footer">
+<div class="footer-socials">
+<a href="/terms.html">Terms</a>
+<a href="/privacy.html">Privacy</a>
+<a href="/risk.html">Risk</a>
+</div>
+<p>© 2026 BLOXIO</p>
+</footer>
+</div>
+<!-- SOUND -->
+<audio id="snd-click" preload="auto" src="/assets/sounds/click.mp3"></audio>
+<audio id="snd-success" preload="auto" src="/assets/sounds/success.mp3"></audio>
+<audio id="snd-notification" preload="auto" src="/assets/sounds/notification.mp3"></audio>
+<!-- BLOXIO CORE -->
+<!-- REWARD PAGE -->
+<!-- BLOXIO SCRIPT BOOTSTRAP: ordered shared dependencies -->
+<script src="/vendor/socket.io.min.js"></script>
+<script src="/core/language.js"></script>
+<script src="/core/translator.js"></script>
+<script src="/core/rtl.js"></script>
+<script src="/bx/auth.js"></script>
+<script src="/bx/core.js"></script>
+<script src="/bx/state.js"></script>
+<script src="/bx/services/api.js"></script>
+<script src="/bx/services/ws.js"></script>
+<script src="/bx/icon-manager.js"></script>
+<script src="/bx/pages.js"></script>
+<script src="/bx/main.js"></script>
+<script src="/core/auto-i18n.js"></script>
+<!-- Page-local behavior -->
+
+</body>
+</html>
