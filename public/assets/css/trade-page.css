@@ -1,47 +1,74 @@
 /* ==========================================================================
-   01. TRADE DESIGN TOKENS
-   ========================================================================== */
+   01. DESIGN TOKENS
+========================================================================== */
 
 body[data-page="trade"] {
-    --trade-surface: var(--bg-card, #0B2B24);
-    --trade-surface-deep: var(--bg-base-deep, #061A17);
-    --trade-surface-input: var(--bg-base-core, #08231E);
-    --trade-border: var(--gold-border, rgba(212,175,55,.17));
-    --trade-border-active: var(--gold-solid, #D4AF37);
-    --trade-text: var(--text-platinum, #F4F7F5);
-    --trade-muted: var(--text-metadata, #A3B8B0);
-    --trade-subtle: var(--text-muted, #718A80);
-    --trade-positive: var(--signal-buy, #27D69A);
-    --trade-negative: var(--signal-sell, #FF6472);
+    --trade-bg: #061B16;
+    --trade-surface: #0B2922;
+    --trade-surface-raised: #0D3028;
+    --trade-surface-deep: #061F19;
+
+    --trade-border: rgba(212, 175, 55, .16);
+    --trade-border-strong: rgba(212, 175, 55, .34);
+    --trade-border-soft: rgba(255, 255, 255, .055);
+
+    --trade-gold: #D4AF37;
+    --trade-gold-hover: #E5C34E;
+    --trade-gold-soft: rgba(212, 175, 55, .10);
+
+    --trade-text: #EAECEF;
+    --trade-muted: #91A69C;
+    --trade-subtle: #6F887D;
+
+    --trade-positive: #0ECB81;
+    --trade-negative: #F6465D;
+    --trade-neutral: #A6B3AD;
+
     --trade-radius-sm: 8px;
     --trade-radius-md: 12px;
     --trade-radius-lg: 16px;
-    --trade-transition: .18s ease;
+
+    --trade-gap: 12px;
+    --trade-panel-padding: 14px;
+
+    --trade-shadow:
+        0 8px 24px rgba(0, 0, 0, .14);
+
+    --trade-transition:
+        .18s ease;
+
+    color: var(--trade-text);
 }
 
 
 /* ==========================================================================
-   02. GLOBAL TRADE CONTAINMENT
-   ========================================================================== */
+   02. BOX MODEL AND ROOT
+========================================================================== */
 
-body[data-page="trade"] .bx-trade-terminal {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-    width: 100%;
-    max-width: 100%;
-    min-width: 0;
-}
-
+body[data-page="trade"] .bx-trade-terminal,
 body[data-page="trade"] .bx-trade-terminal *,
 body[data-page="trade"] .bx-trade-terminal *::before,
 body[data-page="trade"] .bx-trade-terminal *::after {
     box-sizing: border-box;
 }
 
+body[data-page="trade"] .bx-trade-terminal {
+    display: flex;
+    flex-direction: column;
+    gap: var(--trade-gap);
+
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+
+    margin-inline: auto;
+    padding-bottom: 28px;
+
+    color: var(--trade-text);
+}
+
 body[data-page="trade"] .bx-trade-terminal img {
     max-width: 100%;
-    vertical-align: middle;
 }
 
 body[data-page="trade"] .bx-trade-terminal button,
@@ -55,169 +82,234 @@ body[data-page="trade"] .bx-trade-terminal button {
 }
 
 body[data-page="trade"] .bx-trade-terminal button:disabled {
+    opacity: .48;
     cursor: not-allowed;
-}
-
-body[data-page="trade"] .bx-trade-terminal [hidden],
-body[data-page="trade"] .bx-custom-select-menu[hidden] {
-    display: none !important;
 }
 
 
 /* ==========================================================================
    03. MARKET HEADER
-   ========================================================================== */
+========================================================================== */
 
 body[data-page="trade"] .bx-trade-market-head {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 18px;
+
+    gap: 20px;
+
     width: 100%;
     min-width: 0;
-    padding: 16px;
+
+    padding: 16px 18px;
+
     border: 1px solid var(--trade-border);
     border-radius: var(--trade-radius-lg);
+
     background: var(--trade-surface);
+
+    box-shadow: var(--trade-shadow);
 }
 
 body[data-page="trade"] .bx-trade-pair-block {
     display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    gap: 9px;
+
+    grid-template-columns: auto minmax(0, 1fr);
+
+    align-items: center;
+    gap: 7px 12px;
+
     min-width: 0;
 }
 
 body[data-page="trade"] .bx-trade-pair-block > label {
+    grid-column: 1 / -1;
+
+    margin: 0;
+
     color: var(--trade-muted);
-    font-size: 12px;
-    font-weight: 600;
+
+    font-size: 11px;
+    font-weight: 650;
+    letter-spacing: .025em;
 }
 
 body[data-page="trade"] .bx-trade-pair-select-row {
     display: flex;
     align-items: center;
+
     gap: 10px;
+
     min-width: 0;
+    flex-wrap: nowrap;
 }
 
-body[data-page="trade"] .bx-trade-pair-block > strong {
-    color: var(--gold-solid);
-    font-family: var(--font-mono);
-    font-size: clamp(16px, 2vw, 20px);
-    font-variant-numeric: tabular-nums;
+body[data-page="trade"] #tradeBaseIcon {
+    display: block;
+
+    width: 36px;
+    height: 36px;
+
+    min-width: 36px;
+    max-width: 36px;
+
+    min-height: 36px;
+    max-height: 36px;
+
+    flex: 0 0 36px;
+
+    object-fit: contain;
+    object-position: center;
+
+    border-radius: 50%;
+}
+
+body[data-page="trade"] #tradePairSelect {
+    width: min(100%, 230px);
+    max-width: 230px;
+    min-width: 0;
+
+    min-height: 42px;
+
+    padding: 0 12px;
+
+    border: 1px solid var(--trade-border);
+    border-radius: var(--trade-radius-md);
+
+    background: var(--trade-surface-deep);
+    color: var(--trade-text);
+
+    font-size: 13px;
+    font-weight: 750;
 }
 
 body[data-page="trade"] .bx-trade-contract {
-    flex-shrink: 0;
-    padding: 5px 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    width: max-content;
+
+    padding: 5px 9px;
+
     border: 1px solid var(--trade-border);
-    border-radius: 8px;
-    background: var(--trade-surface-deep);
+    border-radius: 7px;
+
+    background: rgba(212, 175, 55, .045);
+
     color: var(--trade-muted);
+
     font-size: 10px;
     font-weight: 750;
     letter-spacing: .04em;
+    text-transform: uppercase;
 }
+
+body[data-page="trade"] .bx-trade-pair-block > strong {
+    color: var(--trade-gold);
+
+    font-family: var(--font-mono, monospace);
+    font-size: 19px;
+    font-weight: 800;
+
+    font-variant-numeric: tabular-nums;
+    overflow-wrap: anywhere;
+}
+
+
+/* ==========================================================================
+   04. HEADER ACTIONS
+========================================================================== */
 
 body[data-page="trade"] .bx-trade-header-actions {
     display: flex;
     align-items: center;
     justify-content: flex-end;
+
     gap: 10px;
+
     min-width: 0;
+    flex-wrap: wrap;
+}
+
+body[data-page="trade"] .bx-trade-mode-tabs,
+body[data-page="trade"] .bx-trade-view-tabs {
+    display: inline-flex;
+    align-items: center;
+
+    gap: 4px;
+
+    padding: 4px;
+
+    border: 1px solid var(--trade-border);
+    border-radius: 10px;
+
+    background: var(--trade-surface-deep);
+}
+
+body[data-page="trade"] .bx-trade-mode-tabs button,
+body[data-page="trade"] .bx-trade-view-tabs button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    min-width: 64px;
+    min-height: 38px;
+
+    padding: 8px 13px;
+
+    border: 1px solid transparent;
+    border-radius: 7px;
+
+    background: transparent;
+    color: var(--trade-muted);
+
+    font-size: 11px;
+    font-weight: 750;
+
+    white-space: nowrap;
+
+    transition:
+        color var(--trade-transition),
+        background var(--trade-transition),
+        border-color var(--trade-transition);
+}
+
+body[data-page="trade"] .bx-trade-mode-tabs button.active,
+body[data-page="trade"] .bx-trade-view-tabs button.active {
+    border-color: var(--trade-border-strong);
+
+    background: var(--trade-gold-soft);
+    color: var(--trade-gold);
+}
+
+body[data-page="trade"] .bx-trade-mode-tabs button:hover,
+body[data-page="trade"] .bx-trade-view-tabs button:hover {
+    color: var(--trade-text);
 }
 
 
 /* ==========================================================================
-   04. TOKEN IMAGE SYSTEM
-   Strict dimensions for every trading token
-   ========================================================================== */
-
-/* Main token image */
-body[data-page="trade"] #tradeBaseIcon {
-    display: block;
-    width: 36px !important;
-    height: 36px !important;
-    min-width: 36px;
-    max-width: 36px;
-    min-height: 36px;
-    max-height: 36px;
-    flex: 0 0 36px;
-    object-fit: contain;
-    object-position: center;
-    border-radius: 50%;
-}
-
-/* Custom dropdown token */
-body[data-page="trade"] .bx-select-token-icon {
-    display: block;
-    width: 24px !important;
-    height: 24px !important;
-    min-width: 24px;
-    max-width: 24px;
-    min-height: 24px;
-    max-height: 24px;
-    flex: 0 0 24px;
-    object-fit: contain;
-    object-position: center;
-    border-radius: 50%;
-}
-
-/* Quick pair images */
-body[data-page="trade"] .bx-trade-quick-pairs img {
-    display: block;
-    width: 25px !important;
-    height: 25px !important;
-    min-width: 25px;
-    max-width: 25px;
-    min-height: 25px;
-    max-height: 25px;
-    flex: 0 0 25px;
-    object-fit: contain;
-    object-position: center;
-    border-radius: 50%;
-}
-
-/* Watchlist token images */
-body[data-page="trade"] #marketPairAssets img {
-    width: 30px;
-    height: 30px;
-    min-width: 30px;
-    max-width: 30px;
-    min-height: 30px;
-    max-height: 30px;
-    flex: 0 0 30px;
-    object-fit: contain;
-    object-position: center;
-    border-radius: 50%;
-}
-
-/* Never allow an image to expand its flex/grid parent */
-body[data-page="trade"] .bx-trade-pair-select-row img,
-body[data-page="trade"] .bx-custom-select-value img,
-body[data-page="trade"] .bx-custom-select-option img,
-body[data-page="trade"] .bx-trade-quick-pairs img,
-body[data-page="trade"] #marketPairAssets img {
-    flex-shrink: 0;
-}
-
-
-/* ==========================================================================
-   05. QUICK PAIRS
-   ========================================================================== */
+   05. QUICK TRADING PAIRS
+========================================================================== */
 
 body[data-page="trade"] .bx-trade-quick-pairs {
     display: flex;
     align-items: center;
+
     gap: 9px;
+
     width: 100%;
     min-width: 0;
-    padding: 3px 0 10px;
+
+    padding: 2px 0 8px;
+
     overflow-x: auto;
     overflow-y: hidden;
+
     scrollbar-width: thin;
-    scrollbar-color: var(--trade-border-active) transparent;
+    scrollbar-color: var(--trade-border-strong) transparent;
+
     -webkit-overflow-scrolling: touch;
 }
 
@@ -225,18 +317,27 @@ body[data-page="trade"] .bx-trade-quick-pairs button {
     display: inline-flex;
     align-items: center;
     justify-content: flex-start;
+
     gap: 9px;
+
     flex: 0 0 auto;
+
     min-width: 118px;
-    min-height: 46px;
-    padding: 8px 13px;
+    min-height: 44px;
+
+    padding: 8px 12px;
+
     border: 1px solid var(--trade-border);
-    border-radius: 12px;
+    border-radius: 11px;
+
     background: var(--trade-surface);
     color: var(--trade-muted);
-    font-size: 12px;
+
+    font-size: 11px;
     font-weight: 750;
+
     white-space: nowrap;
+
     transition:
         background var(--trade-transition),
         border-color var(--trade-transition),
@@ -245,25 +346,52 @@ body[data-page="trade"] .bx-trade-quick-pairs button {
 
 body[data-page="trade"] .bx-trade-quick-pairs button:hover,
 body[data-page="trade"] .bx-trade-quick-pairs button.active {
-    border-color: var(--trade-border-active);
-    background: var(--gold-glow);
-    color: var(--gold-solid);
+    border-color: var(--trade-border-strong);
+
+    background: var(--trade-gold-soft);
+    color: var(--trade-gold);
+}
+
+body[data-page="trade"] .bx-trade-quick-pairs img {
+    display: block;
+
+    width: 25px;
+    height: 25px;
+
+    min-width: 25px;
+    max-width: 25px;
+
+    min-height: 25px;
+    max-height: 25px;
+
+    flex: 0 0 25px;
+
+    object-fit: contain;
+    object-position: center;
+
+    border-radius: 50%;
 }
 
 
 /* ==========================================================================
    06. SUMMARY METRICS
-   ========================================================================== */
+========================================================================== */
 
 body[data-page="trade"] .bx-trade-summary {
     display: grid;
+
     grid-template-columns: repeat(4, minmax(0, 1fr));
+
     gap: 1px;
+
     width: 100%;
     min-width: 0;
+
     overflow: hidden;
+
     border: 1px solid var(--trade-border);
     border-radius: var(--trade-radius-md);
+
     background: var(--trade-border);
 }
 
@@ -271,48 +399,107 @@ body[data-page="trade"] .bx-trade-summary > div {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    gap: 6px;
+
+    gap: 7px;
+
     min-width: 0;
-    min-height: 78px;
-    padding: 12px;
+    min-height: 76px;
+
+    padding: 12px 14px;
+
     background: var(--trade-surface);
 }
 
 body[data-page="trade"] .bx-trade-summary span {
     color: var(--trade-muted);
+
     font-size: 11px;
     font-weight: 550;
 }
 
 body[data-page="trade"] .bx-trade-summary strong {
-    overflow-wrap: anywhere;
+    display: block;
+
+    max-width: 100%;
+
     color: var(--trade-text);
-    font-family: var(--font-mono);
+
+    font-family: var(--font-mono, monospace);
     font-size: 14px;
     font-weight: 750;
+
     font-variant-numeric: tabular-nums;
+    overflow-wrap: anywhere;
 }
 
 
 /* ==========================================================================
-   07. WORKSPACE GRID
-   ========================================================================== */
+   07. MARKET STATUS COLORS
+========================================================================== */
+
+body[data-page="trade"] #marketChange {
+    color: var(--trade-positive);
+}
+
+body[data-page="trade"] #spread {
+    color: var(--trade-gold);
+}
+
+body[data-page="trade"] #marketConnectionStatus {
+    overflow-wrap: anywhere;
+}
+
+
+/* ==========================================================================
+   08. FUTURES NOTICE
+========================================================================== */
+
+body[data-page="trade"] .bx-trade-futures-notice {
+    width: 100%;
+
+    margin: 0;
+    padding: 13px 15px;
+
+    border: 1px solid var(--trade-border-strong);
+    border-radius: var(--trade-radius-md);
+
+    background: var(--trade-gold-soft);
+    color: var(--trade-gold);
+
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+body[data-page="trade"] .bx-trade-futures-notice[hidden] {
+    display: none !important;
+}
+
+
+/* ==========================================================================
+   09. WORKSPACE — DESKTOP THREE COLUMN
+========================================================================== */
 
 body[data-page="trade"] .bx-trade-workspace {
     display: grid;
+
     grid-template-columns:
-        minmax(210px, .85fr)
-        minmax(0, 1.8fr)
-        minmax(220px, .9fr);
+        minmax(205px, .82fr)
+        minmax(0, 1.75fr)
+        minmax(220px, .92fr);
+
     gap: 12px;
+
     width: 100%;
     min-width: 0;
-    align-items: stretch;
+
+    align-items: start;
 }
 
 body[data-page="trade"] .bx-trade-left-column,
 body[data-page="trade"] .bx-trade-center-column,
 body[data-page="trade"] .bx-trade-right-column {
+    width: 100%;
+
     min-width: 0;
     min-height: 0;
 }
@@ -320,28 +507,36 @@ body[data-page="trade"] .bx-trade-right-column {
 body[data-page="trade"] .bx-trade-center-column {
     display: flex;
     flex-direction: column;
+
     gap: 12px;
+
+    min-width: 0;
 }
 
 
 /* ==========================================================================
-   08. PANEL SYSTEM
-   ========================================================================== */
+   10. PANEL SYSTEM
+========================================================================== */
 
 body[data-page="trade"] .bx-trade-panel,
 body[data-page="trade"] .bx-trade-positions {
+    width: 100%;
     min-width: 0;
+
+    padding: var(--trade-panel-padding);
+
     border: 1px solid var(--trade-border);
     border-radius: var(--trade-radius-lg);
+
     background: var(--trade-surface);
-    box-shadow: var(--shadow-card, 0 8px 22px rgba(0,0,0,.15));
+
+    box-shadow: var(--trade-shadow);
 }
 
 body[data-page="trade"] .bx-trade-panel {
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    padding: 15px;
+
     overflow: hidden;
 }
 
@@ -349,26 +544,105 @@ body[data-page="trade"] .trade-head {
     display: flex;
     align-items: center;
     justify-content: space-between;
+
     gap: 10px;
+
+    width: 100%;
     min-width: 0;
-    margin-bottom: 3px;
+
+    margin-bottom: 12px;
 }
 
 body[data-page="trade"] .trade-head h3 {
+    margin: 0;
+
     color: var(--trade-text);
+
     font-size: 14px;
     font-weight: 800;
 }
 
 body[data-page="trade"] .trade-head span {
     color: var(--trade-muted);
-    font-size: 11px;
+
+    font-size: 10px;
+    font-weight: 600;
+
+    text-align: right;
 }
 
 
 /* ==========================================================================
-   09. PRICE CHART
-   ========================================================================== */
+   11. ORDER BOOK
+========================================================================== */
+
+body[data-page="trade"] .bx-trade-orderbook {
+    min-height: 280px;
+    overflow: hidden;
+}
+
+body[data-page="trade"] #orderBookGrid {
+    width: 100%;
+    min-width: 0;
+    min-height: 150px;
+
+    overflow-x: auto;
+    overflow-y: auto;
+
+    overscroll-behavior: contain;
+}
+
+body[data-page="trade"] #orderBookGrid .orderbook-heading,
+body[data-page="trade"] #orderBookGrid .orderbook-row {
+    display: grid;
+
+    grid-template-columns:
+        minmax(0, 1fr)
+        minmax(0, .85fr)
+        minmax(0, .9fr);
+
+    align-items: center;
+
+    gap: 7px;
+
+    width: 100%;
+    min-width: 0;
+
+    padding: 8px 5px;
+
+    font-size: 10px;
+    font-variant-numeric: tabular-nums;
+}
+
+body[data-page="trade"] #orderBookGrid .orderbook-heading {
+    color: var(--trade-muted);
+
+    border-bottom: 1px solid var(--trade-border);
+}
+
+body[data-page="trade"] #orderBookGrid .orderbook-row {
+    border-bottom: 1px solid var(--trade-border-soft);
+}
+
+body[data-page="trade"] #orderBookGrid .orderbook-row span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+body[data-page="trade"] #orderBookGrid .buy,
+body[data-page="trade"] #orderBookGrid .bid {
+    color: var(--trade-positive);
+}
+
+body[data-page="trade"] #orderBookGrid .sell,
+body[data-page="trade"] #orderBookGrid .ask {
+    color: var(--trade-negative);
+}
+
+
+/* ==========================================================================
+   12. PRICE CHART
+========================================================================== */
 
 body[data-page="trade"] .bx-trade-chart {
     min-width: 0;
@@ -378,12 +652,17 @@ body[data-page="trade"] .bx-trade-chart {
 body[data-page="trade"] .market-chart-toolbar {
     display: flex;
     align-items: center;
-    gap: 7px;
+
+    gap: 6px;
+
     width: 100%;
     min-width: 0;
-    padding: 5px 0 10px;
+
+    margin-bottom: 12px;
+
     overflow-x: auto;
     overflow-y: hidden;
+
     scrollbar-width: none;
     -webkit-overflow-scrolling: touch;
 }
@@ -396,34 +675,49 @@ body[data-page="trade"] .market-chart-toolbar .chart-time {
     display: inline-flex;
     align-items: center;
     justify-content: center;
+
     flex: 0 0 auto;
-    min-width: 49px;
+
+    min-width: 48px;
     min-height: 39px;
+
     padding: 8px 12px;
+
     border: 1px solid var(--trade-border);
     border-radius: 9px;
+
     background: var(--trade-surface-deep);
     color: var(--trade-muted);
-    font-size: 12px;
+
+    font-size: 11px;
     font-weight: 750;
-    transition: var(--trade-transition);
+
+    transition:
+        background var(--trade-transition),
+        color var(--trade-transition),
+        border-color var(--trade-transition);
 }
 
-body[data-page="trade"] .market-chart-toolbar .chart-time:hover,
-body[data-page="trade"] .market-chart-toolbar .chart-time.active {
-    border-color: var(--trade-border-active);
-    background: var(--gold-glow);
-    color: var(--gold-solid);
+body[data-page="trade"] .market-chart-toolbar .chart-time.active,
+body[data-page="trade"] .market-chart-toolbar .chart-time:hover {
+    border-color: var(--trade-border-strong);
+
+    background: var(--trade-gold-soft);
+    color: var(--trade-gold);
 }
 
 body[data-page="trade"] #marketChart {
     position: relative;
+
     width: 100%;
     min-width: 0;
-    min-height: 340px;
-    height: 380px;
+
+    height: 370px;
+    min-height: 300px;
+
     overflow: hidden;
-    border-radius: 10px;
+
+    border-radius: 9px;
 }
 
 body[data-page="trade"] #marketChart canvas,
@@ -431,153 +725,273 @@ body[data-page="trade"] #marketChart svg {
     max-width: 100%;
 }
 
+body[data-page="trade"] #marketTooltip {
+    z-index: 20;
+}
+
 
 /* ==========================================================================
-   10. ORDER ENTRY TABS
-   ========================================================================== */
+   13. ORDER ENTRY PANEL
+========================================================================== */
 
 body[data-page="trade"] .bx-trade-order-entry {
     min-width: 0;
+    overflow: visible;
 }
 
-body[data-page="trade"] .bx-trade-order-entry .trade-tabs {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    width: 100%;
-    min-width: 0;
-    padding: 5px;
-    border: 1px solid var(--trade-border);
-    border-radius: 11px;
-    background: var(--trade-surface-deep);
+body[data-page="trade"] .bx-trade-order-entry > .trade-head {
+    margin-bottom: 13px;
 }
 
-body[data-page="trade"] .bx-trade-order-entry .trade-tab {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    flex: 1 1 0;
-    min-width: 0;
-    min-height: 42px;
-    padding: 9px;
-    border: 1px solid transparent;
-    border-radius: 8px;
-    background: transparent;
-    color: var(--trade-muted);
-    font-size: 12px;
+body[data-page="trade"] #tradeTitle {
+    margin: 0;
+    color: var(--trade-text);
+
+    font-size: 15px;
     font-weight: 800;
-    transition: var(--trade-transition);
 }
 
-body[data-page="trade"] .bx-trade-order-entry #buyTab.active {
-    border-color: rgba(39,214,154,.28);
-    background: rgba(39,214,154,.10);
-    color: var(--trade-positive);
-}
+body[data-page="trade"] #marketPair {
+    color: var(--trade-muted);
 
-body[data-page="trade"] .bx-trade-order-entry #sellTab.active {
-    border-color: rgba(255,100,114,.28);
-    background: rgba(255,100,114,.10);
-    color: var(--trade-negative);
+    font-size: 10px;
+    font-weight: 700;
 }
 
 
 /* ==========================================================================
-   11. ORDER OPTIONS
-   ========================================================================== */
+   14. BUY / SELL TABS
+========================================================================== */
+
+body[data-page="trade"] .trade-tabs {
+    display: grid;
+
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+
+    gap: 4px;
+
+    width: 100%;
+    min-width: 0;
+
+    padding: 4px;
+    margin-bottom: 14px;
+
+    border: 1px solid var(--trade-border);
+    border-radius: 11px;
+
+    background: var(--trade-surface-deep);
+}
+
+body[data-page="trade"] .trade-tabs .trade-tab {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 7px;
+
+    width: 100%;
+    min-width: 0;
+    min-height: 43px;
+
+    padding: 9px;
+
+    border: 1px solid transparent;
+    border-radius: 8px;
+
+    background: transparent;
+    color: var(--trade-muted);
+
+    font-size: 12px;
+    font-weight: 800;
+
+    transition:
+        background var(--trade-transition),
+        color var(--trade-transition),
+        border-color var(--trade-transition);
+}
+
+body[data-page="trade"] .trade-tabs .trade-tab.active#buyTab {
+    border-color: rgba(14, 203, 129, .22);
+
+    background: rgba(14, 203, 129, .10);
+    color: var(--trade-positive);
+}
+
+body[data-page="trade"] .trade-tabs .trade-tab.active#sellTab {
+    border-color: rgba(246, 70, 93, .22);
+
+    background: rgba(246, 70, 93, .10);
+    color: var(--trade-negative);
+}
+
+body[data-page="trade"] .trade-tab .bx-ui-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 17px;
+    height: 17px;
+}
+
+body[data-page="trade"] .trade-tab .bx-ui-icon svg {
+    display: block;
+
+    width: 17px;
+    height: 17px;
+
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+
+/* ==========================================================================
+   15. ORDER TYPE / TIME IN FORCE
+========================================================================== */
 
 body[data-page="trade"] .bx-trade-options {
     display: grid;
+
     grid-template-columns: repeat(2, minmax(0, 1fr));
+
     gap: 10px;
+
     width: 100%;
     min-width: 0;
-    margin: 12px 0;
+
+    margin: 0 0 14px;
 }
 
-body[data-page="trade"] .bx-trade-options label {
+body[data-page="trade"] .bx-trade-options > label {
     display: flex;
     flex-direction: column;
+
     gap: 7px;
+
     min-width: 0;
+
     color: var(--trade-muted);
+
     font-size: 11px;
-    font-weight: 600;
+    font-weight: 650;
 }
 
 body[data-page="trade"] .bx-trade-options select {
     width: 100%;
     min-width: 0;
-    min-height: 44px;
-    padding: 0 12px;
+    min-height: 42px;
+
+    padding: 0 11px;
+
     border: 1px solid var(--trade-border);
-    border-radius: 10px;
+    border-radius: 9px;
+
     background: var(--trade-surface-deep);
     color: var(--trade-text);
+
     font-size: 12px;
     font-weight: 650;
+
+    cursor: pointer;
 }
 
 body[data-page="trade"] .bx-trade-options select:focus {
     outline: none;
-    border-color: var(--trade-border-active);
-    box-shadow: 0 0 0 3px var(--gold-glow);
+
+    border-color: var(--trade-gold);
+
+    box-shadow: 0 0 0 3px rgba(212, 175, 55, .10);
 }
 
 
 /* ==========================================================================
-   12. CUSTOM SELECT SYSTEM
-   Created by trade.js — native select remains source of truth
-   ========================================================================== */
+   16. CUSTOM SELECT SYSTEM
+   Native select remains the data source.
+========================================================================== */
 
 body[data-page="trade"] .bx-custom-select {
     position: relative;
+
     display: block;
+
     width: 100%;
     min-width: 0;
+}
+
+body[data-page="trade"] .bx-custom-select > select {
+    position: absolute !important;
+
+    width: 1px !important;
+    height: 1px !important;
+
+    min-width: 1px !important;
+    min-height: 1px !important;
+
+    padding: 0 !important;
+    margin: 0 !important;
+
+    overflow: hidden !important;
+
+    clip: rect(0, 0, 0, 0) !important;
+    clip-path: inset(50%) !important;
+
+    white-space: nowrap !important;
+
+    border: 0 !important;
+
+    opacity: 0 !important;
+    pointer-events: none !important;
 }
 
 body[data-page="trade"] .bx-custom-select-trigger {
     display: flex;
     align-items: center;
     justify-content: space-between;
+
     gap: 10px;
+
     width: 100%;
     min-width: 0;
-    min-height: 45px;
-    padding: 9px 13px;
+    min-height: 42px;
+
+    padding: 9px 12px;
+
     border: 1px solid var(--trade-border);
-    border-radius: 11px;
+    border-radius: 10px;
+
     background: var(--trade-surface-deep);
     color: var(--trade-text);
-    font-size: 13px;
+
+    font-size: 12px;
     font-weight: 700;
+
     text-align: left;
-    transition: var(--trade-transition);
+
+    transition:
+        border-color var(--trade-transition),
+        background var(--trade-transition);
 }
 
 body[data-page="trade"] .bx-custom-select-trigger:hover,
 body[data-page="trade"] .bx-custom-select.is-open .bx-custom-select-trigger {
-    border-color: var(--trade-border-active);
-    background: var(--trade-surface);
-}
-
-body[data-page="trade"] .bx-custom-select-trigger:focus-visible {
-    outline: 2px solid var(--gold-solid);
-    outline-offset: 2px;
+    border-color: var(--trade-border-strong);
 }
 
 body[data-page="trade"] .bx-custom-select-value {
     display: flex;
     align-items: center;
+
     gap: 9px;
-    flex: 1 1 auto;
+
     min-width: 0;
     overflow: hidden;
 }
 
-body[data-page="trade"] .bx-custom-select-value > span {
+body[data-page="trade"] .bx-custom-select-value > span:last-child {
     min-width: 0;
+
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -585,79 +999,103 @@ body[data-page="trade"] .bx-custom-select-value > span {
 
 body[data-page="trade"] .bx-custom-select-chevron {
     flex: 0 0 auto;
-    color: var(--trade-muted);
-    font-size: 19px;
-    line-height: 1;
-    transition: transform var(--trade-transition);
-}
 
-body[data-page="trade"] .bx-custom-select.is-open .bx-custom-select-chevron {
-    transform: rotate(180deg);
+    color: var(--trade-muted);
+
+    font-size: 17px;
+    line-height: 1;
 }
 
 body[data-page="trade"] .bx-custom-select-menu {
     position: absolute;
-    z-index: 1100;
-    top: calc(100% + 7px);
+
+    top: calc(100% + 6px);
     left: 0;
     right: 0;
+
+    z-index: 1000;
+
     width: 100%;
-    max-height: min(300px, 55vh);
-    padding: 6px;
+    max-height: 260px;
+
+    padding: 5px;
+
     overflow-x: hidden;
     overflow-y: auto;
-    border: 1px solid var(--trade-border-active);
-    border-radius: 12px;
-    background: #08231E;
-    box-shadow: 0 16px 36px rgba(0,0,0,.42);
-    scrollbar-width: thin;
-    scrollbar-color: var(--gold-solid) transparent;
+
+    border: 1px solid var(--trade-border-strong);
+    border-radius: 11px;
+
+    background: #09251F;
+
+    box-shadow: 0 14px 32px rgba(0, 0, 0, .42);
+}
+
+body[data-page="trade"] .bx-custom-select-menu[hidden] {
+    display: none !important;
 }
 
 body[data-page="trade"] .bx-custom-select-option {
     display: flex;
     align-items: center;
-    gap: 10px;
+
+    gap: 9px;
+
     width: 100%;
     min-width: 0;
-    min-height: 43px;
+    min-height: 40px;
+
     padding: 8px 10px;
-    border: 1px solid transparent;
-    border-radius: 8px;
+
+    border: 0;
+    border-radius: 7px;
+
     background: transparent;
     color: var(--trade-muted);
+
     font-size: 12px;
     font-weight: 650;
+
     text-align: left;
-    transition: var(--trade-transition);
 }
 
-body[data-page="trade"] .bx-custom-select-option > span {
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-body[data-page="trade"] .bx-custom-select-option:hover {
-    background: rgba(212,175,55,.08);
-    color: var(--trade-text);
-}
-
+body[data-page="trade"] .bx-custom-select-option:hover,
 body[data-page="trade"] .bx-custom-select-option.selected {
-    border-color: var(--trade-border);
-    background: var(--gold-glow);
-    color: var(--gold-solid);
+    background: var(--trade-gold-soft);
+    color: var(--trade-gold);
+}
+
+body[data-page="trade"] .bx-custom-select-option img,
+body[data-page="trade"] .bx-select-token-icon {
+    display: block;
+
+    width: 23px;
+    height: 23px;
+
+    min-width: 23px;
+    max-width: 23px;
+
+    min-height: 23px;
+    max-height: 23px;
+
+    flex: 0 0 23px;
+
+    object-fit: contain;
+    object-position: center;
+
+    border-radius: 50%;
 }
 
 
 /* ==========================================================================
-   13. ORDER INPUTS
-   ========================================================================== */
+   17. ORDER FORM
+========================================================================== */
 
 body[data-page="trade"] .bx-trade-form {
     display: grid;
-    gap: 13px;
+
+    gap: 12px;
+
     width: 100%;
     min-width: 0;
 }
@@ -665,254 +1103,305 @@ body[data-page="trade"] .bx-trade-form {
 body[data-page="trade"] .bx-trade-field {
     display: flex;
     flex-direction: column;
+
     gap: 7px;
+
     width: 100%;
     min-width: 0;
+
     color: var(--trade-muted);
-    font-size: 12px;
+
+    font-size: 11px;
+    font-weight: 650;
 }
 
 body[data-page="trade"] .bx-trade-field > span {
     display: flex;
     align-items: center;
     justify-content: space-between;
+
     gap: 8px;
+
     min-width: 0;
 }
 
 body[data-page="trade"] .bx-trade-field small {
-    flex-shrink: 0;
-    color: var(--gold-solid);
-    font-family: var(--font-mono);
+    color: var(--trade-gold);
+
+    font-family: var(--font-mono, monospace);
     font-size: 10px;
-    font-weight: 700;
-}
+    font-weight: 750;
 
-body[data-page="trade"] .bx-input-frame {
-    position: relative;
-    display: flex;
-    align-items: center;
-    width: 100%;
-    min-width: 0;
-    min-height: 49px;
-    border: 1px solid var(--trade-border);
-    border-radius: 12px;
-    background: var(--trade-surface-deep);
-    transition: border-color var(--trade-transition),
-                box-shadow var(--trade-transition);
-}
-
-body[data-page="trade"] .bx-input-frame:focus-within {
-    border-color: var(--gold-solid);
-    box-shadow: 0 0 0 3px var(--gold-glow);
+    letter-spacing: .035em;
+    text-transform: uppercase;
 }
 
 body[data-page="trade"] .bx-trade-field .market-input {
     display: block;
-    flex: 1 1 auto;
+
     width: 100%;
     min-width: 0;
-    min-height: 47px;
-    padding: 10px 13px;
-    border: 0;
-    outline: 0;
+    min-height: 48px;
+
+    padding: 0 13px;
+
+    border: 1px solid rgba(140, 163, 157, .20);
     border-radius: 11px;
-    background: transparent;
+
+    background: #061D17;
     color: var(--trade-text);
-    font-family: var(--font-mono);
+
+    outline: none;
+
+    font-family: var(--font-mono, monospace);
     font-size: 14px;
     font-weight: 650;
+
     font-variant-numeric: tabular-nums;
+
+    transition:
+        border-color var(--trade-transition),
+        box-shadow var(--trade-transition);
 }
 
 body[data-page="trade"] .bx-trade-field .market-input::placeholder {
-    color: var(--trade-subtle);
-    opacity: .8;
+    color: #61786D;
+    opacity: 1;
+}
+
+body[data-page="trade"] .bx-trade-field .market-input:focus {
+    border-color: var(--trade-gold);
+
+    box-shadow: 0 0 0 3px rgba(212, 175, 55, .10);
 }
 
 body[data-page="trade"] .bx-trade-field .market-input:disabled {
-    opacity: .5;
+    opacity: .55;
     cursor: not-allowed;
 }
 
 body[data-page="trade"] .bx-trade-field .market-input[readonly] {
-    color: var(--trade-muted);
-}
-
-body[data-page="trade"] .bx-input-unit {
-    flex: 0 0 auto;
-    padding: 0 12px;
-    color: var(--gold-solid);
-    font-family: var(--font-mono);
-    font-size: 11px;
-    font-weight: 700;
-    white-space: nowrap;
+    background: #041610;
+    color: var(--trade-gold);
 }
 
 
 /* ==========================================================================
-   14. QUANTITY PERCENTAGE SLIDER
-   ========================================================================== */
+   18. PERCENTAGE SLIDER
+========================================================================== */
 
 body[data-page="trade"] .bx-trade-percent {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    padding: 7px 0;
+    display: grid;
+
+    gap: 8px;
+
+    width: 100%;
+    min-width: 0;
+
+    padding: 2px 0;
 }
 
-body[data-page="trade"] #bxTradePercent {
+body[data-page="trade"] .bx-trade-percent input[type="range"] {
+    display: block;
+
     width: 100%;
-    height: 5px;
-    border-radius: 20px;
-    accent-color: var(--gold-solid);
+    min-width: 0;
+    min-height: 28px;
+
+    margin: 0;
+
+    accent-color: var(--trade-gold);
+
     cursor: pointer;
+    touch-action: pan-y;
 }
 
 body[data-page="trade"] .bx-trade-percent > div {
     display: flex;
+    align-items: center;
     justify-content: space-between;
-    gap: 5px;
+
+    gap: 4px;
+
     color: var(--trade-muted);
-    font-size: 10px;
+
+    font-family: var(--font-mono, monospace);
+    font-size: 9px;
     font-variant-numeric: tabular-nums;
 }
 
 
 /* ==========================================================================
-   15. BALANCE AND SUBMISSION
-   ========================================================================== */
+   19. ORDER META AND ACTION
+========================================================================== */
 
 body[data-page="trade"] .bx-trade-meta {
     display: flex;
     align-items: center;
     justify-content: space-between;
+
     gap: 10px;
+
+    width: 100%;
     min-width: 0;
+
     padding: 11px 0;
-    border-top: 1px solid var(--trade-border);
+
+    border-bottom: 1px solid var(--trade-border);
+
     color: var(--trade-muted);
+
     font-size: 11px;
 }
 
 body[data-page="trade"] .bx-trade-meta strong {
-    overflow-wrap: anywhere;
     color: var(--trade-text);
-    font-family: var(--font-mono);
-    font-size: 12px;
+
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+
+    overflow-wrap: anywhere;
 }
 
 body[data-page="trade"] #actionBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
     width: 100%;
-    min-height: 48px;
-    border-radius: 11px;
-    font-size: 13px;
+    min-width: 0;
+    min-height: 47px;
+
+    padding: 11px 15px;
+
+    border: 1px solid transparent;
+    border-radius: 10px;
+
+    background: var(--trade-gold);
+    color: #102018;
+
+    font-size: 12px;
     font-weight: 850;
-    transition: filter var(--trade-transition),
-                transform var(--trade-transition);
+
+    letter-spacing: .025em;
+    text-align: center;
+
+    transition:
+        background var(--trade-transition),
+        transform var(--trade-transition);
 }
 
 body[data-page="trade"] #actionBtn:hover:not(:disabled) {
-    filter: brightness(1.08);
+    background: var(--trade-gold-hover);
 }
 
 body[data-page="trade"] #actionBtn:active:not(:disabled) {
-    transform: scale(.99);
-}
-
-body[data-page="trade"] #actionBtn:disabled {
-    opacity: .5;
+    transform: translateY(1px);
 }
 
 body[data-page="trade"] .bx-trade-note {
+    margin: 0;
+
     color: var(--trade-subtle);
+
     font-size: 10px;
     line-height: 1.6;
 }
 
 body[data-page="trade"] #marketStatus {
     min-height: 0;
-    overflow-wrap: anywhere;
-    font-size: 11px;
-}
+    margin: 0;
 
-
-/* ==========================================================================
-   16. ORDER BOOK
-   ========================================================================== */
-
-body[data-page="trade"] .bx-trade-orderbook {
-    min-width: 0;
-    min-height: 0;
-}
-
-body[data-page="trade"] #orderBookGrid {
-    width: 100%;
-    min-width: 0;
-    min-height: 0;
-    overflow-x: auto;
-    overflow-y: auto;
-    scrollbar-width: thin;
-    overscroll-behavior: contain;
-}
-
-body[data-page="trade"] #orderBookGrid .orderbook-heading,
-body[data-page="trade"] #orderBookGrid .orderbook-row {
-    min-width: 0;
-    font-variant-numeric: tabular-nums;
-}
-
-body[data-page="trade"] #orderBookGrid .orderbook-heading {
     color: var(--trade-muted);
-    font-size: 10px;
-    font-weight: 700;
-}
 
-body[data-page="trade"] #orderBookGrid .orderbook-row {
-    min-height: 27px;
-    color: var(--trade-text);
     font-size: 11px;
+    line-height: 1.5;
 }
 
 
 /* ==========================================================================
-   17. WATCHLIST
-   ========================================================================== */
+   20. WATCHLIST PANEL
+========================================================================== */
+
+body[data-page="trade"] .bx-trade-right-column {
+    display: flex;
+    flex-direction: column;
+
+    gap: 12px;
+}
 
 body[data-page="trade"] .bx-trade-watchlist {
     min-width: 0;
+    min-height: 0;
 }
 
 body[data-page="trade"] .bx-panel-heading {
     display: flex;
     align-items: center;
     justify-content: space-between;
+
     gap: 10px;
+
+    min-width: 0;
+    margin-bottom: 12px;
+}
+
+body[data-page="trade"] .bx-panel-heading > div {
     min-width: 0;
 }
 
 body[data-page="trade"] .bx-panel-kicker {
-    color: var(--gold-solid);
+    display: block;
+
+    margin-bottom: 4px;
+
+    color: var(--trade-gold);
+
     font-size: 9px;
     font-weight: 800;
+
     letter-spacing: .09em;
 }
 
 body[data-page="trade"] .bx-panel-heading h2 {
+    margin: 0;
+
     color: var(--trade-text);
-    font-size: 15px;
+
+    font-size: 14px;
     font-weight: 800;
 }
+
+body[data-page="trade"] .bx-panel-live {
+    flex: 0 0 auto;
+
+    color: var(--trade-positive);
+
+    font-size: 10px;
+    font-weight: 800;
+}
+
+
+/* ==========================================================================
+   21. MARKET CATEGORY TABS
+========================================================================== */
 
 body[data-page="trade"] .bx-market-category-tabs {
     display: flex;
     align-items: center;
+
     gap: 5px;
+
     width: 100%;
     min-width: 0;
-    padding: 3px 0 8px;
+
+    padding: 3px 0 9px;
+
     overflow-x: auto;
+    overflow-y: hidden;
+
     scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
 }
 
 body[data-page="trade"] .bx-market-category-tabs::-webkit-scrollbar {
@@ -920,86 +1409,325 @@ body[data-page="trade"] .bx-market-category-tabs::-webkit-scrollbar {
 }
 
 body[data-page="trade"] .bx-market-category-tabs button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
     flex: 0 0 auto;
+
     min-height: 34px;
+
     padding: 7px 10px;
-    border: 1px solid transparent;
+
+    border: 1px solid var(--trade-border);
     border-radius: 8px;
+
     background: var(--trade-surface-deep);
     color: var(--trade-muted);
+
     font-size: 10px;
-    font-weight: 700;
+    font-weight: 750;
+
     white-space: nowrap;
+
+    transition:
+        color var(--trade-transition),
+        background var(--trade-transition),
+        border-color var(--trade-transition);
 }
 
 body[data-page="trade"] .bx-market-category-tabs button.active {
-    border-color: var(--trade-border);
-    background: var(--gold-glow);
-    color: var(--gold-solid);
+    border-color: var(--trade-border-strong);
+
+    background: var(--trade-gold-soft);
+    color: var(--trade-gold);
 }
+
+
+/* ==========================================================================
+   22. MARKET SEARCH
+========================================================================== */
 
 body[data-page="trade"] .bx-market-search {
     display: flex;
     align-items: center;
+
     gap: 9px;
-    min-height: 42px;
-    padding: 0 11px;
+
+    width: 100%;
+    min-width: 0;
+    min-height: 43px;
+
+    padding: 0 12px;
+
     border: 1px solid var(--trade-border);
     border-radius: 10px;
+
     background: var(--trade-surface-deep);
     color: var(--trade-muted);
 }
 
 body[data-page="trade"] .bx-market-search input {
     flex: 1 1 auto;
+
     width: 100%;
     min-width: 0;
+    min-height: 40px;
+
+    padding: 0;
+
     border: 0;
-    outline: 0;
+    outline: none;
+
     background: transparent;
     color: var(--trade-text);
+
     font-size: 12px;
 }
 
-body[data-page="trade"] #marketPairAssets {
+body[data-page="trade"] .bx-market-search input::placeholder {
+    color: var(--trade-subtle);
+}
+
+
+/* ==========================================================================
+   23. MARKET QUOTE SELECT
+========================================================================== */
+
+body[data-page="trade"] #bxMarketQuote {
     width: 100%;
     min-width: 0;
+}
+
+body[data-page="trade"] #bxMarketQuote:focus {
+    outline: none;
+}
+
+
+/* ==========================================================================
+   24. MARKET PAIR LIST
+========================================================================== */
+
+body[data-page="trade"] .bx-pair-list-heading {
+    display: grid;
+
+    grid-template-columns:
+        minmax(0, 1fr)
+        auto
+        auto;
+
+    align-items: center;
+
+    gap: 8px;
+
+    padding: 9px 5px;
+
+    border-bottom: 1px solid var(--trade-border);
+
+    color: var(--trade-muted);
+
+    font-size: 9px;
+    font-weight: 700;
+}
+
+body[data-page="trade"] #marketPairAssets {
+    display: flex;
+    flex-direction: column;
+
+    width: 100%;
+    min-width: 0;
+
     overflow-x: hidden;
 }
 
 body[data-page="trade"] #marketPairAssets > * {
     min-width: 0;
+    max-width: 100%;
+}
+
+body[data-page="trade"] #marketPairAssets img {
+    width: 25px;
+    height: 25px;
+
+    min-width: 25px;
+    max-width: 25px;
+
+    min-height: 25px;
+    max-height: 25px;
+
+    flex: 0 0 25px;
+
+    object-fit: contain;
+    object-position: center;
+
+    border-radius: 50%;
+}
+
+body[data-page="trade"] #marketPairAssets .bx-token-copy {
+    display: flex;
+    flex-direction: column;
+
+    gap: 3px;
+
+    min-width: 0;
+}
+
+body[data-page="trade"] #marketPairAssets .bx-token-copy strong {
+    color: var(--trade-text);
+
+    font-size: 11px;
+    font-weight: 750;
+
+    overflow-wrap: anywhere;
+}
+
+body[data-page="trade"] #marketPairAssets .bx-token-copy small {
+    color: var(--trade-muted);
+
+    font-size: 9px;
+}
+
+body[data-page="trade"] #marketPairAssets .bx-market-card-metrics {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+
+    gap: 8px;
+
+    min-width: 0;
+
+    text-align: right;
+    white-space: nowrap;
+}
+
+body[data-page="trade"] #marketPairAssets .bx-market-metric {
+    display: flex;
+    flex-direction: column;
+
+    align-items: flex-end;
+
+    gap: 3px;
+}
+
+body[data-page="trade"] #marketPairAssets .bx-market-metric small {
+    color: var(--trade-muted);
+    font-size: 8px;
+}
+
+body[data-page="trade"] #marketPairAssets .bx-market-metric strong {
+    color: var(--trade-text);
+
+    font-size: 10px;
+    font-variant-numeric: tabular-nums;
+}
+
+body[data-page="trade"] #marketPairAssets .bx-market-volume-cell {
+    display: none;
+}
+
+body[data-page="trade"] #marketPairAssets .is-positive strong {
+    color: var(--trade-positive);
+}
+
+body[data-page="trade"] #marketPairAssets .is-negative strong {
+    color: var(--trade-negative);
+}
+
+body[data-page="trade"] #marketPairAssets .is-neutral strong {
+    color: var(--trade-muted);
 }
 
 body[data-page="trade"] .bx-market-empty {
     padding: 22px 12px;
+
     color: var(--trade-muted);
-    font-size: 12px;
+
+    font-size: 11px;
+    line-height: 1.5;
+
     text-align: center;
+}
+
+body[data-page="trade"] .bx-market-empty[hidden] {
+    display: none !important;
+}
+
+body[data-page="trade"] .bx-market-footnote {
+    margin: 9px 0 0;
+
+    color: var(--trade-subtle);
+
+    font-size: 9px;
+    line-height: 1.5;
 }
 
 
 /* ==========================================================================
-   18. RECENT TRADES
-   ========================================================================== */
+   25. RECENT TRADES
+========================================================================== */
 
 body[data-page="trade"] .bx-trade-recent {
+    display: flex;
+    flex-direction: column;
+
     min-width: 0;
-    min-height: 0;
+    min-height: 180px;
+
     overflow: hidden;
 }
 
+body[data-page="trade"] .bx-trades-table-head {
+    display: grid;
+
+    grid-template-columns:
+        minmax(0, 1fr)
+        minmax(0, .8fr)
+        minmax(0, .7fr);
+
+    gap: 8px;
+
+    padding: 8px 5px;
+
+    border-bottom: 1px solid var(--trade-border);
+
+    color: var(--trade-muted);
+
+    font-size: 9px;
+    font-weight: 700;
+}
+
 body[data-page="trade"] #tradeHistoryGrid {
+    flex: 1 1 auto;
+
     width: 100%;
     min-width: 0;
-    min-height: 0;
-    overflow: auto;
+    min-height: 100px;
+
+    overflow-x: auto;
+    overflow-y: auto;
+
     overscroll-behavior: contain;
 }
 
 body[data-page="trade"] #tradeHistoryGrid .trade-row {
+    display: grid;
+
+    grid-template-columns:
+        minmax(0, 1fr)
+        minmax(0, .8fr)
+        minmax(0, .7fr);
+
+    gap: 7px;
+
     min-width: 0;
-    font-size: 11px;
+
+    padding: 8px 5px;
+
+    border-bottom: 1px solid var(--trade-border-soft);
+
+    color: var(--trade-muted);
+
+    font-size: 10px;
     font-variant-numeric: tabular-nums;
 }
 
@@ -1011,136 +1739,195 @@ body[data-page="trade"] #tradeHistoryGrid .trade-row.sell span:nth-child(2) {
     color: var(--trade-negative);
 }
 
+body[data-page="trade"] #tradeHistoryGrid .trade-empty {
+    padding: 20px 10px;
+
+    color: var(--trade-muted);
+
+    font-size: 11px;
+    text-align: center;
+}
+
 
 /* ==========================================================================
-   19. POSITIONS AND HISTORY
-   ========================================================================== */
+   26. MOBILE MARKET DATA TABS
+========================================================================== */
+
+body[data-page="trade"] .bx-trade-mobile-tabs {
+    display: none;
+}
+
+
+/* ==========================================================================
+   27. POSITIONS AND ACTIVITY
+========================================================================== */
 
 body[data-page="trade"] .bx-trade-positions {
     width: 100%;
     min-width: 0;
+
     padding: 15px;
+
     overflow: hidden;
 }
 
 body[data-page="trade"] .bx-trade-position-tabs {
     display: flex;
     align-items: center;
+
     gap: 20px;
+
     width: 100%;
     min-width: 0;
-    padding-bottom: 11px;
-    overflow-x: auto;
+
+    padding-bottom: 12px;
+
     border-bottom: 1px solid var(--trade-border);
+
+    overflow-x: auto;
+
     scrollbar-width: thin;
+    -webkit-overflow-scrolling: touch;
 }
 
 body[data-page="trade"] .bx-trade-position-tabs button {
     flex: 0 0 auto;
-    padding: 9px 2px;
+
+    padding: 8px 0;
+
     border: 0;
     border-bottom: 2px solid transparent;
+
     background: transparent;
     color: var(--trade-muted);
-    font-size: 12px;
+
+    font-size: 11px;
     font-weight: 750;
+
     white-space: nowrap;
+
+    transition:
+        color var(--trade-transition),
+        border-color var(--trade-transition);
 }
 
 body[data-page="trade"] .bx-trade-position-tabs button.active {
-    border-bottom-color: var(--gold-solid);
-    color: var(--gold-solid);
+    border-bottom-color: var(--trade-gold);
+    color: var(--trade-gold);
 }
 
 body[data-page="trade"] #tradeActivityEmpty {
-    padding: 18px 0;
+    margin: 14px 0 0;
+
     color: var(--trade-muted);
-    font-size: 12px;
-}
 
-
-/* ==========================================================================
-   20. MOBILE DATA TABS
-   ========================================================================== */
-
-body[data-page="trade"] .bx-trade-mobile-tabs {
-    display: none;
-    width: 100%;
-    min-width: 0;
-    gap: 7px;
-}
-
-body[data-page="trade"] .bx-trade-mobile-tabs button {
-    min-width: 0;
-    min-height: 43px;
-    padding: 9px;
-    border: 1px solid var(--trade-border);
-    border-radius: 10px;
-    background: var(--trade-surface);
-    color: var(--trade-muted);
     font-size: 11px;
-    font-weight: 750;
-    transition: var(--trade-transition);
-}
-
-body[data-page="trade"] .bx-trade-mobile-tabs button.active {
-    border-color: var(--gold-solid);
-    background: var(--gold-glow);
-    color: var(--gold-solid);
 }
 
 
 /* ==========================================================================
-   21. TABLET — 769px TO 1100px
-   ========================================================================== */
+   28. CHART FULL VIEW
+   Preserve the JS-controlled trade-chart-mode class.
+========================================================================== */
+
+body[data-page="trade"] .bx-trade-workspace.trade-chart-mode {
+    grid-template-columns: minmax(0, 1fr);
+}
+
+body[data-page="trade"] .bx-trade-workspace.trade-chart-mode
+.bx-trade-left-column,
+body[data-page="trade"] .bx-trade-workspace.trade-chart-mode
+.bx-trade-right-column,
+body[data-page="trade"] .bx-trade-workspace.trade-chart-mode
+.bx-trade-order-entry,
+body[data-page="trade"] .bx-trade-workspace.trade-chart-mode
+.bx-trade-mobile-tabs {
+    display: none !important;
+}
+
+body[data-page="trade"] .bx-trade-workspace.trade-chart-mode
+.bx-trade-chart {
+    width: 100%;
+    min-height: 520px;
+}
+
+body[data-page="trade"] .bx-trade-workspace.trade-chart-mode
+#marketChart {
+    height: 460px;
+    min-height: 420px;
+}
+
+
+/* ==========================================================================
+   29. TABLET — 769px TO 1100px
+========================================================================== */
 
 @media (min-width: 769px) and (max-width: 1100px) {
 
+    body[data-page="trade"] .bx-trade-market-head {
+        gap: 12px;
+        padding: 13px;
+    }
+
     body[data-page="trade"] .bx-trade-workspace {
         grid-template-columns:
-            minmax(190px, .75fr)
-            minmax(0, 1.6fr)
-            minmax(200px, .8fr);
-        gap: 9px;
+            minmax(190px, .72fr)
+            minmax(0, 1.55fr);
+
+        gap: 11px;
+    }
+
+    body[data-page="trade"] .bx-trade-left-column {
+        grid-column: 1;
+        grid-row: 1;
+    }
+
+    body[data-page="trade"] .bx-trade-center-column {
+        grid-column: 2;
+        grid-row: 1 / span 2;
+    }
+
+    body[data-page="trade"] .bx-trade-right-column {
+        grid-column: 1 / -1;
+        grid-row: 2;
+
+        display: grid;
+
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+
+        align-items: start;
+        gap: 11px;
     }
 
     body[data-page="trade"] .bx-trade-panel {
         padding: 12px;
     }
 
-    body[data-page="trade"] .bx-trade-summary > div {
-        padding: 10px;
-    }
-
     body[data-page="trade"] #marketChart {
-        height: 340px;
+        height: 350px;
         min-height: 300px;
     }
 }
 
 
 /* ==========================================================================
-   22. MOBILE — UP TO 768px
-   Preserve the existing mobile visibility and tab logic.
-   ========================================================================== */
+   30. MOBILE — UP TO 768px
+========================================================================== */
 
 @media (max-width: 768px) {
 
     body[data-page="trade"] .bx-trade-terminal {
-        gap: 12px;
-        padding-bottom: 15px;
+        gap: 11px;
+        padding-bottom: 18px;
     }
 
     body[data-page="trade"] .bx-trade-market-head {
         align-items: stretch;
         flex-direction: column;
-        gap: 12px;
-        padding: 13px;
-    }
 
-    body[data-page="trade"] .bx-trade-header-actions {
-        justify-content: space-between;
-        width: 100%;
+        gap: 13px;
+
+        padding: 13px;
     }
 
     body[data-page="trade"] .bx-trade-pair-block {
@@ -1151,12 +1938,34 @@ body[data-page="trade"] .bx-trade-mobile-tabs button.active {
         width: 100%;
     }
 
-    body[data-page="trade"] .bx-trade-header-actions .bx-trade-mode-tabs {
-        flex: 1 1 auto;
+    body[data-page="trade"] #tradePairSelect {
+        width: 100%;
+        max-width: none;
     }
 
-    body[data-page="trade"] .bx-trade-mode-tabs button {
-        min-height: 42px;
+    body[data-page="trade"] .bx-trade-header-actions {
+        display: grid;
+
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+
+        gap: 8px;
+
+        width: 100%;
+    }
+
+    body[data-page="trade"] .bx-trade-mode-tabs,
+    body[data-page="trade"] .bx-trade-view-tabs {
+        width: 100%;
+        min-width: 0;
+    }
+
+    body[data-page="trade"] .bx-trade-mode-tabs button,
+    body[data-page="trade"] .bx-trade-view-tabs button {
+        flex: 1 1 0;
+        min-width: 0;
+        min-height: 40px;
+
+        padding-inline: 7px;
     }
 
     body[data-page="trade"] .bx-trade-summary {
@@ -1164,60 +1973,94 @@ body[data-page="trade"] .bx-trade-mobile-tabs button.active {
     }
 
     body[data-page="trade"] .bx-trade-summary > div {
-        min-height: 68px;
+        min-height: 67px;
         padding: 10px 12px;
     }
 
     body[data-page="trade"] .bx-trade-workspace {
-        grid-template-columns: minmax(0, 1fr);
-        gap: 12px;
+        display: flex;
+        flex-direction: column;
+
+        gap: 11px;
+
+        width: 100%;
     }
 
-    body[data-page="trade"] .bx-trade-chart {
-        min-height: 0;
+    body[data-page="trade"] .bx-trade-left-column,
+    body[data-page="trade"] .bx-trade-center-column,
+    body[data-page="trade"] .bx-trade-right-column {
+        width: 100%;
+        min-width: 0;
+    }
+
+    body[data-page="trade"] .bx-trade-center-column {
+        gap: 11px;
+    }
+
+    body[data-page="trade"] .bx-trade-mobile-tabs {
+        display: grid;
+
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+
+        gap: 7px;
+
+        width: 100%;
+        min-width: 0;
+    }
+
+    body[data-page="trade"] .bx-trade-mobile-tabs button {
+        min-width: 0;
+        min-height: 42px;
+
+        padding: 8px;
+
+        border: 1px solid var(--trade-border);
+        border-radius: 9px;
+
+        background: var(--trade-surface);
+        color: var(--trade-muted);
+
+        font-size: 11px;
+        font-weight: 750;
+    }
+
+    body[data-page="trade"] .bx-trade-mobile-tabs button.active {
+        border-color: var(--trade-border-strong);
+
+        background: var(--trade-gold-soft);
+        color: var(--trade-gold);
+    }
+
+    body[data-page="trade"] .bx-trade-orderbook {
+        min-height: 230px;
+    }
+
+    body[data-page="trade"] .bx-trade-right-column {
+        display: flex;
+        flex-direction: column;
+    }
+
+    body[data-page="trade"] .bx-trade-watchlist,
+    body[data-page="trade"] .bx-trade-recent {
+        width: 100%;
     }
 
     body[data-page="trade"] #marketChart {
         height: 340px;
-        min-height: 300px;
-    }
-
-    body[data-page="trade"] .bx-trade-order-entry {
-        min-width: 0;
-    }
-
-    body[data-page="trade"] .bx-trade-order-entry .trade-tab {
-        min-height: 44px;
-    }
-
-    body[data-page="trade"] .bx-trade-mobile-tabs {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        display: grid;
+        min-height: 290px;
     }
 
     body[data-page="trade"] .bx-trade-positions {
         padding: 13px;
     }
-
-    body[data-page="trade"] .bx-trade-position-tabs {
-        gap: 16px;
-    }
-
-    body[data-page="trade"] .bx-trade-quick-pairs button {
-        min-height: 43px;
-    }
 }
 
 
 /* ==========================================================================
-   23. SMALL MOBILE — UP TO 480px
-   ========================================================================== */
+   31. SMALL MOBILE — UP TO 480px
+========================================================================== */
 
 @media (max-width: 480px) {
-
-    body[data-page="trade"] .bx-trade-terminal {
-        gap: 10px;
-    }
 
     body[data-page="trade"] .bx-trade-market-head {
         padding: 12px;
@@ -1225,71 +2068,25 @@ body[data-page="trade"] .bx-trade-mobile-tabs button.active {
     }
 
     body[data-page="trade"] #tradeBaseIcon {
-        width: 32px !important;
-        height: 32px !important;
+        width: 32px;
+        height: 32px;
+
         min-width: 32px;
         max-width: 32px;
+
         min-height: 32px;
         max-height: 32px;
+
         flex-basis: 32px;
     }
 
-    body[data-page="trade"] .bx-select-token-icon {
-        width: 22px !important;
-        height: 22px !important;
-        min-width: 22px;
-        max-width: 22px;
-        min-height: 22px;
-        max-height: 22px;
-        flex-basis: 22px;
-    }
-
-    body[data-page="trade"] .bx-trade-quick-pairs img {
-        width: 23px !important;
-        height: 23px !important;
-        min-width: 23px;
-        max-width: 23px;
-        min-height: 23px;
-        max-height: 23px;
-        flex-basis: 23px;
-    }
-
-    body[data-page="trade"] #marketPairAssets img {
-        width: 27px;
-        height: 27px;
-        min-width: 27px;
-        max-width: 27px;
-        min-height: 27px;
-        max-height: 27px;
-        flex-basis: 27px;
-    }
-
-    body[data-page="trade"] .bx-trade-panel {
-        padding: 12px;
-        border-radius: 13px;
-    }
-
-    body[data-page="trade"] .bx-trade-options {
-        grid-template-columns: minmax(0, 1fr);
-        gap: 9px;
-    }
-
-    body[data-page="trade"] .bx-trade-form {
-        gap: 11px;
-    }
-
-    body[data-page="trade"] .bx-trade-field .market-input {
-        min-height: 45px;
-        font-size: 14px;
-    }
-
-    body[data-page="trade"] .bx-input-frame {
-        min-height: 46px;
+    body[data-page="trade"] .bx-trade-pair-block > strong {
+        font-size: 17px;
     }
 
     body[data-page="trade"] .bx-trade-summary > div {
-        min-height: 64px;
-        padding: 9px;
+        min-height: 63px;
+        padding: 9px 10px;
     }
 
     body[data-page="trade"] .bx-trade-summary span {
@@ -1300,32 +2097,82 @@ body[data-page="trade"] .bx-trade-mobile-tabs button.active {
         font-size: 12px;
     }
 
+    body[data-page="trade"] .bx-trade-panel,
+    body[data-page="trade"] .bx-trade-positions {
+        padding: 11px;
+        border-radius: 12px;
+    }
+
+    body[data-page="trade"] .bx-trade-options {
+        gap: 8px;
+    }
+
+    body[data-page="trade"] .bx-custom-select-trigger {
+        min-height: 42px;
+        padding: 8px 9px;
+        font-size: 11px;
+    }
+
+    body[data-page="trade"] .bx-trade-field .market-input {
+        min-height: 46px;
+        font-size: 13px;
+    }
+
+    body[data-page="trade"] .bx-trade-quick-pairs button {
+        min-width: 108px;
+        min-height: 42px;
+
+        padding: 7px 10px;
+
+        font-size: 10px;
+    }
+
+    body[data-page="trade"] .bx-trade-quick-pairs img {
+        width: 23px;
+        height: 23px;
+
+        min-width: 23px;
+        max-width: 23px;
+
+        min-height: 23px;
+        max-height: 23px;
+
+        flex-basis: 23px;
+    }
+
     body[data-page="trade"] #marketChart {
         height: 300px;
-        min-height: 280px;
+        min-height: 270px;
     }
 
     body[data-page="trade"] .market-chart-toolbar .chart-time {
         min-width: 43px;
         min-height: 36px;
+
         padding: 7px 9px;
-        font-size: 11px;
+
+        font-size: 10px;
     }
 
-    body[data-page="trade"] .bx-trade-positions {
-        padding: 11px;
+    body[data-page="trade"] .bx-trade-position-tabs {
+        gap: 15px;
     }
 }
 
 
 /* ==========================================================================
-   24. EXTRA SMALL MOBILE — UP TO 360px
-   ========================================================================== */
+   32. EXTRA SMALL MOBILE — UP TO 360px
+========================================================================== */
 
 @media (max-width: 360px) {
 
     body[data-page="trade"] .bx-trade-header-actions {
-        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    body[data-page="trade"] .bx-trade-mode-tabs button,
+    body[data-page="trade"] .bx-trade-view-tabs button {
+        font-size: 10px;
     }
 
     body[data-page="trade"] .bx-trade-summary > div {
@@ -1336,20 +2183,22 @@ body[data-page="trade"] .bx-trade-mobile-tabs button.active {
         font-size: 11px;
     }
 
-    body[data-page="trade"] .bx-custom-select-trigger {
-        min-height: 42px;
-        padding: 8px 10px;
-        font-size: 12px;
-    }
-
-    body[data-page="trade"] .bx-trade-quick-pairs button {
-        min-width: 108px;
-        padding: 7px 9px;
-        font-size: 10px;
+    body[data-page="trade"] .bx-trade-options {
+        grid-template-columns: minmax(0, 1fr);
     }
 
     body[data-page="trade"] .bx-trade-panel {
         padding: 10px;
+    }
+
+    body[data-page="trade"] .bx-trade-quick-pairs button {
+        min-width: 102px;
+        padding: 7px 8px;
+    }
+
+    body[data-page="trade"] #marketChart {
+        height: 270px;
+        min-height: 250px;
     }
 
     body[data-page="trade"] .bx-trade-position-tabs {
@@ -1359,49 +2208,35 @@ body[data-page="trade"] .bx-trade-mobile-tabs button.active {
 
 
 /* ==========================================================================
-   25. CHART FULL VIEW
-   Keep the existing JS-controlled chart mode class.
-   ========================================================================== */
-
-body[data-page="trade"] .bx-trade-workspace.trade-chart-mode {
-    grid-template-columns: minmax(0, 1fr);
-}
-
-body[data-page="trade"] .bx-trade-workspace.trade-chart-mode .bx-trade-chart {
-    width: 100%;
-    min-width: 0;
-    min-height: 500px;
-}
-
-body[data-page="trade"] .bx-trade-workspace.trade-chart-mode #marketChart {
-    min-height: 420px;
-}
-
-
-/* ==========================================================================
-   26. FOCUS AND ACCESSIBILITY
-   ========================================================================== */
+   33. FOCUS AND ACCESSIBILITY
+========================================================================== */
 
 body[data-page="trade"] .bx-trade-terminal button:focus-visible,
 body[data-page="trade"] .bx-trade-terminal input:focus-visible,
 body[data-page="trade"] .bx-trade-terminal select:focus-visible {
-    outline: 2px solid var(--gold-solid);
-    outline-offset: 2px;
-}
-
-body[data-page="trade"] .bx-trade-terminal button:disabled {
-    opacity: .48;
+    outline: 2px solid var(--trade-gold);
+    outline-offset: 3px;
 }
 
 body[data-page="trade"] .bx-trade-terminal ::selection {
-    background: rgba(212,175,55,.25);
+    background: rgba(212, 175, 55, .25);
     color: var(--trade-text);
 }
 
 
 /* ==========================================================================
-   27. REDUCED MOTION
-   ========================================================================== */
+   34. HIDDEN ELEMENTS
+   Preserve the HTML hidden attribute.
+========================================================================== */
+
+body[data-page="trade"] .bx-trade-terminal [hidden] {
+    display: none !important;
+}
+
+
+/* ==========================================================================
+   35. REDUCED MOTION
+========================================================================== */
 
 @media (prefers-reduced-motion: reduce) {
 
@@ -1410,13 +2245,14 @@ body[data-page="trade"] .bx-trade-terminal ::selection {
     body[data-page="trade"] .bx-trade-terminal *::after {
         animation-duration: .01ms !important;
         animation-iteration-count: 1 !important;
+
         transition-duration: .01ms !important;
+
         scroll-behavior: auto !important;
     }
 }
 
 
 /* ==========================================================================
-   END — BLOXIO TRADE CSS V11
-   JavaScript / API / MARKET STATE / ORDER EXECUTION UNTOUCHED
-   ========================================================================== */
+   END — BLOXIO TRADE V12.0
+========================================================================== */
