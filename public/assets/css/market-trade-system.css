@@ -1,0 +1,222 @@
+/*
+ * BLOXIO — Shared Market / Trade presentation layer
+ * Responsibility: shared visual primitives only.
+ * Page behavior remains owned by market-page.css and trade-page.css.
+ * No :root overrides; all colors inherit the existing Bloxio design tokens.
+ */
+body[data-page="market"],
+body[data-page="trade"] {
+  --bx-exchange-radius-sm: 7px;
+  --bx-exchange-radius-md: 10px;
+  --bx-exchange-radius-lg: 14px;
+  --bx-exchange-control-height: 42px;
+}
+body[data-page="market"] *,
+body[data-page="trade"] * { box-sizing: border-box; }
+
+/* Token image contract: fixed square box, never inherit card dimensions. */
+body[data-page="market"] .bx-token-icon,
+body[data-page="trade"] .bx-token-icon,
+body[data-page="trade"] .bx-select-token-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 28px;
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  min-height: 28px;
+  max-width: 28px;
+  max-height: 28px;
+  overflow: hidden;
+  border-radius: 50%;
+  line-height: 1;
+}
+body[data-page="market"] .bx-token-icon img,
+body[data-page="trade"] .bx-token-icon img,
+body[data-page="trade"] .bx-select-token-icon img {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  flex: 0 0 100%;
+  object-fit: contain;
+  object-position: center;
+  border-radius: 50%;
+}
+body[data-page="market"] .bx-token-icon [hidden],
+body[data-page="trade"] .bx-token-icon [hidden] { display: none !important; }
+
+/* Shared compact, keyboard-visible segmented controls and internal tabs. */
+body[data-page="market"] .market-category-tabs,
+body[data-page="market"] .bx-market-modes,
+body[data-page="trade"] .bx-market-category-tabs,
+body[data-page="trade"] .bx-trade-mode-tabs,
+body[data-page="trade"] .bx-trade-view-tabs,
+body[data-page="market"] .bx-market-category,
+body[data-page="trade"] .bx-market-category,
+body[data-page="market"] .trade-tabs,
+body[data-page="trade"] .trade-tabs {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 5px;
+  min-width: 0;
+  padding: 4px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+  border: 1px solid var(--trade-border, var(--gold-border));
+  border-radius: var(--bx-exchange-radius-md);
+  background: var(--trade-surface-deep, var(--bg-panel));
+}
+body[data-page="market"] .market-category-tab,
+body[data-page="market"] .bx-market-modes button,
+body[data-page="trade"] .bx-market-category-tabs button,
+body[data-page="trade"] .bx-trade-mode-tabs button,
+body[data-page="trade"] .bx-trade-view-tabs button,
+body[data-page="market"] .bx-market-category,
+body[data-page="trade"] .bx-market-category,
+body[data-page="market"] .trade-tabs .trade-tab,
+body[data-page="trade"] .trade-tabs .trade-tab {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  padding: 7px 11px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--trade-muted, var(--text-muted));
+  font: 650 11px/1.2 var(--font-primary, inherit);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background .16s ease, color .16s ease, border-color .16s ease;
+}
+body[data-page="market"] .market-category-tab.active,
+body[data-page="market"] .bx-market-modes button.active,
+body[data-page="trade"] .bx-market-category-tabs button.active,
+body[data-page="trade"] .bx-trade-mode-tabs button.active,
+body[data-page="trade"] .bx-trade-view-tabs button.active,
+body[data-page="market"] .bx-market-category.active,
+body[data-page="trade"] .bx-market-category.active {
+  border-color: var(--trade-border-strong, var(--gold-border));
+  background: var(--trade-gold-soft, var(--gold-glow));
+  color: var(--trade-gold, var(--gold-primary));
+}
+body[data-page="market"] .market-category-tab:focus-visible,
+body[data-page="market"] .bx-market-modes button:focus-visible,
+body[data-page="trade"] .bx-market-category-tabs button:focus-visible,
+body[data-page="trade"] .bx-trade-mode-tabs button:focus-visible,
+body[data-page="trade"] .bx-trade-view-tabs button:focus-visible,
+body[data-page="market"] .bx-market-category:focus-visible,
+body[data-page="trade"] .bx-market-category:focus-visible,
+body[data-page="market"] .trade-tabs button:focus-visible,
+body[data-page="trade"] .trade-tabs button:focus-visible {
+  outline: 2px solid var(--trade-gold, var(--gold-primary));
+  outline-offset: 2px;
+}
+
+/* Consistent native/custom controls. */
+body[data-page="market"] .bx-market-quote select,
+body[data-page="market"] .bx-trade-options select,
+body[data-page="market"] .market-search,
+body[data-page="market"] .market-input,
+body[data-page="trade"] .bx-trade-terminal select,
+body[data-page="trade"] .bx-custom-select-trigger,
+body[data-page="trade"] .bx-trade-terminal input {
+  min-width: 0;
+  min-height: var(--bx-exchange-control-height);
+  border: 1px solid var(--trade-border, var(--gold-border));
+  border-radius: var(--bx-exchange-radius-sm);
+  background: var(--trade-surface-deep, var(--bg-panel));
+  color: var(--trade-text, var(--text-platinum));
+  font: 500 12px/1.4 var(--font-primary, inherit);
+}
+body[data-page="market"] .bx-market-quote select,
+body[data-page="market"] .bx-trade-options select,
+body[data-page="market"] .market-search,
+body[data-page="market"] .market-input,
+body[data-page="trade"] .bx-trade-terminal select,
+body[data-page="trade"] .bx-custom-select-trigger,
+body[data-page="trade"] .bx-trade-terminal input { padding: 9px 11px; }
+body[data-page="market"] .bx-market-quote select:focus,
+body[data-page="market"] .bx-trade-options select:focus,
+body[data-page="market"] .market-search:focus,
+body[data-page="market"] .market-input:focus,
+body[data-page="trade"] .bx-trade-terminal select:focus,
+body[data-page="trade"] .bx-custom-select-trigger:focus,
+body[data-page="trade"] .bx-trade-terminal input:focus {
+  outline: none;
+  border-color: var(--trade-border-strong, var(--gold-solid));
+  box-shadow: 0 0 0 3px var(--trade-gold-soft, var(--gold-glow));
+}
+
+/* Custom dropdown menu and option rows remain inside their owning page. */
+body[data-page="trade"] .bx-custom-select-menu {
+  z-index: 80;
+  max-width: min(100%, 420px);
+  overflow-x: hidden;
+  overflow-y: auto;
+  border: 1px solid var(--trade-border-strong);
+  border-radius: var(--bx-exchange-radius-md);
+  background: var(--trade-surface);
+  box-shadow: 0 14px 36px rgba(0,0,0,.32);
+}
+body[data-page="trade"] .bx-custom-select-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  min-height: 48px;
+  padding: 8px 11px;
+  color: var(--trade-text);
+}
+body[data-page="trade"] .bx-custom-select-option img {
+  display: block;
+  flex: 0 0 26px;
+  width: 26px !important;
+  height: 26px !important;
+  min-width: 26px;
+  max-width: 26px;
+  object-fit: contain;
+  border-radius: 50%;
+}
+body[data-page="trade"] .bx-custom-select-option:hover,
+body[data-page="trade"] .bx-custom-select-option.selected {
+  background: var(--trade-gold-soft);
+}
+
+/* Preserve hidden state and prevent controls from widening their grid tracks. */
+body[data-page="market"] [hidden],
+body[data-page="trade"] [hidden] { display: none !important; }
+body[data-page="market"] .market-card,
+body[data-page="market"] .market-grid > *,
+body[data-page="trade"] .bx-trade-panel,
+body[data-page="trade"] .bx-trade-workspace > * { min-width: 0; }
+
+@media (max-width: 600px) {
+  body[data-page="market"] .market-category-tabs,
+  body[data-page="market"] .bx-market-modes,
+  body[data-page="trade"] .bx-market-category-tabs,
+  body[data-page="trade"] .bx-trade-mode-tabs,
+  body[data-page="trade"] .bx-trade-view-tabs,
+  body[data-page="market"] .trade-tabs,
+  body[data-page="trade"] .trade-tabs {
+    max-width: 100%;
+    -webkit-overflow-scrolling: touch;
+  }
+  body[data-page="market"] .market-category-tab,
+  body[data-page="market"] .bx-market-modes button,
+  body[data-page="trade"] .bx-market-category-tabs button,
+  body[data-page="trade"] .bx-trade-mode-tabs button,
+  body[data-page="trade"] .bx-trade-view-tabs button {
+    min-height: 36px;
+    padding-inline: 9px;
+    font-size: 10px;
+  }
+}
