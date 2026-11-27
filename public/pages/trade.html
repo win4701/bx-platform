@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1, viewport-fit=cover" name="viewport"/>
+<title>BLOXIO | Trade</title>
+<meta content="#00e0ff" name="theme-color"/>
+<meta content="Wallet • Market • Mining • Casino • Airdrop • Mint" name="description"/>
+<meta content="yes" name="mobile-web-app-capable"/>
+<meta content="yes" name="apple-mobile-web-app-capable"/>
+<meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"/>
+<meta content="Bloxio" name="apple-mobile-web-app-title"/>
+<link href="/manifest.json" rel="manifest"/>
+<link href="/assets/images/branding/logo.png" rel="icon"/>
+
+<link href="/assets/css/base.css" rel="stylesheet"/>
+<link href="/assets/css/layout.css" rel="stylesheet"/>
+<link href="/assets/css/components.css" rel="stylesheet"/>
+<link href="/assets/css/pages.css" rel="stylesheet"/>
+<link href="/assets/css/responsive.css" rel="stylesheet"/>
+<link href="/assets/css/trade-page.css" rel="stylesheet"/>
+<link rel="stylesheet" href="/assets/css/bloxio-icons.css"/>
+</head>
+<body data-motion="on" data-page="trade" data-sound="on" data-theme="dark" data-ui="enterprise">
+
+<!-- ============ BACKGROUND LAYERS ============ -->
+<video autoplay="" class="bg-video bg-ambient" loop="" muted="" playsinline="">
+  <source src="/assets/v%C3%ADdeo/ambient.mp4" type="video/mp4"/>
+</video>
+<video autoplay="" class="bg-video bg-particles" loop="" muted="" playsinline="">
+  <source src="/assets/v%C3%ADdeo/particles.mp4" type="video/mp4"/>
+</video>
+<video autoplay="" class="bg-video bg-grid" loop="" muted="" playsinline="">
+  <source src="/assets/v%C3%ADdeo/grid-loop.mp4" type="video/mp4"/>
+</video>
+<div class="bg-layer"></div>
+<div class="grid-overlay"></div>
+<div class="ambient-glow"></div>
+
+<div id="app-shell">
+
+  <!-- ============ HEADER ============ -->
+  <header class="app-header enterprise-header">
+    <div class="header-left">
+      <a aria-label="Bloxio Home" class="enterprise-brand" href="/">
+        <img alt="Bloxio Icon" class="brand-icon" src="/assets/images/branding/logo.png"/>
+        <img alt="BLOXIO" class="brand-text-img" src="/assets/images/branding/bloxio.png"/>
+      </a>
+      <div class="system-status" id="systemStatus">
+        <span class="status-dot"></span>
+        <div class="status-meta">
+          <strong>SYSTEM ONLINE</strong>
+          <small id="networkLatency">Latency 42ms</small>
+        </div>
+      </div>
+    </div>
+
+    <nav aria-label="Global Navigation" class="header-center">
+      <div class="header-more-menu-wrap">
+        <details class="header-more-menu" id="headerMoreMenu">
+          <summary aria-label="Open More menu" aria-controls="headerMoreDropdown">
+            <span>More</span>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+          </summary>
+          <nav class="header-more-dropdown" id="headerMoreDropdown" aria-label="More services">
+            <a href="/pages/trade.html" data-view="trade"><span class="sidebar-glyph" aria-hidden="true" data-bx-icon="trade"></span><span>Trade</span></a>
+            <a href="/pages/ia.html" data-view="ia"><span class="sidebar-glyph" aria-hidden="true" data-bx-icon="mint"></span><span>IA</span></a>
+            <a href="/pages/airdrop.html" data-view="airdrop"><img src="/assets/images/navigation/airdrop.svg" alt=""><span>Airdrop</span></a>
+            <a href="/pages/mint.html" data-view="mint"><span class="sidebar-glyph" aria-hidden="true" data-bx-icon="mint"></span><span>Mint</span></a>
+            <a href="/pages/p2p.html" data-view="p2p"><span class="sidebar-glyph" aria-hidden="true" data-bx-icon="trade"></span><span>P2P</span></a>
+            <a href="/pages/settings.html" data-view="settings"><span class="sidebar-glyph" aria-hidden="true" data-bx-icon="settings"></span><span>Settings</span></a>
+            <a href="/pages/profile.html" data-view="profile"><span class="sidebar-glyph" aria-hidden="true" data-bx-icon="user"></span><span>Profile</span></a>
+            <a href="/pages/reward.html" data-view="reward"><span class="sidebar-glyph" aria-hidden="true" data-bx-icon="star"></span><span>Rewards</span></a>
+          </nav>
+        </details>
+      </div>
+      <div class="locale-box">
+        <button aria-controls="localeMenu" aria-expanded="false" class="locale-trigger" id="localeTrigger" type="button">
+          <span id="currentLocale">EN</span>
+          <svg height="14" viewBox="0 0 24 24" width="14"><path d="M7 10l5 5l5-5z" fill="currentColor"></path></svg>
+        </button>
+        <ul class="locale-menu" id="localeMenu">
+          <li><button data-lang="EN">EN</button></li>
+          <li><button data-lang="AR">AR</button></li>
+          <li><button data-lang="FR">FR</button></li>
+          <li><button data-lang="ES">ES</button></li>
+          <li><button data-lang="DE">DE</button></li>
+          <li><button data-lang="ZH">ZH</button></li>
+          <li><button data-lang="RU">RU</button></li>
+          <li><button data-lang="JA">JA</button></li>
+          <li><button data-lang="TR">TR</button></li>
+        </ul>
+      </div>
+    </nav>
+
+    <div class="header-right">
+      <div class="auth-toolbar" id="guestToolbar">
+        <button class="header-btn secondary" id="headerLoginBtn" type="button">Login</button>
+        <button class="header-btn primary" id="headerRegisterBtn" type="button">Register</button>
+      </div>
+      <div class="user-toolbar hidden" id="userToolbar">
+        <button aria-controls="userDropdown" aria-expanded="false" class="user-trigger" id="userMenuTrigger" type="button">
+          <div class="user-avatar">BX</div>
+          <div class="user-meta">
+            <strong id="vipTier">VIP 1</strong>
+            <small>✔ VERIFIED</small>
+          </div>
+          <div class="session-pill">1 ACTIVE</div>
+        </button>
+        <ul class="user-dropdown" id="userDropdown">
+          <li><button type="button">Profile</button></li>
+          <li><button type="button">Security</button></li>
+          <li><button type="button">Sessions</button></li>
+          <li><button id="logoutBtn" type="button">Logout</button></li>
+        </ul>
+      </div>
+    </div>
+  </header>
+
+  <!-- ============ DESKTOP SIDEBAR ============ -->
+  <aside aria-label="Bloxio sections" class="desktop-sidebar">
+    <div class="sidebar-label">Workspace</div>
+    <a data-view="wallet" href="/index.html"><span class="sidebar-icon" data-bx-icon="home" aria-hidden="true"></span>Wallet</a>
+    <a data-view="market" href="/pages/market.html"><span class="sidebar-icon" data-bx-icon="market" aria-hidden="true"></span>Market</a>
+    <a data-view="casino" href="/pages/casino.html"><span class="sidebar-icon" data-bx-icon="casino" aria-hidden="true"></span>Casino</a>
+    <a data-view="mining" href="/pages/mining.html"><span class="sidebar-icon" data-bx-icon="mining" aria-hidden="true"></span>Mining</a>
+    <a data-view="mint" href="/pages/mint.html"><span aria-hidden="true" class="sidebar-glyph" data-bx-icon="mint"></span>Mint</a>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <main class="app-container" id="app">
+    <section class="bx-trade-terminal" aria-label="BLOXIO trading terminal">
+
+      <!-- ===== MARKET HEAD ===== -->
+      <header class="bx-trade-market-head">
+        <div class="bx-trade-pair-block">
+          <label for="tradePairSelect">Trading pair</label>
+          <div class="bx-trade-pair-select-row">
+            <img id="tradeBaseIcon" src="/assets/images/coins/bx.png" alt="BX" onerror="this.hidden=true"/>
+            <select id="tradePairSelect">
+              <option value="BX_USDT">BX/USDT</option>
+              <option value="EUBX_USDT">EUBX/USDT</option>
+              <option value="USDC_EUBX">USDC/EUBX</option>
+              <option value="BTC_USDT">BTC/USDT</option>
+              <option value="ETH_USDT">ETH/USDT</option>
+              <option value="BNB_BX">BNB/BX</option>
+              <option value="BNB_EUBX">BNB/EUBX</option>
+              <option value="XRP_USDT">XRP/USDT</option>
+              <option value="ADA_USDT">ADA/USDT</option>
+              <option value="AVAX_USDT">AVAX/USDT</option>
+              <option value="DOT_USDT">DOT/USDT</option>
+              <option value="LINK_USDT">LINK/USDT</option>
+              <option value="LTC_USDT">LTC/USDT</option>
+              <option value="BCH_USDT">BCH/USDT</option>
+              <option value="TON_USDT">TON/USDT</option>
+              <option value="DOGE_USDT">DOGE/USDT</option>
+              <option value="UNI_USDT">UNI/USDT</option>
+              <option value="AAVE_USDT">AAVE/USDT</option>
+              <option value="MKR_USDT">MKR/USDT</option>
+              <option value="TRX_USDT">TRX/USDT</option>
+              <option value="BTC_USDC">BTC/USDC</option>
+              <option value="ETH_USDC">ETH/USDC</option>
+              <option value="BTC_SOL">BTC/SOL</option>
+              <option value="ETH_SOL">ETH/SOL</option>
+              <option value="XAU_EUBX">XAU/EUBX</option>
+              <option value="XAG_EUBX">XAG/EUBX</option>
+            </select>
+          </div>
+          <span class="bx-trade-contract" id="tradeContractLabel">Spot</span>
+          <strong id="marketPrice">—</strong>
+        </div>
+        <div class="bx-trade-header-actions">
+          <div class="bx-trade-mode-tabs" role="tablist" aria-label="Trade mode">
+            <button type="button" class="active" data-bx-trade-mode="spot" aria-pressed="true">Spot</button>
+            <button type="button" data-bx-trade-mode="futures" aria-pressed="false">Futures</button>
+          </div>
+          <div class="bx-trade-view-tabs" role="tablist" aria-label="Trade view">
+            <button type="button" class="active" data-trade-view="trade" aria-selected="true">Trade</button>
+            <button type="button" data-trade-view="chart" aria-selected="false">Chart</button>
+          </div>
+        </div>
+      </header>
+<!-- ===== SUMMARY STRIP ===== -->
+      <div class="bx-trade-summary">
+        <div><span>24h Change</span><strong id="marketChange">—</strong></div>
+        <div><span>24h Volume</span><strong id="marketVolume">—</strong></div>
+        <div><span>Spread</span><strong id="spread">—</strong></div>
+        <div><span>Market status</span><strong id="marketConnectionStatus">Connecting...</strong></div>
+      </div>
+
+      <p class="bx-trade-futures-notice" id="tradeModeNotice" hidden>
+        Futures interface preview only. A dedicated futures market feed, margin engine and order API are not connected. Order submission is disabled.
+      </p>
+
+      <!-- ===== WORKSPACE ===== -->
+      <div class="bx-trade-workspace">
+
+        <!-- LEFT: ORDER BOOK -->
+        <aside class="bx-trade-left-column">
+          <section class="bx-trade-panel bx-trade-orderbook">
+            <div class="trade-head"><h3>Order Book</h3><span>Price / Quantity</span></div>
+            <div id="orderBookGrid"></div>
+          </section>
+        </aside>
+
+        <!-- CENTER: CHART + ORDER ENTRY -->
+        <section class="bx-trade-center-column">
+          <section class="bx-trade-panel bx-trade-chart">
+            <div class="trade-head"><h3>Price Chart</h3><span id="marketTrend">Market</span></div>
+            <div class="market-chart-toolbar">
+              <button class="chart-time active" type="button" data-tf="1m">1m</button>
+              <button class="chart-time" type="button" data-tf="5m">5m</button>
+              <button class="chart-time" type="button" data-tf="15m">15m</button>
+              <button class="chart-time" type="button" data-tf="1h">1H</button>
+              <button class="chart-time" type="button" data-tf="4h">4H</button>
+              <button class="chart-time" type="button" data-tf="1d">1D</button>
+              <button class="chart-time" type="button" data-tf="1w">1W</button>
+            </div>
+            <div id="marketChart"></div>
+            <div class="hidden" id="marketTooltip"></div>
+          </section>
+
+          <section class="bx-trade-panel bx-trade-order-entry" id="tradeBox">
+            <div class="trade-head">
+              <h3 id="tradeTitle">BX Trading</h3>
+              <span id="marketPair">BX/USDT</span>
+            </div>
+            <div class="trade-tabs">
+              <button class="trade-tab active" id="buyTab" type="button">
+                <span class="bx-ui-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 19V5m-6 6 6-6 6 6"/></svg></span>
+                <span>BUY</span>
+              </button>
+              <button class="trade-tab" id="sellTab" type="button">
+                <span class="bx-ui-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 5v14m-6-6 6 6 6-6"/></svg></span>
+                <span>SELL</span>
+              </button>
+            </div>
+            <div class="bx-trade-options">
+              <label>Order type
+                <select id="bxOrderType">
+                  <option value="limit">Limit</option>
+                  <option value="market">Market</option>
+                </select>
+              </label>
+              <label>Time in force
+                <select id="bxTimeInForce">
+                  <option value="GTC">GTC</option>
+                  <option value="IOC">IOC</option>
+                  <option value="FOK">FOK</option>
+                </select>
+              </label>
+            </div>
+            <div class="trade-form bx-trade-form">
+              <label class="bx-trade-field"><span>Price <small id="bxQuoteSymbol">USDT</small></span>
+                <input class="market-input" id="orderPrice" placeholder="Limit price" type="number" min="0" step="any" inputmode="decimal"/>
+              </label>
+              <label class="bx-trade-field"><span>Quantity <small id="bxBaseSymbol">BX</small></span>
+                <input class="market-input" id="orderAmount" placeholder="Quantity" type="number" min="0" step="any" inputmode="decimal"/>
+              </label>
+              <div class="bx-trade-percent">
+                <input id="bxTradePercent" type="range" min="0" max="100" step="25" value="0"/>
+                <div><span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span></div>
+              </div>
+              <label class="bx-trade-field"><span>Estimated total <small id="bxTotalSymbol">USDT</small></span>
+                <input class="market-input" id="orderTotal" placeholder="Total" readonly type="number"/>
+              </label>
+              <div class="bx-trade-meta"><span>Available balance</span><strong id="bxTradeAvailable">Sign in to view</strong></div>
+              <button class="btn primary" id="actionBtn" type="button">PLACE BUY ORDER</button>
+              <p class="bx-trade-note">Spot orders are subject to account authentication, balance checks and server-side validation.</p>
+              <p class="text-metadata" id="marketStatus" role="status" aria-live="polite"></p>
+            </div>
+          </section>
+        </section>
+
+        <!-- MOBILE TABS: ORDER BOOK / RECENT -->
+        <div class="bx-trade-mobile-tabs" role="tablist" aria-label="Market data">
+          <button type="button" class="active" data-trade-mobile-panel="orderbook" aria-selected="true">Order Book</button>
+          <button type="button" data-trade-mobile-panel="recent" aria-selected="false">Market Trades</button>
+        </div>
+
+        <!-- RIGHT: WATCHLIST + RECENT TRADES -->
+        <aside class="bx-trade-right-column">
+          <section class="bx-trade-panel bx-trade-watchlist" aria-label="Market pairs">
+            <div class="bx-panel-heading">
+              <div><span class="bx-panel-kicker">MARKETS</span><h2>Market Pairs</h2></div>
+            </div>
+            <div class="bx-market-category-tabs" role="tablist" aria-label="Asset categories">
+              <button type="button" class="active" data-market-category="crypto" role="tab" aria-selected="true">Crypto</button>
+              <button type="button" data-market-category="fan-tokens" role="tab" aria-selected="false">Fan Tokens</button>
+              <button type="button" data-market-category="companies" role="tab" aria-selected="false">Companies</button>
+              <button type="button" data-market-category="commodities" role="tab" aria-selected="false">Commodities</button>
+            </div>
+            <label class="bx-market-search">
+              <span aria-hidden="true">⌕</span>
+              <input class="market-search" id="marketSearch" placeholder="Search market pairs" type="search" autocomplete="off"/>
+            </label>
+            <div class="bx-market-filters">
+              <div class="bx-market-modes" role="group" aria-label="Market mode">
+                <button type="button" class="active" data-bx-market-mode="spot" aria-pressed="true">Spot</button>
+                <button type="button" data-bx-market-mode="futures" aria-pressed="false">Futures</button>
+              </div>
+              <div class="bx-quote-picker" id="bxQuotePicker">
+                <span class="bx-quote-label">Quote</span>
+                <button type="button" class="bx-quote-trigger" id="bxQuoteTrigger" aria-haspopup="listbox" aria-expanded="false">
+                  <span id="bxQuoteValue">All</span>
+                  <span class="bx-quote-chevron" aria-hidden="true">⌄</span>
+                </button>
+                <div class="bx-quote-menu" id="bxQuoteMenu" role="listbox" aria-label="Quote currency" hidden></div>
+                <select id="bxMarketQuote" aria-label="Quote currency" tabindex="-1">
+                  <option value="ALL">All</option>
+                  <option value="BX">BX</option>
+                  <option value="EUBX">EUBX</option>
+                  <option value="USDT">USDT</option>
+                  <option value="USDC">USDC</option>
+                  <option value="SOL">SOL</option>
+                </select>
+              </div>
+            </div>
+            <div class="bx-pair-list-heading"><span>Pair</span><span>Last Price</span><span>24h</span></div>
+            <div class="market-assets-scroll bx-market-pair-list" id="marketPairAssets" role="list" aria-label="Available trading pairs"></div>
+            <div class="bx-market-empty" id="bxMarketEmpty" hidden>No markets match this filter.</div>
+            <p class="bx-market-footnote" id="bxMarketFeedLabel" role="status">Prices appear when market data is available.</p>
+            <div class="market-base-assets" id="marketBaseAssets" hidden aria-hidden="true"></div>
+            <p class="market-category-description" id="marketCategoryDescription" hidden>Browse Crypto, Fan Tokens, Companies, and Commodities</p>
+            <strong id="marketPairsTitle" hidden>Markets</strong>
+            <span id="marketPairsCount" hidden>0 pairs</span>
+          </section>
+
+          <section class="bx-trade-panel bx-trade-recent">
+            <div class="bx-panel-heading">
+              <div><span class="bx-panel-kicker">LIVE TAPE</span><h2>Recent Trades</h2></div>
+              <span class="bx-panel-live">LIVE</span>
+            </div>
+            <div class="bx-trades-table-head"><span>Price</span><span>Amount</span><span>Time</span></div>
+            <div id="tradeHistoryGrid" aria-live="polite"></div>
+          </section>
+        </aside>
+      </div>
+
+      <!-- ===== POSITIONS / ORDERS / ASSETS ===== -->
+      <section class="bx-trade-positions market-card">
+        <div class="trade-head"><h3>Positions &amp; Orders</h3><span>Account activity</span></div>
+        <div class="bx-trade-position-tabs" role="tablist" aria-label="Account activity">
+          <button type="button" class="active" data-trade-panel="positions" aria-selected="true">Positions</button>
+          <button type="button" data-trade-panel="orders" aria-selected="false">Open orders</button>
+          <button type="button" data-trade-panel="assets" aria-selected="false">Assets</button>
+        </div>
+        <p class="text-metadata" id="tradeActivityEmpty" role="status">Position data will appear here when supported by the connected account API.</p>
+      </section>
+
+    </section>
+  </main>
+
+  <!-- ============ MOBILE NAV ============ -->
+  <nav aria-label="Primary navigation" class="mobile-nav">
+    <a class="nav-btn" data-view="wallet" href="/index.html"><span class="sidebar-icon" data-bx-icon="home" aria-hidden="true"></span><span>Wallet</span></a>
+    <a class="nav-btn" data-view="market" href="/pages/market.html"><span class="sidebar-icon" data-bx-icon="market" aria-hidden="true"></span><span>Market</span></a>
+    <a class="nav-btn" data-view="casino" href="/pages/casino.html"><span class="sidebar-icon" data-bx-icon="casino" aria-hidden="true"></span><span>Casino</span></a>
+    <a class="nav-btn" data-view="mining" href="/pages/mining.html"><span class="sidebar-icon" data-bx-icon="mining" aria-hidden="true"></span><span>Mining</span></a>
+    <a class="nav-btn" data-view="mint" href="/pages/mint.html"><span class="sidebar-glyph" aria-hidden="true" data-bx-icon="mint"></span><span>Mint</span></a>
+  </nav>
+
+  <!-- ============ AUTH OVERLAY ============ -->
+  <div class="auth auth-overlay hidden" id="authOverlay">
+    <div class="auth-backdrop"></div>
+    <section class="auth-shell">
+      <div class="auth-left">
+        <div class="auth-brand">
+          <img alt="Bloxio" src="/assets/images/branding/logo.png"/>
+          <h1 id="authTitle">Welcome To BLOXIO</h1>
+          <p>Enterprise Web3 Exchange • Casino • Mining • Wallet</p>
+        </div>
+        <div class="auth-metrics">
+          <div class="auth-metric"><strong>100K+</strong><span>Users</span></div>
+          <div class="auth-metric"><strong>24/7</strong><span>Markets</span></div>
+          <div class="auth-metric"><strong>BX</strong><span>Ecosystem</span></div>
+        </div>
+      </div>
+      <div class="auth-right">
+        <div class="auth-card">
+          <div class="auth-topbar">
+            <button class="auth-tab active" id="loginBtn" type="button">Login</button>
+            <button class="auth-tab" id="registerBtn" type="button">Register</button>
+          </div>
+          <div aria-live="polite" class="auth-error" id="authError" role="alert"></div>
+          <div class="auth-box" id="loginBox">
+            <form id="loginForm" novalidate="">
+              <div class="auth-field"><label>Email</label><input autocomplete="email" id="loginEmail" placeholder="name@example.com" required="" type="email"/></div>
+              <div class="auth-field"><label>Password</label><input autocomplete="current-password" id="loginPassword" placeholder="••••••••" required="" type="password"/></div>
+              <div class="auth-row">
+                <label class="remember-box"><input id="rememberDevice" type="checkbox"/><span>Remember Device</span></label>
+                <button class="auth-link" type="button">Forgot Password</button>
+              </div>
+              <button class="auth-submit" type="submit">Login Securely</button>
+            </form>
+          </div>
+          <div class="auth-box hidden" id="registerBox">
+            <form id="registerForm" novalidate="">
+              <div class="auth-grid">
+                <div class="auth-field"><label>Email</label><input id="registerEmail" placeholder="Email" required="" type="email"/></div>
+                <div class="auth-field"><label>Phone</label><input id="registerPhone" placeholder="+1" type="tel"/></div>
+              </div>
+              <div class="auth-field"><label>Password</label><input id="registerPassword" placeholder="Password" required="" type="password"/></div>
+              <div class="auth-field"><label>Confirm Password</label><input id="registerConfirm" placeholder="Confirm Password" required="" type="password"/></div>
+              <div class="auth-field"><label>Invite Code</label><input id="inviteCode" placeholder="Optional" type="text"/></div>
+              <label class="terms-box"><input id="agreeTerms" required="" type="checkbox"/><span>Accept Terms &amp; Privacy</span></label>
+              <button class="auth-submit" type="submit">Create Account</button>
+            </form>
+          </div>
+          <div class="auth-footer">
+            <p id="switchText">Need account?</p>
+            <button class="auth-switch" id="toggleAuth" type="button">Register</button>
+          </div>
+          <div class="auth-security">
+            <div>🔒 Encrypted</div>
+            <div>🛡 2FA Ready</div>
+            <div>⚡ PWA Secure</div>
+          </div>
+        </div>
+      </div>
+      <button aria-label="Close" class="auth-close" id="authClose" type="button">X</button>
+    </section>
+  </div>
+
+  <!-- ============ FOOTER ============ -->
+  <footer class="legal-footer">
+    <div class="footer-socials">
+      <a href="/terms.html">Terms</a>
+      <a href="/privacy.html">Privacy</a>
+      <a href="/risk.html">Risk</a>
+    </div>
+    <p>© 2026 BLOXIO</p>
+  </footer>
+</div>
+
+<!-- ============ SOUNDS ============ -->
+<audio id="snd-click" preload="auto" src="/assets/sounds/click.mp3"></audio>
+<audio id="snd-success" preload="auto" src="/assets/sounds/success.mp3"></audio>
+<audio id="snd-notification" preload="auto" src="/assets/sounds/notification.mp3"></audio>
+
+<!-- ============ SCRIPT BOOTSTRAP ============ -->
+<script src="/vendor/chart.bloxio.js"></script>
+<script src="/vendor/socket.io.min.js"></script>
+<script src="/core/language.js"></script>
+<script src="/core/translator.js"></script>
+<script src="/core/rtl.js"></script>
+<script src="/bx/auth.js"></script>
+<script src="/bx/core.js"></script>
+<script src="/bx/state.js"></script>
+<script src="/bx/services/api.js"></script>
+<script src="/bx/services/ws.js"></script>
+<script defer src="/assets/bx/bloxio-icons.js"></script>
+<script src="/bx/pages.js"></script>
+<script src="/bx/main.js"></script>
+<script src="/core/auto-i18n.js"></script>
+<script src="/bx/market.js"></script>
+<script src="/bx/trade.js"></script>
+</body>
+</html>
