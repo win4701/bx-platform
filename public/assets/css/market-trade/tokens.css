@@ -1,0 +1,19 @@
+/* BLOXIO Market & Trade tokens — page-scoped; does not overwrite global :root */
+body[data-page="market"],
+body[data-page="trade"] {
+  --bxmt-bg: #061b16;
+  --bxmt-panel: #0b2922;
+  --bxmt-panel-raised: #0e332a;
+  --bxmt-panel-deep: #041710;
+  --bxmt-line: rgba(212,175,55,.16);
+  --bxmt-line-strong: rgba(212,175,55,.34);
+  --bxmt-gold: #d4af37;
+  --bxmt-gold-wash: rgba(212,175,55,.09);
+  --bxmt-ink: #eaecef;
+  --bxmt-muted: #91a69c;
+  --bxmt-buy: #0ecb81;
+  --bxmt-sell: #f6465d;
+  --bxmt-radius: 12px;
+  --bxmt-radius-lg: 16px;
+  --bxmt-shadow: 0 12px 30px rgba(0,0,0,.2);
+}

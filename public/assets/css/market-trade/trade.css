@@ -1,0 +1,93 @@
+/* Standalone Trade terminal only */
+body[data-page="trade"] { background: var(--bxmt-bg); }
+body[data-page="trade"] .app-container {
+  width: min(100%, 1680px);
+  max-width: 1680px;
+  margin-inline: auto;
+  padding: clamp(10px, 1.6vw, 22px);
+}
+body[data-page="trade"] .bx-trade-terminal {
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+body[data-page="trade"] .bx-trade-market-head,
+body[data-page="trade"] .bx-trade-panel,
+body[data-page="trade"] #tradeBox,
+body[data-page="trade"] .market-card {
+  min-width: 0;
+  max-width: 100%;
+  border: 1px solid var(--bxmt-line);
+  border-radius: var(--bxmt-radius-lg);
+  background: var(--bxmt-panel);
+  box-shadow: var(--bxmt-shadow);
+}
+body[data-page="trade"] .bx-trade-market-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+  padding: 14px 16px;
+}
+body[data-page="trade"] .bx-trade-pair-select-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+}
+body[data-page="trade"] #tradePairSelect { width: min(100%, 240px); }
+body[data-page="trade"] .bx-trade-workspace {
+  display: grid;
+  grid-template-columns: minmax(220px,.8fr) minmax(0,1.5fr) minmax(220px,.8fr);
+  grid-template-areas: "book chart recent" "book order recent";
+  align-items: start;
+  gap: 13px;
+  min-width: 0;
+}
+body[data-page="trade"] .bx-trade-left-column { grid-area: book; min-width: 0; }
+body[data-page="trade"] .bx-trade-center-column { grid-area: chart; min-width: 0; }
+body[data-page="trade"] .bx-trade-right-column { grid-area: recent; min-width: 0; }
+body[data-page="trade"] .bx-trade-order-entry { grid-area: order; min-width: 0; }
+body[data-page="trade"] .bx-trade-quick-pairs {
+  display: flex;
+  gap: 8px;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  padding-block: 3px 7px;
+  overscroll-behavior-inline: contain;
+}
+body[data-page="trade"] .bx-trade-quick-pairs button {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 8px;
+  min-width: 112px;
+  max-width: 190px;
+  padding: 8px 10px;
+  border: 1px solid var(--bxmt-line);
+  border-radius: 10px;
+  background: var(--bxmt-panel-raised);
+  color: var(--bxmt-ink);
+}
+body[data-page="trade"] .bx-market-pair-list {
+  display: grid;
+  gap: 7px;
+  max-height: min(66vh, 680px);
+  overflow: auto;
+}
+body[data-page="trade"] #marketChart { width: 100%; min-width: 0; max-width: 100%; }
+body[data-page="trade"] #tradeBox { padding: clamp(12px,1.5vw,20px); }
+body[data-page="trade"] #tradeBox :is(.trade-form,.bx-trade-form) {
+  display: grid;
+  grid-template-columns: repeat(2,minmax(0,1fr));
+  gap: 11px;
+  min-width: 0;
+}
+body[data-page="trade"] #tradeBox :is(.bx-trade-field,.bx-trade-options label) { display: grid; gap: 6px; min-width: 0; }
+body[data-page="trade"] #tradeBox :is(.bx-trade-percent,.bx-trade-meta,#actionBtn) { grid-column: 1 / -1; }
+body[data-page="trade"] #tradeBox #actionBtn { width: 100%; min-height: 48px; }
