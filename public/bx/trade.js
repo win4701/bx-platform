@@ -1,15 +1,6 @@
 /* =========================================================
-   BLOXIO TRADE UI ENHANCEMENTS — V10
+   BLOXIO TRADE UI ENHANCEMENTS — V10 (EBIT Style)
    public/bx/trade.js
-
-   - Converts native <select> into accessible custom dropdowns.
-   - Mirrors the select's value; select stays the source of truth.
-   - Syncs market.js state (order type, pair, units).
-   - Does NOT touch order execution or market data (owned by market.js).
-
-   Depends on:
-   - window.MARKET (market.js V10)
-   - window.BLOXIO_ICONS (optional icon library)
 ========================================================= */
 
 "use strict";
@@ -17,8 +8,8 @@
 (() => {
 
   /* ---------- Guard: avoid double-init ---------- */
-  if (window.__BLOXIO_TRADE_UI_V10__) return;
-  window.__BLOXIO_TRADE_UI_V10__ = true;
+  if (window.__BLOXIO_TRADE_UI_V11__) return;
+  window.__BLOXIO_TRADE_UI_V11__ = true;
 
   /* =========================================================
      HELPERS
@@ -40,7 +31,6 @@
 
   /**
    * Resolve the icon path for a given pair value (e.g., "BX_USDT").
-   * Uses window.BLOXIO_ICONS if available, else falls back to a static path.
    */
   function iconForPair(value) {
     const rawBase = String(value || "").split(/[_/]/)[0].toUpperCase();
@@ -68,9 +58,9 @@
 
   /**
    * Wraps a native <select> with a custom accessible dropdown.
+   * - For #tradePairSelect: shows token icons + text.
+   * - For #bxMarketQuote: shows token icons + text (EBIT Style).
    * - Keeps the native select as the source of truth.
-   * - Reflects value changes both ways.
-   * - Skips if already wrapped.
    */
   function enhanceSelect(select) {
     if (!select || select.dataset.customized === "1") return;
@@ -103,7 +93,8 @@
     menu.setAttribute("role", "listbox");
     menu.hidden = true;
 
-    const isPairSelect = select.id === "tradePairSelect";
+    // تحديد ما إذا كان هذا المحدد يحتاج إلى أيقونات توكن
+    const needsIcon = select.id === "tradePairSelect" || select.id === "bxMarketQuote";
 
     /* ---------- Render current value ---------- */
     const renderValue = () => {
@@ -111,13 +102,23 @@
       valueEl.replaceChildren();
       if (!option) return;
 
-      if (isPairSelect) {
-        const img = document.createElement("img");
-        img.className = "bx-select-token-icon";
-        img.src = iconForPair(option.value);
-        img.alt = "";
-        img.onerror = () => { img.hidden = true; };
-        valueEl.append(img);
+      // إضافة أيقونة في زر العرض الرئيسي
+      if (needsIcon) {
+        if (option.value === "ALL") {
+          const allIcon = document.createElement("span");
+          allIcon.className = "bx-quote-all-icon";
+          allIcon.textContent = "A";
+          allIcon.style.cssText = "display:inline-flex;width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,0.1);color:#fff;align-items:center;justify-content:center;font-size:10px;font-weight:bold;flex:0 0 22px;";
+          valueEl.append(allIcon);
+        } else {
+          const img = document.createElement("img");
+          img.className = "bx-select-token-icon";
+          img.src = iconForPair(option.value);
+          img.alt = "";
+          img.style.cssText = "width:22px;height:22px;border-radius:50%;object-fit:contain;flex:0 0 22px;";
+          img.onerror = () => { img.hidden = true; };
+          valueEl.append(img);
+        }
       }
 
       const label = document.createElement("span");
@@ -129,6 +130,9 @@
         const selected = item.dataset.value === select.value;
         item.classList.toggle("selected", selected);
         item.setAttribute("aria-selected", String(selected));
+        // إظهار علامة الصح للعنصر المحدد
+        const check = item.querySelector(".bx-quote-option-check");
+        if (check) check.style.opacity = selected ? "1" : "0";
       });
     };
 
@@ -141,18 +145,37 @@
       item.setAttribute("role", "option");
       item.setAttribute("aria-selected", String(option.selected));
 
-      if (isPairSelect) {
-        const img = document.createElement("img");
-        img.className = "bx-select-token-icon";
-        img.src = iconForPair(option.value);
-        img.alt = "";
-        img.onerror = () => { img.hidden = true; };
-        item.append(img);
+      // إضافة أيقونة داخل القائمة المنسدلة
+      if (needsIcon) {
+        if (option.value === "ALL") {
+          const allIcon = document.createElement("span");
+          allIcon.className = "bx-quote-all-icon";
+          allIcon.textContent = "A";
+          allIcon.style.cssText = "display:inline-flex;width:20px;height:20px;border-radius:50%;background:rgba(255,255,255,0.1);color:#fff;align-items:center;justify-content:center;font-size:10px;font-weight:bold;flex:0 0 20px;";
+          item.append(allIcon);
+        } else {
+          const img = document.createElement("img");
+          img.className = "bx-select-token-icon";
+          img.src = iconForPair(option.value);
+          img.alt = "";
+          img.style.cssText = "width:20px;height:20px;border-radius:50%;object-fit:contain;flex:0 0 20px;";
+          img.onerror = () => { img.hidden = true; };
+          item.append(img);
+        }
       }
 
       const text = document.createElement("span");
+      text.className = "bx-custom-select-option-label";
       text.textContent = option.textContent.trim();
+      text.style.cssText = "flex:1;text-align:left;font-size:12px;";
       item.append(text);
+
+      // إضافة علامة الصح
+      const check = document.createElement("span");
+      check.className = "bx-quote-option-check";
+      check.textContent = "✓";
+      check.style.cssText = "opacity:0;color:#D4AF37;font-weight:bold;font-size:12px;";
+      item.append(check);
 
       item.addEventListener("click", () => {
         if (select.value !== option.value) {
@@ -183,6 +206,7 @@
       menu.hidden = false;
       trigger.setAttribute("aria-expanded", "true");
     }
+    
     function closeMenu() {
       wrapper.classList.remove("is-open");
       menu.hidden = true;
@@ -205,9 +229,7 @@
     // React to native select changes (from market.js or programmatic updates)
     select.addEventListener("change", renderValue);
 
-    // Mount the native select INSIDE the wrapper. This is required for the
-    // .bx-custom-select > select clipping rule to hide the duplicate native UI.
-    // The native select remains the source of truth for all market/order logic.
+    // Mount the native select INSIDE the wrapper.
     select.parentNode.insertBefore(wrapper, select);
     wrapper.append(select, trigger, menu);
     select.classList.add("bx-native-select");
@@ -219,9 +241,6 @@
      SYNC HELPERS
   ========================================================= */
 
-  /**
-   * Sync the header pair icon when the pair select changes.
-   */
   function syncPairIcon() {
     const pairSelect = $("tradePairSelect");
     const icon = $("tradeBaseIcon");
@@ -230,10 +249,6 @@
     icon.alt = String(pairSelect.value || "").split(/[_/]/)[0];
   }
 
-  /**
-   * Sync the unit labels (bxBaseSymbol, bxQuoteSymbol, bxTotalSymbol)
-   * with the currently selected pair.
-   */
   function syncUnitLabels() {
     const pairSelect = $("tradePairSelect");
     const displayPair = window.MARKET?.displayPair
@@ -257,9 +272,6 @@
     if (total) total.dataset.unit = quoteCode || "USDT";
   }
 
-  /**
-   * Apply order type: disable price input in market mode, fill current price.
-   */
   function applyOrderType() {
     const orderType = $("bxOrderType");
     const market = window.MARKET;
@@ -276,11 +288,6 @@
     }
     market?.updateOrderTotal?.();
   }
-
-  /* =========================================================
-     INPUT FRAME DECORATION
-     Wraps .market-input with a unit suffix (.bx-input-unit)
-  ========================================================= */
 
   function decorateInputs() {
     document.querySelectorAll(".bx-trade-field").forEach((field) => {
@@ -356,10 +363,8 @@
     document.addEventListener("bloxio:market-pair-changed", () => {
       syncPairIcon();
       syncUnitLabels();
-      // Sync custom select display to the new pair
       const select = $("tradePairSelect");
       if (select) {
-        const current = select.value;
         const next = window.MARKET?.pair;
         if (next && select.value !== next) {
           select.value = next;
@@ -369,7 +374,7 @@
       }
     });
 
-    // 8. React to market.js price changes (to sync price input in market mode)
+    // 8. React to market.js price changes
     document.addEventListener("bloxio:market-price", (event) => {
       const price = $("orderPrice");
       const market = window.MARKET;
