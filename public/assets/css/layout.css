@@ -1,0 +1,178 @@
+/* BLOXIO CSS / LAYOUT — application shell, header and navigation geometry */
+.app-header,
+.enterprise-header {
+    position: fixed;
+    inset: 0 0 auto;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    width: 100%;
+    height: var(--header-height);
+    padding: 0 26px;
+    border-bottom: 1px solid var(--gold-border);
+    background: var(--bg-base-deep);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+}.header-left,
+.header-center,
+.header-right {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+}.header-left { gap: 25px; }.header-center { justify-content: center; }.header-right { justify-content: flex-end; gap: 12px; }.enterprise-brand {
+    display: flex;
+    align-items: center; /* يضع الأيقونة والنص على خط أفقي واحد */
+    gap: 10px;           /* مسافة صغيرة بين الأيقونة والنص */
+    flex-shrink: 0;      /* يمنع الشعار من الانضغاط */
+    text-decoration: none;
+}.brand-icon {
+    display: block;
+    width: 32px;
+    height: 32px;
+    flex: 0 0 32px;
+    object-fit: contain;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    filter: brightness(0) invert(1);
+}.brand-text-img {
+    display: block;
+    width: auto;
+    height: 22px;
+    max-width: 140px;
+    object-fit: contain;
+    background: transparent;
+    border: 0;
+    filter: brightness(0) invert(1);
+}.header-btn {
+    min-height: 38px;
+    padding: 8px 17px;
+    border: 1px solid var(--gold-border);
+    border-radius: var(--radius-md);
+    background: transparent;
+    color: var(--text-platinum);
+    font-size: .83rem;
+    font-weight: 800;
+    transition: all var(--transition-fast);
+}.header-btn.primary {
+    border-color: transparent;
+    background: var(--gold-primary);
+    color: var(--bg-base-deep);
+}.header-btn.primary:hover {
+    filter: brightness(1.1);
+    box-shadow: var(--shadow-gold);
+}.header-btn.secondary {
+    color: var(--gold-solid);
+}.header-btn.secondary:hover {
+    background: var(--gold-glow);
+}#app-shell {
+    width: 100%;
+    min-height: 100vh;
+}.app-container {
+    width: 100%;
+    max-width: var(--content-max-width);
+    min-height: 100vh;
+    margin: 0 auto;
+    padding: calc(var(--header-height) + 25px) var(--page-gutter) 42px;
+}
+
+/* ==========================================================================
+   BLOXIO APP LAYOUT — WIDTH & SAFE AREA
+   ========================================================================== */
+.app-container { min-width: 0; }
+#app-shell, .app-container, .view { box-sizing: border-box; }
+@supports (padding: max(0px)) {
+    .app-container {
+        padding-left: max(var(--page-gutter), env(safe-area-inset-left));
+        padding-right: max(var(--page-gutter), env(safe-area-inset-right));
+        padding-bottom: max(42px, env(safe-area-inset-bottom));
+    }
+}
+
+
+/* ==========================================================================
+   BLOXIO — HEADER MENU + SIDEBAR STRUCTURE
+   ========================================================================== */
+.enterprise-brand { min-width: 0; }
+.header-more-menu-wrap { position: relative; flex: 0 0 auto; }
+.header-more-menu { position: relative; }
+.header-more-menu > summary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 42px;
+    padding: 8px 16px;
+    border: 1px solid var(--gold-border);
+    border-radius: var(--radius-lg);
+    background: var(--bg-card);
+    color: var(--text-platinum);
+    cursor: pointer;
+    list-style: none;
+    white-space: nowrap;
+}
+.header-more-menu > summary::-webkit-details-marker { display: none; }
+.header-more-menu > summary svg { width: 16px; height: 16px; transition: transform var(--transition-fast); }
+.header-more-menu[open] > summary svg { transform: rotate(180deg); }
+.header-more-dropdown {
+    position: absolute;
+    top: calc(100% + 9px);
+    left: 0;
+    z-index: 1300;
+    display: grid;
+    grid-template-columns: minmax(150px, 1fr);
+    gap: 4px;
+    min-width: 190px;
+    max-height: min(70vh, 420px);
+    overflow: auto;
+    padding: 7px;
+    border: 1px solid var(--gold-border);
+    border-radius: var(--radius-lg);
+    background: var(--bg-panel);
+    box-shadow: var(--shadow-deep);
+}
+.header-more-dropdown a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 40px;
+    padding: 8px 10px;
+    border-radius: var(--radius-md);
+    color: var(--text-metadata);
+}
+.header-more-dropdown a:hover,
+.header-more-dropdown a:focus-visible {
+    background: var(--gold-glow);
+    color: var(--gold-solid);
+}
+.header-more-dropdown img,
+.header-more-dropdown .sidebar-glyph {
+    display: grid;
+    width: 22px;
+    height: 22px;
+    flex: 0 0 22px;
+    place-items: center;
+    object-fit: contain;
+}
+.header-more-dropdown .sidebar-glyph { color: var(--gold-solid); font-size: 17px; }
+.desktop-sidebar { display: none; }
+
+@media (max-width: 768px) {
+    .app-header, .enterprise-header { gap: 7px; padding-right: 10px; padding-left: 10px; }
+    .header-left { gap: 8px; }
+    .brand-icon { width: 30px; height: 30px; flex-basis: 30px; }
+    .brand-text-img { height: 18px; max-width: 82px; }
+    .header-center { gap: 6px; }
+    .header-more-menu > summary { min-height: 38px; padding: 6px 11px; }
+    .header-right { gap: 5px; }
+    .auth-toolbar { gap: 5px; }
+    .header-btn { min-height: 36px; padding: 6px 9px; font-size: .72rem; }
+    .header-more-dropdown { left: auto; right: 0; }
+}
+@media (max-width: 380px) {
+    .brand-text-img { display: none; }
+    .header-more-menu > summary { padding: 6px 9px; }
+    .header-btn { padding-right: 7px; padding-left: 7px; font-size: .68rem; }
+}
