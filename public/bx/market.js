@@ -19,7 +19,7 @@ const BLOXIO_ICON = (() => {
 
 
 /* =========================================================
-   BLOXIO MARKET ENGINE V10.1
+   BLOXIO MARKET ENGINE V10.2 (EBIT Style Integration)
    public/bx/market.js
 ========================================================= */
 
@@ -50,9 +50,7 @@ const BLOXIO_MARKET_PAIRS = Object.freeze((() => {
   ];
   for (const [symbol,name] of crypto) {
     const icon = coinIcon(symbol);
-    const quotes = symbol === "BNB"
-      ? ["BX","EUBX"]
-      : ["USDT","USDC","SOL","BX","EUBX"];
+    const quotes = symbol === "BNB" ? ["BX","EUBX"] : ["USDT","USDC","SOL","BX","EUBX"];
     for (const quote of quotes) add(symbol,quote,"crypto",name,icon);
   }
 
@@ -150,10 +148,7 @@ const CONFIG = {
     refreshInterval: 5000,
     historyLimit: 50,
     depthLimit: 10,
-    timeframes: [
-        "1m", "5m", "15m",
-        "1h", "4h", "1d", "1w", "1M"
-    ]
+    timeframes: ["1m", "5m", "15m", "1h", "4h", "1d", "1w", "1M"]
 };
 
 const MARKET = {
@@ -237,7 +232,7 @@ const MARKET = {
         this.subscribeWS();
         this.startHeartbeat();
 
-        console.log("[BLOXIO MARKET] V10.1 READY");
+        console.log("[BLOXIO MARKET] V10.2 READY");
         return true;
     },
 
@@ -277,19 +272,16 @@ const MARKET = {
         return `<span class="bx-token-icon"><img src="${src}" alt="${safeSymbol}" loading="lazy" onerror="this.hidden=true;this.nextElementSibling.hidden=false"><span hidden>${safeSymbol.slice(0,3)}</span></span>`;
     },
 
+    /**
+     * تحديث دالة renderBloxioPairs
+     * - تم إيقاف توليد التصنيفات في #marketBaseAssets نهائياً.
+     * - تم تحسين الهيكل ليتوافق مع شبكة EBIT (Grid).
+     */
     renderBloxioPairs() {
-        const base = $("marketBaseAssets");
         const pairs = $("marketPairAssets");
-        if (!base || !pairs) return;
+        if (!pairs) return;
 
-        const categories = [
-            { id: "crypto", label: "Crypto" },
-            { id: "fan-tokens", label: "Fan Tokens" },
-            { id: "companies", label: "Companies" },
-            { id: "commodities", label: "Commodities" }
-        ];
-        const activeCategory = categories.some(x => x.id === this.marketCategory) ? this.marketCategory : "crypto";
-        this.marketCategory = activeCategory;
+        const activeCategory = this.marketCategory;
 
         const all = BLOXIO_MARKET_PAIRS.filter(pair =>
             pair.group === activeCategory ||
@@ -300,9 +292,8 @@ const MARKET = {
         const query = ($("marketSearch")?.value || "").trim().toLowerCase();
         const filtered = visible.filter(pair => `${pair.base}${pair.quote} ${pair.name}`.toLowerCase().includes(query));
 
-        base.innerHTML = categories.map(category =>
-            `<button type="button" class="bx-market-category ${activeCategory === category.id ? "active" : ""}" data-bx-category="${category.id}" aria-pressed="${activeCategory === category.id}">${category.label}</button>`
-        ).join("");
+        // إزالة التحديث الديناميكي لـ #marketBaseAssets (لأنها مخفية في CSS)
+        // base.innerHTML = ... (تم حذف هذا الجزء)
 
         pairs.innerHTML = filtered.map(pair => {
             const pairKey = `${pair.base}_${pair.quote}`;
@@ -322,6 +313,8 @@ const MARKET = {
                 core: "Crypto",
                 crypto: "Crypto"
             })[pair.group] || pair.group;
+            
+            // استخدام هيكل الشبكة المتوافق مع التصميم الجديد
             return `<button type="button" class="market-asset bx-market-asset ${selected ? "active" : ""}" data-pair="${pairKey}" aria-pressed="${selected}">
                 <span class="bx-market-card-identity">
                     ${this.assetMarkup(pair.base, displayName, displayIcon)}
@@ -501,6 +494,10 @@ const MARKET = {
         if (select && label) label.textContent = select.value || "ALL";
     },
 
+    /**
+     * تحديث القائمة المنسدلة للعملات (Quote Dropdown)
+     * - عرض الأيقونات داخل القائمة بشكل أفقي (EBIT Style).
+     */
     bindQuoteDropdown() {
         const trigger = $("bxQuoteTrigger");
         const menu = $("bxQuoteMenu");
@@ -508,9 +505,24 @@ const MARKET = {
         if (!trigger || !menu || !select) return;
 
         const buildMenu = () => {
-            menu.innerHTML = Array.from(select.options).map(opt =>
-                `<button type="button" role="option" data-value="${escapeHTML(opt.value)}" class="${opt.value === select.value ? "selected" : ""}" aria-selected="${opt.value === select.value}">${escapeHTML(opt.textContent)}</button>`
-            ).join("");
+            menu.innerHTML = Array.from(select.options).map(opt => {
+                const val = opt.value;
+                let iconHtml = '';
+                
+                // إضافة أيقونة داخل القائمة
+                if (val === "ALL") {
+                    iconHtml = `<span class="bx-quote-all-icon" style="display:inline-flex;width:20px;height:20px;border-radius:50%;background:rgba(255,255,255,0.1);color:#fff;align-items:center;justify-content:center;font-size:10px;font-weight:bold;">A</span>`;
+                } else {
+                    const iconSrc = this.assetIconPath(val);
+                    iconHtml = `<img src="${iconSrc}" alt="${val}" style="width:20px;height:20px;border-radius:50%;object-fit:contain;" onerror="this.src='/assets/images/coins/bx.png'">`;
+                }
+
+                return `<button type="button" role="option" data-value="${escapeHTML(val)}" class="${val === select.value ? "selected" : ""}" aria-selected="${val === select.value}" style="display:flex;align-items:center;gap:8px;width:100%;padding:8px 10px;background:transparent;border:none;color:inherit;cursor:pointer;text-align:left;">
+                    ${iconHtml}
+                    <strong style="flex:1;font-size:12px;font-weight:600;">${escapeHTML(opt.textContent)}</strong>
+                    <span class="bx-quote-option-check" style="opacity:${val === select.value ? 1 : 0};color:#D4AF37;">✓</span>
+                </button>`;
+            }).join("");
         };
         buildMenu();
 
@@ -667,7 +679,6 @@ const MARKET = {
             btn.setAttribute("aria-pressed", String(active));
         });
 
-        // ✅ V10.1 — notify listeners (trade.js) that the active pair changed.
         this.dispatch("bloxio:market-pair-changed", {
             pair: this.pair,
             displayPair: this.displayPair
@@ -851,7 +862,6 @@ const MARKET = {
         if ($("spread")) $("spread").textContent = this.spread.toFixed(4) + "%";
         this.updateIntel();
 
-        // ✅ V10.1 — notify listeners of the current depth snapshot.
         this.dispatch("bloxio:market-depth", {
             pair: this.pair,
             displayPair: this.displayPair,
@@ -902,7 +912,6 @@ const MARKET = {
         this.updateOrderTotal();
         this.updateIntel();
 
-        // ✅ V10.1 — notify listeners (trade.js) of the latest display price.
         this.dispatch("bloxio:market-price", {
             pair: this.pair,
             displayPair: this.displayPair,
@@ -948,7 +957,6 @@ const MARKET = {
             `;
         }).join("");
 
-        // ✅ V10.1 — notify listeners of the latest trades snapshot.
         this.dispatch("bloxio:market-trades", {
             pair: this.pair,
             displayPair: this.displayPair,
@@ -1335,7 +1343,6 @@ const MARKET = {
             feed.dataset.state = status;
         }
 
-        // ✅ V10.1 — Overview feed label (top of the market overview card).
         const overviewFeed = $("bxMarketOverviewFeedLabel");
         if (overviewFeed) {
             const messages = {
